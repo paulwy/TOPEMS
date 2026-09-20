@@ -12,7 +12,6 @@ use uuid::Uuid;
 use crate::models::purchase_order::PurchaseOrder;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 pub struct AppState {
@@ -52,7 +51,7 @@ pub async fn get_supplier_portal_stats(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -74,7 +73,14 @@ pub async fn get_supplier_portal_stats(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "srm"),
@@ -172,7 +178,7 @@ pub async fn get_supplier_portal_orders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(supplier_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -194,7 +200,14 @@ pub async fn get_supplier_portal_orders(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("srm", r#"
@@ -225,7 +238,7 @@ pub async fn get_supplier_portal_invoices(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(_supplier_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -237,7 +250,6 @@ pub async fn get_supplier_portal_invoices(
         Err(e) => return e,
     }
 
-    let _tenant_id = get_tenant_id(&claims, &headers);
 
     let invoices = vec![
         serde_json::json!({
@@ -276,7 +288,7 @@ pub async fn get_supplier_portal_deliveries(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(_supplier_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -288,7 +300,6 @@ pub async fn get_supplier_portal_deliveries(
         Err(e) => return e,
     }
 
-    let _tenant_id = get_tenant_id(&claims, &headers);
 
     let deliveries = vec![
         serde_json::json!({
@@ -329,7 +340,7 @@ pub async fn get_supplier_portal_deliveries(
 pub async fn get_supplier_portal_announcements(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -341,7 +352,6 @@ pub async fn get_supplier_portal_announcements(
         Err(e) => return e,
     }
 
-    let _tenant_id = get_tenant_id(&claims, &headers);
 
     let announcements = vec![
         serde_json::json!({

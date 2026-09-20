@@ -8,7 +8,6 @@ use chrono::Utc;
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -133,7 +132,7 @@ pub async fn list_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -145,7 +144,14 @@ pub async fn list_suppliers(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -279,7 +285,7 @@ pub async fn list_suppliers(
 pub async fn create_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -292,7 +298,14 @@ pub async fn create_supplier(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     if req.supplier_no.is_empty() || req.name.is_empty() {
         return Json(ApiResponse::<Supplier>::error(
@@ -481,7 +494,7 @@ pub async fn get_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -493,7 +506,14 @@ pub async fn get_supplier(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let cache_key = supplier_cache_key(tenant_id, id);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
@@ -551,7 +571,7 @@ pub async fn update_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -564,7 +584,14 @@ pub async fn update_supplier(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let existing = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
@@ -734,7 +761,7 @@ pub async fn delete_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -746,7 +773,14 @@ pub async fn delete_supplier(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let existing = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
@@ -823,7 +857,7 @@ pub async fn get_supplier_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -835,7 +869,14 @@ pub async fn get_supplier_products(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, SupplierProduct>(
         only_own_schema_query!("srm", r#"
@@ -868,7 +909,7 @@ pub async fn get_supplier_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -880,7 +921,14 @@ pub async fn get_supplier_contracts(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
@@ -913,7 +961,7 @@ pub async fn get_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -925,7 +973,14 @@ pub async fn get_supplier_performance(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let supplier_query = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
@@ -1105,7 +1160,7 @@ pub struct ApprovalActionRequest {
 pub async fn start_supplier_approval(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1119,7 +1174,14 @@ pub async fn start_supplier_approval(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1242,7 +1304,7 @@ pub async fn start_supplier_approval(
 pub async fn approve_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1256,7 +1318,14 @@ pub async fn approve_supplier(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1351,7 +1420,7 @@ pub async fn approve_supplier(
 pub async fn reject_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1365,7 +1434,14 @@ pub async fn reject_supplier(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(

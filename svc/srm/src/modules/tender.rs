@@ -15,7 +15,6 @@ use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 pub struct AppState {
@@ -98,7 +97,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 pub async fn list_tenders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -110,7 +109,14 @@ pub async fn list_tenders(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let tenders = sqlx::query_as::<_, Tender>(
         only_own_schema_query!("srm", r#"
@@ -161,7 +167,7 @@ pub async fn list_tenders(
 pub async fn create_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -205,7 +211,14 @@ pub async fn create_tender(
         ));
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let tender_no = format!("TN-{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
 
     let result = sqlx::query_as::<_, Tender>(
@@ -263,7 +276,7 @@ pub async fn get_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -285,7 +298,14 @@ pub async fn get_tender(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, Tender>(
         only_own_schema_query!("srm", r#"
@@ -333,7 +353,7 @@ pub async fn update_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -356,7 +376,14 @@ pub async fn update_tender(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let title = body.get("title").and_then(|v| v.as_str());
     let description = body.get("description").and_then(|v| v.as_str());
@@ -437,7 +464,7 @@ pub async fn delete_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -459,7 +486,14 @@ pub async fn delete_tender(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query(
         only_own_schema_query!("srm", "UPDATE srm.tenders SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "srm"),
@@ -488,7 +522,7 @@ pub async fn get_tender_bids(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(tender_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -510,7 +544,14 @@ pub async fn get_tender_bids(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let bids = sqlx::query_as::<_, TenderBid>(
         only_own_schema_query!("srm", r#"
@@ -565,7 +606,7 @@ pub async fn create_tender_bid(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(tender_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -588,7 +629,14 @@ pub async fn create_tender_bid(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let supplier_id = body
         .get("supplier_id")
@@ -693,7 +741,7 @@ pub async fn award_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(tender_id): Path<String>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -716,7 +764,14 @@ pub async fn award_tender(
         }
     };
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let winning_bid_id = body
         .get("winning_bid_id")
@@ -857,7 +912,7 @@ pub async fn award_tender(
 pub async fn list_tender_awards(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -869,7 +924,14 @@ pub async fn list_tender_awards(
         Err(e) => return e,
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let awards = sqlx::query_as::<_, TenderAward>(
         only_own_schema_query!("srm", r#"

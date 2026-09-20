@@ -4,17 +4,17 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool, Row};
+use sqlx::{FromRow, PgPool};
 use std::sync::Arc;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct ListInquiryParams {
@@ -79,8 +79,8 @@ async fn current_tenant_id(claims: &Claims) -> Option<Uuid> {
 }
 
 pub async fn list_inquiries(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListInquiryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -148,8 +148,8 @@ pub async fn list_inquiries(
 }
 
 pub async fn get_inquiry(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -180,7 +180,7 @@ pub async fn get_inquiry(
 }
 
 pub async fn create_inquiry(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -232,8 +232,8 @@ pub async fn create_inquiry(
 }
 
 pub async fn update_inquiry(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -280,8 +280,8 @@ pub async fn update_inquiry(
 }
 
 pub async fn delete_inquiry(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -315,8 +315,8 @@ pub async fn delete_inquiry(
 }
 
 pub async fn publish_inquiry(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -326,8 +326,8 @@ pub async fn publish_inquiry(
 }
 
 pub async fn close_inquiry(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

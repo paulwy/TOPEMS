@@ -2,12 +2,12 @@ use topems_shared_boundary::only_own_schema_query;
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgPool, query_as};
+use serde::Deserialize;
+use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -48,7 +48,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 }
 
 pub async fn list_biddings(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Query(params): Query<ListBiddingParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -127,8 +127,8 @@ pub async fn list_biddings(
 }
 
 pub async fn create_bidding(
-    State(state): State<Arc<AppState>>,
-    Extension(claims): Extension<Claims>,
+    State(_state): State<Arc<AppState>>,
+    Extension(_claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -212,7 +212,7 @@ pub async fn create_bidding(
 }
 
 pub async fn get_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -243,7 +243,7 @@ pub async fn get_bidding(
 }
 
 pub async fn update_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -318,7 +318,7 @@ pub async fn update_bidding(
 }
 
 pub async fn delete_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -342,7 +342,7 @@ pub async fn delete_bidding(
 }
 
 pub async fn publish_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -385,7 +385,7 @@ pub async fn publish_bidding(
 }
 
 pub async fn open_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -428,7 +428,7 @@ pub async fn open_bidding(
 }
 
 pub async fn evaluate_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -470,7 +470,7 @@ pub async fn evaluate_bidding(
 }
 
 pub async fn award_bidding(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -528,7 +528,7 @@ pub async fn award_bidding(
 }
 
 pub async fn list_bidding_suppliers(
-    State(state): State<Arc<AppState>>,
+    State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
