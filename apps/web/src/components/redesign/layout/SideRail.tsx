@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -50,92 +51,92 @@ export interface SideRailProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const defaultItems: NavItem[] = [
-  { id: 'home', label: '首页', icon: Home, path: '/dashboard' },
+  { id: 'home', label: 'shared.sidebar.home', icon: Home, path: '/dashboard' },
   {
     id: 'mes',
-    label: '制造执行',
+    label: 'shared.sidebar.mes',
     icon: Factory,
     path: '/mes/dashboard',
     children: [
-      { id: 'mes-dashboard', label: '生产看板', icon: BarChart3, path: '/mes/dashboard' },
+      { id: 'mes-dashboard', label: 'shared.sidebar.mes_dashboard', icon: BarChart3, path: '/mes/dashboard' },
       {
         id: 'mes-production-orders',
-        label: '生产订单',
+        label: 'shared.sidebar.mes_production_orders',
         icon: FileText,
         path: '/mes/production-orders',
       },
-      { id: 'mes-work-orders', label: '工单管理', icon: ClipboardList, path: '/mes/work-orders' },
-      { id: 'mes-equipment', label: '设备管理', icon: Cpu, path: '/mes/equipment' },
-      { id: 'mes-quality', label: '质量检验', icon: ShieldCheck, path: '/mes/quality' },
-      { id: 'mes-wip', label: '在制品', icon: Box, path: '/mes/wip' },
-      { id: 'mes-report', label: '生产报表', icon: BarChart3, path: '/mes/production-record' },
+      { id: 'mes-work-orders', label: 'shared.sidebar.mes_work_orders', icon: ClipboardList, path: '/mes/work-orders' },
+      { id: 'mes-equipment', label: 'shared.sidebar.mes_equipment', icon: Cpu, path: '/mes/equipment' },
+      { id: 'mes-quality', label: 'shared.sidebar.mes_quality', icon: ShieldCheck, path: '/mes/quality' },
+      { id: 'mes-wip', label: 'shared.sidebar.mes_wip', icon: Box, path: '/mes/wip' },
+      { id: 'mes-report', label: 'shared.sidebar.mes_report', icon: BarChart3, path: '/mes/production-record' },
     ],
   },
   {
     id: 'erp',
-    label: '企业资源',
+    label: 'shared.sidebar.erp',
     icon: Layers,
     path: '/erp/dashboard',
     children: [
-      { id: 'erp-purchase', label: '采购管理', icon: ShoppingCart, path: '/erp/purchase-order' },
-      { id: 'erp-sales', label: '销售管理', icon: TrendingUp, path: '/erp/sales-order' },
-      { id: 'erp-inventory', label: '库存管理', icon: Package, path: '/erp/inventory' },
-      { id: 'erp-finance', label: '财务管理', icon: DollarSign, path: '/erp/finance' },
+      { id: 'erp-purchase', label: 'shared.sidebar.erp_purchase', icon: ShoppingCart, path: '/erp/purchase-order' },
+      { id: 'erp-sales', label: 'shared.sidebar.erp_sales', icon: TrendingUp, path: '/erp/sales-order' },
+      { id: 'erp-inventory', label: 'shared.sidebar.erp_inventory', icon: Package, path: '/erp/inventory' },
+      { id: 'erp-finance', label: 'shared.sidebar.erp_finance', icon: DollarSign, path: '/erp/finance' },
     ],
   },
   {
     id: 'scm',
-    label: '供应链',
+    label: 'shared.sidebar.scm',
     icon: Truck,
     path: '/scm/dashboard',
     children: [
-      { id: 'scm-supplier', label: '供应商管理', icon: Truck, path: '/scm/suppliers' },
-      { id: 'scm-purchase', label: '采购管理', icon: ShoppingCart, path: '/scm/purchasing' },
-      { id: 'scm-logistics', label: '物流管理', icon: Truck, path: '/scm/logistics' },
+      { id: 'scm-supplier', label: 'shared.sidebar.scm_supplier', icon: Truck, path: '/scm/suppliers' },
+      { id: 'scm-purchase', label: 'shared.sidebar.scm_purchase', icon: ShoppingCart, path: '/scm/purchasing' },
+      { id: 'scm-logistics', label: 'shared.sidebar.scm_logistics', icon: Truck, path: '/scm/logistics' },
     ],
   },
   {
     id: 'crm',
-    label: '客户管理',
+    label: 'shared.sidebar.crm',
     icon: Users,
     path: '/crm/dashboard',
     children: [
-      { id: 'crm-customers', label: '客户列表', icon: Users, path: '/crm/customers' },
-      { id: 'crm-opportunities', label: '商机管理', icon: Target, path: '/crm/opportunities' },
-      { id: 'crm-contracts', label: '合同管理', icon: FileText, path: '/crm/contracts' },
+      { id: 'crm-customers', label: 'shared.sidebar.crm_customers', icon: Users, path: '/crm/customers' },
+      { id: 'crm-opportunities', label: 'shared.sidebar.crm_opportunities', icon: Target, path: '/crm/opportunities' },
+      { id: 'crm-contracts', label: 'shared.sidebar.crm_contracts', icon: FileText, path: '/crm/contracts' },
     ],
   },
   {
     id: 'qms',
-    label: '质量管理',
+    label: 'shared.sidebar.qms',
     icon: ShieldCheck,
     path: '/qms/dashboard',
     children: [
-      { id: 'qms-inspection', label: '检验管理', icon: ShieldCheck, path: '/qms/inspection' },
+      { id: 'qms-inspection', label: 'shared.sidebar.qms_inspection', icon: ShieldCheck, path: '/qms/inspection' },
       {
         id: 'qms-nonconformance',
-        label: '不合格品',
+        label: 'shared.sidebar.qms_nonconformance',
         icon: AlertTriangle,
         path: '/qms/nonconformance',
       },
-      { id: 'qms-eight-d', label: '8D 报告', icon: FileText, path: '/qms/eight-d' },
+      { id: 'qms-eight-d', label: 'shared.sidebar.qms_eight_d', icon: FileText, path: '/qms/eight-d' },
     ],
   },
   {
     id: 'wms',
-    label: '仓储物流',
+    label: 'shared.sidebar.wms',
     icon: Box,
     path: '/wms/dashboard',
     children: [
-      { id: 'wms-inbound', label: '入库管理', icon: Package, path: '/wms/inbound-orders' },
-      { id: 'wms-outbound', label: '出库管理', icon: Package, path: '/wms/outbound-orders' },
-      { id: 'wms-inventory', label: '库存管理', icon: Boxes, path: '/wms/inventory' },
+      { id: 'wms-inbound', label: 'shared.sidebar.wms_inbound', icon: Package, path: '/wms/inbound-orders' },
+      { id: 'wms-outbound', label: 'shared.sidebar.wms_outbound', icon: Package, path: '/wms/outbound-orders' },
+      { id: 'wms-inventory', label: 'shared.sidebar.wms_inventory', icon: Boxes, path: '/wms/inventory' },
     ],
   },
-  { id: 'bi', label: '数据决策', icon: BarChart3, path: '/bi/dashboard' },
-  { id: 'gis', label: '地理信息', icon: Map, path: '/gis/dashboard' },
-  { id: 'doc', label: '文档协同', icon: FileText, path: '/doc/list' },
-  { id: 'im', label: '消息中心', icon: MessageSquare, badge: 3, path: '/im' },
+  { id: 'bi', label: 'shared.sidebar.bi', icon: BarChart3, path: '/bi/dashboard' },
+  { id: 'gis', label: 'shared.sidebar.gis', icon: Map, path: '/gis/dashboard' },
+  { id: 'doc', label: 'shared.sidebar.doc', icon: FileText, path: '/doc/list' },
+  { id: 'im', label: 'shared.sidebar.im', icon: MessageSquare, badge: 3, path: '/im' },
 ];
 
 export const SideRail: React.FC<SideRailProps> = ({
@@ -149,6 +150,22 @@ export const SideRail: React.FC<SideRailProps> = ({
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
+  const { t } = useTranslation();
+
+  // 菜单 label 支持 i18n key（如 'shared.sidebar.mes'）；非 key 的原始文本原样返回
+  const translateItems = useMemo(
+    () =>
+      (list: NavItem[] | undefined): NavItem[] | undefined =>
+        list?.map((item) => ({
+          ...item,
+          label: t(item.label),
+          children: item.children?.map((child) => ({ ...child, label: t(child.label) })),
+        })),
+    [t]
+  );
+  const resolvedItems = translateItems(items) || [];
+  const resolvedFooterItems = translateItems(footerItems) || [];
+
   const railWidth = expanded ? 'var(--siderail-expanded-width)' : 'var(--siderail-width)';
 
   // 管理展开的菜单组
@@ -210,7 +227,7 @@ export const SideRail: React.FC<SideRailProps> = ({
           padding: '0 var(--space-2)',
         }}
       >
-        {items.map((item) => {
+        {resolvedItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeId === item.id || item.active;
           const hasChildren = item.children && item.children.length > 0;
@@ -375,7 +392,7 @@ export const SideRail: React.FC<SideRailProps> = ({
             padding: '0 var(--space-2)',
           }}
         >
-          {footerItems.map((item) => {
+          {resolvedFooterItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeId === item.id;
             return (

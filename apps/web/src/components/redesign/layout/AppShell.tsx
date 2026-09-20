@@ -69,9 +69,10 @@ export const AppShell: React.FC<AppShellProps> = ({
 
     const result = findPathInItems(items || [], path);
     if (result) {
-      crumbs.push({ label: result.parentLabel });
+      // label 可能是 i18n key（如 shared.sidebar.mes），统一翻译；非 key 的原始文本原样返回
+      crumbs.push({ label: i18n.t(result.parentLabel) });
       if (result.childLabel) {
-        crumbs.push({ label: result.childLabel });
+        crumbs.push({ label: i18n.t(result.childLabel) });
       }
     } else {
       // 如果找不到，使用路径片段（已知平台页映射为中文标题）
@@ -89,7 +90,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
 
     return crumbs;
-  }, [location.pathname, items, navigate]);
+  }, [location.pathname, items, navigate, i18n.language]);
 
   return (
     <div
