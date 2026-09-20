@@ -24,6 +24,7 @@ pub struct CreateDepartmentRequest {
     pub tenant_id: Option<Uuid>,
     pub org_id: Option<Uuid>,
     pub name: String,
+    pub name_en: Option<String>,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
     pub manager_id: Option<Uuid>,
@@ -34,6 +35,7 @@ pub struct CreateDepartmentRequest {
 pub struct UpdateDepartmentRequest {
     pub org_id: Option<Uuid>,
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub code: Option<String>,
     pub parent_id: Option<Uuid>,
     pub manager_id: Option<Uuid>,
@@ -78,6 +80,7 @@ mod tests {
             tenant_id: Some(org_id),
             org_id: None,
             name: "HR Department".to_string(),
+            name_en: None,
             code: Some("HR".to_string()),
             parent_id: None,
             manager_id: None,
@@ -93,6 +96,7 @@ mod tests {
         let request = UpdateDepartmentRequest {
             org_id: None,
             name: Some("Updated HR Department".to_string()),
+            name_en: None,
             code: None,
             parent_id: None,
             manager_id: None,

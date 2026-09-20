@@ -172,7 +172,8 @@ pub async fn login(
 
     let user = match sqlx::query_as::<_, UserRow>(
         r#"
-        SELECT u.id, u.username, u.email, u.password_hash, u.full_name,
+        SELECT u.id, u.username, u.email, u.password_hash,
+          CASE WHEN $2 = 'en' THEN COALESCE(u.full_name_en, u.full_name) ELSE u.full_name END AS full_name,
           (u.status = 'active') AS is_active, u.is_superuser,
           COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
                     JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
@@ -185,6 +186,7 @@ pub async fn login(
         "#,
     )
     .bind(username)
+    .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_optional(&state.pool)
     .await
     {
@@ -446,6 +448,10 @@ pub async fn register(
         .get("full_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
+    let full_name_en = payload
+        .get("full_name_en")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     tracing::info!("IAM auth register called with username: {}", username);
 
@@ -549,8 +555,8 @@ pub async fn register(
     let user_id = Uuid::new_v4();
     let write_core = sqlx::query(
         r#"
-        INSERT INTO public.core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
-        VALUES ($1, $2, $3, $4, $5, 'active', false, NOW())
+        INSERT INTO public.core_users (id, username, email, password_hash, full_name, full_name_en, status, is_superuser, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, 'active', false, NOW())
         ON CONFLICT (username) DO NOTHING
         "#,
     )
@@ -559,6 +565,7 @@ pub async fn register(
     .bind(email)
     .bind(&password_hash)
     .bind(&full_name)
+    .bind(&full_name_en)
     .execute(&state.pool)
     .await;
     match write_core {

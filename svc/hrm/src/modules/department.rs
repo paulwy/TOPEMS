@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::*,
     Json, Router,
 };
@@ -12,6 +13,7 @@ use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 use topems_shared_event::event::MasterDataAction;
 
@@ -58,6 +60,7 @@ pub struct DepartmentPaginationParams {
 )]
 pub async fn list_departments(
     State(_state): State<ApiState>,
+    headers: HeaderMap,
     Query(params): Query<DepartmentPaginationParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -75,7 +78,9 @@ pub async fn list_departments(
 
     let result = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, tenant_id, organization_id AS org_id,
+               CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -89,6 +94,7 @@ pub async fn list_departments(
     .bind(org_id_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -141,6 +147,7 @@ pub async fn list_departments(
 )]
 pub async fn create_department(
     State(_state): State<ApiState>,
+    headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -164,9 +171,11 @@ pub async fn create_department(
     let result = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.departments (
-            id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-        RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+            id, tenant_id, organization_id, name, code, parent_id, manager_id, description, status, created_at, updated_at, name_en
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, $11)
+        RETURNING id, tenant_id, organization_id AS org_id,
+                  CASE WHEN $12 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  code, parent_id, manager_id, description, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -179,6 +188,8 @@ pub async fn create_department(
     .bind(&req.description)
     .bind(now)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -245,6 +256,7 @@ pub async fn create_department(
 )]
 pub async fn get_department(
     State(_state): State<ApiState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -254,11 +266,14 @@ pub async fn get_department(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Department>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        SELECT id, tenant_id, organization_id AS org_id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
         "#),
     )
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -289,6 +304,7 @@ pub async fn get_department(
 )]
 pub async fn update_department(
     State(_state): State<ApiState>,
+    headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
@@ -328,9 +344,11 @@ pub async fn update_department(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.departments SET
             tenant_id = $2, organization_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
-            description = $8, status = $9, updated_at = $10
+            description = $8, status = $9, updated_at = $10, name_en = COALESCE($11, name_en)
         WHERE id = $1
-        RETURNING id, tenant_id, organization_id AS org_id, name, code, parent_id, manager_id, description, status, created_at, updated_at
+        RETURNING id, tenant_id, organization_id AS org_id,
+                  CASE WHEN $12 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  code, parent_id, manager_id, description, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -343,6 +361,8 @@ pub async fn update_department(
     .bind(&description)
     .bind(&status)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 

@@ -1,11 +1,13 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, api_success};
 
 use super::models::{
@@ -14,11 +16,19 @@ use super::models::{
     UpdateDictItemRequest, UpdateDictTypeRequest,
 };
 
-const DICT_TYPE_COLUMNS: &str =
-    "id, code, name, category, description, status, created_at, updated_at";
+fn dict_type_columns(locale_placeholder: &str) -> String {
+    format!(
+        "id, code, CASE WHEN {} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, category, description, status, created_at, updated_at",
+        locale_placeholder
+    )
+}
 
-const DICT_ITEM_COLUMNS: &str =
-    "id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at";
+fn dict_item_columns(locale_placeholder: &str) -> String {
+    format!(
+        "id, dict_type_id, code, CASE WHEN {} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, value, sort_order, parent_id, extra_data, status, created_at, updated_at",
+        locale_placeholder
+    )
+}
 
 fn csv_field(s: &str) -> String {
     if s.contains(',') || s.contains('"') || s.contains('\n') {
@@ -49,6 +59,7 @@ fn csv_field(s: &str) -> String {
 )]
 pub async fn list_dict_types(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Query(query): Query<DictTypeQuery>,
 ) -> Json<ApiResponse<DictTypeListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -85,7 +96,7 @@ pub async fn list_dict_types(
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
            ORDER BY created_at DESC
            LIMIT $4 OFFSET $5"#,
-        DICT_TYPE_COLUMNS
+        dict_type_columns("$6")
     );
 
     let items: Vec<DictType> = match sqlx::query_as(&sql)
@@ -94,6 +105,7 @@ pub async fn list_dict_types(
         .bind(search)
         .bind(page_size)
         .bind(offset)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&state.db)
         .await
     {
@@ -128,15 +140,17 @@ pub async fn list_dict_types(
 )]
 pub async fn get_dict_type(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictType>> {
     let sql = format!(
         r#"SELECT {} FROM core_dict_types WHERE deleted_at IS NULL AND id = $1"#,
-        DICT_TYPE_COLUMNS
+        dict_type_columns("$2")
     );
 
     let dict_type: Option<DictType> = match sqlx::query_as(&sql)
         .bind(id)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&state.db)
         .await
     {
@@ -167,6 +181,7 @@ pub async fn get_dict_type(
 )]
 pub async fn create_dict_type(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
     if req.code.trim().is_empty() {
@@ -177,17 +192,19 @@ pub async fn create_dict_type(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_dict_types (code, name, category, description, status)
-           VALUES ($1, $2, $3, $4, 'active')
+        r#"INSERT INTO core_dict_types (code, name, name_en, category, description, status)
+           VALUES ($1, $2, $3, $4, $5, 'active')
            RETURNING {}"#,
-        DICT_TYPE_COLUMNS
+        dict_type_columns("$6")
     );
 
     let dict_type: DictType = match sqlx::query_as(&sql)
         .bind(req.code)
         .bind(req.name)
+        .bind(req.name_en)
         .bind(req.category.unwrap_or_else(|| "general".to_string()))
         .bind(req.description)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_one(&state.db)
         .await
     {
@@ -218,6 +235,7 @@ pub async fn create_dict_type(
 )]
 pub async fn update_dict_type(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
@@ -225,13 +243,14 @@ pub async fn update_dict_type(
         r#"UPDATE core_dict_types
            SET code = COALESCE($1, code),
                name = COALESCE($2, name),
+               name_en = COALESCE($8, name_en),
                category = COALESCE($3, category),
                description = COALESCE($4, description),
                status = COALESCE($5, status),
                updated_at = $6
            WHERE id = $7
            RETURNING {}"#,
-        DICT_TYPE_COLUMNS
+        dict_type_columns("$9")
     );
 
     let dict_type: Option<DictType> = match sqlx::query_as(&sql)
@@ -242,6 +261,8 @@ pub async fn update_dict_type(
         .bind(req.status)
         .bind(chrono::Utc::now())
         .bind(id)
+        .bind(req.name_en)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&state.db)
         .await
     {
@@ -312,6 +333,7 @@ pub async fn delete_dict_type(
 )]
 pub async fn list_dict_items(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(dict_type_id): Path<Uuid>,
     Query(query): Query<DictItemQuery>,
 ) -> Json<ApiResponse<DictItemListResponse>> {
@@ -348,7 +370,7 @@ pub async fn list_dict_items(
              AND ($3::text IS NULL OR code ILIKE '%' || $3 || '%' OR name ILIKE '%' || $3 || '%')
            ORDER BY sort_order ASC, created_at DESC
            LIMIT $4 OFFSET $5"#,
-        DICT_ITEM_COLUMNS
+        dict_item_columns("$6")
     );
 
     let items: Vec<DictItem> = match sqlx::query_as(&sql)
@@ -357,6 +379,7 @@ pub async fn list_dict_items(
         .bind(search)
         .bind(page_size)
         .bind(offset)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&state.db)
         .await
     {
@@ -391,15 +414,17 @@ pub async fn list_dict_items(
 )]
 pub async fn get_dict_item(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictItem>> {
     let sql = format!(
         r#"SELECT {} FROM core_dict_items WHERE deleted_at IS NULL AND id = $1"#,
-        DICT_ITEM_COLUMNS
+        dict_item_columns("$2")
     );
 
     let dict_item: Option<DictItem> = match sqlx::query_as(&sql)
         .bind(id)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&state.db)
         .await
     {
@@ -430,6 +455,7 @@ pub async fn get_dict_item(
 )]
 pub async fn create_dict_item(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<CreateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     if req.code.trim().is_empty() {
@@ -440,20 +466,22 @@ pub async fn create_dict_item(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, value, sort_order, parent_id, extra_data, status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
            RETURNING {}"#,
-        DICT_ITEM_COLUMNS
+        dict_item_columns("$9")
     );
 
     let dict_item: DictItem = match sqlx::query_as(&sql)
         .bind(req.dict_type_id)
         .bind(req.code)
         .bind(req.name)
+        .bind(req.name_en)
         .bind(req.value)
         .bind(req.sort_order.unwrap_or(0))
         .bind(req.parent_id)
         .bind(req.extra_data)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_one(&state.db)
         .await
     {
@@ -484,6 +512,7 @@ pub async fn create_dict_item(
 )]
 pub async fn update_dict_item(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
@@ -491,6 +520,7 @@ pub async fn update_dict_item(
         r#"UPDATE core_dict_items
            SET code = COALESCE($1, code),
                name = COALESCE($2, name),
+               name_en = COALESCE($10, name_en),
                value = COALESCE($3, value),
                sort_order = COALESCE($4, sort_order),
                parent_id = COALESCE($5, parent_id),
@@ -499,7 +529,7 @@ pub async fn update_dict_item(
                updated_at = $8
            WHERE id = $9
            RETURNING {}"#,
-        DICT_ITEM_COLUMNS
+        dict_item_columns("$11")
     );
 
     let dict_item: Option<DictItem> = match sqlx::query_as(&sql)
@@ -512,6 +542,8 @@ pub async fn update_dict_item(
         .bind(req.status)
         .bind(chrono::Utc::now())
         .bind(id)
+        .bind(req.name_en)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&state.db)
         .await
     {
@@ -575,6 +607,7 @@ pub async fn delete_dict_item(
 )]
 pub async fn batch_create_dict_items(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<BatchCreateDictItemsRequest>,
 ) -> Json<ApiResponse<Vec<DictItem>>> {
     if req.items.is_empty() {
@@ -590,10 +623,10 @@ pub async fn batch_create_dict_items(
     };
 
     let insert_sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, value, sort_order, parent_id, extra_data, status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
            RETURNING {}"#,
-        DICT_ITEM_COLUMNS
+        dict_item_columns("$9")
     );
 
     let mut results: Vec<DictItem> = Vec::with_capacity(req.items.len());
@@ -602,10 +635,12 @@ pub async fn batch_create_dict_items(
             .bind(req.dict_type_id)
             .bind(item.code)
             .bind(item.name)
+            .bind(item.name_en)
             .bind(item.value)
             .bind(item.sort_order.unwrap_or(0))
             .bind(item.parent_id)
             .bind(item.extra_data)
+            .bind(Locale::from_headers(&headers).as_sql())
             .fetch_one(&mut *tx)
             .await
         {
@@ -642,17 +677,19 @@ pub async fn batch_create_dict_items(
 )]
 pub async fn export_dict_items(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(dict_type_id): Path<Uuid>,
 ) -> String {
     let sql = format!(
         r#"SELECT {} FROM core_dict_items
            WHERE deleted_at IS NULL AND dict_type_id = $1
            ORDER BY sort_order ASC, created_at DESC"#,
-        DICT_ITEM_COLUMNS
+        dict_item_columns("$2")
     );
 
     let items: Vec<DictItem> = match sqlx::query_as(&sql)
         .bind(dict_type_id)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&state.db)
         .await
     {

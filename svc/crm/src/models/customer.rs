@@ -110,6 +110,7 @@ impl Customer {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateCustomerRequest {
     pub name: String,
+    pub name_en: Option<String>,
     pub customer_type: String,
     pub industry: Option<String>,
     pub rating: Option<String>,
@@ -121,6 +122,7 @@ pub struct CreateCustomerRequest {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
 pub struct UpdateCustomerRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub customer_type: Option<String>,
     pub industry: Option<String>,
     pub rating: Option<String>,
@@ -133,6 +135,7 @@ impl Default for CreateCustomerRequest {
     fn default() -> Self {
         Self {
             name: String::new(),
+            name_en: None,
             customer_type: "enterprise".into(),
             industry: None,
             rating: Some("C".into()),
@@ -265,6 +268,7 @@ mod tests {
     fn create_customer_request_roundtrip_full() {
         let r = CreateCustomerRequest {
             name: "Globex Inc".to_string(),
+            name_en: None,
             customer_type: "smb".to_string(),
             industry: Some("科技".to_string()),
             rating: Some("B".to_string()),
@@ -279,6 +283,7 @@ mod tests {
     fn create_customer_request_roundtrip_minimal() {
         let r = CreateCustomerRequest {
             name: "N".to_string(),
+            name_en: None,
             customer_type: "potential".into(),
             industry: None,
             rating: None,
@@ -293,6 +298,7 @@ mod tests {
     fn update_customer_request_roundtrip_all_some() {
         let r = UpdateCustomerRequest {
             name: Some("New Name".to_string()),
+            name_en: None,
             customer_type: Some("enterprise".to_string()),
             industry: Some("医疗".to_string()),
             rating: Some("A+".to_string()),
@@ -307,6 +313,7 @@ mod tests {
     fn update_customer_request_roundtrip_all_none() {
         let r = UpdateCustomerRequest {
             name: None,
+            name_en: None,
             customer_type: None,
             industry: None,
             rating: None,

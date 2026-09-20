@@ -33,6 +33,7 @@ pub struct DictItem {
 pub struct CreateDictTypeRequest {
     pub code: String,
     pub name: String,
+    pub name_en: Option<String>,
     pub category: Option<String>,
     pub description: Option<String>,
 }
@@ -41,6 +42,7 @@ pub struct CreateDictTypeRequest {
 pub struct UpdateDictTypeRequest {
     pub code: Option<String>,
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub category: Option<String>,
     pub description: Option<String>,
     pub status: Option<String>,
@@ -51,6 +53,7 @@ pub struct CreateDictItemRequest {
     pub dict_type_id: Uuid,
     pub code: String,
     pub name: String,
+    pub name_en: Option<String>,
     pub value: Option<String>,
     pub sort_order: Option<i32>,
     pub parent_id: Option<Uuid>,
@@ -61,6 +64,7 @@ pub struct CreateDictItemRequest {
 pub struct UpdateDictItemRequest {
     pub code: Option<String>,
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub value: Option<String>,
     pub sort_order: Option<i32>,
     pub parent_id: Option<Uuid>,
