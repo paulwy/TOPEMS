@@ -113,7 +113,7 @@ const WmsStocktakePage: React.FC = () => {
       id: '1',
       order_no: 'ST202609001',
       title: t('wms.demo.st_title_1'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.stocktake_page.wh_raw_material'),
       status: 'in_progress',
       type: 'cycle',
       total_items: 156,
@@ -127,7 +127,7 @@ const WmsStocktakePage: React.FC = () => {
       id: '2',
       order_no: 'ST202609002',
       title: t('wms.demo.st_title_2'),
-      warehouse: '成品仓',
+      warehouse: t('wms.stocktake_page.wh_finished'),
       status: 'draft',
       type: 'full',
       total_items: 245,
@@ -141,7 +141,7 @@ const WmsStocktakePage: React.FC = () => {
       id: '3',
       order_no: 'ST202608001',
       title: t('wms.demo.st_title_3'),
-      warehouse: '半成品仓',
+      warehouse: t('wms.stocktake_page.wh_semi_finished'),
       status: 'completed',
       type: 'partial',
       total_items: 89,
@@ -156,7 +156,7 @@ const WmsStocktakePage: React.FC = () => {
       id: '4',
       order_no: 'ST202608002',
       title: t('wms.demo.st_title_4'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.stocktake_page.wh_raw_material'),
       status: 'completed',
       type: 'partial',
       total_items: 45,
@@ -171,7 +171,7 @@ const WmsStocktakePage: React.FC = () => {
       id: '5',
       order_no: 'ST202607001',
       title: t('wms.demo.st_title_5'),
-      warehouse: '全部仓库',
+      warehouse: t('wms.stocktake_page.filter_all_warehouse'),
       status: 'cancelled',
       type: 'full',
       total_items: 500,
@@ -567,9 +567,9 @@ const WmsStocktakePage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.stocktake_page.filter_all_warehouse') },
-                  { value: '原材料仓', label: t('wms.stocktake_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.stocktake_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.stocktake_page.wh_finished') },
+                  { value: t('wms.stocktake_page.wh_raw_material'), label: t('wms.stocktake_page.wh_raw_material') },
+                  { value: t('wms.stocktake_page.wh_semi_finished'), label: t('wms.stocktake_page.wh_semi_finished') },
+                  { value: t('wms.stocktake_page.wh_finished'), label: t('wms.stocktake_page.wh_finished') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -866,12 +866,12 @@ const WmsStocktakePage: React.FC = () => {
               </label>
               <Select
                 id='field-2'
-                defaultValue={selectedOrder?.warehouse || '原材料仓'}
+                defaultValue={selectedOrder?.warehouse || t('wms.stocktake_page.wh_raw_material')}
                 options={[
-                  { value: '原材料仓', label: t('wms.stocktake_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.stocktake_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.stocktake_page.wh_finished') },
-                  { value: '全部仓库', label: t('wms.stocktake_page.filter_all_warehouse') },
+                  { value: t('wms.stocktake_page.wh_raw_material'), label: t('wms.stocktake_page.wh_raw_material') },
+                  { value: t('wms.stocktake_page.wh_semi_finished'), label: t('wms.stocktake_page.wh_semi_finished') },
+                  { value: t('wms.stocktake_page.wh_finished'), label: t('wms.stocktake_page.wh_finished') },
+                  { value: t('wms.stocktake_page.filter_all_warehouse'), label: t('wms.stocktake_page.filter_all_warehouse') },
                 ]}
               />
             </div>

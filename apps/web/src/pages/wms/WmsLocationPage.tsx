@@ -101,7 +101,7 @@ const WmsLocationPage: React.FC = () => {
       id: '1',
       code: 'A-01-01',
       name: t('wms.demo.loc_name_1'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.location_page.wh_raw_material'),
       zone: t('wms.demo.zone_a'),
       status: 'occupied',
       capacity: 100,
@@ -114,7 +114,7 @@ const WmsLocationPage: React.FC = () => {
       id: '2',
       code: 'A-01-02',
       name: t('wms.demo.loc_name_2'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.location_page.wh_raw_material'),
       zone: t('wms.demo.zone_a'),
       status: 'occupied',
       capacity: 50,
@@ -127,7 +127,7 @@ const WmsLocationPage: React.FC = () => {
       id: '3',
       code: 'A-02-03',
       name: t('wms.demo.loc_name_3'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.location_page.wh_raw_material'),
       zone: t('wms.demo.zone_a'),
       status: 'occupied',
       capacity: 200,
@@ -140,7 +140,7 @@ const WmsLocationPage: React.FC = () => {
       id: '4',
       code: 'B-02-01',
       name: t('wms.demo.loc_name_4'),
-      warehouse: '半成品仓',
+      warehouse: t('wms.location_page.wh_semi_finished'),
       zone: t('wms.demo.zone_b'),
       status: 'available',
       capacity: 80,
@@ -151,7 +151,7 @@ const WmsLocationPage: React.FC = () => {
       id: '5',
       code: 'C-03-01',
       name: t('wms.demo.loc_name_5'),
-      warehouse: '成品仓',
+      warehouse: t('wms.location_page.wh_finished'),
       zone: t('wms.demo.zone_c'),
       status: 'occupied',
       capacity: 120,
@@ -164,7 +164,7 @@ const WmsLocationPage: React.FC = () => {
       id: '6',
       code: 'A-03-05',
       name: t('wms.demo.loc_name_6'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.location_page.wh_raw_material'),
       zone: t('wms.demo.zone_a'),
       status: 'locked',
       capacity: 40,
@@ -175,7 +175,7 @@ const WmsLocationPage: React.FC = () => {
       id: '7',
       code: 'B-01-01',
       name: t('wms.demo.loc_name_7'),
-      warehouse: '半成品仓',
+      warehouse: t('wms.location_page.wh_semi_finished'),
       zone: t('wms.demo.zone_b'),
       status: 'maintenance',
       capacity: 60,
@@ -567,9 +567,9 @@ const WmsLocationPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.location_page.filter_all_warehouse') },
-                  { value: '原材料仓', label: t('wms.location_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.location_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.location_page.wh_finished') },
+                  { value: t('wms.location_page.wh_raw_material'), label: t('wms.location_page.wh_raw_material') },
+                  { value: t('wms.location_page.wh_semi_finished'), label: t('wms.location_page.wh_semi_finished') },
+                  { value: t('wms.location_page.wh_finished'), label: t('wms.location_page.wh_finished') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -894,11 +894,11 @@ const WmsLocationPage: React.FC = () => {
               </label>
               <Select
                 id='field-3'
-                defaultValue={selectedLocation?.warehouse || '原材料仓'}
+                defaultValue={selectedLocation?.warehouse || t('wms.location_page.wh_raw_material')}
                 options={[
-                  { value: '原材料仓', label: t('wms.location_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.location_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.location_page.wh_finished') },
+                  { value: t('wms.location_page.wh_raw_material'), label: t('wms.location_page.wh_raw_material') },
+                  { value: t('wms.location_page.wh_semi_finished'), label: t('wms.location_page.wh_semi_finished') },
+                  { value: t('wms.location_page.wh_finished'), label: t('wms.location_page.wh_finished') },
                 ]}
               />
             </div>

@@ -104,7 +104,7 @@ const WmsInboundOrderPage: React.FC = () => {
       id: '1',
       order_no: 'IN202609001',
       supplier_name: t('wms.demo.in_supplier_hua_dong'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.inbound_order_page.wh_raw_material'),
       status: 'pending',
       total_quantity: 500,
       total_amount: 25000,
@@ -116,7 +116,7 @@ const WmsInboundOrderPage: React.FC = () => {
       id: '2',
       order_no: 'IN202609002',
       supplier_name: t('wms.demo.in_supplier_nan_fang'),
-      warehouse: '半成品仓',
+      warehouse: t('wms.inbound_order_page.wh_semi_finished'),
       status: 'in_progress',
       total_quantity: 1200,
       total_amount: 86000,
@@ -128,7 +128,7 @@ const WmsInboundOrderPage: React.FC = () => {
       id: '3',
       order_no: 'IN202609003',
       supplier_name: t('wms.demo.in_supplier_bei_fang'),
-      warehouse: '化学品仓',
+      warehouse: t('wms.inbound_order_page.wh_chemical'),
       status: 'completed',
       total_quantity: 800,
       total_amount: 45000,
@@ -140,7 +140,7 @@ const WmsInboundOrderPage: React.FC = () => {
       id: '4',
       order_no: 'IN202609004',
       supplier_name: t('wms.demo.in_supplier_xi_bu'),
-      warehouse: '包材仓',
+      warehouse: t('wms.inbound_order_page.wh_packaging'),
       status: 'pending',
       total_quantity: 3000,
       total_amount: 12000,
@@ -151,7 +151,7 @@ const WmsInboundOrderPage: React.FC = () => {
       id: '5',
       order_no: 'IN202609005',
       supplier_name: t('wms.demo.in_supplier_zhong_bu'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.inbound_order_page.wh_raw_material'),
       status: 'cancelled',
       total_quantity: 200,
       total_amount: 8000,
@@ -488,11 +488,11 @@ const WmsInboundOrderPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.inbound_order_page.filter_all_warehouse') },
-                  { value: '原材料仓', label: t('wms.inbound_order_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.inbound_order_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.inbound_order_page.wh_finished') },
-                  { value: '化学品仓', label: t('wms.inbound_order_page.wh_chemical') },
-                  { value: '包材仓', label: t('wms.inbound_order_page.wh_packaging') },
+                  { value: t('wms.inbound_order_page.wh_raw_material'), label: t('wms.inbound_order_page.wh_raw_material') },
+                  { value: t('wms.inbound_order_page.wh_semi_finished'), label: t('wms.inbound_order_page.wh_semi_finished') },
+                  { value: t('wms.inbound_order_page.wh_finished'), label: t('wms.inbound_order_page.wh_finished') },
+                  { value: t('wms.inbound_order_page.wh_chemical'), label: t('wms.inbound_order_page.wh_chemical') },
+                  { value: t('wms.inbound_order_page.wh_packaging'), label: t('wms.inbound_order_page.wh_packaging') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -778,13 +778,13 @@ const WmsInboundOrderPage: React.FC = () => {
               </label>
               <Select
                 id='warehouse'
-                defaultValue={selectedOrder?.warehouse || '原材料仓'}
+                defaultValue={selectedOrder?.warehouse || t('wms.inbound_order_page.wh_raw_material')}
                 options={[
-                  { value: '原材料仓', label: t('wms.inbound_order_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.inbound_order_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.inbound_order_page.wh_finished') },
-                  { value: '化学品仓', label: t('wms.inbound_order_page.wh_chemical') },
-                  { value: '包材仓', label: t('wms.inbound_order_page.wh_packaging') },
+                  { value: t('wms.inbound_order_page.wh_raw_material'), label: t('wms.inbound_order_page.wh_raw_material') },
+                  { value: t('wms.inbound_order_page.wh_semi_finished'), label: t('wms.inbound_order_page.wh_semi_finished') },
+                  { value: t('wms.inbound_order_page.wh_finished'), label: t('wms.inbound_order_page.wh_finished') },
+                  { value: t('wms.inbound_order_page.wh_chemical'), label: t('wms.inbound_order_page.wh_chemical') },
+                  { value: t('wms.inbound_order_page.wh_packaging'), label: t('wms.inbound_order_page.wh_packaging') },
                 ]}
               />
             </div>

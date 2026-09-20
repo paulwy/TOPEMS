@@ -114,7 +114,7 @@ const WmsOutboundOrderPage: React.FC = () => {
       id: '1',
       order_no: 'OUT202609001',
       customer_name: t('wms.demo.company_a_name'),
-      warehouse: '成品仓',
+      warehouse: t('wms.outbound_order_page.wh_finished'),
       status: 'pending',
       total_quantity: 200,
       total_amount: 56000,
@@ -127,7 +127,7 @@ const WmsOutboundOrderPage: React.FC = () => {
       id: '2',
       order_no: 'OUT202609002',
       customer_name: t('wms.demo.company_b_name'),
-      warehouse: '成品仓',
+      warehouse: t('wms.outbound_order_page.wh_finished'),
       status: 'picking',
       total_quantity: 500,
       total_amount: 128000,
@@ -139,7 +139,7 @@ const WmsOutboundOrderPage: React.FC = () => {
       id: '3',
       order_no: 'OUT202609003',
       customer_name: t('wms.demo.company_c_name'),
-      warehouse: '半成品仓',
+      warehouse: t('wms.outbound_order_page.wh_semi_finished'),
       status: 'shipped',
       total_quantity: 800,
       total_amount: 96000,
@@ -152,7 +152,7 @@ const WmsOutboundOrderPage: React.FC = () => {
       id: '4',
       order_no: 'OUT202609004',
       customer_name: t('wms.demo.company_d_name'),
-      warehouse: '成品仓',
+      warehouse: t('wms.outbound_order_page.wh_finished'),
       status: 'completed',
       total_quantity: 1000,
       total_amount: 256000,
@@ -165,7 +165,7 @@ const WmsOutboundOrderPage: React.FC = () => {
       id: '5',
       order_no: 'OUT202609005',
       customer_name: t('wms.demo.company_e_name'),
-      warehouse: '原材料仓',
+      warehouse: t('wms.outbound_order_page.wh_raw_material'),
       status: 'cancelled',
       total_quantity: 50,
       total_amount: 4500,
@@ -511,9 +511,9 @@ const WmsOutboundOrderPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.outbound_order_page.filter_all_warehouse') },
-                  { value: '原材料仓', label: t('wms.outbound_order_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.outbound_order_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.outbound_order_page.wh_finished') },
+                  { value: t('wms.outbound_order_page.wh_raw_material'), label: t('wms.outbound_order_page.wh_raw_material') },
+                  { value: t('wms.outbound_order_page.wh_semi_finished'), label: t('wms.outbound_order_page.wh_semi_finished') },
+                  { value: t('wms.outbound_order_page.wh_finished'), label: t('wms.outbound_order_page.wh_finished') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -800,11 +800,11 @@ const WmsOutboundOrderPage: React.FC = () => {
               </label>
               <Select
                 id='field-2'
-                defaultValue={selectedOrder?.warehouse || '成品仓'}
+                defaultValue={selectedOrder?.warehouse || t('wms.outbound_order_page.wh_finished')}
                 options={[
-                  { value: '原材料仓', label: t('wms.outbound_order_page.wh_raw_material') },
-                  { value: '半成品仓', label: t('wms.outbound_order_page.wh_semi_finished') },
-                  { value: '成品仓', label: t('wms.outbound_order_page.wh_finished') },
+                  { value: t('wms.outbound_order_page.wh_raw_material'), label: t('wms.outbound_order_page.wh_raw_material') },
+                  { value: t('wms.outbound_order_page.wh_semi_finished'), label: t('wms.outbound_order_page.wh_semi_finished') },
+                  { value: t('wms.outbound_order_page.wh_finished'), label: t('wms.outbound_order_page.wh_finished') },
                 ]}
               />
             </div>
