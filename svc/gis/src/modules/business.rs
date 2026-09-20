@@ -25,8 +25,15 @@ pub struct CreateBusinessLocation {
 
 pub async fn list_business_locations(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
     let page_size: i64 = params
         .get("page_size")
@@ -37,15 +44,17 @@ pub async fn list_business_locations(
 
     let query = if let Some(ref bt) = business_type {
         sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(bt)
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
     } else {
         sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
     };
@@ -53,15 +62,16 @@ pub async fn list_business_locations(
     match query.fetch_all(&pool).await {
         Ok(locations) => {
             let total_query = if let Some(ref bt) = business_type {
-                sqlx::query(only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1"))
+                sqlx::query(only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
                     .bind(bt)
             } else {
                 sqlx::query(only_own_schema_query!(
                     "gis",
-                    "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL"
+                    "SELECT COUNT(*) FROM gis.business_locations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)"
                 ))
             };
             let total: i64 = total_query
+                .bind(tenant_opt)
                 .fetch_one(&pool)
                 .await
                 .map(|row| row.get::<i64, _>(0))
@@ -119,12 +129,20 @@ pub async fn create_business_location(
 
 pub async fn get_business_location(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BusinessLocation>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     match sqlx::query_as::<_, BusinessLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {
@@ -206,12 +224,20 @@ pub async fn delete_business_location(
 
 pub async fn list_business_locations_by_type(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(business_type): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     match sqlx::query_as::<_, BusinessLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(business_type)
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {

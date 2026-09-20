@@ -1,16 +1,24 @@
 use crate::models::{BusinessLocation, DeviceLocation, Pipeline, WarehouseLocation};
 use axum::{
-    extract::{Query, State},
+    extract::{Extension, Query, State},
     Json, Router,
 };
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
 pub async fn search_locations(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let query = params.get("q").cloned().unwrap_or_default();
     let location_type = params.get("type").cloned();
 
@@ -19,9 +27,10 @@ pub async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("device") {
         if let Ok(devices) = sqlx::query_as::<_, DeviceLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE device_name ILIKE $1 OR device_code ILIKE $1"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE (device_name ILIKE $1 OR device_code ILIKE $1) AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(&search_pattern)
+        .bind(tenant_opt)
         .fetch_all(&pool)
         .await
         {
@@ -40,9 +49,10 @@ pub async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("pipeline") {
         if let Ok(pipelines) = sqlx::query_as::<_, Pipeline>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE name ILIKE $1 OR code ILIKE $1"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE (name ILIKE $1 OR code ILIKE $1) AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(&search_pattern)
+        .bind(tenant_opt)
         .fetch_all(&pool)
         .await
         {
@@ -61,9 +71,10 @@ pub async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("warehouse") {
         if let Ok(warehouses) = sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE warehouse_name ILIKE $1"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE warehouse_name ILIKE $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(&search_pattern)
+        .bind(tenant_opt)
         .fetch_all(&pool)
         .await
         {
@@ -81,9 +92,10 @@ pub async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("business") {
         if let Ok(locations) = sqlx::query_as::<_, BusinessLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE business_name ILIKE $1 OR business_code ILIKE $1"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE (business_name ILIKE $1 OR business_code ILIKE $1) AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(&search_pattern)
+        .bind(tenant_opt)
         .fetch_all(&pool)
         .await
         {

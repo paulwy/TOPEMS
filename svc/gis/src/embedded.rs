@@ -55,8 +55,8 @@ impl FromRef<AppState> for Arc<WebSocketManager> {
 /// - 公开路由：查询类 GET + WebSocket（无鉴权，与独立部署一致）
 /// - 受保护路由：写操作，tenant 中间件 + auth 中间件 + `gis:admin` 权限 + 限流
 pub fn build_business_router(state: &AppState) -> Router<AppState> {
-    // Public business routes (no auth)
-    let public_business_routes = Router::new()
+    // 认证查询路由（需登录，无需 gis:admin；按 claims 租户过滤）
+    let authed_query_routes = Router::new()
         .route("/statistics", get(modules::stats::get_statistics))
         .route(
             "/search",
@@ -66,6 +66,18 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/geojson/export",
             axum::routing::get(modules::import_export::export_geojson),
         )
+
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            topems_shared_auth::auth::auth_middleware,
+        ));
+
+    // Public business routes (no auth)
+    let public_business_routes = Router::new()
         .route(
             "/factory-maps",
             axum::routing::get(modules::factory_map::list_factory_maps),
@@ -122,18 +134,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/location-photos/map/{map_id}",
             axum::routing::get(modules::photo::list_location_photos_by_map),
         )
-        .route(
-            "/business-locations",
-            axum::routing::get(modules::business::list_business_locations),
-        )
-        .route(
-            "/business-locations/{id}",
-            axum::routing::get(modules::business::get_business_location),
-        )
-        .route(
-            "/business-locations/type/{business_type}",
-            axum::routing::get(modules::business::list_business_locations_by_type),
-        )
+
         .route(
             "/map-markers",
             axum::routing::get(modules::marker::list_map_markers),
@@ -427,7 +428,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         }
     }));
 
-    public_business_routes.merge(protected_api)
+    authed_query_routes.merge(public_business_routes).merge(protected_api)
 }
 
 async fn list_device_locations_by_map(

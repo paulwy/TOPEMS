@@ -1,6 +1,10 @@
-use axum::{extract::State, Json, Router};
+use axum::{
+    extract::{Extension, State},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
@@ -18,11 +22,21 @@ pub struct GisStatistics {
     pub active_pipelines: i64,
 }
 
-pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisStatistics>> {
+pub async fn get_statistics(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<GisStatistics>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+
     let device_points: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.device_locations"
+        "SELECT COUNT(*) FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -30,8 +44,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let pipelines: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.pipelines"
+        "SELECT COUNT(*) FROM gis.pipelines WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -39,8 +54,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let storage_locations: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.warehouse_locations"
+        "SELECT COUNT(*) FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -48,8 +64,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let evidence_records: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.evidence_records"
+        "SELECT COUNT(*) FROM gis.evidence_records WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -57,8 +74,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let business_locations: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.business_locations"
+        "SELECT COUNT(*) FROM gis.business_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -66,8 +84,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let factory_maps: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.factory_maps"
+        "SELECT COUNT(*) FROM gis.factory_maps WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -75,8 +94,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let map_markers: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.map_markers"
+        "SELECT COUNT(*) FROM gis.map_markers WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -84,8 +104,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let location_photos: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.location_photos"
+        "SELECT COUNT(*) FROM gis.location_photos WHERE ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -93,8 +114,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let active_devices: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.device_locations WHERE status = 'active'"
+        "SELECT COUNT(*) FROM gis.device_locations WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
@@ -102,8 +124,9 @@ pub async fn get_statistics(State(pool): State<PgPool>) -> Json<ApiResponse<GisS
 
     let active_pipelines: i64 = sqlx::query(only_own_schema_query!(
         "gis",
-        "SELECT COUNT(*) FROM gis.pipelines WHERE status = 'active'"
+        "SELECT COUNT(*) FROM gis.pipelines WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1)"
     ))
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     .map(|row| row.get::<i64, _>(0))
