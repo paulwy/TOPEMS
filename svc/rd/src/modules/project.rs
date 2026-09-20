@@ -20,7 +20,6 @@ use crate::services::project_permission::{
     check_project_owner, check_project_permission, ProjectPermission,
 };
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -89,14 +88,17 @@ pub async fn list_projects(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListProjectsQuery>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -108,14 +110,14 @@ pub async fn list_projects(
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
         FROM projects
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -128,12 +130,12 @@ pub async fn list_projects(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM projects
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -183,7 +185,11 @@ pub async fn create_project(
 ) -> Json<ApiResponse<Project>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -332,14 +338,17 @@ pub async fn get_project(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Project>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Read).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -357,11 +366,11 @@ pub async fn get_project(
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
-        FROM projects WHERE id = $1 AND tenant_id = $2
+        FROM projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -408,17 +417,21 @@ pub async fn update_project(
 ) -> Json<ApiResponse<Project>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Update).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -443,7 +456,7 @@ pub async fn update_project(
         UPDATE projects SET
             name = $2, description = $3, status = $4, leader = $5,
             team_members = $6, end_date = $7, budget = $8, progress = $9, updated_at = $10
-        WHERE id = $1 AND tenant_id = $11
+        WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
         RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                   team_members, start_date, end_date, budget, progress,
                   created_by, created_at, updated_at, project_config, benefit_target,
@@ -460,7 +473,7 @@ pub async fn update_project(
     .bind(budget)
     .bind(progress)
     .bind(now)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -536,16 +549,20 @@ pub async fn delete_project(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     match check_project_owner(&mut **txn, &claims, &id).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
     let result =
-        sqlx::query("UPDATE projects SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
             .bind(id)
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .execute(&mut **txn)
             .await;
 
@@ -622,7 +639,11 @@ pub async fn batch_create_projects(
 ) -> Json<ApiResponse<BatchOperationResult>> {
     let mut guard = txn_arc.lock().await;
     let _txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let mut success = 0;
     let mut errors = Vec::new();
 
@@ -776,16 +797,20 @@ pub async fn batch_delete_projects(
 ) -> Json<ApiResponse<BatchOperationResult>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     if req.ids.is_empty() {
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
     }
 
     let result = sqlx::query(
-        r#"UPDATE projects SET deleted_at = NOW() WHERE id = ANY($1) AND tenant_id = $2"#,
+        r#"UPDATE projects SET deleted_at = NOW() WHERE id = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(&req.ids)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 
@@ -886,7 +911,11 @@ pub async fn export_projects(
 ) -> Response {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, tenant_id, name, code, description, project_type, status, leader,
@@ -894,11 +923,11 @@ pub async fn export_projects(
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
         FROM projects
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1109,7 +1138,11 @@ pub async fn import_projects(
 ) -> Json<ApiResponse<BatchOperationResult>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let mut rdr = csv::Reader::from_reader(&bytes[..]);
     let _ = match rdr.headers() {
         Ok(h) => h.clone(),
@@ -1317,25 +1350,28 @@ pub async fn get_project_dashboard(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let project_result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, tenant_id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at,
                project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id
-        FROM projects WHERE id = $1 AND tenant_id = $2
+        FROM projects WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1514,24 +1550,27 @@ pub async fn get_project_gantt(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(
         r#"
         SELECT id, tenant_id, project_id, phase_number, name, description, start_date, end_date,
                planned_duration_days, actual_duration_days, status, progress, weight,
                predecessor_id, created_at, updated_at
-        FROM rs.project_phases WHERE project_id = $1 AND tenant_id = $2 ORDER BY phase_number
+        FROM rs.project_phases WHERE project_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY phase_number
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
