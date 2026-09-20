@@ -9,25 +9,25 @@
 
 DO $$
 BEGIN
-  IF to_regclass('public.sys_db_changes') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='sys_db_changes' AND c.relkind='r') THEN
     ALTER TABLE public.sys_db_changes ADD COLUMN IF NOT EXISTS old_definition JSONB;
   END IF;
-  IF to_regclass('public.qa_lab_tasks') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='qa_lab_tasks' AND c.relkind='r') THEN
     ALTER TABLE public.qa_lab_tasks ADD COLUMN IF NOT EXISTS actual_start_date TIMESTAMPTZ;
     ALTER TABLE public.qa_lab_tasks ADD COLUMN IF NOT EXISTS actual_end_date TIMESTAMPTZ;
     ALTER TABLE public.qa_lab_tasks ADD COLUMN IF NOT EXISTS planned_date DATE;
     ALTER TABLE public.qa_lab_tasks ADD COLUMN IF NOT EXISTS recorded_by UUID;
     ALTER TABLE public.qa_lab_tasks ADD COLUMN IF NOT EXISTS instrument_id UUID;
   END IF;
-  IF to_regclass('wms.transfer_order_items') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='transfer_order_items' AND c.relkind='r') THEN
     ALTER TABLE wms.transfer_order_items ADD COLUMN IF NOT EXISTS quantity NUMERIC DEFAULT 0;
     ALTER TABLE wms.transfer_order_items ADD COLUMN IF NOT EXISTS order_number TEXT;
     ALTER TABLE wms.transfer_order_items ADD COLUMN IF NOT EXISTS transfer_no TEXT;
   END IF;
-  IF to_regclass('scm.suppliers') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='scm' AND c.relname='suppliers' AND c.relkind='r') THEN
     ALTER TABLE scm.suppliers ADD COLUMN IF NOT EXISTS level TEXT;
   END IF;
-  IF to_regclass('mes.capacities') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mes' AND c.relname='capacities' AND c.relkind='r') THEN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mes' AND table_name='capacities' AND column_name='updated_at' AND data_type='timestamp without time zone') THEN
       ALTER TABLE mes.capacities ALTER COLUMN updated_at TYPE TIMESTAMPTZ USING updated_at AT TIME ZONE 'UTC';
     END IF;

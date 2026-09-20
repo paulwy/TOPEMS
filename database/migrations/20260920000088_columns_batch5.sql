@@ -13,35 +13,35 @@
 
 DO $$
 BEGIN
-  IF to_regclass('wms.inventory_alert_records') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='inventory_alert_records' AND c.relkind='r') THEN
     ALTER TABLE wms.inventory_alert_records ADD COLUMN IF NOT EXISTS rule_id UUID;
     ALTER TABLE wms.inventory_alert_records ADD COLUMN IF NOT EXISTS item_id UUID;
     ALTER TABLE wms.inventory_alert_records ADD COLUMN IF NOT EXISTS item_code TEXT;
     ALTER TABLE wms.inventory_alert_records ADD COLUMN IF NOT EXISTS alert_level TEXT;
     ALTER TABLE wms.inventory_alert_records ADD COLUMN IF NOT EXISTS threshold_quantity NUMERIC;
   END IF;
-  IF to_regclass('public.qa_lab_tasks') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='qa_lab_tasks' AND c.relkind='r') THEN
     ALTER TABLE public.qa_lab_tasks ADD COLUMN IF NOT EXISTS sample_no TEXT;
   END IF;
-  IF to_regclass('public.qa_lab_sample_lifecycle') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='qa_lab_sample_lifecycle' AND c.relkind='r') THEN
     ALTER TABLE public.qa_lab_sample_lifecycle ADD COLUMN IF NOT EXISTS tenant_id UUID;
   END IF;
-  IF to_regclass('srm.bid_requests') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='srm' AND c.relname='bid_requests' AND c.relkind='r') THEN
     ALTER TABLE srm.bid_requests ADD COLUMN IF NOT EXISTS tenant_id UUID;
   END IF;
-  IF to_regclass('srm.bids') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='srm' AND c.relname='bids' AND c.relkind='r') THEN
     ALTER TABLE srm.bids ADD COLUMN IF NOT EXISTS tenant_id UUID;
   END IF;
-  IF to_regclass('scm.suppliers') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='scm' AND c.relname='suppliers' AND c.relkind='r') THEN
     ALTER TABLE scm.suppliers ADD COLUMN IF NOT EXISTS code TEXT;
   END IF;
-  IF to_regclass('wms.warehouses') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='warehouses' AND c.relkind='r') THEN
     ALTER TABLE wms.warehouses ADD COLUMN IF NOT EXISTS name TEXT;
   END IF;
-  IF to_regclass('wms.transfer_order_items') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='transfer_order_items' AND c.relkind='r') THEN
     ALTER TABLE wms.transfer_order_items ADD COLUMN IF NOT EXISTS item_code TEXT;
   END IF;
-  IF to_regclass('mes.capacities') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mes' AND c.relname='capacities' AND c.relkind='r') THEN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='mes' AND table_name='capacities' AND column_name='used_hours' AND data_type='numeric') THEN
       ALTER TABLE mes.capacities ALTER COLUMN used_hours TYPE DOUBLE PRECISION USING used_hours::double precision;
     END IF;

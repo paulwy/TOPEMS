@@ -7,13 +7,13 @@
 
 DO $$
 BEGIN
-  IF to_regclass('hrm.initialization_status') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='hrm' AND c.relname='initialization_status' AND c.relkind='r') THEN
     ALTER TABLE hrm.initialization_status ADD COLUMN IF NOT EXISTS organization_id UUID;
   END IF;
-  IF to_regclass('scm.supplier_evaluations') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='scm' AND c.relname='supplier_evaluations' AND c.relkind='r') THEN
     ALTER TABLE scm.supplier_evaluations ADD COLUMN IF NOT EXISTS total_score NUMERIC(5,2) DEFAULT 0;
   END IF;
-  IF to_regclass('wms.transfer_orders') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='transfer_orders' AND c.relkind='r') THEN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='wms' AND table_name='transfer_orders' AND column_name='from_warehouse_id' AND data_type='character varying') THEN
       ALTER TABLE wms.transfer_orders ALTER COLUMN from_warehouse_id TYPE UUID USING from_warehouse_id::uuid;
     END IF;

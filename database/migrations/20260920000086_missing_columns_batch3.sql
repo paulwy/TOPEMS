@@ -11,31 +11,31 @@
 
 DO $$
 BEGIN
-  IF to_regclass('lims.inspection_tasks') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='lims' AND c.relname='inspection_tasks' AND c.relkind='r') THEN
     ALTER TABLE lims.inspection_tasks ADD COLUMN IF NOT EXISTS sample_no TEXT;
   END IF;
-  IF to_regclass('lims.samples') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='lims' AND c.relname='samples' AND c.relkind='r') THEN
     ALTER TABLE lims.samples ADD COLUMN IF NOT EXISTS sample_no TEXT;
   END IF;
-  IF to_regclass('wms.inventory_alerts') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='inventory_alerts' AND c.relkind='r') THEN
     ALTER TABLE wms.inventory_alerts ADD COLUMN IF NOT EXISTS rule_id UUID;
   END IF;
-  IF to_regclass('scm.incoming_inspections') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='scm' AND c.relname='incoming_inspections' AND c.relkind='r') THEN
     ALTER TABLE scm.incoming_inspections ADD COLUMN IF NOT EXISTS actual_arrival_date TIMESTAMPTZ;
   END IF;
-  IF to_regclass('scm.incoming_notices') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='scm' AND c.relname='incoming_notices' AND c.relkind='r') THEN
     ALTER TABLE scm.incoming_notices ADD COLUMN IF NOT EXISTS actual_arrival_date TIMESTAMPTZ;
   END IF;
-  IF to_regclass('srm.bid_prices') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='srm' AND c.relname='bid_prices' AND c.relkind='r') THEN
     ALTER TABLE srm.bid_prices ADD COLUMN IF NOT EXISTS tenant_id UUID;
   END IF;
-  IF to_regclass('erp.sys_db_changes') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='erp' AND c.relname='sys_db_changes' AND c.relkind='r') THEN
     ALTER TABLE erp.sys_db_changes ADD COLUMN IF NOT EXISTS old_definition JSONB;
   END IF;
-  IF to_regclass('wms.transfer_order_items') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='wms' AND c.relname='transfer_order_items' AND c.relkind='r') THEN
     ALTER TABLE wms.transfer_order_items ADD COLUMN IF NOT EXISTS item_id UUID;
   END IF;
-  IF to_regclass('mes.capacities') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mes' AND c.relname='capacities' AND c.relkind='r') THEN
     ALTER TABLE mes.capacities ADD COLUMN IF NOT EXISTS workshop TEXT;
   END IF;
 END $$;

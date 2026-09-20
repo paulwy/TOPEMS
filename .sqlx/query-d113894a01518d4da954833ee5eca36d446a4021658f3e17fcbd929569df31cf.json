@@ -1,0 +1,102 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE production_records SET\n            end_time = $2,\n            status = 'completed',\n            updated_at = $2\n        WHERE id = $1 AND status = 'in_progress'\n          AND ($3::uuid IS NULL OR tenant_id = $3)\n        RETURNING \n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, start_time, end_time,\n            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,\n            created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "order_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "equipment_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "operator_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "start_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "end_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "quantity_produced",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "quantity_defective",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      null,
+      true,
+      false,
+      true,
+      false,
+      null,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "d113894a01518d4da954833ee5eca36d446a4021658f3e17fcbd929569df31cf"
+}

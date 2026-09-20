@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE production_records SET deleted_at = NOW()\n        WHERE id = $1\n          AND ($2::uuid IS NULL OR tenant_id = $2)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "251207511439f2b204030a394f7116234333acf295cec882a6cfc9708da17aa0"
+}

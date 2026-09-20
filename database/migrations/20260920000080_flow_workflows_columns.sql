@@ -9,25 +9,25 @@
 
 DO $$
 BEGIN
-  IF to_regclass('core.core_workflows') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='core' AND c.relname='core_workflows' AND c.relkind='r') THEN
     ALTER TABLE core.core_workflows ADD COLUMN IF NOT EXISTS tenant_id UUID;
     ALTER TABLE core.core_workflows ADD COLUMN IF NOT EXISTS code TEXT;
   END IF;
-  IF to_regclass('rs.core_workflows') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='rs' AND c.relname='core_workflows' AND c.relkind='r') THEN
     ALTER TABLE rs.core_workflows ADD COLUMN IF NOT EXISTS tenant_id UUID;
     ALTER TABLE rs.core_workflows ADD COLUMN IF NOT EXISTS code TEXT;
   END IF;
-  IF to_regclass('public.core_workflows') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='core_workflows' AND c.relkind='r') THEN
     ALTER TABLE public.core_workflows ADD COLUMN IF NOT EXISTS tenant_id UUID;
     ALTER TABLE public.core_workflows ADD COLUMN IF NOT EXISTS code TEXT;
   END IF;
-  IF to_regclass('mes.equipment') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='mes' AND c.relname='equipment' AND c.relkind='r') THEN
     ALTER TABLE mes.equipment ADD COLUMN IF NOT EXISTS equipment_no TEXT;
   END IF;
-  IF to_regclass('rs.equipment') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='rs' AND c.relname='equipment' AND c.relkind='r') THEN
     ALTER TABLE rs.equipment ADD COLUMN IF NOT EXISTS equipment_no TEXT;
   END IF;
-  IF to_regclass('public.equipment') IS NOT NULL THEN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname='equipment' AND c.relkind='r') THEN
     ALTER TABLE public.equipment ADD COLUMN IF NOT EXISTS equipment_no TEXT;
   END IF;
 END $$;

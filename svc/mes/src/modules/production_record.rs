@@ -120,6 +120,11 @@ pub async fn list_records(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordRead).await {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
@@ -145,6 +150,13 @@ pub async fn list_records(
             ));
         }
         params.push(serde_json::Value::String(pattern));
+    }
+
+    // 租户过滤：非 superuser 仅见本租户
+    if let Some(t) = tenant_opt {
+        let tidx = params.len() + 1;
+        params.push(serde_json::Value::String(t.to_string()));
+        where_clause.push_str(&format!(" AND (tenant_id = ${}::uuid)", tidx));
     }
 
     let count_sql = format!(
@@ -267,6 +279,13 @@ pub async fn create_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let new_tenant: uuid::Uuid = tenant_opt
+        .unwrap_or(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
 
     let now = Utc::now();
 
@@ -276,8 +295,8 @@ pub async fn create_record(
             order_id, process_id, work_station_id,
             operator_id, start_time, end_time,
             completed_quantity, status, notes,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -292,6 +311,7 @@ pub async fn create_record(
         req.quantity_produced.map(|v| v as i32),
         req.notes,
         now,
+        new_tenant,
     )
     .fetch_one(&state.pool)
     .await;
@@ -332,6 +352,11 @@ pub async fn get_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordRead).await {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query!(
         r#"
@@ -342,8 +367,10 @@ pub async fn get_record(
             created_at, updated_at
         FROM production_records
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
+        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -389,6 +416,11 @@ pub async fn update_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let now = Utc::now();
     let status = if req.end_time.is_some() {
@@ -409,6 +441,7 @@ pub async fn update_record(
             notes = COALESCE($8, notes),
             updated_at = $9
         WHERE id = $1
+          AND ($10::uuid IS NULL OR tenant_id = $10)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -424,6 +457,7 @@ pub async fn update_record(
         status,
         req.notes,
         now,
+        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -468,13 +502,20 @@ pub async fn delete_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query!(
         r#"
         UPDATE production_records SET deleted_at = NOW()
         WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
+        tenant_opt,
     )
     .execute(&state.pool)
     .await;
@@ -502,6 +543,11 @@ pub async fn complete_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let now = Utc::now();
 
@@ -512,6 +558,7 @@ pub async fn complete_record(
             status = 'completed',
             updated_at = $2
         WHERE id = $1 AND status = 'in_progress'
+          AND ($3::uuid IS NULL OR tenant_id = $3)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -520,6 +567,7 @@ pub async fn complete_record(
         "#,
         id,
         now,
+        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
