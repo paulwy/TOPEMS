@@ -178,7 +178,7 @@ pub async fn create_spc_chart(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_charts (tenant_id, chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10) RETURNING id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_charts (tenant_id, chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10) RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -231,7 +231,7 @@ pub async fn update_spc_chart(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), ucl = COALESCE($4, ucl), cl = COALESCE($5, cl), lcl = COALESCE($6, lcl), status = COALESCE($7, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), ucl = COALESCE($4, ucl), cl = COALESCE($5, cl), lcl = COALESCE($6, lcl), status = COALESCE($7, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

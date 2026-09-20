@@ -439,7 +439,7 @@ pub async fn get_leave_request(
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         FROM erp.leave_requests
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id::TEXT = $1 AND tenant_id = $2
         "#
     ))
     .bind(id)
@@ -488,7 +488,7 @@ pub async fn update_leave_request(
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         FROM erp.leave_requests
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id::TEXT = $1 AND tenant_id = $2
         "#
     ))
     .bind(id)
@@ -531,7 +531,7 @@ pub async fn update_leave_request(
             leave_type = $2, start_date = $3, end_date = $4,
             start_half_day = $5, end_half_day = $6, days = $7, reason = $8,
             updated_at = $9
-        WHERE id = $1
+        WHERE id::TEXT = $1
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
@@ -625,7 +625,7 @@ pub async fn delete_leave_request(
 
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE erp.leave_requests SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"
+        "UPDATE erp.leave_requests SET deleted_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2"
     ))
     .bind(id)
     .bind(tenant)
@@ -717,7 +717,7 @@ pub async fn submit_leave_request(
         "erp",
         r#"
         UPDATE erp.leave_requests SET status = 'pending', updated_at = $2
-        WHERE id = $1 AND tenant_id = $3 AND status = 'draft'
+        WHERE id::TEXT = $1 AND tenant_id = $3 AND status = 'draft'
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
@@ -821,7 +821,7 @@ pub async fn approve_leave_request(
         UPDATE erp.leave_requests SET
             status = 'approved', approved_by = $2, approved_at = $3,
             rejected_reason = NULL, updated_at = $4
-        WHERE id = $1 AND tenant_id = $5 AND status = 'pending'
+        WHERE id::TEXT = $1 AND tenant_id = $5 AND status = 'pending'
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
@@ -930,7 +930,7 @@ pub async fn reject_leave_request(
         UPDATE erp.leave_requests SET
             status = 'rejected', approved_by = $2, approved_at = $3,
             rejected_reason = $4, updated_at = $5
-        WHERE id = $1 AND tenant_id = $6 AND status = 'pending'
+        WHERE id::TEXT = $1 AND tenant_id = $6 AND status = 'pending'
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
@@ -1030,7 +1030,7 @@ pub async fn cancel_leave_request(
         "erp",
         r#"
         UPDATE erp.leave_requests SET status = 'cancelled', updated_at = $2
-        WHERE id = $1 AND tenant_id = $3 AND status IN ('draft', 'pending')
+        WHERE id::TEXT = $1 AND tenant_id = $3 AND status IN ('draft', 'pending')
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at

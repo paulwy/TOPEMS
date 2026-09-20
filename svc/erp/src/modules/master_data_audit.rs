@@ -73,7 +73,7 @@ pub async fn record_audit_event(
         r#"INSERT INTO erp_master_data_audit_trail
            (id, master_data_id, domain, action, source_service, target_service,
             changed_by, old_values, new_values, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"#
+           VALUES ($1, $2::uuid, $3, $4, $5, $6, $7, $8, $9, $10)"#
     ))
     .bind(id)
     .bind(&req.master_data_id)

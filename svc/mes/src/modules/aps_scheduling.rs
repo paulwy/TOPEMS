@@ -882,7 +882,7 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
 
     let result = sqlx::query(
         r#"
-        INSERT INTO production_schedules (
+        INSERT INTO mes.production_schedules (
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
@@ -1321,7 +1321,7 @@ pub async fn get_optimization_report(
         SELECT ws.station_name, COUNT(ps.id) as task_count,
                SUM(EXTRACT(EPOCH FROM (ps.planned_end_time - ps.planned_start_time)) / 3600) as total_hours
         FROM work_stations ws
-        LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
+        LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
             AND ps.tenant_id = ws.tenant_id
         WHERE ws.status = 'active'
@@ -1511,7 +1511,7 @@ pub async fn get_bottleneck_analysis(
                COUNT(ps.id) as scheduled_tasks,
                COUNT(DISTINCT ps.order_id) as unique_orders
         FROM work_stations ws
-        LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
+        LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
             AND ps.tenant_id = ws.tenant_id
         WHERE ws.status = 'active'

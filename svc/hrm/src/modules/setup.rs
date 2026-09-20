@@ -562,7 +562,7 @@ pub async fn setup_admin_user(
             id_card_number, email, phone,
             emergency_contact_name, emergency_contact_phone, address,
             status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'active', $17, $18)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11, $12, $13, $14, $15, $16, 'active', $17, $18)
         RETURNING id, tenant_id, organization_id AS org_id, department_id, position_id,
                   employee_number, name, status, created_at, updated_at
         "#),

@@ -695,11 +695,9 @@ pub async fn depreciate_assets(
 
     let assets = match req.asset_ids {
         Some(ref ids) => {
-            let placeholders = ids.iter().map(|_| "$1").collect::<Vec<_>>().join(",");
-            sqlx::query_as::<_, FixedAsset>(&format!(
-                "SELECT * FROM erp.fixed_assets WHERE deleted_at IS NULL AND id IN ({}) AND status = 'active'",
-                placeholders
-            ))
+            sqlx::query_as::<_, FixedAsset>(
+                "SELECT * FROM erp.fixed_assets WHERE deleted_at IS NULL AND id IN (SELECT unnest($1::uuid[])) AND status = 'active'",
+            )
             .bind(ids)
             .fetch_all(&mut **txn)
             .await
