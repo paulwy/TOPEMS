@@ -25,11 +25,19 @@ BEGIN
   END IF;
 END $$;
 
-UPDATE mes.production_processes
+-- 2026-09-21 防御化（空库重建链卡点）：mes.production_processes 在空库重建时仅为 2 列骨架，
+-- 真实列 process_code/process_name/standard_time_minutes 由 000014 补齐，列不存在时跳过（与 wms 同法）。
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='mes' AND table_name='production_processes' AND column_name='process_code') THEN
+    EXECUTE $x$UPDATE mes.production_processes
 SET process_no = process_code,
     name = process_name,
     estimated_duration = standard_time_minutes
-WHERE process_no IS NULL OR name IS NULL;
+WHERE process_no IS NULL OR name IS NULL$x$;
+  END IF;
+END $$;
 
 -- wms.locations 种子数据 tenant_id 回填（解码 NULL 修复）
 -- 2026-09-18 防御化（空库重建链卡点）：wms.locations 可能仅为 2 列骨架（无 tenant_id），跳过。

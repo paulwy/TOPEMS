@@ -43,9 +43,33 @@ END $$;
 -- ============================================================
 -- 2) public.core_workflow_tasks 补列（对齐 core 权威 12 列）
 -- ============================================================
-ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS node_id varchar(255);
-ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS comment text;
-ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS priority varchar(50);
-ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS due_time timestamptz;
-ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS completed_at timestamptz;
-ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS claimed_at timestamptz;
+-- 2026-09-21 防御化（空库重建链卡点）：000007 已 DROP public 影子表（5433 空库重建真实生效，
+-- 5432 因历史迁移记录回填未删），第 1 部分 DROP flow 骨架后若无 public 表则查询无表可解析；
+-- 此处按 5432 权威 DDL 重建 public.core_workflow_tasks（5432 已存在 → IF NOT EXISTS 跳过），
+-- 补列段表存在守卫（幂等可重放）。
+CREATE TABLE IF NOT EXISTS "public"."core_workflow_tasks" (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  instance_id uuid NOT NULL,
+  node_id varchar NOT NULL,
+  assignee_id uuid NOT NULL,
+  status varchar DEFAULT 'pending',
+  comment text,
+  created_at timestamp NOT NULL DEFAULT now(),
+  completed_at timestamp,
+  deleted_at timestamptz,
+  priority varchar,
+  due_time timestamptz,
+  claimed_at timestamptz,
+  PRIMARY KEY (id)
+);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='core_workflow_tasks') THEN
+    EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS node_id varchar(255)$x$;
+    EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS comment text$x$;
+    EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS priority varchar(50)$x$;
+    EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS due_time timestamptz$x$;
+    EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS completed_at timestamptz$x$;
+    EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS claimed_at timestamptz$x$;
+  END IF;
+END $$;

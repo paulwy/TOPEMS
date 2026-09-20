@@ -20,6 +20,29 @@ CREATE TABLE IF NOT EXISTS unified_core.inter_module_sync (
 );
 
 -- 2. qms.qa_alert_rules 补 tenant_id
+-- 2026-09-21 防御化（空库重建链卡点）：qms.qa_alert_rules 由 000019 从 public 拷贝创建
+-- （条件式），5433 空库重建时 public 侧不存在 → qms 表缺失；此处按 5432 权威 17 列重建
+-- （5432 已存在 → IF NOT EXISTS 跳过），再补 tenant_id（幂等）。
+CREATE TABLE IF NOT EXISTS qms.qa_alert_rules (
+    id                uuid NOT NULL DEFAULT gen_random_uuid(),
+    rule_name         varchar NOT NULL,
+    alert_type        varchar NOT NULL,
+    metric            varchar NOT NULL,
+    condition         varchar NOT NULL,
+    threshold         numeric NOT NULL,
+    duration          integer,
+    severity          varchar,
+    status            varchar DEFAULT 'active',
+    notification_type varchar,
+    recipients        text,
+    description       text,
+    created_by        varchar,
+    created_at        timestamp NOT NULL DEFAULT now(),
+    updated_at        timestamp NOT NULL DEFAULT now(),
+    deleted_at        timestamptz,
+    tenant_id         uuid,
+    PRIMARY KEY (id)
+);
 ALTER TABLE qms.qa_alert_rules ADD COLUMN IF NOT EXISTS tenant_id uuid;
 
 -- 3. finance.finance_audit_rules_v52（audit-v52 引擎）
