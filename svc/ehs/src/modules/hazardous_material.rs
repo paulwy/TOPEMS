@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -282,9 +280,8 @@ pub struct UpdateMsdsRequest {
 pub async fn list_materials(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing hazardous materials");
     Json(ApiResponse::success(
         Vec::<HazardousMaterial>::new(),
@@ -303,10 +300,17 @@ pub async fn list_materials(
 pub async fn create_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating hazardous material: {:?}", req);
     Json(ApiResponse::success(
         HazardousMaterial {
@@ -358,10 +362,17 @@ pub async fn create_material(
 pub async fn get_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting hazardous material: {}", id);
     Json(ApiResponse::success(
         MaterialDetail {
@@ -479,11 +490,18 @@ pub async fn get_material(
 pub async fn update_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating hazardous material {}: {:?}", id, req);
     Json(ApiResponse::success(
         HazardousMaterial {
@@ -532,10 +550,9 @@ pub async fn update_material(
 pub async fn delete_material(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting hazardous material: {}", id);
     Json(ApiResponse::success((), "危险品删除成功"))
 }
@@ -554,10 +571,9 @@ pub async fn delete_material(
 pub async fn list_material_stocks(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MaterialStock>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing stocks for material: {}", id);
     Json(ApiResponse::success(
         Vec::<MaterialStock>::new(),
@@ -575,9 +591,8 @@ pub async fn list_material_stocks(
 pub async fn list_stock_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing stock records");
     Json(ApiResponse::success(
         Vec::<StockRecord>::new(),
@@ -596,10 +611,17 @@ pub async fn list_stock_records(
 pub async fn create_stock_in(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateStockRecordRequest>,
 ) -> Json<ApiResponse<StockRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating stock in record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
@@ -640,10 +662,17 @@ pub async fn create_stock_in(
 pub async fn create_stock_out(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateStockRecordRequest>,
 ) -> Json<ApiResponse<StockRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating stock out record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
@@ -687,10 +716,17 @@ pub async fn create_stock_out(
 pub async fn get_stock_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<StockRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting stock record: {}", id);
     Json(ApiResponse::success(
         StockRecord {
@@ -731,10 +767,17 @@ pub async fn get_stock_record(
 pub async fn get_material_msds(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MsdsData>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting MSDS for material: {}", id);
     Json(ApiResponse::success(
         MsdsData {
@@ -782,11 +825,18 @@ pub async fn get_material_msds(
 pub async fn update_material_msds(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMsdsRequest>,
 ) -> Json<ApiResponse<MsdsData>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating MSDS for material {}: {:?}", id, req);
     Json(ApiResponse::success(
         MsdsData {
@@ -827,9 +877,16 @@ pub async fn update_material_msds(
 pub async fn get_material_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<MaterialStatistics>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting material statistics");
     Json(ApiResponse::success(
         MaterialStatistics {
@@ -875,9 +932,8 @@ pub async fn get_material_statistics(
 pub async fn list_material_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing material categories");
     let categories = vec![
         serde_json::json!({ "code": "flammable", "name": "易燃" }),
@@ -903,10 +959,9 @@ pub async fn list_material_categories(
 pub async fn create_material_category(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Creating material category: {:?}", req);
     Json(ApiResponse::success(req, "危险品分类创建成功"))
 }

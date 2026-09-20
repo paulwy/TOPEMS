@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/training", get(list_trainings).post(create_training))
@@ -127,9 +125,8 @@ pub struct TrainingCertificate {
 pub async fn list_trainings(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Training>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing trainings");
     Json(ApiResponse::success(
         Vec::<Training>::new(),
@@ -148,10 +145,17 @@ pub async fn list_trainings(
 pub async fn create_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Training>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating training: {:?}", req);
     Json(ApiResponse::success(
         Training {
@@ -188,10 +192,17 @@ pub async fn create_training(
 pub async fn get_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Training>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting training: {}", id);
     Json(ApiResponse::success(
         Training {
@@ -226,11 +237,18 @@ pub async fn get_training(
 pub async fn update_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Training>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating training {}: {:?}", id, req);
     Json(ApiResponse::success(
         Training {
@@ -284,10 +302,9 @@ pub async fn update_training(
 pub async fn delete_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting training: {}", id);
     Json(ApiResponse::success((), "培训删除成功"))
 }
@@ -302,9 +319,8 @@ pub async fn delete_training(
 pub async fn list_training_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingPlan>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing training plans");
     Json(ApiResponse::success(
         Vec::<TrainingPlan>::new(),
@@ -323,10 +339,17 @@ pub async fn list_training_plans(
 pub async fn create_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating training plan: {:?}", req);
     Json(ApiResponse::success(
         TrainingPlan {
@@ -376,10 +399,17 @@ pub async fn create_training_plan(
 pub async fn get_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TrainingPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting training plan: {}", id);
     Json(ApiResponse::success(
         TrainingPlan {
@@ -414,11 +444,18 @@ pub async fn get_training_plan(
 pub async fn update_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating training plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         TrainingPlan {
@@ -469,10 +506,9 @@ pub async fn update_training_plan(
 pub async fn delete_training_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting training plan: {}", id);
     Json(ApiResponse::success((), "培训计划删除成功"))
 }
@@ -487,9 +523,8 @@ pub async fn delete_training_plan(
 pub async fn list_training_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing training records");
     Json(ApiResponse::success(
         Vec::<TrainingRecord>::new(),
@@ -508,10 +543,17 @@ pub async fn list_training_records(
 pub async fn create_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating training record: {:?}", req);
     Json(ApiResponse::success(
         TrainingRecord {
@@ -564,10 +606,17 @@ pub async fn create_training_record(
 pub async fn get_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting training record: {}", id);
     Json(ApiResponse::success(
         TrainingRecord {
@@ -602,11 +651,18 @@ pub async fn get_training_record(
 pub async fn update_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating training record {}: {:?}", id, req);
     Json(ApiResponse::success(
         TrainingRecord {
@@ -660,10 +716,9 @@ pub async fn update_training_record(
 pub async fn delete_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting training record: {}", id);
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
@@ -678,9 +733,8 @@ pub async fn delete_training_record(
 pub async fn list_certificates(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingCertificate>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing training certificates");
     Json(ApiResponse::success(
         Vec::<TrainingCertificate>::new(),
@@ -700,10 +754,17 @@ pub async fn list_certificates(
 pub async fn create_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingCertificate>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating certificate: {:?}", req);
     Json(ApiResponse::success(
         TrainingCertificate {
@@ -750,10 +811,17 @@ pub async fn create_certificate(
 pub async fn get_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TrainingCertificate>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting certificate: {}", id);
     Json(ApiResponse::success(
         TrainingCertificate {
@@ -787,11 +855,18 @@ pub async fn get_certificate(
 pub async fn update_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingCertificate>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating certificate {}: {:?}", id, req);
     Json(ApiResponse::success(
         TrainingCertificate {
@@ -840,10 +915,9 @@ pub async fn update_certificate(
 pub async fn delete_certificate(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting certificate: {}", id);
     Json(ApiResponse::success((), "证书删除成功"))
 }

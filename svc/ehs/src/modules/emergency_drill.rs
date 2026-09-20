@@ -9,8 +9,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -269,9 +267,8 @@ pub struct UpdateDrillProblemRequest {
 pub async fn list_drill_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing drill plans");
     Json(ApiResponse::success(
         Vec::<DrillPlan>::new(),
@@ -290,10 +287,17 @@ pub async fn list_drill_plans(
 pub async fn create_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating drill plan: {:?}", req);
     Json(ApiResponse::success(
         DrillPlan {
@@ -336,10 +340,17 @@ pub async fn create_drill_plan(
 pub async fn get_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DrillPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting drill plan: {}", id);
     Json(ApiResponse::success(
         DrillPlan {
@@ -380,11 +391,18 @@ pub async fn get_drill_plan(
 pub async fn update_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating drill plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillPlan {
@@ -426,10 +444,9 @@ pub async fn update_drill_plan(
 pub async fn delete_drill_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting drill plan: {}", id);
     Json(ApiResponse::success((), "演练计划删除成功"))
 }
@@ -444,9 +461,8 @@ pub async fn delete_drill_plan(
 pub async fn list_drill_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing drill records");
     Json(ApiResponse::success(
         Vec::<DrillRecord>::new(),
@@ -465,10 +481,17 @@ pub async fn list_drill_records(
 pub async fn create_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating drill record: {:?}", req);
     Json(ApiResponse::success(
         DrillRecord {
@@ -515,10 +538,17 @@ pub async fn create_drill_record(
 pub async fn get_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DrillDetail>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting drill record: {}", id);
     Json(ApiResponse::success(
         DrillDetail {
@@ -600,11 +630,18 @@ pub async fn get_drill_record(
 pub async fn update_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating drill record {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillRecord {
@@ -650,10 +687,9 @@ pub async fn update_drill_record(
 pub async fn delete_drill_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting drill record: {}", id);
     Json(ApiResponse::success((), "演练记录删除成功"))
 }
@@ -673,11 +709,18 @@ pub async fn delete_drill_record(
 pub async fn create_drill_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateEvaluationRequest>,
 ) -> Json<ApiResponse<DrillEvaluation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating drill evaluation for {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillEvaluation {
@@ -714,10 +757,9 @@ pub async fn create_drill_evaluation(
 pub async fn list_drill_problems(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<DrillProblem>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing drill problems for: {}", id);
     Json(ApiResponse::success(
         Vec::<DrillProblem>::new(),
@@ -740,11 +782,18 @@ pub async fn list_drill_problems(
 pub async fn create_drill_problem(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating drill problem for {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillProblem {
@@ -785,11 +834,18 @@ pub async fn create_drill_problem(
 pub async fn update_drill_problem(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path((_drill_id, problem_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating drill problem {}: {:?}", problem_id, req);
     let status = req
         .status
@@ -841,9 +897,16 @@ pub async fn update_drill_problem(
 pub async fn get_drill_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<DrillStatistics>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting drill statistics");
     Json(ApiResponse::success(
         DrillStatistics {
@@ -885,9 +948,8 @@ pub async fn get_drill_statistics(
 pub async fn list_drill_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing drill types");
     let types = vec![
         serde_json::json!({ "code": "fire", "name": "火灾演练" }),

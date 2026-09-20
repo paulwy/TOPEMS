@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new().route("/health-records", get(list_records).post(create_record))
 }
@@ -44,9 +42,8 @@ pub struct HealthRecord {
 pub async fn list_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing health records");
     Json(ApiResponse::success(
         Vec::<HealthRecord>::new(),
@@ -65,10 +62,17 @@ pub async fn list_records(
 pub async fn create_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<HealthRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating health record: {:?}", req);
     Json(ApiResponse::success(
         HealthRecord {

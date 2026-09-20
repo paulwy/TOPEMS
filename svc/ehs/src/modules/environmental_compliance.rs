@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -377,9 +375,8 @@ pub struct UpdateIncidentRequest {
 pub async fn list_regulations(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing environmental regulations");
     Json(ApiResponse::success(
         Vec::<EnvironmentalRegulation>::new(),
@@ -398,10 +395,17 @@ pub async fn list_regulations(
 pub async fn create_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating environmental regulation: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
@@ -446,10 +450,17 @@ pub async fn create_regulation(
 pub async fn get_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting environmental regulation: {}", id);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
@@ -494,11 +505,18 @@ pub async fn get_regulation(
 pub async fn update_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating environmental regulation {}: {:?}", id, req);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
@@ -542,10 +560,9 @@ pub async fn update_regulation(
 pub async fn delete_regulation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting environmental regulation: {}", id);
     Json(ApiResponse::success((), "法规删除成功"))
 }
@@ -560,9 +577,8 @@ pub async fn delete_regulation(
 pub async fn list_evaluations(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing compliance evaluations");
     Json(ApiResponse::success(
         Vec::<ComplianceEvaluation>::new(),
@@ -581,10 +597,17 @@ pub async fn list_evaluations(
 pub async fn create_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating compliance evaluation: {:?}", req);
     Json(ApiResponse::success(
         ComplianceEvaluation {
@@ -629,10 +652,17 @@ pub async fn create_evaluation(
 pub async fn get_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting compliance evaluation: {}", id);
     Json(ApiResponse::success(
         ComplianceEvaluation {
@@ -675,11 +705,18 @@ pub async fn get_evaluation(
 pub async fn update_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating compliance evaluation {}: {:?}", id, req);
     let status = req
         .status
@@ -731,10 +768,9 @@ pub async fn update_evaluation(
 pub async fn delete_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting compliance evaluation: {}", id);
     Json(ApiResponse::success((), "评价删除成功"))
 }
@@ -749,9 +785,8 @@ pub async fn delete_evaluation(
 pub async fn list_monitor_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing environment monitor records");
     Json(ApiResponse::success(
         Vec::<EnvironmentMonitor>::new(),
@@ -770,10 +805,17 @@ pub async fn list_monitor_records(
 pub async fn create_monitor_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating environment monitor record: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentMonitor {
@@ -821,10 +863,17 @@ pub async fn create_monitor_record(
 pub async fn get_monitor_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting environment monitor record: {}", id);
     Json(ApiResponse::success(
         EnvironmentMonitor {
@@ -869,10 +918,9 @@ pub async fn get_monitor_record(
 pub async fn delete_monitor_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting environment monitor record: {}", id);
     Json(ApiResponse::success((), "监测记录删除成功"))
 }
@@ -887,9 +935,8 @@ pub async fn delete_monitor_record(
 pub async fn list_permits(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing discharge permits");
     Json(ApiResponse::success(
         Vec::<DischargePermit>::new(),
@@ -909,10 +956,17 @@ pub async fn list_permits(
 pub async fn create_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating discharge permit: {:?}", req);
     Json(ApiResponse::success(
         DischargePermit {
@@ -958,10 +1012,17 @@ pub async fn create_permit(
 pub async fn get_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DischargePermit>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting discharge permit: {}", id);
     Json(ApiResponse::success(
         DischargePermit {
@@ -1009,11 +1070,18 @@ pub async fn get_permit(
 pub async fn update_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating discharge permit {}: {:?}", id, req);
     Json(ApiResponse::success(
         DischargePermit {
@@ -1057,10 +1125,9 @@ pub async fn update_permit(
 pub async fn delete_permit(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting discharge permit: {}", id);
     Json(ApiResponse::success((), "排污许可删除成功"))
 }
@@ -1075,9 +1142,8 @@ pub async fn delete_permit(
 pub async fn list_incidents(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing environment incidents");
     Json(ApiResponse::success(
         Vec::<EnvironmentIncident>::new(),
@@ -1096,10 +1162,17 @@ pub async fn list_incidents(
 pub async fn create_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating environment incident: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentIncident {
@@ -1149,10 +1222,17 @@ pub async fn create_incident(
 pub async fn get_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting environment incident: {}", id);
     Json(ApiResponse::success(
         EnvironmentIncident {
@@ -1200,11 +1280,18 @@ pub async fn get_incident(
 pub async fn update_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating environment incident {}: {:?}", id, req);
     let status = req
         .status
@@ -1261,10 +1348,9 @@ pub async fn update_incident(
 pub async fn delete_incident(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting environment incident: {}", id);
     Json(ApiResponse::success((), "环境事件删除成功"))
 }
@@ -1279,9 +1365,16 @@ pub async fn delete_incident(
 pub async fn get_compliance_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<ComplianceStatistics>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting compliance statistics");
     Json(ApiResponse::success(
         ComplianceStatistics {
@@ -1323,9 +1416,8 @@ pub async fn get_compliance_statistics(
 pub async fn list_regulation_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing regulation categories");
     let categories = vec![
         serde_json::json!({ "code": "law", "name": "法律" }),
@@ -1348,9 +1440,8 @@ pub async fn list_regulation_categories(
 pub async fn list_monitor_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing monitor types");
     let types = vec![
         serde_json::json!({ "code": "wastewater", "name": "废水监测" }),

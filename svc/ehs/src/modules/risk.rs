@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/hazards", get(list_risks).post(create_risk))
@@ -76,9 +74,8 @@ pub struct RiskControlMeasure {
 pub async fn list_risks(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Risk>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing risks");
     Json(ApiResponse::success(Vec::<Risk>::new(), "获取风险列表成功"))
 }
@@ -94,10 +91,17 @@ pub async fn list_risks(
 pub async fn create_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating risk: {:?}", req);
     Json(ApiResponse::success(
         Risk {
@@ -136,10 +140,17 @@ pub async fn create_risk(
 pub async fn get_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting risk: {}", id);
     Json(ApiResponse::success(
         Risk {
@@ -176,11 +187,18 @@ pub async fn get_risk(
 pub async fn update_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         Risk {
@@ -217,11 +235,18 @@ pub async fn update_risk(
 pub async fn assess_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Assessing risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         Risk {
@@ -257,10 +282,9 @@ pub async fn assess_risk(
 pub async fn delete_risk(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting risk: {}", id);
     Json(ApiResponse::success((), "风险删除成功"))
 }
@@ -279,10 +303,17 @@ pub async fn delete_risk(
 pub async fn list_control_measures(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<RiskControlMeasure>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Listing control measures for risk: {}", id);
     Json(ApiResponse::success(
         vec![
@@ -328,11 +359,18 @@ pub async fn list_control_measures(
 pub async fn create_control_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating control measure for risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         RiskControlMeasure {
@@ -376,11 +414,18 @@ pub async fn create_control_measure(
 pub async fn update_control_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!(
         "Updating control measure {} for risk {}: {:?}",
         measure_id,
@@ -432,10 +477,9 @@ pub async fn update_control_measure(
 pub async fn delete_control_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path((_id, measure_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting control measure: {}", measure_id);
     Json(ApiResponse::success((), "控制措施删除成功"))
 }

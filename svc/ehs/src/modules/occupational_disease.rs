@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -334,9 +332,8 @@ pub struct CreateHealthTrainingRequest {
 pub async fn list_hazard_factors(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardFactor>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing hazard factors");
     Json(ApiResponse::success(
         Vec::<HazardFactor>::new(),
@@ -356,10 +353,17 @@ pub async fn list_hazard_factors(
 pub async fn create_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateHazardFactorRequest>,
 ) -> Json<ApiResponse<HazardFactor>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating hazard factor: {:?}", req);
     Json(ApiResponse::success(
         HazardFactor {
@@ -403,10 +407,17 @@ pub async fn create_hazard_factor(
 pub async fn get_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardFactor>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting hazard factor: {}", id);
     Json(ApiResponse::success(
         HazardFactor {
@@ -448,11 +459,18 @@ pub async fn get_hazard_factor(
 pub async fn update_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateHazardFactorRequest>,
 ) -> Json<ApiResponse<HazardFactor>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating hazard factor {}: {:?}", id, req);
     Json(ApiResponse::success(
         HazardFactor {
@@ -494,10 +512,9 @@ pub async fn update_hazard_factor(
 pub async fn delete_hazard_factor(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting hazard factor: {}", id);
     Json(ApiResponse::success((), "危害因素删除成功"))
 }
@@ -512,9 +529,8 @@ pub async fn delete_hazard_factor(
 pub async fn list_detection_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DetectionRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing detection records");
     Json(ApiResponse::success(
         Vec::<DetectionRecord>::new(),
@@ -533,10 +549,17 @@ pub async fn list_detection_records(
 pub async fn create_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateDetectionRecordRequest>,
 ) -> Json<ApiResponse<DetectionRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating detection record: {:?}", req);
     Json(ApiResponse::success(
         DetectionRecord {
@@ -583,10 +606,17 @@ pub async fn create_detection_record(
 pub async fn get_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DetectionRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting detection record: {}", id);
     Json(ApiResponse::success(
         DetectionRecord {
@@ -630,10 +660,9 @@ pub async fn get_detection_record(
 pub async fn delete_detection_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting detection record: {}", id);
     Json(ApiResponse::success((), "检测记录删除成功"))
 }
@@ -648,9 +677,8 @@ pub async fn delete_detection_record(
 pub async fn list_disease_cases(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DiseaseCase>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing disease cases");
     Json(ApiResponse::success(
         Vec::<DiseaseCase>::new(),
@@ -669,10 +697,17 @@ pub async fn list_disease_cases(
 pub async fn create_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateDiseaseCaseRequest>,
 ) -> Json<ApiResponse<DiseaseCase>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating disease case: {:?}", req);
     Json(ApiResponse::success(
         DiseaseCase {
@@ -721,10 +756,17 @@ pub async fn create_disease_case(
 pub async fn get_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DiseaseCase>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting disease case: {}", id);
     Json(ApiResponse::success(
         DiseaseCase {
@@ -771,11 +813,18 @@ pub async fn get_disease_case(
 pub async fn update_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDiseaseCaseRequest>,
 ) -> Json<ApiResponse<DiseaseCase>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating disease case {}: {:?}", id, req);
     let status = req.status.clone().unwrap_or_else(|| "active".to_string());
     let closed_at = if status == "closed" {
@@ -828,10 +877,9 @@ pub async fn update_disease_case(
 pub async fn delete_disease_case(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting disease case: {}", id);
     Json(ApiResponse::success((), "职业病案例删除成功"))
 }
@@ -846,9 +894,8 @@ pub async fn delete_disease_case(
 pub async fn list_protection_measures(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing protection measures");
     Json(ApiResponse::success(
         Vec::<ProtectionMeasure>::new(),
@@ -867,10 +914,17 @@ pub async fn list_protection_measures(
 pub async fn create_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateProtectionMeasureRequest>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating protection measure: {:?}", req);
     Json(ApiResponse::success(
         ProtectionMeasure {
@@ -913,10 +967,17 @@ pub async fn create_protection_measure(
 pub async fn get_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting protection measure: {}", id);
     Json(ApiResponse::success(
         ProtectionMeasure {
@@ -957,11 +1018,18 @@ pub async fn get_protection_measure(
 pub async fn update_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ProtectionMeasure>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating protection measure {}: {:?}", id, req);
     Json(ApiResponse::success(
         ProtectionMeasure {
@@ -1011,10 +1079,9 @@ pub async fn update_protection_measure(
 pub async fn delete_protection_measure(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting protection measure: {}", id);
     Json(ApiResponse::success((), "防护措施删除成功"))
 }
@@ -1029,9 +1096,8 @@ pub async fn delete_protection_measure(
 pub async fn list_health_trainings(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthTraining>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing health trainings");
     Json(ApiResponse::success(
         Vec::<HealthTraining>::new(),
@@ -1050,10 +1116,17 @@ pub async fn list_health_trainings(
 pub async fn create_health_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateHealthTrainingRequest>,
 ) -> Json<ApiResponse<HealthTraining>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating health training: {:?}", req);
     Json(ApiResponse::success(
         HealthTraining {
@@ -1096,10 +1169,17 @@ pub async fn create_health_training(
 pub async fn get_health_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthTraining>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting health training: {}", id);
     Json(ApiResponse::success(
         HealthTraining {
@@ -1139,10 +1219,9 @@ pub async fn get_health_training(
 pub async fn delete_health_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting health training: {}", id);
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
@@ -1157,9 +1236,16 @@ pub async fn delete_health_training(
 pub async fn get_disease_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<DiseaseStatistics>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting disease statistics");
     Json(ApiResponse::success(
         DiseaseStatistics {
@@ -1199,9 +1285,8 @@ pub async fn get_disease_statistics(
 pub async fn list_factor_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing factor types");
     let types = vec![
         serde_json::json!({ "code": "physical", "name": "物理因素" }),

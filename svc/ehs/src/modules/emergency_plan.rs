@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/emergency-plans", get(list_plans).post(create_plan))
@@ -189,9 +187,8 @@ pub struct ApprovalRequest {
 pub async fn list_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing emergency plans");
     Json(ApiResponse::success(
         Vec::<EmergencyPlan>::new(),
@@ -210,10 +207,17 @@ pub async fn list_plans(
 pub async fn create_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreatePlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating emergency plan: {:?}", req);
     Json(ApiResponse::success(
         EmergencyPlan {
@@ -261,10 +265,17 @@ pub async fn create_plan(
 pub async fn get_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<PlanDetail>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting emergency plan: {}", id);
     Json(ApiResponse::success(
         PlanDetail {
@@ -380,11 +391,18 @@ pub async fn get_plan(
 pub async fn update_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating emergency plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         EmergencyPlan {
@@ -429,10 +447,9 @@ pub async fn update_plan(
 pub async fn delete_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting emergency plan: {}", id);
     Json(ApiResponse::success((), "应急预案删除成功"))
 }
@@ -451,10 +468,9 @@ pub async fn delete_plan(
 pub async fn list_plan_supplies(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanSupply>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing supplies for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanSupply>::new(),
@@ -477,11 +493,18 @@ pub async fn list_plan_supplies(
 pub async fn add_plan_supply(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateSupplyRequest>,
 ) -> Json<ApiResponse<PlanSupply>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Adding supply to plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanSupply {
@@ -517,10 +540,9 @@ pub async fn add_plan_supply(
 pub async fn delete_plan_supply(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path((_plan_id, supply_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting supply: {}", supply_id);
     Json(ApiResponse::success((), "应急物资删除成功"))
 }
@@ -540,11 +562,18 @@ pub async fn delete_plan_supply(
 pub async fn submit_plan_approval(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(_req): Json<SubmitApprovalRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::info!("Submitting plan for approval: {}", id);
     Json(ApiResponse::success(
         EmergencyPlan {
@@ -590,11 +619,18 @@ pub async fn submit_plan_approval(
 pub async fn approve_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<PlanApproval>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Approving plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanApproval {
@@ -627,10 +663,9 @@ pub async fn approve_plan(
 pub async fn list_plan_versions(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanVersion>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing versions for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanVersion>::new(),
@@ -653,11 +688,18 @@ pub async fn list_plan_versions(
 pub async fn create_new_version(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PlanVersion>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating new version for plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanVersion {
@@ -688,9 +730,8 @@ pub async fn create_new_version(
 pub async fn list_plan_categories(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing plan categories");
     let categories = vec![
         serde_json::json!({ "code": "fire", "name": "火灾", "icon": "flame" }),

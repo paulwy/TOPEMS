@@ -12,8 +12,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/checks/plans", get(list_plans).post(create_plan))
@@ -180,10 +178,9 @@ pub struct UpdateInspectionRecordRequest {
 pub async fn list_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionPlan>>> {
     tracing::debug!("Listing inspection plans");
-    let _tenant_id = get_tenant_id(&claims, &headers);
     Json(ApiResponse::success(
         Vec::<InspectionPlan>::new(),
         "获取检查计划列表成功",
@@ -201,11 +198,18 @@ pub async fn list_plans(
 pub async fn create_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateInspectionPlanRequest>,
 ) -> Json<ApiResponse<InspectionPlan>> {
     tracing::debug!("Creating inspection plan: {:?}", req);
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     Json(ApiResponse::success(
         InspectionPlan {
             id: uuid::Uuid::new_v4().to_string(),
@@ -243,10 +247,17 @@ pub async fn create_plan(
 pub async fn get_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting inspection plan: {}", id);
     Json(ApiResponse::success(
         InspectionPlan {
@@ -284,11 +295,18 @@ pub async fn get_plan(
 pub async fn update_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<InspectionPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating inspection plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         InspectionPlan {
@@ -325,10 +343,9 @@ pub async fn update_plan(
 pub async fn delete_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting inspection plan: {}", id);
     Json(ApiResponse::success((), "检查计划删除成功"))
 }
@@ -347,10 +364,17 @@ pub async fn delete_plan(
 pub async fn list_plan_items(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<InspectionItem>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Listing inspection items for plan: {}", plan_id);
     Json(ApiResponse::success(
         vec![
@@ -410,11 +434,18 @@ pub async fn list_plan_items(
 pub async fn create_plan_item(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
     Json(req): Json<CreateInspectionItemRequest>,
 ) -> Json<ApiResponse<InspectionItem>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating inspection item for plan {}: {:?}", plan_id, req);
     Json(ApiResponse::success(
         InspectionItem {
@@ -451,10 +482,9 @@ pub async fn create_plan_item(
 pub async fn delete_plan_item(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path((plan_id, item_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting inspection item {} from plan {}", item_id, plan_id);
     Json(ApiResponse::success((), "检查项删除成功"))
 }
@@ -469,9 +499,8 @@ pub async fn delete_plan_item(
 pub async fn list_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing inspection records");
     Json(ApiResponse::success(
         Vec::<InspectionRecord>::new(),
@@ -490,10 +519,17 @@ pub async fn list_records(
 pub async fn create_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating inspection record: {:?}", req);
     let result = if req.items.iter().all(|i| i.result == "pass") {
         "合格".to_string()
@@ -543,10 +579,17 @@ pub async fn create_record(
 pub async fn get_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionRecordDetail>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting inspection record: {}", id);
     Json(ApiResponse::success(
         InspectionRecordDetail {
@@ -613,11 +656,18 @@ pub async fn get_record(
 pub async fn update_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating inspection record {}: {:?}", id, req);
     Json(ApiResponse::success(
         InspectionRecord {
@@ -656,10 +706,9 @@ pub async fn update_record(
 pub async fn delete_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting inspection record: {}", id);
     Json(ApiResponse::success((), "检查记录删除成功"))
 }

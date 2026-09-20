@@ -8,8 +8,6 @@ use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use crate::shared::AppState;
-use topems_shared_auth::get_tenant_id;
-
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -332,9 +330,8 @@ pub struct UpdateAbnormalityRequest {
 pub async fn list_exam_plans(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing health exam plans");
     Json(ApiResponse::success(
         Vec::<HealthExamPlan>::new(),
@@ -353,10 +350,17 @@ pub async fn list_exam_plans(
 pub async fn create_exam_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating health exam plan: {:?}", req);
     Json(ApiResponse::success(
         HealthExamPlan {
@@ -398,10 +402,17 @@ pub async fn create_exam_plan(
 pub async fn get_exam_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting health exam plan: {}", id);
     Json(ApiResponse::success(
         HealthExamPlan {
@@ -441,11 +452,18 @@ pub async fn get_exam_plan(
 pub async fn update_exam_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating health exam plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthExamPlan {
@@ -486,10 +504,9 @@ pub async fn update_exam_plan(
 pub async fn delete_exam_plan(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting health exam plan: {}", id);
     Json(ApiResponse::success((), "体检计划删除成功"))
 }
@@ -504,9 +521,8 @@ pub async fn delete_exam_plan(
 pub async fn list_exam_records(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing health exam records");
     Json(ApiResponse::success(
         Vec::<HealthExamRecord>::new(),
@@ -525,10 +541,17 @@ pub async fn list_exam_records(
 pub async fn create_exam_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating health exam record: {:?}", req);
     Json(ApiResponse::success(
         HealthExamRecord {
@@ -585,10 +608,17 @@ pub async fn create_exam_record(
 pub async fn get_exam_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting health exam record: {}", id);
     Json(ApiResponse::success(
         HealthExamRecord {
@@ -643,11 +673,18 @@ pub async fn get_exam_record(
 pub async fn update_exam_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating health exam record {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthExamRecord {
@@ -701,10 +738,9 @@ pub async fn update_exam_record(
 pub async fn delete_exam_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting health exam record: {}", id);
     Json(ApiResponse::success((), "体检记录删除成功"))
 }
@@ -723,10 +759,17 @@ pub async fn delete_exam_record(
 pub async fn get_health_archive(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(employee_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthArchive>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting health archive for employee: {}", employee_id);
     Json(ApiResponse::success(
         HealthArchive {
@@ -757,9 +800,8 @@ pub async fn get_health_archive(
 pub async fn list_contraindications(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing contraindications");
     Json(ApiResponse::success(
         Vec::<Contraindication>::new(),
@@ -778,10 +820,17 @@ pub async fn list_contraindications(
 pub async fn create_contraindication(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Json(req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Creating contraindication: {:?}", req);
     Json(ApiResponse::success(
         Contraindication {
@@ -822,10 +871,17 @@ pub async fn create_contraindication(
 pub async fn get_contraindication(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Contraindication>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting contraindication: {}", id);
     Json(ApiResponse::success(
         Contraindication {
@@ -867,11 +923,18 @@ pub async fn get_contraindication(
 pub async fn update_contraindication(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating contraindication {}: {:?}", id, req);
     Json(ApiResponse::success(
         Contraindication {
@@ -914,10 +977,9 @@ pub async fn update_contraindication(
 pub async fn delete_contraindication(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Deleting contraindication: {}", id);
     Json(ApiResponse::success((), "职业禁忌症删除成功"))
 }
@@ -932,9 +994,8 @@ pub async fn delete_contraindication(
 pub async fn list_abnormalities(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthAbnormality>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing health abnormalities");
     Json(ApiResponse::success(
         Vec::<HealthAbnormality>::new(),
@@ -957,11 +1018,18 @@ pub async fn list_abnormalities(
 pub async fn update_abnormality(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateAbnormalityRequest>,
 ) -> Json<ApiResponse<HealthAbnormality>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Updating abnormality {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthAbnormality {
@@ -997,9 +1065,16 @@ pub async fn update_abnormality(
 pub async fn get_health_statistics(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<HealthStatistics>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     tracing::debug!("Getting health statistics");
     Json(ApiResponse::success(
         HealthStatistics {
@@ -1037,9 +1112,8 @@ pub async fn get_health_statistics(
 pub async fn list_exam_types(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let _tenant_id = get_tenant_id(&claims, &headers);
     tracing::debug!("Listing exam types");
     let types = vec![
         serde_json::json!({ "code": "pre_employment", "name": "上岗前体检" }),
