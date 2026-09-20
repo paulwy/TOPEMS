@@ -540,5 +540,6 @@
   "templates.listPage.k8": "操作吗？",
   "templates.listPage.k9": "正在处理",
   "templates.editor.k0": "模板名称 *",
-  "templates.editor.k1": "模板编码 *"
+  "templates.editor.k1": "模板编码 *",
+  "templates.listPage.selected_items": "项"
 }

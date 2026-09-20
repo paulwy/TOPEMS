@@ -78,76 +78,7 @@ const mapApiAuditPlans = (apiPlans: ApiAuditPlan[]): AuditPlan[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockAuditPlans: AuditPlan[] = [
-  {
-    id: '1',
-    audit_no: 'AUD202609001',
-    title: '9月内部质量体系审核',
-    audit_type: 'internal',
-    status: 'planned',
-    scope: '全公司 ISO 9001 体系',
-    auditor: '张三',
-    auditee: '生产部/质量部',
-    plan_date: '2026-09-20',
-    findings: 0,
-    created_at: '2026-09-05 10:00:00',
-  },
-  {
-    id: '2',
-    audit_no: 'AUD202609002',
-    title: '供应商质量审核-华东电子',
-    audit_type: 'supplier',
-    status: 'in_progress',
-    scope: '来料检验流程',
-    auditor: '李四',
-    auditee: '华东电子有限公司',
-    plan_date: '2026-09-15',
-    findings: 3,
-    created_at: '2026-09-01 14:30:00',
-  },
-  {
-    id: '3',
-    audit_no: 'AUD202608001',
-    title: 'ISO 9001 外部监督审核',
-    audit_type: 'external',
-    status: 'completed',
-    scope: '质量管理体系全要素',
-    auditor: '认证机构-王老师',
-    auditee: '全公司',
-    plan_date: '2026-08-10',
-    actual_date: '2026-08-12',
-    findings: 2,
-    created_at: '2026-07-25 09:00:00',
-  },
-  {
-    id: '4',
-    audit_no: 'AUD202608002',
-    title: '生产过程审核-装配线',
-    audit_type: 'process',
-    status: 'completed',
-    scope: 'PLC 控制器装配线',
-    auditor: '王五',
-    auditee: '生产二部',
-    plan_date: '2026-08-20',
-    actual_date: '2026-08-20',
-    findings: 5,
-    created_at: '2026-08-10 11:00:00',
-  },
-  {
-    id: '5',
-    audit_no: 'AUD202607001',
-    title: '产品审核-伺服电机',
-    audit_type: 'product',
-    status: 'cancelled',
-    scope: '伺服电机出厂检验',
-    auditor: '赵六',
-    auditee: '质量部',
-    plan_date: '2026-07-15',
-    findings: 0,
-    created_at: '2026-07-01 16:00:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockAuditPlans
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -157,6 +88,76 @@ const formatDateTime = (value?: string) => {
 const QmsAuditRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const mockAuditPlans: AuditPlan[] = [
+    {
+      id: '1',
+      audit_no: 'AUD202609001',
+      title: t('qms.demo.audit_title_1'),
+      audit_type: 'internal',
+      status: 'planned',
+      scope: t('qms.demo.audit_scope_1'),
+      auditor: t('qms.demo.person_zhang'),
+      auditee: t('qms.demo.audit_auditee_1'),
+      plan_date: '2026-09-20',
+      findings: 0,
+      created_at: '2026-09-05 10:00:00',
+    },
+    {
+      id: '2',
+      audit_no: 'AUD202609002',
+      title: t('qms.demo.audit_title_2'),
+      audit_type: 'supplier',
+      status: 'in_progress',
+      scope: t('qms.demo.audit_scope_2'),
+      auditor: t('qms.demo.person_li'),
+      auditee: t('qms.demo.audit_auditee_2'),
+      plan_date: '2026-09-15',
+      findings: 3,
+      created_at: '2026-09-01 14:30:00',
+    },
+    {
+      id: '3',
+      audit_no: 'AUD202608001',
+      title: t('qms.demo.audit_title_3'),
+      audit_type: 'external',
+      status: 'completed',
+      scope: t('qms.demo.audit_scope_3'),
+      auditor: t('qms.demo.audit_auditor_3'),
+      auditee: t('qms.demo.audit_auditee_3'),
+      plan_date: '2026-08-10',
+      actual_date: '2026-08-12',
+      findings: 2,
+      created_at: '2026-07-25 09:00:00',
+    },
+    {
+      id: '4',
+      audit_no: 'AUD202608002',
+      title: t('qms.demo.audit_title_4'),
+      audit_type: 'process',
+      status: 'completed',
+      scope: t('qms.demo.audit_scope_4'),
+      auditor: t('qms.demo.person_wang'),
+      auditee: t('qms.demo.audit_auditee_4'),
+      plan_date: '2026-08-20',
+      actual_date: '2026-08-20',
+      findings: 5,
+      created_at: '2026-08-10 11:00:00',
+    },
+    {
+      id: '5',
+      audit_no: 'AUD202607001',
+      title: t('qms.demo.audit_title_5'),
+      audit_type: 'product',
+      status: 'cancelled',
+      scope: t('qms.demo.audit_scope_5'),
+      auditor: t('qms.demo.person_zhao'),
+      auditee: t('qms.demo.audit_auditee_5'),
+      plan_date: '2026-07-15',
+      findings: 0,
+      created_at: '2026-07-01 16:00:00',
+    },
+  ];
 
   const statusConfig = useMemo(
     () => ({

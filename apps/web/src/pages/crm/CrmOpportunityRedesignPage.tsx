@@ -72,74 +72,7 @@ const mapApiOpportunities = (apiOpportunities: ApiOpportunity[]): Opportunity[] 
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockOpportunities: Opportunity[] = [
-  {
-    id: '1',
-    opp_no: 'OPP202609001',
-    name: '伺服电机批量采购项目',
-    customer_name: '上海科技有限公司',
-    stage: 'proposal',
-    amount: 560000,
-    expected_date: '2026-09-30',
-    probability: 60,
-    owner: '张三',
-    source: 'referral',
-    created_at: '2026-09-01 10:00:00',
-  },
-  {
-    id: '2',
-    opp_no: 'OPP202609002',
-    name: 'PLC 控制器年度框架协议',
-    customer_name: '北京贸易集团',
-    stage: 'negotiation',
-    amount: 1280000,
-    expected_date: '2026-09-25',
-    probability: 80,
-    owner: '李四',
-    source: 'website',
-    created_at: '2026-08-20 14:30:00',
-  },
-  {
-    id: '3',
-    opp_no: 'OPP202609003',
-    name: '工业相机新产线项目',
-    customer_name: '深圳电子股份',
-    stage: 'qualified',
-    amount: 350000,
-    expected_date: '2026-10-15',
-    probability: 40,
-    owner: '张三',
-    source: 'exhibition',
-    created_at: '2026-09-05 09:15:00',
-  },
-  {
-    id: '4',
-    opp_no: 'OPP202608001',
-    name: '变频器替换升级项目',
-    customer_name: '广州制造有限公司',
-    stage: 'won',
-    amount: 256000,
-    expected_date: '2026-08-28',
-    probability: 100,
-    owner: '王五',
-    source: 'cold_call',
-    created_at: '2026-08-10 11:00:00',
-  },
-  {
-    id: '5',
-    opp_no: 'OPP202608002',
-    name: '触摸屏 HMI 试点项目',
-    customer_name: '成都设备公司',
-    stage: 'lost',
-    amount: 89000,
-    expected_date: '2026-08-15',
-    probability: 0,
-    owner: '李四',
-    source: 'other',
-    created_at: '2026-08-01 16:45:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockOpportunities
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -156,6 +89,74 @@ const formatAmount = (value: number) => {
 const CrmOpportunityRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const mockOpportunities: Opportunity[] = [
+    {
+      id: '1',
+      opp_no: 'OPP202609001',
+      name: t('crm.demo.opp_1_name'),
+      customer_name: t('crm.demo.company_a_name'),
+      stage: 'proposal',
+      amount: 560000,
+      expected_date: '2026-09-30',
+      probability: 60,
+      owner: t('crm.demo.owner_zhang'),
+      source: 'referral',
+      created_at: '2026-09-01 10:00:00',
+    },
+    {
+      id: '2',
+      opp_no: 'OPP202609002',
+      name: t('crm.demo.opp_2_name'),
+      customer_name: t('crm.demo.company_b_name'),
+      stage: 'negotiation',
+      amount: 1280000,
+      expected_date: '2026-09-25',
+      probability: 80,
+      owner: t('crm.demo.owner_li'),
+      source: 'website',
+      created_at: '2026-08-20 14:30:00',
+    },
+    {
+      id: '3',
+      opp_no: 'OPP202609003',
+      name: t('crm.demo.opp_3_name'),
+      customer_name: t('crm.demo.company_c_name'),
+      stage: 'qualified',
+      amount: 350000,
+      expected_date: '2026-10-15',
+      probability: 40,
+      owner: t('crm.demo.owner_zhang'),
+      source: 'exhibition',
+      created_at: '2026-09-05 09:15:00',
+    },
+    {
+      id: '4',
+      opp_no: 'OPP202608001',
+      name: t('crm.demo.opp_4_name'),
+      customer_name: t('crm.demo.company_d_name'),
+      stage: 'won',
+      amount: 256000,
+      expected_date: '2026-08-28',
+      probability: 100,
+      owner: t('crm.demo.owner_wang'),
+      source: 'cold_call',
+      created_at: '2026-08-10 11:00:00',
+    },
+    {
+      id: '5',
+      opp_no: 'OPP202608002',
+      name: t('crm.demo.opp_5_name'),
+      customer_name: t('crm.demo.company_e_name'),
+      stage: 'lost',
+      amount: 89000,
+      expected_date: '2026-08-15',
+      probability: 0,
+      owner: t('crm.demo.owner_li'),
+      source: 'other',
+      created_at: '2026-08-01 16:45:00',
+    },
+  ];
 
   const stageConfig = {
     lead: { label: t('crm.opportunity_redesign.stage_lead'), variant: 'default' as const, step: 1 },

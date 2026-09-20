@@ -67,7 +67,7 @@ export interface BffLoadingFallbackProps extends BffFallbackBaseProps {
  * ```
  */
 export const BffLoadingFallback: React.FC<BffLoadingFallbackProps> = ({
-  message = i18n.t('components.bff_fallback.k0'),
+  message = i18n.t('components.bff_fallback.loading'),
   fullScreen = false,
   minHeight = 200,
   skeletonRows = 0,
@@ -162,7 +162,7 @@ export interface BffErrorFallbackProps extends BffFallbackBaseProps {
 export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
   error,
   message,
-  title = i18n.t('components.bff_fallback.k0'),
+  title = i18n.t('components.bff_fallback.error_title'),
   showDetails = true,
   fullScreen = false,
   minHeight = 200,
@@ -173,9 +173,9 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
 }) => {
   const handleAction = onRetry ?? onRefresh;
   const actionLabel = onRetry
-    ? i18n.t('components.bff_fallback.k2')
+    ? i18n.t('components.bff_fallback.retry')
     : onRefresh
-      ? i18n.t('components.bff_fallback.k1')
+      ? i18n.t('components.bff_fallback.refresh')
       : null;
   const canRetry = maxRetries === undefined || retryCount < maxRetries;
 
@@ -239,8 +239,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {i18n.t('components.bff_fallback.k0')} {retryCount} / {maxRetries}{' '}
-            {i18n.t('components.bff_fallback.k1')}
+            {i18n.t('components.bff_fallback.retry_count', { current: retryCount, max: maxRetries })}
           </Typography>
         )}
 
@@ -306,7 +305,7 @@ export interface BffOfflineFallbackProps extends BffFallbackBaseProps {
  * ```
  */
 export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
-  message = i18n.t('components.bff_fallback.k3'),
+  message = i18n.t('components.bff_fallback.offline_message'),
   fullScreen = false,
   minHeight = 200,
   showLocalHint = true,
@@ -339,7 +338,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
             color='warning.main'
             sx={{ fontWeight: 600 }}
           >
-            {i18n.t('components.bff_fallback.k1')}
+            {i18n.t('components.bff_fallback.offline_title')}
           </Typography>
           <Chip
             size='small'
@@ -362,8 +361,8 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
             icon={<History size={18} />}
             sx={{ py: 0.5 }}
           >
-            <AlertTitle sx={{ mb: 0 }}>{i18n.t('components.bff_fallback.k4')}</AlertTitle>
-            {i18n.t('components.bff_fallback.k2')}
+            <AlertTitle sx={{ mb: 0 }}>{i18n.t('components.bff_fallback.local_data_title')}</AlertTitle>
+            {i18n.t('components.bff_fallback.local_data_body')}
           </Alert>
         )}
 
@@ -379,7 +378,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
               startIcon={<Database size={16} />}
               onClick={onShowLocalData}
             >
-              {i18n.t('components.bff_fallback.k3')}
+              {i18n.t('components.bff_fallback.view_local_data')}
             </Button>
           )}
           {onRefresh && (
@@ -389,7 +388,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
               startIcon={<RefreshCw size={16} />}
               onClick={onRefresh}
             >
-              {i18n.t('components.bff_fallback.k4')}
+              {i18n.t('components.bff_fallback.reload')}
             </Button>
           )}
         </Stack>
@@ -446,7 +445,7 @@ export interface BffCacheFallbackProps extends BffFallbackBaseProps {
  * ```
  */
 export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
-  message = i18n.t('components.bff_fallback.k5'),
+  message = i18n.t('components.bff_fallback.cache_message'),
   cachedAt,
   showCachePreview = false,
   cachePreview,
@@ -472,14 +471,14 @@ export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
               startIcon={<RefreshCw size={14} />}
               onClick={onRefresh}
             >
-              {i18n.t('components.bff_fallback.k5')}
+              {i18n.t('components.bff_fallback.refresh')}
             </Button>
           ) : undefined
         }
       >
         <AlertTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0 }}>
           <CloudOff size={16} />
-          <span>{i18n.t('components.bff_fallback.k6')}</span>
+          <span>{i18n.t('components.bff_fallback.cache_title')}</span>
           <Chip
             size='small'
             label={FallbackLevel.TERTIARY}
@@ -495,8 +494,7 @@ export const BffCacheFallback: React.FC<BffCacheFallbackProps> = ({
             color='text.secondary'
             sx={{ display: 'block', mt: 0.5 }}
           >
-            {i18n.t('components.bff_fallback.k2')}
-            {formattedTime}
+            {i18n.t('components.bff_fallback.cache_updated_at', { time: formattedTime })}
           </Typography>
         )}
       </Alert>
@@ -579,7 +577,7 @@ export const BffFallbackContainer: React.FC<BffFallbackContainerProps> = ({
     default:
       return (
         <BffLoadingFallback
-          message={i18n.t('components.bff_fallback.k6')}
+          message={i18n.t('components.bff_fallback.loading')}
           minHeight={minHeight}
         />
       );

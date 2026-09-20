@@ -1162,5 +1162,6 @@
     "k3": "5 per page",
     "k4": "Y-axis Field",
     "k5": "X-axis Field"
-  }
+  },
+  "templates.listPage.selected_items": "items"
 }

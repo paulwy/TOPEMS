@@ -3233,5 +3233,18 @@
   "mes.work_order_page.line_a": "Line A",
   "mes.work_order_page.line_b": "Line B",
   "mes.work_order_page.line_c": "Line C",
-  "mes.work_order_page.attachment_hint": "Upload process drawings, technical documents and other attachments; max 20MB per file"
+  "mes.work_order_page.attachment_hint": "Upload process drawings, technical documents and other attachments; max 20MB per file",
+  "mes.demo.product_gear": "Precision Gear Assembly",
+  "mes.demo.product_shell": "Stainless Steel Housing",
+  "mes.demo.product_rotor": "Motor Rotor",
+  "mes.demo.product_bracket": "Aluminum Alloy Bracket",
+  "mes.demo.product_connector": "Plastic Connector",
+  "mes.demo.operator_zhang": "Zhang San",
+  "mes.demo.operator_li": "Li Si",
+  "mes.demo.operator_wang": "Wang Wu",
+  "mes.demo.operator_zhao": "Zhao Liu",
+  "mes.demo.operator_sun": "Sun Qi",
+  "mes.demo.remark_urgent": "Urgent order, needs priority handling",
+  "mes.demo.remark_breakdown": "Equipment breakdown paused, awaiting repair",
+  "mes.demo.remark_cancelled": "Customer cancelled order"
 }

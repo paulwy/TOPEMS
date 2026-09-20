@@ -72,74 +72,7 @@ const mapApiAttendance = (apiRecords: ApiAttendanceRecord[]): AttendanceRecord[]
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockAttendance: AttendanceRecord[] = [
-  {
-    id: '1',
-    emp_no: 'EMP001',
-    employee_name: '张三',
-    department: '技术部',
-    date: '2026-09-12',
-    check_in: '08:55',
-    check_out: '18:30',
-    status: 'normal',
-    work_hours: 9.5,
-    overtime_hours: 1.5,
-    remark: '',
-  },
-  {
-    id: '2',
-    emp_no: 'EMP002',
-    employee_name: '李四',
-    department: '产品部',
-    date: '2026-09-12',
-    check_in: '09:20',
-    check_out: '18:00',
-    status: 'late',
-    work_hours: 8.0,
-    overtime_hours: 0,
-    remark: '地铁延误',
-  },
-  {
-    id: '3',
-    emp_no: 'EMP003',
-    employee_name: '王五',
-    department: '设计部',
-    date: '2026-09-12',
-    check_in: '09:00',
-    check_out: '17:30',
-    status: 'early',
-    work_hours: 8.5,
-    overtime_hours: 0,
-    remark: '提前下班',
-  },
-  {
-    id: '4',
-    emp_no: 'EMP004',
-    employee_name: '赵六',
-    department: '市场部',
-    date: '2026-09-12',
-    check_in: '-',
-    check_out: '-',
-    status: 'leave',
-    work_hours: 0,
-    overtime_hours: 0,
-    remark: '年假',
-  },
-  {
-    id: '5',
-    emp_no: 'EMP005',
-    employee_name: '钱七',
-    department: '技术部',
-    date: '2026-09-12',
-    check_in: '08:50',
-    check_out: '20:00',
-    status: 'normal',
-    work_hours: 11.0,
-    overtime_hours: 3.0,
-    remark: '项目赶工',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockAttendance
 
 const statusConfig: Record<
   string,
@@ -161,6 +94,74 @@ const formatDateTime = (value?: string) => {
 const HrmAttendanceRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const mockAttendance: AttendanceRecord[] = [
+    {
+      id: '1',
+      emp_no: 'EMP001',
+      employee_name: t('hrm.demo.person_zhang'),
+      department: t('hrm.demo.dept_tech'),
+      date: '2026-09-12',
+      check_in: '08:55',
+      check_out: '18:30',
+      status: 'normal',
+      work_hours: 9.5,
+      overtime_hours: 1.5,
+      remark: '',
+    },
+    {
+      id: '2',
+      emp_no: 'EMP002',
+      employee_name: t('hrm.demo.person_li'),
+      department: t('hrm.demo.dept_product'),
+      date: '2026-09-12',
+      check_in: '09:20',
+      check_out: '18:00',
+      status: 'late',
+      work_hours: 8.0,
+      overtime_hours: 0,
+      remark: t('hrm.demo.att_remark_subway'),
+    },
+    {
+      id: '3',
+      emp_no: 'EMP003',
+      employee_name: t('hrm.demo.person_wang'),
+      department: t('hrm.demo.dept_design'),
+      date: '2026-09-12',
+      check_in: '09:00',
+      check_out: '17:30',
+      status: 'early',
+      work_hours: 8.5,
+      overtime_hours: 0,
+      remark: t('hrm.demo.att_remark_early_leave'),
+    },
+    {
+      id: '4',
+      emp_no: 'EMP004',
+      employee_name: t('hrm.demo.person_zhao'),
+      department: t('hrm.demo.dept_market'),
+      date: '2026-09-12',
+      check_in: '-',
+      check_out: '-',
+      status: 'leave',
+      work_hours: 0,
+      overtime_hours: 0,
+      remark: t('hrm.demo.att_remark_annual_leave'),
+    },
+    {
+      id: '5',
+      emp_no: 'EMP005',
+      employee_name: t('hrm.demo.person_qian'),
+      department: t('hrm.demo.dept_tech'),
+      date: '2026-09-12',
+      check_in: '08:50',
+      check_out: '20:00',
+      status: 'normal',
+      work_hours: 11.0,
+      overtime_hours: 3.0,
+      remark: t('hrm.demo.att_remark_project'),
+    },
+  ];
 
   const [activeTab, setActiveTab] = useState<'all' | 'normal' | 'abnormal' | 'leave'>('all');
   const [searchQuery, setSearchQuery] = useState('');

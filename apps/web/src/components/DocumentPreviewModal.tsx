@@ -105,7 +105,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
           if (header !== 'PK') {
             throw new Error(
-              `${i18n.t('components.document_preview_modal.k6')} ${blob.type || 'unknown'}`
+              `${i18n.t('components.document_preview_modal.format_error')}: ${blob.type || 'unknown'}`
             );
           }
 
@@ -140,13 +140,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         } else {
           logger.info(i18n.t('components.document_preview_modal.k8'));
           setError(
-            `${i18n.t('components.document_preview_modal.k9')} ${fileName}${i18n.t('components.document_preview_modal.k10')}`
+            `${i18n.t('components.document_preview_modal.unsupported')}: ${fileName}`
           );
         }
       } catch (err: unknown) {
         logger.error('Preview error:', err);
         setError(
-          `${i18n.t('components.document_preview_modal.k11')} ${err instanceof Error ? (err as { message?: string }).message : i18n.t('components.document_preview_modal.k9')}`
+          `${i18n.t('components.document_preview_modal.preview_failed')}: ${err instanceof Error ? (err as { message?: string }).message : i18n.t('components.document_preview_modal.k9')}`
         );
       } finally {
         setLoading(false);
@@ -276,7 +276,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 }}
               />
               <p style={{ color: theme.palette.text.secondary }}>
-                {i18n.t('components.document_preview_modal.k12')}
+                {i18n.t('components.document_preview_modal.loading')}
               </p>
             </div>
           )}
@@ -315,7 +315,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   transition: 'background-color 0.2s',
                 }}
               >
-                {i18n.t('components.document_preview_modal.k13')}
+                {i18n.t('components.document_preview_modal.close')}
               </button>
             </div>
           )}

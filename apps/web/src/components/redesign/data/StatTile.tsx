@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { ArrowDownRight, ArrowUpRight, Minus, type LucideIcon } from 'lucide-react';
 
 export interface StatTileProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -33,6 +34,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const accentColors: Record<string, string> = {
       amber: 'var(--accent-primary)',
       cyan: 'var(--accent-secondary)',
@@ -166,7 +168,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
                     color: 'var(--text-tertiary)',
                   }}
                 >
-                  vs 上月
+                  {t('components.stat_tile.vs_last_month')}
                 </span>
               </div>
             )}

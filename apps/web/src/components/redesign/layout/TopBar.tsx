@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Bell,
   Menu,
@@ -38,6 +39,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   sidebarExpanded = true,
   title = 'TOPEMS',
 }) => {
+  const { t } = useTranslation();
   const handleToggle = onToggleSidebar || onMenuToggle;
   const ToggleIcon = sidebarExpanded ? PanelLeftClose : PanelLeftOpen;
 
@@ -210,7 +212,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 }}
               >
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  {user?.name || user?.username || '用户'}
+                  {user?.name || user?.username || t('components.top_bar.user_fallback')}
                 </div>
                 <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
                   {user?.email || ''}
@@ -235,7 +237,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   }}
                 >
                   <UserCircle size={16} />
-                  个人中心
+                  {t('components.top_bar.profile')}
                 </button>
 
                 <button
@@ -254,7 +256,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   }}
                 >
                   <SettingsIcon size={16} />
-                  账号设置
+                  {t('components.top_bar.account_settings')}
                 </button>
               </div>
 
@@ -281,7 +283,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   }}
                 >
                   <LogOut size={16} />
-                  退出登录
+                  {t('components.top_bar.logout')}
                 </button>
               </div>
             </div>

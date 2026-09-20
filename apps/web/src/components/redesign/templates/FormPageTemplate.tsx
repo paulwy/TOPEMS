@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { Button } from '../primitives';
 
@@ -20,8 +21,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   children,
   onSubmit,
   onCancel,
-  submitLabel = '保存',
-  cancelLabel = '取消',
+  submitLabel,
+  cancelLabel,
   loading = false,
   actions,
   className,
@@ -29,6 +30,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
+  const { t } = useTranslation();
+  const resolvedSubmitLabel = submitLabel ?? t('components.form_page_template.submit');
+  const resolvedCancelLabel = cancelLabel ?? t('components.form_page_template.cancel');
   return (
     <div
       className={className}
@@ -78,7 +82,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               type='button'
               onClick={onCancel}
             >
-              {cancelLabel}
+              {resolvedCancelLabel}
             </Button>
           )}
           {onSubmit && (
@@ -87,7 +91,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
               type='submit'
               loading={loading}
             >
-              {submitLabel}
+              {resolvedSubmitLabel}
             </Button>
           )}
         </div>

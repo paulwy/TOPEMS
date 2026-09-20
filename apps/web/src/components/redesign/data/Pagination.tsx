@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface PaginationProps {
@@ -75,6 +76,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   className,
   style,
 }) => {
+  const { t } = useTranslation();
   const pages = useMemo(() => getPageNumbers(current, total), [current, total]);
 
   const handlePageClick = (page: number) => {
@@ -115,7 +117,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       {/* 左侧：总数信息 */}
       {showTotal && totalItems !== undefined && (
         <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-          共 {totalItems} 条，第 {current}/{total} 页
+          {t('components.pagination.total', { total: totalItems, current, pageCount: total })}
         </span>
       )}
 
@@ -127,7 +129,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           style={buttonBaseStyle}
           disabled={disabled || current === 1}
           onClick={() => handlePageClick(1)}
-          aria-label='第一页'
+          aria-label={t('components.pagination.first_page')}
         >
           <ChevronsLeft size={16} />
         </button>
@@ -138,7 +140,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           style={buttonBaseStyle}
           disabled={disabled || current === 1}
           onClick={() => handlePageClick(current - 1)}
-          aria-label='上一页'
+          aria-label={t('components.pagination.prev_page')}
         >
           <ChevronLeft size={16} />
         </button>
@@ -182,7 +184,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           style={buttonBaseStyle}
           disabled={disabled || current === total}
           onClick={() => handlePageClick(current + 1)}
-          aria-label='下一页'
+          aria-label={t('components.pagination.next_page')}
         >
           <ChevronRight size={16} />
         </button>
@@ -193,7 +195,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           style={buttonBaseStyle}
           disabled={disabled || current === total}
           onClick={() => handlePageClick(total)}
-          aria-label='最后一页'
+          aria-label={t('components.pagination.last_page')}
         >
           <ChevronsRight size={16} />
         </button>
@@ -220,7 +222,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 key={size}
                 value={size}
               >
-                {size} 条/页
+                {t('components.pagination.rows_per_page', { count: size })}
               </option>
             ))}
           </select>
@@ -229,7 +231,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* 快速跳转 */}
         {showQuickJumper && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>跳至</span>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>{t('components.pagination.jump_to')}</span>
             <input
               type='number'
               min={1}
@@ -256,7 +258,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 textAlign: 'center',
               }}
             />
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>页</span>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>{t('components.pagination.page')}</span>
           </div>
         )}
       </div>

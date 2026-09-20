@@ -255,7 +255,7 @@ export function BffFormPage<T extends Record<string, unknown>>({
       >
         <Save size={18} />
         {entityName ??
-          (mode === 'create' ? i18n.t('bff.create', '新建') : i18n.t('bff.edit', '编辑'))}
+          (mode === 'create' ? i18n.t('components.bff_form_page.create') : i18n.t('components.bff_form_page.edit'))}
       </Typography>
 
       {pageState.error && (
@@ -335,7 +335,7 @@ export function BffFormPage<T extends Record<string, unknown>>({
                 onClick={onCancel}
                 disabled={isSubmitting}
               >
-                {cancelLabel ?? i18n.t('bff.cancel', '取消')}
+                {cancelLabel ?? i18n.t('components.bff_form_page.cancel')}
               </Button>
             )}
             <Button
@@ -354,7 +354,7 @@ export function BffFormPage<T extends Record<string, unknown>>({
               disabled={isSubmitting || !isValid || (mode === 'edit' && !isDirty)}
             >
               {submitLabel ??
-                (mode === 'create' ? i18n.t('bff.submit', '提交') : i18n.t('bff.save', '保存'))}
+                (mode === 'create' ? i18n.t('components.bff_form_page.submit') : i18n.t('components.bff_form_page.save'))}
             </Button>
           </Stack>
         </Box>

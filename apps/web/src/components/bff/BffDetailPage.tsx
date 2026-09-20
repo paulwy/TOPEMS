@@ -170,7 +170,7 @@ function DetailField({
           size='small'
           onClick={handleCopy}
           sx={{ ml: -0.5 }}
-          aria-label={i18n.t('components.bff_detail_page.k0')}
+          aria-label={i18n.t('components.bff_detail_page.copy')}
         >
           {copied ? (
             <Check
@@ -367,7 +367,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
   const handleDelete = useCallback(async () => {
     if (!entityId || !currentData) return;
     const confirmed = window.confirm(
-      `${i18n.t('components.bff_detail_page.k0')}${entityName ?? i18n.t('components.bff_detail_page.k1')}${i18n.t('components.bff_detail_page.k1')}`
+i18n.t('components.bff_detail_page.delete_confirm', { name: entityName ?? i18n.t('components.bff_detail_page.record') })
     );
     if (!confirmed) return;
 
@@ -405,8 +405,8 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
         }
       } catch (_err) {
         addNotification({
-          title: i18n.t('components.bff_detail_page.k2'),
-          message: i18n.t('components.bff_detail_page.k3'),
+          title: i18n.t('components.bff_detail_page.load_failed'),
+          message: i18n.t('components.bff_detail_page.related_load_failed'),
           type: 'error',
         });
       } finally {
@@ -425,7 +425,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
   }, [loadRelated, relatedQueries]);
 
   const displayTitle = String(
-    title ?? dataObj.name ?? dataObj.title ?? entityName ?? i18n.t('components.bff_detail_page.k4')
+    title ?? dataObj.name ?? dataObj.title ?? entityName ?? i18n.t('components.bff_detail_page.details')
   );
   const displaySubtitle = subtitle ?? (dataObj.code as string) ?? '';
 
@@ -448,7 +448,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
           <IconButton
             onClick={handleBack}
             size='small'
-            aria-label={i18n.t('components.bff_detail_page.k5')}
+            aria-label={i18n.t('components.bff_detail_page.back')}
           >
             <ArrowLeft size={20} />
           </IconButton>
@@ -485,33 +485,33 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
             )}
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <Tooltip title={i18n.t('components.bff_detail_page.k6')}>
+            <Tooltip title={i18n.t('components.bff_detail_page.refresh')}>
               <IconButton
                 onClick={() => entityId && crud.get(entityId)}
                 size='small'
-                aria-label={i18n.t('components.bff_detail_page.k7')}
+                aria-label={i18n.t('components.bff_detail_page.refresh')}
               >
                 <RefreshCw size={18} />
               </IconButton>
             </Tooltip>
             {onEdit && (
-              <Tooltip title={i18n.t('components.bff_detail_page.k8')}>
+              <Tooltip title={i18n.t('components.bff_detail_page.edit')}>
                 <IconButton
                   onClick={handleEdit}
                   size='small'
-                  aria-label={i18n.t('components.bff_detail_page.k9')}
+                  aria-label={i18n.t('components.bff_detail_page.edit')}
                 >
                   <Edit size={18} />
                 </IconButton>
               </Tooltip>
             )}
             {onDelete && (
-              <Tooltip title={i18n.t('components.bff_detail_page.k10')}>
+              <Tooltip title={i18n.t('components.bff_detail_page.delete')}>
                 <IconButton
                   onClick={handleDelete}
                   size='small'
                   color='error'
-                  aria-label={i18n.t('components.bff_detail_page.k11')}
+                  aria-label={i18n.t('components.bff_detail_page.delete')}
                 >
                   <Delete size={18} />
                 </IconButton>
@@ -589,7 +589,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
             onChange={(_, v) => setActiveTab(v)}
             sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
           >
-            <Tab label={i18n.t('components.bff_detail_page.k12')} />
+            <Tab label={i18n.t('components.bff_detail_page.basic_info')} />
             {relatedQueries.map((q, _i) => {
               const icon = React.isValidElement(q.icon) ? q.icon : undefined;
               return (
@@ -624,7 +624,7 @@ function BffDetailPageInner<T extends { id?: string; [key: string]: unknown }>(
                       variant='outlined'
                       onClick={() => loadRelated(q.key)}
                     >
-                      {i18n.t('components.bff_detail_page.k0')}
+                      {i18n.t('components.bff_detail_page.load')}
                     </Button>
                   </Box>
                 )}

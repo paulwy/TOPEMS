@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '../primitives';
 
@@ -18,8 +19,8 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
   (
     {
       code = 500,
-      title = '出错了',
-      message = '系统遇到意外问题，请稍后重试或联系支持团队。',
+      title,
+      message,
       traceId,
       onRetry,
       onFeedback,
@@ -30,6 +31,9 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
+    const resolvedTitle = title ?? t('components.error_state.title');
+    const resolvedMessage = message ?? t('components.error_state.message');
     return (
       <div
         ref={ref}
@@ -99,10 +103,10 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
                 color: 'var(--text-primary)',
               }}
             >
-              {title}
+              {resolvedTitle}
             </h1>
           </div>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{message}</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{resolvedMessage}</p>
           {traceId && (
             <code
               style={{
@@ -128,7 +132,7 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
               leftIcon={<RefreshCw size={16} />}
               onClick={onRetry}
             >
-              重试
+              {t('components.error_state.retry')}
             </Button>
           )}
           {onFeedback && (
@@ -136,7 +140,7 @@ export const ErrorState = React.forwardRef<HTMLDivElement, ErrorStateProps>(
               variant='secondary'
               onClick={onFeedback}
             >
-              反馈问题
+              {t('components.error_state.feedback')}
             </Button>
           )}
         </div>

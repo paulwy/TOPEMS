@@ -180,5 +180,19 @@
   "oa.announcement_page.k43": "Attachments",
   "oa.announcement_page.k44": "Click or drag files here to upload. Supports PDF, Word, Excel, images and other formats.",
   "oa.announcement_page.k45": "Announcement published successfully",
-  "oa.announcement_page.k46": "Announcement deleted"
+  "oa.announcement_page.k46": "Announcement deleted",
+  "oa.demo.ann_title_1": "Notice on the 2026 National Day Holiday Arrangement",
+  "oa.demo.ann_content_1": "In accordance with the notice of the General Office of the State Council and based on the company's actual situation, the 2026 National Day holiday arrangement is announced as follows:\n\nI. Holiday: October 1 (Thursday) to October 7 (Wednesday), a total of 7 days off.\n\nII. Work on October 10 (Saturday).\n\nIII. All departments should make work arrangements in advance to ensure normal operations during the holiday.\n\nIV. Please stay safe during the holiday. Happy holidays to everyone!",
+  "oa.demo.ann_author_hr": "Human Resources Dept",
+  "oa.demo.ann_title_2": "Company Information Security Management Policy (2026 Edition)",
+  "oa.demo.ann_content_2": "Chapter 1 General Provisions\n\nArticle 1 This policy is formulated to strengthen the company's information security management and protect its information systems and data security, in accordance with relevant national laws and regulations and the company's actual situation.\n\nArticle 2 This policy applies to all employees and external partners of the company.\n\nChapter 2 Account Management\n\nArticle 3 System accounts are uniformly assigned by the IT department after an employee joins the company.\n\nArticle 4 Account passwords must meet complexity requirements and be changed regularly.",
+  "oa.demo.ann_author_sec": "Information Security Dept",
+  "oa.demo.ann_title_3": "2026 Autumn Team Building Registration Notice",
+  "oa.demo.ann_content_3": "To enrich employees' spare time and strengthen team cohesion, the company will organize an autumn team building event on October 18, 2026 (Sunday).\n\nVenue: XX Ecological Park\nActivities: Outdoor training, BBQ, team games\nRegistration: Now until October 10\nHow to register: Please contact your department's admin staff\n\nEveryone is welcome to join!",
+  "oa.demo.ann_author_union": "Labor Union",
+  "oa.demo.ann_title_4": "Draft Attendance Policy Revision for Comments",
+  "oa.demo.ann_content_4": "To further standardize the company's attendance management and improve efficiency, the Human Resources Dept plans to optimize the current attendance policy. The draft is now released for comments. Please have all departments organize discussions and send feedback to Human Resources before October 15.",
+  "oa.demo.ann_title_5": "Announcement on Launching the New OA System",
+  "oa.demo.ann_content_5": "To improve office efficiency, the company will officially launch the new OA system on October 1, 2026. The old system will be shut down at 24:00 on September 30.\n\nNew system address: https://oa.topems.com\nLogin account: Employee number\nInitial password: Last six digits of ID card\n\nPlease log in promptly and change your password. Contact IT support if you have any issues.",
+  "oa.demo.ann_author_it": "IT Dept"
 }

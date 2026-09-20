@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageHeader, type PageHeaderProps } from '../layout';
 import { DataTable, type DataTableProps, type DataTableColumn } from '../data';
 import { EmptyState } from '../feedback';
@@ -41,6 +42,7 @@ export function ListPageTemplate<T extends object>({
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }: ListPageTemplateProps<T>) {
+  const { t } = useTranslation();
   return (
     <div
       className={className}
@@ -85,8 +87,8 @@ export function ListPageTemplate<T extends object>({
       {data.length === 0 && !loading && !error ? (
         <EmptyState
           variant='data'
-          title={emptyTitle ?? '暂无数据'}
-          description={emptyDescription ?? '当前列表为空'}
+          title={emptyTitle ?? t('components.data_table.empty_title')}
+          description={emptyDescription ?? t('components.data_table.empty_description')}
           action={emptyAction}
         />
       ) : (

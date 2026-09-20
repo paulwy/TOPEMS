@@ -120,10 +120,9 @@ const AnnouncementPage: React.FC = () => {
     () => [
       {
         id: '1',
-        title: '关于 2026 年国庆节放假安排的通知',
-        content:
-          '根据国务院办公厅通知精神，结合公司实际情况，现将 2026 年国庆节放假安排通知如下：\n\n一、放假时间：10 月 1 日（星期四）至 10 月 7 日（星期三）放假调休，共 7 天。\n\n二、10 月 10 日（星期六）上班。\n\n三、请各部门提前做好工作安排，确保放假期间各项工作正常运转。\n\n四、放假期间请大家注意安全，祝大家节日快乐！',
-        author: '人力资源部',
+        title: t('oa.demo.ann_title_1'),
+        content: t('oa.demo.ann_content_1'),
+        author: t('oa.demo.ann_author_hr'),
         created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
         category: 'notice',
         status: 'published',
@@ -132,10 +131,9 @@ const AnnouncementPage: React.FC = () => {
       },
       {
         id: '2',
-        title: '公司信息安全管理制度（2026 版）',
-        content:
-          '第一章 总则\n\n第一条 为加强公司信息安全管理，保障公司信息系统和数据安全，根据国家有关法律法规，结合公司实际，制定本制度。\n\n第二条 本制度适用于公司全体员工及外部合作人员。\n\n第二章 账号管理\n\n第三条 员工入职后由 IT 部门统一分配系统账号。\n\n第四条 账号密码必须符合复杂度要求，定期更换。',
-        author: '信息安全部',
+        title: t('oa.demo.ann_title_2'),
+        content: t('oa.demo.ann_content_2'),
+        author: t('oa.demo.ann_author_sec'),
         created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
         category: 'policy',
         status: 'published',
@@ -144,10 +142,9 @@ const AnnouncementPage: React.FC = () => {
       },
       {
         id: '3',
-        title: '2026 年秋季团建活动报名通知',
-        content:
-          '为丰富员工业余生活，增强团队凝聚力，公司定于 2026 年 10 月 18 日（星期日）组织秋季团建活动。\n\n活动地点：XX 生态公园\n活动内容：户外拓展、烧烤、团队游戏\n报名时间：即日起至 10 月 10 日\n报名方式：请联系各部门行政人员报名\n\n欢迎大家积极参与！',
-        author: '工会',
+        title: t('oa.demo.ann_title_3'),
+        content: t('oa.demo.ann_content_3'),
+        author: t('oa.demo.ann_author_union'),
         created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
         category: 'activity',
         status: 'published',
@@ -156,10 +153,9 @@ const AnnouncementPage: React.FC = () => {
       },
       {
         id: '4',
-        title: '关于优化考勤制度的征求意见稿',
-        content:
-          '为进一步规范公司考勤管理，提高工作效率，人力资源部拟对现有考勤制度进行优化。现将征求意见稿发布如下，请各部门组织员工讨论，并于 10 月 15 日前将意见反馈至人力资源部。',
-        author: '人力资源部',
+        title: t('oa.demo.ann_title_4'),
+        content: t('oa.demo.ann_content_4'),
+        author: t('oa.demo.ann_author_hr'),
         created_at: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
         category: 'policy',
         status: 'draft',
@@ -168,10 +164,9 @@ const AnnouncementPage: React.FC = () => {
       },
       {
         id: '5',
-        title: '关于启用新 OA 系统的公告',
-        content:
-          '为提升办公效率，公司将于 2026 年 10 月 1 日正式启用新 OA 系统。旧系统将于 9 月 30 日 24:00 停止使用。\n\n新系统访问地址：https://oa.topems.com\n登录账号：工号\n初始密码：身份证后六位\n\n请大家及时登录并修改密码。如有问题请联系 IT 支持。',
-        author: 'IT 部门',
+        title: t('oa.demo.ann_title_5'),
+        content: t('oa.demo.ann_content_5'),
+        author: t('oa.demo.ann_author_it'),
         created_at: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
         category: 'announcement',
         status: 'published',
@@ -179,7 +174,7 @@ const AnnouncementPage: React.FC = () => {
         views: 512,
       },
     ],
-    []
+    [t]
   );
 
   const { data, isLoading, error, refetch } = useQuery({

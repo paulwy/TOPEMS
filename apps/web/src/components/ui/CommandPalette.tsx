@@ -421,7 +421,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                       component='span'
                       sx={{ ml: 1, fontWeight: 400, opacity: 0.7 }}
                     >
-                      {i18n.t('components.command_palette.k15', { defaultValue: '当前域' })}
+                      {i18n.t('components.command_palette.current_domain')}
                     </Box>
                   )}
                 </Typography>

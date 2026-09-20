@@ -3703,7 +3703,7 @@ export function ListPageTemplate<
                       color='primary'
                       sx={{ whiteSpace: 'nowrap' }}
                     >
-                      {i18n.t('templates.listPage.k4')} {selectedIds.size} 项
+                      {i18n.t('templates.listPage.k4')} {selectedIds.size} {i18n.t('templates.listPage.selected_items')}
                     </Button>
                     {resolvedBatchActions?.map((action, index) => (
                       <Button

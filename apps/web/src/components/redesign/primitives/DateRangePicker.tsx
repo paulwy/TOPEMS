@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { Calendar } from 'lucide-react';
 
 export interface DateRange {
@@ -31,16 +32,18 @@ export interface DateRangePickerProps {
 }
 
 /** 常用预设 */
-export const defaultPresets = [
+export const createDefaultPresets = (
+  t: (key: string) => string
+): { label: string; value: () => DateRange }[] => [
   {
-    label: '今天',
+    label: t('components.date_range_picker.preset_today'),
     value: () => {
       const today = new Date().toISOString().split('T')[0];
       return { start: today, end: today };
     },
   },
   {
-    label: '最近7天',
+    label: t('components.date_range_picker.preset_last_7_days'),
     value: () => {
       const end = new Date();
       const start = new Date();
@@ -52,7 +55,7 @@ export const defaultPresets = [
     },
   },
   {
-    label: '最近30天',
+    label: t('components.date_range_picker.preset_last_30_days'),
     value: () => {
       const end = new Date();
       const start = new Date();
@@ -64,7 +67,7 @@ export const defaultPresets = [
     },
   },
   {
-    label: '本月',
+    label: t('components.date_range_picker.preset_this_month'),
     value: () => {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -80,8 +83,8 @@ export const defaultPresets = [
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   value,
   onChange,
-  startPlaceholder = '开始日期',
-  endPlaceholder = '结束日期',
+  startPlaceholder,
+  endPlaceholder,
   minDate,
   maxDate,
   disabled = false,
@@ -89,6 +92,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   className,
   style,
 }) => {
+  const { t } = useTranslation();
+  const resolvedStartPlaceholder = startPlaceholder ?? t('components.date_range_picker.start_placeholder');
+  const resolvedEndPlaceholder = endPlaceholder ?? t('components.date_range_picker.end_placeholder');
   const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.({ start: e.target.value, end: value?.end || '' });
   };
@@ -154,11 +160,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             min={minDate}
             max={maxDate || value?.end || maxDate}
             disabled={disabled}
-            placeholder={startPlaceholder}
+            placeholder={resolvedStartPlaceholder}
             style={{ ...inputStyle, paddingLeft: 36 }}
           />
         </div>
-        <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>至</span>
+        <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>{t('components.date_range_picker.to')}</span>
         <div style={{ position: 'relative', flex: 1 }}>
           <Calendar
             size={16}
@@ -178,7 +184,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             min={minDate || value?.start || minDate}
             max={maxDate}
             disabled={disabled}
-            placeholder={endPlaceholder}
+            placeholder={resolvedEndPlaceholder}
             style={{ ...inputStyle, paddingLeft: 36 }}
           />
         </div>

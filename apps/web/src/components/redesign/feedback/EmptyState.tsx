@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { Search, Inbox, FileQuestion, type LucideIcon } from 'lucide-react';
 import { Button } from '../primitives';
 
@@ -34,11 +35,12 @@ export const EmptyState = React.forwardRef<HTMLDivElement, EmptyStateProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const Icon = IconProp ?? defaultIcons[variant];
     const defaultTitles: Record<EmptyStateVariant, string> = {
-      default: '暂无数据',
-      search: '未找到结果',
-      data: '没有相关记录',
+      default: t('components.empty_state.default_title'),
+      search: t('components.empty_state.search_title'),
+      data: t('components.empty_state.data_title'),
     };
 
     return (

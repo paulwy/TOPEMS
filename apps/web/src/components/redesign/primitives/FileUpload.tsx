@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, File, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 export interface UploadFile {
@@ -63,11 +64,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   disabled = false,
   showFileList = true,
   customRequest,
-  hint = '点击或拖拽文件到此处上传',
+  hint,
   className,
   style,
   id,
 }) => {
+  const { t } = useTranslation();
+  const resolvedHint = hint ?? t('components.file_upload.hint');
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -81,22 +84,22 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const validateFile = useCallback(
     (file: File): string | null => {
       if (maxSize && file.size > maxSize * 1024 * 1024) {
-        return `文件大小不能超过 ${maxSize}MB`;
+        return t('components.file_upload.size_limit_error', { maxSize });
       }
       if (accept) {
-        const acceptTypes = accept.split(',').map((t) => t.trim().toLowerCase());
+        const acceptTypes = accept.split(',').map((type) => type.trim().toLowerCase());
         const fileType = file.type.toLowerCase();
         const fileExt = `.${file.name.split('.').pop()?.toLowerCase()}`;
         const isValid = acceptTypes.some(
           (type) => fileType.startsWith(type.replace('/*', '')) || fileExt === type
         );
         if (!isValid) {
-          return `不支持的文件类型`;
+          return t('components.file_upload.type_error');
         }
       }
       return null;
     },
-    [maxSize, accept]
+    [maxSize, accept, t]
   );
 
   const handleFiles = useCallback(
@@ -148,7 +151,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 ? {
                     ...f,
                     status: 'error' as const,
-                    error: err instanceof Error ? err.message : '上传失败',
+                    error: err instanceof Error ? err.message : t('components.file_upload.upload_failed'),
                   }
                 : f
             );
@@ -273,11 +276,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             style={{ color: 'var(--text-secondary)' }}
           />
         </div>
-        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>{hint}</div>
+        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>{resolvedHint}</div>
         {accept && (
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
-            支持格式：{accept}
-            {maxSize && ` · 单个文件不超过 ${maxSize}MB`}
+            {t('components.file_upload.supported_formats', { accept })}
+            {maxSize && ` · ${t('components.file_upload.max_size_hint', { maxSize })}`}
           </div>
         )}
       </div>
@@ -372,7 +375,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
-                aria-label={`删除 ${file.name}`}
+                aria-label={t('components.file_upload.remove', { name: file.name })}
               >
                 <X size={16} />
               </button>

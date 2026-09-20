@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 
 export interface LoadingOverlayProps extends React.HTMLAttributes<HTMLDivElement> {
   visible: boolean;
@@ -12,13 +13,15 @@ export interface LoadingOverlayProps extends React.HTMLAttributes<HTMLDivElement
 
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   visible,
-  label = '加载中...',
+  label,
   global = false,
   className,
   style,
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t('components.loading_overlay.label');
   if (!visible) return null;
 
   const content = (
@@ -58,7 +61,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
           letterSpacing: 'var(--tracking-wide)',
         }}
       >
-        {label}
+        {resolvedLabel}
       </span>
     </div>
   );

@@ -57,15 +57,15 @@ import {
 // ==================== 状态徽标 ====================
 
 const STATUS_META: Record<ExperimentStatus, { color: ChipOwnProps['color']; label: string }> = {
-  [ExperimentStatus.DRAFT]: { color: 'default', label: i18n.t('abtest.status_draft', '草稿') },
+  [ExperimentStatus.DRAFT]: { color: 'default', label: i18n.t('components.bff_ab_test_panel.status_draft') },
   [ExperimentStatus.RUNNING]: {
     color: 'success',
-    label: i18n.t('abtest.status_running', '运行中'),
+    label: i18n.t('components.bff_ab_test_panel.status_running'),
   },
-  [ExperimentStatus.PAUSED]: { color: 'warning', label: i18n.t('abtest.status_paused', '已暂停') },
+  [ExperimentStatus.PAUSED]: { color: 'warning', label: i18n.t('components.bff_ab_test_panel.status_paused') },
   [ExperimentStatus.COMPLETED]: {
     color: 'info',
-    label: i18n.t('abtest.status_completed', '已完成'),
+    label: i18n.t('components.bff_ab_test_panel.status_completed'),
   },
 };
 
@@ -83,8 +83,8 @@ function emptyForm(): CreateFormState {
   return {
     name: '',
     description: '',
-    controlName: i18n.t('ai.ab_test_panel.control_group'),
-    variantName: i18n.t('ai.ab_test_panel.variant_group'),
+    controlName: i18n.t('components.bff_ab_test_panel.control_group'),
+    variantName: i18n.t('components.bff_ab_test_panel.variant_group'),
     traffic: 100,
   };
 }
@@ -184,7 +184,7 @@ function ExperimentRow({
                 size='small'
                 color='success'
                 icon={<Trophy size={12} />}
-                label={i18n.t('abtest.winner', '赢家')}
+                label={i18n.t('components.bff_ab_test_panel.winner')}
               />
             )}
             {!isSignificant && experiment.status === ExperimentStatus.RUNNING && (
@@ -192,7 +192,7 @@ function ExperimentRow({
                 variant='caption'
                 color='text.secondary'
               >
-                {i18n.t('abtest.not_significant', '未达显著')}
+                {i18n.t('components.bff_ab_test_panel.not_significant')}
               </Typography>
             )}
           </Box>
@@ -201,7 +201,7 @@ function ExperimentRow({
             variant='caption'
             color='text.secondary'
           >
-            {i18n.t('abtest.no_data', '暂无数据')}
+            {i18n.t('components.bff_ab_test_panel.no_data')}
           </Typography>
         )}
       </TableCell>
@@ -212,7 +212,7 @@ function ExperimentRow({
           sx={{ justifyContent: 'flex-end' }}
         >
           {experiment.status === ExperimentStatus.DRAFT && (
-            <Tooltip title={i18n.t('abtest.start', '启动')}>
+            <Tooltip title={i18n.t('components.bff_ab_test_panel.start')}>
               <IconButton
                 size='small'
                 color='success'
@@ -226,7 +226,7 @@ function ExperimentRow({
             </Tooltip>
           )}
           {experiment.status === ExperimentStatus.RUNNING && (
-            <Tooltip title={i18n.t('abtest.pause', '暂停')}>
+            <Tooltip title={i18n.t('components.bff_ab_test_panel.pause')}>
               <IconButton
                 size='small'
                 color='warning'
@@ -240,7 +240,7 @@ function ExperimentRow({
             </Tooltip>
           )}
           {experiment.status !== ExperimentStatus.COMPLETED && (
-            <Tooltip title={i18n.t('abtest.complete', '完成')}>
+            <Tooltip title={i18n.t('components.bff_ab_test_panel.complete')}>
               <IconButton
                 size='small'
                 color='info'
@@ -253,7 +253,7 @@ function ExperimentRow({
               </IconButton>
             </Tooltip>
           )}
-          <Tooltip title={i18n.t('abtest.delete', '删除')}>
+          <Tooltip title={i18n.t('components.bff_ab_test_panel.delete')}>
             <IconButton
               size='small'
               color='error'
@@ -301,7 +301,7 @@ export function ABTestPanel({
 
   const handleCreate = (): void => {
     if (!form.name.trim()) {
-      setError(i18n.t('abtest.name_required', '请输入实验名称'));
+      setError(i18n.t('components.bff_ab_test_panel.name_required'));
       return;
     }
     const input: CreateExperimentInput = {
@@ -310,13 +310,13 @@ export function ABTestPanel({
       traffic_allocation: Math.min(100, Math.max(0, form.traffic)) / 100,
       variants: [
         {
-          name: form.controlName.trim() || i18n.t('ai.ab_test_panel.control_group'),
+          name: form.controlName.trim() || i18n.t('components.bff_ab_test_panel.control_group'),
           weight: 50,
           is_control: true,
           config: {},
         },
         {
-          name: form.variantName.trim() || i18n.t('ai.ab_test_panel.variant_group'),
+          name: form.variantName.trim() || i18n.t('components.bff_ab_test_panel.variant_group'),
           weight: 50,
           is_control: false,
           config: {},
@@ -342,18 +342,18 @@ export function ABTestPanel({
           sx={{ alignItems: 'center' }}
         >
           <FlaskConical size={20} />
-          <Typography variant='h6'>{title ?? i18n.t('abtest.title', 'A/B 实验管理')}</Typography>
+          <Typography variant='h6'>{title ?? i18n.t('components.bff_ab_test_panel.title')}</Typography>
           <Chip
             size='small'
             color='success'
-            label={i18n.t('abtest.active_count', '活跃 {count}', { count })}
+            label={i18n.t('components.bff_ab_test_panel.active_count', { count })}
           />
         </Stack>
         <Stack
           direction='row'
           spacing={1}
         >
-          <Tooltip title={i18n.t('abtest.refresh', '刷新')}>
+          <Tooltip title={i18n.t('components.bff_ab_test_panel.refresh')}>
             <IconButton
               size='small'
               onClick={refresh}
@@ -368,7 +368,7 @@ export function ABTestPanel({
               startIcon={<Plus size={16} />}
               onClick={() => setOpen(true)}
             >
-              {i18n.t('abtest.create', '创建实验')}
+              {i18n.t('components.bff_ab_test_panel.create_experiment')}
             </Button>
           )}
         </Stack>
@@ -376,19 +376,19 @@ export function ABTestPanel({
 
       {allExperiments.length === 0 ? (
         <Alert severity='info'>
-          {i18n.t('abtest.empty', '暂无实验，点击右上角创建第一个 A/B 实验')}
+          {i18n.t('components.bff_ab_test_panel.empty')}
         </Alert>
       ) : (
         <TableContainer>
           <Table size='small'>
             <TableHead>
               <TableRow>
-                <TableCell>{i18n.t('abtest.col_name', '实验')}</TableCell>
-                <TableCell>{i18n.t('abtest.col_status', '状态')}</TableCell>
-                <TableCell>{i18n.t('abtest.col_variants', '变体')}</TableCell>
-                <TableCell align='right'>{i18n.t('abtest.col_traffic', '流量')}</TableCell>
-                <TableCell>{i18n.t('abtest.col_result', '结果')}</TableCell>
-                <TableCell align='right'>{i18n.t('abtest.col_actions', '操作')}</TableCell>
+                <TableCell>{i18n.t('components.bff_ab_test_panel.col_name')}</TableCell>
+                <TableCell>{i18n.t('components.bff_ab_test_panel.col_status')}</TableCell>
+                <TableCell>{i18n.t('components.bff_ab_test_panel.col_variants')}</TableCell>
+                <TableCell align='right'>{i18n.t('components.bff_ab_test_panel.col_traffic')}</TableCell>
+                <TableCell>{i18n.t('components.bff_ab_test_panel.col_result')}</TableCell>
+                <TableCell align='right'>{i18n.t('components.bff_ab_test_panel.col_actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -411,7 +411,7 @@ export function ABTestPanel({
         maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>{i18n.t('abtest.create_title', '创建 A/B 实验')}</DialogTitle>
+        <DialogTitle>{i18n.t('components.bff_ab_test_panel.create_title')}</DialogTitle>
         <DialogContent>
           {error && (
             <Alert
@@ -426,14 +426,14 @@ export function ABTestPanel({
             sx={{ mt: 1 }}
           >
             <TextField
-              label={i18n.t('abtest.name', '实验名称')}
+              label={i18n.t('components.bff_ab_test_panel.name')}
               size='small'
               value={form.name}
               required
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             />
             <TextField
-              label={i18n.t('abtest.description', '实验描述')}
+              label={i18n.t('components.bff_ab_test_panel.description')}
               size='small'
               multiline
               minRows={2}
@@ -445,20 +445,20 @@ export function ABTestPanel({
               spacing={2}
             >
               <TextField
-                label={i18n.t('abtest.control', '对照组')}
+                label={i18n.t('components.bff_ab_test_panel.control_group')}
                 size='small'
                 value={form.controlName}
                 onChange={(e) => setForm((f) => ({ ...f, controlName: e.target.value }))}
               />
               <TextField
-                label={i18n.t('abtest.treatment', '实验组')}
+                label={i18n.t('components.bff_ab_test_panel.variant_group')}
                 size='small'
                 value={form.variantName}
                 onChange={(e) => setForm((f) => ({ ...f, variantName: e.target.value }))}
               />
             </Stack>
             <TextField
-              label={i18n.t('abtest.traffic', '流量分配 (%)')}
+              label={i18n.t('components.bff_ab_test_panel.traffic')}
               size='small'
               type='number'
               slotProps={{ htmlInput: { min: 1, max: 100 } }}
@@ -468,13 +468,13 @@ export function ABTestPanel({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>{i18n.t('abtest.cancel', '取消')}</Button>
+          <Button onClick={() => setOpen(false)}>{i18n.t('components.bff_ab_test_panel.cancel')}</Button>
           <Button
             variant='contained'
             startIcon={<Plus size={16} />}
             onClick={handleCreate}
           >
-            {i18n.t('abtest.create', '创建')}
+            {i18n.t('components.bff_ab_test_panel.create')}
           </Button>
         </DialogActions>
       </Dialog>

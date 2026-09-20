@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { EmptyState } from '../feedback';
 
@@ -40,8 +41,8 @@ export function DataTable<T extends object>({
   selectable = false,
   selectedKeys = [],
   onSelectionChange,
-  emptyTitle = '暂无数据',
-  emptyDescription = '当前列表为空',
+  emptyTitle,
+  emptyDescription,
   emptyAction,
   onRowClick,
   sort,
@@ -51,6 +52,9 @@ export function DataTable<T extends object>({
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }: DataTableProps<T>) {
+  const { t } = useTranslation();
+  const resolvedEmptyTitle = emptyTitle ?? t('components.data_table.empty_title');
+  const resolvedEmptyDescription = emptyDescription ?? t('components.data_table.empty_description');
   const [internalSelected, setInternalSelected] = useState<string[]>([]);
   const currentSelected = selectedKeys ?? internalSelected;
 
@@ -259,8 +263,8 @@ export function DataTable<T extends object>({
       {!loading && data.length === 0 && (
         <EmptyState
           variant='data'
-          title={emptyTitle}
-          description={emptyDescription}
+          title={resolvedEmptyTitle}
+          description={resolvedEmptyDescription}
           action={emptyAction}
         />
       )}

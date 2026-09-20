@@ -28,5 +28,5 @@ export type { AvatarProps, AvatarSize, AvatarStatus, AvatarVariant } from './Ava
 export { FileUpload } from './FileUpload';
 export type { FileUploadProps, UploadFile } from './FileUpload';
 
-export { DateRangePicker, defaultPresets } from './DateRangePicker';
+export { DateRangePicker, createDefaultPresets } from './DateRangePicker';
 export type { DateRangePickerProps, DateRange } from './DateRangePicker';

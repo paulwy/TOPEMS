@@ -76,71 +76,7 @@ const mapApiInspections = (apiChecks: ApiQualityCheck[]): Inspection[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockInspections: Inspection[] = [
-  {
-    id: '1',
-    check_no: 'QC202609001',
-    title: '原材料入库检验-伺服电机',
-    inspection_type: 'incoming',
-    status: 'pending',
-    product_name: '伺服电机',
-    batch_no: 'BATCH-2026-0901',
-    quantity: 500,
-    created_at: '2026-09-13 09:00:00',
-  },
-  {
-    id: '2',
-    check_no: 'QC202609002',
-    title: '过程检验-PLC控制器装配线',
-    inspection_type: 'process',
-    status: 'in_progress',
-    product_name: 'PLC 控制器',
-    batch_no: 'BATCH-2026-0902',
-    inspector: '张三',
-    quantity: 200,
-    created_at: '2026-09-13 10:30:00',
-  },
-  {
-    id: '3',
-    check_no: 'QC202609003',
-    title: '成品出库检验-变频器',
-    inspection_type: 'final',
-    status: 'completed',
-    product_name: '变频器',
-    batch_no: 'BATCH-2026-0899',
-    inspector: '李四',
-    result: 'qualified',
-    quantity: 320,
-    created_at: '2026-09-12 14:00:00',
-    completed_at: '2026-09-12 16:30:00',
-  },
-  {
-    id: '4',
-    check_no: 'QC202609004',
-    title: '原材料入库检验-工业相机',
-    inspection_type: 'incoming',
-    status: 'rejected',
-    product_name: '工业相机',
-    batch_no: 'BATCH-2026-0898',
-    inspector: '王五',
-    result: 'unqualified',
-    quantity: 1500,
-    created_at: '2026-09-11 11:00:00',
-    completed_at: '2026-09-11 15:00:00',
-  },
-  {
-    id: '5',
-    check_no: 'QC202609005',
-    title: '过程检验-触摸屏HMI测试',
-    inspection_type: 'process',
-    status: 'pending',
-    product_name: '触摸屏 HMI',
-    batch_no: 'BATCH-2026-0903',
-    quantity: 100,
-    created_at: '2026-09-13 15:00:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockInspections
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -150,6 +86,71 @@ const formatDateTime = (value?: string) => {
 const QmsInspectionPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const mockInspections: Inspection[] = [
+    {
+      id: '1',
+      check_no: 'QC202609001',
+      title: t('qms.demo.insp_title_1'),
+      inspection_type: 'incoming',
+      status: 'pending',
+      product_name: t('qms.demo.product_servo'),
+      batch_no: 'BATCH-2026-0901',
+      quantity: 500,
+      created_at: '2026-09-13 09:00:00',
+    },
+    {
+      id: '2',
+      check_no: 'QC202609002',
+      title: t('qms.demo.insp_title_2'),
+      inspection_type: 'process',
+      status: 'in_progress',
+      product_name: t('qms.demo.product_plc'),
+      batch_no: 'BATCH-2026-0902',
+      inspector: t('qms.demo.person_zhang'),
+      quantity: 200,
+      created_at: '2026-09-13 10:30:00',
+    },
+    {
+      id: '3',
+      check_no: 'QC202609003',
+      title: t('qms.demo.insp_title_3'),
+      inspection_type: 'final',
+      status: 'completed',
+      product_name: t('qms.demo.product_inverter'),
+      batch_no: 'BATCH-2026-0899',
+      inspector: t('qms.demo.person_li'),
+      result: 'qualified',
+      quantity: 320,
+      created_at: '2026-09-12 14:00:00',
+      completed_at: '2026-09-12 16:30:00',
+    },
+    {
+      id: '4',
+      check_no: 'QC202609004',
+      title: t('qms.demo.insp_title_4'),
+      inspection_type: 'incoming',
+      status: 'rejected',
+      product_name: t('qms.demo.product_camera'),
+      batch_no: 'BATCH-2026-0898',
+      inspector: t('qms.demo.person_wang'),
+      result: 'unqualified',
+      quantity: 1500,
+      created_at: '2026-09-11 11:00:00',
+      completed_at: '2026-09-11 15:00:00',
+    },
+    {
+      id: '5',
+      check_no: 'QC202609005',
+      title: t('qms.demo.insp_title_5'),
+      inspection_type: 'process',
+      status: 'pending',
+      product_name: t('qms.demo.product_hmi'),
+      batch_no: 'BATCH-2026-0903',
+      quantity: 100,
+      created_at: '2026-09-13 15:00:00',
+    },
+  ];
 
   const statusConfig = useMemo(
     () => ({

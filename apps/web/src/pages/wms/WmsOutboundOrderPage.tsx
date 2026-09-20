@@ -78,73 +78,7 @@ const mapApiOutboundOrders = (apiOrders: ApiOutboundOrder[]): OutboundOrder[] =>
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockOrders: OutboundOrder[] = [
-  {
-    id: '1',
-    order_no: 'OUT202609001',
-    customer_name: '上海科技有限公司',
-    warehouse: '成品仓',
-    status: 'pending',
-    total_quantity: 200,
-    total_amount: 56000,
-    expected_date: '2026-09-16',
-    priority: 'high',
-    remark: '加急订单',
-    created_at: '2026-09-10 10:30:00',
-  },
-  {
-    id: '2',
-    order_no: 'OUT202609002',
-    customer_name: '北京贸易集团',
-    warehouse: '成品仓',
-    status: 'picking',
-    total_quantity: 500,
-    total_amount: 128000,
-    expected_date: '2026-09-14',
-    priority: 'normal',
-    created_at: '2026-09-09 14:20:00',
-  },
-  {
-    id: '3',
-    order_no: 'OUT202609003',
-    customer_name: '深圳电子股份',
-    warehouse: '半成品仓',
-    status: 'shipped',
-    total_quantity: 800,
-    total_amount: 96000,
-    expected_date: '2026-09-13',
-    actual_date: '2026-09-13',
-    priority: 'normal',
-    created_at: '2026-09-07 09:15:00',
-  },
-  {
-    id: '4',
-    order_no: 'OUT202609004',
-    customer_name: '广州制造有限公司',
-    warehouse: '成品仓',
-    status: 'completed',
-    total_quantity: 1000,
-    total_amount: 256000,
-    expected_date: '2026-09-10',
-    actual_date: '2026-09-10',
-    priority: 'high',
-    created_at: '2026-09-05 16:45:00',
-  },
-  {
-    id: '5',
-    order_no: 'OUT202609005',
-    customer_name: '成都设备公司',
-    warehouse: '原材料仓',
-    status: 'cancelled',
-    total_quantity: 50,
-    total_amount: 4500,
-    expected_date: '2026-09-08',
-    priority: 'low',
-    remark: '客户取消订单',
-    created_at: '2026-09-01 11:00:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockOrders
 
 const buildStatusConfig = (t: (k: string) => string) => ({
   pending: { label: t('wms.outbound_order_page.status_pending'), variant: 'warning' as const, icon: Clock },
@@ -174,6 +108,74 @@ const WmsOutboundOrderPage: React.FC = () => {
   const queryClient = useQueryClient();
   const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
   const priorityConfig = useMemo(() => buildPriorityConfig(t), [t]);
+
+  const mockOrders: OutboundOrder[] = [
+    {
+      id: '1',
+      order_no: 'OUT202609001',
+      customer_name: t('wms.demo.company_a_name'),
+      warehouse: '成品仓',
+      status: 'pending',
+      total_quantity: 200,
+      total_amount: 56000,
+      expected_date: '2026-09-16',
+      priority: 'high',
+      remark: t('wms.demo.out_remark_urgent'),
+      created_at: '2026-09-10 10:30:00',
+    },
+    {
+      id: '2',
+      order_no: 'OUT202609002',
+      customer_name: t('wms.demo.company_b_name'),
+      warehouse: '成品仓',
+      status: 'picking',
+      total_quantity: 500,
+      total_amount: 128000,
+      expected_date: '2026-09-14',
+      priority: 'normal',
+      created_at: '2026-09-09 14:20:00',
+    },
+    {
+      id: '3',
+      order_no: 'OUT202609003',
+      customer_name: t('wms.demo.company_c_name'),
+      warehouse: '半成品仓',
+      status: 'shipped',
+      total_quantity: 800,
+      total_amount: 96000,
+      expected_date: '2026-09-13',
+      actual_date: '2026-09-13',
+      priority: 'normal',
+      created_at: '2026-09-07 09:15:00',
+    },
+    {
+      id: '4',
+      order_no: 'OUT202609004',
+      customer_name: t('wms.demo.company_d_name'),
+      warehouse: '成品仓',
+      status: 'completed',
+      total_quantity: 1000,
+      total_amount: 256000,
+      expected_date: '2026-09-10',
+      actual_date: '2026-09-10',
+      priority: 'high',
+      created_at: '2026-09-05 16:45:00',
+    },
+    {
+      id: '5',
+      order_no: 'OUT202609005',
+      customer_name: t('wms.demo.company_e_name'),
+      warehouse: '原材料仓',
+      status: 'cancelled',
+      total_quantity: 50,
+      total_amount: 4500,
+      expected_date: '2026-09-08',
+      priority: 'low',
+      remark: t('wms.demo.out_remark_cancelled'),
+      created_at: '2026-09-01 11:00:00',
+    },
+  ];
+
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'pending' | 'picking' | 'shipped' | 'completed'

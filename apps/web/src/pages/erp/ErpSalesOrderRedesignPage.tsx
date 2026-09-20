@@ -78,79 +78,7 @@ const mapApiSalesOrders = (apiOrders: ApiSalesOrder[]): SalesOrder[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockSalesOrders: SalesOrder[] = [
-  {
-    id: '1',
-    order_no: 'SO202609001',
-    customer_name: '上海科技有限公司',
-    product_name: '伺服电机 SM-750W',
-    quantity: 50,
-    unit_price: 3500,
-    total_amount: 175000,
-    status: 'delivered',
-    order_date: '2026-09-01',
-    delivery_date: '2026-09-10',
-    salesperson: '张三',
-    created_at: '2026-09-01 10:00:00',
-  },
-  {
-    id: '2',
-    order_no: 'SO202609002',
-    customer_name: '北京贸易集团',
-    product_name: 'PLC 控制器 CX-200',
-    quantity: 100,
-    unit_price: 1200,
-    total_amount: 120000,
-    status: 'shipped',
-    order_date: '2026-09-05',
-    delivery_date: '2026-09-20',
-    salesperson: '李四',
-    created_at: '2026-09-05 14:30:00',
-  },
-  {
-    id: '3',
-    order_no: 'SO202609003',
-    customer_name: '深圳电子股份',
-    product_name: '工业相机 MV-200',
-    quantity: 30,
-    unit_price: 5800,
-    total_amount: 174000,
-    status: 'confirmed',
-    order_date: '2026-09-10',
-    delivery_date: '2026-09-25',
-    salesperson: '张三',
-    created_at: '2026-09-10 09:15:00',
-  },
-  {
-    id: '4',
-    order_no: 'SO202608001',
-    customer_name: '广州制造有限公司',
-    product_name: '变频器 VF-5.5KW',
-    quantity: 20,
-    unit_price: 4200,
-    total_amount: 84000,
-    status: 'draft',
-    order_date: '2026-08-28',
-    delivery_date: '2026-09-15',
-    salesperson: '王五',
-    created_at: '2026-08-28 11:00:00',
-  },
-  {
-    id: '5',
-    order_no: 'SO202608002',
-    customer_name: '成都设备公司',
-    product_name: '触摸屏 HMI-7寸',
-    quantity: 15,
-    unit_price: 2800,
-    total_amount: 42000,
-    status: 'cancelled',
-    order_date: '2026-08-15',
-    delivery_date: '2026-08-30',
-    salesperson: '李四',
-    created_at: '2026-08-15 16:45:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockSalesOrders
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -167,6 +95,79 @@ const formatAmount = (value: number) => {
 const ErpSalesOrderRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const mockSalesOrders: SalesOrder[] = [
+    {
+      id: '1',
+      order_no: 'SO202609001',
+      customer_name: t('erp.demo.company_a_name'),
+      product_name: t('erp.demo.product_servo'),
+      quantity: 50,
+      unit_price: 3500,
+      total_amount: 175000,
+      status: 'delivered',
+      order_date: '2026-09-01',
+      delivery_date: '2026-09-10',
+      salesperson: t('erp.demo.owner_zhang'),
+      created_at: '2026-09-01 10:00:00',
+    },
+    {
+      id: '2',
+      order_no: 'SO202609002',
+      customer_name: t('erp.demo.company_b_name'),
+      product_name: t('erp.demo.product_plc'),
+      quantity: 100,
+      unit_price: 1200,
+      total_amount: 120000,
+      status: 'shipped',
+      order_date: '2026-09-05',
+      delivery_date: '2026-09-20',
+      salesperson: t('erp.demo.owner_li'),
+      created_at: '2026-09-05 14:30:00',
+    },
+    {
+      id: '3',
+      order_no: 'SO202609003',
+      customer_name: t('erp.demo.company_c_name'),
+      product_name: t('erp.demo.product_camera'),
+      quantity: 30,
+      unit_price: 5800,
+      total_amount: 174000,
+      status: 'confirmed',
+      order_date: '2026-09-10',
+      delivery_date: '2026-09-25',
+      salesperson: t('erp.demo.owner_zhang'),
+      created_at: '2026-09-10 09:15:00',
+    },
+    {
+      id: '4',
+      order_no: 'SO202608001',
+      customer_name: t('erp.demo.company_d_name'),
+      product_name: t('erp.demo.product_inverter'),
+      quantity: 20,
+      unit_price: 4200,
+      total_amount: 84000,
+      status: 'draft',
+      order_date: '2026-08-28',
+      delivery_date: '2026-09-15',
+      salesperson: t('erp.demo.owner_wang'),
+      created_at: '2026-08-28 11:00:00',
+    },
+    {
+      id: '5',
+      order_no: 'SO202608002',
+      customer_name: t('erp.demo.company_e_name'),
+      product_name: t('erp.demo.product_hmi'),
+      quantity: 15,
+      unit_price: 2800,
+      total_amount: 42000,
+      status: 'cancelled',
+      order_date: '2026-08-15',
+      delivery_date: '2026-08-30',
+      salesperson: t('erp.demo.owner_li'),
+      created_at: '2026-08-15 16:45:00',
+    },
+  ];
 
   const statusConfig = useMemo(() => ({
     draft: { label: t('erp.erp_sales_order_redesign.status.draft'), variant: 'default' as const },
@@ -797,13 +798,13 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               </label>
               <Select
                 id='field-1'
-                defaultValue={selectedOrder?.customer_name || '上海科技有限公司'}
+                defaultValue={selectedOrder?.customer_name || t('erp.demo.company_a_name')}
                 options={[
-                  { value: '上海科技有限公司', label: '上海科技有限公司' },
-                  { value: '北京贸易集团', label: '北京贸易集团' },
-                  { value: '深圳电子股份', label: '深圳电子股份' },
-                  { value: '广州制造有限公司', label: '广州制造有限公司' },
-                  { value: '成都设备公司', label: '成都设备公司' },
+                  { value: t('erp.demo.company_a_name'), label: t('erp.demo.company_a_name') },
+                  { value: t('erp.demo.company_b_name'), label: t('erp.demo.company_b_name') },
+                  { value: t('erp.demo.company_c_name'), label: t('erp.demo.company_c_name') },
+                  { value: t('erp.demo.company_d_name'), label: t('erp.demo.company_d_name') },
+                  { value: t('erp.demo.company_e_name'), label: t('erp.demo.company_e_name') },
                 ]}
               />
             </div>
@@ -884,7 +885,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               <Input
                 id='field-7'
                 placeholder={t('erp.erp_sales_order_redesign.form.salesperson_placeholder')}
-                defaultValue={selectedOrder?.salesperson || '张三'}
+                defaultValue={selectedOrder?.salesperson || t('erp.demo.owner_zhang')}
               />
             </div>
             <div>

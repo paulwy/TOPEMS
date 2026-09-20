@@ -78,77 +78,7 @@ const mapApiEightDReports = (apiReports: ApiEightDReport[]): EightDReport[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockEightDReports: EightDReport[] = [
-  {
-    id: '1',
-    report_no: '8D202609001',
-    title: '伺服电机批量外观不良问题',
-    problem_source: 'customer',
-    severity: 'major',
-    status: 'd4',
-    current_step: 'D4 - 根本原因分析',
-    product_name: '伺服电机',
-    customer_name: '上海科技有限公司',
-    owner: '张三',
-    due_date: '2026-09-20',
-    created_at: '2026-09-10 10:00:00',
-  },
-  {
-    id: '2',
-    report_no: '8D202609002',
-    title: 'PLC 控制器程序烧录错误',
-    problem_source: 'internal',
-    severity: 'critical',
-    status: 'd6',
-    current_step: 'D6 - 实施永久纠正措施',
-    product_name: 'PLC 控制器',
-    owner: '李四',
-    due_date: '2026-09-18',
-    created_at: '2026-09-05 14:30:00',
-  },
-  {
-    id: '3',
-    report_no: '8D202608001',
-    title: '工业相机镜头来料污渍',
-    problem_source: 'supplier',
-    severity: 'minor',
-    status: 'closed',
-    current_step: 'D8 - 表彰团队',
-    product_name: '工业相机',
-    customer_name: '深圳电子股份',
-    owner: '王五',
-    due_date: '2026-08-25',
-    created_at: '2026-08-15 09:00:00',
-  },
-  {
-    id: '4',
-    report_no: '8D202608002',
-    title: '变频器出厂参数设置错误',
-    problem_source: 'internal',
-    severity: 'critical',
-    status: 'd8',
-    current_step: 'D8 - 表彰团队',
-    product_name: '变频器',
-    owner: '赵六',
-    due_date: '2026-08-30',
-    created_at: '2026-08-20 11:00:00',
-  },
-  {
-    id: '5',
-    report_no: '8D202609003',
-    title: '触摸屏 HMI 屏幕坏点客户投诉',
-    problem_source: 'customer',
-    severity: 'major',
-    status: 'd2',
-    current_step: 'D2 - 问题描述',
-    product_name: '触摸屏 HMI',
-    customer_name: '广州制造有限公司',
-    owner: '张三',
-    due_date: '2026-09-25',
-    created_at: '2026-09-12 16:00:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockEightDReports
 
 const formatDateTime = (value?: string) => {
   if (!value) return '-';
@@ -158,6 +88,77 @@ const formatDateTime = (value?: string) => {
 const QmsEightDRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const mockEightDReports: EightDReport[] = [
+    {
+      id: '1',
+      report_no: '8D202609001',
+      title: t('qms.demo.eightd_title_1'),
+      problem_source: 'customer',
+      severity: 'major',
+      status: 'd4',
+      current_step: t('qms.demo.eightd_step_d4'),
+      product_name: t('qms.demo.product_servo'),
+      customer_name: t('qms.demo.company_a_name'),
+      owner: t('qms.demo.person_zhang'),
+      due_date: '2026-09-20',
+      created_at: '2026-09-10 10:00:00',
+    },
+    {
+      id: '2',
+      report_no: '8D202609002',
+      title: t('qms.demo.eightd_title_2'),
+      problem_source: 'internal',
+      severity: 'critical',
+      status: 'd6',
+      current_step: t('qms.demo.eightd_step_d6'),
+      product_name: t('qms.demo.product_plc'),
+      owner: t('qms.demo.person_li'),
+      due_date: '2026-09-18',
+      created_at: '2026-09-05 14:30:00',
+    },
+    {
+      id: '3',
+      report_no: '8D202608001',
+      title: t('qms.demo.eightd_title_3'),
+      problem_source: 'supplier',
+      severity: 'minor',
+      status: 'closed',
+      current_step: t('qms.demo.eightd_step_d8'),
+      product_name: t('qms.demo.product_camera'),
+      customer_name: t('qms.demo.company_c_name'),
+      owner: t('qms.demo.person_wang'),
+      due_date: '2026-08-25',
+      created_at: '2026-08-15 09:00:00',
+    },
+    {
+      id: '4',
+      report_no: '8D202608002',
+      title: t('qms.demo.eightd_title_4'),
+      problem_source: 'internal',
+      severity: 'critical',
+      status: 'd8',
+      current_step: t('qms.demo.eightd_step_d8'),
+      product_name: t('qms.demo.product_inverter'),
+      owner: t('qms.demo.person_zhao'),
+      due_date: '2026-08-30',
+      created_at: '2026-08-20 11:00:00',
+    },
+    {
+      id: '5',
+      report_no: '8D202609003',
+      title: t('qms.demo.eightd_title_5'),
+      problem_source: 'customer',
+      severity: 'major',
+      status: 'd2',
+      current_step: t('qms.demo.eightd_step_d2'),
+      product_name: t('qms.demo.product_hmi'),
+      customer_name: t('qms.demo.company_d_name'),
+      owner: t('qms.demo.person_zhang'),
+      due_date: '2026-09-25',
+      created_at: '2026-09-12 16:00:00',
+    },
+  ];
 
   const statusConfig = useMemo<
     Record<string, { label: string; variant: any; step: number }>

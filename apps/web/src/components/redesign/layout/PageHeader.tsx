@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../primitives';
 
 export interface PageHeaderProps extends React.HTMLAttributes<HTMLElement> {
@@ -25,6 +26,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   action: _action, // 显式排除 action，避免传递给非 form 元素
   ...rest
 }) => {
+  const { t } = useTranslation();
   return (
     <header
       className={clsx('redesign-page-header', className)}
@@ -95,7 +97,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               size='sm'
               onClick={backButton.onClick}
             >
-              ← {backButton.label || '返回'}
+              ← {backButton.label || t('components.page_header.back')}
             </Button>
           )}
           <h1

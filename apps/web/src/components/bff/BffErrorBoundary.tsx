@@ -214,7 +214,7 @@ export function classifyError(error: Error): ClassifiedError {
 
   return {
     type,
-    message: msg || i18n.t('bff.error_unknown', '未知错误'),
+    message: msg || i18n.t('components.bff_error_boundary.unknown_error'),
     retryable,
     recovery,
     recommendedStrategy: recovery,
@@ -331,47 +331,47 @@ const ERROR_META: Record<
   [BffErrorType.NETWORK]: {
     icon: <WifiOff size={18} />,
     color: 'error',
-    label: i18n.t('bff.type_network', '网络错误'),
+    label: i18n.t('components.bff_error_boundary.type_network'),
   },
   [BffErrorType.TIMEOUT]: {
     icon: <Clock size={18} />,
     color: 'warning',
-    label: i18n.t('bff.type_timeout', '请求超时'),
+    label: i18n.t('components.bff_error_boundary.type_timeout'),
   },
   [BffErrorType.VALIDATION]: {
     icon: <AlertTriangle size={18} />,
     color: 'warning',
-    label: i18n.t('bff.type_validation', '校验失败'),
+    label: i18n.t('components.bff_error_boundary.type_validation'),
   },
   [BffErrorType.SERVER]: {
     icon: <Server size={18} />,
     color: 'error',
-    label: i18n.t('bff.type_server', '服务端错误'),
+    label: i18n.t('components.bff_error_boundary.type_server'),
   },
   [BffErrorType.AUTH]: {
     icon: <ShieldAlert size={18} />,
     color: 'error',
-    label: i18n.t('bff.type_auth', '权限不足'),
+    label: i18n.t('components.bff_error_boundary.type_auth'),
   },
   [BffErrorType.NOTFOUND]: {
     icon: <Ban size={18} />,
     color: 'info',
-    label: i18n.t('bff.type_not_found', '资源不存在'),
+    label: i18n.t('components.bff_error_boundary.type_not_found'),
   },
   [BffErrorType.CACHE]: {
     icon: <Database size={18} />,
     color: 'info',
-    label: i18n.t('bff.type_cache', '缓存错误'),
+    label: i18n.t('components.bff_error_boundary.type_cache'),
   },
   [BffErrorType.OFFLINE]: {
     icon: <WifiOff size={18} />,
     color: 'warning',
-    label: i18n.t('bff.type_offline', '离线模式'),
+    label: i18n.t('components.bff_error_boundary.type_offline'),
   },
   [BffErrorType.UNKNOWN]: {
     icon: <AlertTriangle size={18} />,
     color: 'warning',
-    label: i18n.t('bff.type_unknown', '未知错误'),
+    label: i18n.t('components.bff_error_boundary.type_unknown'),
   },
 };
 
@@ -426,7 +426,7 @@ export function DefaultBffErrorFallback({
               variant='contained'
               onClick={reset}
             >
-              {i18n.t('bff.retry', '重试')}
+              {i18n.t('components.bff_error_boundary.retry')}
             </Button>
           )}
         </Stack>

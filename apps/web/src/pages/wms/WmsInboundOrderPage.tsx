@@ -76,68 +76,7 @@ const mapApiInboundOrders = (apiOrders: ApiInboundOrder[]): InboundOrder[] => {
   }));
 };
 
-// Mock 数据（API 不可用时的 fallback）
-const mockOrders: InboundOrder[] = [
-  {
-    id: '1',
-    order_no: 'IN202609001',
-    supplier_name: '华东电子有限公司',
-    warehouse: '原材料仓',
-    status: 'pending',
-    total_quantity: 500,
-    total_amount: 25000,
-    expected_date: '2026-09-15',
-    remark: '紧急订单',
-    created_at: '2026-09-10 10:30:00',
-  },
-  {
-    id: '2',
-    order_no: 'IN202609002',
-    supplier_name: '南方机械制造',
-    warehouse: '半成品仓',
-    status: 'in_progress',
-    total_quantity: 1200,
-    total_amount: 86000,
-    expected_date: '2026-09-14',
-    actual_date: '2026-09-13',
-    created_at: '2026-09-08 14:20:00',
-  },
-  {
-    id: '3',
-    order_no: 'IN202609003',
-    supplier_name: '北方化工原料',
-    warehouse: '化学品仓',
-    status: 'completed',
-    total_quantity: 800,
-    total_amount: 45000,
-    expected_date: '2026-09-12',
-    actual_date: '2026-09-12',
-    created_at: '2026-09-05 09:15:00',
-  },
-  {
-    id: '4',
-    order_no: 'IN202609004',
-    supplier_name: '西部包装材料',
-    warehouse: '包材仓',
-    status: 'pending',
-    total_quantity: 3000,
-    total_amount: 12000,
-    expected_date: '2026-09-18',
-    created_at: '2026-09-11 16:45:00',
-  },
-  {
-    id: '5',
-    order_no: 'IN202609005',
-    supplier_name: '中部五金配件',
-    warehouse: '原材料仓',
-    status: 'cancelled',
-    total_quantity: 200,
-    total_amount: 8000,
-    expected_date: '2026-09-10',
-    remark: '供应商延迟交货',
-    created_at: '2026-09-01 11:00:00',
-  },
-];
+// Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockOrders
 
 const buildStatusConfig = (t: (k: string) => string) => ({
   pending: { label: t('wms.inbound_order_page.status_pending'), variant: 'warning' as const, icon: Clock },
@@ -159,6 +98,69 @@ const WmsInboundOrderPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const statusConfig = useMemo(() => buildStatusConfig(t), [t]);
+
+  const mockOrders: InboundOrder[] = [
+    {
+      id: '1',
+      order_no: 'IN202609001',
+      supplier_name: t('wms.demo.in_supplier_hua_dong'),
+      warehouse: '原材料仓',
+      status: 'pending',
+      total_quantity: 500,
+      total_amount: 25000,
+      expected_date: '2026-09-15',
+      remark: t('wms.demo.in_remark_urgent'),
+      created_at: '2026-09-10 10:30:00',
+    },
+    {
+      id: '2',
+      order_no: 'IN202609002',
+      supplier_name: t('wms.demo.in_supplier_nan_fang'),
+      warehouse: '半成品仓',
+      status: 'in_progress',
+      total_quantity: 1200,
+      total_amount: 86000,
+      expected_date: '2026-09-14',
+      actual_date: '2026-09-13',
+      created_at: '2026-09-08 14:20:00',
+    },
+    {
+      id: '3',
+      order_no: 'IN202609003',
+      supplier_name: t('wms.demo.in_supplier_bei_fang'),
+      warehouse: '化学品仓',
+      status: 'completed',
+      total_quantity: 800,
+      total_amount: 45000,
+      expected_date: '2026-09-12',
+      actual_date: '2026-09-12',
+      created_at: '2026-09-05 09:15:00',
+    },
+    {
+      id: '4',
+      order_no: 'IN202609004',
+      supplier_name: t('wms.demo.in_supplier_xi_bu'),
+      warehouse: '包材仓',
+      status: 'pending',
+      total_quantity: 3000,
+      total_amount: 12000,
+      expected_date: '2026-09-18',
+      created_at: '2026-09-11 16:45:00',
+    },
+    {
+      id: '5',
+      order_no: 'IN202609005',
+      supplier_name: t('wms.demo.in_supplier_zhong_bu'),
+      warehouse: '原材料仓',
+      status: 'cancelled',
+      total_quantity: 200,
+      total_amount: 8000,
+      expected_date: '2026-09-10',
+      remark: t('wms.demo.in_remark_late'),
+      created_at: '2026-09-01 11:00:00',
+    },
+  ];
+
 
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>(
     'all'

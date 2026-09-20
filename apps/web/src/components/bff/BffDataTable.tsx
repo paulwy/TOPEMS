@@ -228,7 +228,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
           <TextField
             variant='outlined'
             size='small'
-            placeholder={i18n.t('components.bff_data_table.k0')}
+            placeholder={i18n.t('components.bff_data_table.search_placeholder')}
             value={searchKeyword}
             onChange={handleSearchChange}
             slotProps={{
@@ -253,14 +253,14 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
           <Tooltip
             title={
               showFilterBar
-                ? i18n.t('components.bff_data_table.k1')
-                : i18n.t('components.bff_data_table.k0')
+                ? i18n.t('components.bff_data_table.filter_hide')
+                : i18n.t('components.bff_data_table.filter_show')
             }
           >
             <IconButton
               onClick={() => setShowFilterBar(!showFilterBar)}
               size='small'
-              aria-label={i18n.t('components.bff_data_table.k2')}
+              aria-label={i18n.t('components.bff_data_table.filter')}
             >
               <Filter size={18} />
             </IconButton>
@@ -268,14 +268,14 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         )}
 
         {enableSharding && (
-          <Tooltip title={i18n.t('components.bff_data_table.k3')}>
+          <Tooltip title={i18n.t('components.bff_data_table.auto_sharding')}>
             <Chip
               size='small'
               icon={<Layers size={14} />}
               label={
                 crud.total > shardThreshold
-                  ? i18n.t('components.bff_data_table.k5')
-                  : i18n.t('components.bff_data_table.k4')
+                  ? i18n.t('components.bff_data_table.sharded')
+                  : i18n.t('components.bff_data_table.not_sharded')
               }
               color={crud.total > shardThreshold ? 'primary' : 'default'}
               variant='outlined'
@@ -283,11 +283,11 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
           </Tooltip>
         )}
 
-        <Tooltip title={i18n.t('components.bff_data_table.k6')}>
+        <Tooltip title={i18n.t('components.bff_data_table.refresh')}>
           <IconButton
             onClick={() => crud.refresh()}
             size='small'
-            aria-label={i18n.t('components.bff_data_table.k7')}
+            aria-label={i18n.t('components.bff_data_table.refresh')}
           >
             <RefreshCw size={18} />
           </IconButton>
@@ -400,7 +400,7 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
                   sx={{ py: 6 }}
                 >
                   <Box sx={{ color: 'text.secondary' }}>
-                    {i18n.t('components.bff_data_table.k8')}
+                    {i18n.t('components.bff_data_table.empty')}
                   </Box>
                 </TableCell>
               </TableRow>
@@ -463,9 +463,9 @@ function BffDataTableInner<T extends { id?: string }>(props: BffDataTableProps<T
         rowsPerPage={pageSize}
         onRowsPerPageChange={handlePageSizeChange}
         rowsPerPageOptions={[10, 25, 50, 100]}
-        labelRowsPerPage={i18n.t('components.bff_data_table.k9')}
+        labelRowsPerPage={i18n.t('components.bff_data_table.rows_per_page')}
         labelDisplayedRows={({ from, to, count }) =>
-          `${from}-${to} ${i18n.t('components.bff_data_table.k1')} ${count} ${i18n.t('components.bff_data_table.k2')}`
+i18n.t('components.bff_data_table.displayed_rows', { from, to, count })
         }
       />
     </Paper>
