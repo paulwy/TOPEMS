@@ -22,8 +22,14 @@ pub struct CreateWarehouseLocation {
 
 pub async fn list_warehouse_locations(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
     let page_size: i64 = params
         .get("page_size")
@@ -34,31 +40,35 @@ pub async fn list_warehouse_locations(
 
     let query = if !search.is_empty() {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(format!("%{}%", search))
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_opt)
     } else {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_opt)
     };
 
     match query.fetch_all(&pool).await {
         Ok(locations) => {
             let total_query = if !search.is_empty() {
                 sqlx::query(
-                    only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1"),
+                    only_own_schema_query!("gis", "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
                 )
                 .bind(format!("%{}%", search))
+                .bind(tenant_opt)
             } else {
                 sqlx::query(only_own_schema_query!(
                     "gis",
-                    "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL"
+                    "SELECT COUNT(*) FROM gis.warehouse_locations WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)"
                 ))
+                .bind(tenant_opt)
             };
             let total: i64 = total_query
                 .fetch_one(&pool)
@@ -113,12 +123,19 @@ pub async fn create_warehouse_location(
 
 pub async fn get_warehouse_location(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WarehouseLocation>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {
@@ -193,12 +210,19 @@ pub async fn delete_warehouse_location(
 
 pub async fn list_warehouse_locations_by_map(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(map_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(map_id)
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {

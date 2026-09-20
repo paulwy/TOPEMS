@@ -27,8 +27,17 @@ pub struct CreateMapMarker {
     pub z_index: Option<i32>,
 }
 
-pub async fn list_map_markers(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "SELECT id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers ORDER BY created_at DESC"))
+pub async fn list_map_markers(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "SELECT id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
+        .bind(tenant_opt)
         .fetch_all(&pool)
         .await
     {
@@ -84,10 +93,17 @@ pub async fn create_map_marker(
 
 pub async fn get_map_marker(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MapMarker>> {
-    match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "SELECT id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers WHERE id = $1"))
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "SELECT id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
         .bind(id)
+        .bind(tenant_opt)
         .fetch_one(&pool)
         .await
     {

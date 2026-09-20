@@ -113,10 +113,19 @@ pub async fn create_location(
         (status = 500, description = "查询失败")
     )
 )]
-pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_locations(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, Location>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
     )
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {
@@ -148,12 +157,19 @@ pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serd
 )]
 pub async fn get_location(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Location>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, Location>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, location_type, position, address, description, properties, status, created_at, updated_at FROM gis.locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {

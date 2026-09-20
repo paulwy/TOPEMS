@@ -66,18 +66,6 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/geojson/export",
             axum::routing::get(modules::import_export::export_geojson),
         )
-
-        .layer(axum::middleware::from_fn_with_state(
-            state.pool.clone(),
-            topems_shared_auth::tenant_middleware(),
-        ))
-        .layer(axum::middleware::from_fn_with_state(
-            state.auth_state.clone(),
-            topems_shared_auth::auth::auth_middleware,
-        ));
-
-    // Public business routes (no auth)
-    let public_business_routes = Router::new()
         .route(
             "/factory-maps",
             axum::routing::get(modules::factory_map::list_factory_maps),
@@ -173,6 +161,18 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/devices/{id}",
             axum::routing::get(modules::device::get_device),
         )
+
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            topems_shared_auth::auth::auth_middleware,
+        ));
+
+    // Public business routes (no auth)
+    let public_business_routes = Router::new()
         .route(
             "/devices/{device_code}/report",
             axum::routing::post(modules::device::report_device_location),
@@ -433,12 +433,19 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
 
 async fn list_device_locations_by_map(
     State(pool): State<sqlx::PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(map_id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, DeviceLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(map_id)
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {

@@ -186,8 +186,17 @@ async fn insert_feature(
 }
 
 /// 获取地理数据列表
-pub async fn list_geodata(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata ORDER BY created_at DESC"))
+pub async fn list_geodata(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    match sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
+        .bind(tenant_opt)
         .fetch_all(&pool)
         .await
     {
@@ -205,12 +214,19 @@ pub async fn list_geodata(State(pool): State<PgPool>) -> Json<ApiResponse<serde_
 /// 获取地理数据详情
 pub async fn get_geodata(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeoData>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, GeoData>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&pool)
     .await
     {
@@ -377,12 +393,19 @@ fn convert_geojson_to_csv(geojson: &serde_json::Value) -> String {
 /// 获取地理要素列表
 pub async fn list_geofeatures(
     State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     match sqlx::query_as::<_, GeoFeature>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {

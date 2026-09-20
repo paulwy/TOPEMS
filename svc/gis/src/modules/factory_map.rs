@@ -8,7 +8,6 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
@@ -24,15 +23,14 @@ pub struct CreateFactoryMap {
 
 pub async fn list_factory_maps(
     State(pool): State<PgPool>,
-    headers: axum::http::HeaderMap,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    // 公开查询路由（embedded public_business_routes 无鉴权，无 Claims 扩展注入）
-    let tenant_id = headers
-        .get("x-tenant-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::new_v4);
-    let service = TenantService::new(pool, tenant_id);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let service = TenantService::new(pool, tenant_opt);
 
     match service.list_factory_maps().await {
         Ok(maps) => Json(ApiResponse::success(
@@ -49,15 +47,19 @@ pub async fn list_factory_maps(
 pub async fn create_factory_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
     Json(payload): Json<CreateFactoryMap>,
 ) -> Json<ApiResponse<FactoryMap>> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let service = TenantService::new(pool, tenant_id);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let service = TenantService::new(pool, Some(tenant_id));
 
     match service
         .create_factory_map(
@@ -77,15 +79,15 @@ pub async fn create_factory_map(
 
 pub async fn get_factory_map(
     State(pool): State<PgPool>,
-    headers: axum::http::HeaderMap,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FactoryMap>> {
-    let tenant_id = headers
-        .get("x-tenant-id")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::new_v4);
-    let service = TenantService::new(pool, tenant_id);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let service = TenantService::new(pool, tenant_opt);
 
     match service.get_factory_map(id).await {
         Ok(Some(map)) => Json(ApiResponse::success(map, "获取厂区地图成功")),
@@ -107,7 +109,6 @@ pub struct UpdateFactoryMap {
 pub async fn update_factory_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateFactoryMap>,
 ) -> Json<ApiResponse<FactoryMap>> {
@@ -115,8 +116,12 @@ pub async fn update_factory_map(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let service = TenantService::new(pool, tenant_id);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let service = TenantService::new(pool, tenant_opt);
 
     match service
         .update_factory_map(
@@ -139,15 +144,18 @@ pub async fn update_factory_map(
 pub async fn delete_factory_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::FactoryMapWrite).await {
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let service = TenantService::new(pool, tenant_id);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let service = TenantService::new(pool, tenant_opt);
 
     match service.delete_factory_map(id).await {
         Ok(true) => Json(ApiResponse::success("".to_string(), "删除厂区地图成功")),
