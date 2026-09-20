@@ -1,3 +1,4 @@
+use topems_shared::auth::Claims;
 use super::ApiState;
 use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -52,12 +53,18 @@ pub fn create_routes() -> Router<ApiState> {
 pub async fn list_announcements(
     State(_state): State<ApiState>,
     Query(params): Query<AnnouncementQueryParams>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Announcement>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -71,13 +78,15 @@ pub async fn list_announcements(
         WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR priority = $3)
+          AND ($4::uuid IS NULL OR tenant_id = $4 OR tenant_id = '00000000-0000-0000-0000-000000000001')
         ORDER BY publish_at DESC NULLS LAST, created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#),
     )
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&priority_filter)
+    .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -90,11 +99,13 @@ pub async fn list_announcements(
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR priority = $3)
+                  AND ($4::uuid IS NULL OR tenant_id = $4 OR tenant_id = '00000000-0000-0000-0000-000000000001')
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&priority_filter)
+            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await;
             let total = count_result.unwrap_or(0);
@@ -122,6 +133,7 @@ pub async fn list_announcements(
 pub async fn create_announcement(
     State(state): State<ApiState>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -137,10 +149,15 @@ pub async fn create_announcement(
     }
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let new_tenant: uuid::Uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        .unwrap_or(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8)
+        INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
@@ -152,6 +169,7 @@ pub async fn create_announcement(
     .bind(req.expire_at)
     .bind(now)
     .bind(now)
+    .bind(new_tenant)
     .fetch_one(&mut **txn)
     .await;
     let (response, status, error_msg) = match &result {
@@ -170,6 +188,15 @@ pub async fn create_announcement(
         }
     };
     let request_data = serde_json::to_value(&req).ok();
+    let is_success = status == "success";
+    if is_success {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "公告创建失败"));
+            }
+        }
+    }
     let response_data = if let Ok(announcement) = &result {
         serde_json::to_value(announcement).ok()
     } else {
@@ -209,19 +236,27 @@ pub async fn create_announcement(
 pub async fn get_announcement(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements WHERE id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2 OR tenant_id = '00000000-0000-0000-0000-000000000001')
         "#),
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
     match result {
@@ -250,6 +285,7 @@ pub async fn update_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -257,6 +293,11 @@ pub async fn update_announcement(
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let existing = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -281,6 +322,7 @@ pub async fn update_announcement(
         UPDATE announcements SET
             title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8
         WHERE id = $1
+          AND ($9::uuid IS NULL OR tenant_id = $9)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
@@ -292,6 +334,7 @@ pub async fn update_announcement(
     .bind(&priority)
     .bind(expire_at)
     .bind(now)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
@@ -309,6 +352,15 @@ pub async fn update_announcement(
             )
         }
     };
+    let is_success = status_str == "success";
+    if is_success {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "公告更新失败"));
+            }
+        }
+    }
     let response_data = if let Ok(announcement) = &result {
         serde_json::to_value(announcement).ok()
     } else {
@@ -349,17 +401,24 @@ pub async fn delete_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE announcements SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE announcements SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
@@ -430,24 +489,32 @@ pub async fn publish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             status = 'published', publish_at = $2, updated_at = $3
         WHERE id = $1 AND status = 'draft'
+          AND ($4::uuid IS NULL OR tenant_id = $4)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(now)
     .bind(now)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
@@ -470,6 +537,15 @@ pub async fn publish_announcement(
             )
         }
     };
+    let is_success = status_str == "success";
+    if is_success {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "公告发布失败"));
+            }
+        }
+    }
     let response_data = if let Ok(Some(announcement)) = &result {
         serde_json::to_value(announcement).ok()
     } else {
@@ -510,23 +586,31 @@ pub async fn unpublish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
             status = 'draft', publish_at = NULL, updated_at = $2
         WHERE id = $1 AND status = 'published'
+          AND ($3::uuid IS NULL OR tenant_id = $3)
         RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
@@ -549,6 +633,15 @@ pub async fn unpublish_announcement(
             )
         }
     };
+    let is_success = status_str == "success";
+    if is_success {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(api_error(500, "公告撤回失败"));
+            }
+        }
+    }
     let response_data = if let Ok(Some(announcement)) = &result {
         serde_json::to_value(announcement).ok()
     } else {
