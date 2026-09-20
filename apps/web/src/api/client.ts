@@ -186,6 +186,48 @@ const NOTIFICATION_READ_GRACE_PATHS: readonly RegExp[] = [
   /^\/notifications\/archived(?:\?.*)?$/,
 ];
 
+// GIS 只读查询接口（GET /maps、/devices、/pipelines 等）：
+// - 后端查询路由已迁入认证组（要求 Extension<Claims>），无 token / token 失效时返回 401。
+// - 未登录或开发测试身份（dev_auth_bypass）访问 gis 页面时，不应因 401 触发登出或页面报错，
+//   这里声明这些路径在 401 时应降级为默认空数据，而不是 reject / 抛错。
+// 匹配模式：相对路径（不含 baseURL），与 apiClient.gis.get('/maps') 等调用对齐。
+const GIS_READ_GRACE_PATHS: readonly RegExp[] = [
+  /^\/maps(?:\/|$|\?)/,
+  /^\/maps\/[0-9a-f-]+\/layers(?:\?|$)/,
+  /^\/factory-maps(?:\/|$|\?)/,
+  /^\/device-locations(?:\/|$|\?)/,
+  /^\/pipelines(?:\/|$|\?)/,
+  /^\/warehouse-locations(?:\/|$|\?)/,
+  /^\/location-photos(?:\/|$|\?)/,
+  /^\/map-markers(?:\/|$|\?)/,
+  /^\/geodata(?:\/|$|\?)/,
+  /^\/locations(?:\/|$|\?)/,
+  /^\/devices(?:\/|$|\?)/,
+  /^\/statistics(?:\/|$|\?)/,
+  /^\/search(?:\?|$)/,
+  /^\/geojson\/export(?:\?|$)/,
+  /^\/business-locations(?:\/|$|\?)/,
+];
+
+const isGisGraceRead = (
+  method: string | undefined,
+  url: string,
+  baseURL: string | undefined
+): boolean => {
+  if ((method || 'GET').toUpperCase() !== 'GET') return false;
+  // 仅对 gis 子客户端生效：baseURL 以 /api/gis 结尾
+  if (!baseURL || !baseURL.endsWith('/api/gis')) return false;
+  return GIS_READ_GRACE_PATHS.some((re) => re.test(url));
+};
+
+const GIS_GRACE_FALLBACK = (): ApiResponse => ({
+  code: 0,
+  success: true,
+  data: {},
+  message: 'Skipped (no auth token)',
+  timestamp: Date.now(),
+});
+
 const isNotificationGraceRead = (
   method: string | undefined,
   url: string,
@@ -492,6 +534,17 @@ export const createAxiosClient = ({
           );
           apiLogger.debug(
             `[Notification Grace] 401 on ${fullUrl}, returning fallback instead of rejecting`
+          );
+          return returnData
+            ? fallback
+            : { data: fallback, status: 200, statusText: 'OK', headers: {}, config: error.config };
+        }
+
+        // GIS 只读查询接口：401 不 reject、不触发登出，降级为空数据（未登录/测试身份友好）
+        if (isGisGraceRead(error.config?.method, url, baseURL)) {
+          const fallback = GIS_GRACE_FALLBACK();
+          apiLogger.debug(
+            `[GIS Grace] 401 on ${fullUrl}, returning empty fallback instead of rejecting`
           );
           return returnData
             ? fallback
