@@ -329,15 +329,11 @@ pub async fn get_team(
         Some(r) => {
             let team = TeamResponse {
                 id: r.id.to_string(),
-                team_code: r.team_code,
-                team_name: r.team_name,
+                team_code: r.team_code.unwrap_or_default(),
+                team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: if r.work_station_name.is_empty() {
-                    None
-                } else {
-                    Some(r.work_station_name)
-                },
+                work_station_name: r.work_station_name.filter(|s| !s.is_empty()),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
@@ -420,7 +416,7 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                emp_uuid_arg.as_deref(),
+                emp_uuid,
                 member.employee_name,
                 member.employee_code,
                 member.position,
@@ -445,8 +441,8 @@ pub async fn create_team(
 
     let team = TeamResponse {
         id: result.id.to_string(),
-        team_code: result.team_code,
-        team_name: result.team_name,
+        team_code: result.team_code.unwrap_or_default(),
+        team_name: result.team_name.unwrap_or_default(),
         team_type: result.team_type,
         work_station_id: result.work_station_id.map(|u| u.to_string()),
         work_station_name: None,
@@ -530,8 +526,8 @@ pub async fn update_team(
         Some(r) => {
             let team = TeamResponse {
                 id: r.id.to_string(),
-                team_code: r.team_code,
-                team_name: r.team_name,
+                team_code: r.team_code.unwrap_or_default(),
+                team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: None,
@@ -630,8 +626,8 @@ pub async fn get_team_members(
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
             team_id: r.team_id.to_string(),
-            employee_id: r.employee_id,
-            employee_name: r.employee_name,
+            employee_id: r.employee_id.map(|u| u.to_string()).unwrap_or_default(),
+            employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
             join_date: r.join_date.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()),
@@ -671,7 +667,7 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        employee_uuid_arg.as_deref(),
+        employee_uuid,
         req.employee_name,
         req.employee_code,
         req.position,
@@ -703,8 +699,8 @@ pub async fn add_team_member(
     let member = TeamMemberResponse {
         id: result.id.to_string(),
         team_id: result.team_id.to_string(),
-        employee_id: result.employee_id,
-        employee_name: result.employee_name,
+        employee_id: result.employee_id.map(|u| u.to_string()).unwrap_or_default(),
+        employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,
         join_date: result
