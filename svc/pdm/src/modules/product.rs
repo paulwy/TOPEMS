@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
@@ -68,9 +67,16 @@ pub async fn list_products(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProductQuery>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -141,10 +147,17 @@ pub async fn list_products(
 pub async fn create_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<CreateProductRequest>,
 ) -> Json<ApiResponse<Product>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     if req.product_no.is_empty() {
         return Json(ApiResponse::error(400, "产品编号不能为空"));
@@ -195,9 +208,16 @@ pub async fn get_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Product>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result = sqlx::query_as::<_, Product>(
         r#"
@@ -236,10 +256,17 @@ pub async fn update_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProductRequest>,
 ) -> Json<ApiResponse<Product>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Product>(
@@ -291,9 +318,16 @@ pub async fn delete_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
 
     let result =
         sqlx::query("UPDATE pdm_products SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -339,7 +373,14 @@ mod tests {
     fn test_get_tenant_id_from_claims() {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
         let headers = axum::http::HeaderMap::new();
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -354,7 +395,14 @@ mod tests {
             "x-tenant-id",
             "550e8400-e29b-41d4-a716-446655440001".parse().unwrap(),
         );
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440001").unwrap()
@@ -369,7 +417,14 @@ mod tests {
             "x-tenant-id",
             "550e8400-e29b-41d4-a716-446655440002".parse().unwrap(),
         );
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440002").unwrap()
@@ -381,7 +436,14 @@ mod tests {
         // 当 claims 和 header 都没有合法 tenant_id 时，应生成一个新的 v4 UUID
         let claims = make_claims(None);
         let headers = axum::http::HeaderMap::new();
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(tid.get_version(), Some(uuid::Version::Random));
     }
 

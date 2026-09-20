@@ -6,7 +6,6 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
@@ -190,9 +189,16 @@ pub async fn list_projects(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProjectQuery>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<PdmProject>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
     let result = sqlx::query_as::<_, PdmProject>(&format!(
@@ -226,10 +232,17 @@ pub async fn list_projects(
 pub async fn create_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<CreatePdmProjectRequest>,
 ) -> Json<ApiResponse<PdmProject>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     if req.project_no.trim().is_empty() {
         return Json(ApiResponse::error(400, "项目编号不能为空"));
     }
@@ -283,9 +296,16 @@ pub async fn get_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<PdmProject>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         r#"
         SELECT {PROJECT_COLUMNS}
@@ -313,10 +333,17 @@ pub async fn update_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdatePdmProjectRequest>,
 ) -> Json<ApiResponse<PdmProject>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let progress = req.progress.map(|p| p.clamp(0, 100));
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         r#"
@@ -370,9 +397,16 @@ pub async fn delete_project(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query(
         "UPDATE pdm_projects SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
@@ -397,10 +431,17 @@ pub async fn update_project_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectStatusRequest>,
 ) -> Json<ApiResponse<PdmProject>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     if req.status.trim().is_empty() {
         return Json(ApiResponse::error(400, "项目状态不能为空"));
     }
@@ -427,10 +468,17 @@ pub async fn update_project_phase(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectPhaseRequest>,
 ) -> Json<ApiResponse<PdmProject>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     if req.phase.trim().is_empty() {
         return Json(ApiResponse::error(400, "项目阶段不能为空"));
     }
@@ -457,9 +505,16 @@ pub async fn list_members(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         SELECT id, tenant_id, project_id, user_id, user_name, user_email, role, joined_at, updated_at
@@ -487,10 +542,17 @@ pub async fn add_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<AddProjectMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     if req.user_id.trim().is_empty() || req.role.trim().is_empty() {
         return Json(ApiResponse::error(400, "成员用户和角色不能为空"));
     }
@@ -529,10 +591,17 @@ pub async fn update_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((project_id, user_id)): Path<(Uuid, String)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         UPDATE pdm_project_members
@@ -568,9 +637,16 @@ pub async fn remove_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((project_id, user_id)): Path<(Uuid, String)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query(
         "DELETE FROM pdm_project_members WHERE tenant_id = $1 AND project_id = $2 AND user_id = $3",
     )
@@ -594,9 +670,16 @@ pub async fn list_phases(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
         SELECT id, tenant_id, project_id, phase, name, description, start_date, end_date,
@@ -624,10 +707,17 @@ pub async fn create_phase(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(project_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<CreateProjectPhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     if req.phase.trim().is_empty() || req.name.trim().is_empty() {
         return Json(ApiResponse::error(400, "阶段标识和名称不能为空"));
     }
@@ -666,10 +756,17 @@ pub async fn update_phase(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((project_id, phase_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProjectPhaseByIdRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
         UPDATE pdm_project_phases
@@ -713,9 +810,16 @@ pub async fn delete_phase(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((project_id, phase_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query(
         "DELETE FROM pdm_project_phases WHERE tenant_id = $1 AND project_id = $2 AND id = $3",
     )
@@ -761,7 +865,14 @@ mod tests {
     fn test_get_tenant_id_from_claims() {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
         let headers = axum::http::HeaderMap::new();
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -776,7 +887,14 @@ mod tests {
             "x-tenant-id",
             "550e8400-e29b-41d4-a716-446655440070".parse().unwrap(),
         );
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440070").unwrap()
@@ -787,7 +905,14 @@ mod tests {
     fn test_get_tenant_id_fallback_v4() {
         let claims = make_claims(None);
         let headers = axum::http::HeaderMap::new();
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(tid.get_version(), Some(uuid::Version::Random));
     }
 

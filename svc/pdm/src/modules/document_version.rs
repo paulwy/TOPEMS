@@ -11,7 +11,6 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 // =============================================================================
@@ -403,9 +402,16 @@ pub async fn list_versions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<DocumentVersion>>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
         r#"
         SELECT {VERSION_COLUMNS}
@@ -432,10 +438,17 @@ pub async fn create_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     if req.version_number.trim().is_empty() || req.title.trim().is_empty() {
         return Json(ApiResponse::error(400, "版本号和标题不能为空"));
     }
@@ -480,9 +493,16 @@ pub async fn get_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
         r#"
         SELECT {VERSION_COLUMNS}
@@ -510,10 +530,17 @@ pub async fn update_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
         r#"
         UPDATE pdm_document_versions
@@ -566,9 +593,16 @@ pub async fn delete_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query(
         "UPDATE pdm_document_versions SET deleted_at = NOW(), updated_at = NOW() WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL",
     )
@@ -593,9 +627,16 @@ pub async fn publish_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -660,10 +701,17 @@ pub async fn upload_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(document_id): Path<Uuid>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
     mut multipart: Multipart,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let mut filename: Option<String> = None;
     let mut content_type: Option<String> = None;
     let mut bytes: Option<Vec<u8>> = None;
@@ -741,9 +789,16 @@ pub async fn download_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
-    headers: axum::http::HeaderMap,
+    _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
     let result = sqlx::query(
         r#"
         SELECT file_url, file_type, encode(file_content, 'base64') AS file_content_base64
@@ -833,7 +888,14 @@ mod handler_tests {
     fn test_get_tenant_id_from_claims() {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
         let headers = axum::http::HeaderMap::new();
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -848,7 +910,14 @@ mod handler_tests {
             "x-tenant-id",
             "550e8400-e29b-41d4-a716-446655440050".parse().unwrap(),
         );
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440050").unwrap()
@@ -859,7 +928,14 @@ mod handler_tests {
     fn test_get_tenant_id_fallback_v4() {
         let claims = make_claims(None);
         let headers = axum::http::HeaderMap::new();
-        let tid = get_tenant_id(&claims, &headers);
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tid = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    });
         assert_eq!(tid.get_version(), Some(uuid::Version::Random));
     }
 
