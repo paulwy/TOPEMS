@@ -1289,5 +1289,9 @@
   "crm.demo.contract_2_title": "PLC 控制器框架协议",
   "crm.demo.contract_3_title": "工业相机服务合同",
   "crm.demo.contract_4_title": "变频器销售合同（已完成）",
-  "crm.demo.contract_5_title": "触摸屏试点合同（已过期）"
+  "crm.demo.contract_5_title": "触摸屏试点合同（已过期）",
+  "crm.dashboard.${sc.id}": "标题",
+  "crm.dashboard.${ch.id}": "标题",
+  "crm.billing.status_${s.status}": "状态}",
+  "crm.billing.status_${item.status}": "标签"
 }

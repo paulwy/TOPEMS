@@ -12,5 +12,8 @@
   "api.index.boolean_6": ": boolean; // 抵消内部交易",
   "api.index.boolean_7": ": boolean; // 包含附注",
   "api.index.boolean_8": ": boolean; // 包含对比数据",
-  "api.index.k9": "periods: string[]; // 报表期间，如 ["
+  "api.index.k9": "periods: string[]; // 报表期间，如 [",
+  "api.mockData.k0": "临时措施：隔离库存、加强检验",
+  "api.mockData.k1": "验证结果：措施有效，合格率已恢复",
+  "api.mockData.k2": "团队认可：表彰相关人员"
 }

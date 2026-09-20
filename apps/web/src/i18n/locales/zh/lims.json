@@ -1899,5 +1899,7 @@
   "lims.inspection_result_page.col_result": "结果",
   "lims.inspection_result_page.col_sample_no": "样品编号",
   "lims.inspection_result_page.col_status": "状态",
-  "lims.parse_test_dialog.empty_hint": "点击\"{{action}}\"{{suffix}}"
+  "lims.parse_test_dialog.empty_hint": "点击\"{{action}}\"{{suffix}}",
+  "lims.dashboard.${sc.id}": "标题",
+  "lims.dashboard.${ch.id}": "标题"
 }
