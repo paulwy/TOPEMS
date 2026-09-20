@@ -521,7 +521,7 @@ pub async fn create_production_order(
         let pname = order.product_name.clone();
         let qty = order.quantity;
         let psd = order.planned_start_date;
-        let cby = Some(claims.sub.clone());
+        let cby = claims.sub.clone();
         tokio::spawn(async move {
             let payload = ProductionOrderCreatedPayload {
                 order_id: oid,
@@ -530,7 +530,7 @@ pub async fn create_production_order(
                 product_name: Some(pname),
                 quantity: Some(qty),
                 planned_start_date: psd,
-                created_by: cby,
+                created_by: Some(cby),
             };
             if let Err(e) = publisher
                 .publish_event(EventType::ProductionOrderCreated, payload)
