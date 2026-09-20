@@ -22,6 +22,7 @@ pub struct Supplier {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateSupplierRequest {
     pub name: String,
+    pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_name: Option<String>,
     pub contact_phone: Option<String>,
@@ -34,6 +35,7 @@ pub struct CreateSupplierRequest {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateSupplierRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_name: Option<String>,
     pub contact_phone: Option<String>,
@@ -139,6 +141,7 @@ mod tests {
     fn test_create_supplier_request_serde_roundtrip() {
         let req = CreateSupplierRequest {
             name: "NewCo".to_string(),
+            name_en: None,
             short_name: Some("NC".to_string()),
             contact_name: Some("李四".to_string()),
             contact_phone: Some("13900000000".to_string()),
@@ -158,6 +161,7 @@ mod tests {
     fn test_create_supplier_request_serde_minimal() {
         let req = CreateSupplierRequest {
             name: "Bare".to_string(),
+            name_en: None,
             short_name: None,
             contact_name: None,
             contact_phone: None,
@@ -177,6 +181,7 @@ mod tests {
     fn test_update_supplier_request_serde_all_none() {
         let req = UpdateSupplierRequest {
             name: None,
+            name_en: None,
             short_name: None,
             contact_name: None,
             contact_phone: None,
@@ -196,6 +201,7 @@ mod tests {
     fn test_update_supplier_request_serde_partial() {
         let req = UpdateSupplierRequest {
             name: Some("Updated".to_string()),
+            name_en: None,
             short_name: None,
             contact_name: None,
             contact_phone: None,

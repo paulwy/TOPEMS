@@ -49,6 +49,7 @@ pub async fn get_user_permissions(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(user_id): Path<String>,
+    headers: axum::http::HeaderMap,
 ) -> (StatusCode, Json<serde_json::Value>) {
     tracing::info!(
         "IAM user get_user_permissions called with user_id: {}",
@@ -70,9 +71,10 @@ pub async fn get_user_permissions(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
+    .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_optional(&state.pool)
     .await
     .unwrap_or_else(|e| {

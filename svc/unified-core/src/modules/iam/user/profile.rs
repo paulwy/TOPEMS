@@ -104,6 +104,7 @@ pub async fn update_preferences(
 pub async fn get_current_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user get_current_user called for user: {}", claims.sub);
 
@@ -119,9 +120,10 @@ pub async fn get_current_user(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE id = $1",
+        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE id = $1",
     )
     .bind(user_id)
+    .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_optional(&state.pool)
     .await
     .unwrap_or_else(|e| {

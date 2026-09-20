@@ -17,6 +17,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -37,6 +38,7 @@ pub struct Carrier {
 pub struct CreateCarrierRequest {
     pub carrier_no: String,
     pub name: String,
+    pub name_en: Option<String>,
     pub contact_person: Option<String>,
     pub contact_phone: Option<String>,
     pub service_area: Option<String>,
@@ -45,6 +47,7 @@ pub struct CreateCarrierRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateCarrierRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub contact_person: Option<String>,
     pub contact_phone: Option<String>,
     pub status: Option<String>,
@@ -129,7 +132,7 @@ pub async fn list_carriers(
 
     let result = sqlx::query_as::<_, Carrier>(
         r#"
-        SELECT id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
+        SELECT id, carrier_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
         FROM tms.tms_carriers
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR carrier_no ILIKE $2 OR name ILIKE $2)
@@ -143,6 +146,7 @@ pub async fn list_carriers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -222,9 +226,9 @@ pub async fn create_carrier(
 
     let result = sqlx::query_as::<_, Carrier>(
         r#"
-        INSERT INTO tms.tms_carriers (id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8, $9)
-        RETURNING id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
+        INSERT INTO tms.tms_carriers (id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at, name_en)
+        VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, $8, $9, $10)
+        RETURNING id, carrier_no, CASE WHEN $11 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -236,6 +240,8 @@ pub async fn create_carrier(
     .bind(tenant_id)
     .bind(now)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -304,12 +310,13 @@ pub async fn get_carrier(
 
     let result = sqlx::query_as::<_, Carrier>(
         r#"
-        SELECT id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
+        SELECT id, carrier_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
         FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -359,9 +366,10 @@ pub async fn update_carrier(
             contact_phone = COALESCE($4, contact_phone),
             status = COALESCE($5, status),
             service_area = COALESCE($6, service_area),
-            updated_at = $7
+            updated_at = $7,
+            name_en = COALESCE($9, name_en)
         WHERE id = $1 AND tenant_id = $8
-        RETURNING id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
+        RETURNING id, carrier_no, CASE WHEN $10 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -372,6 +380,8 @@ pub async fn update_carrier(
     .bind(&req.service_area)
     .bind(now)
     .bind(tenant_id)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -479,7 +489,16 @@ pub struct ApprovalRequest {
     pub comment: Option<String>,
 }
 
-const CARRIER_RETURN: &str = r#"id, carrier_no, name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at"#;
+/// 承运商返回列：按语言切换 name（zh→name, en→COALESCE(name_en, name)）。
+///
+/// `locale_placeholder` 为该查询中绑定语言参数的占位符（如 "$3"），由调用方把
+/// locale（`Locale::from_headers(&headers).as_sql()`）绑到最后一个参数。
+fn carrier_return_columns(locale_placeholder: &str) -> String {
+    format!(
+        "id, carrier_no, CASE WHEN {ph} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, contact_person, contact_phone, status, service_area, tenant_id, created_at, updated_at",
+        ph = locale_placeholder
+    )
+}
 
 /// Submit carrier for qualification review (no state change, just flag)
 #[utoipa::path(
@@ -511,10 +530,11 @@ pub async fn submit_qualification(
 
     let result = sqlx::query_as::<_, Carrier>(&format!(
         r#"SELECT {} FROM tms.tms_carriers WHERE id = $1 AND tenant_id = $2"#,
-        CARRIER_RETURN
+        carrier_return_columns("$3")
     ))
     .bind(id)
     .bind(tenant_id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -585,11 +605,12 @@ pub async fn approve_carrier(
             let result = sqlx::query_as::<_, Carrier>(&format!(
                 r#"UPDATE tms.tms_carriers SET status = 'active', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
-                CARRIER_RETURN
+                carrier_return_columns("$4")
             ))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
+            .bind(Locale::from_headers(&headers).as_sql())
             .fetch_optional(&mut **txn)
             .await;
 
@@ -664,11 +685,12 @@ pub async fn reject_carrier(
             let result = sqlx::query_as::<_, Carrier>(&format!(
                 r#"UPDATE tms.tms_carriers SET status = 'rejected', updated_at = $2
                     WHERE id = $1 AND tenant_id = $3 RETURNING {}"#,
-                CARRIER_RETURN
+                carrier_return_columns("$4")
             ))
             .bind(id)
             .bind(now)
             .bind(tenant_id)
+            .bind(Locale::from_headers(&headers).as_sql())
             .fetch_optional(&mut **txn)
             .await;
 
@@ -717,6 +739,7 @@ mod serde_tests {
         roundtrip(&CreateCarrierRequest {
             carrier_no: "C-2024-001".into(),
             name: "顺丰速运".into(),
+            name_en: None,
             contact_person: Some("王五".into()),
             contact_phone: Some("13800138001".into()),
             service_area: Some("华东地区".into()),
@@ -727,6 +750,7 @@ mod serde_tests {
     fn update_carrier_request_roundtrip_full() {
         roundtrip(&UpdateCarrierRequest {
             name: Some("京东物流".into()),
+            name_en: None,
             contact_person: Some("赵六".into()),
             contact_phone: Some("13900139001".into()),
             status: Some("active".into()),

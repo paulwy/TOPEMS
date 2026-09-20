@@ -30,6 +30,7 @@ pub async fn list_users(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListUsersParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user list_users called");
 
@@ -67,19 +68,21 @@ pub async fn list_users(
 
     let result = if claims.is_superuser {
         sqlx::query_as::<_, UserRow>(
-            "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            "SELECT id, username, email, CASE WHEN $3 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
         )
         .bind(page_size)
         .bind(offset)
+        .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
         .fetch_all(&state.pool)
         .await
     } else {
         sqlx::query_as::<_, UserRow>(
-            "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .bind(page_size)
         .bind(offset)
+        .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
         .fetch_all(&state.pool)
         .await
     };
@@ -405,6 +408,7 @@ pub async fn get_user(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
+    headers: axum::http::HeaderMap,
 ) -> (StatusCode, Json<serde_json::Value>) {
     tracing::info!("IAM user get_user called with id: {}", id);
 
@@ -423,9 +427,10 @@ pub async fn get_user(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
+    .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_optional(&state.pool)
     .await
     .unwrap_or_else(|e| {

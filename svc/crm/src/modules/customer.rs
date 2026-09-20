@@ -67,21 +67,27 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-/// 单条客户详情缓存 key（含 tenant_id 做租户隔离）
-fn customer_detail_cache_key(tenant_id: Uuid, id: Uuid) -> String {
-    format!("crm:customer:{}:{}", tenant_id, id)
+/// 单条客户详情缓存 key（含 locale 语言维度 + tenant_id 做租户隔离）
+///
+/// 列表/详情按 Accept-Language 返回不同 name（zh/en），因此缓存 key 必须带语言维度，
+/// 否则英文请求会命中中文缓存。失效 pattern 仍为 `crm:customer:*`（见 invalidate_customer_cache），
+/// 新 key 以 `crm:customer:` 开头可被正确失效；旧 key 无需主动清理——每次写操作都会 clear_l1()，
+/// 且新部署后旧 key 自然过期（TTL）。
+fn customer_detail_cache_key(locale: &str, tenant_id: Uuid, id: Uuid) -> String {
+    format!("crm:customer:{}:{}:{}", locale, tenant_id, id)
 }
 
-/// 客户列表缓存 key（含 tenant_id 与查询参数 hash）
+/// 客户列表缓存 key（含 locale 语言维度 + tenant_id 与查询参数 hash）
 fn customer_list_cache_key(
+    locale: &str,
     tenant_id: Uuid,
     page: i64,
     page_size: i64,
     search: &Option<String>,
 ) -> String {
     format!(
-        "crm:customer:list:{}:page:{}:size:{}:search:{:?}",
-        tenant_id, page, page_size, search
+        "crm:customer:list:{}:{}:page:{}:size:{}:search:{:?}",
+        locale, tenant_id, page, page_size, search
     )
 }
 
@@ -146,7 +152,7 @@ pub async fn list_customers(
     });
 
     // 缓存命中则直接返回（含 tenant_id 的隔离 key）
-    let list_cache_key = customer_list_cache_key(tenant_id, page, page_size, &search);
+    let list_cache_key = customer_list_cache_key(Locale::from_headers(&headers).as_sql(), tenant_id, page, page_size, &search);
     if let Some(cached) = state.customer_cache.get(&list_cache_key).await {
         match serde_json::from_value::<ListResponse<Customer>>(cached) {
             Ok(list_resp) => {
@@ -344,7 +350,7 @@ async fn get_customer(
     });
 
     // 缓存命中则直接返回
-    let detail_key = customer_detail_cache_key(tenant_id, id);
+    let detail_key = customer_detail_cache_key(Locale::from_headers(&headers).as_sql(), tenant_id, id);
     if let Some(cached) = state.customer_cache.get(&detail_key).await {
         match serde_json::from_value::<Customer>(cached) {
             Ok(customer) => {

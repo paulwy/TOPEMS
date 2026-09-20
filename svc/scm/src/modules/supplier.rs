@@ -23,6 +23,7 @@ use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{auth::Claims, ApiResponse};
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_event::event::{MasterDataAction, SupplierDataSyncRequestedPayload};
@@ -131,6 +132,7 @@ pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -180,7 +182,7 @@ pub async fn list_suppliers(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
-        SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
+        SELECT id, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         FROM scm.suppliers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -192,6 +194,7 @@ pub async fn list_suppliers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -271,9 +274,9 @@ pub async fn create_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.suppliers (id, name, legal_name, contact_person, phone, email, address, bank_account, tax_id, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
-        RETURNING id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
+        INSERT INTO scm.suppliers (id, name, legal_name, contact_person, phone, email, address, bank_account, tax_id, status, created_at, updated_at, name_en)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11, $12)
+        RETURNING id, CASE WHEN $13 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -287,6 +290,8 @@ pub async fn create_supplier(
     .bind(&req.tax_number)
     .bind(now)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -422,6 +427,7 @@ pub async fn get_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -465,11 +471,12 @@ pub async fn get_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
-        SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
+        SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         FROM scm.suppliers WHERE id = $1
         "#),
     )
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -554,9 +561,9 @@ pub async fn update_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
         UPDATE scm.suppliers SET
-            name = $2, legal_name = $3, contact_person = $4, phone = $5, email = $6, address = $7, bank_account = $8, tax_id = $9, status = $10, updated_at = $11
+            name = $2, legal_name = $3, contact_person = $4, phone = $5, email = $6, address = $7, bank_account = $8, tax_id = $9, status = $10, updated_at = $11, name_en = COALESCE($12, name_en)
         WHERE id = $1
-        RETURNING id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
+        RETURNING id, CASE WHEN $13 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -570,6 +577,8 @@ pub async fn update_supplier(
     .bind(&tax_number)
     .bind(&status)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
