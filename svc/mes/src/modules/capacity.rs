@@ -116,7 +116,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .tenant_id
         .as_deref()
         .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
 }
 
 fn can_transition(from: &str, to: &str) -> bool {
