@@ -1052,6 +1052,23 @@ pub async fn check_iam_health() -> DependencyHealth {
         env::var("IAM_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let health_url = format!("{}/health", iam_url);
 
+    // 自指防护：模块化单体（run_monolith.sh）会把 <SVC>_SERVICE_URL 全部注入为
+    // 统一入口自身（MONOLITH_SERVICE_URL）。此时 IAM 内嵌于本进程，若仍对外呼
+    // {IAM_SERVICE_URL}/health，会命中嵌入模块的 /health 处理器并再次触发本检查，
+    // 形成无限递归（GET /health span 无限嵌套 → tokio 栈溢出 → 进程 abort）。
+    // 检测到 IAM_SERVICE_URL 与统一入口地址一致时直接判定 IAM 内嵌健康，不再外呼。
+    if let Ok(monolith) = env::var("MONOLITH_SERVICE_URL") {
+        let self_base = monolith.trim_end_matches('/').to_string();
+        let iam_base = iam_url.trim_end_matches('/').to_string();
+        if !self_base.is_empty() && self_base == iam_base {
+            return DependencyHealth {
+                name: "iam-service".to_string(),
+                status: HealthStatus::Healthy,
+                message: "IAM 服务内嵌（模块化单体）".to_string(),
+            };
+        }
+    }
+
     match check_http_health(&health_url).await {
         Ok(status) => {
             let message = match status {

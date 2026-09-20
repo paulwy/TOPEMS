@@ -56,7 +56,7 @@ echo "  服务间调用: ${#SERVICES[@]} 个 SERVICE_URL 统一指向 :8099"
 
 if [ "$MODE" = "--daemon" ]; then
   env "${ENV_ARGS[@]}" nohup "$BIN" > "$LOG" 2>&1 &
-  echo "后台运行 PID $!，日志 $LOG（启动约需 3 分钟，24 模块顺序建池）"
+  echo "后台运行 PID $!，日志 ${LOG}（启动约需 3 分钟，24 模块顺序建池）"
 else
   env "${ENV_ARGS[@]}" "$BIN"
 fi
