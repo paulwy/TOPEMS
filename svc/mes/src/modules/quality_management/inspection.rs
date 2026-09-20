@@ -306,8 +306,8 @@ pub async fn get_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                inspection_no: r.inspection_no.unwrap_or_default(),
+                id: r.id.to_string(),
+                inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
@@ -424,8 +424,8 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                inspection_no: r.inspection_no.unwrap_or_default(),
+                id: r.id.to_string(),
+                inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
@@ -532,8 +532,8 @@ pub async fn update_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                inspection_no: r.inspection_no.unwrap_or_default(),
+                id: r.id.to_string(),
+                inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),

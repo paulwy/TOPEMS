@@ -499,17 +499,17 @@ pub async fn create_oee_record(
     .flatten();
 
     let record = OeeRecordResponse {
-        id: result.id.unwrap_or_default(),
-        equipment_id: result.equipment_id.unwrap_or_default(),
-        equipment_name: equipment.as_ref().map(|e| e.name.clone()).flatten(),
-        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
-        record_date: opt_naive_date_to_utc(result.record_date).unwrap_or_else(Utc::now),
-        planned_production_time: big_decimal_to_f64(result.planned_production_time),
-        run_time: big_decimal_to_f64(result.actual_run_time),
+        id: result.id,
+        equipment_id: result.equipment_id,
+        equipment_name: equipment.as_ref().map(|e| e.name.clone()),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
+        planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
+        run_time: big_decimal_to_f64(Some(result.actual_run_time)),
         downtime: big_decimal_to_f64(result.downtime),
-        ideal_cycle_time: big_decimal_to_f64(result.ideal_cycle_time),
-        total_count: big_decimal_to_f64(result.actual_output),
-        good_count: big_decimal_to_f64(result.good_output),
+        ideal_cycle_time: big_decimal_to_f64(Some(result.ideal_cycle_time)),
+        total_count: big_decimal_to_f64(Some(result.actual_output)),
+        good_count: big_decimal_to_f64(Some(result.good_output)),
         reject_count: big_decimal_to_f64(result.defective_output),
         availability: big_decimal_to_f64(result.availability) * 100.0,
         performance: big_decimal_to_f64(result.performance) * 100.0,
@@ -578,17 +578,17 @@ pub async fn get_oee_record(
     match result {
         Some(r) => {
             let record = OeeRecordResponse {
-                id: r.id.unwrap_or_default(),
-                equipment_id: r.equipment_id.unwrap_or_default(),
-                equipment_name: r.equipment_name,
-                equipment_code: r.equipment_no,
-                record_date: opt_naive_date_to_utc(r.record_date).unwrap_or_else(Utc::now),
-                planned_production_time: big_decimal_to_f64(r.planned_production_time),
-                run_time: big_decimal_to_f64(r.actual_run_time),
+                id: r.id,
+                equipment_id: r.equipment_id,
+                equipment_name: Some(r.equipment_name),
+                equipment_code: Some(r.equipment_no),
+                record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
+                planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
+                run_time: big_decimal_to_f64(Some(r.actual_run_time)),
                 downtime: big_decimal_to_f64(r.downtime),
-                ideal_cycle_time: big_decimal_to_f64(r.ideal_cycle_time),
-                total_count: big_decimal_to_f64(r.actual_output),
-                good_count: big_decimal_to_f64(r.good_output),
+                ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
+                total_count: big_decimal_to_f64(Some(r.actual_output)),
+                good_count: big_decimal_to_f64(Some(r.good_output)),
                 reject_count: big_decimal_to_f64(r.defective_output),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
@@ -654,19 +654,19 @@ pub async fn update_oee_record(
 
     let planned_time = req
         .planned_production_time
-        .unwrap_or(big_decimal_to_f64(existing.planned_production_time));
+        .unwrap_or(big_decimal_to_f64(Some(existing.planned_production_time)));
     let run_time = req
         .actual_run_time
-        .unwrap_or(big_decimal_to_f64(existing.actual_run_time));
+        .unwrap_or(big_decimal_to_f64(Some(existing.actual_run_time)));
     let cycle_time = req
         .ideal_cycle_time
-        .unwrap_or(big_decimal_to_f64(existing.ideal_cycle_time));
+        .unwrap_or(big_decimal_to_f64(Some(existing.ideal_cycle_time)));
     let output = req
         .actual_output
-        .unwrap_or(big_decimal_to_f64(existing.actual_output));
+        .unwrap_or(big_decimal_to_f64(Some(existing.actual_output)));
     let good = req
         .good_output
-        .unwrap_or(big_decimal_to_f64(existing.good_output));
+        .unwrap_or(big_decimal_to_f64(Some(existing.good_output)));
 
     let (availability, performance, quality_rate, oee) =
         calculate_oee(planned_time, run_time, cycle_time, output, good);
@@ -735,17 +735,17 @@ pub async fn update_oee_record(
     match result {
         Some(r) => {
             let record = OeeRecordResponse {
-                id: r.id.unwrap_or_default(),
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                id: r.id,
+                equipment_id: r.equipment_id,
                 equipment_name: None,
                 equipment_code: None,
-                record_date: opt_naive_date_to_utc(r.record_date).unwrap_or_else(Utc::now),
-                planned_production_time: big_decimal_to_f64(r.planned_production_time),
-                run_time: big_decimal_to_f64(r.actual_run_time),
+                record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
+                planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
+                run_time: big_decimal_to_f64(Some(r.actual_run_time)),
                 downtime: big_decimal_to_f64(r.downtime),
-                ideal_cycle_time: big_decimal_to_f64(r.ideal_cycle_time),
-                total_count: big_decimal_to_f64(r.actual_output),
-                good_count: big_decimal_to_f64(r.good_output),
+                ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
+                total_count: big_decimal_to_f64(Some(r.actual_output)),
+                good_count: big_decimal_to_f64(Some(r.good_output)),
                 reject_count: big_decimal_to_f64(r.defective_output),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
@@ -970,9 +970,9 @@ pub async fn get_oee_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| OeeEquipmentStat {
-                equipment_id: r.equipment_id.unwrap_or_default(),
-                equipment_name: r.equipment_name.unwrap_or_default(),
-                equipment_code: r.equipment_code.unwrap_or_default(),
+                equipment_id: r.equipment_id,
+                equipment_name: r.equipment_name,
+                equipment_code: r.equipment_code,
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
@@ -1075,9 +1075,9 @@ pub async fn get_equipment_efficiency_analysis(
             };
 
             EquipmentEfficiencyAnalysis {
-                equipment_id: r.equipment_id.unwrap_or_default(),
-                equipment_name: r.equipment_name.unwrap_or_default(),
-                equipment_no: r.equipment_no.unwrap_or_default(),
+                equipment_id: r.equipment_id,
+                equipment_name: r.equipment_name,
+                equipment_no: r.equipment_no,
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),

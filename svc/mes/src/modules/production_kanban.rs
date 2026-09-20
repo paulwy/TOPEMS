@@ -238,7 +238,7 @@ pub async fn get_dashboard(
         Ok(rows) => rows
             .into_iter()
             .map(|r| {
-                let planned = r.quantity.unwrap_or_default() as f64;
+                let planned = r.quantity as f64;
                 let completed = r.completed_quantity.unwrap_or_default() as f64;
                 let progress = if planned > 0.0 {
                     (completed / planned) * 100.0
@@ -246,13 +246,13 @@ pub async fn get_dashboard(
                     0.0
                 };
                 OrderProgressResponse {
-                    order_id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                    order_number: r.order_no.unwrap_or_default(),
-                    product_name: r.product_name.unwrap_or_default(),
+                    order_id: r.id.to_string(),
+                    order_number: r.order_no,
+                    product_name: r.product_name,
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                 }
             })
             .collect(),
@@ -497,7 +497,7 @@ pub async fn get_order_progress(
     let list: Vec<OrderProgressResponse> = orders
         .into_iter()
         .map(|r| {
-            let planned = r.quantity.unwrap_or_default() as f64;
+            let planned = r.quantity as f64;
             let completed = r.completed_quantity.unwrap_or_default() as f64;
             let progress = if planned > 0.0 {
                 (completed / planned) * 100.0
@@ -505,13 +505,13 @@ pub async fn get_order_progress(
                 0.0
             };
             OrderProgressResponse {
-                order_id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                order_number: r.order_no.unwrap_or_default(),
-                product_name: r.product_name.unwrap_or_default(),
+                order_id: r.id.to_string(),
+                order_number: r.order_no,
+                product_name: r.product_name,
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,
-                status: r.status.unwrap_or_default(),
+                status: r.status,
             }
         })
         .collect();
