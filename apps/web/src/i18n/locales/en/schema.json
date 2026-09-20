@@ -1177,7 +1177,12 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories"
+            "all": "All Categories",
+            "其他": "Others",
+            "办公设备": "Office Equipment",
+            "家具": "Furniture",
+            "机械设备": "Machinery & Equipment",
+            "电子设备": "Electronic Equipment"
           }
         }
       },
@@ -1454,11 +1459,24 @@
       },
       "category": {
         "label": "Customer Category",
-        "option": {}
+        "option": {
+          "个人客户": "Individual Customer",
+          "中型企业": "Medium Enterprise",
+          "大型企业": "Large Enterprise",
+          "小型企业": "Small Enterprise",
+          "政府机构": "Government Agency"
+        }
       },
       "industry": {
         "label": "Industry",
-        "option": {}
+        "option": {
+          "互联网": "Internet",
+          "化工": "Chemicals",
+          "医疗": "Healthcare",
+          "机械制造": "Machinery Manufacturing",
+          "电子制造": "Electronics Manufacturing",
+          "金融": "Finance"
+        }
       },
       "credit_rating": {
         "label": "Credit Rating",
@@ -1530,13 +1548,24 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories"
+            "all": "All Categories",
+            "个人客户": "Individual Customer",
+            "中型企业": "Medium Enterprise",
+            "大型企业": "Large Enterprise",
+            "小型企业": "Small Enterprise",
+            "政府机构": "Government Agency"
           }
         },
         "industry": {
           "label": "Industry",
           "option": {
-            "all": "All Industries"
+            "all": "All Industries",
+            "互联网": "Internet",
+            "化工": "Chemicals",
+            "医疗": "Healthcare",
+            "机械制造": "Machinery Manufacturing",
+            "电子制造": "Electronics Manufacturing",
+            "金融": "Finance"
           }
         }
       },
@@ -1584,7 +1613,11 @@
       },
       "warehouse_name": {
         "label": "Warehouse",
-        "option": {}
+        "option": {
+          "半成品仓库": "Semi-finished Warehouse",
+          "原材料仓库": "Raw Material Warehouse",
+          "成品仓库": "Finished Goods Warehouse"
+        }
       },
       "warehouse_id": {
         "label": "Warehouse ID"
@@ -1681,7 +1714,13 @@
       },
       "category": {
         "label": "Category",
-        "option": {}
+        "option": {
+          "包装材料": "Packaging Materials",
+          "原材料": "Raw Materials",
+          "机械零件": "Mechanical Parts",
+          "电子元件": "Electronic Components",
+          "辅助材料": "Auxiliary Materials"
+        }
       },
       "unit": {
         "label": "Unit"
@@ -1728,7 +1767,12 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories"
+            "all": "All Categories",
+            "包装材料": "Packaging Materials",
+            "原材料": "Raw Materials",
+            "机械零件": "Mechanical Parts",
+            "电子元件": "Electronic Components",
+            "辅助材料": "Auxiliary Materials"
           }
         }
       },
@@ -2034,7 +2078,12 @@
       },
       "category": {
         "label": "Supplier Category",
-        "option": {}
+        "option": {
+          "原材料供应商": "Raw Material Supplier",
+          "服务供应商": "Service Supplier",
+          "设备供应商": "Equipment Supplier",
+          "配件供应商": "Parts Supplier"
+        }
       },
       "credit_rating": {
         "label": "Credit Rating",
@@ -2103,7 +2152,11 @@
         "category": {
           "label": "Category",
           "option": {
-            "all": "All Categories"
+            "all": "All Categories",
+            "原材料供应商": "Raw Material Supplier",
+            "服务供应商": "Service Supplier",
+            "设备供应商": "Equipment Supplier",
+            "配件供应商": "Parts Supplier"
           }
         }
       },
@@ -2281,7 +2334,12 @@
       },
       "voucher_type": {
         "label": "Voucher Type",
-        "option": {}
+        "option": {
+          "付": "Payment",
+          "收": "Receipt",
+          "记": "Journal",
+          "转": "Transfer"
+        }
       },
       "summary": {
         "label": "Summary"
@@ -2314,7 +2372,11 @@
         "voucher_type": {
           "label": "Voucher Type",
           "option": {
-            "all": "All Types"
+            "all": "All Types",
+            "付": "Payment",
+            "收": "Receipt",
+            "记": "Journal",
+            "转": "Transfer"
           }
         }
       },
