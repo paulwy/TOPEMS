@@ -124,5 +124,7 @@
       "k59": "Quick Actions",
       "k60": "Recent Activities"
     }
-  }
+  },
+  "dev-platform.v53-platform-console.empty_projects": "No projects yet. Go to the Development Platform to create your first project.",
+  "dev-platform.v53-platform-console.start_first": "Click Create Project to start your first V53 micro-frontend project."
 }

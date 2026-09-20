@@ -3600,5 +3600,6 @@
   "erp.demo.inv_cat_vision": "视觉",
   "erp.demo.inv_cat_drive": "驱动",
   "erp.demo.inv_cat_hmi": "人机界面",
-  "erp.demo.unit_piece": "台"
+  "erp.demo.unit_piece": "台",
+  "erp.purchase_order.department.unassigned": "未分配"
 }

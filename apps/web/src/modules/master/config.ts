@@ -1,4 +1,5 @@
 import { lazyWithRetry } from '@/routes/utils';
+import i18n from '@/i18n';
 import type { RouteConfigV2, RouteModuleConfig } from '@/routes/v2/types';
 import type { ModuleNavConfig } from '@/lib/navigation/types';
 
@@ -35,7 +36,7 @@ const dataAssetCatalogRoute: RouteConfigV2<DataAssetCatalogPageProps> = {
   ),
   module: 'master',
   code: 'master-data-asset-catalog',
-  title: '数据资产目录',
+  title: i18n.t('master.dataAssetCatalog'),
   titleKey: 'master.dataAssetCatalog',
   template: 'list',
   group: 'master',
@@ -45,7 +46,7 @@ const dataAssetCatalogRoute: RouteConfigV2<DataAssetCatalogPageProps> = {
 
 export const masterModuleConfig: RouteModuleConfig = {
   code: 'master',
-  name: '主数据治理',
+  name: i18n.t('master.moduleName'),
   nameKey: 'master.moduleName',
   icon: 'Database',
   path: MASTER_PATHS.root,
@@ -53,7 +54,7 @@ export const masterModuleConfig: RouteModuleConfig = {
   suite: 'platform',
   status: 'online',
   order: 95,
-  description: '主数据治理与数据资产目录管理',
+  description: i18n.t('master.module_desc'),
   permission: 'master:data-asset:read',
   routes: [dataAssetCatalogRoute],
 };
@@ -61,7 +62,7 @@ export const masterModuleConfig: RouteModuleConfig = {
 // ---- 导航菜单配置 ----
 export const masterNavConfig: ModuleNavConfig = {
   code: 'master',
-  name: '主数据治理',
+  name: i18n.t('master.moduleName'),
   nameKey: 'master.moduleName',
   icon: 'Database',
   path: MASTER_PATHS.root,
@@ -71,7 +72,7 @@ export const masterNavConfig: ModuleNavConfig = {
   navItems: [
     {
       code: 'master-data-asset-catalog',
-      label: '数据资产目录',
+      label: i18n.t('master.dataAssetCatalog'),
       labelKey: 'master.dataAssetCatalog',
       icon: 'Database',
       path: MASTER_PATHS.dataAssetCatalog,
@@ -79,7 +80,7 @@ export const masterNavConfig: ModuleNavConfig = {
       order: 0,
       group: 'master',
       showInSidebar: true,
-      description: '数据资产编目、搜索与治理',
+      description: i18n.t('master.data_asset_catalog.desc'),
     },
   ],
 };

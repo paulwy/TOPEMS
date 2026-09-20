@@ -26,5 +26,9 @@
     "userMenu": {
       "k0": "Help Center & Shortcuts"
     }
-  }
+  },
+  "layouts.mobile_nav.home": "Home",
+  "layouts.mobile_nav.mes": "Manufacturing",
+  "layouts.mobile_nav.im": "Messages",
+  "layouts.mobile_nav.profile": "Profile"
 }

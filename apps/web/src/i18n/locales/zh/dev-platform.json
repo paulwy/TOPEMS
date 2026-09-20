@@ -59,5 +59,7 @@
   "dev-platform.v53-platform-console.k57": "耗时",
   "dev-platform.v53-platform-console.k58": "操作",
   "dev-platform.v53-platform-console.k59": "快速操作",
-  "dev-platform.v53-platform-console.k60": "最近活动"
+  "dev-platform.v53-platform-console.k60": "最近活动",
+  "dev-platform.v53-platform-console.empty_projects": "暂无项目，前往开发平台创建第一个项目",
+  "dev-platform.v53-platform-console.start_first": "点击创建项目开始你的第一个 V53 微前端项目"
 }

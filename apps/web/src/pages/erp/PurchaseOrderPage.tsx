@@ -124,7 +124,7 @@ const PurchaseOrderPage: React.FC = () => {
         status: 'pending_approval',
         priority: 'high',
         buyer: t('erp.demo.owner_zhang'),
-        department: '采购部',
+        department: t('erp.purchase_order.department.purchase'),
         created_at: '2026-09-14 09:30',
         expected_date: '2026-09-25',
         items_count: 5,
@@ -140,7 +140,7 @@ const PurchaseOrderPage: React.FC = () => {
         status: 'approved',
         priority: 'medium',
         buyer: t('erp.demo.owner_li'),
-        department: '采购部',
+        department: t('erp.purchase_order.department.purchase'),
         created_at: '2026-09-13 14:20',
         expected_date: '2026-09-28',
         items_count: 8,
@@ -155,7 +155,7 @@ const PurchaseOrderPage: React.FC = () => {
         status: 'ordered',
         priority: 'low',
         buyer: t('erp.demo.owner_wang'),
-        department: '生产部',
+        department: t('erp.purchase_order.department.production'),
         created_at: '2026-09-12 10:15',
         expected_date: '2026-09-22',
         items_count: 12,
@@ -170,7 +170,7 @@ const PurchaseOrderPage: React.FC = () => {
         status: 'received',
         priority: 'high',
         buyer: t('erp.demo.buyer_zhao'),
-        department: '采购部',
+        department: t('erp.purchase_order.department.purchase'),
         created_at: '2026-09-10 16:45',
         expected_date: '2026-09-20',
         items_count: 3,
@@ -185,7 +185,7 @@ const PurchaseOrderPage: React.FC = () => {
         status: 'rejected',
         priority: 'low',
         buyer: t('erp.demo.buyer_sun'),
-        department: '行政部',
+        department: t('erp.purchase_order.department.admin'),
         created_at: '2026-09-11 11:30',
         expected_date: '2026-09-18',
         items_count: 20,
@@ -201,7 +201,7 @@ const PurchaseOrderPage: React.FC = () => {
         status: 'draft',
         priority: 'medium',
         buyer: t('erp.demo.buyer_zhou'),
-        department: '生产部',
+        department: t('erp.purchase_order.department.production'),
         created_at: '2026-09-14 15:00',
         expected_date: '2026-09-30',
         items_count: 6,
@@ -232,7 +232,7 @@ const PurchaseOrderPage: React.FC = () => {
                   : (o.status as PurchaseOrder['status']),
             priority: 'medium',
             buyer: o.created_by || '—',
-            department: '未分配',
+            department: t('erp.purchase_order.department.unassigned'),
             created_at: o.created_at,
             expected_date: o.expected_date || o.order_date,
             items_count: 0,
@@ -479,9 +479,9 @@ const PurchaseOrderPage: React.FC = () => {
                 onChange={(e) => setDepartmentFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('erp.purchase_order.filter.all_departments') },
-                  { value: '采购部', label: t('erp.purchase_order.department.purchase') },
-                  { value: '生产部', label: t('erp.purchase_order.department.production') },
-                  { value: '行政部', label: t('erp.purchase_order.department.admin') },
+                  { value: t('erp.purchase_order.department.purchase'), label: t('erp.purchase_order.department.purchase') },
+                  { value: t('erp.purchase_order.department.production'), label: t('erp.purchase_order.department.production') },
+                  { value: t('erp.purchase_order.department.admin'), label: t('erp.purchase_order.department.admin') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -790,11 +790,11 @@ const PurchaseOrderPage: React.FC = () => {
               </label>
               <Select
                 id='po-department'
-                defaultValue='采购部'
+                defaultValue={t('erp.purchase_order.department.purchase')}
                 options={[
-                  { value: '采购部', label: t('erp.purchase_order.department.purchase') },
-                  { value: '生产部', label: t('erp.purchase_order.department.production') },
-                  { value: '行政部', label: t('erp.purchase_order.department.admin') },
+                  { value: t('erp.purchase_order.department.purchase'), label: t('erp.purchase_order.department.purchase') },
+                  { value: t('erp.purchase_order.department.production'), label: t('erp.purchase_order.department.production') },
+                  { value: t('erp.purchase_order.department.admin'), label: t('erp.purchase_order.department.admin') },
                 ]}
               />
             </div>

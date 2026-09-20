@@ -150,7 +150,7 @@ const MesWorkOrderPage: React.FC = () => {
         completed_quantity: 320,
         status: 'in_progress',
         priority: 'high',
-        workshop: '一车间',
+        workshop: t('mes.work_order_page.workshop_1'),
         production_line: 'A 线',
         operator: t('mes.demo.operator_zhang'),
         planned_start: '2026-09-14 08:00',
@@ -167,7 +167,7 @@ const MesWorkOrderPage: React.FC = () => {
         completed_quantity: 1000,
         status: 'completed',
         priority: 'medium',
-        workshop: '二车间',
+        workshop: t('mes.work_order_page.workshop_2'),
         production_line: 'B 线',
         operator: t('mes.demo.operator_li'),
         planned_start: '2026-09-13 08:00',
@@ -184,7 +184,7 @@ const MesWorkOrderPage: React.FC = () => {
         completed_quantity: 0,
         status: 'pending',
         priority: 'low',
-        workshop: '一车间',
+        workshop: t('mes.work_order_page.workshop_1'),
         production_line: 'C 线',
         operator: t('mes.demo.operator_wang'),
         planned_start: '2026-09-16 08:00',
@@ -199,7 +199,7 @@ const MesWorkOrderPage: React.FC = () => {
         completed_quantity: 450,
         status: 'paused',
         priority: 'medium',
-        workshop: '三车间',
+        workshop: t('mes.work_order_page.workshop_3'),
         production_line: 'A 线',
         operator: t('mes.demo.operator_zhao'),
         planned_start: '2026-09-14 08:00',
@@ -216,7 +216,7 @@ const MesWorkOrderPage: React.FC = () => {
         completed_quantity: 0,
         status: 'cancelled',
         priority: 'low',
-        workshop: '二车间',
+        workshop: t('mes.work_order_page.workshop_2'),
         production_line: 'C 线',
         operator: t('mes.demo.operator_sun'),
         planned_start: '2026-09-15 08:00',
@@ -555,9 +555,9 @@ const MesWorkOrderPage: React.FC = () => {
                 onChange={(e) => setWorkshopFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('mes.work_order_page.workshop_all') },
-                  { value: '一车间', label: t('mes.work_order_page.workshop_1') },
-                  { value: '二车间', label: t('mes.work_order_page.workshop_2') },
-                  { value: '三车间', label: t('mes.work_order_page.workshop_3') },
+                  { value: t('mes.work_order_page.workshop_1'), label: t('mes.work_order_page.workshop_1') },
+                  { value: t('mes.work_order_page.workshop_2'), label: t('mes.work_order_page.workshop_2') },
+                  { value: t('mes.work_order_page.workshop_3'), label: t('mes.work_order_page.workshop_3') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -951,11 +951,11 @@ const MesWorkOrderPage: React.FC = () => {
               </label>
               <Select
                 id='wo-workshop'
-                defaultValue='一车间'
+                defaultValue={t('mes.work_order_page.workshop_1')}
                 options={[
-                  { value: '一车间', label: t('mes.work_order_page.workshop_1') },
-                  { value: '二车间', label: t('mes.work_order_page.workshop_2') },
-                  { value: '三车间', label: t('mes.work_order_page.workshop_3') },
+                  { value: t('mes.work_order_page.workshop_1'), label: t('mes.work_order_page.workshop_1') },
+                  { value: t('mes.work_order_page.workshop_2'), label: t('mes.work_order_page.workshop_2') },
+                  { value: t('mes.work_order_page.workshop_3'), label: t('mes.work_order_page.workshop_3') },
                 ]}
               />
             </div>
@@ -968,7 +968,7 @@ const MesWorkOrderPage: React.FC = () => {
               </label>
               <Select
                 id='wo-line'
-                defaultValue='A 线'
+                defaultValue={t('mes.work_order_page.line_a')}
                 options={[
                   { value: 'A 线', label: t('mes.work_order_page.line_a') },
                   { value: 'B 线', label: t('mes.work_order_page.line_b') },

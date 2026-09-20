@@ -35,5 +35,9 @@
   "master.data_asset_catalog.fld_description": "Description",
   "master.data_asset_catalog.fld_tags": "Tags",
   "master.data_asset_catalog.fld_created_at": "Created At",
-  "master.data_asset_catalog.close": "Close"
+  "master.data_asset_catalog.close": "Close",
+  "master.moduleName": "Master Data Governance",
+  "master.module_desc": "Master data governance & data asset catalog management",
+  "master.dataAssetCatalog": "Data Asset Catalog",
+  "master.data_asset_catalog.desc": "Data asset cataloging, search & governance"
 }

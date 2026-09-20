@@ -340,11 +340,11 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     }))
                   }
                 >
-                  <MenuItem value='Critical'>严重</MenuItem>
+                  <MenuItem value='Critical'>{i18n.t('intelligent-ops.v56-ops-panel.sev_critical')}</MenuItem>
                   <MenuItem value='High'>高</MenuItem>
                   <MenuItem value='Medium'>中</MenuItem>
                   <MenuItem value='Low'>低</MenuItem>
-                  <MenuItem value='Info'>信息</MenuItem>
+                  <MenuItem value='Info'>{i18n.t('intelligent-ops.v56-ops-panel.sev_info')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField

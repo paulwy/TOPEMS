@@ -35,5 +35,9 @@
   "master.data_asset_catalog.fld_description": "描述",
   "master.data_asset_catalog.fld_tags": "标签",
   "master.data_asset_catalog.fld_created_at": "创建时间",
-  "master.data_asset_catalog.close": "关闭"
+  "master.data_asset_catalog.close": "关闭",
+  "master.moduleName": "主数据治理",
+  "master.module_desc": "主数据治理与数据资产目录管理",
+  "master.dataAssetCatalog": "数据资产目录",
+  "master.data_asset_catalog.desc": "数据资产编目、搜索与治理"
 }

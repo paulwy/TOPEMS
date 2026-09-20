@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import i18n from '@/i18n';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Home,
@@ -33,10 +34,10 @@ interface MobileTabItem {
 }
 
 const mobileTabs: MobileTabItem[] = [
-  { id: 'home', label: '首页', icon: Home, path: '/dashboard' },
-  { id: 'mes', label: '制造', icon: Factory, path: '/mes' },
-  { id: 'im', label: '消息', icon: MessageSquare, path: '/im', badge: 3 },
-  { id: 'profile', label: '我的', icon: User, path: '/profile' },
+  { id: 'home', label: i18n.t('layouts.mobile_nav.home'), icon: Home, path: '/dashboard' },
+  { id: 'mes', label: i18n.t('layouts.mobile_nav.mes'), icon: Factory, path: '/mes' },
+  { id: 'im', label: i18n.t('layouts.mobile_nav.im'), icon: MessageSquare, path: '/im', badge: 3 },
+  { id: 'profile', label: i18n.t('layouts.mobile_nav.profile'), icon: User, path: '/profile' },
 ];
 
 export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {

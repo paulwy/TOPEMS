@@ -289,7 +289,7 @@ export async function bffGraphQL<T = unknown>(
     const finalDuration = duration > 0 ? duration : 0;
 
     perfLogger.debug(
-      `${i18n.t('shared.index.graphql_1')}${operationName} - ${finalDuration.toFixed(0)}ms - ${success ? i18n.t('api.index.k0') : i18n.t('api.index.k2')} - ${cached ? '缓存命中' : '缓存未命中'}`
+      `${i18n.t('shared.index.graphql_1')}${operationName} - ${finalDuration.toFixed(0)}ms - ${success ? i18n.t('api.index.k0') : i18n.t('api.index.k2')} - ${cached ? i18n.t('api.index.k1') : i18n.t('api.index.k3')}`
     );
 
     notifyPerformance(query, finalDuration, success, cached, variables, errorMsg);

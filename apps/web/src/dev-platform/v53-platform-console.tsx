@@ -413,7 +413,7 @@ const DashboardTab: React.FC<{
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          暂无项目，前往i18n.t('dev-platform.v53-platform-console.k19')创建第一个项目
+                          {i18n.t('dev-platform.v53-platform-console.empty_projects')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -808,7 +808,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                 color='text.secondary'
                 sx={{ mb: 2 }}
               >
-                点击i18n.t('dev-platform.v53-platform-console.k27')开始你的第一个 V53 微前端项目
+                {i18n.t('dev-platform.v53-platform-console.start_first')}
               </Typography>
               <Button
                 variant='contained'

@@ -7,5 +7,9 @@
   "layouts.user_menu.k2": "退出后清除本地会话需重登。您确定要退出当前账号吗？",
   "layouts.user_menu.k3": "取消",
   "layouts.user_menu.k4": "确认退出",
-  "layouts.userMenu.k0": "帮助中心 & 快捷键"
+  "layouts.userMenu.k0": "帮助中心 & 快捷键",
+  "layouts.mobile_nav.home": "首页",
+  "layouts.mobile_nav.mes": "制造",
+  "layouts.mobile_nav.im": "消息",
+  "layouts.mobile_nav.profile": "我的"
 }

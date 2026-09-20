@@ -84,5 +84,7 @@
       "k39": "Remediation",
       "k40": "No event records. Create an event or perform an action to view the timeline."
     }
-  }
+  },
+  "intelligent-ops.v56-ops-panel.sev_critical": "Critical",
+  "intelligent-ops.v56-ops-panel.sev_info": "Info"
 }

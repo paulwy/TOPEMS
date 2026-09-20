@@ -91,7 +91,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sku: 'SM-750W-001',
       product_name: t('erp.demo.inv_product_servo'),
       category: t('erp.demo.inv_cat_motor'),
-      warehouse: '华东仓',
+      warehouse: t('erp.erp_inventory_redesign.warehouse.east'),
       quantity: 150,
       safety_stock: 50,
       unit: t('erp.demo.unit_piece'),
@@ -105,7 +105,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sku: 'CX-200-PLC',
       product_name: t('erp.demo.inv_product_plc'),
       category: t('erp.demo.inv_cat_controller'),
-      warehouse: '华东仓',
+      warehouse: t('erp.erp_inventory_redesign.warehouse.east'),
       quantity: 200,
       safety_stock: 100,
       unit: t('erp.demo.unit_piece'),
@@ -119,7 +119,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sku: 'MV-200-CAM',
       product_name: t('erp.demo.inv_product_camera'),
       category: t('erp.demo.inv_cat_vision'),
-      warehouse: '华南仓',
+      warehouse: t('erp.erp_inventory_redesign.warehouse.south'),
       quantity: 25,
       safety_stock: 30,
       unit: t('erp.demo.unit_piece'),
@@ -133,7 +133,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sku: 'VF-5.5KW',
       product_name: t('erp.demo.inv_product_inverter'),
       category: t('erp.demo.inv_cat_drive'),
-      warehouse: '华南仓',
+      warehouse: t('erp.erp_inventory_redesign.warehouse.south'),
       quantity: 0,
       safety_stock: 20,
       unit: t('erp.demo.unit_piece'),
@@ -147,7 +147,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
       sku: 'HMI-7INCH',
       product_name: t('erp.demo.inv_product_hmi'),
       category: t('erp.demo.inv_cat_hmi'),
-      warehouse: '华北仓',
+      warehouse: t('erp.erp_inventory_redesign.warehouse.north'),
       quantity: 500,
       safety_stock: 100,
       unit: t('erp.demo.unit_piece'),
@@ -425,9 +425,9 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('erp.erp_inventory_redesign.filter.all_warehouses') },
-                  { value: '华东仓', label: t('erp.erp_inventory_redesign.warehouse.east') },
-                  { value: '华南仓', label: t('erp.erp_inventory_redesign.warehouse.south') },
-                  { value: '华北仓', label: t('erp.erp_inventory_redesign.warehouse.north') },
+                  { value: t('erp.erp_inventory_redesign.warehouse.east'), label: t('erp.erp_inventory_redesign.warehouse.east') },
+                  { value: t('erp.erp_inventory_redesign.warehouse.south'), label: t('erp.erp_inventory_redesign.warehouse.south') },
+                  { value: t('erp.erp_inventory_redesign.warehouse.north'), label: t('erp.erp_inventory_redesign.warehouse.north') },
                 ]}
                 style={{ width: 140 }}
               />

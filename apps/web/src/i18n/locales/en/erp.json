@@ -4369,5 +4369,6 @@
   "erp.demo.inv_cat_vision": "Vision",
   "erp.demo.inv_cat_drive": "Drives",
   "erp.demo.inv_cat_hmi": "HMI",
-  "erp.demo.unit_piece": "pcs"
+  "erp.demo.unit_piece": "pcs",
+  "erp.purchase_order.department.unassigned": "Unassigned"
 }

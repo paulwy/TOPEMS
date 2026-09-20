@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import i18n from '@/i18n';
 
 interface UseAnalyticsDataOptions<TData> {
   /** 数据加载函数，返回 ApiResponse 包装的数据 */
@@ -52,7 +53,7 @@ export function useAnalyticsData<TData>({
         setData(result as TData);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : '加载失败';
+      const message = err instanceof Error ? err.message : i18n.t('shared.data_load_failed');
       setError(message);
       console.error('Analytics data load error:', err);
     } finally {

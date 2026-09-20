@@ -39,5 +39,7 @@
   "intelligent-ops.v56-ops-panel.k37": "未知事件",
   "intelligent-ops.v56-ops-panel.k38": "扩缩容",
   "intelligent-ops.v56-ops-panel.k39": "修复",
-  "intelligent-ops.v56-ops-panel.k40": "暂无事件记录。创建事件或执行操作以查看时间线。"
+  "intelligent-ops.v56-ops-panel.k40": "暂无事件记录。创建事件或执行操作以查看时间线。",
+  "intelligent-ops.v56-ops-panel.sev_critical": "严重",
+  "intelligent-ops.v56-ops-panel.sev_info": "信息"
 }
