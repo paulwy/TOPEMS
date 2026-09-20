@@ -11,6 +11,7 @@ use sqlx::Row;
 use std::sync::Arc;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{EventPublisher, EventType, PmProjectCreatedPayload};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
@@ -158,6 +159,7 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
 )]
 async fn list_projects(
     State(state): State<AppState>,
+    headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ProjectQuery>,
 ) -> Json<ApiResponse<ProjectListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -165,8 +167,16 @@ async fn list_projects(
 
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
-        "SELECT * FROM pm.projects ORDER BY created_at DESC"
+        r#"
+        SELECT id,
+               CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, description, project_type, status, leader, start_date, end_date,
+               budget, progress, project_config, benefit_target, risk_level, priority, tags,
+               parent_id, workspace_id, created_by, created_at, updated_at
+        FROM pm.projects ORDER BY created_at DESC
+        "#
     ))
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&state.pool)
     .await;
 
@@ -236,11 +246,15 @@ async fn create_project(
             id, name, code, description, project_type, status, leader,
             start_date, end_date, budget, progress, project_config, benefit_target,
             risk_level, priority, tags, parent_id, workspace_id, tenant_id, created_by,
-            created_at, updated_at
+            created_at, updated_at, name_en
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, to_jsonb($16::text[]), $17, $18, $19, $20, $21, $22)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, to_jsonb($16::text[]), $17, $18, $19, $20, $21, $22, $23)
         ON CONFLICT (code) DO NOTHING
-        RETURNING *
+        RETURNING id,
+                  CASE WHEN $24 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  code, description, project_type, status, leader, start_date, end_date,
+                  budget, progress, project_config, benefit_target, risk_level, priority, tags,
+                  parent_id, workspace_id, created_by, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -265,6 +279,8 @@ async fn create_project(
     .bind(Some("system"))
     .bind(now)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&state.pool)
     .await;
 
@@ -372,12 +388,21 @@ async fn create_project(
 async fn get_project(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Project>> {
     let result = sqlx::query_as::<_, Project>(only_own_schema_query!(
         "pm",
-        "SELECT * FROM pm.projects WHERE deleted_at IS NULL AND id = $1"
+        r#"
+        SELECT id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, description, project_type, status, leader, start_date, end_date,
+               budget, progress, project_config, benefit_target, risk_level, priority, tags,
+               parent_id, workspace_id, created_by, created_at, updated_at
+        FROM pm.projects WHERE deleted_at IS NULL AND id = $1
+        "#
     ))
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&state.pool)
     .await;
 
@@ -436,9 +461,14 @@ async fn update_project(
             tags = COALESCE(to_jsonb($12::text[]), tags),
             parent_id = COALESCE($13, parent_id),
             workspace_id = COALESCE($14, workspace_id),
-            updated_at = $15
-        WHERE id = $16
-        RETURNING *
+            name_en = COALESCE($15, name_en),
+            updated_at = $16
+        WHERE id = $17
+        RETURNING id,
+                  CASE WHEN $18 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  code, description, project_type, status, leader, start_date, end_date,
+                  budget, progress, project_config, benefit_target, risk_level, priority, tags,
+                  parent_id, workspace_id, created_by, created_at, updated_at
         "#
     ))
     .bind(&req.name)
@@ -455,8 +485,10 @@ async fn update_project(
     .bind(&req.tags)
     .bind(req.parent_id)
     .bind(req.workspace_id)
+    .bind(&req.name_en)
     .bind(now)
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&state.pool)
     .await;
 

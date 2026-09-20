@@ -214,6 +214,7 @@ pub mod hrm;
 pub mod id;
 pub mod l2_cache;
 pub mod layers;
+pub mod locale;
 pub mod logging;
 pub mod metrics;
 pub mod n_plus_one_detector;

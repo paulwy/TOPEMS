@@ -79,6 +79,7 @@ pub struct ProjectFinance {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateProjectRequest {
     pub name: String,
+    pub name_en: Option<String>,
     pub code: String,
     pub description: Option<String>,
     pub project_type: String,
@@ -98,6 +99,7 @@ pub struct CreateProjectRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateProjectRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub description: Option<String>,
     pub status: Option<String>,
     pub leader: Option<String>,
@@ -404,6 +406,7 @@ mod tests {
     fn sample_create_project_request() -> CreateProjectRequest {
         CreateProjectRequest {
             name: "新项目".to_string(),
+            name_en: None,
             code: "NEW-001".to_string(),
             description: Some("desc".to_string()),
             project_type: "internal".to_string(),
@@ -444,6 +447,7 @@ mod tests {
     fn test_create_project_request_minimal_fields() {
         let r = CreateProjectRequest {
             name: "x".to_string(),
+            name_en: None,
             code: "y".to_string(),
             description: None,
             project_type: "t".to_string(),
@@ -471,6 +475,7 @@ mod tests {
     fn test_update_project_request_all_none_roundtrip() {
         let r = UpdateProjectRequest {
             name: None,
+            name_en: None,
             description: None,
             status: None,
             leader: None,
@@ -495,6 +500,7 @@ mod tests {
     fn test_update_project_request_with_values_roundtrip() {
         let r = UpdateProjectRequest {
             name: Some("updated".to_string()),
+            name_en: None,
             description: Some("d".to_string()),
             status: Some("active".to_string()),
             leader: Some("l".to_string()),
@@ -520,6 +526,7 @@ mod tests {
     fn test_update_project_request_clone_preserves_fields() {
         let r = UpdateProjectRequest {
             name: Some("n".to_string()),
+            name_en: None,
             description: None,
             status: Some("active".to_string()),
             leader: None,

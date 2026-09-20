@@ -13,6 +13,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 use uuid::Uuid;
 #[derive(Debug, Deserialize)]
@@ -52,6 +53,7 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_announcements(
     State(_state): State<ApiState>,
+    headers: HeaderMap,
     Query(params): Query<AnnouncementQueryParams>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -71,9 +73,13 @@ pub async fn list_announcements(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let priority_filter = params.priority.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
+        SELECT id,
+               CASE WHEN $7 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               CASE WHEN $7 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+               author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements
         WHERE ($1::text IS NULL OR title ILIKE $1 OR content ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -89,6 +95,7 @@ pub async fn list_announcements(
     .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
     match result {
@@ -156,9 +163,12 @@ pub async fn create_announcement(
         .unwrap_or(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9)
-        RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
+        INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id, title_en, content_en)
+        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11)
+        RETURNING id,
+                  CASE WHEN $12 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+                  CASE WHEN $12 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+                  author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -170,6 +180,9 @@ pub async fn create_announcement(
     .bind(now)
     .bind(now)
     .bind(new_tenant)
+    .bind(&req.title_en)
+    .bind(&req.content_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
     let (response, status, error_msg) = match &result {
@@ -236,6 +249,7 @@ pub async fn create_announcement(
 pub async fn get_announcement(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -250,13 +264,17 @@ pub async fn get_announcement(
     };
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
-        SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
+        SELECT id,
+               CASE WHEN $3 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               CASE WHEN $3 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+               author, status, priority, publish_at, expire_at, created_at, updated_at
         FROM announcements WHERE id = $1
           AND ($2::uuid IS NULL OR tenant_id = $2 OR tenant_id = '00000000-0000-0000-0000-000000000001')
         "#),
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
     match result {
@@ -320,10 +338,14 @@ pub async fn update_announcement(
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         UPDATE announcements SET
-            title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8
+            title = $2, content = $3, author = $4, status = $5, priority = $6, expire_at = $7, updated_at = $8,
+            title_en = COALESCE($9, title_en), content_en = COALESCE($10, content_en)
         WHERE id = $1
-          AND ($9::uuid IS NULL OR tenant_id = $9)
-        RETURNING id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at
+          AND ($11::uuid IS NULL OR tenant_id = $11)
+        RETURNING id,
+                  CASE WHEN $12 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+                  CASE WHEN $12 = 'en' THEN COALESCE(content_en, content) ELSE content END AS content,
+                  author, status, priority, publish_at, expire_at, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -334,7 +356,10 @@ pub async fn update_announcement(
     .bind(&priority)
     .bind(expire_at)
     .bind(now)
+    .bind(&req.title_en)
+    .bind(&req.content_en)
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {

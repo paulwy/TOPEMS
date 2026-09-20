@@ -367,6 +367,15 @@ export const createAxiosClient = ({
         requestConfig.headers['Authorization'] = `Bearer ${effectiveToken}`;
       }
 
+      // 注入 Accept-Language，后端据此做字段级双语切换（en / zh-CN，其余回退 zh）
+      const rawLang = (i18n.language || 'zh').toLowerCase();
+      const normalizedLang = rawLang.startsWith('en')
+        ? 'en'
+        : rawLang.startsWith('zh') || rawLang.startsWith('cn')
+          ? 'zh-CN'
+          : 'zh-CN';
+      requestConfig.headers['Accept-Language'] = normalizedLang;
+
       // Notification 只读接口（GET /notifications/*）在缺 token 时本地短路返回空数据：
       // - 不发网络请求，避免触发后端 401；
       // - 不进入 reject 链路，避免 axios / xhr 在控制台打印 AxiosError 堆栈。

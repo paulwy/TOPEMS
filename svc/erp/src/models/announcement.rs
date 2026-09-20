@@ -21,6 +21,8 @@ pub struct Announcement {
 pub struct CreateAnnouncementRequest {
     pub title: String,
     pub content: Option<String>,
+    pub title_en: Option<String>,
+    pub content_en: Option<String>,
     pub author: String,
     pub priority: Option<String>,
     pub expire_at: Option<DateTime<Utc>>,
@@ -30,6 +32,8 @@ pub struct CreateAnnouncementRequest {
 pub struct UpdateAnnouncementRequest {
     pub title: Option<String>,
     pub content: Option<String>,
+    pub title_en: Option<String>,
+    pub content_en: Option<String>,
     pub author: Option<String>,
     pub status: Option<String>,
     pub priority: Option<String>,
@@ -74,6 +78,8 @@ mod tests {
         roundtrip(&CreateAnnouncementRequest {
             title: "新公告".into(),
             content: None,
+            title_en: None,
+            content_en: None,
             author: "tester".into(),
             priority: Some("low".into()),
             expire_at: Some(Utc::now()),
@@ -85,6 +91,8 @@ mod tests {
         roundtrip(&UpdateAnnouncementRequest {
             title: Some("更新后标题".into()),
             content: Some("新内容".into()),
+            title_en: None,
+            content_en: None,
             author: None,
             status: Some("draft".into()),
             priority: None,

@@ -52,6 +52,21 @@ fn erp_auth(builder: reqwest::RequestBuilder, state: &AppState) -> reqwest::Requ
     }
 }
 
+/// 透传前端 Accept-Language 到 ERP 后端，使公告标题/正文按语言双语切换。
+/// 无该头时不传（后端默认中文）。
+fn forward_accept_language(
+    builder: reqwest::RequestBuilder,
+    headers: &HeaderMap,
+) -> reqwest::RequestBuilder {
+    match headers
+        .get("accept-language")
+        .and_then(|v| v.to_str().ok())
+    {
+        Some(lang) if !lang.is_empty() => builder.header("Accept-Language", lang),
+        _ => builder,
+    }
+}
+
 fn map_announcement(a: &serde_json::Value) -> Option<Announcement> {
     Some(Announcement {
         id: a.get("id")?.as_str()?.to_string(),
@@ -105,10 +120,13 @@ fn map_announcement(a: &serde_json::Value) -> Option<Announcement> {
 )]
 pub async fn get_announcements(
     State(state): State<AppState>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Announcement>>> {
     let url = format!("{}/api/erp/announcements", erp_base_url());
-    let req = erp_auth(state.http_client.get(&url), &state);
+    let req = forward_accept_language(
+        erp_auth(state.http_client.get(&url), &state),
+        &headers,
+    );
     match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
@@ -137,9 +155,14 @@ pub async fn get_announcements(
 pub async fn get_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Announcement>> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
-    match erp_auth(state.http_client.get(&url), &state).send().await {
+    let req = forward_accept_language(
+        erp_auth(state.http_client.get(&url), &state),
+        &headers,
+    );
+    match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 if let Some(data) = json.get("data") {
@@ -297,9 +320,14 @@ pub async fn toggle_announcement_pin(
 
 pub async fn get_pinned_announcements(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Announcement>>> {
     let url = format!("{}/api/erp/announcements?priority=pinned", erp_base_url());
-    match erp_auth(state.http_client.get(&url), &state).send().await {
+    let req = forward_accept_language(
+        erp_auth(state.http_client.get(&url), &state),
+        &headers,
+    );
+    match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
                 let list = json
