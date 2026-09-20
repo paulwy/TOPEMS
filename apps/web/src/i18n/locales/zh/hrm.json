@@ -2683,5 +2683,11 @@
   "hrm.demo.pos_product_manager": "产品经理",
   "hrm.demo.pos_ui_designer": "UI设计师",
   "hrm.demo.pos_marketing_director": "市场总监",
-  "hrm.demo.pos_frontend_engineer": "前端工程师"
+  "hrm.demo.pos_frontend_engineer": "前端工程师",
+  "hrm.demo.period_h2": "2026年下半年",
+  "hrm.demo.period_q1": "2026年Q1",
+  "hrm.demo.period_q2": "2026年Q2",
+  "hrm.demo.period_q3": "2026年Q3",
+  "hrm.demo.period_q4": "2026年Q4",
+  "hrm.demo.person_manager": "王经理"
 }

@@ -565,10 +565,10 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 onChange={(e) => setDeptFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('hrm.employee_redesign_page.k5') },
-                  { value: '技术部', label: '技术部' },
-                  { value: '产品部', label: '产品部' },
-                  { value: '设计部', label: '设计部' },
-                  { value: '市场部', label: '市场部' },
+                  { value: t('hrm.demo.dept_tech'), label: t('hrm.demo.dept_tech') },
+                  { value: t('hrm.demo.dept_product'), label: t('hrm.demo.dept_product') },
+                  { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
+                  { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -862,12 +862,12 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               </label>
               <Select
                 id='field-3'
-                defaultValue={selectedEmployee?.department || '技术部'}
+                defaultValue={selectedEmployee?.department || t('hrm.demo.dept_tech')}
                 options={[
-                  { value: '技术部', label: '技术部' },
-                  { value: '产品部', label: '产品部' },
-                  { value: '设计部', label: '设计部' },
-                  { value: '市场部', label: '市场部' },
+                  { value: t('hrm.demo.dept_tech'), label: t('hrm.demo.dept_tech') },
+                  { value: t('hrm.demo.dept_product'), label: t('hrm.demo.dept_product') },
+                  { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
+                  { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
               />
             </div>

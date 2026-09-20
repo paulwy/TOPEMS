@@ -524,10 +524,10 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 onChange={(e) => setDeptFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('hrm.attendance_redesign_page.k5') },
-                  { value: '技术部', label: '技术部' },
-                  { value: '产品部', label: '产品部' },
-                  { value: '设计部', label: '设计部' },
-                  { value: '市场部', label: '市场部' },
+                  { value: t('hrm.demo.dept_tech'), label: t('hrm.demo.dept_tech') },
+                  { value: t('hrm.demo.dept_product'), label: t('hrm.demo.dept_product') },
+                  { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
+                  { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -799,11 +799,11 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 id='field-1'
                 defaultValue={selectedRecord?.emp_no || 'EMP001'}
                 options={[
-                  { value: 'EMP001', label: '张三 (技术部)' },
-                  { value: 'EMP002', label: '李四 (产品部)' },
-                  { value: 'EMP003', label: '王五 (设计部)' },
-                  { value: 'EMP004', label: '赵六 (市场部)' },
-                  { value: 'EMP005', label: '钱七 (技术部)' },
+                  { value: 'EMP001', label: `${t('hrm.demo.person_zhang')} (${t('hrm.demo.dept_tech')})` },
+                  { value: 'EMP002', label: `${t('hrm.demo.person_li')} (${t('hrm.demo.dept_product')})` },
+                  { value: 'EMP003', label: `${t('hrm.demo.person_wang')} (${t('hrm.demo.dept_design')})` },
+                  { value: 'EMP004', label: `${t('hrm.demo.person_zhao')} (${t('hrm.demo.dept_market')})` },
+                  { value: 'EMP005', label: `${t('hrm.demo.person_qian')} (${t('hrm.demo.dept_tech')})` },
                 ]}
               />
             </div>

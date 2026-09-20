@@ -562,10 +562,10 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 onChange={(e) => setDeptFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('hrm.performance_redesign_page.k5') },
-                  { value: '技术部', label: '技术部' },
-                  { value: '产品部', label: '产品部' },
-                  { value: '设计部', label: '设计部' },
-                  { value: '市场部', label: '市场部' },
+                  { value: t('hrm.demo.dept_tech'), label: t('hrm.demo.dept_tech') },
+                  { value: t('hrm.demo.dept_product'), label: t('hrm.demo.dept_product') },
+                  { value: t('hrm.demo.dept_design'), label: t('hrm.demo.dept_design') },
+                  { value: t('hrm.demo.dept_market'), label: t('hrm.demo.dept_market') },
                 ]}
                 style={{ width: 140 }}
               />
@@ -841,13 +841,13 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               </label>
               <Select
                 id='field-1'
-                defaultValue={selectedReview?.employee_name || '张三'}
+                defaultValue={selectedReview?.employee_name || t('hrm.demo.person_zhang')}
                 options={[
-                  { value: '张三', label: '张三 (技术部)' },
-                  { value: '李四', label: '李四 (产品部)' },
-                  { value: '王五', label: '王五 (设计部)' },
-                  { value: '赵六', label: '赵六 (市场部)' },
-                  { value: '钱七', label: '钱七 (技术部)' },
+                  { value: t('hrm.demo.person_zhang'), label: `${t('hrm.demo.person_zhang')} (${t('hrm.demo.dept_tech')})` },
+                  { value: t('hrm.demo.person_li'), label: `${t('hrm.demo.person_li')} (${t('hrm.demo.dept_product')})` },
+                  { value: t('hrm.demo.person_wang'), label: `${t('hrm.demo.person_wang')} (${t('hrm.demo.dept_design')})` },
+                  { value: t('hrm.demo.person_zhao'), label: `${t('hrm.demo.person_zhao')} (${t('hrm.demo.dept_market')})` },
+                  { value: t('hrm.demo.person_qian'), label: `${t('hrm.demo.person_qian')} (${t('hrm.demo.dept_tech')})` },
                 ]}
               />
             </div>
@@ -860,14 +860,14 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               </label>
               <Select
                 id='field-2'
-                defaultValue={selectedReview?.period || '2026年上半年'}
+                defaultValue={selectedReview?.period || t('hrm.demo.period_h1')}
                 options={[
-                  { value: '2026年上半年', label: '2026年上半年' },
-                  { value: '2026年下半年', label: '2026年下半年' },
-                  { value: '2026年Q1', label: '2026年Q1' },
-                  { value: '2026年Q2', label: '2026年Q2' },
-                  { value: '2026年Q3', label: '2026年Q3' },
-                  { value: '2026年Q4', label: '2026年Q4' },
+                  { value: t('hrm.demo.period_h1'), label: t('hrm.demo.period_h1') },
+                  { value: t('hrm.demo.period_h2'), label: t('hrm.demo.period_h2') },
+                  { value: t('hrm.demo.period_q1'), label: t('hrm.demo.period_q1') },
+                  { value: t('hrm.demo.period_q2'), label: t('hrm.demo.period_q2') },
+                  { value: t('hrm.demo.period_q3'), label: t('hrm.demo.period_q3') },
+                  { value: t('hrm.demo.period_q4'), label: t('hrm.demo.period_q4') },
                 ]}
               />
             </div>
@@ -881,7 +881,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
               <Input
                 id='field-3'
                 placeholder={t('hrm.performance_redesign_page.k44')}
-                defaultValue={selectedReview?.reviewer || '王经理'}
+                defaultValue={selectedReview?.reviewer || t('hrm.demo.person_manager')}
               />
             </div>
             <div>
