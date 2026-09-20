@@ -1100,7 +1100,7 @@
       "k33": "Edit Order",
       "k34": "Order Details",
       "breadcrumb": {
-        "home": "Label"
+        "home": "Home"
       }
     },
     "quotation": {
@@ -1488,7 +1488,7 @@
   "srm.monthly_order_trend": "Order",
   "srm.contract_status_distribution": "Title",
   "srm.title": "Title",
-  "srm.order.breadcrumb.home": "Label",
+  "srm.order.breadcrumb.home": "Home",
   "srm.quotation_page.award_success": "Award Success",
   "srm.quotation_page.award_fail": "Award Failure",
   "srm.quotation_page.reject_success": "Reject Success",

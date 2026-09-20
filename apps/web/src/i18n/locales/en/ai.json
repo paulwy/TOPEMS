@@ -3418,6 +3418,11 @@
       "k4": "Request (",
       "k5": "Global Status (",
       "k6": "Debug Meeting ("
+    },
+    "dify": {
+      "error": {
+        "delete_conv_title": "Delete failed"
+      }
     }
   },
   "ai.ai_chat_page.k0": "System Optimization Suggestion",
@@ -6133,7 +6138,7 @@
   "ai.dify.empty.start_subtitle": "Start your AI conversation",
   "ai.dify.empty.start_title": "Hello, how can I help you?",
   "ai.dify.error.delete_conv_body": "Failed to delete conversation, please retry",
-  "ai.dify.error.delete_conv_title": "Delete Failed",
+  "ai.dify.error.delete_conv_title": "Delete failed",
   "ai.dify.error.feedback_body": "Failed to submit feedback, please retry",
   "ai.dify.error.feedback_title": "Feedback Failed",
   "ai.dify.error.send_body": "Failed to send message, please retry",

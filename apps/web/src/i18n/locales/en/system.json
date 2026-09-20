@@ -469,7 +469,7 @@
       "success": "Success",
       "failed": "Failed",
       "error": "Error",
-      "warning": "Label",
+      "warning": "Warning",
       "partial_success": "Partial Success"
     },
     "action_type": {
@@ -519,7 +519,7 @@
   "system.status.success": "Success",
   "system.status.failed": "Failed",
   "system.status.error": "Error",
-  "system.status.warning": "Label",
+  "system.status.warning": "Warning",
   "system.status.partial_success": "Partial Success",
   "system.field.time_range": "Timerange",
   "system.field.start_time": "Label",

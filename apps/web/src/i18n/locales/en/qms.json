@@ -1176,7 +1176,6 @@
   "qms.qms_audit_plan_detail_page.k22": "Audit Findings List",
   "qms.qms_audit_plan_detail_page.k23": "No findings",
   "qms.qms_audit_plan_detail_page.k24": "Code",
-  "qms.qms_audit_plan_detail_page.k25": "Title",
   "qms.qms_audit_plan_detail_page.k26": "Severity",
   "qms.qms_audit_plan_detail_page.k27": "Category",
   "qms.qms_audit_plan_detail_page.k28": "Status",
@@ -2879,7 +2878,7 @@
       "k22": "Audit Findings List",
       "k23": "No findings",
       "k24": "Code",
-      "k25": "Title",
+      "k25": "Owner",
       "k26": "Severity",
       "k27": "Category",
       "k28": "Status"
@@ -2963,6 +2962,20 @@
     },
     "inspectionDetail": {
       "k0": "TODO: translate"
+    },
+    "eight_d_redesign": {
+      "severity_major": "Critical"
+    },
+    "nonconformance_redesign": {
+      "status_open": "Pending",
+      "severity_major": "Critical",
+      "tab_open": "Pending",
+      "severity_suffix": "Critical"
+    },
+    "inspection_redesign": {
+      "status_rejected": "Non-Conforming",
+      "result_unqualified": "Non-Conforming",
+      "tab_rejected": "Non-Conforming"
     }
   },
   "qms_inspection_page": {
@@ -3195,7 +3208,7 @@
   "qms.eight_d_redesign.source_supplier": "Supplier Issue",
   "qms.eight_d_redesign.source_audit": "Audit Finding",
   "qms.eight_d_redesign.severity_minor": "Minor",
-  "qms.eight_d_redesign.severity_major": "Major",
+  "qms.eight_d_redesign.severity_major": "Critical",
   "qms.eight_d_redesign.severity_critical": "Critical",
   "qms.eight_d_redesign.toast_delete_success": "8D report deleted successfully",
   "qms.eight_d_redesign.toast_delete_fail": "Failed to delete, please try again",
@@ -3254,7 +3267,7 @@
   "qms.eight_d_redesign.delete_title": "Delete 8D Report",
   "qms.eight_d_redesign.delete_confirm": "Confirm Delete",
   "qms.eight_d_redesign.delete_message": "Are you sure you want to delete 8D report \"{{report_no}}\"? This action cannot be undone.",
-  "qms.nonconformance_redesign.status_open": "Open",
+  "qms.nonconformance_redesign.status_open": "Pending",
   "qms.nonconformance_redesign.status_investigating": "Investigating",
   "qms.nonconformance_redesign.status_contained": "Contained",
   "qms.nonconformance_redesign.status_resolved": "Resolved",
@@ -3264,7 +3277,7 @@
   "qms.nonconformance_redesign.type_material": "Material Nonconformance",
   "qms.nonconformance_redesign.type_service": "Service Nonconformance",
   "qms.nonconformance_redesign.severity_minor": "Minor",
-  "qms.nonconformance_redesign.severity_major": "Major",
+  "qms.nonconformance_redesign.severity_major": "Critical",
   "qms.nonconformance_redesign.severity_critical": "Critical",
   "qms.nonconformance_redesign.toast_delete_success": "Nonconformance record deleted successfully",
   "qms.nonconformance_redesign.toast_delete_fail": "Failed to delete, please try again",
@@ -3273,7 +3286,7 @@
   "qms.nonconformance_redesign.toast_update_success": "Nonconformance record updated successfully",
   "qms.nonconformance_redesign.toast_update_fail": "Failed to update, please try again",
   "qms.nonconformance_redesign.tab_all": "All",
-  "qms.nonconformance_redesign.tab_open": "Open",
+  "qms.nonconformance_redesign.tab_open": "Pending",
   "qms.nonconformance_redesign.tab_investigating": "Investigating",
   "qms.nonconformance_redesign.tab_contained": "Contained",
   "qms.nonconformance_redesign.tab_resolved": "Resolved",
@@ -3315,7 +3328,7 @@
   "qms.nonconformance_redesign.drawer_discovered_date": "Discovered Date",
   "qms.nonconformance_redesign.drawer_created_at": "Created At",
   "qms.nonconformance_redesign.card_category": "Category",
-  "qms.nonconformance_redesign.severity_suffix": "Severity",
+  "qms.nonconformance_redesign.severity_suffix": "Critical",
   "qms.nonconformance_redesign.modal_edit_title": "Edit NC Record",
   "qms.nonconformance_redesign.cancel": "Cancel",
   "qms.nonconformance_redesign.modal_save": "Save Changes",
@@ -3398,12 +3411,12 @@
   "qms.inspection_redesign.status_pending": "Pending Inspection",
   "qms.inspection_redesign.status_in_progress": "Inspecting",
   "qms.inspection_redesign.status_completed": "Completed",
-  "qms.inspection_redesign.status_rejected": "Rejected",
+  "qms.inspection_redesign.status_rejected": "Non-Conforming",
   "qms.inspection_redesign.type_incoming": "Incoming Inspection",
   "qms.inspection_redesign.type_process": "In-Process Inspection",
   "qms.inspection_redesign.type_final": "Final Inspection",
   "qms.inspection_redesign.result_qualified": "Qualified",
-  "qms.inspection_redesign.result_unqualified": "Unqualified",
+  "qms.inspection_redesign.result_unqualified": "Non-Conforming",
   "qms.inspection_redesign.result_pending": "Pending Disposition",
   "qms.inspection_redesign.toast_delete_success": "Inspection record deleted successfully",
   "qms.inspection_redesign.toast_delete_fail": "Failed to delete, please try again",
@@ -3415,7 +3428,7 @@
   "qms.inspection_redesign.tab_pending": "Pending",
   "qms.inspection_redesign.tab_in_progress": "Inspecting",
   "qms.inspection_redesign.tab_completed": "Completed",
-  "qms.inspection_redesign.tab_rejected": "Rejected",
+  "qms.inspection_redesign.tab_rejected": "Non-Conforming",
   "qms.inspection_redesign.col_check_no": "Inspection No.",
   "qms.inspection_redesign.col_title": "Inspection Title",
   "qms.inspection_redesign.col_type": "Inspection Type",

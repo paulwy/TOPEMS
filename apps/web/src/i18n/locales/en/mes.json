@@ -1775,7 +1775,8 @@
       "k23": "Completed",
       "k25": "Completion Rate",
       "k26": "pcs",
-      "k27": "Work Order Details"
+      "k27": "Work Order Details",
+      "unqualified": "Non-Conforming"
     },
     "mes_equipment_mtbf_page": {
       "k15": "Critical",
@@ -2562,7 +2563,9 @@
       "k34": "Active"
     },
     "equipment_detail_page": {
-      "k0": "Equipment Details"
+      "k0": "Equipment Details",
+      "field_responsible_person": "Owner",
+      "status_maintenance": "Under Maintenance"
     },
     "equipment_oee_page": {
       "k0": "Equipment No.",
@@ -2624,7 +2627,9 @@
       "k9": "Created At",
       "k10": "Description",
       "k11": "No process data",
-      "k12": "Process Route"
+      "k12": "Process Route",
+      "active": "Enabled",
+      "inactive": "Disabled"
     },
     "production_order_management_page": {
       "k0": "Invalid operation",
@@ -2663,7 +2668,10 @@
       "k1": "Failed to create quality inspection record",
       "k2": "Failed to update quality inspection record",
       "k3": "Failed to delete quality inspection record",
-      "k4": "QC Record"
+      "k4": "QC Record",
+      "export": "Exported successfully",
+      "hint": "Tip",
+      "result_unqualified": "Non-Conforming"
     },
     "team_management_page": {
       "k0": "Active",
@@ -2681,7 +2689,8 @@
       "k12": "Active"
     },
     "traceability_detail_page": {
-      "k0": "Traceability Details"
+      "k0": "Traceability Details",
+      "result_unqualified": "Non-Conforming"
     },
     "wip_page": {
       "k0": "Transfer",
@@ -2918,6 +2927,9 @@
         "k0": "TODO: translate",
         "k1": "TODO: translate"
       }
+    },
+    "production_kanban_page": {
+      "status_maintenance": "Under Maintenance"
     }
   },
   "equipment_management_page": {
@@ -3001,7 +3013,7 @@
   "mes.equipment_detail_page.field_purchase_date": "Purchase Date",
   "mes.equipment_detail_page.field_rated_power": "Rated Power",
   "mes.equipment_detail_page.field_rated_voltage": "Rated Voltage",
-  "mes.equipment_detail_page.field_responsible_person": "Responsible Person",
+  "mes.equipment_detail_page.field_responsible_person": "Owner",
   "mes.equipment_detail_page.field_serial_no": "Serial No.",
   "mes.equipment_detail_page.field_status": "Status",
   "mes.equipment_detail_page.field_updated_at": "Updated At",
@@ -3011,7 +3023,7 @@
   "mes.equipment_detail_page.section_other_info": "Other Information",
   "mes.equipment_detail_page.status_idle": "Idle",
   "mes.equipment_detail_page.status_in_use": "In Use",
-  "mes.equipment_detail_page.status_maintenance": "Maintenance",
+  "mes.equipment_detail_page.status_maintenance": "Under Maintenance",
   "mes.equipment_detail_page.status_scrapped": "Scrapped",
   "mes.equipment_detail_page.tab_basic": "Basic Info",
   "mes.equipment_detail_page.tab_purchase": "Purchase Info",
@@ -3024,8 +3036,8 @@
   "mes.equipment_management_page.operation_failed": "Operation failed",
   "mes.equipment_management_page.success": "Operation succeeded",
   "mes.process_flow_page.quality_inspection": "QC Required",
-  "mes.process_route_page.active": "Active",
-  "mes.process_route_page.inactive": "Inactive",
+  "mes.process_route_page.active": "Enabled",
+  "mes.process_route_page.inactive": "Disabled",
   "mes.process_route_page.process": "Process Routes",
   "mes.process_route_page.process_1": "Manage process routes and operation sequences",
   "mes.process_route_page.status_draft": "Draft",
@@ -3057,7 +3069,7 @@
   "mes.production_kanban_page.status_error": "Error",
   "mes.production_kanban_page.status_idle": "Idle",
   "mes.production_kanban_page.status_in_progress": "In Progress",
-  "mes.production_kanban_page.status_maintenance": "Maintenance",
+  "mes.production_kanban_page.status_maintenance": "Under Maintenance",
   "mes.production_kanban_page.status_pending": "Pending",
   "mes.production_kanban_page.status_running": "Running",
   "mes.production_order_detail_page.completed": "Completed",
@@ -3076,7 +3088,7 @@
   "mes.production_order_detail_page.tab_basic": "Basic Info",
   "mes.production_order_detail_page.text_93466b": "Statistics",
   "mes.production_order_detail_page.text_e0468e": "Pending",
-  "mes.production_order_detail_page.unqualified": "Unqualified",
+  "mes.production_order_detail_page.unqualified": "Non-Conforming",
   "mes.production_order_detail_page.work_report": "Work Reports",
   "mes.production_order_management_page.action_cancel": "Cancel",
   "mes.production_order_management_page.breadcrumb_home": "Home",
@@ -3087,17 +3099,17 @@
   "mes.production_order_management_page.update_3": "Operation failed",
   "mes.production_order_management_page.update_4": "Updated successfully",
   "mes.quality_inspection_page.batch_export_1": "Batch Export",
-  "mes.quality_inspection_page.export": "Export succeeded",
+  "mes.quality_inspection_page.export": "Exported successfully",
   "mes.quality_inspection_page.export_2": "Export failed",
   "mes.quality_inspection_page.export_3": "Export failed, please retry",
-  "mes.quality_inspection_page.hint": "Notice",
+  "mes.quality_inspection_page.hint": "Tip",
   "mes.quality_inspection_page.inspection": "Incoming Inspection",
   "mes.quality_inspection_page.inspection_1": "Final Inspection",
   "mes.quality_inspection_page.inspection_2": "Outgoing Inspection",
   "mes.quality_inspection_page.patrol": "Patrol Inspection",
   "mes.quality_inspection_page.please_select": "Please select records to export first",
   "mes.quality_inspection_page.result_qualified": "Qualified",
-  "mes.quality_inspection_page.result_unqualified": "Unqualified",
+  "mes.quality_inspection_page.result_unqualified": "Non-Conforming",
   "mes.quality_inspection_page.scrap": "Scrapped",
   "mes.quality_inspection_page.status_in_progress": "Inspecting",
   "mes.quality_inspection_page.status_pending": "Pending",
@@ -3129,7 +3141,7 @@
   "mes.traceability_detail_page.node_type_warehouse": "Warehouse",
   "mes.traceability_detail_page.notifications.load_error.message": "Failed to load traceability data",
   "mes.traceability_detail_page.result_qualified": "Qualified",
-  "mes.traceability_detail_page.result_unqualified": "Unqualified",
+  "mes.traceability_detail_page.result_unqualified": "Non-Conforming",
   "mes.traceability_detail_page.stat_node_count": "{{count}} nodes in total",
   "mes.traceability_detail_page.stat_node_count_label": "Trace Nodes",
   "mes.traceability_detail_page.tab_batch_info": "Batch Info",

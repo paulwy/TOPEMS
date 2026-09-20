@@ -4221,7 +4221,6 @@
   "shared.config.fifo_0": "FIFO Strategy",
   "shared.config.abc_1": "ABC Classification Analysis",
   "shared.config.wms_name": "Warehouse Management",
-  "shared.config.wms_dashboard": "Dashboard",
   "shared.config.wms_2": "WMS Data Overview",
   "shared.config.sku8020_3": "SKU Amount 80/20 Pareto",
   "shared.config.abc_4": "ABC Classification Analysis",
@@ -9418,6 +9417,12 @@
       "k3": "Times Used Latency High, Consider Preload Strategy",
       "k4": "Lazy Loading, Evaluate Yes No Need Module",
       "k5": "Memory Use"
+    },
+    "profile": {
+      "hint": "Tip"
+    },
+    "sidebar": {
+      "dashboard": "Home"
     }
   },
   "attachments_page": {
@@ -9606,7 +9611,7 @@
   "shared.profile.field_new_pwd_required": "New Password",
   "shared.profile.field_new_pwd_required_err": "Please enter new password",
   "shared.profile.field_username": "Username",
-  "shared.profile.hint": "Notice",
+  "shared.profile.hint": "Tip",
   "shared.profile.image_too_large": "Image size cannot exceed 2MB",
   "shared.profile.load_failed": "Load failed",
   "shared.profile.loading": "Loading...",
@@ -9656,7 +9661,7 @@
   "shared.profile.verified": "(verified)",
   "shared.use_auto_breadcrumbs.k140": "Plugins",
   "shared.use_auto_breadcrumbs.k141": "Marketplace",
-  "shared.sidebar.dashboard": "Dashboard",
+  "shared.sidebar.dashboard": "Home",
   "shared.sidebar.mes": "Manufacturing",
   "shared.sidebar.mes_dashboard": "Production Dashboard",
   "shared.sidebar.mes_production_orders": "Production Orders",

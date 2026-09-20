@@ -218,6 +218,10 @@
       "k4": "Home",
       "k5": "Identity Management",
       "k6": "User Management"
+    },
+    "user_management": {
+      "status_active": "Enabled",
+      "status_inactive": "Disable"
     }
   },
   "companystructurepage": {
@@ -422,8 +426,8 @@
   "iam.nav.iam-permission_desc": "Permissions",
   "iam.nav.iam-company-structure_desc": "Company Structure",
   "iam.user_management.filter_all": "All",
-  "iam.user_management.status_active": "Active",
-  "iam.user_management.status_inactive": "Disabled",
+  "iam.user_management.status_active": "Enabled",
+  "iam.user_management.status_inactive": "Disable",
   "iam.role_management.all_with_count": "All ({{count}})",
   "iam.role_management.search_filter": "Search: {{keyword}}",
   "iam.user_management.confirm_delete": "Are you sure you want to delete user \"{{name}}\"? This action cannot be undone.",

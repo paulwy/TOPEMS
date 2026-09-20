@@ -2550,7 +2550,7 @@
         "export_success_message": "Message",
         "export_failed_title": "Title",
         "export_failed_message": "Message",
-        "tip_title": "Title",
+        "tip_title": "Tip",
         "apply_in_development": "Label",
         "edit_in_development": "Edit"
       },
@@ -2567,7 +2567,7 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "breadcrumb": {
-        "home": "Label",
+        "home": "Home",
         "rd": "Label",
         "material": "Label"
       }
@@ -2607,7 +2607,7 @@
         "submit_failed_message": "Message"
       },
       "section": {
-        "basic_title": "Title",
+        "basic_title": "Basic Info",
         "basic_description": "Description",
         "timing_title": "Title",
         "timing_description": "Description",
@@ -2621,7 +2621,7 @@
         "code_placeholder": "Please enter...",
         "code_helper": "Helper text",
         "project_type": "Project",
-        "leader": "Label",
+        "leader": "Owner",
         "leader_placeholder": "Please enter...",
         "description": "Description",
         "description_placeholder": "Please enter...",
@@ -2677,7 +2677,7 @@
   "rd.material_list_page.notification.export_failed_title": "Title",
   "rd.material_list_page.notification.export_failed_message": "Message",
   "rd.material_list_page.row_action.apply": "Label",
-  "rd.material_list_page.notification.tip_title": "Title",
+  "rd.material_list_page.notification.tip_title": "Tip",
   "rd.material_list_page.notification.apply_in_development": "Label",
   "rd.material_list_page.row_action.edit": "Edit",
   "rd.material_list_page.notification.edit_in_development": "Edit",
@@ -2687,7 +2687,7 @@
   "rd.material_list_page.stat_card.insufficient": "Insufficient",
   "rd.material_list_page.title": "Title",
   "rd.material_list_page.subtitle": "Subtitle",
-  "rd.material_list_page.breadcrumb.home": "Label",
+  "rd.material_list_page.breadcrumb.home": "Home",
   "rd.material_list_page.breadcrumb.rd": "Label",
   "rd.material_list_page.breadcrumb.material": "Label",
   "rd.project_type.new_product": "Product",
@@ -2713,7 +2713,7 @@
   "rd.project_create_page.notification.create_success_message": "Create",
   "rd.project_create_page.notification.submit_failed_title": "Title",
   "rd.project_create_page.notification.submit_failed_message": "Message",
-  "rd.project_create_page.section.basic_title": "Title",
+  "rd.project_create_page.section.basic_title": "Basic Info",
   "rd.project_create_page.section.basic_description": "Description",
   "rd.project_create_page.field.name": "Name",
   "rd.project_create_page.field.name_placeholder": "Please enter...",
@@ -2721,7 +2721,7 @@
   "rd.project_create_page.field.code_placeholder": "Please enter...",
   "rd.project_create_page.field.code_helper": "Helper text",
   "rd.project_create_page.field.project_type": "Project",
-  "rd.project_create_page.field.leader": "Label",
+  "rd.project_create_page.field.leader": "Owner",
   "rd.project_create_page.field.leader_placeholder": "Please enter...",
   "rd.project_create_page.field.description": "Description",
   "rd.project_create_page.field.description_placeholder": "Please enter...",

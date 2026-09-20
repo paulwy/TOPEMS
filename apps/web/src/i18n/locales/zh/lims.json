@@ -1821,7 +1821,6 @@
   "lims.samplereceive.v0_key_confirm_label_i18n_t_lims_sampler": "{{v0}}, }, { key: 'confirm', label: i18n.t('lims.samplereceivepage.'), icon:",
   "lims.samplereceive.row_status_i18n_t_lims_samplereceivepage": "row.status === i18n.t('lims.samplereceivepage.') || row.status === 'confirmed', onClick: async (row: Record",
   "lims.samplereceive.box_box_box_box_component_span_sx_color_": ": '-'} </Box> </Box> <Box> <Box component='span' sx={{ color: 'text.secondary', fontSize: '0.875rem' }} > {i18n.t('lims.samplereceive.')}</Box> <Box>{sample.location || '-'}</Box> </Box> <Box> <Box component='span' sx={{ color: 'text.secondary', fontSize: '0.875rem' }} > {i18n.t('lims.samplereceive.')}</Box> <Box>{sample.responsible_person || '-'}</Box> </Box> </Box> </Box> ); }; return ( <PageContainer title={i18n.t(\"lims.samplereceivepage.\")} subtitle='Sample Receive Management' headerProps={{ pageIcon: <TestTube style={{ width: 20, height: 20 }} />, pageGradient:",
-  "lims.instrument.title": "仪器标题",
   "lims.instrument.description": "Instrument Description",
   "lims.instrument.code": "Instrument Code",
   "lims.instrument.name": "Name",

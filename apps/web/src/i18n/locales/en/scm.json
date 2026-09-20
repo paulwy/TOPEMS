@@ -253,7 +253,6 @@
   "scm.mrp_suggestion_page.e2": "Generated {{v1}} purchase orders",
   "scm.mrp_suggestion_page.e3": "Generated {{v1}} work orders",
   "scm.scm_delivery_appointment_page.e1": "${action}Failed:",
-  "scm.scm_delivery_appointment_page.e2": "${action}Failed",
   "scm.scm_delivery_appointment_page.e4": "Confirm: Are you sure you want to approve appointment \"{{v1}}\"?",
   "scm.scm_delivery_appointment_page.e5": "Confirm: Are you sure you want to reject appointment \"{{v1}}\"?",
   "scm.scm_delivery_appointment_page.e6": "Confirm: Are you sure you want to confirm appointment \"{{v1}}\" has arrived?",
@@ -987,7 +986,7 @@
       "k20": "Cancel",
       "k21": "Cancel",
       "e1": "${action}Failed:",
-      "e2": "${action}Failed"
+      "e2": "Operation failed"
     },
     "supplier_admission_page": {
       "k6": "Operation failed",

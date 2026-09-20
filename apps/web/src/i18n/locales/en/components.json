@@ -2971,7 +2971,10 @@
       "i18n_8": "No Experiment, Clicki18n"
     },
     "bff_data_table": {},
-    "bff_detail_page": {},
+    "bff_detail_page": {
+      "load_failed": "Load failed",
+      "basic_info": "Basic Info"
+    },
     "mock_data": {
       "k17": "Created At",
       "k24": "Start Date",
@@ -4303,16 +4306,7 @@
       "k10": "Volume Large:"
     },
     "context_help_button": {
-      "k0": "Context Help",
-      "k1": "Help Middle",
-      "k2": "View Action",
-      "k3": "Complete user manual and operation tutorial",
-      "k4": "Browse Problem",
-      "k5": "High Frequency Problem,",
-      "k6": "Contact Technology Support",
-      "9001800_7": "Work Time 9:00-18:00, Working Day",
-      "k8": "Keyboard Shortcut: ?",
-      "k9": "All Document"
+      "k0": "Context Help"
     },
     "document_preview_modal": {
       "k0": "Start Preview:",
@@ -4355,22 +4349,9 @@
       "k14": "Close"
     },
     "error_boundary": {
-      "k0": "Network Connection failed",
       "k1": "Please check your network connection and retry",
-      "k2": "Content Not Found",
       "k3": "The content you accessed may have been deleted or moved",
-      "k4": "Page Load failed",
-      "k5": "Sorry, Page Problem, Refreshor Return Home",
-      "k6": "Module Load failed",
-      "k7": "Dept Points Content Load Failed, Refresh Page",
-      "k8": "Component Render failed",
-      "k9": "Dept Points Content Show Abnormal, Refresh Page",
-      "k10": "Send Generate Error",
-      "k11": "Sorry, One Problem, Please Retry",
-      "k12": "Please Retry",
-      "k13": "Send Generate Error",
       "k14": "Error Details",
-      "k15": "Report Problem",
       "k16": "Reporting...",
       "react_6": "React Version"
     },
@@ -4439,12 +4420,9 @@
       "k14": "Visitor"
     },
     "theme_selector": {
-      "k0": "Light Color",
       "k1": "Dark",
-      "k2": "gram",
       "k3": "System",
-      "k4": "Current:",
-      "k5": "Switch Theme"
+      "k4": "Current:"
     },
     "validation_error": {
       "k0": "Is Empty",
@@ -4933,7 +4911,8 @@
       "k11": "Next Page",
       "k12": "Reset",
       "k13": "Application Filter",
-      "menuitem_1": ">Show/Hidden Column</Menu Item>"
+      "menuitem_1": ">Show/Hidden Column</Menu Item>",
+      "empty_title": "No data"
     },
     "department_select": {
       "k0": "Search Department...",
@@ -6266,6 +6245,9 @@
     },
     "addressbook": {
       "k0": "Status:"
+    },
+    "empty_state": {
+      "default_title": "No data"
     }
   },
   "report_viewer": {
@@ -6337,7 +6319,6 @@
   "demo.tabs.modules": "Modules",
   "demo.tabs.alerts": "Alerts",
   "demo.tabs.empty": "Empty States",
-  "demo.tabs.error": "Errors",
   "demo.time_range.1h": "Last 1 hour",
   "demo.time_range.24h": "Last 24 hours",
   "demo.time_range.7d": "Last 7 days",
@@ -6424,10 +6405,10 @@
   "components.pagination.rows_per_page": "{{count}} / page",
   "components.pagination.jump_to": "Go to",
   "components.pagination.page": "Page",
-  "components.data_table.empty_title": "No Data",
+  "components.data_table.empty_title": "No data",
   "components.data_table.empty_description": "The list is currently empty.",
   "components.stat_tile.vs_last_month": "vs last month",
-  "components.empty_state.default_title": "No Data",
+  "components.empty_state.default_title": "No data",
   "components.empty_state.search_title": "No Results Found",
   "components.empty_state.data_title": "No Records Found",
   "components.loading_overlay.label": "Loading...",
@@ -6495,14 +6476,14 @@
   "components.bff_detail_page.copy": "Copy",
   "components.bff_detail_page.record": "record",
   "components.bff_detail_page.delete_confirm": "Delete this {{name}}?",
-  "components.bff_detail_page.load_failed": "Failed to load",
+  "components.bff_detail_page.load_failed": "Load failed",
   "components.bff_detail_page.related_load_failed": "Failed to load related data",
   "components.bff_detail_page.details": "Details",
   "components.bff_detail_page.back": "Back",
   "components.bff_detail_page.refresh": "Refresh",
   "components.bff_detail_page.edit": "Edit",
   "components.bff_detail_page.delete": "Delete",
-  "components.bff_detail_page.basic_info": "Basic info",
+  "components.bff_detail_page.basic_info": "Basic Info",
   "components.bff_detail_page.load": "Load",
   "components.bff_form_page.create": "Create",
   "components.bff_form_page.edit": "Edit",
@@ -6671,5 +6652,10 @@
   "components.tier.advanced.search.description": "Full-text and semantic search",
   "components.tier.advanced.search.features.0": "Full-text search",
   "components.tier.advanced.search.features.1": "Semantic search",
-  "components.command_palette.current_domain": "Current Domain"
+  "components.command_palette.current_domain": "Current Domain",
+  "demo": {
+    "tabs": {
+      "error": "Error"
+    }
+  }
 }

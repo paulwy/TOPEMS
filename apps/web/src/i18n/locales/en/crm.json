@@ -706,6 +706,9 @@
       "qtd": "Label",
       "ytd": "Label",
       "r12": "Label"
+    },
+    "opportunity_redesign": {
+      "stage_qualified": "Confirmed"
     }
   },
   "crm.contact_detail_page.k0": "Contact Detail",
@@ -1454,7 +1457,7 @@
   "crm.opportunity_redesign.tab_all": "All",
   "crm.opportunity_redesign.tab_pipeline": "Pipeline",
   "crm.opportunity_redesign.stage_lead": "Lead",
-  "crm.opportunity_redesign.stage_qualified": "Qualified",
+  "crm.opportunity_redesign.stage_qualified": "Confirmed",
   "crm.opportunity_redesign.stage_proposal": "Proposal",
   "crm.opportunity_redesign.stage_negotiation": "Negotiation",
   "crm.opportunity_redesign.stage_won": "Won",

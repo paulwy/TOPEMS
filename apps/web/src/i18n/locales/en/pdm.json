@@ -1781,6 +1781,10 @@
     },
     "pdm_product_category_page": {
       "k0": "Product Category"
+    },
+    "category_rule": {
+      "opt_status_active": "Enabled",
+      "opt_status_inactive": "Disabled"
     }
   },
   "pdm.nav.module_name": "PDM",
@@ -1885,8 +1889,8 @@
   "pdm.category_rule.sec_hierarchy_title": "Hierarchy & Status",
   "pdm.category_rule.sec_hierarchy_desc": "Category depth and default status settings",
   "pdm.category_rule.fld_default_status": "Default Category Status",
-  "pdm.category_rule.opt_status_active": "Active",
-  "pdm.category_rule.opt_status_inactive": "Inactive",
+  "pdm.category_rule.opt_status_active": "Enabled",
+  "pdm.category_rule.opt_status_inactive": "Disabled",
   "pdm.category_rule.fld_allow_subcategory": "Allow Sub-categories",
   "pdm.category_rule.fld_max_depth": "Max Category Levels"
 }

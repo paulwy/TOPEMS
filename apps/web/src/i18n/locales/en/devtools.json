@@ -1,8 +1,7 @@
 {
   "devtools": {
     "common": {
-      "loaded": "✅ Loaded",
-      "modules": "TODO: translate"
+      "loaded": "✅ Loaded"
     },
     "panels": {
       "registry": {
