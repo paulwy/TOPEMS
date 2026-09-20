@@ -1,6 +1,5 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -14,7 +13,6 @@ use crate::models::project_phase::{CreatePhaseRequest, ProjectPhase, UpdatePhase
 use crate::services::project_permission::{check_project_permission, ProjectPermission};
 use crate::services::project_progress;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
@@ -31,7 +29,6 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn create_phase(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -39,7 +36,12 @@ pub async fn create_phase(
 ) -> Json<ApiResponse<ProjectPhase>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     match check_project_permission(
         &mut **txn,
         &claims,
@@ -153,14 +155,17 @@ pub async fn get_project_phases(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     match check_project_permission(&mut **txn, &claims, &project_id, &ProjectPermission::Read).await
     {
         Ok(_) => {}
@@ -187,12 +192,12 @@ pub async fn get_project_phases(
                   start_date, end_date, planned_duration_days, actual_duration_days,
                   status, progress, weight, predecessor_id, created_at, updated_at
         FROM rs.project_phases 
-        WHERE project_id = $1 AND tenant_id = $2
+        WHERE project_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY phase_number
         "#,
     )
     .bind(project_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -227,7 +232,6 @@ pub async fn update_phase(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -235,12 +239,16 @@ pub async fn update_phase(
 ) -> Json<ApiResponse<ProjectPhase>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let project_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2",
+        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -297,7 +305,7 @@ pub async fn update_phase(
             weight = COALESCE($8, weight),
             predecessor_id = COALESCE($9, predecessor_id),
             updated_at = NOW()
-        WHERE id = $1 AND tenant_id = $10
+        WHERE id = $1 AND ($10::uuid IS NULL OR tenant_id = $10)
         RETURNING id, tenant_id, project_id, phase_number, name, description, 
                   start_date, end_date, planned_duration_days, actual_duration_days,
                   status, progress, weight, predecessor_id, created_at, updated_at
@@ -312,7 +320,7 @@ pub async fn update_phase(
     .bind(payload.progress)
     .bind(payload.weight)
     .bind(payload.predecessor_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -373,14 +381,17 @@ pub async fn delete_phase(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -391,10 +402,10 @@ pub async fn delete_phase(
     );
 
     let project_id = match sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2",
+        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -420,11 +431,11 @@ pub async fn delete_phase(
 
     let get_result = sqlx::query_scalar::<_, Uuid>(
         r#"
-        SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2
+        SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -444,11 +455,11 @@ pub async fn delete_phase(
     let result = sqlx::query(
         r#"
         DELETE FROM rs.project_phases 
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 

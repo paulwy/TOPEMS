@@ -1,6 +1,5 @@
 use axum::{
     extract::{Extension, Path, State},
-    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -15,7 +14,6 @@ use crate::models::project_milestone::{
 };
 use crate::services::project_progress;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<super::ApiState> {
@@ -32,7 +30,6 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn create_milestone(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -40,7 +37,12 @@ pub async fn create_milestone(
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -130,14 +132,17 @@ pub async fn get_project_milestones(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
     let cache_key = format!("milestones:{}", project_id);
@@ -161,12 +166,12 @@ pub async fn get_project_milestones(
         r#"
         SELECT id, tenant_id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at, deliverable_type, acceptance_criteria, acceptance_status, accepted_by, accepted_at
         FROM rs.project_milestones 
-        WHERE project_id = $1 AND tenant_id = $2
+        WHERE project_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY target_date
         "#,
     )
     .bind(project_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -203,7 +208,6 @@ pub async fn update_milestone(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -211,7 +215,11 @@ pub async fn update_milestone(
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -242,7 +250,7 @@ pub async fn update_milestone(
             actual_date = COALESCE($5, actual_date),
             status = COALESCE($6, status),
             updated_at = NOW()
-        WHERE id = $1 AND tenant_id = $7
+        WHERE id = $1 AND ($7::uuid IS NULL OR tenant_id = $7)
         RETURNING id, tenant_id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at, deliverable_type, acceptance_criteria, acceptance_status, accepted_by, accepted_at
         "#,
     )
@@ -252,7 +260,7 @@ pub async fn update_milestone(
     .bind(payload.target_date)
     .bind(payload.actual_date)
     .bind(payload.status.map(|s| s.to_string()))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -323,14 +331,17 @@ pub async fn delete_milestone(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -341,21 +352,21 @@ pub async fn delete_milestone(
     );
 
     let project_id_result = sqlx::query_scalar::<_, Uuid>(
-        "SELECT project_id FROM rs.project_milestones WHERE id = $1 AND tenant_id = $2",
+        "SELECT project_id FROM rs.project_milestones WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
     let result = sqlx::query(
         r#"
         DELETE FROM rs.project_milestones 
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 

@@ -14,7 +14,6 @@ use crate::models::{
 };
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::repository::ListQueryParams;
 
@@ -72,14 +71,17 @@ pub async fn list_formulas(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -91,7 +93,7 @@ pub async fn list_formulas(
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
         FROM rs.formulas
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR project_id = $4)
@@ -99,7 +101,7 @@ pub async fn list_formulas(
         LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
@@ -113,13 +115,13 @@ pub async fn list_formulas(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.formulas
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR project_id = $4)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
@@ -156,7 +158,12 @@ pub async fn create_formula(
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "配方名称不能为空"));
     }
@@ -258,25 +265,28 @@ pub async fn get_formula(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, Formula>(
         r#"
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1 AND tenant_id = $2
+        FROM rs.formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -302,18 +312,22 @@ pub async fn update_formula(
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let existing = sqlx::query_as::<_, Formula>(
         r#"
         SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1 AND tenant_id = $2
+        FROM rs.formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -342,7 +356,7 @@ pub async fn update_formula(
             name = $2, category = $3, description = $4, status = $5,
             effective_date = $6, expiration_date = $7,
             ingredients = $8, process_steps = $9, properties = $10, updated_at = $11
-        WHERE id = $1 AND tenant_id = $12
+        WHERE id = $1 AND ($12::uuid IS NULL OR tenant_id = $12)
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -360,7 +374,7 @@ pub async fn update_formula(
     .bind(&process_steps)
     .bind(properties)
     .bind(now)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -416,11 +430,15 @@ pub async fn delete_formula(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result =
-        sqlx::query("UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
+        sqlx::query("UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
             .bind(id)
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .execute(&mut **txn)
             .await;
 
@@ -474,26 +492,29 @@ pub async fn get_formula_versions(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Vec<FormulaVersion>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
         SELECT id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
                properties, changes, approval_status, approved_by, approved_at,
                created_by, created_at, updated_at
         FROM rs.formula_versions
-        WHERE formula_id = $1 AND tenant_id = $2
+        WHERE formula_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY version DESC, created_at DESC
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -510,7 +531,6 @@ pub async fn create_formula_version(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -518,7 +538,12 @@ pub async fn create_formula_version(
 ) -> Json<ApiResponse<FormulaVersion>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let version_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -528,11 +553,11 @@ pub async fn create_formula_version(
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1 AND tenant_id = $2
+        FROM rs.formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -609,7 +634,6 @@ pub async fn approve_formula(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -617,7 +641,11 @@ pub async fn approve_formula(
 ) -> Json<ApiResponse<Formula>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Formula>(
@@ -627,7 +655,7 @@ pub async fn approve_formula(
             approval_status = 'approved',
             approved_at = $2,
             updated_at = $3
-        WHERE id = $1 AND tenant_id = $4
+        WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4)
         RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
@@ -637,7 +665,7 @@ pub async fn approve_formula(
     .bind(id)
     .bind(now)
     .bind(now)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 

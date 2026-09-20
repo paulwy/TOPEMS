@@ -11,7 +11,6 @@ use uuid::Uuid;
 use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::repository::ListQueryParams;
 
@@ -79,14 +78,17 @@ pub async fn list_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -98,7 +100,7 @@ pub async fn list_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR project_id = $4)
@@ -107,7 +109,7 @@ pub async fn list_experiments(
         LIMIT $6 OFFSET $7
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
@@ -122,14 +124,14 @@ pub async fn list_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR project_id = $4)
                   AND ($5::text IS NULL OR experiment_type = $5)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
@@ -167,7 +169,12 @@ pub async fn create_experiment(
 ) -> Json<ApiResponse<Experiment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "试验名称不能为空"));
     }
@@ -265,25 +272,28 @@ pub async fn get_experiment(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Experiment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, Experiment>(
         r#"
         SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM rs.experiments WHERE id = $1 AND tenant_id = $2
+        FROM rs.experiments WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -309,12 +319,16 @@ pub async fn update_experiment(
 ) -> Json<ApiResponse<Experiment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -341,7 +355,7 @@ pub async fn update_experiment(
         UPDATE rs.experiments SET
             name = $2, status = $3, results = $4, conclusions = $5,
             completed_at = $6, batch_number = $7, scale = $8, scale_unit = $9, updated_at = $10
-        WHERE id = $1 AND tenant_id = $11
+        WHERE id = $1 AND ($11::uuid IS NULL OR tenant_id = $11)
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
@@ -358,7 +372,7 @@ pub async fn update_experiment(
     .bind(scale)
     .bind(scale_unit)
     .bind(now)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -414,12 +428,16 @@ pub async fn delete_experiment(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query(
-        "UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",
+        "UPDATE rs.experiments SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 
@@ -473,14 +491,17 @@ pub async fn get_experiment_records(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
         SELECT json_agg(
@@ -496,12 +517,12 @@ pub async fn get_experiment_records(
         ) as records
         FROM rs.experiment_records er
         JOIN rs.experiments e ON er.experiment_id = e.id
-        WHERE er.experiment_id = $1 AND e.tenant_id = $2
+        WHERE er.experiment_id = $1 AND ($2::uuid IS NULL OR e.tenant_id = $2)
         ORDER BY recorded_at ASC
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -523,8 +544,6 @@ pub async fn get_experiment_records(
 pub async fn create_experiment_record(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
-    Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -532,7 +551,6 @@ pub async fn create_experiment_record(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let _tenant_id = get_tenant_id(&claims, &headers);
     let record_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -572,14 +590,17 @@ pub async fn list_lab_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -591,7 +612,7 @@ pub async fn list_lab_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND phase = 'lab'
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -599,7 +620,7 @@ pub async fn list_lab_experiments(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -612,13 +633,13 @@ pub async fn list_lab_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND phase = 'lab'
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -647,14 +668,17 @@ pub async fn list_pilot_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -666,7 +690,7 @@ pub async fn list_pilot_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND phase = 'pilot'
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -674,7 +698,7 @@ pub async fn list_pilot_experiments(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -687,13 +711,13 @@ pub async fn list_pilot_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND phase = 'pilot'
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -722,14 +746,17 @@ pub async fn list_scaleup_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListParams>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -741,7 +768,7 @@ pub async fn list_scaleup_experiments(
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND phase = 'scaleup'
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
@@ -749,7 +776,7 @@ pub async fn list_scaleup_experiments(
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -762,13 +789,13 @@ pub async fn list_scaleup_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND phase = 'scaleup'
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -797,7 +824,6 @@ pub async fn advance_phase(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -805,12 +831,16 @@ pub async fn advance_phase(
 ) -> Json<ApiResponse<Experiment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -831,7 +861,7 @@ pub async fn advance_phase(
         r#"
         UPDATE rs.experiments SET
             phase = $2, status = $3, updated_at = $4
-        WHERE id = $1 AND tenant_id = $5
+        WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5)
         RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
@@ -842,7 +872,7 @@ pub async fn advance_phase(
     .bind(new_phase)
     .bind(req.new_status.unwrap_or("in_progress".to_string()))
     .bind(Utc::now())
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -867,14 +897,17 @@ pub async fn trace_batch(
     State(_state): State<super::ApiState>,
     Path(batch_number): Path<String>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
         SELECT json_agg(
@@ -893,11 +926,11 @@ pub async fn trace_batch(
         ) as trace_items
         FROM rs.experiments e
         LEFT JOIN rs.formulas f ON e.formula_id = f.id
-        WHERE e.batch_number = $1 AND e.tenant_id = $2
+        WHERE e.batch_number = $1 AND ($2::uuid IS NULL OR e.tenant_id = $2)
         "#,
     )
     .bind(batch_number)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
