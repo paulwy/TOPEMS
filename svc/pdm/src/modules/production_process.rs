@@ -79,14 +79,11 @@ pub async fn list_processes(
     Query(query): Query<ProcessQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -96,7 +93,7 @@ pub async fn list_processes(
         r#"
         SELECT id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
         FROM pdm_production_processes
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -116,7 +113,7 @@ pub async fn list_processes(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_processes
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -222,19 +219,16 @@ pub async fn get_process(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionProcess>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, ProductionProcess>(
         r#"
         SELECT id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
-        FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2
+        FROM pdm_production_processes WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

@@ -52,17 +52,14 @@ pub async fn get_dashboard(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let pending_reviews = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pdm_documents WHERE tenant_id = $1 AND status IN ('review', 'pending')",
+        "SELECT COUNT(*) FROM pdm_documents WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('review', 'pending')",
     )
     .bind(tenant_id)
     .fetch_one(&state.pool)
@@ -70,7 +67,7 @@ pub async fn get_dashboard(
     .unwrap_or(0);
 
     let active_boms = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM pdm_boms WHERE tenant_id = $1 AND status = 'active'",
+        "SELECT COUNT(*) FROM pdm_boms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
     )
     .bind(tenant_id)
     .fetch_one(&state.pool)
@@ -78,7 +75,7 @@ pub async fn get_dashboard(
     .unwrap_or(0);
 
     let total_boms =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_boms WHERE tenant_id = $1")
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_boms WHERE ($1::uuid IS NULL OR tenant_id = $1)")
             .bind(tenant_id)
             .fetch_one(&state.pool)
             .await
@@ -90,7 +87,7 @@ pub async fn get_dashboard(
         r#"
         SELECT COALESCE(document_type, 'other') AS name, COUNT(*) AS value
         FROM pdm_documents
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY COALESCE(document_type, 'other')
         ORDER BY value DESC
         "#,
@@ -103,7 +100,7 @@ pub async fn get_dashboard(
         r#"
         SELECT COALESCE(status, 'unknown') AS name, COUNT(*) AS value
         FROM pdm_change_notices
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY COALESCE(status, 'unknown')
         ORDER BY value DESC
         "#,
@@ -116,7 +113,7 @@ pub async fn get_dashboard(
         r#"
         SELECT COALESCE(status, 'unknown') AS name, COUNT(*) AS value
         FROM pdm_boms
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY COALESCE(status, 'unknown')
         ORDER BY value DESC
         "#,
@@ -146,7 +143,7 @@ pub async fn get_dashboard(
     }
 }
 
-async fn fetch_named_counts(state: &AppState, tenant_id: Uuid, sql: &str) -> Vec<NamedCount> {
+async fn fetch_named_counts(state: &AppState, tenant_id: Option<Uuid>, sql: &str) -> Vec<NamedCount> {
     sqlx::query_as::<_, NamedCountRow>(sql)
         .bind(tenant_id)
         .fetch_all(&state.pool)

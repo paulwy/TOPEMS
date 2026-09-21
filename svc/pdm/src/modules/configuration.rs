@@ -80,14 +80,11 @@ pub async fn list_configurations(
     Query(query): Query<ConfigurationQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -98,7 +95,7 @@ pub async fn list_configurations(
         SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
         FROM pdm_configurations
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
@@ -120,7 +117,7 @@ pub async fn list_configurations(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_configurations
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
@@ -242,20 +239,17 @@ pub async fn get_configuration(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Configuration>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, Configuration>(
         r#"
         SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
-        FROM pdm_configurations WHERE id = $1 AND tenant_id = $2
+        FROM pdm_configurations WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

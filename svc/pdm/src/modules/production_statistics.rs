@@ -76,14 +76,11 @@ pub async fn list_statistics(
     Query(query): Query<StatisticsQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -92,7 +89,7 @@ pub async fn list_statistics(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
         FROM pdm_production_batches
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
         GROUP BY product_id, product_name
         ORDER BY batch_count DESC
         LIMIT $2 OFFSET $3
@@ -110,7 +107,7 @@ pub async fn list_statistics(
                 r#"
                 SELECT COUNT(*) FROM (
                     SELECT 1 FROM pdm_production_batches
-                    WHERE tenant_id = $1
+                    WHERE (1::uuid IS NULL OR tenant_id = $1)
                     GROUP BY product_id, product_name
                 ) AS grouped
                 "#,
@@ -150,14 +147,11 @@ pub async fn get_statistics_summary(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, (
         i64,
@@ -174,17 +168,17 @@ pub async fn get_statistics_summary(
     )>(
         r#"
         SELECT
-            (SELECT COUNT(*) FROM pdm_production_processes WHERE tenant_id = $1) AS total_processes,
-            (SELECT COUNT(*) FROM pdm_production_processes WHERE tenant_id = $1 AND status = 'active') AS active_processes,
-            (SELECT COUNT(*) FROM pdm_production_formulas WHERE tenant_id = $1) AS total_formulas,
-            (SELECT COUNT(*) FROM pdm_production_formulas WHERE tenant_id = $1 AND status = 'active') AS active_formulas,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1) AS total_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status IN ('planning', 'pending')) AS planning_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status IN ('in_progress', 'processing')) AS in_progress_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status = 'completed') AS completed_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE tenant_id = $1 AND status = 'cancelled') AS cancelled_batches,
-            (SELECT COUNT(*) FROM pdm_production_steps WHERE tenant_id = $1) AS total_steps,
-            (SELECT COALESCE(SUM(quantity), 0) FROM pdm_production_batches WHERE tenant_id = $1) AS total_output_quantity
+            (SELECT COUNT(*) FROM pdm_production_processes WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_processes,
+            (SELECT COUNT(*) FROM pdm_production_processes WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'active') AS active_processes,
+            (SELECT COUNT(*) FROM pdm_production_formulas WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_formulas,
+            (SELECT COUNT(*) FROM pdm_production_formulas WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'active') AS active_formulas,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status IN ('planning', 'pending')) AS planning_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status IN ('in_progress', 'processing')) AS in_progress_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'completed') AS completed_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'cancelled') AS cancelled_batches,
+            (SELECT COUNT(*) FROM pdm_production_steps WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_steps,
+            (SELECT COALESCE(SUM(quantity), 0) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_output_quantity
         "#,
     )
     .bind(tenant_id)
@@ -253,20 +247,17 @@ pub async fn get_statistics(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let main_result = sqlx::query_as::<_, ProductStatistics>(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
         FROM pdm_production_batches
-        WHERE product_id = $1 AND tenant_id = $2
+        WHERE product_id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         GROUP BY product_id, product_name
         "#,
     )
@@ -283,7 +274,7 @@ pub async fn get_statistics(
                 r#"
                 SELECT status, COUNT(*) AS count, SUM(quantity) AS quantity
                 FROM pdm_production_batches
-                WHERE product_id = $1 AND tenant_id = $2
+                WHERE product_id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
                 GROUP BY status
                 "#,
             )

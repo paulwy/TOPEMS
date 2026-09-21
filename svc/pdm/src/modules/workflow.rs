@@ -105,21 +105,18 @@ pub async fn list_workflows(
     Extension(claims): Extension<Claims>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
         FROM pdm_workflows
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
     )
@@ -229,20 +226,17 @@ pub async fn get_workflow(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<WorkflowDefinition>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
-        FROM pdm_workflows WHERE id = $1 AND tenant_id = $2
+        FROM pdm_workflows WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -495,7 +489,7 @@ pub async fn list_workflow_instances(
                current_step, status, assignees, history, created_by,
                created_at, updated_at
         FROM pdm_workflow_instances
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
     )
@@ -535,21 +529,18 @@ pub async fn get_workflow_instance(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
         SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
-        FROM pdm_workflow_instances WHERE id = $1 AND tenant_id = $2
+        FROM pdm_workflow_instances WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

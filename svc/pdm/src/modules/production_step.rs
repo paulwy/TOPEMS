@@ -75,14 +75,11 @@ pub async fn list_steps(
     Query(query): Query<StepQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -91,7 +88,7 @@ pub async fn list_steps(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         FROM pdm_production_steps
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::uuid IS NULL OR process_id = $2)
         ORDER BY process_id, step_no
         LIMIT $3 OFFSET $4
@@ -109,7 +106,7 @@ pub async fn list_steps(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_steps
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::uuid IS NULL OR process_id = $2)
                 "#,
             )
@@ -211,19 +208,16 @@ pub async fn get_step(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionStep>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
-        FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2
+        FROM pdm_production_steps WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

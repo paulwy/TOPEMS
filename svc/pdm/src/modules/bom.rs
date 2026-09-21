@@ -587,14 +587,11 @@ pub async fn list_bom_versions(
     Query(query): Query<BomVersionQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(50).min(100);
     let offset = (page - 1) * page_size;
@@ -605,7 +602,7 @@ pub async fn list_bom_versions(
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
         FROM pdm_boms
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR bom_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -643,20 +640,17 @@ pub async fn get_bom_version(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query_as::<_, BomVersion>(
         r#"
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
         FROM pdm_boms
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -922,21 +916,18 @@ pub async fn list_bom_items(
     Query(query): Query<BomItemQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query_as::<_, BomItem>(
         r#"
         SELECT id, tenant_id, bom_id AS bom_version_id, material_id,
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::uuid IS NULL OR bom_id = $2)
         ORDER BY sequence ASC, material_code ASC
         "#,
@@ -983,7 +974,7 @@ pub async fn get_bom_item(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -1211,14 +1202,11 @@ pub async fn compare_bom_versions(
     _headers: axum::http::HeaderMap,
     Json(payload): Json<CompareBomVersionsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let items_a = fetch_items_by_bom(&state, tenant_id, payload.bom_version_a_id).await;
     let items_b = fetch_items_by_bom(&state, tenant_id, payload.bom_version_b_id).await;
 
@@ -1293,7 +1281,7 @@ pub async fn compare_bom_versions(
 
 async fn fetch_items_by_bom(
     state: &AppState,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     bom_id: Uuid,
 ) -> Result<Vec<BomItem>, sqlx::Error> {
     sqlx::query_as::<_, BomItem>(
@@ -1302,7 +1290,7 @@ async fn fetch_items_by_bom(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE tenant_id = $1 AND bom_id = $2
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND bom_id = $2
         ORDER BY sequence ASC, material_code ASC
         "#,
     )

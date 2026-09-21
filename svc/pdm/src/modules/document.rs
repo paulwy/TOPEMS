@@ -127,14 +127,11 @@ pub async fn list_documents(
     Query(query): Query<ListDocumentsQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -145,7 +142,7 @@ pub async fn list_documents(
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -165,7 +162,7 @@ pub async fn list_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -208,14 +205,11 @@ pub async fn search_documents(
     _headers: axum::http::HeaderMap,
     Json(query): Json<DocumentSearchRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.pagesize.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -226,7 +220,7 @@ pub async fn search_documents(
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR document_type = $3)
           AND ($4::text IS NULL OR status = $4)
@@ -252,7 +246,7 @@ pub async fn search_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE tenant_id = $1
+                WHERE (1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR document_type = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -378,20 +372,17 @@ pub async fn get_document(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Document>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, Document>(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1 AND tenant_id = $2
+        FROM pdm_documents WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -800,7 +791,7 @@ pub async fn get_document_approval_history(
         SELECT id, workflow_id, workflow_name, current_step, status, 
                assignees, history, created_by, created_at, updated_at
         FROM pdm_workflow_instances 
-        WHERE target_type = 'document' AND target_id = $1 AND tenant_id = $2
+        WHERE target_type = 'document' AND target_id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at DESC
         "#,
     )
@@ -873,8 +864,8 @@ pub async fn list_pending_documents(
                i.current_step, i.assignees
         FROM pdm_documents d
         LEFT JOIN pdm_workflow_instances i 
-            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND i.tenant_id = $1
-        WHERE d.status = 'pending_approval' AND d.tenant_id = $1
+            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND (1::uuid IS NULL OR i.tenant_id = $1)
+        WHERE d.status = 'pending_approval' AND (1::uuid IS NULL OR d.tenant_id = $1)
         ORDER BY d.updated_at DESC
         "#,
     )

@@ -35,17 +35,14 @@ pub async fn get_settings(
     Path(category): Path<String>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query(
-        "SELECT key, value FROM pdm.module_settings WHERE tenant_id = $1 AND category = $2",
+        "SELECT key, value FROM pdm.module_settings WHERE (1::uuid IS NULL OR tenant_id = $1) AND category = $2",
     )
     .bind(tenant_id)
     .bind(&category)

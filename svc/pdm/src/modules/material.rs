@@ -12,7 +12,7 @@ use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreated
 
 /// 物料列表缓存 Key
 fn materials_list_cache_key(
-    tenant_id: &Uuid,
+    tenant_id: &Option<Uuid>,
     page: i64,
     page_size: i64,
     search: &Option<String>,
@@ -20,7 +20,8 @@ fn materials_list_cache_key(
 ) -> String {
     format!(
         "pdm:material:list:{}:page:{}:pagesize:{}:search:{:?}:status:{:?}",
-        tenant_id, page, page_size, search, status
+        tenant_id.map_or("all".to_string(), |t| t.to_string()),
+        page, page_size, search, status
     )
 }
 
@@ -87,14 +88,11 @@ pub async fn list_materials(
     Query(query): Query<MaterialQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -109,7 +107,7 @@ pub async fn list_materials(
             service = "pdm",
             entity = "material",
             operation = "list",
-            tenant_id = %tenant_id,
+            tenant_id = ?tenant_id,
             cache_key = %cache_key,
             "物料列表缓存命中"
         );
@@ -123,7 +121,7 @@ pub async fn list_materials(
         r#"
         SELECT id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
         FROM pdm_materials
-        WHERE tenant_id = $1
+        WHERE (1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -143,7 +141,7 @@ pub async fn list_materials(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_materials
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -173,7 +171,7 @@ pub async fn list_materials(
                 service = "pdm",
                 entity = "material",
                 operation = "list",
-                tenant_id = %tenant_id,
+                tenant_id = ?tenant_id,
                 cache_key = %cache_key,
                 "物料列表缓存写入"
             );
@@ -346,19 +344,16 @@ pub async fn get_material(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Material>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
     let result = sqlx::query_as::<_, Material>(
         r#"
         SELECT id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
-        FROM pdm_materials WHERE id = $1 AND tenant_id = $2
+        FROM pdm_materials WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

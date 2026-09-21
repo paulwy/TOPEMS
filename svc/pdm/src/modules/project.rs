@@ -191,21 +191,18 @@ pub async fn list_projects(
     Query(query): Query<ProjectQuery>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<PdmProject>>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
-        WHERE p.deleted_at IS NULL AND p.tenant_id = $1
+        WHERE p.deleted_at IS NULL AND (1::uuid IS NULL OR p.tenant_id = $1)
           AND ($2::text IS NULL OR p.project_no ILIKE $2 OR p.name ILIKE $2 OR p.description ILIKE $2)
           AND ($3::text IS NULL OR p.status = $3)
           AND ($4::text IS NULL OR p.phase = $4)
@@ -298,19 +295,16 @@ pub async fn get_project(
     Path(id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<PdmProject>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query_as::<_, PdmProject>(&format!(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
-        WHERE p.deleted_at IS NULL AND p.id = $1 AND p.tenant_id = $2
+        WHERE p.deleted_at IS NULL AND p.id = $1 AND (2::uuid IS NULL OR p.tenant_id = $2)
         "#
     ))
     .bind(id)
@@ -507,19 +501,16 @@ pub async fn list_members(
     Path(project_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         SELECT id, tenant_id, project_id, user_id, user_name, user_email, role, joined_at, updated_at
         FROM pdm_project_members
-        WHERE tenant_id = $1 AND project_id = $2
+        WHERE (1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
         ORDER BY joined_at DESC
         "#,
     )
@@ -685,7 +676,7 @@ pub async fn list_phases(
         SELECT id, tenant_id, project_id, phase, name, description, start_date, end_date,
                status, deliverables, created_at, updated_at
         FROM pdm_project_phases
-        WHERE tenant_id = $1 AND project_id = $2
+        WHERE (1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
         ORDER BY created_at ASC
         "#,
     )

@@ -404,19 +404,16 @@ pub async fn list_versions(
     Path(document_id): Path<Uuid>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<DocumentVersion>>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
         r#"
         SELECT {VERSION_COLUMNS}
         FROM pdm_document_versions
-        WHERE deleted_at IS NULL AND tenant_id = $1 AND document_id = $2
+        WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1) AND document_id = $2
         ORDER BY created_at DESC
         "#
     ))
@@ -495,19 +492,16 @@ pub async fn get_version(
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<DocumentVersion>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
         r#"
         SELECT {VERSION_COLUMNS}
         FROM pdm_document_versions
-        WHERE deleted_at IS NULL AND tenant_id = $1 AND document_id = $2 AND id = $3
+        WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
         "#
     ))
     .bind(tenant_id)
@@ -791,19 +785,16 @@ pub async fn download_version(
     Path((document_id, version_id)): Path<(Uuid, Uuid)>,
     _headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
     let result = sqlx::query(
         r#"
         SELECT file_url, file_type, encode(file_content, 'base64') AS file_content_base64
         FROM pdm_document_versions
-        WHERE deleted_at IS NULL AND tenant_id = $1 AND document_id = $2 AND id = $3
+        WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
         "#,
     )
     .bind(tenant_id)
@@ -838,7 +829,7 @@ pub async fn download_version(
 
 async fn get_document_type(state: &AppState, tenant_id: Uuid, document_id: Uuid) -> Option<String> {
     sqlx::query_scalar::<_, Option<String>>(
-        "SELECT document_type FROM pdm_documents WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL",
+        "SELECT document_type FROM pdm_documents WHERE (1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(document_id)
