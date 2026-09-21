@@ -322,6 +322,51 @@ jobs:
         run: RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --tests --message-format=short
 
   # ──────────────────────────────────────────────────────────────────────────
+  # mes-online-check：mes 真实 schema 在线编译门禁（防漂移 / 防倒退）
+  # 流程：导入 fixtures/mes_compile_schema.sql 快照（mes_guard.sh --sync-snapshot 生成）
+  #       → SQLX_OFFLINE=false 在线解析 → 断言 0 error
+  # 规则：mes 结构变更后必须同步快照；任何 Option/Value 倒退、遮蔽漂移将在此红
+  # ──────────────────────────────────────────────────────────────────────────
+  mes-online-check:
+    name: Gate · mes online compile (real schema snapshot)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: topems
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          cache-prefix: "mes-online-check-snapshot-2026-09-22"
+
+      - name: Install postgresql-client (psql)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
+
+      - name: Import mes compile schema snapshot
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/topems" \
+            -v ON_ERROR_STOP=1 -q -f fixtures/mes_compile_schema.sql
+
+      - name: Run mes_guard (online compile, 0-error assert)
+        run: |
+          bash scripts/mes_guard.sh \
+            --db-url "postgresql://postgres:postgres@localhost:5432/topems?options=-csearch_path=mes,public"
+
+  # ──────────────────────────────────────────────────────────────────────────
   # [V247 D-track NEW] cargo-test baseline job (non-blocking, establishes run baseline)
   # Goal: upgrade from `cargo test --workspace --no-run` (compile-only) to full
   # `cargo test --workspace` execution. V247 keeps continue-on-error: true;
