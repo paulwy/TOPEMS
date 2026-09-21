@@ -89,7 +89,7 @@ pub async fn list_products(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         FROM srm.supplier_products
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR product_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR supplier_id = $4)
@@ -98,7 +98,7 @@ pub async fn list_products(
         LIMIT $6 OFFSET $7
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -114,7 +114,7 @@ pub async fn list_products(
                 "srm",
                 r#"
                 SELECT COUNT(*) FROM srm.supplier_products
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR product_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
@@ -122,7 +122,7 @@ pub async fn list_products(
                 "#,
                 "srm"
             ))
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -195,9 +195,9 @@ pub async fn create_product(
     };
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND status != 'deleted'", "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(supplier_id)
     .fetch_one(&mut **txn)
     .await;
@@ -210,9 +210,9 @@ pub async fn create_product(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_products WHERE deleted_at IS NULL AND tenant_id = $1 AND product_no = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_products WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_no = $2", "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&req.product_no)
     .fetch_one(&mut **txn)
     .await;
@@ -324,11 +324,11 @@ pub async fn get_product(
     let result = sqlx::query_as::<_, SupplierProduct>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM srm.supplier_products WHERE id = $1 AND tenant_id = $2
+        FROM srm.supplier_products WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -375,10 +375,10 @@ pub async fn update_product(
     });
 
     let existing = sqlx::query_as::<_, SupplierProduct>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM srm.supplier_products WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM srm.supplier_products WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -410,9 +410,9 @@ pub async fn update_product(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'", "srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND status != 'deleted'", "srm"),
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(supplier_uuid_val)
         .fetch_one(&mut **txn)
         .await;

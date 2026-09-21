@@ -122,11 +122,11 @@ pub async fn list_tenders(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
         FROM srm.tenders
-        WHERE tenant_id = $1 AND status != 'deleted'
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
         ORDER BY created_at DESC
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -311,11 +311,11 @@ pub async fn get_tender(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_no, title, description, type, budget, status, start_date, end_date, created_by, created_at, updated_at
         FROM srm.tenders
-        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#, "srm"),
     )
     .bind(uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -557,12 +557,12 @@ pub async fn get_tender_bids(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, remarks, created_by, created_at, updated_at
         FROM srm.tender_bids
-        WHERE tender_id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE tender_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         ORDER BY total_score DESC
         "#, "srm"),
     )
     .bind(tender_uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -799,12 +799,12 @@ pub async fn award_tender(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, tender_id, supplier_id, supplier_name, bid_price, currency, technical_score, commercial_score, total_score, status, remarks, created_by, created_at, updated_at
         FROM srm.tender_bids
-        WHERE id = $1 AND tender_id = $2 AND tenant_id = $3 AND status != 'deleted'
+        WHERE id = $1 AND tender_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND status != 'deleted'
         "#, "srm"),
     )
     .bind(winning_bid_uuid)
     .bind(tender_uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -937,11 +937,11 @@ pub async fn list_tender_awards(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, award_no, tender_id, bid_id, supplier_id, supplier_name, award_price, currency, status, created_by, created_at, updated_at
         FROM srm.tender_awards
-        WHERE tenant_id = $1 AND status != 'deleted'
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
         ORDER BY created_at DESC
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 

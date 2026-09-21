@@ -135,7 +135,7 @@ pub async fn get_performance_reports(
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
               AND status != 'cancelled'
               AND ($6::timestamptz IS NULL OR created_at >= $6)
               AND ($7::timestamptz IS NULL OR created_at <= $7)
@@ -162,12 +162,12 @@ pub async fn get_performance_reports(
                     ELSE NULL END, 2
                 ) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
               AND ($6::timestamptz IS NULL OR evaluation_date >= $6)
               AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.tenant_id = $1
+        WHERE s.($1::uuid IS NULL OR tenant_id = $1)
           AND s.status != 'deleted'
           AND ($2::text IS NULL OR s.name ILIKE $2)
           AND ($3::text IS NULL OR s.category = $3)
@@ -179,7 +179,7 @@ pub async fn get_performance_reports(
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&category_filter)
     .bind(&status_filter)
@@ -202,12 +202,12 @@ pub async fn get_performance_reports(
                 LEFT JOIN (
                     SELECT supplier_id, AVG(overall_score) as avg_overall_score
                     FROM srm.supplier_evaluations
-                    WHERE tenant_id = $1
+                    WHERE ($1::uuid IS NULL OR tenant_id = $1)
                       AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
                       AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
                     GROUP BY supplier_id
                 ) e ON s.id = e.supplier_id
-                WHERE s.tenant_id = $1
+                WHERE s.($1::uuid IS NULL OR tenant_id = $1)
                   AND s.status != 'deleted'
                   AND ($2::text IS NULL OR s.name ILIKE $2)
                   AND ($3::text IS NULL OR s.category = $3)
@@ -217,7 +217,7 @@ pub async fn get_performance_reports(
                 "#,
                 "srm"
             ))
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&category_filter)
             .bind(&status_filter)
@@ -281,12 +281,12 @@ pub async fn get_performance_report(
             r#"
         SELECT name, category, status, contact_person
         FROM srm.suppliers
-        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#,
             "srm"
         ))
         .bind(id)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_optional(&mut **txn)
         .await;
 
@@ -331,7 +331,7 @@ pub async fn get_performance_report(
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE tenant_id = $2
+            WHERE ($2::uuid IS NULL OR tenant_id = $2)
               AND status != 'cancelled' AND supplier_id = $1
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
@@ -356,15 +356,15 @@ pub async fn get_performance_report(
                     ELSE NULL END, 2
                 ) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $2 AND supplier_id = $1
+            WHERE ($2::uuid IS NULL OR tenant_id = $2) AND supplier_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.id = $1 AND s.tenant_id = $2
+        WHERE s.id = $1 AND s.($2::uuid IS NULL OR tenant_id = $2)
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -389,13 +389,13 @@ pub async fn get_performance_report(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM srm.supplier_evaluations
-        WHERE supplier_id = $1 AND tenant_id = $2
+        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY evaluation_date DESC
         LIMIT 10
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -414,14 +414,14 @@ pub async fn get_performance_report(
         r#"
         SELECT contract_no, title, start_date, end_date, total_amount
         FROM srm.supplier_contracts
-        WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'active'
+        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'active'
         ORDER BY start_date DESC
         LIMIT 5
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -432,14 +432,14 @@ pub async fn get_performance_report(
             r#"
         SELECT product_no, name, unit_price, min_order_qty
         FROM srm.supplier_products
-        WHERE supplier_id = $1 AND tenant_id = $2 AND status = 'active'
+        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'active'
         ORDER BY unit_price ASC
         LIMIT 10
         "#,
             "srm"
         ))
         .bind(id)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_all(&mut **txn)
         .await
         .unwrap_or_default();
@@ -660,7 +660,7 @@ pub async fn get_performance_trend(
             AVG(overall_score) as avg_overall_score,
             COUNT(*) as evaluation_count
         FROM srm.supplier_evaluations
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::uuid IS NULL OR supplier_id = $2)
           AND evaluation_date >= NOW() - $3::interval
         GROUP BY TO_CHAR(evaluation_date, 'YYYY-MM')
@@ -668,7 +668,7 @@ pub async fn get_performance_trend(
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(supplier_id)
     .bind(interval)
     .fetch_all(&mut **txn)
@@ -755,7 +755,7 @@ pub async fn get_top_suppliers(
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE tenant_id = $1 AND status != 'cancelled'
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -766,15 +766,15 @@ pub async fn get_top_suppliers(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.tenant_id = $1 AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
+        WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
         ORDER BY e.avg_overall_score DESC
         LIMIT 10
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -799,7 +799,7 @@ pub async fn get_top_suppliers(
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE tenant_id = $1 AND status != 'cancelled'
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -810,15 +810,15 @@ pub async fn get_top_suppliers(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.tenant_id = $1 AND s.status = 'active'
+        WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND s.status = 'active'
         ORDER BY po.total_orders DESC NULLS LAST
         LIMIT 10
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -894,7 +894,7 @@ pub async fn export_performance_report(
         LEFT JOIN (
             SELECT supplier_id, COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
               AND status != 'cancelled'
               AND ($5::timestamptz IS NULL OR created_at >= $5)
               AND ($6::timestamptz IS NULL OR created_at <= $6)
@@ -908,12 +908,12 @@ pub async fn export_performance_report(
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN delivery_score >= 80 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as on_time_delivery_rate,
                    ROUND(CASE WHEN COUNT(*) > 0 THEN (SUM(CASE WHEN quality_score < 60 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)) ELSE NULL END, 2) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
               AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
               AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.tenant_id = $1
+        WHERE s.($1::uuid IS NULL OR tenant_id = $1)
           AND s.status != 'deleted'
           AND ($2::text IS NULL OR s.name ILIKE $2)
           AND ($3::text IS NULL OR s.category = $3)
@@ -923,7 +923,7 @@ pub async fn export_performance_report(
         ORDER BY e.avg_overall_score DESC NULLS LAST
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&category_filter)
     .bind(&status_filter)
@@ -1003,7 +1003,7 @@ pub async fn get_score_level_distribution(
         FROM (
             SELECT supplier_id, AVG(overall_score) as avg_overall_score
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $1 AND overall_score IS NOT NULL
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL
             GROUP BY supplier_id
         ) s
         GROUP BY level
@@ -1011,7 +1011,7 @@ pub async fn get_score_level_distribution(
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -1075,28 +1075,28 @@ pub async fn get_performance_summary(
 
     let total_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE tenant_id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'",
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let evaluated_suppliers = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE tenant_id = $1",
+        "SELECT COUNT(DISTINCT supplier_id) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL", "srm"),
+        only_own_schema_query!("srm", "SELECT AVG(overall_score) FROM srm.supplier_evaluations WHERE ($1::uuid IS NULL OR tenant_id = $1) AND overall_score IS NOT NULL", "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(None)
@@ -1108,14 +1108,14 @@ pub async fn get_performance_summary(
         SELECT s.name, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
         JOIN srm.suppliers s ON e.supplier_id = s.id
-        WHERE e.tenant_id = $1 AND e.overall_score IS NOT NULL
+        WHERE e.($1::uuid IS NULL OR tenant_id = $1) AND e.overall_score IS NOT NULL
         GROUP BY s.name
         ORDER BY avg_score DESC
         LIMIT 1
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
@@ -1126,14 +1126,14 @@ pub async fn get_performance_summary(
         SELECT s.name, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
         JOIN srm.suppliers s ON e.supplier_id = s.id
-        WHERE e.tenant_id = $1 AND e.overall_score IS NOT NULL
+        WHERE e.($1::uuid IS NULL OR tenant_id = $1) AND e.overall_score IS NOT NULL
         GROUP BY s.name
         ORDER BY avg_score ASC
         LIMIT 1
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
@@ -1144,13 +1144,13 @@ pub async fn get_performance_summary(
         SELECT s.category, AVG(e.overall_score) as avg_score, COUNT(DISTINCT s.id) as supplier_count
         FROM srm.suppliers s
         LEFT JOIN srm.supplier_evaluations e ON s.id = e.supplier_id
-        WHERE s.tenant_id = $1 AND s.status != 'deleted' AND e.overall_score IS NOT NULL
+        WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND s.status != 'deleted' AND e.overall_score IS NOT NULL
         GROUP BY s.category
         ORDER BY avg_score DESC
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();

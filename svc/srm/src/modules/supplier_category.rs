@@ -91,7 +91,7 @@ pub async fn list_categories(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
         FROM srm.supplier_categories
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
           AND ($3::boolean IS NULL OR is_active = $3)
           AND ($4::uuid IS NULL OR parent_id = $4)
@@ -99,7 +99,7 @@ pub async fn list_categories(
         LIMIT $5 OFFSET $6
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(is_active_filter)
     .bind(parent_id_filter)
@@ -114,14 +114,14 @@ pub async fn list_categories(
                 "srm",
                 r#"
                 SELECT COUNT(*) FROM srm.supplier_categories
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
                   AND ($3::boolean IS NULL OR is_active = $3)
                   AND ($4::uuid IS NULL OR parent_id = $4)
                 "#,
                 "srm"
             ))
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(is_active_filter)
             .bind(parent_id_filter)
@@ -190,9 +190,9 @@ pub async fn create_category(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND category_no = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND category_no = $2", "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&req.category_no)
     .fetch_one(&mut **txn)
     .await;
@@ -216,9 +216,9 @@ pub async fn create_category(
         };
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND is_active = true", "srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND is_active = true", "srm"),
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(parent_uuid)
         .fetch_one(&mut **txn)
         .await;
@@ -305,11 +305,11 @@ pub async fn get_category(
     let result = sqlx::query_as::<_, SupplierCategory>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
-        FROM srm.supplier_categories WHERE id = $1 AND tenant_id = $2
+        FROM srm.supplier_categories WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -356,10 +356,10 @@ pub async fn update_category(
     });
 
     let existing = sqlx::query_as::<_, SupplierCategory>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -407,9 +407,9 @@ pub async fn update_category(
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2 AND is_active = true", "srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND is_active = true", "srm"),
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(parent_uuid)
         .fetch_one(&mut **txn)
         .await;
@@ -499,9 +499,9 @@ pub async fn delete_category(
     });
 
     let child_count = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND parent_id = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2", "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(id)
     .fetch_one(&mut **txn)
     .await;
@@ -514,9 +514,9 @@ pub async fn delete_category(
     }
 
     let supplier_count = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers s JOIN srm.supplier_categories c ON s.category_id = c.id WHERE s.tenant_id = $1 AND c.id = $2 AND c.tenant_id = $1", "srm")
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers s JOIN srm.supplier_categories c ON s.category_id = c.id WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND c.id = $2 AND c.($1::uuid IS NULL OR tenant_id = $1)", "srm")
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(id)
     .fetch_one(&mut **txn)
     .await;

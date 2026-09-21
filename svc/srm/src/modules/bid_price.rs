@@ -108,11 +108,11 @@ pub async fn list_bid_requests(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
         FROM srm.bid_requests
-        WHERE tenant_id = $1 AND status != 'deleted'
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
         ORDER BY created_at DESC
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -278,11 +278,11 @@ pub async fn get_bid_request(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_no, title, description, deadline, status, created_by, created_at, updated_at
         FROM srm.bid_requests
-        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#, "srm"),
     )
     .bind(uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -511,12 +511,12 @@ pub async fn get_bid_request_bids(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
         FROM srm.bids
-        WHERE request_id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE request_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         ORDER BY price ASC
         "#, "srm"),
     )
     .bind(request_uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -706,11 +706,11 @@ pub async fn get_bid(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
         FROM srm.bids
-        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#, "srm"),
     )
     .bind(uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -934,12 +934,12 @@ pub async fn get_bid_comparison(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, request_id, supplier_id, supplier_name, price, currency, valid_until, status, remarks, created_by, created_at, updated_at
         FROM srm.bids
-        WHERE request_id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE request_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         ORDER BY price ASC
         "#, "srm"),
     )
     .bind(request_uuid)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 

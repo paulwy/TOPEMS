@@ -89,7 +89,7 @@ pub async fn list_purchase_orders(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
         FROM srm.purchase_orders
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR po_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR supplier_id = $4)
@@ -97,7 +97,7 @@ pub async fn list_purchase_orders(
         LIMIT $5 OFFSET $6
         "#, "srm"),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -112,14 +112,14 @@ pub async fn list_purchase_orders(
                 "srm",
                 r#"
                 SELECT COUNT(*) FROM srm.purchase_orders
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR po_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR supplier_id = $4)
                 "#,
                 "srm"
             ))
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -188,10 +188,10 @@ pub async fn create_purchase_order(
     };
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'", "srm"),
     )
     .bind(supplier_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -203,10 +203,10 @@ pub async fn create_purchase_order(
     }
 
     let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.purchase_orders WHERE deleted_at IS NULL AND po_no = $1 AND tenant_id = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.purchase_orders WHERE deleted_at IS NULL AND po_no = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
     )
     .bind(&req.po_no)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -305,11 +305,11 @@ pub async fn get_purchase_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at
-        FROM srm.purchase_orders WHERE id = $1 AND tenant_id = $2
+        FROM srm.purchase_orders WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#, "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -350,10 +350,10 @@ pub async fn update_purchase_order(
     });
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM srm.purchase_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, po_no, supplier_id, order_date, expected_date, actual_date, total_amount, currency, status, remarks, created_by, created_at, updated_at FROM srm.purchase_orders WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -375,10 +375,10 @@ pub async fn update_purchase_order(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'", "srm"),
+            only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'", "srm"),
         )
         .bind(supplier_uuid_val)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_one(&mut **txn)
         .await;
 

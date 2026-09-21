@@ -107,11 +107,11 @@ pub async fn sync_supplier_from_scm(
         only_own_schema_query!("srm", r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM srm.scm_supplier_snapshots
-        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#),
     )
     .bind(supplier_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -153,11 +153,11 @@ pub async fn sync_supplier_from_scm(
 
     let existing_count = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "srm",
-        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         "srm"
     ))
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -335,10 +335,10 @@ pub async fn sync_all_suppliers_from_scm(
         only_own_schema_query!("srm", r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM srm.scm_supplier_snapshots
-        WHERE tenant_id = $1 AND status != 'deleted'
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
         "#),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -371,11 +371,11 @@ pub async fn sync_all_suppliers_from_scm(
     {
         let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
             "srm",
-            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND tenant_id = $2",
+            "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
             "srm"
         ))
         .bind(id)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_one(&mut **txn)
         .await;
 
@@ -522,12 +522,12 @@ pub async fn sync_supplier_to_scm(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM srm.suppliers
-        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#,
         "srm"
     ))
     .bind(supplier_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -689,11 +689,11 @@ pub async fn sync_all_suppliers_to_scm(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM srm.suppliers
-        WHERE tenant_id = $1 AND status != 'deleted'
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'deleted'
         "#,
         "srm"
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -798,7 +798,7 @@ pub async fn get_sync_logs(
                source_id, source_code, target_id, target_code, operation, status,
                error_message, retry_count, executed_at, created_at
         FROM unified_core.inter_module_sync
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR sync_type = $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR source_module = $4)
@@ -806,7 +806,7 @@ pub async fn get_sync_logs(
         LIMIT $5 OFFSET $6
         "#
     ))
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&req.sync_type)
     .bind(&req.status)
     .bind(&req.source_module)
