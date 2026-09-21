@@ -6,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -26,13 +27,20 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 /// 任务详情缓存 key（含 tenant_id）
-fn task_detail_key(tenant_id: &Uuid, id: &str) -> String {
-    format!("lims:task:{}:{}", tenant_id, id)
+fn task_detail_key(tenant_id: &Option<Uuid>, id: &str) -> String {
+    format!(
+        "lims:task:{}:{}",
+        tenant_id.map_or("all".to_string(), |t| t.to_string()),
+        id
+    )
 }
 
 /// 任务列表缓存 key（含 tenant_id）
-fn task_list_key(tenant_id: &Uuid) -> String {
-    format!("lims:task:list:{}", tenant_id)
+fn task_list_key(tenant_id: &Option<Uuid>) -> String {
+    format!(
+        "lims:task:list:{}",
+        tenant_id.map_or("all".to_string(), |t| t.to_string())
+    )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -115,19 +123,25 @@ fn task_from_row(row: &sqlx::postgres::PgRow) -> InspectionTask {
 pub async fn list_tasks_by_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
     let sample_uuid = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let rows = sqlx::query(&format!(
-        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND tenant_id = $2 ORDER BY created_at DESC",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC",
         TASK_SELECT_COLS
     ))
     .bind(sample_uuid)
-    .bind(ctx.tenant_id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -237,8 +251,13 @@ pub async fn complete_step(
 pub async fn list_tasks(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let list_key = task_list_key(&tenant_id);
 
     // 缓存读取
@@ -250,7 +269,7 @@ pub async fn list_tasks(
     }
 
     let rows = sqlx::query(&format!(
-        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
         TASK_SELECT_COLS
     ))
     .bind(ctx.tenant_id)
@@ -415,13 +434,19 @@ pub async fn create_task(
 pub async fn get_task(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
-    let cache_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
+    let cache_key = task_detail_key(&tenant_id, &id.to_string());
 
     // 缓存读取
     if let Some(cached) = state.task_cache.get(&cache_key).await {
@@ -432,11 +457,11 @@ pub async fn get_task(
     }
 
     let row = sqlx::query(&format!(
-        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT {} FROM public.qa_lab_tasks WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         TASK_SELECT_COLS
     ))
     .bind(id)
-    .bind(ctx.tenant_id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -528,7 +553,7 @@ pub async fn update_task(
                 updated_at: r.get("updated_at"),
             };
             // 失效详情缓存并广播列表失效
-            let detail_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+            let detail_key = task_detail_key(&Some(ctx.tenant_id), &id.to_string());
             state.task_cache.remove(&detail_key).await;
             if let Some(publisher) = &state.event_publisher {
                 let publisher = publisher.clone();
@@ -602,7 +627,7 @@ pub async fn submit_result(
             };
 
             // 失效详情缓存
-            let detail_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+            let detail_key = task_detail_key(&Some(ctx.tenant_id), &id.to_string());
             state.task_cache.remove(&detail_key).await;
 
             if let Some(ref publisher) = state.event_publisher {
@@ -681,7 +706,7 @@ pub async fn delete_task(
     match result {
         Ok(_) => {
             // 失效详情缓存并广播列表失效
-            let detail_key = task_detail_key(&ctx.tenant_id, &id.to_string());
+            let detail_key = task_detail_key(&Some(ctx.tenant_id), &id.to_string());
             state.task_cache.remove(&detail_key).await;
             if let Some(publisher) = &state.event_publisher {
                 let publisher = publisher.clone();

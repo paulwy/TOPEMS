@@ -239,14 +239,14 @@ pub async fn create_material_bom(
         match item_result {
             Ok(i) => {
                 item_responses.push(BomItemResponse {
-                    id: i.id.unwrap_or_default().to_string(),
-                    bom_id: i.bom_id.unwrap_or_default().to_string(),
+                    id: i.id.to_string(),
+                    bom_id: i.bom_id.to_string(),
                     material_id: i.material_id.map(|u| u.to_string()),
-                    material_code: i.material_code.unwrap_or_default(),
-                    material_name: i.material_name.unwrap_or_default(),
+                    material_code: i.material_code,
+                    material_name: i.material_name,
                     specification: i.specification,
-                    unit: i.unit.unwrap_or_default(),
-                    quantity: big_decimal_to_f64(Some(i.quantity.unwrap_or_default())),
+                    unit: i.unit,
+                    quantity: big_decimal_to_f64(Some(i.quantity)),
                     loss_rate: big_decimal_to_f64(i.loss_rate),
                     sequence: i.sequence.unwrap_or(0),
                     notes: i.notes,
@@ -266,11 +266,11 @@ pub async fn create_material_bom(
     }
 
     let bom_response = MaterialBomResponse {
-        id: bom.id.unwrap_or_default().to_string(),
-        bom_no: bom.bom_no.unwrap_or_default(),
+        id: bom.id.to_string(),
+        bom_no: bom.bom_no,
         product_id: bom.product_id.map(|u| u.to_string()),
-        product_name: bom.product_name.unwrap_or_default(),
-        product_code: bom.product_code.unwrap_or_default(),
+        product_name: bom.product_name,
+        product_code: bom.product_code,
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
@@ -342,11 +342,11 @@ pub async fn get_material_bom(
     };
 
     let bom_response = MaterialBomResponse {
-        id: bom.id.unwrap_or_default().to_string(),
-        bom_no: bom.bom_no.unwrap_or_default(),
+        id: bom.id.to_string(),
+        bom_no: bom.bom_no,
         product_id: bom.product_id.map(|u| u.to_string()),
-        product_name: bom.product_name.unwrap_or_default(),
-        product_code: bom.product_code.unwrap_or_default(),
+        product_name: bom.product_name,
+        product_code: bom.product_code,
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
@@ -357,14 +357,14 @@ pub async fn get_material_bom(
     let item_responses: Vec<BomItemResponse> = items
         .into_iter()
         .map(|i| BomItemResponse {
-            id: i.id.unwrap_or_default().to_string(),
-            bom_id: i.bom_id.unwrap_or_default().to_string(),
+            id: i.id.to_string(),
+            bom_id: i.bom_id.to_string(),
             material_id: i.material_id.map(|u| u.to_string()),
-            material_code: i.material_code.unwrap_or_default(),
-            material_name: i.material_name.unwrap_or_default(),
+            material_code: i.material_code,
+            material_name: i.material_name,
             specification: i.specification,
-            unit: i.unit.unwrap_or_default(),
-            quantity: big_decimal_to_f64(Some(i.quantity.unwrap_or_default())),
+            unit: i.unit,
+            quantity: big_decimal_to_f64(Some(i.quantity)),
             loss_rate: big_decimal_to_f64(i.loss_rate),
             sequence: i.sequence.unwrap_or(0),
             notes: i.notes,

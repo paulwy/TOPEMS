@@ -49,7 +49,7 @@ const SERVICE_SCHEMA = {
   qms: ['qms'],
   rd: ['rd'],
   scm: ['scm'],
-  search: ['search'],
+  search: ['search', 'erp'],
   server: ['public'],
   srm: ['srm'],
   ticket: ['ticket'],
