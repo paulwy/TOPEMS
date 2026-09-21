@@ -38,7 +38,7 @@ struct CustomerSearchRow {
     code: String,
     name: String,
     contact_person: Option<String>,
-    phone: Option<String>,
+    contact_phone: Option<String>,
     #[allow(dead_code)]
     email: Option<String>,
     address: Option<String>,
@@ -47,17 +47,17 @@ struct CustomerSearchRow {
 #[derive(Debug, Clone, FromRow)]
 struct SalesOrderSearchRow {
     id: Uuid,
-    order_number: String,
+    order_no: String,
     status: String,
-    remarks: Option<String>,
+    remark: Option<String>,
 }
 
 #[derive(Debug, Clone, FromRow)]
 struct PurchaseOrderSearchRow {
     id: Uuid,
-    order_number: String,
+    order_no: String,
     status: String,
-    remarks: Option<String>,
+    remark: Option<String>,
 }
 
 #[derive(Debug, Clone, FromRow)]
@@ -109,9 +109,9 @@ async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
     let keyword_like = format!("%{}%", keyword);
 
     let rows: Vec<CustomerSearchRow> = match sqlx::query_as(
-        r#"SELECT id, code, name, contact_person, phone, email, address
-           FROM erp_customers
-           WHERE code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1 OR phone ILIKE $1 OR email ILIKE $1
+        r#"SELECT id, code, name, contact_person, contact_phone, email, address
+           FROM erp.customers
+           WHERE code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1 OR contact_phone ILIKE $1 OR email ILIKE $1
            ORDER BY created_at DESC
            LIMIT $2"#,
     )
@@ -131,7 +131,7 @@ async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
         .map(|r| {
             let description = match (
                 r.contact_person.as_ref(),
-                r.phone.as_ref(),
+                r.contact_phone.as_ref(),
                 r.address.as_ref(),
             ) {
                 (Some(cp), Some(p), Some(a)) => Some(format!("{} | {} | {}", cp, p, a)),
@@ -163,9 +163,9 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
     let mut results: Vec<SearchResult> = Vec::new();
 
     let sales_rows: Vec<SalesOrderSearchRow> = match sqlx::query_as(
-        r#"SELECT id, order_number, status, remarks
-           FROM erp_sales_orders
-           WHERE order_number ILIKE $1 OR remarks ILIKE $1
+        r#"SELECT id, order_no, status, remark
+           FROM erp.sales_orders
+           WHERE order_no ILIKE $1 OR remark ILIKE $1
            ORDER BY created_at DESC
            LIMIT $2"#,
     )
@@ -183,8 +183,8 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
 
     results.extend(sales_rows.into_iter().map(|r| SearchResult {
         id: r.id.to_string(),
-        title: r.order_number,
-        description: r.remarks.or_else(|| Some(r.status.clone())),
+        title: r.order_no,
+        description: r.remark.or_else(|| Some(r.status.clone())),
         module: "order".to_string(),
         path: format!("/sales/orders/{}", r.id),
         type_name: "订单".to_string(),
@@ -193,9 +193,9 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
     }));
 
     let purchase_rows: Vec<PurchaseOrderSearchRow> = match sqlx::query_as(
-        r#"SELECT id, order_number, status, remarks
-           FROM erp_purchase_orders
-           WHERE order_number ILIKE $1 OR remarks ILIKE $1
+        r#"SELECT id, order_no, status, remark
+           FROM erp.purchase_orders
+           WHERE order_no ILIKE $1 OR remark ILIKE $1
            ORDER BY created_at DESC
            LIMIT $2"#,
     )
@@ -213,8 +213,8 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
 
     results.extend(purchase_rows.into_iter().map(|r| SearchResult {
         id: r.id.to_string(),
-        title: r.order_number,
-        description: r.remarks.or_else(|| Some(r.status.clone())),
+        title: r.order_no,
+        description: r.remark.or_else(|| Some(r.status.clone())),
         module: "order".to_string(),
         path: format!("/purchase/orders/{}", r.id),
         type_name: "订单".to_string(),
