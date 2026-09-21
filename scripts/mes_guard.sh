@@ -170,14 +170,14 @@ export DATABASE_URL="$DB_URL"
 
 if ! cargo check --lib > "${LOG}" 2>&1; then
   ERR_COUNT="$(grep -c '^error\[E' "${LOG}" || true)"
-  say "编译失败：$ERR_COUNT 个错误（详见 $LOG）"
+  say "编译失败：$ERR_COUNT 个错误（详见 ${LOG}）"
   grep '^error\[E' "${LOG}" | sort | uniq -c | sort -rn | head -8 | sed 's/^/    /'
   exit 1
 fi
 
 ERR_COUNT="$(grep -c '^error\[E' "${LOG}" || true)"
 if [[ "$ERR_COUNT" != "0" ]]; then
-  say "检测到 $ERR_COUNT 个 error[E 但 cargo check 退出码为 0（异常，请人工检查 $LOG）"
+  say "检测到 $ERR_COUNT 个 error[E 但 cargo check 退出码为 0（异常，请人工检查 ${LOG}）"
   exit 1
 fi
 

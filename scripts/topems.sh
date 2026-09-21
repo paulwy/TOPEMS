@@ -253,6 +253,24 @@ build_service() {
         esac
     fi
 
+    # mes 特例：必须在线编译（mes schema 结构，根 .sqlx 缓存与代码不匹配）
+    # 配方与 scripts/mes_guard.sh 一致：rm .sqlx + SQLX_OFFLINE=false + search_path=mes,public
+    if [ "$service_name" = "mes" ]; then
+        rm -f svc/mes/.sqlx/query-*.json
+        export SQLX_OFFLINE=false
+        export DATABASE_URL="postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public"
+        info "  mes 在线编译配方（mes_guard 机制，search_path=mes,public）"
+        if cargo build $profile --bin "$executable_name" 2>&1; then
+            success "mes 编译成功（在线，search_path=mes,public）"
+            _restore_cargo_jobs
+            return 0
+        else
+            _restore_cargo_jobs
+            error "mes 编译失败（在线）。请运行 ./scripts/topems.sh mes-guard 查看详情"
+            return 1
+        fi
+    fi
+
     local cmd
     if [ "$online" = "1" ]; then
         cmd="SQLX_OFFLINE= cargo build $profile --bin $executable_name"
@@ -3052,6 +3070,10 @@ TOPEMS 服务管理工具
   start <服务>            启动服务（自动注册到 unified-core）
   stop <服务>             停止服务
   restart <服务>          重启服务
+  mes-guard [选项]       运行 mes 编译守卫（遮蔽检查 + 在线编译断言 0 error）
+                            --clean          清理 public 遮蔽对象（幂等）
+                            --sync-snapshot  同步 fixtures/mes_compile_schema.sql
+                            --skip-compile   只做遮蔽检查（快排）
   check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志
   build <服务> [--online|--offline|--dev]  编译服务
@@ -3231,6 +3253,16 @@ case "${1:-help}" in
             web|frontend)
                 stop_frontend && start_frontend
                 ;;
+            mes)
+                # mes 重启前编译守卫：防启动坏/旧版本（MES_GUARD_SKIP=1 跳过）
+                if [ "${MES_GUARD_SKIP:-0}" != "1" ]; then
+                    bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public" || {
+                        error "mes 编译守卫失败，已中止重启（MES_GUARD_SKIP=1 可跳过）"
+                        exit 1
+                    }
+                fi
+                stop_service mes && sleep 1 && start_service mes "${3:-false}"
+                ;;
             "")
                 error "请指定服务名"
                 show_help
@@ -3248,6 +3280,10 @@ case "${1:-help}" in
     build)
         [ -z "$2" ] && { error "请指定服务名"; show_help; exit 1; }
         build_service "$2" "${@:3}"
+        ;;
+    mes-guard)
+        # mes 编译守卫：遮蔽检查 + 在线编译断言 0 error（--clean/--sync-snapshot/--skip-compile 透传）
+        bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public" "${@:2}"
         ;;
     build-all)
         build_all "${@:2}"
