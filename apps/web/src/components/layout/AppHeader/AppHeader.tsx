@@ -9,6 +9,7 @@ import { HeaderUserMenu } from './HeaderUserMenu';
 import { HeaderBreadcrumbs } from './HeaderBreadcrumbs';
 import { BusinessDomainTabs } from './BusinessDomainTabs';
 import LanguageSelector from '@/components/LanguageSelector';
+import { TenantSwitcher } from '@/components/TenantSwitcher/TenantSwitcher';
 
 interface AppHeaderProps {
   mobileMenuOpen?: boolean;
@@ -90,6 +91,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         >
           {rightActions || (
             <>
+              <TenantSwitcher />
               <HeaderNotifications />
               <LanguageSelector />
               <HeaderUserMenu />
