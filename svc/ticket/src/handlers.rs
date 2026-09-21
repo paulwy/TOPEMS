@@ -94,7 +94,7 @@ impl TicketService {
         // 自动化规则应用：按租户启用规则评估并应用变更（assignee/severity/tags）
         let rules = sqlx::query_as::<_, AutomationRule>(
             "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-             FROM ticket.ticket_automation_rules WHERE tenant_id = $1 AND enabled = true",
+             FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND enabled = true",
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -173,7 +173,7 @@ impl TicketService {
                    source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                    resolved_at, closed_at, created_at, updated_at, tags, metadata
             FROM ticket.core_tickets
-            WHERE id = $1 AND tenant_id = $2
+            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             "#,
         )
         .bind(ticket_id)
@@ -199,7 +199,7 @@ impl TicketService {
                    source_service, source_business_id, assignee_id, reporter_id, sla_due_at,
                    resolved_at, closed_at, created_at, updated_at, tags, metadata
             FROM ticket.core_tickets
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
               AND ($2::text IS NULL OR status = $2)
               AND ($3::text IS NULL OR severity = $3)
               AND ($4::text IS NULL OR ticket_type = $4)
@@ -416,7 +416,7 @@ impl TicketService {
             r#"
             SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at
             FROM ticket.core_ticket_comments
-            WHERE ticket_id = $1 AND tenant_id = $2
+            WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY created_at ASC
             "#,
         )
@@ -435,7 +435,7 @@ impl TicketService {
             r#"
             SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at
             FROM ticket.core_ticket_activities
-            WHERE ticket_id = $1 AND tenant_id = $2
+            WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY created_at ASC
             "#,
         )
@@ -1257,13 +1257,18 @@ pub async fn list_automation_rules_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AutomationRule>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, AutomationRule>(
         "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-         FROM ticket.ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
+         FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {
@@ -1277,14 +1282,19 @@ pub async fn get_automation_rule_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AutomationRule>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, AutomationRule>(
         "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
-         FROM ticket.ticket_automation_rules WHERE id = $1 AND tenant_id = $2",
+         FROM ticket.ticket_automation_rules WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&pool)
     .await
     {
@@ -1397,14 +1407,19 @@ pub async fn list_knowledge_articles_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<Vec<KnowledgeArticle>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let q = params.get("q").cloned().unwrap_or_default();
     let articles = match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
-         FROM ticket.ticket_knowledge_articles WHERE tenant_id = $1 ORDER BY updated_at DESC",
+         FROM ticket.ticket_knowledge_articles WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY updated_at DESC",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&pool)
     .await
     {
@@ -1437,14 +1452,19 @@ pub async fn get_knowledge_article_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<KnowledgeArticle>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at
-         FROM ticket.ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2",
+         FROM ticket.ticket_knowledge_articles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&pool)
     .await
     {

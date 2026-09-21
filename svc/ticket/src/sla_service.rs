@@ -256,7 +256,7 @@ impl TicketSlaService {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
-            WHERE deleted_at IS NULL AND tenant_id = $1
+            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
               AND is_active = true
               AND (ticket_type IS NULL OR ticket_type = $2)
               AND (severity IS NULL OR severity = $3)
@@ -285,7 +285,7 @@ impl TicketSlaService {
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
             SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM ticket.core_ticket_sla_escalations
-            WHERE ticket_id = $1 AND tenant_id = $2
+            WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY level ASC, created_at ASC
             "#,
         )
@@ -481,7 +481,7 @@ impl TicketSlaService {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
-            WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+            WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             "#,
         )
         .bind(policy_id)
@@ -499,7 +499,7 @@ impl TicketSlaService {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
             SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
-            WHERE deleted_at IS NULL AND tenant_id = $1
+            WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
             ORDER BY is_default DESC, created_at DESC
             "#,
         )

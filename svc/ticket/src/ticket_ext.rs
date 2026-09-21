@@ -276,7 +276,7 @@ async fn apply_transition(
     let user_id = user_of(&claims);
 
     let current: String = match sqlx::query_scalar::<_, String>(
-        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
