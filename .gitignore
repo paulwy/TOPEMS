@@ -243,9 +243,11 @@ apps/web/dist/*.bak
 *.bak_pass*
 
 tmp/
-# CI ci.yml L195/L314 SQLX_OFFLINE=true cargo check · scripts/dev/sqlx-prepare.sh 末尾指引
-# 共同要求：根 .sqlx/ 下的 query/data JSON 必须提交（CI 无 DB、纯离线编译依赖它）
-# 因此 .sqlx 目录改为"只忽略临时文件"，白名单放行缓存 JSON
+# ── 根 .sqlx/ 缓存入库（勿移除）────────────────────────────
+# CI ci.yml cargo-check/rust-smoke 纯离线编译（SQLX_OFFLINE=true、无 DB）依赖根 .sqlx/query-*.json。
+# workspace 在线编译不可行（57 个 schema 无法用单一 DATABASE_URL/search_path 解析，实测 85 错误）。
+# 本地开发一律在线编译（DATABASE_URL + 服务 search_path），不写根 .sqlx；仅显式 cargo sqlx prepare 会更新缓存。
+# 因此 .sqlx 目录"只忽略临时文件"，白名单放行缓存 JSON；svc/*/.sqlx 与 lib/*/.sqlx（prepare 中间产物）保持忽略。
 .sqlx/*
 !.sqlx/query-*.json
 !.sqlx/data-*.json
