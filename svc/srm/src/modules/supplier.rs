@@ -203,9 +203,9 @@ pub async fn list_suppliers(
 
     let query = format!(
         r#"
-        SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         FROM srm.suppliers
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR category = $4)
@@ -216,7 +216,7 @@ pub async fn list_suppliers(
     );
 
     let result = sqlx::query_as::<_, Supplier>(&query)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(&search_pattern)
         .bind(&status_filter)
         .bind(&category_filter)
@@ -230,7 +230,7 @@ pub async fn list_suppliers(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM srm.suppliers
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR category = $4)
@@ -238,7 +238,7 @@ pub async fn list_suppliers(
             );
 
             let count_result = sqlx::query_scalar::<_, i64>(&count_query)
-                .bind(tenant_id)
+                .bind(tenant_opt)
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)
