@@ -13,4 +13,18 @@
 ALTER TABLE qms.qa_quality_issues ADD COLUMN IF NOT EXISTS title_en VARCHAR(255);
 
 -- 2. mes 工艺流程：工艺名英文列（用户可见字段 name）
-ALTER TABLE process_flows ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='public' AND c.relname='process_flows' AND c.relkind='r')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='public' AND table_name='process_flows' AND column_name='name_en') THEN
+    ALTER TABLE public.process_flows ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='mes' AND c.relname='process_flows' AND c.relkind='r')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema='mes' AND table_name='process_flows' AND column_name='name_en') THEN
+    ALTER TABLE mes.process_flows ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
+  END IF;
+END $$;

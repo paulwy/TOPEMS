@@ -11,7 +11,7 @@
 -- 兼容性：幂等（ADD COLUMN IF NOT EXISTS），双库（5432 / 5433）可重放。
 
 -- 1. mes 生产工单：产品名英文列（用户可见字段 product_name）
-ALTER TABLE production_orders ADD COLUMN IF NOT EXISTS product_name_en VARCHAR(255);
+ALTER TABLE mes.production_orders ADD COLUMN IF NOT EXISTS product_name_en VARCHAR(255);
 
 -- 2. mes 设备：设备名英文列（真实列名 equipment_name，SELECT 别名为 name）
-ALTER TABLE equipment ADD COLUMN IF NOT EXISTS equipment_name_en VARCHAR(255);
+ALTER TABLE mes.equipment ADD COLUMN IF NOT EXISTS equipment_name_en VARCHAR(255);
