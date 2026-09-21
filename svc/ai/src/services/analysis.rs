@@ -252,7 +252,7 @@ impl AnalysisService {
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
                 FROM ai.analysis_results
-                WHERE analysis_type = $1 AND tenant_id = $3
+                WHERE analysis_type = $1 AND ($3::uuid IS NULL OR tenant_id = $3)
                 ORDER BY created_at DESC
                 LIMIT $2
                 "#,
@@ -267,7 +267,7 @@ impl AnalysisService {
                 r#"
                 SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
                 FROM ai.analysis_results
-                WHERE tenant_id = $2
+                WHERE ($2::uuid IS NULL OR tenant_id = $2)
                 ORDER BY created_at DESC
                 LIMIT $1
                 "#,

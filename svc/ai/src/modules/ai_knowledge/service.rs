@@ -65,7 +65,7 @@ pub async fn list_knowledge_bases(
         r#"SELECT id, tenant_id, name, description, kb_type, status,
                   document_count, created_by, created_at, updated_at
            FROM core.knowledge_bases
-           WHERE tenant_id = $1
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::text IS NULL OR kb_type = $2)
              AND ($3::text IS NULL OR status = $3)
              AND ($4::text IS NULL OR name ILIKE $4)
@@ -96,7 +96,7 @@ pub async fn get_knowledge_base(
         r#"SELECT id, tenant_id, name, description, kb_type, status,
                   document_count, created_by, created_at, updated_at
            FROM core.knowledge_bases
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
         "core"
     ))
     .bind(kb_id)
@@ -213,7 +213,7 @@ pub async fn list_documents(
                   file_size, chunk_count, status, error_message, created_by,
                   created_at, updated_at
            FROM core.knowledge_documents
-           WHERE tenant_id = $1
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::uuid IS NULL OR kb_id = $2)
              AND ($3::text IS NULL OR status = $3)
              AND ($4::text IS NULL OR doc_type = $4)
@@ -247,7 +247,7 @@ pub async fn get_document_detail(
                   file_size, chunk_count, status, error_message, created_by,
                   created_at, updated_at
            FROM core.knowledge_documents
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
         "core"
     ))
     .bind(document_id)
@@ -264,7 +264,7 @@ pub async fn get_document_detail(
         r#"SELECT id, tenant_id, document_id, kb_id, chunk_index, content,
                   token_count, metadata, created_at
            FROM core.knowledge_chunks
-           WHERE document_id = $1 AND tenant_id = $2
+           WHERE document_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
            ORDER BY chunk_index"#,
         "core"
     ))
@@ -428,9 +428,9 @@ pub async fn update_document(
                 r#"UPDATE core.knowledge_bases
                    SET document_count = (
                        SELECT COUNT(*) FROM core.knowledge_documents
-                       WHERE kb_id = $1 AND tenant_id = $2 AND status = 'ready'
+                       WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'ready'
                    )
-                   WHERE id = $1 AND tenant_id = $2"#,
+                   WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
                 "core"
             ))
             .bind(old_kb_id)
@@ -443,9 +443,9 @@ pub async fn update_document(
                 r#"UPDATE core.knowledge_bases
                    SET document_count = (
                        SELECT COUNT(*) FROM core.knowledge_documents
-                       WHERE kb_id = $1 AND tenant_id = $2 AND status = 'ready'
+                       WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'ready'
                    )
-                   WHERE id = $1 AND tenant_id = $2"#,
+                   WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
                 "core"
             ))
             .bind(new_kb_id)
@@ -468,7 +468,7 @@ pub async fn delete_document(
     let doc: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
         "ai",
         r#"SELECT kb_id FROM core.knowledge_documents
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
         "core"
     ))
     .bind(document_id)
@@ -498,9 +498,9 @@ pub async fn delete_document(
             r#"UPDATE core.knowledge_bases
                SET document_count = (
                    SELECT COUNT(*) FROM core.knowledge_documents
-                   WHERE kb_id = $1 AND tenant_id = $2
+                   WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
                )
-               WHERE id = $1 AND tenant_id = $2"#,
+               WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
             "core"
         ))
         .bind(kb_id)
@@ -554,7 +554,7 @@ pub async fn process_document(
             "ai",
             r#"SELECT kb_id, title, content, doc_type
            FROM core.knowledge_documents
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
             "core"
         ))
         .bind(document_id)
@@ -679,9 +679,9 @@ pub async fn process_document(
         r#"UPDATE core.knowledge_bases
            SET document_count = (
                SELECT COUNT(*) FROM core.knowledge_documents
-               WHERE kb_id = $1 AND tenant_id = $2 AND status = 'ready'
+               WHERE kb_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status = 'ready'
            )
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
         "core"
     ))
     .bind(kb_id)
@@ -728,7 +728,7 @@ pub async fn list_qa_history(
         r#"SELECT id, tenant_id, kb_id, question, answer, sources, feedback,
                   user_id, created_at
            FROM core.knowledge_qa_history
-           WHERE tenant_id = $1
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::uuid IS NULL OR kb_id = $2)
              AND ($3::uuid IS NULL OR user_id = $3)
            ORDER BY created_at DESC

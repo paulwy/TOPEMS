@@ -133,7 +133,7 @@ impl VectorService {
             SELECT id, tenant_id, title, file_name, file_path, file_size, mime_type,
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
-            FROM ai.documents WHERE id = $1 AND tenant_id = $2
+            FROM ai.documents WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             "#,
             "plugin_ai"
         ))
@@ -154,7 +154,7 @@ impl VectorService {
                    content_hash, category, tags, description, status,
                    error_message, created_at, updated_at
             FROM ai.documents
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             ORDER BY created_at DESC
             "#,
             "plugin_ai"
@@ -262,7 +262,7 @@ impl VectorService {
             FROM ai.document_chunks c
             JOIN ai.documents d ON c.document_id = d.id
             WHERE c.embedding <=> $1::vector < 0.5
-              AND c.tenant_id = $3
+              AND c.($3::uuid IS NULL OR tenant_id = $3)
             ORDER BY c.embedding <=> $1::vector
             LIMIT $2
             "#,
@@ -358,7 +358,7 @@ impl VectorService {
             JOIN ai.documents d ON c.document_id = d.id,
                  to_tsquery('simple', $1) query
             WHERE to_tsvector('simple', c.content) @@ query
-              AND c.tenant_id = $3
+              AND c.($3::uuid IS NULL OR tenant_id = $3)
             ORDER BY similarity DESC
             LIMIT $2
             "#,
@@ -471,7 +471,7 @@ impl VectorService {
             r#"
             SELECT id, tenant_id, document_id, chunk_index, content, metadata, created_at
             FROM ai.document_chunks
-            WHERE document_id = $1 AND tenant_id = $2
+            WHERE document_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY chunk_index
             "#,
             "plugin_ai"
@@ -495,7 +495,7 @@ impl VectorService {
             r#"
             SELECT id, tenant_id, document_id, chunk_index, content, embedding
             FROM ai.document_chunks
-            WHERE id = $1 AND tenant_id = $2
+            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             "#,
             "plugin_ai"
         ))

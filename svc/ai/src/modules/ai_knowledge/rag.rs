@@ -64,7 +64,7 @@ pub async fn retrieve_relevant_chunks(
             (1 - (c.embedding <=> $1::vector))::float8 AS score
            FROM core.knowledge_chunks c
            JOIN core.knowledge_documents d ON d.id = c.document_id
-           WHERE c.tenant_id = $2
+           WHERE c.($2::uuid IS NULL OR tenant_id = $2)
              AND c.kb_id = $3
              AND c.embedding IS NOT NULL
              AND d.status = 'ready'

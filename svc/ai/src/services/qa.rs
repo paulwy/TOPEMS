@@ -281,7 +281,7 @@ impl QAService {
             r#"
             SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
-            WHERE deleted_at IS NULL AND tenant_id = $3
+            WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3)
             ORDER BY created_at DESC
             OFFSET $1 LIMIT $2
             "#,
@@ -321,7 +321,7 @@ impl QAService {
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
-            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND tenant_id = $1
+            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
             "#,
             "plugin_ai"
         ))
@@ -346,7 +346,7 @@ impl QAService {
             r#"
             SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
-            WHERE deleted_at IS NULL AND tenant_id = $4
+            WHERE deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4)
               AND (question ILIKE $1 OR answer ILIKE $1)
             ORDER BY created_at DESC
             OFFSET $2 LIMIT $3
@@ -393,7 +393,7 @@ impl QAService {
             "ai",
             r#"
             SELECT COUNT(*) FROM ai.qa_history 
-            WHERE deleted_at IS NULL AND tenant_id = $2
+            WHERE deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
               AND (question ILIKE $1 OR answer ILIKE $1)
             "#,
             "plugin_ai"
@@ -974,7 +974,7 @@ impl QAService {
                         d.title AS document_title
                     FROM ai.document_chunks c
                     JOIN ai.documents d ON c.document_id = d.id
-                    WHERE c.embedding IS NOT NULL AND d.tenant_id = $3
+                    WHERE c.embedding IS NOT NULL AND d.($3::uuid IS NULL OR tenant_id = $3)
                     ORDER BY c.embedding <=> $1::vector
                     LIMIT $2
                     "#,

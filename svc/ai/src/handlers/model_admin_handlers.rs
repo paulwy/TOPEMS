@@ -314,14 +314,19 @@ pub async fn get_model_config(
     Path(model_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ModelConfig>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>)>(
         "SELECT id, temperature::float8, max_tokens, top_p::float8, frequency_penalty::float8,
                 presence_penalty::float8, system_prompt
-         FROM ai.ai_models WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)",
+         FROM ai.ai_models WHERE id = $1 AND (tenant_id IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))",
     )
     .bind(model_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&state.pool)
     .await
     {
