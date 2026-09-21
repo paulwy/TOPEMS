@@ -132,12 +132,12 @@ fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: DateTime<Utc>) -> String {
-    dt.to_rfc3339()
+fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
+    naive_to_utc(dt).to_rfc3339()
 }
 
-fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d.to_rfc3339())
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    dt.map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -378,7 +378,7 @@ pub async fn list_work_reports(
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
             approved_at: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
+                r.try_get::<Option<NaiveDateTime>, _>("approved_at")
                     .ok()
                     .flatten(),
             ),
@@ -387,14 +387,14 @@ pub async fn list_work_reports(
                 .ok()
                 .flatten(),
             created_at: datetime_to_string(
-                r.try_get::<DateTime<Utc>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
-                    .unwrap_or_else(Utc::now),
+                    .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<DateTime<Utc>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
-                    .unwrap_or_else(Utc::now),
+                    .flatten(),
             ),
         })
         .collect();
@@ -468,8 +468,8 @@ pub async fn get_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -666,8 +666,8 @@ pub async fn create_work_report(
                     order_no: r.order_no,
                     work_station_id: r.work_station_id.map(|u| u.to_string()),
                     work_station_name: r.work_station_name,
-                    reporter_name: r.reporter_name,
-                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                    reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
+                    report_date: r.report_date.to_string(),
                     shift: r.shift,
                     output_quantity: big_decimal_to_f64(r.output_quantity),
                     defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -812,8 +812,8 @@ pub async fn update_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -952,8 +952,8 @@ pub async fn approve_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -1047,8 +1047,8 @@ pub async fn reject_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),

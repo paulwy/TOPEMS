@@ -33,7 +33,7 @@ pub async fn get_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -76,7 +76,7 @@ pub async fn update_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<UpdateSettingsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
