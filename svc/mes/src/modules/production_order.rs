@@ -467,11 +467,11 @@ pub async fn create_production_order(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_number, product_name, product_code,
+            order_number, order_no, product_name, product_code,
             quantity, completed_quantity, status,
             planned_start_date, planned_end_date, workshop_id, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
+        ) VALUES ($1, $1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -628,11 +628,11 @@ pub async fn create_from_erp(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_number, product_name, product_code, quantity,
+            order_number, order_no, product_name, product_code, quantity,
             status, source_order_id, source_order_number,
             planned_start_date, planned_end_date, workshop_id, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
+        ) VALUES ($1, $1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
