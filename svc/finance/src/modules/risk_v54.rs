@@ -516,13 +516,13 @@ pub struct EvaluateRiskRequest {
 impl RealTimeRiskMonitor {
     pub async fn evaluate_risk(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         req: EvaluateRiskRequest,
     ) -> Result<RiskDashboard, sqlx::Error> {
         let now = Utc::now();
 
         let mut query = String::from(
-            "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance.finance_v54_risk_indicators WHERE tenant_id = $1",
+            "SELECT id, category, level, current_value, threshold, unit, updated_at FROM finance.finance_v54_risk_indicators WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         let mut conditions = vec!["$1".to_string()];
 
@@ -564,7 +564,9 @@ impl RealTimeRiskMonitor {
             }
 
             if indicator.current_value > indicator.threshold {
-                Self::auto_escalate(pool, tenant_id, indicator, &level, &now).await?;
+                if let Some(tid) = tenant_id {
+                    Self::auto_escalate(pool, tid, indicator, &level, &now).await?;
+                }
             }
         }
 
@@ -575,7 +577,7 @@ impl RealTimeRiskMonitor {
         };
 
         let open_alerts: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_risk_alerts WHERE tenant_id = $1 AND acknowledged = false AND resolved = false"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v54_risk_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND acknowledged = false AND resolved = false"),
         )
         .bind(tenant_id)
         .fetch_one(pool)
@@ -626,7 +628,7 @@ impl RealTimeRiskMonitor {
 
     pub async fn get_dashboard(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<RiskDashboard, sqlx::Error> {
         Self::evaluate_risk(
             pool,
@@ -705,14 +707,14 @@ impl RealTimeRiskMonitor {
 
     pub async fn get_alerts_by_category(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         category: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
         sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
             FROM finance.finance_v54_risk_alerts
-            WHERE tenant_id = $1 AND entity = $2
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity = $2
             ORDER BY created_at DESC
             LIMIT 100"#
         ))
@@ -724,14 +726,14 @@ impl RealTimeRiskMonitor {
 
     pub async fn get_alerts_by_entity(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         entity: String,
     ) -> Result<Vec<RiskAlert>, sqlx::Error> {
         sqlx::query_as(only_own_schema_query!(
             "finance",
             r#"SELECT id, indicator_id, level, message, entity, created_at, acknowledged, resolved
             FROM finance.finance_v54_risk_alerts
-            WHERE tenant_id = $1 AND entity = $2
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity = $2
             ORDER BY created_at DESC
             LIMIT 100"#
         ))
@@ -758,7 +760,7 @@ impl AntiFraudEngine {
         req: ScoreTransactionRequest,
     ) -> Result<FraudScore, sqlx::Error> {
         let tx = &req.transaction;
-        let rules = Self::get_fraud_rules(pool, tenant_id).await?;
+        let rules = Self::get_fraud_rules(pool, Some(tenant_id)).await?;
 
         let mut triggered_rules: Vec<String> = Vec::new();
         let mut score = 0.0f64;
@@ -923,10 +925,10 @@ impl AntiFraudEngine {
 
     pub async fn get_fraud_rules(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<FraudRule>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE tenant_id = $1 ORDER BY rule_type, name"),
+            only_own_schema_query!("finance", "SELECT id, name, rule_type, condition, threshold, enabled FROM finance.finance_v54_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY rule_type, name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1071,12 +1073,12 @@ impl AutoComplianceReviewer {
 
     pub async fn get_review_results(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Result<Vec<ReviewResult>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance.finance_v54_review_results WHERE tenant_id = $1",
+            "SELECT id, entity_type, entity_id, rule_id, passed, details, reviewed_at, reviewer FROM finance.finance_v54_review_results WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if entity_type.is_some() {
@@ -1180,12 +1182,12 @@ impl AutoComplianceReviewer {
 
     pub async fn get_compliance_status(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         entity_type: String,
         entity_id: String,
     ) -> Result<Vec<ReviewWorkflow>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE tenant_id = $1 AND entity_type = $2 AND entity_id = $3 ORDER BY created_at DESC"),
+            only_own_schema_query!("finance", "SELECT id, entity_type, entity_id, status, assigned_to, steps, created_at, updated_at FROM finance.finance_v54_review_workflows WHERE ($1::uuid IS NULL OR tenant_id = $1) AND entity_type = $2 AND entity_id = $3 ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
         .bind(&entity_type)
@@ -1201,7 +1203,7 @@ impl AutoComplianceReviewer {
         entity_id: Option<String>,
     ) -> Result<ComplianceReport, sqlx::Error> {
         let results =
-            Self::get_review_results(pool, tenant_id, entity_type.clone(), entity_id.clone())
+            Self::get_review_results(pool, Some(tenant_id), entity_type.clone(), entity_id.clone())
                 .await?;
 
         let total_rules = results.len() as i64;
@@ -1284,7 +1286,7 @@ async fn get_risk_dashboard_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskDashboard>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
 
     match RealTimeRiskMonitor::get_dashboard(&pool, tenant_id).await {
         Ok(dashboard) => Json(ApiResponse::success(dashboard, "查询成功")),
@@ -1314,7 +1316,7 @@ async fn get_risk_alerts_handler(
     Query(params): Query<AlertQueryParams>,
 ) -> Json<ApiResponse<Vec<RiskAlert>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
 
     if let Some(ref cat) = params.category {
         match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, cat.clone()).await {
@@ -1432,7 +1434,7 @@ async fn get_fraud_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
 
     match AntiFraudEngine::get_fraud_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
@@ -1570,7 +1572,7 @@ async fn get_review_results_handler(
     Query(params): Query<ReviewResultQueryParams>,
 ) -> Json<ApiResponse<Vec<ReviewResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
 
     match AutoComplianceReviewer::get_review_results(
         &pool,
@@ -1601,7 +1603,7 @@ async fn get_compliance_status_handler(
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<ReviewWorkflow>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
 
     match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id)
         .await

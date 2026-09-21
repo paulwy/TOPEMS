@@ -363,7 +363,7 @@ impl FinanceService {
         voucher_id: Uuid,
     ) -> Result<VoucherResponse, TopemsError> {
         let voucher: Voucher =
-            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
+            sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"))
                 .bind(tenant_id)
                 .bind(voucher_id)
                 .fetch_one(&self.db_pool)
@@ -552,7 +552,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: ExportVoucherRequest,
     ) -> Result<ExportVoucherResponse, TopemsError> {
-        let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE v.tenant_id = $1".to_string();
+        let mut query = "SELECT v.*, vl.* FROM finance.core_finance_vouchers v JOIN finance.core_finance_voucher_lines vl ON v.id = vl.voucher_id WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR v.tenant_id = $1)".to_string();
 
         if let Some(status) = req.status {
             query.push_str(&format!(" AND v.status = '{}'", status));

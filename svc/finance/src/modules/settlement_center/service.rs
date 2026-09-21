@@ -91,11 +91,11 @@ pub async fn get_reconciliation_detail(
            FROM finance.reconciliation_settlement_links l
            JOIN finance.settlement_snapshots s ON s.id = l.settlement_id
            WHERE l.reconciliation_id = $1
-             AND l.tenant_id = $2
+             AND ($2::uuid IS NULL OR l.tenant_id = $2)
              AND l.status != 'cancelled'"#
     ))
     .bind(recon_id)
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .fetch_all(pool)
     .await?;
 
@@ -438,11 +438,11 @@ pub async fn get_settlement_detail(
            FROM finance.reconciliation_settlement_links l
            JOIN finance.reconciliation_snapshots r ON r.id = l.reconciliation_id
            WHERE l.settlement_id = $1
-             AND l.tenant_id = $2
+             AND ($2::uuid IS NULL OR l.tenant_id = $2)
              AND l.status != 'cancelled'"#),
     )
     .bind(settlement_id)
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .fetch_all(pool)
     .await?;
 
@@ -764,7 +764,7 @@ pub async fn list_links(
         r#"SELECT id, tenant_id, reconciliation_id, settlement_id, link_type,
                   amount, status, remark, created_by, created_at, updated_at
            FROM finance.reconciliation_settlement_links
-           WHERE tenant_id = $1
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::uuid IS NULL OR reconciliation_id = $2)
              AND ($3::uuid IS NULL OR settlement_id = $3)
              AND ($4::text IS NULL OR link_type = $4)
@@ -772,7 +772,7 @@ pub async fn list_links(
            ORDER BY created_at DESC
            LIMIT $6 OFFSET $7"#
     ))
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .bind(query.reconciliation_id)
     .bind(query.settlement_id)
     .bind(&query.link_type)
@@ -898,7 +898,7 @@ pub async fn list_differences(
                   status, approved_by, approved_at, remark, created_by,
                   created_at, updated_at
            FROM finance.difference_adjustments
-           WHERE tenant_id = $1
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)
              AND ($2::text IS NULL OR source_type = $2)
              AND ($3::uuid IS NULL OR source_id = $3)
              AND ($4::text IS NULL OR difference_type = $4)
@@ -906,7 +906,7 @@ pub async fn list_differences(
            ORDER BY created_at DESC
            LIMIT $6 OFFSET $7"#
     ))
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .bind(&query.source_type)
     .bind(query.source_id)
     .bind(&query.difference_type)
@@ -1022,9 +1022,9 @@ async fn get_difference_statistics(
              COALESCE(SUM(difference_amount), 0)::numeric AS total_difference_amount,
              COALESCE(SUM(adjustment_amount) FILTER (WHERE status = 'approved'), 0)::numeric AS total_adjustment_amount
            FROM finance.difference_adjustments
-           WHERE tenant_id = $1"#),
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#),
     )
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .fetch_one(pool)
     .await?;
 
@@ -1050,9 +1050,9 @@ async fn get_link_statistics(
              COUNT(*) FILTER (WHERE status = 'cancelled')::bigint AS cancelled_count,
              COALESCE(SUM(amount) FILTER (WHERE status = 'linked'), 0)::numeric AS total_amount
            FROM finance.reconciliation_settlement_links
-           WHERE tenant_id = $1"#
+           WHERE ($1::uuid IS NULL OR tenant_id = $1)"#
     ))
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .fetch_one(pool)
     .await?;
 
@@ -1119,11 +1119,11 @@ pub async fn get_dashboard_summary(
                   status, approved_by, approved_at, remark, created_by,
                   created_at, updated_at
            FROM finance.difference_adjustments
-           WHERE tenant_id = $1 AND status = 'pending'
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending'
            ORDER BY created_at DESC
            LIMIT 5"#
     ))
-    .bind(tenant_id)
+    .bind(tenant_id_opt(tenant_id))
     .fetch_all(pool)
     .await?;
 

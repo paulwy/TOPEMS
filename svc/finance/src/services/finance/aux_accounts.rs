@@ -53,7 +53,7 @@ impl FinanceService {
         let accounts = if let Some(t) = aux_type {
             let type_str = t.to_string();
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE tenant_id = $1 AND aux_type::text = $2 ORDER BY code"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND aux_type::text = $2 ORDER BY code"),
             )
             .bind(tenant_id)
             .bind(type_str)
@@ -61,7 +61,7 @@ impl FinanceService {
             .await?
         } else {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE tenant_id = $1 ORDER BY aux_type, code"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) ORDER BY aux_type, code"),
             )
             .bind(tenant_id)
             .fetch_all(&self.db_pool)
@@ -77,7 +77,7 @@ impl FinanceService {
         aux_id: Uuid,
     ) -> Result<AuxiliaryAccount, TopemsError> {
         let account = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(aux_id)
@@ -118,7 +118,7 @@ impl FinanceService {
                 l.balance
             FROM finance.core_finance_ledger l
             JOIN finance.core_finance_aux_accounts la ON la.id = l.aux_id
-            WHERE l.tenant_id = $1
+            WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR l.tenant_id = $1)
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR l.aux_id = $3)
               AND ($4::uuid IS NULL OR l.account_id = $4)
@@ -167,8 +167,8 @@ impl FinanceService {
             CROSS JOIN finance.core_finance_accounts a
             LEFT JOIN finance.core_finance_ledger l ON l.account_id = a.id AND l.aux_id = la.id
                 AND ($4::text IS NULL OR l.period = $4)
-            WHERE la.tenant_id = $1
-              AND a.tenant_id = $1
+            WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR la.tenant_id = $1)
+              AND ($1 = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1)
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR la.id = $3)
               AND ($5::uuid IS NULL OR a.id = $5)

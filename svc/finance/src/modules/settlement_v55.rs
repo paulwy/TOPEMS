@@ -913,10 +913,10 @@ impl AutoReconciler {
 
     pub async fn list_rules(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReconciliationRule>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules WHERE tenant_id = $1 ORDER BY name"),
+            only_own_schema_query!("finance", "SELECT id, name, match_type, tolerance, enabled FROM finance.finance_v55_reconciliation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -931,7 +931,7 @@ impl AutoReconciler {
         let now = Utc::now();
         req.prevalidate_reconciliation(now, Some(180), true)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        let rules = Self::list_rules(pool, tenant_id).await?;
+        let rules = Self::list_rules(pool, Some(tenant_id)).await?;
         let mut results = Vec::new();
 
         for bank_tx in &req.bank_transactions {
@@ -978,7 +978,7 @@ impl AutoReconciler {
         let now = Utc::now();
         req.prevalidate(now, Some(180), true)
             .map_err(|e| sqlx::Error::Decode(e.into()))?;
-        let rules = Self::list_rules(pool, tenant_id).await?;
+        let rules = Self::list_rules(pool, Some(tenant_id)).await?;
         let result = Self::try_match(&req.bank_transaction, &req.system_record, &rules);
 
         let id = Uuid::new_v4();
@@ -1189,11 +1189,11 @@ impl AutoReconciler {
 
     pub async fn get_results(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<ReconciliationResult>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results WHERE tenant_id = $1",
+            "SELECT id, bank_transaction_id, system_record_id, match_status, confidence, difference_amount, notes FROM finance.finance_v55_reconciliation_results WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if status.is_some() {
             query.push_str(" AND match_status = $2");
@@ -1518,11 +1518,11 @@ impl InvoiceRecognizer {
 
     pub async fn get_invoice(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         invoice_id: Uuid,
     ) -> Result<InvoiceWithItems, sqlx::Error> {
         let invoice: Invoice = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1530,7 +1530,7 @@ impl InvoiceRecognizer {
         .await?;
 
         let items: Vec<InvoiceItem> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 AND tenant_id = $2 ORDER BY id"),
+            only_own_schema_query!("finance", "SELECT id, invoice_id, description, quantity, unit_price, amount, tax_rate FROM finance.finance_v55_invoice_items WHERE invoice_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY id"),
         )
         .bind(invoice_id)
         .bind(tenant_id)
@@ -1542,11 +1542,11 @@ impl InvoiceRecognizer {
 
     pub async fn list_invoices(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<Invoice>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE tenant_id = $1",
+            "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -1782,11 +1782,11 @@ impl ElectronicPaymentProcessor {
 
     pub async fn get_payment_status(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         payment_id: Uuid,
     ) -> Result<PaymentResult, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND tenant_id = $2 ORDER BY processed_at DESC LIMIT 1"),
+            only_own_schema_query!("finance", "SELECT id, request_id, status, transaction_ref, fee, processed_at FROM finance.finance_v55_payment_results WHERE request_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY processed_at DESC LIMIT 1"),
         )
         .bind(payment_id)
         .bind(tenant_id)
@@ -1836,11 +1836,11 @@ impl ElectronicPaymentProcessor {
 
     pub async fn list_payments(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<PaymentRequest>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests WHERE tenant_id = $1",
+            "SELECT id, amount, currency, from_account, to_account, method, reference, scheduled_at FROM finance.finance_v55_payment_requests WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if status.is_some() {
             query.push_str(
@@ -2065,7 +2065,7 @@ async fn get_recon_results_handler(
     Query(params): Query<ReconResultQueryParams>,
 ) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutoReconciler::get_results(&pool, tenant_id, params.status).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2114,7 +2114,7 @@ async fn list_recon_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReconciliationRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutoReconciler::list_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2237,7 +2237,7 @@ async fn get_invoice_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InvoiceWithItems>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match InvoiceRecognizer::get_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2260,7 +2260,7 @@ async fn list_invoices_handler(
     Query(params): Query<InvoiceListQueryParams>,
 ) -> Json<ApiResponse<Vec<Invoice>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match InvoiceRecognizer::list_invoices(&pool, tenant_id, params.status).await {
         Ok(invoices) => Json(ApiResponse::success(invoices, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2433,7 +2433,7 @@ async fn get_payment_status_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match ElectronicPaymentProcessor::get_payment_status(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2489,7 +2489,7 @@ pub async fn list_payments_handler(
     Query(params): Query<PaymentListQueryParams>,
 ) -> Json<ApiResponse<Vec<PaymentRequest>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match ElectronicPaymentProcessor::list_payments(&pool, tenant_id, params.status).await {
         Ok(payments) => Json(ApiResponse::success(payments, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

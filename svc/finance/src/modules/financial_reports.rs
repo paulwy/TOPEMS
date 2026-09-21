@@ -43,10 +43,10 @@ fn period_string((y, m): (i32, i32)) -> String {
     format!("{:04}-{:02}", y, m)
 }
 
-async fn period_net_total(pool: &sqlx::PgPool, tenant_id: Uuid, period: &str) -> (f64, f64, f64) {
+async fn period_net_total(pool: &sqlx::PgPool, tenant_id: Option<Uuid>, period: &str) -> (f64, f64, f64) {
     let result: Result<(Option<Decimal>, Option<Decimal>, Option<Decimal>), _> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(debit), 0) as td, COALESCE(SUM(credit), 0) as tc, COALESCE(SUM(debit - credit), 0) as net
-         FROM finance.core_finance_ledger WHERE tenant_id = $1 AND period = $2"),
+         FROM finance.core_finance_ledger WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period = $2"),
     )
     .bind(tenant_id)
     .bind(period)
@@ -89,7 +89,7 @@ pub async fn get_report_item_details(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemDetailsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
         _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
@@ -98,7 +98,7 @@ pub async fn get_report_item_details(
         "finance",
         "SELECT account_code, account_name, period, debit, credit, balance
          FROM finance.core_finance_ledger
-         WHERE tenant_id = $1 AND account_code = $2 AND ($3::text IS NULL OR period = $3)
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND account_code = $2 AND ($3::text IS NULL OR period = $3)
          ORDER BY voucher_date, id"
     ))
     .bind(tenant_id)
@@ -156,7 +156,7 @@ pub async fn get_report_item_vouchers(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ItemVouchersQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let account_code = match params.account_code.as_deref() {
         Some(c) if !c.is_empty() => c,
         _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
@@ -170,7 +170,7 @@ pub async fn get_report_item_vouchers(
         "SELECT l.id, l.account_code, l.account_name, l.voucher_id, l.voucher_no, l.voucher_date,
                 l.period, l.description, l.debit, l.credit, l.balance
          FROM finance.core_finance_ledger l
-         WHERE l.tenant_id = $1 AND l.account_code = $2 AND ($3::text IS NULL OR l.period = $3)
+         WHERE ($1::uuid IS NULL OR l.tenant_id = $1) AND l.account_code = $2 AND ($3::text IS NULL OR l.period = $3)
          ORDER BY l.voucher_date DESC, l.id DESC
          LIMIT $4 OFFSET $5"
     ))
@@ -185,7 +185,7 @@ pub async fn get_report_item_vouchers(
     let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
         "finance",
         "SELECT COUNT(*) FROM finance.core_finance_ledger
-         WHERE tenant_id = $1 AND account_code = $2 AND ($3::text IS NULL OR period = $3)"
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND account_code = $2 AND ($3::text IS NULL OR period = $3)"
     ))
     .bind(tenant_id)
     .bind(account_code)
@@ -261,7 +261,7 @@ pub async fn get_report_comparison(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComparisonQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let report_type = params.report_type.clone().unwrap_or_default();
     let period_from = match params.period_from.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -328,7 +328,7 @@ pub async fn get_report_trend(
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let start = match params.period_from.as_deref().and_then(parse_period) {
         Some(p) => p,
         None => {
@@ -400,7 +400,7 @@ pub async fn get_report_year_over_year(
     Extension(claims): Extension<Claims>,
     Query(params): Query<YearOverYearQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -467,7 +467,7 @@ pub async fn get_report_period_over_period(
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodOverPeriodQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let report_type = params.report_type.clone().unwrap_or_default();
     let current_period = match params.current_period.as_deref() {
         Some(p) if !p.is_empty() => p,
@@ -1417,7 +1417,7 @@ async fn upsert_report(
 
 async fn fetch_report(
     pool: &sqlx::PgPool,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     report_type: &str,
     period: &str,
     currency_code: &str,
@@ -1425,7 +1425,7 @@ async fn fetch_report(
     let row = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
-           WHERE tenant_id = $1 AND report_type = $2 AND period = $3 AND currency_code = $4"#),
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 AND period = $3 AND currency_code = $4"#),
     )
     .bind(tenant_id)
     .bind(report_type)
@@ -1452,7 +1452,7 @@ async fn fetch_report(
 
 async fn fetch_history(
     pool: &sqlx::PgPool,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     report_type: &str,
     start_period: &str,
     end_period: &str,
@@ -1464,7 +1464,7 @@ async fn fetch_history(
     let rows = sqlx::query(
         only_own_schema_query!("finance", r#"SELECT id, report_type, org_id, period, currency_code, status, approval_status, data, generated_at, approved_at
            FROM financial_reports
-           WHERE tenant_id = $1 AND report_type = $2 AND period >= $3 AND period <= $4
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 AND period >= $3 AND period <= $4
              AND ($5::text IS NULL OR currency_code = $5)
            ORDER BY period DESC
            LIMIT $6 OFFSET $7"#),
@@ -1482,7 +1482,7 @@ async fn fetch_history(
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         r#"SELECT COUNT(*) FROM financial_reports
-           WHERE tenant_id = $1 AND report_type = $2 AND period >= $3 AND period <= $4
+           WHERE ($1::uuid IS NULL OR tenant_id = $1) AND report_type = $2 AND period >= $3 AND period <= $4
              AND ($5::text IS NULL OR currency_code = $5)"#
     ))
     .bind(tenant_id)
@@ -1601,10 +1601,11 @@ pub async fn get_balance_sheet(
     Query(params): Query<GetReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id_opt: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
     match fetch_report(
         &state.pool,
-        tenant_id,
+        tenant_id_opt,
         "balance_sheet",
         &params.period,
         currency,
@@ -1648,7 +1649,7 @@ pub async fn get_balance_sheet_history(
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     match fetch_history(
@@ -1727,10 +1728,11 @@ pub async fn get_income_statement(
     Query(params): Query<GetReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id_opt: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
     match fetch_report(
         &state.pool,
-        tenant_id,
+        tenant_id_opt,
         "income_statement",
         &params.period,
         currency,
@@ -1777,7 +1779,7 @@ pub async fn get_income_statement_history(
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     match fetch_history(
@@ -1860,10 +1862,11 @@ pub async fn get_cash_flow(
     Query(params): Query<GetReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id_opt: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let currency = params.currency_code.as_deref().unwrap_or("CNY");
     match fetch_report(
         &state.pool,
-        tenant_id,
+        tenant_id_opt,
         "cash_flow",
         &params.period,
         currency,
@@ -1909,7 +1912,7 @@ pub async fn get_cash_flow_history(
     Extension(claims): Extension<Claims>,
     Query(params): Query<HistoryReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     match fetch_history(

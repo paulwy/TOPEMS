@@ -14,7 +14,7 @@ impl FinanceService {
         tenant_id: Uuid,
         params: LedgerQueryParams,
     ) -> Result<Vec<LedgerEntry>, TopemsError> {
-        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM finance.core_finance_ledger WHERE tenant_id = $1".to_string();
+        let mut query = "SELECT id, tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, created_at FROM finance.core_finance_ledger WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)".to_string();
 
         let account_id_provided = params.account_id.is_some();
         let account_code_provided = params.account_code.is_some();
@@ -69,7 +69,7 @@ impl FinanceService {
                 COALESCE(SUM(CASE WHEN l.credit > l.debit THEN l.credit - l.debit ELSE 0 END), 0) as credit_balance
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $2
-             WHERE a.tenant_id = $1
+             WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1)
              GROUP BY a.id, a.code, a.name, a.account_type
              ORDER BY a.code"),
         )
@@ -132,7 +132,7 @@ impl FinanceService {
                 {} as amount
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $3
-             WHERE a.tenant_id = $1 AND a.account_type::text = $2
+             WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1) AND a.account_type::text = $2
              GROUP BY a.code, a.name
              ORDER BY a.code",
             amount_expr
@@ -206,7 +206,7 @@ impl FinanceService {
                 COALESCE(SUM(l.debit - l.credit), 0) as amount
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $3
-             WHERE a.tenant_id = $1 AND a.account_type::text = $2
+             WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1) AND a.account_type::text = $2
              GROUP BY a.code, a.name
              ORDER BY a.code"
         ))
@@ -243,7 +243,7 @@ impl FinanceService {
                 COALESCE(SUM(l.credit), 0) as total_credit
             FROM finance.core_finance_accounts a
             LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period = $2
-            WHERE a.tenant_id = $1
+            WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR a.tenant_id = $1)
               AND a.account_type::text = 'asset'
               AND a.code LIKE '1___'
             GROUP BY a.code, a.name

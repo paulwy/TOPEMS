@@ -231,7 +231,7 @@ fn days_overdue(due: Option<chrono::NaiveDate>, now: chrono::NaiveDate) -> i64 {
 
 async fn fetch_invoice(
     pool: &sqlx::PgPool,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<SalesInvoiceOut>, sqlx::Error> {
     let row = sqlx::query(
@@ -240,7 +240,7 @@ async fn fetch_invoice(
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 amount::float8, tax_amount::float8, total_amount::float8, paid_amount::float8,
                 status, invoice_type, cancel_reason, red_flush_of
-         FROM finance.sales_invoices WHERE id = $1 AND tenant_id = $2",
+         FROM finance.sales_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_id)
@@ -270,12 +270,12 @@ pub async fn list_sales_invoices(
     Query(params): Query<InvoiceListQuery>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Paginated<SalesInvoiceOut>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
 
-    let where_sql = "tenant_id = $1
+    let where_sql = "($1::uuid IS NULL OR tenant_id = $1)
         AND ($2::uuid IS NULL OR customer_id = $2)
         AND ($3::text IS NULL OR status = $3)
         AND ($4::text IS NULL OR invoice_type = $4)
@@ -373,7 +373,7 @@ pub async fn get_sales_invoice(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SalesInvoiceOut>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match fetch_invoice(&state.pool, tenant_id, id).await {
         Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(404, "发票不存在")),
@@ -418,7 +418,7 @@ pub async fn create_sales_invoice(
     {
         Ok(row) => {
             let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, tenant_id, id).await {
+            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Created")),
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "创建后读取失败")),
             }
@@ -459,7 +459,7 @@ pub async fn update_sales_invoice(
     {
         Ok(Some(row)) => {
             let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, tenant_id, id).await {
+            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "更新后读取失败")),
             }
@@ -515,7 +515,7 @@ pub async fn issue_sales_invoice(
     {
         Ok(Some(row)) => {
             let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, tenant_id, id).await {
+            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "开具后读取失败")),
             }
@@ -547,7 +547,7 @@ pub async fn cancel_sales_invoice(
     {
         Ok(Some(row)) => {
             let id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, tenant_id, id).await {
+            match fetch_invoice(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "取消后读取失败")),
             }
@@ -567,7 +567,7 @@ pub async fn red_flush_sales_invoice(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let now = today();
 
-    let original = match fetch_invoice(&state.pool, tenant_id, id).await {
+    let original = match fetch_invoice(&state.pool, Some(tenant_id), id).await {
         Ok(Some(inv)) => inv,
         _ => return Json(ApiResponse::<SalesInvoiceOut>::error(404, "发票不存在")),
     };
@@ -619,7 +619,7 @@ pub async fn red_flush_sales_invoice(
     {
         Ok(row) => {
             let red_id: Uuid = row.get("id");
-            match fetch_invoice(&state.pool, tenant_id, red_id).await {
+            match fetch_invoice(&state.pool, Some(tenant_id), red_id).await {
                 Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "红冲后读取失败")),
             }
@@ -632,7 +632,7 @@ pub async fn red_flush_sales_invoice(
 
 async fn fetch_collection(
     pool: &sqlx::PgPool,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     id: Uuid,
 ) -> Result<Option<CollectionOut>, sqlx::Error> {
     let row = sqlx::query(
@@ -645,7 +645,7 @@ async fn fetch_collection(
                 amount::float8, payment_method, NULL AS bank_account, remark, status, confirmed_by,
                 CASE WHEN confirmed_at IS NULL THEN NULL ELSE to_char(confirmed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS') END AS confirmed_at
          FROM finance.erp_collection_records erc
-         WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
@@ -674,12 +674,12 @@ pub async fn list_collections(
     Query(params): Query<CollectionListQuery>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Paginated<CollectionOut>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
 
-    let where_sql = "tenant_id = $1 AND deleted_at IS NULL
+    let where_sql = "($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
         AND ($2::uuid IS NULL OR customer_id = $2)
         AND ($3::date IS NULL OR collection_date >= $3::date)
         AND ($4::date IS NULL OR collection_date <= $4::date)
@@ -776,7 +776,7 @@ pub async fn get_collection(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<CollectionOut>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match fetch_collection(&state.pool, tenant_id, id).await {
         Ok(Some(c)) => Json(ApiResponse::success(c, "Success")),
         Ok(None) => Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
@@ -839,7 +839,7 @@ pub async fn create_collection(
     {
         Ok(row) => {
             let id: Uuid = row.get("id");
-            match fetch_collection(&state.pool, tenant_id, id).await {
+            match fetch_collection(&state.pool, Some(tenant_id), id).await {
                 Ok(Some(c)) => Json(ApiResponse::success(c, "Created")),
                 _ => Json(ApiResponse::<CollectionOut>::error(500, "创建后读取失败")),
             }
@@ -915,7 +915,7 @@ pub async fn confirm_collection(
         return Json(ApiResponse::<CollectionOut>::error(500, &e.to_string()));
     }
 
-    match fetch_collection(pool, tenant_id, id).await {
+    match fetch_collection(pool, Some(tenant_id), id).await {
         Ok(Some(c)) => Json(ApiResponse::success(c, "Success")),
         _ => Json(ApiResponse::<CollectionOut>::error(500, "确认后读取失败")),
     }
@@ -967,12 +967,12 @@ pub async fn get_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AgingBucket>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let now = today();
     let rows = match sqlx::query(
         "SELECT id, due_date, total_amount::float8, paid_amount::float8, status
          FROM finance.sales_invoices
-         WHERE tenant_id = $1 AND status IN ('issued', 'overdue')",
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -1014,13 +1014,13 @@ pub async fn get_receivable_summary(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ReceivableSummary>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let now = today();
     // 口径：draft 未开票计入应收总额（前端应收概览口径），cancelled 红冲/取消票剔除；
     // 账龄/逾期报表只统计 issued/overdue 生效应收（见 get_receivable_aging / get_overdue_receivables）
     let rows = match sqlx::query(
         "SELECT total_amount::float8, paid_amount::float8, due_date, status
-         FROM finance.sales_invoices WHERE tenant_id = $1 AND status <> 'cancelled'",
+         FROM finance.sales_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status <> 'cancelled'",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -1063,14 +1063,14 @@ pub async fn get_overdue_receivables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OverdueItem>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let now = today();
     let rows = match sqlx::query(
         "SELECT id, invoice_number, customer_name,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 total_amount::float8, paid_amount::float8, due_date AS d
          FROM finance.sales_invoices
-         WHERE tenant_id = $1 AND status IN ('issued', 'overdue')",
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -1124,12 +1124,12 @@ pub async fn export_sales_invoices(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let rows = match sqlx::query(
         "SELECT invoice_number, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
                 total_amount::float8, paid_amount::float8, status
-         FROM finance.sales_invoices WHERE tenant_id = $1 ORDER BY created_at",
+         FROM finance.sales_invoices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -1159,13 +1159,13 @@ pub async fn export_collections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let rows = match sqlx::query(
         "SELECT COALESCE(collection_no, '') AS no, COALESCE(customer_name, '') AS cname,
                 CASE WHEN collection_date IS NULL THEN '' ELSE to_char(collection_date, 'YYYY-MM-DD') END AS d,
                 amount::float8, COALESCE(payment_method, '') AS pm, COALESCE(status, '') AS st
          FROM finance.erp_collection_records
-         WHERE tenant_id = $1 AND deleted_at IS NULL ORDER BY created_at",
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL ORDER BY created_at",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
@@ -1195,13 +1195,13 @@ pub async fn export_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let rows = match sqlx::query(
         "SELECT invoice_number, customer_name,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,
                 total_amount::float8, paid_amount::float8, due_date AS d
          FROM finance.sales_invoices
-         WHERE tenant_id = $1 AND status IN ('issued', 'overdue')",
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('issued', 'overdue')",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)

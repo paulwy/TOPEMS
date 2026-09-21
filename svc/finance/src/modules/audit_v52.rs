@@ -328,12 +328,12 @@ impl AutoAuditEngine {
 
     pub async fn list_rules(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         category: Option<String>,
         is_active: Option<bool>,
     ) -> Result<Vec<AuditRule>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND tenant_id = $1",
+            "SELECT id, tenant_id, name, category, condition, severity, schedule, is_active, created_by, created_at, updated_at FROM finance_audit_rules_v52 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if category.is_some() {
@@ -854,7 +854,7 @@ impl AutoAuditEngine {
 
     pub async fn get_findings(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         status: Option<String>,
         severity: Option<String>,
         entity_type: Option<String>,
@@ -864,9 +864,9 @@ impl AutoAuditEngine {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE tenant_id = $1");
+            String::from("SELECT COUNT(*) FROM finance_audit_findings_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance_audit_findings_v52 WHERE tenant_id = $1",
+            "SELECT id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by FROM finance_audit_findings_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if status.is_some() {
@@ -1327,7 +1327,7 @@ impl AnomalyDetector {
 
     pub async fn get_alerts(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         detection_type: Option<String>,
         severity: Option<String>,
         is_resolved: Option<bool>,
@@ -1337,9 +1337,9 @@ impl AnomalyDetector {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1");
+            String::from("SELECT COUNT(*) FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1",
+            "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if detection_type.is_some() {
@@ -1413,10 +1413,10 @@ impl AnomalyDetector {
 
     pub async fn get_summary(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<DetectionSummary, sqlx::Error> {
         let alerts: Vec<AnomalyAlert> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE tenant_id = $1"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, detection_type, entity_type, entity_id, metric_value, expected_range, confidence, severity, description, is_resolved, created_at FROM finance_anomaly_alerts_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1482,10 +1482,10 @@ impl AlertManager {
 
     pub async fn list_configs(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertConfig>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE tenant_id = $1 ORDER BY created_at DESC"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, channel, threshold, cooldown, recipients, is_active, created_at, updated_at FROM finance_alert_configs_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1548,7 +1548,7 @@ impl AlertManager {
 
     pub async fn get_history(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         channel: Option<String>,
         is_delivered: Option<bool>,
         is_acknowledged: Option<bool>,
@@ -1558,9 +1558,9 @@ impl AlertManager {
         let offset = (page - 1) * page_size;
 
         let mut count_query =
-            String::from("SELECT COUNT(*) FROM finance_alert_history_v52 WHERE tenant_id = $1");
+            String::from("SELECT COUNT(*) FROM finance_alert_history_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)");
         let mut data_query = String::from(
-            "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance_alert_history_v52 WHERE tenant_id = $1",
+            "SELECT id, tenant_id, channel, alert_type, entity_id, severity, message, is_delivered, is_acknowledged, acknowledged_by, created_at FROM finance_alert_history_v52 WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if channel.is_some() {
@@ -1697,7 +1697,7 @@ async fn list_audit_rules_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditRuleQueryParams>,
 ) -> Json<ApiResponse<Vec<AuditRule>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active)
         .await
     {
@@ -1766,7 +1766,7 @@ async fn get_audit_findings_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditFindingQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AutoAuditEngine::get_findings(
@@ -1882,7 +1882,7 @@ async fn get_anomaly_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyAlertQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AnomalyDetector::get_alerts(
@@ -1921,7 +1921,7 @@ async fn get_detection_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DetectionSummary>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AnomalyDetector::get_summary(&state.pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1980,7 +1980,7 @@ async fn get_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertHistoryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AlertManager::get_history(
@@ -2041,7 +2041,7 @@ async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertConfig>>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AlertManager::list_configs(&state.pool, tenant_id).await {
         Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

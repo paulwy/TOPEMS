@@ -612,11 +612,11 @@ impl AntiFraudEngine {
 
     pub async fn get_fraud_decision(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         decision_id: Uuid,
     ) -> Result<FraudDecision, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance.finance_v59_fraud_decisions WHERE id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, transaction_id, risk_level, action, reason, signals, decided_at FROM finance.finance_v59_fraud_decisions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(decision_id)
         .bind(tenant_id)
@@ -626,11 +626,11 @@ impl AntiFraudEngine {
 
     pub async fn get_signals(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         signal_type: Option<String>,
     ) -> Result<Vec<FraudSignal>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance.finance_v59_fraud_signals WHERE tenant_id = $1",
+            "SELECT id, signal_type, score, confidence, metadata, detected_at FROM finance.finance_v59_fraud_signals WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if signal_type.is_some() {
@@ -698,10 +698,10 @@ impl AntiFraudEngine {
 
     pub async fn list_blocked_devices(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<DeviceProfile>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE tenant_id = $1 AND trust_score < 0.5 ORDER BY trust_score ASC"),
+            only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE ($1::uuid IS NULL OR tenant_id = $1) AND trust_score < 0.5 ORDER BY trust_score ASC"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -734,9 +734,9 @@ impl AntiFraudEngine {
         .await
     }
 
-    pub async fn get_rules(pool: &PgPool, tenant_id: Uuid) -> Result<Vec<FraudRule>, sqlx::Error> {
+    pub async fn get_rules(pool: &PgPool, tenant_id: Option<Uuid>) -> Result<Vec<FraudRule>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules WHERE tenant_id = $1 ORDER BY signal_type, name"),
+            only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY signal_type, name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -869,10 +869,10 @@ impl CreditScoringEngine {
 
     pub async fn get_scoring_models(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<ScoringModel>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100"),
+            only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -987,14 +987,14 @@ impl CreditScoringEngine {
 
     pub async fn get_model_comparison(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         model_ids: Vec<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut models = Vec::new();
 
         for mid in &model_ids {
             let model = sqlx::query_as::<_, ScoringModel>(
-                only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1 AND tenant_id = $2"),
+                only_own_schema_query!("finance", "SELECT id, name, version, features, weights, accuracy, status FROM finance.finance_v59_scoring_models WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
             )
             .bind(mid)
             .bind(tenant_id)
@@ -1170,11 +1170,11 @@ impl StressTestEngine {
 
     pub async fn get_test_result(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         result_id: Uuid,
     ) -> Result<StressResult, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(result_id)
         .bind(tenant_id)
@@ -1184,10 +1184,10 @@ impl StressTestEngine {
 
     pub async fn list_scenarios(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<StressScenario>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1251,12 +1251,12 @@ impl StressTestEngine {
 
     pub async fn get_scenario_parameters(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         scenario_id: Option<Uuid>,
     ) -> Result<Vec<ScenarioParameter>, sqlx::Error> {
         if let Some(sid) = scenario_id {
             let scenario = sqlx::query_as::<_, StressScenario>(
-                only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND tenant_id = $2"),
+                only_own_schema_query!("finance", "SELECT id, name, scenario_type, severity, assumptions, created_at FROM finance.finance_v59_stress_scenarios WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
             )
             .bind(sid)
             .bind(tenant_id)
@@ -1334,7 +1334,7 @@ impl StressTestEngine {
 
     pub async fn get_test_summary(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let scenarios = Self::list_scenarios(pool, tenant_id).await?;
 
@@ -1345,7 +1345,7 @@ impl StressTestEngine {
 
         for scenario in &scenarios {
             let results: Vec<StressResult> = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE scenario_id = $1 AND tenant_id = $2"),
+                only_own_schema_query!("finance", "SELECT id, scenario_id, entity_id, impact_value, capital_adequacy, liquidity_ratio, pass_fail, details FROM finance.finance_v59_stress_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
             )
             .bind(scenario.id)
             .bind(tenant_id)
@@ -1428,7 +1428,7 @@ async fn get_fraud_decision_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FraudDecision>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AntiFraudEngine::get_fraud_decision(&pool, tenant_id, id).await {
         Ok(decision) => Json(ApiResponse::success(decision, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1456,7 +1456,7 @@ async fn get_signals_handler(
     Query(params): Query<SignalQueryParams>,
 ) -> Json<ApiResponse<Vec<FraudSignal>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AntiFraudEngine::get_signals(&pool, tenant_id, params.signal_type).await {
         Ok(signals) => Json(ApiResponse::success(signals, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1509,9 +1509,9 @@ async fn get_device_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DeviceProfile>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let result: Result<DeviceProfile, sqlx::Error> = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1 AND tenant_id = $2"),
+        only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
     .bind(tenant_id)
@@ -1539,7 +1539,7 @@ async fn list_blocked_devices_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DeviceProfile>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AntiFraudEngine::list_blocked_devices(&pool, tenant_id).await {
         Ok(devices) => Json(ApiResponse::success(devices, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1584,7 +1584,7 @@ async fn get_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AntiFraudEngine::get_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1659,7 +1659,7 @@ async fn get_scoring_models_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ScoringModel>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match CreditScoringEngine::get_scoring_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1764,7 +1764,7 @@ async fn get_model_comparison_handler(
     Query(params): Query<CompareModelsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match CreditScoringEngine::get_model_comparison(&pool, tenant_id, params.model_ids).await {
         Ok(result) => Json(ApiResponse::success(result, "对比完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1863,7 +1863,7 @@ async fn get_test_result_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<StressResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match StressTestEngine::get_test_result(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1885,7 +1885,7 @@ async fn list_scenarios_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<StressScenario>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match StressTestEngine::list_scenarios(&pool, tenant_id).await {
         Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1941,7 +1941,7 @@ async fn get_scenario_parameters_handler(
     Query(params): Query<GetParamsQueryParams>,
 ) -> Json<ApiResponse<Vec<ScenarioParameter>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match StressTestEngine::get_scenario_parameters(&pool, tenant_id, params.scenario_id).await {
         Ok(params) => Json(ApiResponse::success(params, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1963,7 +1963,7 @@ async fn get_test_summary_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match StressTestEngine::get_test_summary(&pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

@@ -177,7 +177,7 @@ impl FinanceService {
         import_id: Uuid,
     ) -> Result<ImportStatusResponse, TopemsError> {
         let record: U8ImportRecord = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)
@@ -200,7 +200,7 @@ impl FinanceService {
         tenant_id: Uuid,
         query: ImportRecordQuery,
     ) -> Result<Vec<U8ImportRecord>, TopemsError> {
-        let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1".to_string();
+        let mut sql = "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)".to_string();
         let mut param_idx = 2;
 
         if query.status.is_some() {
@@ -232,7 +232,7 @@ impl FinanceService {
         import_id: Uuid,
     ) -> Result<U8ImportRecord, TopemsError> {
         let record: U8ImportRecord = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, file_name, file_type, total_count, imported_count, failed_count, status, error_message, created_by, created_at, updated_at FROM finance_u8_import_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(import_id)

@@ -83,7 +83,7 @@ impl FinanceService {
         status: Option<String>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
         let mut query =
-            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
+            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)".to_string();
 
         if source_type.is_some() {
             query.push_str(" AND source_type = $2");
@@ -112,7 +112,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let rule: VoucherGenerationRule = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)

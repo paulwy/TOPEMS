@@ -12,7 +12,7 @@ impl FinanceService {
         tenant_id: Uuid,
     ) -> Result<Vec<ApprovalConfigResponse>, TopemsError> {
         let configs: Vec<PaymentApprovalConfig> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY priority DESC, amount_threshold ASC"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) ORDER BY priority DESC, amount_threshold ASC"),
         )
         .bind(tenant_id)
         .fetch_all(&self.db_pool)
@@ -46,7 +46,7 @@ impl FinanceService {
         config_id: Uuid,
     ) -> Result<ApprovalConfigResponse, TopemsError> {
         let config: PaymentApprovalConfig = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, node_config, priority, is_active, created_by, created_at, updated_at FROM core_finance_payment_approval_config WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(config_id)

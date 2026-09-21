@@ -51,7 +51,7 @@ impl FinanceService {
         };
 
         let mut sql = format!(
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM {} WHERE tenant_id = $1 AND status = 'unpaid'",
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM {} WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND status = 'unpaid'",
             table
         );
 
@@ -135,7 +135,7 @@ impl FinanceService {
                     COALESCE(SUM(CASE WHEN due_date < {} - INTERVAL '30 days' AND due_date >= {} - INTERVAL '60 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as bucket_31_60,
                     COALESCE(SUM(CASE WHEN due_date < {} - INTERVAL '60 days' AND due_date >= {} - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as bucket_61_90,
                     COALESCE(SUM(CASE WHEN due_date < {} - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as bucket_90_plus
-                 FROM {} WHERE tenant_id = $1 AND created_at <= {}",
+                 FROM {} WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND created_at <= {}",
                 month_end, month_end, month_end,
                 month_end, month_end,
                 month_end,

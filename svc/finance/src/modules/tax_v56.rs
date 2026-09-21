@@ -589,7 +589,7 @@ impl AutoTaxFiler {
         .fetch_one(pool)
         .await?;
 
-        let lines = Self::get_form_lines(pool, tenant_id, form_id).await?;
+        let lines = Self::get_form_lines(pool, Some(tenant_id), form_id).await?;
 
         Ok(TaxFormWithLines {
             form: updated_form,
@@ -599,12 +599,12 @@ impl AutoTaxFiler {
 
     pub async fn get_forms(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         form_type: Option<String>,
         status: Option<String>,
     ) -> Result<Vec<TaxForm>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE tenant_id = $1",
+            "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if form_type.is_some() {
             query.push_str(" AND form_type = $2");
@@ -631,11 +631,11 @@ impl AutoTaxFiler {
 
     pub async fn get_form_by_id(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         form_id: Uuid,
     ) -> Result<TaxFormWithLines, sqlx::Error> {
         let form: TaxForm = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, form_type, jurisdiction, period_start, period_end, status, total_tax_amount, filed_at, accepted_at FROM finance.finance_v56_tax_forms WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(form_id)
         .bind(tenant_id)
@@ -748,11 +748,11 @@ impl AutoTaxFiler {
 
     pub async fn get_tax_summary(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         year: Option<i32>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let mut sql = String::from(
-            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms WHERE tenant_id = $1",
+            "SELECT form_type, COALESCE(SUM(total_tax_amount), 0) as total, COUNT(*) as cnt FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if let Some(y) = year {
             sql.push_str(&format!(" AND EXTRACT(YEAR FROM period_end) = {}", y));
@@ -793,11 +793,11 @@ impl AutoTaxFiler {
 
     async fn get_form_lines(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         form_id: Uuid,
     ) -> Result<Vec<TaxLine>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance.finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND tenant_id = $2 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, form_id, line_no, description, taxable_amount, tax_rate, tax_amount FROM finance.finance_v56_tax_lines WHERE deleted_at IS NULL AND form_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY line_no"),
         )
         .bind(form_id)
         .bind(tenant_id)
@@ -858,7 +858,7 @@ impl TaxRateCalculator {
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let rate = Self::lookup_rate_impl(pool, tenant_id, "vat", &jur, None).await?;
+        let rate = Self::lookup_rate_impl(pool, Some(tenant_id), "vat", &jur, None).await?;
         let tax_amount = (amount * rate * 100.0).round() / 100.0;
 
         Ok(TaxResult {
@@ -883,7 +883,7 @@ impl TaxRateCalculator {
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let brackets = Self::get_brackets_impl(pool, tenant_id, "cit", &jur).await?;
+        let brackets = Self::get_brackets_impl(pool, Some(tenant_id), "cit", &jur).await?;
         let (tax, breakdown) = Self::apply_progressive_brackets(amount, &brackets);
 
         Ok(TaxResult {
@@ -901,7 +901,7 @@ impl TaxRateCalculator {
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let brackets = Self::get_brackets_impl(pool, tenant_id, "pit", &jur).await?;
+        let brackets = Self::get_brackets_impl(pool, Some(tenant_id), "pit", &jur).await?;
         let (tax, breakdown) = Self::apply_progressive_brackets(amount, &brackets);
 
         Ok(TaxResult {
@@ -919,7 +919,7 @@ impl TaxRateCalculator {
         jurisdiction: Option<String>,
     ) -> Result<TaxResult, sqlx::Error> {
         let jur = jurisdiction.unwrap_or_else(|| "CN".to_string());
-        let rate = Self::lookup_rate_impl(pool, tenant_id, "withholding", &jur, None).await?;
+        let rate = Self::lookup_rate_impl(pool, Some(tenant_id), "withholding", &jur, None).await?;
         let tax_amount = (amount * rate * 100.0).round() / 100.0;
 
         Ok(TaxResult {
@@ -939,12 +939,12 @@ impl TaxRateCalculator {
 
     pub async fn get_rate_schedule(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         tax_type: Option<String>,
         jurisdiction: Option<String>,
     ) -> Result<Vec<TaxRate>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, jurisdiction, rate_type, rate, effective_from, effective_to, description FROM finance.finance_v56_tax_rates WHERE tenant_id = $1",
+            "SELECT id, jurisdiction, rate_type, rate, effective_from, effective_to, description FROM finance.finance_v56_tax_rates WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if tax_type.is_some() {
             query.push_str(" AND rate_type = $2");
@@ -971,7 +971,7 @@ impl TaxRateCalculator {
 
     pub async fn lookup_rate(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         tax_type: String,
         jurisdiction: Option<String>,
         date: Option<DateTime<Utc>>,
@@ -982,7 +982,7 @@ impl TaxRateCalculator {
 
     pub async fn get_tax_breakdown(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         amount: f64,
         tax_type: String,
         jurisdiction: Option<String>,
@@ -1032,7 +1032,7 @@ impl TaxRateCalculator {
 
     async fn lookup_rate_impl(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         tax_type: &str,
         jurisdiction: &str,
         date: Option<DateTime<Utc>>,
@@ -1042,7 +1042,7 @@ impl TaxRateCalculator {
         let rate: Option<f64> = sqlx::query_scalar(only_own_schema_query!(
             "finance",
             r#"SELECT rate FROM finance.finance_v56_tax_rates
-               WHERE tenant_id = $1 AND rate_type = $2 AND jurisdiction = $3
+               WHERE ($1::uuid IS NULL OR tenant_id = $1) AND rate_type = $2 AND jurisdiction = $3
                AND effective_from <= $4 AND (effective_to IS NULL OR effective_to >= $4)
                ORDER BY effective_from DESC LIMIT 1"#
         ))
@@ -1065,7 +1065,7 @@ impl TaxRateCalculator {
 
     async fn get_brackets_impl(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         tax_type: &str,
         jurisdiction: &str,
     ) -> Result<Vec<TaxBracket>, sqlx::Error> {
@@ -1074,7 +1074,7 @@ impl TaxRateCalculator {
             r#"SELECT b.id, b.rate_id, b.bracket_order, b.threshold_from, b.threshold_to, b.rate
                FROM finance.finance_v56_tax_brackets b
                JOIN finance.finance_v56_tax_rates r ON b.rate_id = r.id
-               WHERE r.tenant_id = $1 AND r.rate_type = $2 AND r.jurisdiction = $3
+               WHERE ($1::uuid IS NULL OR r.tenant_id = $1) AND r.rate_type = $2 AND r.jurisdiction = $3
                ORDER BY b.bracket_order"#
         ))
         .bind(tenant_id)
@@ -1312,11 +1312,11 @@ impl TaxPlanner {
 
     pub async fn get_suggestions(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         plan_id: Uuid,
     ) -> Result<Vec<TaxSuggestion>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance.finance_v56_tax_suggestions WHERE plan_id = $1 AND tenant_id = $2 ORDER BY estimated_savings DESC"),
+            only_own_schema_query!("finance", "SELECT id, plan_id, category, description, estimated_savings, confidence, action_items FROM finance.finance_v56_tax_suggestions WHERE plan_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY estimated_savings DESC"),
         )
         .bind(plan_id)
         .bind(tenant_id)
@@ -1353,11 +1353,11 @@ impl TaxPlanner {
 
     pub async fn list_plans(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<TaxPlan>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE tenant_id = $1",
+            "SELECT id, entity, period, strategy, projected_savings, risk_level, status, approved_at FROM finance.finance_v56_tax_plans WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -1393,7 +1393,7 @@ impl TaxPlanner {
 
     pub async fn get_compliance_check(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         entity: Option<String>,
     ) -> Result<ComplianceCheckResult, sqlx::Error> {
         let mut issues: Vec<String> = Vec::new();
@@ -1401,7 +1401,7 @@ impl TaxPlanner {
         let mut suggestions: Vec<String> = Vec::new();
 
         let mut query = String::from(
-            "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'draft'",
+            "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'draft'",
         );
         if entity.is_some() {
             query.push_str(" AND jurisdiction = $2");
@@ -1421,7 +1421,7 @@ impl TaxPlanner {
         }
 
         let submitted_forms: Vec<(Uuid, String, String)> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'"),
+            only_own_schema_query!("finance", "SELECT id, form_type, status FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'submitted' AND filed_at < NOW() - INTERVAL '30 days'"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1435,7 +1435,7 @@ impl TaxPlanner {
         }
 
         let accepted_count: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'accepted'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'accepted'"),
         )
         .bind(tenant_id)
         .fetch_one(pool)
@@ -1447,7 +1447,7 @@ impl TaxPlanner {
         }
 
         let rejected_forms: Vec<(Uuid, String)> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, form_type FROM finance.finance_v56_tax_forms WHERE tenant_id = $1 AND status = 'rejected'"),
+            only_own_schema_query!("finance", "SELECT id, form_type FROM finance.finance_v56_tax_forms WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'rejected'"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1479,7 +1479,7 @@ impl TaxPlanner {
             return Ok(0.0);
         }
 
-        let brackets = TaxRateCalculator::get_brackets_impl(pool, tenant_id, "pit", "CN").await?;
+        let brackets = TaxRateCalculator::get_brackets_impl(pool, Some(tenant_id), "pit", "CN").await?;
         let (tax, _) = TaxRateCalculator::apply_progressive_brackets(income, &brackets);
         Ok(tax)
     }
@@ -1586,7 +1586,7 @@ async fn get_tax_forms_handler(
     Query(params): Query<TaxFormsQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxForm>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutoTaxFiler::get_forms(&pool, tenant_id, params.form_type, params.status).await {
         Ok(forms) => Json(ApiResponse::success(forms, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1609,7 +1609,7 @@ async fn get_tax_form_by_id_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TaxFormWithLines>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutoTaxFiler::get_form_by_id(&pool, tenant_id, id).await {
         Ok(form) => Json(ApiResponse::success(form, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1687,7 +1687,7 @@ async fn get_tax_summary_handler(
     Query(params): Query<TaxSummaryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutoTaxFiler::get_tax_summary(&pool, tenant_id, params.year).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1807,7 +1807,7 @@ async fn get_rate_schedule_handler(
     Query(params): Query<RateScheduleQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxRate>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match TaxRateCalculator::get_rate_schedule(
         &pool,
         tenant_id,
@@ -1837,7 +1837,7 @@ async fn lookup_rate_handler(
     Query(params): Query<LookupRateParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let tax_type = params.tax_type.unwrap_or_else(|| "vat".to_string());
     match TaxRateCalculator::lookup_rate(
         &pool,
@@ -1872,7 +1872,7 @@ async fn get_tax_breakdown_handler(
     Query(params): Query<BreakdownParams>,
 ) -> Json<ApiResponse<Vec<TaxBreakdown>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match TaxRateCalculator::get_tax_breakdown(
         &pool,
         tenant_id,
@@ -2002,7 +2002,7 @@ async fn get_suggestions_handler(
     Query(params): Query<SuggestionsQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxSuggestion>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     let plan_id = match params.plan_id {
         Some(id) => id,
         None => return Json(ApiResponse::error(400, "plan_id 参数必填")),
@@ -2052,7 +2052,7 @@ async fn list_plans_handler(
     Query(params): Query<PlansQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxPlan>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match TaxPlanner::list_plans(&pool, tenant_id, params.status).await {
         Ok(plans) => Json(ApiResponse::success(plans, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2105,7 +2105,7 @@ async fn get_compliance_handler(
     Query(params): Query<ComplianceQueryParams>,
 ) -> Json<ApiResponse<ComplianceCheckResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match TaxPlanner::get_compliance_check(&pool, tenant_id, params.entity).await {
         Ok(result) => Json(ApiResponse::success(result, "合规检查完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

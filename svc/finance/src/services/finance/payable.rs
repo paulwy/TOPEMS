@@ -17,9 +17,9 @@ impl FinanceService {
         let offset = (page - 1) * page_size;
 
         let mut sql =
-            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1".to_string();
+            "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)".to_string();
         let mut count_sql =
-            "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1"
+            "SELECT COUNT(*) FROM erp_payables WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
                 .to_string();
 
         let mut cond = Vec::new();
@@ -101,7 +101,7 @@ impl FinanceService {
         payable_id: Uuid,
     ) -> Result<Value, TopemsError> {
         let row = sqlx::query(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, payable_no, supplier_id, supplier_name, invoice_no, invoice_date, due_date, amount, currency, paid_amount, status, description, created_by, created_at, updated_at FROM erp_payables WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(payable_id)
@@ -228,22 +228,22 @@ impl FinanceService {
                 '0-30天' as bucket,
                 COALESCE(SUM(CASE WHEN due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0) as amount,
                 COUNT(*) FILTER (WHERE due_date >= CURRENT_DATE - INTERVAL '30 days' AND status = 'unpaid') as cnt
-             FROM erp_payables WHERE tenant_id = $1
+             FROM erp_payables WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
              UNION ALL
              SELECT '31-60天',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '30 days' AND due_date >= CURRENT_DATE - INTERVAL '60 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '30 days' AND due_date >= CURRENT_DATE - INTERVAL '60 days' AND status = 'unpaid')
-             FROM erp_payables WHERE tenant_id = $1
+             FROM erp_payables WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
              UNION ALL
              SELECT '61-90天',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '60 days' AND due_date >= CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '60 days' AND due_date >= CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE tenant_id = $1
+             FROM erp_payables WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
              UNION ALL
              SELECT '90天以上',
                 COALESCE(SUM(CASE WHEN due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid' THEN amount ELSE 0 END), 0),
                 COUNT(*) FILTER (WHERE due_date < CURRENT_DATE - INTERVAL '90 days' AND status = 'unpaid')
-             FROM erp_payables WHERE tenant_id = $1"),
+             FROM erp_payables WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"),
         )
         .bind(tenant_id)
         .fetch_all(&self.db_pool)

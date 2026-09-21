@@ -662,11 +662,11 @@ impl DecisionEngine {
 
     pub async fn get_decision(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<DecisionResult, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -676,10 +676,10 @@ impl DecisionEngine {
 
     pub async fn list_scenarios(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<DecisionScenario>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, scenario_type, parameters, objectives, constraints, status, created_at, updated_at FROM finance.finance_v60_decision_scenarios WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -688,11 +688,11 @@ impl DecisionEngine {
 
     pub async fn get_alternatives(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         scenario_id: Uuid,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let result = sqlx::query_as::<_, DecisionResult>(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND tenant_id = $2 ORDER BY decided_at DESC LIMIT 1"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE scenario_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY decided_at DESC LIMIT 1"),
         )
         .bind(scenario_id)
         .bind(tenant_id)
@@ -752,10 +752,10 @@ impl DecisionEngine {
 
     pub async fn get_decision_history(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<DecisionResult>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE tenant_id = $1 ORDER BY decided_at DESC LIMIT 500"),
+            only_own_schema_query!("finance", "SELECT id, scenario_id, recommended_action, alternatives, expected_impact, risk_level, confidence, decided_at FROM finance.finance_v60_decision_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY decided_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -928,10 +928,10 @@ impl AlertEngine {
 
     pub async fn get_alert_rules(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertRule>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE tenant_id = $1 ORDER BY metric_name, name"),
+            only_own_schema_query!("finance", "SELECT id, name, metric_name, condition, threshold, severity, enabled FROM finance.finance_v60_alert_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY metric_name, name"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -998,11 +998,11 @@ impl AlertEngine {
 
     pub async fn get_active_alerts(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         params: AlertQueryParams,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE tenant_id = $1 AND status = 'active'",
+            "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
         );
 
         if let Some(ref severity) = params.severity {
@@ -1071,10 +1071,10 @@ impl AlertEngine {
 
     pub async fn get_alert_history(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<AlertV60>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 500"),
+            only_own_schema_query!("finance", "SELECT id, rule_id, metric_name, current_value, threshold, severity, status, created_at FROM finance.finance_v60_alerts WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1213,11 +1213,11 @@ impl IntelligentScheduler {
 
     pub async fn get_tasks(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         params: TaskQueryParams,
     ) -> Result<Vec<ScheduleTask>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE tenant_id = $1",
+            "SELECT id, name, task_type, cron_expression, action, priority, status, created_at, updated_at FROM finance.finance_v60_schedule_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if let Some(ref task_type) = params.task_type {
@@ -1323,11 +1323,11 @@ impl IntelligentScheduler {
 
     pub async fn get_execution(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         execution_id: Uuid,
     ) -> Result<ScheduleExecution, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(execution_id)
         .bind(tenant_id)
@@ -1337,11 +1337,11 @@ impl IntelligentScheduler {
 
     pub async fn list_executions(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         task_id: Option<Uuid>,
     ) -> Result<Vec<ScheduleExecution>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE tenant_id = $1",
+            "SELECT id, task_id, scheduled_at, started_at, completed_at, duration_ms, status, output FROM finance.finance_v60_schedule_executions WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
 
         if task_id.is_some() {
@@ -1509,7 +1509,7 @@ async fn get_decision_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DecisionResult>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match DecisionEngine::get_decision(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1531,7 +1531,7 @@ async fn list_scenarios_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DecisionScenario>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match DecisionEngine::list_scenarios(&pool, tenant_id).await {
         Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1561,7 +1561,7 @@ async fn get_alternatives_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match DecisionEngine::get_alternatives(&pool, tenant_id, id).await {
         Ok(alts) => Json(ApiResponse::success(alts, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1606,7 +1606,7 @@ async fn get_decision_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DecisionResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match DecisionEngine::get_decision_history(&pool, tenant_id).await {
         Ok(history) => Json(ApiResponse::success(history, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1682,7 +1682,7 @@ async fn get_alert_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertRule>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AlertEngine::get_alert_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1728,7 +1728,7 @@ async fn get_active_alerts_handler(
     Query(params): Query<AlertQueryParams>,
 ) -> Json<ApiResponse<Vec<AlertV60>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AlertEngine::get_active_alerts(&pool, tenant_id, params).await {
         Ok(alerts) => Json(ApiResponse::success(alerts, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1804,7 +1804,7 @@ async fn get_alert_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertV60>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AlertEngine::get_alert_history(&pool, tenant_id).await {
         Ok(history) => Json(ApiResponse::success(history, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1880,7 +1880,7 @@ async fn get_tasks_handler(
     Query(params): Query<TaskQueryParams>,
 ) -> Json<ApiResponse<Vec<ScheduleTask>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match IntelligentScheduler::get_tasks(&pool, tenant_id, params).await {
         Ok(tasks) => Json(ApiResponse::success(tasks, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1946,7 +1946,7 @@ async fn get_execution_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ScheduleExecution>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match IntelligentScheduler::get_execution(&pool, tenant_id, id).await {
         Ok(execution) => Json(ApiResponse::success(execution, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1974,7 +1974,7 @@ async fn list_executions_handler(
     Query(params): Query<ExecutionQueryParams>,
 ) -> Json<ApiResponse<Vec<ScheduleExecution>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match IntelligentScheduler::list_executions(&pool, tenant_id, params.task_id).await {
         Ok(executions) => Json(ApiResponse::success(executions, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

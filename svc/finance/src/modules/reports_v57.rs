@@ -465,10 +465,10 @@ impl AutomatedReportEngine {
 
     pub async fn get_templates(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<ReportTemplate>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, name, report_type, layout, parameters, schedule, created_at, updated_at FROM finance.finance_v57_report_templates WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -508,11 +508,11 @@ impl AutomatedReportEngine {
 
     pub async fn list_reports(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         status: Option<String>,
     ) -> Result<Vec<GeneratedReport>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND tenant_id = $1",
+            "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if status.is_some() {
             query.push_str(" AND status = $2");
@@ -529,11 +529,11 @@ impl AutomatedReportEngine {
 
     pub async fn get_report(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, template_id, period_start, period_end, data, generated_at, status, format FROM finance.finance_v57_generated_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(report_id)
         .bind(tenant_id)
@@ -543,7 +543,7 @@ impl AutomatedReportEngine {
 
     pub async fn download_report(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         report_id: Uuid,
     ) -> Result<GeneratedReport, sqlx::Error> {
         Self::get_report(pool, tenant_id, report_id).await
@@ -824,10 +824,10 @@ impl MultiDimensionalAnalyzer {
 
     pub async fn get_analysis_history(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<AnalysisResult>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, dimensions, measures, data, aggregations, created_at FROM finance.finance_v57_analysis_results WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1094,11 +1094,11 @@ impl PredictiveInsightEngine {
 
     pub async fn get_insights(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         insight_type: Option<String>,
     ) -> Result<Vec<Insight>, sqlx::Error> {
         let mut query = String::from(
-            "SELECT id, insight_type, description, confidence, data, created_at FROM finance.finance_v57_insights WHERE tenant_id = $1",
+            "SELECT id, insight_type, description, confidence, data, created_at FROM finance.finance_v57_insights WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         );
         if insight_type.is_some() {
             query.push_str(" AND insight_type = $2");
@@ -1145,10 +1145,10 @@ impl PredictiveInsightEngine {
 
     pub async fn list_models(
         pool: &PgPool,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<ForecastModel>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE tenant_id = $1 ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
+            only_own_schema_query!("finance", "SELECT id, model_type, target_metric, features, accuracy, trained_at FROM finance.finance_v57_forecast_models WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY trained_at DESC NULLS LAST LIMIT 200"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1342,7 +1342,7 @@ async fn get_templates_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutomatedReportEngine::get_templates(&pool, tenant_id).await {
         Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1390,7 +1390,7 @@ async fn list_reports_handler(
     Query(params): Query<ReportListQueryParams>,
 ) -> Json<ApiResponse<Vec<GeneratedReport>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutomatedReportEngine::list_reports(&pool, tenant_id, params.status).await {
         Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1413,7 +1413,7 @@ async fn get_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutomatedReportEngine::get_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1434,7 +1434,7 @@ async fn download_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match AutomatedReportEngine::download_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "下载成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1645,7 +1645,7 @@ async fn get_analysis_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AnalysisResult>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match MultiDimensionalAnalyzer::get_analysis_history(&pool, tenant_id).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1724,7 +1724,7 @@ async fn get_insights_handler(
     Query(params): Query<InsightsQueryParams>,
 ) -> Json<ApiResponse<Vec<Insight>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match PredictiveInsightEngine::get_insights(&pool, tenant_id, params.insight_type).await {
         Ok(insights) => Json(ApiResponse::success(insights, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1769,7 +1769,7 @@ async fn list_models_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ForecastModel>>> {
     let pool = state.pool.clone();
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
     match PredictiveInsightEngine::list_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

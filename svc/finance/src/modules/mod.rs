@@ -88,9 +88,9 @@ pub struct AuxQueryParams {
     pub end_date: Option<DateTime<Utc>>,
 }
 
-async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
+async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
+        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
     ))
     .bind(tenant_id)
@@ -105,11 +105,11 @@ async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uu
 async fn count_table_with_tenant_and_status(
     pool: &sqlx::PgPool,
     table: &str,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
+        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
         table
     ))
     .bind(tenant_id)
@@ -122,9 +122,9 @@ async fn count_table_with_tenant_and_status(
     }
 }
 
-async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
+async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE tenant_id = $1",
+        "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
     ))
     .bind(tenant_id)
@@ -136,8 +136,8 @@ async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid
     }
 }
 
-async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
-    match sqlx::query_scalar(&format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE tenant_id = $1 AND due_date < NOW() AND status = 'unpaid'", table))
+async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
+    match sqlx::query_scalar(&format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND due_date < NOW() AND status = 'unpaid'", table))
         .bind(tenant_id)
         .fetch_one(pool)
         .await
@@ -1766,7 +1766,7 @@ pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<FinanceDashboardStats>> {
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
 
     let total_vouchers = count_table_with_tenant(&state.pool, "vouchers", tenant_id).await;
     let draft_vouchers =
@@ -2216,7 +2216,7 @@ async fn get_template_usage_stats_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rule_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE tenant_id = $1 AND mapping_config->>'template_id' = $2"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config->>'template_id' = $2"),
     )
     .bind(tenant_id)
     .bind(template_id.to_string())
@@ -4092,7 +4092,7 @@ pub async fn get_voucher_entries(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY created_at"),
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
@@ -4140,7 +4140,7 @@ pub async fn get_voucher_items(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, sort_order FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2 ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, sort_order FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sort_order, created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
@@ -4712,7 +4712,7 @@ pub async fn get_account_tree(
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, code, name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE tenant_id = $1 AND ($2::text IS NULL OR category = $2) ORDER BY code"),
+        only_own_schema_query!("finance", "SELECT id, code, name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR category = $2) ORDER BY code"),
     )
     .bind(tenant_id)
     .bind(category)
