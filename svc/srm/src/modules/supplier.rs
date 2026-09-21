@@ -983,10 +983,10 @@ pub async fn get_supplier_performance(
     });
 
     let supplier_query = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
+        only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn).await;
 
     let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(only_own_schema_query!(
@@ -994,12 +994,12 @@ pub async fn get_supplier_performance(
         r#"
         SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
         FROM srm.purchase_orders
-        WHERE supplier_id = $1 AND tenant_id = $2
+        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1026,12 +1026,12 @@ pub async fn get_supplier_performance(
             COUNT(*) as eval_count,
             MAX(evaluation_date) as last_eval_date
         FROM srm.supplier_evaluations
-        WHERE supplier_id = $1 AND tenant_id = $2
+        WHERE supplier_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         "srm"
     ))
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 

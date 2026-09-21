@@ -527,7 +527,7 @@ pub async fn compare_supplier_performance(
                 COUNT(*) as total_orders,
                 COALESCE(SUM(total_amount), 0) as total_amount
             FROM srm.purchase_orders
-            WHERE tenant_id = $1 AND status != 'cancelled'
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status != 'cancelled'
             GROUP BY supplier_id
         ) po ON s.id = po.supplier_id
         LEFT JOIN (
@@ -551,17 +551,17 @@ pub async fn compare_supplier_performance(
                     ELSE NULL END, 2
                 ) as defect_rate
             FROM srm.supplier_evaluations
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.tenant_id = $1 AND s.id IN ({}) AND s.status != 'deleted'
+        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.id IN ({}) AND s.status != 'deleted'
         ORDER BY e.avg_overall_score DESC NULLS LAST
         "#,
         placeholders_str
     );
 
     let mut query_builder = sqlx::query_as::<_, SupplierPerformance>(&query);
-    query_builder = query_builder.bind(tenant_id);
+    query_builder = query_builder.bind(tenant_opt);
     for id in &supplier_ids {
         query_builder = query_builder.bind(*id);
     }

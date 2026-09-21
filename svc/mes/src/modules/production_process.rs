@@ -134,13 +134,18 @@ pub async fn list_processes(
 
     let tenant_id = tenant::get_tenant_id(&claims, &headers);
     let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10).min(100) as i64;
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    let mut where_clause = String::from(" WHERE ($1::uuid IS NULL OR tenant_id = $1)");
 
     if let Some(status) = query.status {
         let idx = params.len() + 2;
@@ -164,7 +169,7 @@ pub async fn list_processes(
     );
 
     let mut count_query = sqlx::query_scalar(&count_sql);
-    count_query = count_query.bind(tenant_id);
+    count_query = count_query.bind(tenant_opt);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -195,7 +200,7 @@ pub async fn list_processes(
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
-    fetch_query = fetch_query.bind(tenant_id);
+    fetch_query = fetch_query.bind(tenant_opt);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }

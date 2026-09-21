@@ -163,7 +163,11 @@ pub async fn list_forecasts(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -176,7 +180,7 @@ pub async fn list_forecasts(
                forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
                notes, status, tenant_id, created_at, updated_at
         FROM demand_forecasts
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR forecast_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
@@ -185,7 +189,7 @@ pub async fn list_forecasts(
         LIMIT $6 OFFSET $7
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(product_filter)
@@ -200,14 +204,14 @@ pub async fn list_forecasts(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM demand_forecasts
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR forecast_no ILIKE $2 OR product_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
                   AND ($5::text IS NULL OR method = $5)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(product_filter)
@@ -238,7 +242,11 @@ pub async fn get_forecast(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DemandForecast>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query_as::<_, DemandForecast>(
         r#"
@@ -246,11 +254,11 @@ pub async fn get_forecast(
                forecast_quantity, actual_quantity, accuracy_rate, method, confidence_level,
                notes, status, tenant_id, created_at, updated_at
         FROM demand_forecasts
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&state.pool)
     .await;
 

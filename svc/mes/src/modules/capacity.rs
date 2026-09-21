@@ -140,12 +140,17 @@ pub async fn list_capacities(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let tenant_key = tenant_opt.map_or("all".to_string(), |t| t.to_string());
 
     // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
     let cache_key = format!(
         "mes:capacity:list:{}:page:{}:pagesize:{}:search:{}:status:{}:work_center_id:{}",
-        tenant_id,
+        tenant_key,
         page,
         page_size,
         params.search.clone().unwrap_or_else(|| "none".to_string()),
@@ -163,7 +168,7 @@ pub async fn list_capacities(
             service = "mes",
             entity = "capacity",
             operation = "list",
-            tenant_id = %tenant_id,
+            tenant_id = %tenant_key,
             cache_key = %cache_key,
             "产能列表缓存命中"
         );
@@ -179,7 +184,7 @@ pub async fn list_capacities(
         SELECT id, work_center_id, work_center_name, capacity_date, available_hours,
                used_hours, utilization_rate, status, tenant_id, created_at, updated_at
         FROM capacities
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR work_center_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR work_center_id = $4)
@@ -187,7 +192,7 @@ pub async fn list_capacities(
         LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(wc_filter)
@@ -201,13 +206,13 @@ pub async fn list_capacities(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM capacities
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR work_center_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR work_center_id = $4)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(wc_filter)
@@ -232,7 +237,7 @@ pub async fn list_capacities(
                 service = "mes",
                 entity = "capacity",
                 operation = "list",
-                tenant_id = %tenant_id,
+                tenant_id = %tenant_key,
                 cache_key = %cache_key,
                 "产能列表缓存写入"
             );
@@ -251,18 +256,22 @@ pub async fn get_capacity(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Capacity>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
         SELECT id, work_center_id, work_center_name, capacity_date, available_hours,
                used_hours, utilization_rate, status, tenant_id, created_at, updated_at
         FROM capacities
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&state.pool)
     .await;
 

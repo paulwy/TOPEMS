@@ -147,7 +147,11 @@ pub async fn list_plans(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.pagesize.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
@@ -157,14 +161,14 @@ pub async fn list_plans(
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
         FROM production_plans
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -177,12 +181,12 @@ pub async fn list_plans(
             let total = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM production_plans
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR plan_no ILIKE $2 OR plan_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.pool)
@@ -211,18 +215,22 @@ pub async fn get_plan(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionPlan>> {
-    let tenant_id = get_tenant_id(&claims);
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query_as::<_, ProductionPlan>(
         r#"
         SELECT id, plan_no, plan_name, plan_type, start_date, end_date, status,
                product_id, product_name, target_quantity, notes, tenant_id, created_at, updated_at
         FROM production_plans
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&state.pool)
     .await;
 
