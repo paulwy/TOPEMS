@@ -132,22 +132,27 @@ pub async fn list_spc_charts(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcChartQuery>,
 ) -> Json<ApiResponse<Vec<SpcChart>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let charts = match (query.chart_type.as_ref(), query.product_id.as_ref()) {
-        (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND tenant_id = $1 AND chart_type = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(ct).bind(pid).bind(page_size).bind(offset)
+        (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(ct).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(ct), None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND tenant_id = $1 AND chart_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(ct).bind(page_size).bind(offset)
+        (Some(ct), None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(ct).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND tenant_id = $1 AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(pid).bind(page_size).bind(offset)
+        (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -197,13 +202,18 @@ pub async fn get_spc_chart(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SpcChart>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -280,6 +290,11 @@ pub async fn get_spc_data_points(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcDataQuery>,
 ) -> Json<ApiResponse<Vec<SpcDataPoint>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&query.chart_id) {
         Ok(u) => u,
@@ -288,7 +303,7 @@ pub async fn get_spc_data_points(
 
     let limit = query.limit.unwrap_or(100);
 
-    let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT FROM qms.qa_spc_data_points WHERE chart_id = $1 AND tenant_id = $2 ORDER BY sample_no DESC LIMIT $3"#)).bind(chart_id).bind(tenant_id).bind(limit)
+    let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT FROM qms.qa_spc_data_points WHERE chart_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no DESC LIMIT $3"#)).bind(chart_id).bind(tenant_opt).bind(limit)
     .fetch_all(&state.pool)
     .await;
 
@@ -310,13 +325,18 @@ pub async fn add_spc_data_point(
     headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcDataRequest>,
 ) -> Json<ApiResponse<SpcDataPoint>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&req.chart_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(chart_id).bind(tenant_id)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

@@ -51,6 +51,11 @@ pub async fn list_standards(
     axum::extract::Query(query): axum::extract::Query<StandardQuery>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ListStandardsResponse>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -86,14 +91,14 @@ pub async fn list_standards(
     record_cache_miss("qms", "quality_standard", "list");
 
     let _params: Vec<serde_json::Value> = Vec::new();
-    let where_clause = String::from(" WHERE tenant_id = $1");
+    let where_clause = String::from(" WHERE ($1::uuid IS NULL OR tenant_id = $1)");
 
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM qms.qa_standards{}",
         where_clause
     );
 
-    let count_query = sqlx::query_scalar(&count_sql).bind(tenant_id);
+    let count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt);
 
     let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
         Ok(c) => c,
@@ -117,7 +122,7 @@ pub async fn list_standards(
     );
 
     let fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset);
 
@@ -236,13 +241,18 @@ pub async fn get_standard(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<QualityStandard>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -279,13 +289,18 @@ pub async fn update_standard(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStandardRequest>,
 ) -> Json<ApiResponse<QualityStandard>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -404,13 +419,18 @@ pub async fn list_revisions(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<StandardRevision>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at::TEXT FROM qms.qa_standard_revisions WHERE standard_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"#)).bind(id).bind(tenant_id)
+    let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at::TEXT FROM qms.qa_standard_revisions WHERE standard_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 
@@ -430,13 +450,18 @@ pub async fn create_revision(
     headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStandardRequest>,
 ) -> Json<ApiResponse<QualityStandard>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

@@ -43,8 +43,15 @@ pub async fn list_quality_costs(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
-    params.push(tenant_id.to_string());
+    let mut where_clause = String::from(" WHERE 1=1");
+    let mut __has_tenant = false;
+    if !claims.is_superuser {
+        where_clause = String::from(" WHERE tenant_id = $1::uuid");
+        __has_tenant = true;
+    }
+    if __has_tenant {
+        params.push(tenant_id.to_string());
+    }
 
     if let Some(category) = &query.cost_category {
         where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
@@ -180,13 +187,18 @@ pub async fn get_quality_cost(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<QualityCost>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
