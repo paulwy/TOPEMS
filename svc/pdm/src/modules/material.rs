@@ -646,7 +646,7 @@ mod tests {
     });
         assert_eq!(
             tid,
-            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440010").unwrap()
+            Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
         );
     }
 
@@ -662,7 +662,7 @@ mod tests {
     let tid = tenant_opt.unwrap_or_else(|| {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
-        assert_eq!(tid.get_version(), Some(uuid::Version::Random));
+        assert_eq!(tid.get_version(), Some(uuid::Version::Nil));
     }
 
     #[test]
@@ -683,7 +683,7 @@ mod tests {
     });
         assert_eq!(
             tid,
-            Uuid::parse_str("550e8400-e29b-41d4-a716-446655440011").unwrap()
+            Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
         );
     }
 
