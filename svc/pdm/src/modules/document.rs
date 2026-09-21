@@ -301,7 +301,7 @@ pub async fn create_document(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     if req.document_no.is_empty() {
@@ -425,7 +425,7 @@ pub async fn update_document(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let existing = sqlx::query_as::<_, Document>(
@@ -524,7 +524,7 @@ pub async fn update_document_status(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     if req.status.trim().is_empty() {
         return Json(ApiResponse::error(400, "文档状态不能为空"));
@@ -578,7 +578,7 @@ pub async fn delete_document(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result =
@@ -629,7 +629,7 @@ pub async fn start_document_approval(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let document_result = sqlx::query_as::<_, Document>(
@@ -783,7 +783,7 @@ pub async fn get_document_approval_history(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query(
@@ -854,7 +854,7 @@ pub async fn list_pending_documents(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query(
@@ -943,7 +943,7 @@ mod tests {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
         assert_eq!(
             tid,
@@ -965,7 +965,7 @@ mod tests {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
         assert_eq!(
             tid,
@@ -983,7 +983,7 @@ mod tests {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
         assert_eq!(tid.get_version(), Some(uuid::Version::Random));
     }

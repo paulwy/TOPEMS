@@ -227,7 +227,7 @@ async fn list_returns(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query_as::<_, Return>(
@@ -321,7 +321,7 @@ async fn create_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let now = Utc::now();
     let id = Uuid::new_v4();
@@ -439,7 +439,7 @@ async fn get_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query_as::<_, Return>(
@@ -489,7 +489,7 @@ async fn update_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let existing = sqlx::query_as::<_, Return>(
@@ -630,7 +630,7 @@ async fn delete_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     // 先查询退换单状态
@@ -744,7 +744,7 @@ async fn approve_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -844,7 +844,7 @@ async fn reject_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -944,7 +944,7 @@ async fn receive_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -1051,7 +1051,7 @@ async fn complete_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -1241,7 +1241,7 @@ async fn cancel_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -1336,7 +1336,7 @@ async fn list_return_items(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query_as::<_, ReturnItem>(
@@ -1391,7 +1391,7 @@ async fn add_return_item(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     // 校验退换单存在
@@ -1742,7 +1742,7 @@ async fn get_return_finance_status(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     // 校验退换单存在且属于租户
@@ -1825,7 +1825,7 @@ async fn get_return_inventory_status(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     // 校验退换单存在且属于租户
@@ -1916,7 +1916,7 @@ async fn accept_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -2012,7 +2012,7 @@ async fn process_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -2114,7 +2114,7 @@ async fn resolve_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
@@ -2225,7 +2225,7 @@ async fn confirm_return(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();

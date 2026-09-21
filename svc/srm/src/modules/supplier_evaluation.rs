@@ -87,7 +87,7 @@ pub async fn list_evaluations(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -205,7 +205,7 @@ pub async fn create_evaluation(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     if req.evaluation_no.is_empty() {
@@ -414,7 +414,7 @@ pub async fn get_evaluation(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
@@ -467,7 +467,7 @@ pub async fn update_evaluation(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
@@ -627,7 +627,7 @@ pub async fn delete_evaluation(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query(only_own_schema_query!(
@@ -676,7 +676,7 @@ pub async fn get_evaluation_history(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -743,7 +743,7 @@ pub async fn get_performance_summary(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let result = sqlx::query_as::<_, EvaluationSummaryRow>(only_own_schema_query!(
@@ -844,7 +844,7 @@ pub async fn get_score_trend(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let start_date = params.start_date.clone().and_then(|s| {
@@ -971,7 +971,7 @@ pub async fn get_evaluation_statistics(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
     let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(

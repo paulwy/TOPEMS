@@ -444,7 +444,7 @@ pub async fn create_version(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     if req.version_number.trim().is_empty() || req.title.trim().is_empty() {
         return Json(ApiResponse::error(400, "版本号和标题不能为空"));
@@ -533,7 +533,7 @@ pub async fn update_version(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let result = sqlx::query_as::<_, DocumentVersion>(&format!(
         r#"
@@ -595,7 +595,7 @@ pub async fn delete_version(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let result = sqlx::query(
         "UPDATE pdm_document_versions SET deleted_at = NOW(), updated_at = NOW() WHERE tenant_id = $1 AND document_id = $2 AND id = $3 AND deleted_at IS NULL",
@@ -629,7 +629,7 @@ pub async fn publish_version(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
@@ -704,7 +704,7 @@ pub async fn upload_version(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let mut filename: Option<String> = None;
     let mut content_type: Option<String> = None;
@@ -885,7 +885,7 @@ mod handler_tests {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
         assert_eq!(
             tid,
@@ -907,7 +907,7 @@ mod handler_tests {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
         assert_eq!(
             tid,
@@ -925,7 +925,7 @@ mod handler_tests {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
         assert_eq!(tid.get_version(), Some(uuid::Version::Random));
     }

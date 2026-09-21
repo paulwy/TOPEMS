@@ -309,7 +309,7 @@ pub async fn create_material(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Creating hazardous material: {:?}", req);
     Json(ApiResponse::success(
@@ -371,7 +371,7 @@ pub async fn get_material(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Getting hazardous material: {}", id);
     Json(ApiResponse::success(
@@ -500,7 +500,7 @@ pub async fn update_material(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Updating hazardous material {}: {:?}", id, req);
     Json(ApiResponse::success(
@@ -620,7 +620,7 @@ pub async fn create_stock_in(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Creating stock in record: {:?}", req);
     Json(ApiResponse::success(
@@ -671,7 +671,7 @@ pub async fn create_stock_out(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Creating stock out record: {:?}", req);
     Json(ApiResponse::success(
@@ -725,7 +725,7 @@ pub async fn get_stock_record(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Getting stock record: {}", id);
     Json(ApiResponse::success(
@@ -776,7 +776,7 @@ pub async fn get_material_msds(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Getting MSDS for material: {}", id);
     Json(ApiResponse::success(
@@ -835,7 +835,7 @@ pub async fn update_material_msds(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Updating MSDS for material {}: {:?}", id, req);
     Json(ApiResponse::success(
@@ -885,7 +885,7 @@ pub async fn get_material_statistics(
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     tracing::debug!("Getting material statistics");
     Json(ApiResponse::success(
