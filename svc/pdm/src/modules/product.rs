@@ -21,7 +21,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Product {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub product_no: String,
     pub name: String,
     pub description: Option<String>,
