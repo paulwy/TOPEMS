@@ -692,12 +692,6 @@ pub async fn transfer_wip(
         return e;
     }
 
-    let tenant_opt: Option<String> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.clone()
-    };
-
     let now = Utc::now();
     let transfer_no = format!(
         "TRF{}{:04}",
@@ -713,11 +707,10 @@ pub async fn transfer_wip(
         }
     };
 
-    let wip = sqlx::query(
-        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#,
+    let wip = sqlx::query!(
+        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1"#,
+        req.wip_id
     )
-    .bind(req.wip_id)
-    .bind(tenant_opt)
     .fetch_optional(&mut *tx)
     .await;
 
@@ -734,9 +727,7 @@ pub async fn transfer_wip(
         }
     };
 
-    let current_qty = big_decimal_to_f64(
-        wip.try_get::<Option<BigDecimal>, _>("quantity").unwrap_or_default()
-    );
+    let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
         let _ = tx.rollback().await;
         return Json(ApiResponse::error(400, "转移数量不能大于当前WIP数量"));
