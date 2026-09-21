@@ -13,7 +13,7 @@ mod schema_defense;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public, communication");
+    std::env::set_var("SEARCH_PATH", "communication, public");
 
     let config = ServiceConfig {
         name: "topems-communication",

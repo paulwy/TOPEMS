@@ -28,7 +28,7 @@ fn get_uptime() -> u64 {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public, portal");
+    std::env::set_var("SEARCH_PATH", "portal, public");
 
     let config = ServiceConfig {
         name: "topems-portal",
