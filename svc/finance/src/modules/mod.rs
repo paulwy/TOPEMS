@@ -28,6 +28,7 @@ pub mod voucher_template_entries;
 
 use axum::{
     extract::{Json, Multipart, Path, Query, State},
+    http::HeaderMap,
     response::IntoResponse,
     Extension, Router,
 };
@@ -45,6 +46,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{EventType, PaymentMadePayload, PaymentReceivedPayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -183,10 +185,12 @@ pub async fn get_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(account_id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Account>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_account(tenant_id, account_id).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.get_account(tenant_id, account_id, locale).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -206,10 +210,12 @@ pub async fn get_account_by_code(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(code): Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Account>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.get_account_by_code(tenant_id, &code).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.get_account_by_code(tenant_id, &code, locale).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -262,10 +268,12 @@ pub async fn list_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<AccountQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Account>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    match service.list_accounts(tenant_id).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.list_accounts(tenant_id, locale).await {
         Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

@@ -5,6 +5,7 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
+    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -20,6 +21,7 @@ use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -66,6 +68,8 @@ pub struct CreateEquipmentRequest {
     pub warranty_expiry_date: Option<chrono::NaiveDate>,
     pub maintenance_frequency_days: Option<i32>,
     pub description: Option<String>,
+    #[serde(default)]
+    pub equipment_name_en: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
@@ -81,6 +85,8 @@ pub struct UpdateEquipmentRequest {
     pub last_maintenance_date: Option<chrono::NaiveDate>,
     pub next_maintenance_date: Option<chrono::NaiveDate>,
     pub description: Option<String>,
+    #[serde(default)]
+    pub equipment_name_en: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -208,6 +214,7 @@ pub async fn list_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListEquipmentQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ListEquipmentResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
@@ -258,21 +265,30 @@ pub async fn list_equipment(
         }
     };
 
+    // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
+    params.push(serde_json::Value::String(
+        Locale::from_headers(&headers).as_sql().to_string(),
+    ));
+    let locale_placeholder = params.len();
+
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
+            id, equipment_code AS equipment_no,
+            CASE WHEN ${locale_placeholder} = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END AS name,
+            model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
-        {}
+        {where_clause}
         ORDER BY created_at DESC
-        LIMIT ${} OFFSET ${}
+        LIMIT ${limit_placeholder} OFFSET ${offset_placeholder}
         "#,
-        where_clause,
-        params.len() + 1,
-        params.len() + 2
+        locale_placeholder = locale_placeholder,
+        where_clause = where_clause,
+        limit_placeholder = params.len() + 1,
+        offset_placeholder = params.len() + 2,
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -345,8 +361,8 @@ pub async fn create_equipment(
             equipment_code, equipment_name, model, manufacturer, status,
             location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
-            description, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
+            description, created_at, updated_at, equipment_name_en
+        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11, $12)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -365,6 +381,7 @@ pub async fn create_equipment(
     .bind(next_maintenance_date)
     .bind(&req.description)
     .bind(now)
+    .bind(&req.equipment_name_en)
     .fetch_one(&state.pool)
     .await;
 
@@ -399,15 +416,19 @@ pub async fn get_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<EquipmentResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(
         r#"
         SELECT 
-            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
+            id, equipment_code AS equipment_no,
+            CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END AS name,
+            model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -416,6 +437,7 @@ pub async fn get_equipment(
         "#,
     )
     .bind(id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 
@@ -465,6 +487,7 @@ pub async fn update_equipment(
         r#"
         UPDATE equipment SET
             name = COALESCE($2, name),
+            equipment_name_en = COALESCE($14, equipment_name_en),
             model = COALESCE($3, model),
             manufacturer = COALESCE($4, manufacturer),
             status = COALESCE($5, status),
@@ -497,6 +520,7 @@ pub async fn update_equipment(
     .bind(req.next_maintenance_date)
     .bind(&req.description)
     .bind(Utc::now().naive_utc())
+    .bind(&req.equipment_name_en)
     .fetch_optional(&state.pool)
     .await;
 

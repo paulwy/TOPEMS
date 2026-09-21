@@ -487,6 +487,8 @@ pub struct CreateAccountRequest {
     pub account_type: Option<AccountType>,
     pub currency: String,
     pub description: Option<String>,
+    #[serde(default)]
+    pub name_en: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]

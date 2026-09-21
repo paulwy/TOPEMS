@@ -351,10 +351,10 @@ impl FinanceService {
             ));
         }
 
-        let profit_account = match self.get_account_by_code(tenant_id, "3101").await {
+        let profit_account = match self.get_account_by_code(tenant_id, "3101", "zh").await {
             Ok(account) => account,
             Err(_) => self
-                .get_account_by_code(tenant_id, "3103")
+                .get_account_by_code(tenant_id, "3103", "zh")
                 .await
                 .map_err(|_| {
                     TopemsError::ValidationFailed("未找到本年利润科目(3101或3103)".to_string())
