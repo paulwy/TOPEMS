@@ -519,8 +519,8 @@ pub async fn create_oee_record(
     .flatten();
 
     let record = OeeRecordResponse {
-        id: result.id,        equipment_id: result.equipment_id,        equipment_name: equipment.as_ref().and_then(|e| e.name.clone()),
-        equipment_code: equipment.as_ref().and_then(|e| e.equipment_no.clone()),
+        id: result.id,        equipment_id: result.equipment_id,        equipment_name: equipment.as_ref().and_then(|e| Some(e.name.clone())),
+        equipment_code: equipment.as_ref().and_then(|e| Some(e.equipment_no.clone())),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),
@@ -1007,7 +1007,7 @@ pub async fn get_oee_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| OeeEquipmentStat {
-                equipment_id: r.equipment_id.unwrap_or_default(),                equipment_name: r.equipment_name.unwrap_or_default(),                equipment_code: r.equipment_code.unwrap_or_default(),                availability: big_decimal_to_f64(r.availability) * 100.0,
+                equipment_id: r.equipment_id,                equipment_name: r.equipment_name,                equipment_code: r.equipment_code,                availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
                 oee: big_decimal_to_f64(r.oee) * 100.0,
@@ -1109,7 +1109,7 @@ pub async fn get_equipment_efficiency_analysis(
             };
 
             EquipmentEfficiencyAnalysis {
-                equipment_id: r.equipment_id.unwrap_or_default(),                equipment_name: r.equipment_name.unwrap_or_default(),                equipment_no: r.equipment_no.unwrap_or_default(),                oee: oee_val,
+                equipment_id: r.equipment_id,                equipment_name: r.equipment_name,                equipment_no: r.equipment_no,                oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),
                 quality_rate: big_decimal_to_f64(r.quality_rate),

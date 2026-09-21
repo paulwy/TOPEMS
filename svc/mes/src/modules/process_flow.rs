@@ -837,7 +837,7 @@ pub async fn add_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (None, String::new()),
+                Err(_) => (String::new(), String::new()),
             };
 
             Json(ApiResponse::success(
@@ -845,7 +845,7 @@ pub async fn add_flow_step(
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
-                    process_name: process_name.unwrap_or_default(),
+                    process_name: process_name,
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
@@ -963,7 +963,7 @@ pub async fn update_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (None, String::new()),
+                Err(_) => (String::new(), String::new()),
             };
 
             Json(ApiResponse::success(
@@ -971,7 +971,7 @@ pub async fn update_flow_step(
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
-                    process_name: process_name.unwrap_or_default(),
+                    process_name: process_name,
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),

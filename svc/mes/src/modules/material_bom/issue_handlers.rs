@@ -52,7 +52,7 @@ pub async fn create_material_issue(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.flatten();
+    let order_no_arg = order_no_flat;
     let issue_result = sqlx::query!(
         r#"
         INSERT INTO material_issues (
@@ -121,8 +121,8 @@ pub async fn create_material_issue(
     }
 
     let response = MaterialIssueResponse {
-        id: issue.id.unwrap_or_default().to_string(),
-        issue_no: issue.issue_no.unwrap_or_default(),
+        id: issue.id.to_string(),
+        issue_no: issue.issue_no,
         order_id: issue.order_id.map(|u| u.to_string()),
         order_no: issue.order_no,
         bom_id: issue.bom_id.map(|u| u.to_string()),
@@ -338,7 +338,7 @@ pub async fn get_material_issue(
     };
 
     let issue_json = serde_json::json!({
-        "id": issue.id.unwrap_or_default().to_string(),
+        "id": issue.id.to_string(),
         "issue_no": issue.issue_no,
         "order_id": issue.order_id.map(|u| u.to_string()),
         "order_no": issue.order_no,
@@ -351,14 +351,14 @@ pub async fn get_material_issue(
         "created_at": datetime_to_string(issue.created_at),
         "updated_at": datetime_to_string(issue.updated_at),
         "items": items.iter().map(|i| serde_json::json!({
-            "id": i.id.unwrap_or_default().to_string(),
-            "issue_id": i.issue_id.unwrap_or_default().to_string(),
+            "id": i.id.to_string(),
+            "issue_id": i.issue_id.to_string(),
             "material_id": i.material_id.map(|u| u.to_string()),
             "material_code": i.material_code,
             "material_name": i.material_name,
             "unit": i.unit,
-            "planned_quantity": big_decimal_to_f64(i.planned_quantity.clone()),
-            "actual_quantity": big_decimal_to_f64(i.actual_quantity.clone()),
+            "planned_quantity": big_decimal_to_f64(Some(i.planned_quantity.clone())),
+            "actual_quantity": big_decimal_to_f64(Some(i.actual_quantity.clone())),
             "batch_no": i.batch_no,
             "notes": i.notes,
         })).collect::<Vec<_>>(),
@@ -415,7 +415,7 @@ pub async fn update_material_issue(
     };
 
     let issue_json = serde_json::json!({
-        "id": issue.id.unwrap_or_default().to_string(),
+        "id": issue.id.to_string(),
         "issue_no": issue.issue_no,
         "order_id": issue.order_id.map(|u| u.to_string()),
         "order_no": issue.order_no,
