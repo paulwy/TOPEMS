@@ -24,7 +24,7 @@ pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
             }
         }
     }
-    Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
+    Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
 }
 
 /// 在当前 PostgreSQL 会话设置 `app.tenant_id`，使 RLS 策略生效。
