@@ -504,6 +504,11 @@ pub async fn approve_eightd(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
 ) -> Json<ApiResponse<EightDReport>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -511,7 +516,7 @@ pub async fn approve_eightd(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {
@@ -564,6 +569,11 @@ pub async fn close_eightd_approval(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
 ) -> Json<ApiResponse<EightDReport>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -571,7 +581,7 @@ pub async fn close_eightd_approval(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {
@@ -624,6 +634,11 @@ pub async fn cancel_eightd(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<EightDApprovalRequest>,
 ) -> Json<ApiResponse<EightDReport>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -631,7 +646,7 @@ pub async fn cancel_eightd(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {

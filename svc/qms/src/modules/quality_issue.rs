@@ -201,6 +201,11 @@ pub async fn get_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
@@ -210,9 +215,9 @@ pub async fn get_issue(
 
     let cols = issue_select_cols("$3");
     let issue = sqlx::query_as::<_, QualityIssue>(&format!(
-        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         cols
-    )).bind(id).bind(tenant_id).bind(locale)
+    )).bind(id).bind(tenant_opt).bind(locale)
     .fetch_one(&state.pool)
     .await;
 
@@ -337,6 +342,11 @@ pub async fn start_issue_approval(
     headers: axum::http::HeaderMap,
     Json(req): Json<StartApprovalRequest>,
 ) -> Json<ApiResponse<QualityIssueWithWorkflow>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -375,11 +385,11 @@ pub async fn start_issue_approval(
     let locale = Locale::from_headers(&headers).as_sql();
     let cols = issue_select_cols("$3");
     let issue = sqlx::query_as::<_, QualityIssue>(&format!(
-        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         cols
     ))
         .bind(issue_id)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(locale)
         .fetch_one(&state.pool)
         .await;
@@ -510,6 +520,11 @@ pub async fn approve_issue_status(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -517,7 +532,7 @@ pub async fn approve_issue_status(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {
@@ -571,6 +586,11 @@ pub async fn reject_issue_status(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -578,7 +598,7 @@ pub async fn reject_issue_status(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {
@@ -627,6 +647,11 @@ pub async fn cancel_issue(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<IssueApprovalRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -634,7 +659,7 @@ pub async fn cancel_issue(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"))
-        .bind(id).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {

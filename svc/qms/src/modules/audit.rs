@@ -302,6 +302,11 @@ pub async fn create_audit_finding(
     axum::extract::Path(task_id): axum::extract::Path<String>,
     Json(req): Json<CreateAuditFindingRequest>,
 ) -> Json<ApiResponse<AuditFinding>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let task_id = match Uuid::parse_str(&task_id) {
         Ok(u) => u,
@@ -316,10 +321,10 @@ pub async fn create_audit_finding(
 
     let task = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"SELECT plan_id FROM qms.qa_audit_tasks WHERE id = $1 AND tenant_id = $2"#
+        r#"SELECT plan_id FROM qms.qa_audit_tasks WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(task_id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

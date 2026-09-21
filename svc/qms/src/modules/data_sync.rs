@@ -134,13 +134,18 @@ pub async fn get_sync_record(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的同步记录ID")),
     };
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
 
     let row = sqlx::query(
         only_own_schema_query!("qms", "SELECT id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qms.qa_qms_sync_records WHERE id = $1 AND tenant_id = $2")
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

@@ -43,6 +43,11 @@ pub async fn list_inspections(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<InspectionQuery>,
 ) -> Json<ApiResponse<ListInspectionsResponse>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -53,13 +58,13 @@ pub async fn list_inspections(
     let total: Option<i64> = match sqlx::query_scalar(
         only_own_schema_query!("qms", r#"
         SELECT COUNT(*) as total FROM qms.qa_quality_inspections
-        WHERE deleted_at IS NULL AND tenant_id = $1
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR inspection_type = $3)
           AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
         "#),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
@@ -82,7 +87,7 @@ pub async fn list_inspections(
             inspected_at::TEXT, result, memo, created_by,
             created_at::TEXT, updated_at::TEXT
         FROM qms.qa_quality_inspections
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR inspection_type = $3)
           AND ($4::text IS NULL OR inspection_no ILIKE $4 OR product_name ILIKE $4 OR inspector ILIKE $4 OR assignee ILIKE $4)
@@ -90,7 +95,7 @@ pub async fn list_inspections(
         LIMIT $5 OFFSET $6
         "#),
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(query.inspection_type.as_deref())
     .bind(search_pattern.as_deref())
@@ -304,6 +309,11 @@ pub async fn assign_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<AssignInspectionRequest>,
 ) -> Json<ApiResponse<Inspection>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -314,7 +324,7 @@ pub async fn assign_inspection(
         only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -357,6 +367,11 @@ pub async fn submit_result(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<SubmitInspectionResultRequest>,
 ) -> Json<ApiResponse<Inspection>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -367,7 +382,7 @@ pub async fn submit_result(
         only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -428,6 +443,11 @@ pub async fn audit_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<AuditInspectionRequest>,
 ) -> Json<ApiResponse<Inspection>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -438,7 +458,7 @@ pub async fn audit_inspection(
         only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -497,6 +517,11 @@ pub async fn rework_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<AuditInspectionRequest>,
 ) -> Json<ApiResponse<Inspection>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -507,7 +532,7 @@ pub async fn rework_inspection(
         only_own_schema_query!("qms", r#"SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"#),
     )
     .bind(id.to_string())
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -586,13 +611,18 @@ pub async fn get_inspection_audits(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<InspectionAudit>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id::TEXT, inspection_id, status_from, status_to, action, operator, comment, created_at::TEXT FROM qms.qa_inspection_audits WHERE inspection_id = $1 AND tenant_id = $2 ORDER BY created_at"#)).bind(id).bind(tenant_id)
+    let audits = sqlx::query_as::<_, InspectionAudit>(only_own_schema_query!("qms", r#"SELECT id::TEXT, COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id, inspection_id, status_from, status_to, action, operator, comment, created_at::TEXT FROM qms.qa_inspection_audits WHERE inspection_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"#)).bind(id).bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 
@@ -637,6 +667,11 @@ pub async fn approve_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Inspection>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -644,7 +679,7 @@ pub async fn approve_inspection(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"))
-        .bind(id.to_string()).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id.to_string()).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {
@@ -694,6 +729,11 @@ pub async fn reject_inspection(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<Inspection>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -701,7 +741,7 @@ pub async fn reject_inspection(
     };
 
     let current = sqlx::query(only_own_schema_query!("qms", "SELECT status FROM qms.qa_quality_inspections WHERE deleted_at IS NULL AND id::TEXT = $1 AND tenant_id = $2"))
-        .bind(id.to_string()).bind(tenant_id).fetch_one(&state.pool).await;
+        .bind(id.to_string()).bind(tenant_opt).fetch_one(&state.pool).await;
 
     match current {
         Ok(row) => {

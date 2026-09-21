@@ -331,6 +331,11 @@ pub async fn get_fmea_statistics(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<FmeaStatistics>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -339,70 +344,70 @@ pub async fn get_fmea_statistics(
 
     let total: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2"#
+        r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#
     ))
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
     let total_items = total.unwrap_or(0);
 
     let high_risk: Option<i64> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2 AND rpn >= 100"#),
+        only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND rpn >= 100"#),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
     let high_risk_count = high_risk.unwrap_or(0);
 
     let medium_risk: Option<i64> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2 AND rpn >= 36 AND rpn < 100"#),
+        only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND rpn >= 36 AND rpn < 100"#),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
     let medium_risk_count = medium_risk.unwrap_or(0);
 
     let low_risk: Option<i64> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2 AND rpn < 36"#),
+        only_own_schema_query!("qms", r#"SELECT COUNT(*) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND rpn < 36"#),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
     let low_risk_count = low_risk.unwrap_or(0);
 
     let avg_rpn: Option<bigdecimal::BigDecimal> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2"#),
+        only_own_schema_query!("qms", r#"SELECT COALESCE(AVG(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
     let average_rpn: f64 = avg_rpn.and_then(|v| v.to_f64()).unwrap_or(0.0);
 
     let max_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", r#"SELECT COALESCE(MAX(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2"#),
+        only_own_schema_query!("qms", r#"SELECT COALESCE(MAX(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
     let max_rpn = max_rpn_val.unwrap_or(0) as i64;
 
     let min_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(
-        only_own_schema_query!("qms", r#"SELECT COALESCE(MIN(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND tenant_id = $2"#),
+        only_own_schema_query!("qms", r#"SELECT COALESCE(MIN(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     .ok();
