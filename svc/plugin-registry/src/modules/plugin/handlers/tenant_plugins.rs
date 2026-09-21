@@ -7,6 +7,7 @@ use uuid::Uuid;
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 // ============================================================================
 // Pure helper functions (no DB / async) — extracted for unit testing
@@ -141,24 +142,17 @@ pub async fn list_tenant_plugins(
 /// Get current user's tenant installed plugins
 pub async fn list_my_plugins(
     State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
 ) -> Json<CoreResponse<Vec<TenantPluginWithDetails>>> {
-    let tenant_id = match claims.tenant_id {
-        Some(id) => match Uuid::parse_str(&id) {
-            Ok(id) => id,
-            Err(e) => {
-                tracing::error!("[Plugin] Invalid tenant ID in claims: {}", e);
-                return Json(CoreResponse::error("Invalid tenant ID"));
-            }
-        },
-        None => {
-            tracing::error!("[Plugin] No tenant ID in claims");
-            return Json(CoreResponse::error("Tenant ID not found in token"));
-        }
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
     };
 
     tracing::info!(
-        "[Plugin] Listing plugins for tenant (from claims): {}",
+        "[Plugin] Listing plugins for tenant (from claims): {:?}",
         tenant_id
     );
 
@@ -173,7 +167,7 @@ pub async fn list_my_plugins(
             p.price_cents, p.install_count, p.rating, p.rating_count
         FROM core.core_tenant_plugins tp
         JOIN core.core_plugins p ON tp.plugin_id = p.id
-        WHERE tp.tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tp.tenant_id = $1)
         ORDER BY tp.is_active DESC, tp.activated_at DESC
         "#,
     )

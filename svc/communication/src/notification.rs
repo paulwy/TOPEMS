@@ -1923,10 +1923,14 @@ pub async fn list_channels(
     Extension(claims): Extension<Claims>,
     Query(query): Query<ChannelQuery>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+    let tenant_id: Option<String> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims
+            .tenant_id
+            .clone()
+            .unwrap_or_else(|| "default".to_string()))
+    };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -1938,7 +1942,7 @@ pub async fn list_channels(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
          FROM notification_channels \
-         WHERE tenant_id = $1 \
+         WHERE ($1::text IS NULL OR tenant_id = $1) \
            AND ($2::text IS NULL OR type = $2) \
            AND ($3::text IS NULL OR status = $3) \
          ORDER BY created_at DESC LIMIT $4 OFFSET $5",
@@ -1962,7 +1966,7 @@ pub async fn list_channels(
 
     let total = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM notification_channels \
-         WHERE tenant_id = $1 AND ($2::text IS NULL OR type = $2) AND ($3::text IS NULL OR status = $3)",
+         WHERE ($1::text IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR type = $2) AND ($3::text IS NULL OR status = $3)",
     )
     .bind(&tenant_id)
     .bind(query.r#type)
@@ -1990,14 +1994,18 @@ pub async fn get_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+    let tenant_id: Option<String> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims
+            .tenant_id
+            .clone()
+            .unwrap_or_else(|| "default".to_string()))
+    };
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
-         FROM notification_channels WHERE id = $1 AND tenant_id = $2",
+         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(&tenant_id)
@@ -2172,14 +2180,18 @@ pub async fn test_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id = claims
-        .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+    let tenant_id: Option<String> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims
+            .tenant_id
+            .clone()
+            .unwrap_or_else(|| "default".to_string()))
+    };
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
-         FROM notification_channels WHERE id = $1 AND tenant_id = $2",
+         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(&tenant_id)

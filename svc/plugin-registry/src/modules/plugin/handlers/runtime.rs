@@ -308,8 +308,10 @@ pub async fn get_navigation_config(
         .as_deref()
         .and_then(|s| uuid::Uuid::parse_str(s).ok());
 
+    let use_tenant_filter = !claims.is_superuser && tenant_uuid.is_some();
     let rows: Vec<(String, String, Option<String>, Option<String>, bool, bool)> =
-        if let Some(tid) = tenant_uuid {
+        if use_tenant_filter {
+            let tid = tenant_uuid.unwrap();
             sqlx::query_as(
                 r#"
             SELECT p.code, p.name, p.category, p.entry_point,
