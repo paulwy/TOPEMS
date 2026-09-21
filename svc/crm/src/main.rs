@@ -1,4 +1,5 @@
 use anyhow::Result;
+use uuid::Uuid;
 use axum::{routing::get, Router};
 use std::env;
 use std::sync::Arc;
@@ -181,8 +182,10 @@ async fn main() -> Result<()> {
             tracing::info!("[crm] 开始客户列表缓存预热...");
             // 预热使用默认租户占位（与 create_customer 中使用的组织 UUID 一致），
             // 默认参数：page=1, page_size=25, search=None
-            let warmup_tenant =
-                "00000000-0000-0000-0000-000000000001".to_string();
+            let warmup_tenant = Uuid::parse_str(
+                "00000000-0000-0000-0000-000000000001"
+            )
+            .expect("default tenant uuid");
             match sqlx::query_scalar::<_, serde_json::Value>(
                 r#"
                 SELECT json_build_object(
