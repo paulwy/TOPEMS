@@ -428,7 +428,7 @@ pub async fn create_production_schedule(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.as_deref();
+    let order_no_arg = order_no_flat.flatten();
     let result = sqlx::query!(
         r#"
         INSERT INTO production_schedules (
@@ -475,14 +475,14 @@ pub async fn create_production_schedule(
     };
 
     let schedule = ProductionScheduleResponse {
-        id: result.id,
-        schedule_no: result.schedule_no,
+        id: result.id.unwrap_or_default(),
+        schedule_no: result.schedule_no.unwrap_or_default(),
         order_id: result.order_id,
         order_no: result.order_no,
         product_id: result.product_id,
-        product_name: result.product_name,
-        product_code: result.product_code,
-        quantity: big_decimal_to_f64(Some(result.quantity)),
+        product_name: result.product_name.unwrap_or_default(),
+        product_code: result.product_code.unwrap_or_default(),
+        quantity: big_decimal_to_f64(result.quantity),
         work_station_id: result.work_station_id,
         work_station_name: None,
         equipment_id: result.equipment_id,
@@ -567,20 +567,20 @@ pub async fn get_production_schedule(
     match result {
         Some(r) => {
             let schedule = ProductionScheduleResponse {
-                id: r.id,
-                schedule_no: r.schedule_no,
+                id: r.id.unwrap_or_default(),
+                schedule_no: r.schedule_no.unwrap_or_default(),
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
-                product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity.unwrap_or_default())),
                 work_station_id: r.work_station_id,
-                work_station_name: Some(r.work_station_name),
+                work_station_name: Some(r.work_station_name.unwrap_or_default()),
                 equipment_id: r.equipment_id,
-                equipment_name: Some(r.equipment_name),
+                equipment_name: Some(r.equipment_name.unwrap_or_default()),
                 process_id: r.process_id,
-                process_name: Some(r.process_name),
+                process_name: Some(r.process_name.unwrap_or_default()),
                 planned_start_time: opt_naive_to_utc(r.planned_start_time),
                 planned_end_time: opt_naive_to_utc(r.planned_end_time),
                 actual_start_time: opt_naive_to_utc(r.actual_start_time),
@@ -677,14 +677,14 @@ pub async fn update_production_schedule(
     match result {
         Some(r) => {
             let schedule = ProductionScheduleResponse {
-                id: r.id,
-                schedule_no: r.schedule_no,
+                id: r.id.unwrap_or_default(),
+                schedule_no: r.schedule_no.unwrap_or_default(),
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
-                product_name: r.product_name,
-                product_code: r.product_code,
-                quantity: big_decimal_to_f64(Some(r.quantity)),
+                product_name: r.product_name.unwrap_or_default(),
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: big_decimal_to_f64(Some(r.quantity.unwrap_or_default())),
                 work_station_id: r.work_station_id,
                 work_station_name: None,
                 equipment_id: r.equipment_id,
@@ -883,7 +883,7 @@ pub async fn get_gantt_data(
             .map(|d| Utc.from_utc_datetime(&d))
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
-        let total = big_decimal_to_f64(Some(s.quantity.clone()));
+        let total = big_decimal_to_f64(s.quantity.clone());
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
         let progress = if total > 0.0 {
             (completed / total) * 100.0
@@ -894,20 +894,20 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone(),
-                name: resource_name.clone(),
+                id: resource_name.clone().unwrap_or_default(),
+                name: resource_name.clone().unwrap_or_default(),
                 category: "workstation".to_string(),
             });
         }
 
         tasks.push(GanttTask {
-            id: s.id.to_string(),
-            name: format!("{} - {}", s.schedule_no.clone(), s.product_name.clone()),
+            id: s.id.unwrap_or_default().to_string(),
+            name: format!("{} - {}", s.schedule_no.clone().unwrap_or_default(), s.product_name.clone().unwrap_or_default()),
             start,
             end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
-            resource: Some(resource_name),
+            resource: resource_name,
             parent: None,
         });
     }
