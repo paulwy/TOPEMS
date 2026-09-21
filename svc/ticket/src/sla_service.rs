@@ -470,12 +470,12 @@ impl TicketSlaService {
         .execute(&self.pool)
         .await?;
 
-        self.get_policy(tenant_id, policy_id).await
+        self.get_policy(Some(tenant_id), policy_id).await
     }
 
     pub async fn get_policy(
         &self,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         policy_id: Uuid,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
@@ -494,7 +494,7 @@ impl TicketSlaService {
 
     pub async fn list_policies(
         &self,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
@@ -570,7 +570,7 @@ impl TicketSlaService {
         .execute(&self.pool)
         .await?;
 
-        self.get_policy(tenant_id, policy_id).await
+        self.get_policy(Some(tenant_id), policy_id).await
     }
 
     pub async fn delete_policy(
@@ -592,11 +592,11 @@ impl TicketSlaService {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn get_sla_stats(&self, tenant_id: Uuid) -> Result<TicketSlaStats, sqlx::Error> {
+    pub async fn get_sla_stats(&self, tenant_id: Option<Uuid>) -> Result<TicketSlaStats, sqlx::Error> {
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM ticket.core_tickets
-            WHERE tenant_id = $1 AND sla_due_at IS NOT NULL
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sla_due_at IS NOT NULL
               AND status IN ('resolved', 'closed')
             "#,
         )
@@ -607,7 +607,7 @@ impl TicketSlaService {
         let breached: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM ticket.core_tickets
-            WHERE tenant_id = $1 AND sla_due_at IS NOT NULL
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND sla_due_at IS NOT NULL
               AND status IN ('resolved', 'closed')
               AND resolved_at > sla_due_at
             "#,
@@ -627,7 +627,7 @@ impl TicketSlaService {
             r#"
             SELECT AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 60)
             FROM ticket.core_tickets
-            WHERE tenant_id = $1 AND resolved_at IS NOT NULL
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND resolved_at IS NOT NULL
             "#,
         )
         .bind(tenant_id)
@@ -641,7 +641,7 @@ impl TicketSlaService {
               SELECT t.created_at, MIN(c.created_at) as first_response_at
               FROM ticket.core_tickets t
               JOIN ticket.core_ticket_comments c ON t.id = c.ticket_id
-              WHERE t.tenant_id = $1 AND c.user_id != t.reporter_id
+              WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND c.user_id != t.reporter_id
               GROUP BY t.id, t.created_at
             ) sub
             "#,
@@ -658,7 +658,7 @@ impl TicketSlaService {
               COUNT(*) as total,
               SUM(CASE WHEN t.resolved_at > t.sla_due_at THEN 1 ELSE 0 END) as breached
             FROM ticket.core_tickets t
-            WHERE t.tenant_id = $1 AND t.sla_due_at IS NOT NULL
+            WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND t.sla_due_at IS NOT NULL
               AND t.status IN ('resolved', 'closed')
             GROUP BY t.severity
             "#,
@@ -692,7 +692,7 @@ impl TicketSlaService {
               COUNT(*) as total,
               SUM(CASE WHEN t.resolved_at > t.sla_due_at THEN 1 ELSE 0 END) as breached
             FROM ticket.core_tickets t
-            WHERE t.tenant_id = $1 AND t.sla_due_at IS NOT NULL
+            WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND t.sla_due_at IS NOT NULL
               AND t.status IN ('resolved', 'closed')
             GROUP BY t.ticket_type
             "#,
@@ -726,7 +726,7 @@ impl TicketSlaService {
               COUNT(*) as total,
               SUM(CASE WHEN sla_due_at IS NOT NULL AND resolved_at > sla_due_at THEN 1 ELSE 0 END) as breached
             FROM ticket.core_tickets
-            WHERE tenant_id = $1
+            WHERE ($1::uuid IS NULL OR tenant_id = $1)
               AND created_at >= NOW() - INTERVAL '30 days'
             GROUP BY DATE(created_at)
             ORDER BY date DESC

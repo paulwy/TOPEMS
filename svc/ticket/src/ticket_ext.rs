@@ -160,12 +160,12 @@ async fn list_workflow_automation_rules(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
 ) -> Json<ApiResponse<Vec<WorkflowRuleView>>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     match sqlx::query(
         "SELECT id, name, condition_field, action_type, enabled
-         FROM ticket.ticket_automation_rules WHERE tenant_id = $1 ORDER BY priority ASC, created_at ASC",
+         FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
     )
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_all(&pool)
     .await
     {
@@ -237,12 +237,12 @@ async fn get_ticket_transitions(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let row = sqlx::query(
-        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_optional(&pool)
     .await;
 
@@ -384,12 +384,12 @@ async fn get_ticket_tags(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let tags: Option<Vec<String>> = match sqlx::query_scalar(
-        "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_optional(&pool)
     .await
     {
@@ -485,13 +485,13 @@ async fn list_tag_directory(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let rows = sqlx::query(
         "SELECT unnest(tags) AS tag, count(*) AS count \
-         FROM ticket.core_tickets WHERE tenant_id = $1 AND deleted_at IS NULL \
+         FROM ticket.core_tickets WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
          GROUP BY tag ORDER BY count DESC",
     )
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_all(&pool)
     .await;
     let rows = match rows {
@@ -523,12 +523,12 @@ async fn get_tag_stub(
     claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let count: i64 = match sqlx::query_scalar(
         "SELECT count(*) FROM ticket.core_tickets \
-         WHERE tenant_id = $1 AND deleted_at IS NULL AND $2 = ANY(tags)",
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND $2 = ANY(tags)",
     )
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .bind(&tag)
     .fetch_one(&pool)
     .await
@@ -754,14 +754,14 @@ async fn list_attachments(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_by, created_at \
          FROM ticket.ticket_attachments \
-         WHERE ticket_id = $1 AND tenant_id = $2 AND deleted_at IS NULL ORDER BY created_at DESC",
+         WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL ORDER BY created_at DESC",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_all(&pool)
     .await
     {
@@ -835,15 +835,15 @@ async fn get_attachment(
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let row = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_at \
          FROM ticket.ticket_attachments \
-         WHERE id = $1 AND ticket_id = $2 AND tenant_id = $3 AND deleted_at IS NULL",
+         WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND deleted_at IS NULL",
     )
     .bind(attachment_id)
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_optional(&pool)
     .await
     {
@@ -1014,14 +1014,14 @@ async fn get_attachment_stats(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let row = match sqlx::query(
         "SELECT count(*) AS total, COALESCE(sum(file_size), 0) AS total_bytes \
          FROM ticket.ticket_attachments \
-         WHERE ticket_id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+         WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_one(&pool)
     .await
     {
@@ -1042,15 +1042,15 @@ async fn get_attachments_by_type(
     claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, created_at \
          FROM ticket.ticket_attachments \
-         WHERE ticket_id = $1 AND tenant_id = $2 AND file_type = $3 AND deleted_at IS NULL \
+         WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND file_type = $3 AND deleted_at IS NULL \
          ORDER BY created_at DESC",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .bind(&file_type)
     .fetch_all(&pool)
     .await
@@ -1082,14 +1082,14 @@ pub async fn download_attachment_handler(
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::response::Response, axum::response::Response> {
-    let tenant_id = tenant_of(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
     let row = sqlx::query(
         "SELECT file_name, mime_type, file_data FROM ticket.ticket_attachments \
-         WHERE id = $1 AND ticket_id = $2 AND tenant_id = $3 AND deleted_at IS NULL",
+         WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND deleted_at IS NULL",
     )
     .bind(attachment_id)
     .bind(id)
-    .bind(tenant_id)
+    .bind(opt_tenant_id)
     .fetch_optional(&pool)
     .await
     .map_err(|_| axum::response::Response::new(axum::body::Body::from("查询失败")))?;
