@@ -236,12 +236,12 @@ pub async fn list_production_orders(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE deleted_at IS NULL");
 
     if let Some(status) = query.status {
         where_clause.push_str(" AND status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(status);
     }
 
     if let Some(search) = query.search {
@@ -258,7 +258,7 @@ pub async fn list_production_orders(
                 params.len() + 1
             ));
         }
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!(
@@ -281,9 +281,7 @@ pub async fn list_production_orders(
     };
 
     // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
-    params.push(serde_json::Value::String(
-        Locale::from_headers(&headers).as_sql().to_string(),
-    ));
+    params.push(Locale::from_headers(&headers).as_sql().to_string());
     let locale_placeholder = params.len();
 
     let fetch_sql = format!(
