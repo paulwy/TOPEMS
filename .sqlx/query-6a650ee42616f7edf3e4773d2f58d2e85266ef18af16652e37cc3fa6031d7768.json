@@ -62,11 +62,6 @@
         "ordinal": 11,
         "name": "updated_at",
         "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 12,
-        "name": "work_station_name",
-        "type_info": "Varchar"
       }
     ],
     "parameters": {
@@ -77,16 +72,15 @@
         "Uuid",
         "Uuid",
         "Varchar",
-        "Varchar",
+        "Text",
         "Timestamp",
         "Uuid"
       ]
     },
     "nullable": [
       false,
-      true,
-      true,
-      true,
+      false,
+      false,
       true,
       true,
       true,

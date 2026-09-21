@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Timestamp"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 9,
@@ -73,7 +73,7 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Timestamp",
+        "Varchar",
         "Text",
         "Uuid"
       ]
@@ -84,13 +84,13 @@
       false,
       true,
       true,
-      true,
-      true,
-      true,
-      true,
-      true,
       false,
-      false
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
     ]
   },
   "hash": "ff2ce847546db8f67b08db4f9a03105a9f4378e50496f8125e9c886c424dd671"
