@@ -473,7 +473,7 @@ mod tests {
         let p = Pipeline {
             id: test_uuid(),
             tenant_id: test_uuid(),
-            map_id: test_uuid(),
+            map_id: Some(test_uuid()),
             name: "主管道".to_string(),
             code: "PIPE-001".to_string(),
             pipeline_type: Some("water".to_string()),
@@ -956,7 +956,7 @@ mod tests {
         let p = Pipeline {
             id: test_uuid(),
             tenant_id: test_uuid(),
-            map_id: test_uuid(),
+            map_id: Some(test_uuid()),
             name: "管道".to_string(),
             code: "P-001".to_string(),
             pipeline_type: None,
