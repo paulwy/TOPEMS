@@ -60,6 +60,7 @@ async fn test_create_account() {
         account_type: Some(AccountType::Asset),
         currency: "CNY".to_string(),
         description: None,
+        name_en: None,
     };
 
     let account = service
@@ -94,6 +95,7 @@ async fn test_get_account() {
         account_type: Some(AccountType::Asset),
         currency: "CNY".to_string(),
         description: None,
+        name_en: None,
     };
 
     let created = service
@@ -101,7 +103,7 @@ async fn test_get_account() {
         .await
         .expect("Failed to create account");
     let retrieved = service
-        .get_account(tenant_id, created.id)
+        .get_account(tenant_id, created.id, "zh")
         .await
         .expect("Failed to get account");
 
@@ -131,6 +133,7 @@ async fn test_voucher_lifecycle() {
         account_type: Some(AccountType::Asset),
         currency: "CNY".to_string(),
         description: None,
+        name_en: None,
     };
     service
         .create_account(tenant_id, cash_req)
@@ -144,6 +147,7 @@ async fn test_voucher_lifecycle() {
         account_type: Some(AccountType::Income),
         currency: "CNY".to_string(),
         description: None,
+        name_en: None,
     };
     service
         .create_account(tenant_id, revenue_req)

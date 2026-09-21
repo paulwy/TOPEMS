@@ -63,6 +63,7 @@ fn test_create_issue_request_full() {
         related_inspection_id: Some("12345678-1234-5678-1234-567812345678".to_string()),
         created_by: Some("user123".to_string()),
         workflow_id: None,
+        title_en: None,
     };
 
     assert_eq!(request.title, "产品质量问题");
@@ -83,6 +84,7 @@ fn test_create_issue_request_minimal() {
         related_inspection_id: None,
         created_by: None,
         workflow_id: None,
+        title_en: None,
     };
 
     assert_eq!(request.title, "简单问题");
@@ -103,6 +105,7 @@ fn test_create_issue_request_serialization() {
         related_inspection_id: None,
         created_by: Some("tester".to_string()),
         workflow_id: None,
+        title_en: None,
     };
 
     let json = serde_json::to_string(&request).unwrap();

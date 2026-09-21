@@ -1001,7 +1001,7 @@ mod tests {
     #[test]
     fn suppliers_list_cache_key_distinct_for_different_params() {
         let k1 = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None, None);
-        let k2 = suppliers_list_cache_key("test-tenant", 2, 10, &None, &None);
+        let k2 = suppliers_list_cache_key("test-tenant", 2, 10, &None, &None, None);
         assert_ne!(k1, k2);
     }
 
