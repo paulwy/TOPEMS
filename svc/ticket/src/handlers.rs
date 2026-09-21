@@ -916,10 +916,13 @@ pub async fn get_sla_stats_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<TicketSlaStats>> {
     let service = TicketSlaService::new(pool);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
+    };
 
-    match service.get_sla_stats(tenant_id).await {
+    match service.get_sla_stats(opt_tenant_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA统计失败", e))),
     }
@@ -966,10 +969,13 @@ pub async fn list_sla_policies_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<TicketSlaPolicy>>> {
     let service = TicketSlaService::new(pool);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
+    };
 
-    match service.list_policies(tenant_id).await {
+    match service.list_policies(opt_tenant_id).await {
         Ok(policies) => Json(ApiResponse::success(policies, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA策略失败", e))),
     }
@@ -981,10 +987,13 @@ pub async fn get_sla_policy_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TicketSlaPolicy>> {
     let service = TicketSlaService::new(pool);
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
+    };
 
-    match service.get_policy(tenant_id, id).await {
+    match service.get_policy(opt_tenant_id, id).await {
         Ok(policy) => Json(ApiResponse::success(policy, "查询成功")),
         Err(e) => Json(ApiResponse::from({
             tracing::warn!("SLA策略不存在: {}", e);
