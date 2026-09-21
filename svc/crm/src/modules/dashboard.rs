@@ -200,11 +200,11 @@ async fn get_customer_details(
     let customer = sqlx::query_as::<_, crate::models::Customer>(
         r#"
         SELECT id, tenant_id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
-        FROM crm.customers WHERE id = $1 AND tenant_id = $2
+        FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -212,30 +212,30 @@ async fn get_customer_details(
         Ok(Some(customer)) => {
             let contacts = sqlx::query_as::<_, crate::models::Contact>(
                 "SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
-                 FROM crm.contacts WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"
+                 FROM crm.contacts WHERE customer_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"
             )
             .bind(id)
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
             let opportunities = sqlx::query_as::<_, crate::models::Opportunity>(
                 "SELECT id, tenant_id, customer_id, name, value, stage, probability, close_date, notes, created_at, updated_at
-                 FROM crm.opportunities WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"
+                 FROM crm.opportunities WHERE customer_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"
             )
             .bind(id)
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
             let recent_interactions = sqlx::query_as::<_, crate::models::Interaction>(
                 "SELECT id, tenant_id, customer_id, contact_id, type, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at
-                 FROM crm.interactions WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 10"
+                 FROM crm.interactions WHERE customer_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC LIMIT 10"
             )
             .bind(id)
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();

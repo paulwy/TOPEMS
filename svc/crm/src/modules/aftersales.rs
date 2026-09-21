@@ -237,7 +237,7 @@ async fn list_returns(
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
         FROM crm.returns
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR return_type = $3)
           AND ($4::uuid IS NULL OR customer_id = $4)
@@ -247,7 +247,7 @@ async fn list_returns(
         LIMIT $7 OFFSET $8
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&params.status)
     .bind(&params.return_type)
     .bind(params.customer_id)
@@ -263,7 +263,7 @@ async fn list_returns(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.returns
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR return_type = $3)
                   AND ($4::uuid IS NULL OR customer_id = $4)
@@ -271,7 +271,7 @@ async fn list_returns(
                   AND ($6::text IS NULL OR return_no ILIKE $6 OR reason ILIKE $6)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&params.status)
             .bind(&params.return_type)
             .bind(params.customer_id)
@@ -448,11 +448,11 @@ async fn get_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -498,11 +498,11 @@ async fn update_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -640,11 +640,11 @@ async fn delete_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -755,11 +755,11 @@ async fn approve_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -855,11 +855,11 @@ async fn reject_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -955,11 +955,11 @@ async fn receive_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1062,11 +1062,11 @@ async fn complete_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1252,11 +1252,11 @@ async fn cancel_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1343,12 +1343,12 @@ async fn list_return_items(
         r#"
         SELECT id, return_id, tenant_id, product_id, quantity, unit_price, total_amount, created_at
         FROM crm.return_items
-        WHERE return_id = $1 AND tenant_id = $2
+        WHERE return_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at ASC
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1472,7 +1472,7 @@ pub async fn sync_return_to_finance(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(return_id)
@@ -1582,7 +1582,7 @@ pub async fn sync_return_to_inventory(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(return_id)
@@ -1605,7 +1605,7 @@ pub async fn sync_return_to_inventory(
         r#"
         SELECT id, return_id, tenant_id, product_id, quantity, unit_price, total_amount, created_at
         FROM crm.return_items
-        WHERE return_id = $1 AND tenant_id = $2
+        WHERE return_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(return_id)
@@ -1927,7 +1927,7 @@ async fn accept_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -2023,7 +2023,7 @@ async fn process_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -2125,7 +2125,7 @@ async fn resolve_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -2236,7 +2236,7 @@ async fn confirm_return(
                status, refund_amount, exchange_product_id, received, received_at, approved_by,
                approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
                ticket_id, warehouse_id, deleted_at
-        FROM crm.returns WHERE id = $1 AND tenant_id = $2
+        FROM crm.returns WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

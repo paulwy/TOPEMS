@@ -276,7 +276,7 @@ async fn list_opportunities(
         r#"
         SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2)
           AND ($3::text IS NULL OR stage = $3)
           AND ($4::uuid IS NULL OR customer_id = $4)
@@ -284,7 +284,7 @@ async fn list_opportunities(
         LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&stage_filter)
     .bind(customer_filter)
@@ -298,13 +298,13 @@ async fn list_opportunities(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.opportunities
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2)
                   AND ($3::text IS NULL OR stage = $3)
                   AND ($4::uuid IS NULL OR customer_id = $4)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&stage_filter)
             .bind(customer_filter)
@@ -511,11 +511,11 @@ async fn get_opportunity(
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
-        FROM crm.opportunities WHERE id = $1 AND tenant_id = $2
+        FROM crm.opportunities WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -562,11 +562,11 @@ async fn update_opportunity(
 
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1244,11 +1244,11 @@ async fn advance_opportunity(
     let existing = match sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
-        FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
@@ -1418,11 +1418,11 @@ async fn rollback_opportunity(
     let existing = match sqlx::query_as::<_, Opportunity>(
         r#"
         SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, win_rate, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
-        FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        FROM crm.opportunities WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     {
