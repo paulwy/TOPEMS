@@ -57,7 +57,7 @@ pub async fn list_roles(
         .await
     } else {
         sqlx::query_as::<_, RoleRow>(
-            "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC",
+            "SELECT id, name, description, tenant_id, created_at, updated_at FROM public.core_roles WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .fetch_all(&state.pool)

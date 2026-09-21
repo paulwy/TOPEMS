@@ -14,7 +14,7 @@ use topems_shared_core::{response::ApiResponse, TopemsError};
 
 async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
+        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
     ))
     .bind(tenant_id)
@@ -33,7 +33,7 @@ async fn count_table_with_tenant_and_status(
     status: &str,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
+        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2",
         table
     ))
     .bind(tenant_id)
@@ -53,7 +53,7 @@ async fn count_table_with_tenant_and_enabled(
     is_enabled: bool,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND is_enabled = $2",
+        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_enabled = $2",
         table
     ))
     .bind(tenant_id)
@@ -73,7 +73,7 @@ async fn count_table_with_tenant_and_condition(
     condition: &str,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
-        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND {}",
+        "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1) AND {}",
         table, condition
     ))
     .bind(tenant_id)

@@ -53,7 +53,7 @@ pub async fn get_operation_log(
                   resource_type, resource_id, description, request_data,
                   response_status, ip_address, user_agent, trace_id, created_at
            FROM core_operation_logs
-           WHERE id = $1 AND tenant_id = $2"#,
+           WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
     )
     .bind(id)
     .bind(tenant_id)

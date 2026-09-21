@@ -52,7 +52,7 @@ pub async fn list_positions(
         .unwrap_or_default()
     } else {
         sqlx::query(
-            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE tenant_id = $1 ORDER BY name"#,
+            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"#,
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .fetch_all(&state.pool)
@@ -167,7 +167,7 @@ pub async fn get_position(
         .await
     } else {
         sqlx::query(
-            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+            r#"SELECT id, code, name, department_id, description FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
         )
         .bind(id)
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
@@ -238,7 +238,7 @@ pub async fn update_position(
             .flatten()
     } else {
         sqlx::query(
-            r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#,
+            r#"SELECT id FROM iam.positions WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
         )
         .bind(id)
         .bind(tenant_id)

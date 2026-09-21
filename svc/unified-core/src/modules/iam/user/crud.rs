@@ -48,7 +48,7 @@ pub async fn list_users(
             .await
     } else {
         sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND tenant_id = $1",
+            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .fetch_one(&state.pool)
@@ -77,7 +77,7 @@ pub async fn list_users(
         .await
     } else {
         sqlx::query_as::<_, UserRow>(
-            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .bind(page_size)

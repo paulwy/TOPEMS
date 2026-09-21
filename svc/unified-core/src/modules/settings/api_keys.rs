@@ -71,7 +71,7 @@ pub async fn list_api_keys(
     let pattern = format!("{}%", API_KEY_PREFIX);
 
     let result = sqlx::query(
-        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE deleted_at IS NULL AND tenant_id = $1 AND setting_key LIKE $2 ORDER BY updated_at DESC",
+        "SELECT setting_key, setting_value, updated_at FROM core_tenant_settings WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND setting_key LIKE $2 ORDER BY updated_at DESC",
     )
     .bind(tenant_id)
     .bind(&pattern)

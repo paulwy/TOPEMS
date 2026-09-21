@@ -72,7 +72,7 @@ pub async fn get_smtp_config(
     let tenant_id = tenant_uuid(&claims);
 
     let result = sqlx::query(
-        "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2",
+        "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
     )
     .bind(tenant_id)
     .bind(SMTP_CONFIG_KEY)
@@ -130,7 +130,7 @@ pub async fn update_smtp_config(
     let mut to_store = payload.clone();
     if to_store.password.is_empty() || to_store.password == PASSWORD_MASK {
         let existing = sqlx::query(
-            "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2",
+            "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
         )
         .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)
@@ -208,7 +208,7 @@ pub async fn test_smtp_config(
     } else {
         let tenant_id = tenant_uuid(&claims);
         let row = sqlx::query(
-            "SELECT setting_value FROM core_tenant_settings WHERE tenant_id = $1 AND setting_key = $2",
+            "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",
         )
         .bind(tenant_id)
         .bind(SMTP_CONFIG_KEY)

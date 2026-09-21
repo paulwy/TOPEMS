@@ -14,7 +14,7 @@ impl FolderService {
 
     pub async fn list_folders(&self, tenant_id: Uuid) -> Result<Vec<Folder>> {
         sqlx::query_as::<_, Folder>(
-            r#"SELECT id, tenant_id, name, description, parent_id, created_by, created_at, updated_at, deleted_at FROM core_doc_folders WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, description, parent_id, created_by, created_at, updated_at, deleted_at FROM core_doc_folders WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -23,7 +23,7 @@ impl FolderService {
 
     pub async fn get_folder(&self, tenant_id: Uuid, folder_id: Uuid) -> Result<Option<Folder>> {
         sqlx::query_as::<_, Folder>(
-            r#"SELECT id, tenant_id, name, description, parent_id, created_by, created_at, updated_at, deleted_at FROM core_doc_folders WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
+            r#"SELECT id, tenant_id, name, description, parent_id, created_by, created_at, updated_at, deleted_at FROM core_doc_folders WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(folder_id)

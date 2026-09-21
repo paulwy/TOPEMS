@@ -355,7 +355,7 @@ impl MasterDataService {
             r#"
             SELECT id, master_data_id, tenant_id, action, source_service, operator, changed_fields, payload, created_at
             FROM core_master_data_change_log
-            WHERE tenant_id = $1 AND master_data_id = $2
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND master_data_id = $2
             ORDER BY created_at DESC
             LIMIT $3
             "#,
@@ -374,7 +374,7 @@ impl MasterDataService {
 
         let since = Utc::now() - Duration::hours(24);
         let recent: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM core_master_data_change_log WHERE tenant_id = $1 AND created_at >= $2",
+            "SELECT COUNT(*) FROM core_master_data_change_log WHERE ($1::uuid IS NULL OR tenant_id = $1) AND created_at >= $2",
         )
         .bind(tenant_id)
         .bind(since)
@@ -855,7 +855,7 @@ impl MasterDataService {
                 SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                        status, reviewed_by, reviewed_at, review_comment, payload
                 FROM core_mdm_approvals
-                WHERE tenant_id = $1 AND status = 'pending' AND domain = $2
+                WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending' AND domain = $2
                 ORDER BY requested_at DESC LIMIT $3
                 "#,
             )
@@ -870,7 +870,7 @@ impl MasterDataService {
                 SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                        status, reviewed_by, reviewed_at, review_comment, payload
                 FROM core_mdm_approvals
-                WHERE tenant_id = $1 AND status = 'pending'
+                WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'pending'
                 ORDER BY requested_at DESC LIMIT $2
                 "#,
             )
@@ -893,7 +893,7 @@ impl MasterDataService {
             SELECT id, tenant_id, master_data_id, domain, action, requested_by, requested_at,
                    status, reviewed_by, reviewed_at, review_comment, payload
             FROM core_mdm_approvals
-            WHERE tenant_id = $1 AND master_data_id = $2
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND master_data_id = $2
             ORDER BY requested_at DESC
             "#,
         )

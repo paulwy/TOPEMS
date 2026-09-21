@@ -14,7 +14,7 @@ impl TemplateService {
 
     pub async fn list_templates(&self, tenant_id: Uuid) -> Result<Vec<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY name"#,
+            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY name"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl TemplateService {
         template_id: Uuid,
     ) -> Result<Option<Template>> {
         sqlx::query_as::<_, Template>(
-            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"#,
+            r#"SELECT id, tenant_id, name, category, description, content, content_type, fields, is_enabled, is_default, created_by, created_at, updated_at FROM core_doc_templates WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(template_id)
@@ -112,7 +112,7 @@ impl TemplateService {
 
     pub async fn list_categories(&self, tenant_id: Uuid) -> Result<Vec<String>> {
         sqlx::query_scalar::<_, String>(
-            r#"SELECT DISTINCT category FROM core_doc_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND category IS NOT NULL ORDER BY category"#,
+            r#"SELECT DISTINCT category FROM core_doc_templates WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND category IS NOT NULL ORDER BY category"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)

@@ -58,7 +58,7 @@ pub async fn list_workflows(
     let has_filters = !search.is_empty() || status.is_some();
 
     let total: i64 = if !has_filters {
-        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)")
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_workflows WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR ($1::uuid IS NULL OR tenant_id = $1))")
             .bind(tenant_id)
             .fetch_one(&state.pool)
             .await
@@ -68,7 +68,7 @@ pub async fn list_workflows(
             r#"SELECT COUNT(*) FROM core_workflows 
                WHERE deleted_at IS NULL AND (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
-                 AND ($3::uuid IS NULL OR tenant_id = $3)"#,
+                 AND ($3::uuid IS NULL OR ($3::uuid IS NULL OR tenant_id = $3))"#,
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
@@ -86,7 +86,7 @@ pub async fn list_workflows(
 
     let items: Vec<Workflow> = if !has_filters {
         match sqlx::query_as::<_, Workflow>(
-            "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE ($3::uuid IS NULL OR ($3::uuid IS NULL OR tenant_id = $3)) ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
@@ -106,7 +106,7 @@ pub async fn list_workflows(
                FROM core_workflows 
                WHERE (name ILIKE $1 OR description ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
-                 AND ($5::uuid IS NULL OR tenant_id = $5)
+                 AND ($5::uuid IS NULL OR ($5::uuid IS NULL OR tenant_id = $5))
                ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
         )
         .bind(format!("%{}%", search.clone()))
@@ -156,7 +156,7 @@ pub async fn get_workflow(
         claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))",
     )
     .bind(id)
     .bind(tenant_id)
