@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Query, State},
+    http::HeaderMap,
     routing::{delete, get},
     Json, Router,
 };
@@ -13,6 +14,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
+use topems_shared_core::locale::Locale;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct CustomerSegment {
@@ -47,6 +49,7 @@ pub struct SegmentedCustomer {
 #[derive(Debug, Deserialize)]
 pub struct CreateSegmentRequest {
     pub name: String,
+    pub name_en: Option<String>,
     pub description: Option<String>,
     pub criteria: SegmentCriteria,
 }
@@ -89,6 +92,7 @@ async fn list_segments(
     >,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SegmentQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -103,7 +107,9 @@ async fn list_segments(
 
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
-        SELECT id, name, description, criteria, customer_count, created_at, updated_at
+        SELECT id,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               description, criteria, customer_count, created_at, updated_at
         FROM crm.customer_segments
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
@@ -111,6 +117,7 @@ async fn list_segments(
     )
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -148,6 +155,7 @@ async fn get_segment(
     >,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<CustomerSegment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -158,11 +166,14 @@ async fn get_segment(
 
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
-        SELECT id, name, description, criteria, customer_count, created_at, updated_at
+        SELECT id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               description, criteria, customer_count, created_at, updated_at
         FROM crm.customer_segments WHERE id = $1
         "#,
     )
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -182,6 +193,7 @@ async fn create_segment(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateSegmentRequest>,
 ) -> Json<ApiResponse<CustomerSegment>> {
     let mut guard = txn_arc.lock().await;
@@ -203,9 +215,11 @@ async fn create_segment(
 
     let result = sqlx::query_as::<_, CustomerSegment>(
         r#"
-        INSERT INTO crm.customer_segments (id, name, description, criteria, customer_count, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, name, description, criteria, customer_count, created_at, updated_at
+        INSERT INTO crm.customer_segments (id, name, description, criteria, customer_count, created_at, updated_at, name_en)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id,
+                  CASE WHEN $9 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  description, criteria, customer_count, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -215,6 +229,8 @@ async fn create_segment(
     .bind(customer_count)
     .bind(now)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 

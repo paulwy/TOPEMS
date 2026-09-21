@@ -27,6 +27,7 @@ pub struct CustomerTag {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateTagRequest {
     pub name: String,
+    pub name_en: Option<String>,
     pub color: Option<String>,
     pub description: Option<String>,
 }
@@ -34,6 +35,7 @@ pub struct CreateTagRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateTagRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub color: Option<String>,
     pub description: Option<String>,
 }
@@ -110,6 +112,7 @@ mod tests {
     fn rt_create_tag_request_with_color() {
         roundtrip(&CreateTagRequest {
             name: "新标签".into(),
+            name_en: None,
             color: Some("#123456".into()),
             description: None,
         });
@@ -118,6 +121,7 @@ mod tests {
     fn rt_create_tag_request_minimal() {
         roundtrip(&CreateTagRequest {
             name: "极简".into(),
+            name_en: None,
             color: None,
             description: None,
         });
@@ -126,6 +130,7 @@ mod tests {
     fn rt_update_tag_request_full() {
         roundtrip(&UpdateTagRequest {
             name: Some("改名".into()),
+            name_en: None,
             color: Some("#ABC".into()),
             description: Some("新描述".into()),
         });
@@ -134,6 +139,7 @@ mod tests {
     fn rt_update_tag_request_none() {
         roundtrip(&UpdateTagRequest {
             name: None,
+            name_en: None,
             color: None,
             description: None,
         });

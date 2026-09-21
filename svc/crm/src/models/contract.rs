@@ -70,6 +70,7 @@ fn default_contract_status() -> String {
 pub struct CreateContractRequest {
     pub contract_no: String,
     pub title: String,
+    pub title_en: Option<String>,
     pub customer_name: Option<String>,
     pub amount: Option<Decimal>,
     pub status: Option<String>,
@@ -86,6 +87,7 @@ pub struct CreateContractRequest {
 pub struct UpdateContractRequest {
     pub contract_no: Option<String>,
     pub title: Option<String>,
+    pub title_en: Option<String>,
     pub customer_name: Option<String>,
     pub amount: Option<Decimal>,
     pub status: Option<String>,
@@ -153,6 +155,7 @@ mod tests {
         let r = CreateContractRequest {
             contract_no: "HT-2026-002".into(),
             title: "服务合同".into(),
+            title_en: None,
             customer_name: None,
             amount: Some(Decimal::new(9999, 2)),
             status: Some("draft".into()),
@@ -173,6 +176,7 @@ mod tests {
         let r = UpdateContractRequest {
             contract_no: None,
             title: Some("新标题".into()),
+            title_en: None,
             customer_name: None,
             amount: None,
             status: Some("signed".into()),

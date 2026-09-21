@@ -18,6 +18,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
+use topems_shared_core::locale::Locale;
 
 #[derive(Debug, Deserialize)]
 pub struct TagPaginationParams {
@@ -76,7 +77,9 @@ async fn list_tags(
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, tenant_id, name, color, description, created_at, updated_at
+        SELECT id, tenant_id,
+               CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               color, description, created_at, updated_at
         FROM crm.tags
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR name ILIKE $2)
@@ -88,6 +91,7 @@ async fn list_tags(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -160,9 +164,11 @@ async fn create_tag(
     let result = sqlx::query_as::<_, Tag>(
 
         r#"
-        INSERT INTO crm.tags (id, tenant_id, name, color, description, created_at, updated_at, org_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, tenant_id, name, color, description, created_at, updated_at
+        INSERT INTO crm.tags (id, tenant_id, name, color, description, created_at, updated_at, org_id, name_en)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, tenant_id,
+                  CASE WHEN $10 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  color, description, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -173,6 +179,8 @@ async fn create_tag(
     .bind(now)
     .bind(now)
     .bind(org_id)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -247,12 +255,15 @@ async fn get_tag(
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, tenant_id, name, color, description, created_at, updated_at
+        SELECT id, tenant_id,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               color, description, created_at, updated_at
         FROM crm.tags WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -318,9 +329,12 @@ async fn update_tag(
     let result = sqlx::query_as::<_, Tag>(
         r#"
         UPDATE crm.tags SET
-            name = $2, color = $3, description = $4, updated_at = $5
+            name = $2, color = $3, description = $4, updated_at = $5,
+            name_en = COALESCE($7, name_en)
         WHERE id = $1 AND tenant_id = $6
-        RETURNING id, tenant_id, name, color, description, created_at, updated_at
+        RETURNING id, tenant_id,
+                  CASE WHEN $8 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  color, description, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -329,6 +343,8 @@ async fn update_tag(
     .bind(&description)
     .bind(now)
     .bind(tenant_id)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 

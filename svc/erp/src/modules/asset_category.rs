@@ -7,7 +7,7 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
@@ -15,6 +15,7 @@ use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -44,6 +45,7 @@ pub struct ListAssetCategoriesQuery {
 #[derive(Debug, Deserialize)]
 pub struct CreateAssetCategoryRequest {
     pub name: String,
+    pub name_en: Option<String>,
     pub code: String,
     #[serde(rename = "parentId")]
     pub parent_id: Option<Uuid>,
@@ -54,6 +56,7 @@ pub struct CreateAssetCategoryRequest {
 #[derive(Debug, Deserialize)]
 pub struct UpdateAssetCategoryRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub code: Option<String>,
     #[serde(rename = "parentId")]
     pub parent_id: Option<Uuid>,
@@ -84,6 +87,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
 pub async fn list_asset_categories(
     State(_state): State<ApiState>,
     Query(params): Query<ListAssetCategoriesQuery>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -120,7 +124,8 @@ pub async fn list_asset_categories(
 
     let rows = match sqlx::query(only_own_schema_query!(
         "erp",
-        "SELECT id, name, code, parent_id, description, status, created_at, updated_at \
+        "SELECT id, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
+                code, parent_id, description, status, created_at, updated_at \
          FROM erp.asset_categories \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' \
@@ -131,6 +136,7 @@ pub async fn list_asset_categories(
     .bind(&search)
     .bind(pagesize)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await
     {
@@ -152,6 +158,7 @@ pub async fn list_asset_categories(
 pub async fn get_asset_category(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -161,10 +168,12 @@ pub async fn get_asset_category(
     let txn = guard.as_mut().expect("rls txn missing");
     let row = match sqlx::query(only_own_schema_query!(
         "erp",
-        "SELECT id, name, code, parent_id, description, status, created_at, updated_at \
+        "SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
+                code, parent_id, description, status, created_at, updated_at \
          FROM erp.asset_categories WHERE id = $1"
     ))
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
     {
@@ -192,6 +201,7 @@ pub async fn create_asset_category(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    headers: HeaderMap,
     Json(req): Json<CreateAssetCategoryRequest>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
@@ -201,15 +211,18 @@ pub async fn create_asset_category(
 
     let row = match sqlx::query(only_own_schema_query!(
         "erp",
-        "INSERT INTO erp.asset_categories (name, code, parent_id, description, status) \
-         VALUES ($1, $2, $3, $4, $5) \
-         RETURNING id, name, code, parent_id, description, status, created_at, updated_at"
+        "INSERT INTO erp.asset_categories (name, code, parent_id, description, status, name_en) \
+         VALUES ($1, $2, $3, $4, $5, $6) \
+         RETURNING id, CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
+                  code, parent_id, description, status, created_at, updated_at"
     ))
     .bind(&req.name)
     .bind(&req.code)
     .bind(req.parent_id)
     .bind(&req.description)
     .bind(&status)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await
     {
@@ -229,6 +242,7 @@ pub async fn create_asset_category(
 pub async fn update_asset_category(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -245,9 +259,11 @@ pub async fn update_asset_category(
          parent_id = COALESCE($4, parent_id), \
          description = COALESCE($5, description), \
          status = COALESCE($6, status), \
+         name_en = COALESCE($7, name_en), \
          updated_at = NOW() \
          WHERE id = $1 \
-         RETURNING id, name, code, parent_id, description, status, created_at, updated_at"
+         RETURNING id, CASE WHEN $8 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
+                  code, parent_id, description, status, created_at, updated_at"
     ))
     .bind(id)
     .bind(&req.name)
@@ -255,6 +271,8 @@ pub async fn update_asset_category(
     .bind(req.parent_id)
     .bind(&req.description)
     .bind(&req.status)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
     {

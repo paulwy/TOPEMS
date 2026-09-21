@@ -69,6 +69,7 @@ fn default_status_open() -> String {
 pub struct CreateOpportunityRequest {
     pub opp_no: String,
     pub name: String,
+    pub name_en: Option<String>,
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
     pub value: Option<Decimal>,
@@ -83,6 +84,7 @@ pub struct CreateOpportunityRequest {
 pub struct UpdateOpportunityRequest {
     pub opp_no: Option<String>,
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
     pub value: Option<Decimal>,
@@ -100,6 +102,7 @@ impl Default for CreateOpportunityRequest {
         Self {
             opp_no: String::new(),
             name: String::new(),
+            name_en: None,
             customer_id: None,
             customer_name: None,
             value: None,
@@ -216,6 +219,7 @@ mod tests {
         let r = CreateOpportunityRequest {
             opp_no: "OPP-2026-0042".to_string(),
             name: "Cloud Migration Project".to_string(),
+            name_en: None,
             customer_id: Some(Uuid::new_v4()),
             customer_name: Some("Globex".to_string()),
             value: Some(Decimal::new(12500000, 2)),
@@ -233,6 +237,7 @@ mod tests {
         let r = CreateOpportunityRequest {
             opp_no: String::new(),
             name: "Tiny".to_string(),
+            name_en: None,
             customer_id: None,
             customer_name: None,
             value: None,
@@ -256,6 +261,7 @@ mod tests {
         let r = UpdateOpportunityRequest {
             opp_no: Some("OPP-UPDATED".to_string()),
             name: Some("Renamed Deal".to_string()),
+            name_en: None,
             customer_id: Some(Uuid::new_v4()),
             customer_name: Some("Initech".to_string()),
             value: Some(Decimal::new(999999, 2)),
@@ -275,6 +281,7 @@ mod tests {
         let r = UpdateOpportunityRequest {
             opp_no: None,
             name: None,
+            name_en: None,
             customer_id: None,
             customer_name: None,
             value: None,

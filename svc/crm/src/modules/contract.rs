@@ -13,6 +13,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, CrmPermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::locale::Locale;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -74,7 +75,9 @@ async fn list_contracts(
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        SELECT id, tenant_id, org_id, contract_no, title, customer_name, amount,
+        SELECT id, tenant_id, org_id, contract_no,
+               CASE WHEN $7 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               customer_name, amount,
                status, sign_date, start_date, end_date, owner, type, remark,
                created_at, updated_at, deleted_at
         FROM crm.contracts
@@ -92,6 +95,7 @@ async fn list_contracts(
     .bind(&type_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -180,10 +184,12 @@ async fn create_contract(
         INSERT INTO crm.contracts (
             id, tenant_id, contract_no, title, customer_name, amount,
             status, sign_date, start_date, end_date, owner, type, remark,
-            created_at, updated_at
+            created_at, updated_at, title_en
         ) VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, 'draft'),
-                  $8, $9, $10, $11, $12, $13, $14, $15)
-        RETURNING id, tenant_id, org_id, contract_no, title, customer_name, amount,
+                  $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id, tenant_id, org_id, contract_no,
+                  CASE WHEN $17 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+                  customer_name, amount,
                   status, sign_date, start_date, end_date, owner, type, remark,
                   created_at, updated_at, deleted_at
         "#,
@@ -203,6 +209,8 @@ async fn create_contract(
     .bind(&req.remark)
     .bind(now)
     .bind(now)
+    .bind(&req.title_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -298,7 +306,9 @@ async fn get_contract(
 
     let result = sqlx::query_as::<_, Contract>(
         r#"
-        SELECT id, tenant_id, org_id, contract_no, title, customer_name, amount,
+        SELECT id, tenant_id, org_id, contract_no,
+               CASE WHEN $3 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+               customer_name, amount,
                status, sign_date, start_date, end_date, owner, type, remark,
                created_at, updated_at, deleted_at
         FROM crm.contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
@@ -306,6 +316,7 @@ async fn get_contract(
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -373,9 +384,12 @@ async fn update_contract(
             owner         = COALESCE($11, owner),
             type          = COALESCE($12, type),
             remark        = COALESCE($13, remark),
-            updated_at    = $14
+            updated_at    = $14,
+            title_en      = COALESCE($15, title_en)
         WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
-        RETURNING id, tenant_id, org_id, contract_no, title, customer_name, amount,
+        RETURNING id, tenant_id, org_id, contract_no,
+                  CASE WHEN $16 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+                  customer_name, amount,
                   status, sign_date, start_date, end_date, owner, type, remark,
                   created_at, updated_at, deleted_at
         "#,
@@ -394,6 +408,8 @@ async fn update_contract(
     .bind(&req.contract_type)
     .bind(&req.remark)
     .bind(now)
+    .bind(&req.title_en)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 

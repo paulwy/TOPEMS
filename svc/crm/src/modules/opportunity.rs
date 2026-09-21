@@ -16,6 +16,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::response::api_error;
+use topems_shared_core::locale::Locale;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OppStage {
@@ -274,7 +275,9 @@ async fn list_opportunities(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, opp_no,
+               CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2)
@@ -290,6 +293,7 @@ async fn list_opportunities(
     .bind(customer_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -387,9 +391,11 @@ async fn create_opportunity(
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
         INSERT INTO crm.opportunities (
-            id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, org_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+            id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, org_id, name_en
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        RETURNING id, tenant_id, opp_no,
+                  CASE WHEN $19 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
@@ -409,6 +415,8 @@ async fn create_opportunity(
     .bind(now)
     .bind(now)
     .bind(org_id)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -510,12 +518,15 @@ async fn get_opportunity(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, opp_no,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         FROM crm.opportunities WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -595,9 +606,12 @@ async fn update_opportunity(
         r#"
         UPDATE crm.opportunities SET
             name = $2, customer_id = $3, customer_name = $4, value = $5, stage = $6, priority = $7, probability = $8,
-            close_date = $9, owner_id = $10, status = $11, notes = $12, updated_at = $13
+            close_date = $9, owner_id = $10, status = $11, notes = $12, updated_at = $13,
+            name_en = COALESCE($15, name_en)
         WHERE id = $1 AND tenant_id = $14
-        RETURNING id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
+        RETURNING id, tenant_id, opp_no,
+                  CASE WHEN $16 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at, deleted_at
         "#,
     )
     .bind(id)
@@ -614,6 +628,8 @@ async fn update_opportunity(
     .bind(&notes)
     .bind(now)
     .bind(tenant_id)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
