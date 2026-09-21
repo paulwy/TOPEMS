@@ -9,7 +9,7 @@
 
 SHELL := /bin/bash
 
-.PHONY: help sqlx-prepare sqlx-prepare-pkg sqlx-check sqlx-offline-test \
+.PHONY: help sqlx-prepare sqlx-prepare-pkg sqlx-prepare-mes sqlx-check sqlx-offline-test \
         check-online check-offline check-migrations \
         clean clean-rust clean-frontend
 
@@ -26,6 +26,9 @@ sqlx-prepare: ## 刷新全 workspace 的 SQLx 离线缓存（需要本地 DB 在
 sqlx-prepare-pkg: ## 刷新单个 package 的缓存：make sqlx-prepare-pkg P=topems-unified-core
 	@[ -n "$(P)" ] || (echo "用法: make sqlx-prepare-pkg P=<package-name>"; exit 2)
 	./scripts/dev/sqlx-prepare.sh -p $(P)
+
+sqlx-prepare-mes: ## 刷新 mes 缓存（search_path=mes,public 在线解析 → 合并根 .sqlx；迁移后必跑）
+	scripts/mes_guard.sh --prepare
 
 sqlx-check: ## 仅校验缓存与源码是否一致（不修改，用于 CI / pre-push）
 	./scripts/dev/sqlx-prepare.sh --check

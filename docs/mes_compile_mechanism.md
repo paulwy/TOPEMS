@@ -27,12 +27,14 @@
 scripts/mes_guard.sh                      # 遮蔽检查 + 在线编译断言（只读，不动库）
 scripts/mes_guard.sh --clean              # 额外清理非白名单遮蔽对象（幂等）
 scripts/mes_guard.sh --sync-snapshot      # 重新生成 fixtures/mes_compile_schema.sql
+scripts/mes_guard.sh --prepare            # 生成/更新 sqlx 缓存并合并根 .sqlx（迁移后必跑）
 scripts/mes_guard.sh --skip-compile       # 只做遮蔽检查（快排）
 scripts/mes_guard.sh --db-url "postgresql://..."  # 指定编译库（CI 传 service 地址）
 ```
 
 - **遮蔽检查**：扫描 `public` schema 中与 mes 查询表同名、且不在白名单的对象。白名单当前为 `inspection_records`（erp_public 共享表）、`audit_logs`（unified-core 审计共享表）。
 - **在线编译**：`rm -f svc/mes/.sqlx/query-*.json` → `SQLX_OFFLINE=false` + `DATABASE_URL`（`search_path=mes,public`）→ `cargo check --lib` → **断言 0 error**，失败退出码 1。
+- **缓存同步（--prepare）**：`rm -f svc/mes/.sqlx/query-*.json` → `SQLX_OFFLINE=false` + `DATABASE_URL`（`search_path=mes,public`）→ `cargo sqlx prepare` → 合并到根 `.sqlx` → 提示提交。**数据库结构变更（迁移）后必跑**，保持离线编译与真库一致。
 - **快照同步**：将 5432 的 `mes` schema + 白名单 public 共享表结构导出为 `fixtures/mes_compile_schema.sql`（自动过滤扩展/权限/触发器/psql 元命令，头部自带扩展与 `app.tenant_id` GUC 注册）。
 
 ### 2.2 `fixtures/mes_compile_schema.sql` — 编译结构快照
@@ -62,10 +64,13 @@ scripts/mes_guard.sh          # 改完代码先跑守卫，0 error 再提交
 
 ```bash
 # 1. 先应用迁移到 5432（编译参考库）
-# 2. 再同步快照
+# 2. 同步 sqlx 离线缓存（方案C调和：在线解析 + search_path，自动合并根 .sqlx）
+scripts/topems.sh mes-guard --prepare
+git add .sqlx && git commit -m 'chore(sqlx): 缓存与真库对齐'
+# 3. 再同步快照（CI 干净库编译用）
 scripts/mes_guard.sh --sync-snapshot
 git add fixtures/mes_compile_schema.sql
-# 3. 提交时结构变更与快照必须同 commit，否则 CI 红
+# 4. 提交时结构变更与缓存/快照必须同 commit，否则 CI 红
 ```
 
 ### 3.3 编译失败排查流程
@@ -82,6 +87,33 @@ git add fixtures/mes_compile_schema.sql
 - 若因**代码倒退**（在线编译真实报错）→ 按 3.3 修正代码，快照无需动。
 - 若因**遮蔽**（新 public 同名对象）→ 确认后 `--clean` 清理或加入白名单，并查明建表来源（通常是迁移未显式限定 schema，应修迁移而非绕行）。
 
+### 3.5 数据库结构变更后同步离线缓存（方案 C 调和，必做）
+
+**背景**：`cargo sqlx prepare` 生成的离线缓存（根 `.sqlx`）曾与 5432 真库漂移（缓存类型与真库不符），导致「我方离线可编译版本在线 165 错、TRAE 在线真值版离线 68 错」的双真相拉锯。**方案 C 以在线真值为准重跑 prepare**，实现离线/在线双 0 error。
+
+**迁移/改表后的完整维护链**：
+
+```bash
+# 1. 应用迁移到 5432（编译参考库）
+# 2. 同步离线缓存（在线解析 + search_path=mes,public，自动合并根 .sqlx）
+scripts/topems.sh mes-guard --prepare
+git add .sqlx && git commit -m 'chore(sqlx): 缓存与真库对齐'
+# 3. 同步编译快照（CI 干净库用）
+scripts/mes_guard.sh --sync-snapshot
+git add fixtures/mes_compile_schema.sql
+# 4. 本地回归
+SQLX_OFFLINE=true cargo check --workspace   # 离线 0 error
+scripts/mes_guard.sh                        # 在线 0 error（含遮蔽检查）
+```
+
+**关键点（实测教训）**：
+
+- mes 表在 `mes` schema，prepare 连接串**必须带** `?options=-csearch_path=mes,public`，否则报 `relation "equipment" does not exist`（此前 161 错/165 错的真正根因，不是代码问题）。
+- **宏查询**（`sqlx::query!`）与离线缓存强绑定：改宏内容**必重跑 prepare**，否则离线编译报「无缓存」。
+- **运行时查询**（`sqlx::query`）不产生缓存，改动不受 prepare 影响。
+- prepare 后**必须提交根 `.sqlx`**（326 个缓存，含 47 个 mes 新/更新），否则团队离线编译仍用旧缓存、双真相复发。
+- `--prepare` 幂等：重复执行不产生额外 diff（已实测 0 diff）。
+
 ---
 
 ## 4. 设计原则（供所有会话遵守）
@@ -91,6 +123,7 @@ git add fixtures/mes_compile_schema.sql
 3. **CI 强制**：`mes-online-check` 是 main 的最后防线，任何倒退在此拦截。
 4. **schema 限定**：建表/迁移一律显式 `schema.table`（如 `mes.xxx`），禁止依赖 `search_path` 落库（public 漂移的根源）。
 5. **白名单透明**：public 中与 mes 表同名的合法共享表必须加入 `PUBLIC_ALLOWLIST` 并注明用途，其余视为遮蔽。
+6. **缓存同步**：数据库结构变更后必须 `mes-guard --prepare` 并提交根 `.sqlx`——离线缓存以在线真值为唯一真相来源，禁止以旧缓存/旧分支假设为代码书写依据。
 
 ---
 

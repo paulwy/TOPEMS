@@ -3073,6 +3073,7 @@ TOPEMS 服务管理工具
   mes-guard [选项]       运行 mes 编译守卫（遮蔽检查 + 在线编译断言 0 error）
                             --clean          清理 public 遮蔽对象（幂等）
                             --sync-snapshot  同步 fixtures/mes_compile_schema.sql
+                            --prepare        生成/更新 sqlx 缓存并合并根 .sqlx（迁移后必跑）
                             --skip-compile   只做遮蔽检查（快排）
   check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志

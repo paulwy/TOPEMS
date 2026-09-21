@@ -221,6 +221,8 @@ cd TOPEMS
 pnpm install
 # 首次编译：先刷新 sqlx 离线缓存（需要本地 PostgreSQL 在线）
 ./scripts/topems.sh sqlx prepare --all
+# 注意：mes 的缓存刷新必须走专用入口（search_path=mes,public）：
+./scripts/topems.sh mes-guard --prepare      # 迁移/改表后也必跑，见 docs/mes_compile_mechanism.md
 # 或直接编译（离线优先，失败自动切换在线编译）
 ./scripts/topems.sh build-all --only-core          # 只编核心服务（约 3-5 分钟）
 ./scripts/topems.sh build-all                       # 全量编译（后端+前端）
