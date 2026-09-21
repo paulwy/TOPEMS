@@ -4,6 +4,7 @@ pub mod approval;
 pub mod history;
 pub mod instance;
 pub mod models;
+pub mod monitor;
 pub mod openapi;
 pub mod record;
 pub mod setting;

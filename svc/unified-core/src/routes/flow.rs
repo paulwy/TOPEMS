@@ -63,6 +63,29 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/monitor/instances/overdue",
             get(modules::flow::instance::overdue_instances),
         )
+        .route("/monitor/instances", get(modules::flow::monitor::list_monitor_instances))
+        .route("/monitor/instances/running", get(modules::flow::monitor::running_instances))
+        .route("/monitor/instances/completed", get(modules::flow::monitor::completed_instances))
+        .route("/monitor/instances/rejected", get(modules::flow::monitor::rejected_instances))
+        .route("/monitor/instances/suspended", get(modules::flow::monitor::suspended_instances))
+        .route("/monitor/statistics", get(modules::flow::monitor::get_monitor_statistics))
+        .route("/monitor/analysis", get(modules::flow::monitor::get_workflow_analysis))
+        .route("/monitor/analysis/nodes", get(modules::flow::monitor::get_node_statistics))
+        .route("/monitor/analysis/bottleneck", get(modules::flow::monitor::get_bottleneck_analysis))
+        .route("/monitor/analysis/efficiency", get(modules::flow::monitor::get_efficiency_analysis))
+        .route("/monitor/trends", get(modules::flow::monitor::get_trend_data))
+        .route("/monitor/users", get(modules::flow::monitor::get_user_stats))
+        .route("/monitor/departments", get(modules::flow::monitor::get_department_stats))
+        .route("/monitor/logs", get(modules::flow::monitor::list_logs))
+        .route("/monitor/logs/{id}", get(modules::flow::monitor::get_log))
+        .route("/monitor/logs/instance/{id}", get(modules::flow::monitor::get_logs_by_instance))
+        .route("/monitor/logs/workflow/{id}", get(modules::flow::monitor::get_logs_by_workflow))
+        .route("/monitor/logs/node/{id}", get(modules::flow::monitor::get_logs_by_node))
+        .route("/monitor/logs/user/{id}", get(modules::flow::monitor::get_logs_by_user))
+        .route("/monitor/realtime", get(modules::flow::monitor::get_realtime_stats))
+        .route("/monitor/dashboard", get(modules::flow::monitor::get_dashboard_data))
+        .route("/monitor/performance", get(modules::flow::monitor::get_performance_metrics))
+        .route("/monitor/sla", get(modules::flow::monitor::get_sla_compliance))
         .route(
             "/approvals/pending",
             get(modules::flow::approval::list_pending_approvals),
@@ -282,6 +305,18 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/monitor/instances/{id}/retry",
             post(modules::flow::instance::retry_instance),
+        )
+        .route(
+            "/monitor/instances/{id}/skip",
+            post(modules::flow::monitor::skip_node),
+        )
+        .route(
+            "/monitor/instances/{id}/complete",
+            post(modules::flow::monitor::force_complete),
+        )
+        .route(
+            "/monitor/instances/{id}/terminate",
+            post(modules::flow::monitor::force_terminate),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
