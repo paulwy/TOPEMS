@@ -232,15 +232,22 @@ pub async fn list_production_orders(
         return e;
     }
 
+    let tenant_opt: Option<String> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.clone()
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+    let mut where_clause =
+        String::from(" WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" AND status = $1");
+        where_clause.push_str(" AND status = $2");
         params.push(status);
     }
 
@@ -253,9 +260,9 @@ pub async fn list_production_orders(
         } else {
             where_clause.push_str(&format!(
                 " AND (order_number ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
-                params.len() + 1,
-                params.len() + 1,
-                params.len() + 1
+                params.len() + 2,
+                params.len() + 2,
+                params.len() + 2
             ));
         }
         params.push(pattern);
@@ -266,7 +273,7 @@ pub async fn list_production_orders(
         where_clause
     );
 
-    let mut count_query = sqlx::query_scalar(&count_sql);
+    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt.clone());
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -282,7 +289,7 @@ pub async fn list_production_orders(
 
     // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
     params.push(Locale::from_headers(&headers).as_sql().to_string());
-    let locale_placeholder = params.len();
+    let locale_placeholder = params.len() + 1;
 
     let fetch_sql = format!(
         r#"
@@ -302,11 +309,11 @@ pub async fn list_production_orders(
         "#,
         locale_placeholder = locale_placeholder,
         where_clause = where_clause,
-        limit_placeholder = params.len() + 1,
-        offset_placeholder = params.len() + 2,
+        limit_placeholder = params.len() + 2,
+        offset_placeholder = params.len() + 3,
     );
 
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(&fetch_sql).bind(tenant_opt.clone());
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }

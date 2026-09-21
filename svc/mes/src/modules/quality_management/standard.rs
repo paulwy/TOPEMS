@@ -100,20 +100,26 @@ pub async fn list_standards(
         return e;
     }
 
+    let tenant_opt: Option<String> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.clone()
+    };
+
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE ($1::uuid IS NULL OR qs.tenant_id = $1::uuid)");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" WHERE qs.status = $1");
+        where_clause.push_str(" AND qs.status = $2");
         params.push(status);
     }
 
     if let Some(inspection_type) = query.inspection_type {
-        let idx = params.len() + 1;
+        let idx = params.len() + 2;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(" WHERE qs.inspection_type = ${}", idx));
         } else {
@@ -124,7 +130,7 @@ pub async fn list_standards(
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
-        let idx = params.len() + 1;
+        let idx = params.len() + 2;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(
                 " WHERE (qs.code ILIKE ${} OR qs.name ILIKE ${} OR qs.product_code ILIKE ${})",
@@ -143,7 +149,7 @@ pub async fn list_standards(
         "SELECT COUNT(*) as total FROM quality_standards qs{}",
         where_clause
     );
-    let mut count_query = sqlx::query_scalar(&count_sql);
+    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt.clone());
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -169,10 +175,10 @@ pub async fn list_standards(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
+        params.len() + 2,
+        params.len() + 3
     );
-    let mut fetch_query = sqlx::query(&fetch_sql);
+    let mut fetch_query = sqlx::query(&fetch_sql).bind(tenant_opt.clone());
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
