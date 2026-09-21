@@ -13,11 +13,14 @@
 #   2. 在线编译：rm .sqlx → SQLX_OFFLINE=false + DATABASE_URL → cargo check --lib → 断言 0 error
 #   3. 快照同步：--sync-snapshot 将 5432 的 mes schema + public 共享表导出为
 #      fixtures/mes_compile_schema.sql（CI 干净库编译用），结构变更后必须重新同步
+#   4. 缓存同步：--prepare 在线解析全部宏并生成 .sqlx 缓存（合并到根 .sqlx），
+#      数据库结构变更后必须执行，保持离线编译（SQLX_OFFLINE=true）与真库一致
 #
 # 用法：
 #   scripts/mes_guard.sh                      # 遮蔽检查 + 在线编译断言（默认只读，不动库）
 #   scripts/mes_guard.sh --clean              # 额外清理非白名单遮蔽对象（幂等）
 #   scripts/mes_guard.sh --sync-snapshot      # 重新生成 fixtures/mes_compile_schema.sql
+#   scripts/mes_guard.sh --prepare            # 生成/更新 sqlx 缓存并合并根 .sqlx（迁移后必跑）
 #   scripts/mes_guard.sh --db-url "postgresql://..."   # 指定编译库（CI 传入 service 地址）
 #   scripts/mes_guard.sh --skip-compile       # 只做遮蔽检查（快排）
 #
@@ -37,6 +40,7 @@ LOG="/tmp/mes_guard_$$.log"
 CLEAN=0
 SYNC_SNAPSHOT=0
 SKIP_COMPILE=0
+PREPARE=0
 DB_URL="${DATABASE_URL:-postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public}"
 
 # public schema 中允许存在的 mes 查询表（共享表，非遮蔽）
@@ -56,8 +60,9 @@ while [[ $# -gt 0 ]]; do
     --clean)         CLEAN=1 ;;
     --sync-snapshot) SYNC_SNAPSHOT=1 ;;
     --skip-compile)  SKIP_COMPILE=1 ;;
+    --prepare)       PREPARE=1 ;;
     --db-url)        DB_URL="$2"; shift ;;
-    *) die "未知参数: $1（支持 --clean / --sync-snapshot / --skip-compile / --db-url）" ;;
+    *) die "未知参数: $1（支持 --clean / --sync-snapshot / --skip-compile / --prepare / --db-url）" ;;
   esac
   shift
 done
@@ -105,6 +110,35 @@ if [[ "$SYNC_SNAPSHOT" == "1" ]]; then
   done
 
   say "快照生成完成: $(wc -l < "$SNAPSHOT") 行"
+  exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# 0. sqlx 缓存同步（--prepare）：在线解析生成新缓存并合并根 .sqlx
+#    使用场景：数据库结构变更（迁移）后，同步离线编译缓存（方案C调和）
+# ---------------------------------------------------------------------------
+if [[ "$PREPARE" == "1" ]]; then
+  say "=== 生成 sqlx 缓存（在线解析 → svc/mes/.sqlx → 合并根 .sqlx） ==="
+  [[ -d "$MES_DIR/.sqlx" ]] && rm -f "$MES_DIR/.sqlx"/query-*.json
+  cd "$MES_DIR" || die "目录不存在: $MES_DIR"
+  export SQLX_OFFLINE=false
+  export DATABASE_URL="$DB_URL"
+
+  if ! cargo sqlx prepare > "${LOG}" 2>&1; then
+    say "prepare 失败（详见 ${LOG}）"
+    tail -20 "${LOG}" | sed 's/^/    /'
+    exit 1
+  fi
+
+  COUNT="$(ls "$MES_DIR"/.sqlx/query-*.json 2>/dev/null | wc -l | tr -d ' ')"
+  [[ "$COUNT" =~ ^[0-9]+$ ]] || COUNT=0
+  say "生成 $COUNT 个缓存"
+  mkdir -p "$ROOT/.sqlx"
+  cp "$MES_DIR"/.sqlx/query-*.json "$ROOT/.sqlx/" 2>/dev/null || die "合并到根 .sqlx 失败"
+  TOTAL="$(ls "$ROOT/.sqlx"/query-*.json 2>/dev/null | wc -l | tr -d ' ')"
+  say "已合并到根 .sqlx（当前共 $TOTAL 个缓存）"
+  say "请 review 后提交：git add .sqlx && git commit -m 'chore(sqlx): 缓存与真库对齐'"
+  say "=== sqlx prepare PASS ==="
   exit 0
 fi
 
