@@ -46,7 +46,7 @@ pub async fn create_integration_sample(
     let status = req.status.unwrap_or_else(|| "registered".to_string());
 
     let result = sqlx::query(
-        "INSERT INTO qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status)
+        "INSERT INTO public.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (sample_no) DO UPDATE SET updated_at = NOW()
          RETURNING id, sample_no, sample_name, status",
@@ -93,7 +93,7 @@ pub async fn create_integration_task(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // qa_lab_tasks.sample_id 为 NOT NULL：按 sample_no 关联解析样本（integration 仅提供 sample_no）
     let sample_id: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM qa_lab_samples WHERE sample_no = $1 AND deleted_at IS NULL",
+        "SELECT id FROM public.qa_lab_samples WHERE sample_no = $1 AND deleted_at IS NULL",
     )
     .bind(&req.sample_no)
     .fetch_optional(&state.pool)
