@@ -217,8 +217,9 @@ async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
         async {
             match client.get_wip_summary().await {
                 Ok(data) => data
-                    .get("total_count")
+                    .get("total_wip")
                     .and_then(|v| v.as_u64())
+                    .or_else(|| data.get("total_count").and_then(|v| v.as_u64()))
                     .or_else(|| data.get("count").and_then(|v| v.as_u64()))
                     .unwrap_or(0),
                 Err(e) => {

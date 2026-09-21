@@ -203,7 +203,7 @@ async fn main() -> Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key =
-                        "scm:suppliers:list:default:page:1:size:20:search:None:status:None";
+                        "scm:suppliers:list:default:page:1:size:20:search:None:status:None:zh";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[scm] 供应商列表缓存预热完成");
                 }

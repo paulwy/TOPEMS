@@ -147,7 +147,8 @@ pub async fn fetch_mes_stats(state: &AppState) -> Option<ServiceStatsGql> {
         .await
         .ok()
         .and_then(|v| {
-            v.get("total_count")
+            v.get("total_wip")
+                .or_else(|| v.get("total_count"))
                 .or_else(|| v.get("count"))
                 .and_then(|x| x.as_u64())
         })

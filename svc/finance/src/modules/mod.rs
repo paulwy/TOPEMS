@@ -4707,15 +4707,17 @@ pub async fn get_ap_aging(
 pub async fn get_account_tree(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let category = params.get("category").and_then(|v| v.as_str());
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, code, name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR category = $2) ORDER BY code"),
+        only_own_schema_query!("finance", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, category, level, is_leaf, status FROM finance.core_finance_accounts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR category = $2) ORDER BY code"),
     )
     .bind(tenant_id)
     .bind(category)
+    .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
     .fetch_all(&state.pool)
     .await;
     match rows {

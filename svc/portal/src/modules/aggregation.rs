@@ -336,8 +336,8 @@ async fn fetch_mes_stats(state: &AppState) -> MesStats {
 
     let wip = match client.get_wip_summary().await {
         Ok(data) => data
-            .get("data")
-            .and_then(|v| v.get("total_wip"))
+            .get("total_wip")
+            .or_else(|| data.get("total_count"))
             .and_then(|v| v.as_i64())
             .unwrap_or(0) as u64,
         Err(_) => 0,

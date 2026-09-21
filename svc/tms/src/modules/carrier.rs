@@ -459,6 +459,12 @@ pub async fn delete_carrier(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear_l1();
 

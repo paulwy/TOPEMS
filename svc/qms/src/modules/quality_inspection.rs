@@ -299,7 +299,8 @@ pub async fn delete_inspection(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(true, "质量检查删除成功")),
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "质量检查删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "检查不存在或已删除")),
         Err(e) => {
             tracing::error!("Failed to delete inspection: {}", e);
             Json(ApiResponse::error(500, "质量检查删除失败"))

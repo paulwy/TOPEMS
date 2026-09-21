@@ -37,24 +37,34 @@ const CACHE_PREFIX_SUPPLIER: &str = "scm:supplier";
 /// 供应商列表缓存 key 前缀
 const CACHE_PREFIX_SUPPLIERS_LIST: &str = "scm:suppliers:list";
 
-/// 构建供应商缓存 key
-fn supplier_cache_key(tenant_id: &str, id: &Uuid) -> String {
-    format!("{}:{}:get:{}", CACHE_PREFIX_SUPPLIER, tenant_id, id)
+/// 构建供应商缓存 key（locale 用于语言隔离，None 用于失效删除时的无语言 key）
+fn supplier_cache_key(tenant_id: &str, id: &Uuid, locale: Option<&str>) -> String {
+    match locale {
+        Some(l) => format!("{}:{}:get:{}:{}", CACHE_PREFIX_SUPPLIER, tenant_id, id, l),
+        None => format!("{}:{}:get:{}", CACHE_PREFIX_SUPPLIER, tenant_id, id),
+    }
 }
 
-/// 构建供应商列表缓存 key
+/// 构建供应商列表缓存 key（locale 用于语言隔离）
 fn suppliers_list_cache_key(
     tenant_id: &str,
     page: i64,
     page_size: i64,
     search: &Option<String>,
     status: &Option<String>,
+    locale: Option<&str>,
 ) -> String {
     let search_pattern = search.clone().map(|s| format!("%{}%", s));
-    format!(
-        "{}:{}:page:{}:size:{}:search:{:?}:status:{:?}",
-        CACHE_PREFIX_SUPPLIERS_LIST, tenant_id, page, page_size, search_pattern, status
-    )
+    match locale {
+        Some(l) => format!(
+            "{}:{}:page:{}:size:{}:search:{:?}:status:{:?}:{}",
+            CACHE_PREFIX_SUPPLIERS_LIST, tenant_id, page, page_size, search_pattern, status, l
+        ),
+        None => format!(
+            "{}:{}:page:{}:size:{}:search:{:?}:status:{:?}",
+            CACHE_PREFIX_SUPPLIERS_LIST, tenant_id, page, page_size, search_pattern, status
+        ),
+    }
 }
 
 fn publish_supplier_sync_event(
@@ -155,8 +165,14 @@ pub async fn list_suppliers(
         .tenant_id
         .clone()
         .unwrap_or_else(|| "default".to_string());
-    let cache_key =
-        suppliers_list_cache_key(&tenant_id, page, page_size, &params.search, &params.status);
+    let cache_key = suppliers_list_cache_key(
+        &tenant_id,
+        page,
+        page_size,
+        &params.search,
+        &params.status,
+        Some(Locale::from_headers(&headers).as_sql()),
+    );
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("scm", "supplier", "list");
@@ -318,6 +334,12 @@ pub async fn create_supplier(
     };
 
     if status == "success" {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
         state.supplier_cache.clear_l1();
         tracing::debug!("🗑️ 供应商内存缓存已清空（创建供应商）");
 
@@ -444,7 +466,7 @@ pub async fn get_supplier(
         .tenant_id
         .clone()
         .unwrap_or_else(|| "default".to_string());
-    let cache_key = supplier_cache_key(&tenant_id, &id);
+    let cache_key = supplier_cache_key(&tenant_id, &id, Some(Locale::from_headers(&headers).as_sql()));
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("scm", "supplier", "get");
@@ -605,12 +627,18 @@ pub async fn update_supplier(
     };
 
     if status_str == "success" {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离
         let tenant_id = claims
             .tenant_id
             .clone()
             .unwrap_or_else(|| "default".to_string());
-        let cache_key = supplier_cache_key(&tenant_id, &id);
+        let cache_key = supplier_cache_key(&tenant_id, &id, None);
         state.supplier_cache.remove(&cache_key).await;
         state.supplier_cache.clear_l1();
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
@@ -768,12 +796,18 @@ pub async fn delete_supplier(
     };
 
     if status_str == "success" {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
         // 从 claims 中获取 tenant_id，用于多租户缓存隔离
         let tenant_id = claims
             .tenant_id
             .clone()
             .unwrap_or_else(|| "default".to_string());
-        let cache_key = supplier_cache_key(&tenant_id, &id);
+        let cache_key = supplier_cache_key(&tenant_id, &id, None);
         state.supplier_cache.remove(&cache_key).await;
         state.supplier_cache.clear_l1();
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
@@ -879,7 +913,7 @@ mod tests {
     fn supplier_cache_key_includes_id_with_prefix() {
         let id = Uuid::new_v4();
         let tenant_id = "test-tenant";
-        let key = supplier_cache_key(tenant_id, &id);
+        let key = supplier_cache_key(tenant_id, &id, None);
         assert!(
             key.starts_with("scm:supplier:"),
             "key should start with prefix, got {}",
@@ -901,15 +935,15 @@ mod tests {
     fn supplier_cache_key_format_is_deterministic() {
         let id = Uuid::nil();
         let tenant_id = "test-tenant";
-        let key = supplier_cache_key(tenant_id, &id);
+        let key = supplier_cache_key(tenant_id, &id, None);
         assert_eq!(key, format!("scm:supplier:{}:get:{}", tenant_id, id));
     }
 
     #[test]
     fn supplier_cache_key_is_isolated_by_tenant() {
         let id = Uuid::new_v4();
-        let key1 = supplier_cache_key("tenant-a", &id);
-        let key2 = supplier_cache_key("tenant-b", &id);
+        let key1 = supplier_cache_key("tenant-a", &id, None);
+        let key2 = supplier_cache_key("tenant-b", &id, None);
         assert_ne!(
             key1, key2,
             "different tenants should have different cache keys"
@@ -919,7 +953,7 @@ mod tests {
     #[test]
     fn suppliers_list_cache_key_includes_pagination_params() {
         let tenant_id = "test-tenant";
-        let key = suppliers_list_cache_key(tenant_id, 2, 20, &None, &None);
+        let key = suppliers_list_cache_key(tenant_id, 2, 20, &None, &None, None);
         assert!(
             key.contains("page:2"),
             "key should contain page, got {}",
@@ -945,7 +979,7 @@ mod tests {
     #[test]
     fn suppliers_list_cache_key_includes_search_pattern() {
         let search = Some("acme".to_string());
-        let key = suppliers_list_cache_key("test-tenant", 1, 10, &search, &None);
+        let key = suppliers_list_cache_key("test-tenant", 1, 10, &search, &None, None);
         assert!(
             key.contains("search:Some(\"%acme%\")"),
             "key should contain search pattern, got {}",
@@ -956,7 +990,7 @@ mod tests {
     #[test]
     fn suppliers_list_cache_key_includes_status_filter() {
         let status = Some("active".to_string());
-        let key = suppliers_list_cache_key("test-tenant", 1, 10, &None, &status);
+        let key = suppliers_list_cache_key("test-tenant", 1, 10, &None, &status, None);
         assert!(
             key.contains("status:Some(\"active\")"),
             "key should contain status, got {}",
@@ -966,21 +1000,21 @@ mod tests {
 
     #[test]
     fn suppliers_list_cache_key_distinct_for_different_params() {
-        let k1 = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None);
+        let k1 = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None, None);
         let k2 = suppliers_list_cache_key("test-tenant", 2, 10, &None, &None);
         assert_ne!(k1, k2);
     }
 
     #[test]
     fn suppliers_list_cache_key_is_isolated_by_tenant() {
-        let k1 = suppliers_list_cache_key("tenant-a", 1, 10, &None, &None);
-        let k2 = suppliers_list_cache_key("tenant-b", 1, 10, &None, &None);
+        let k1 = suppliers_list_cache_key("tenant-a", 1, 10, &None, &None, None);
+        let k2 = suppliers_list_cache_key("tenant-b", 1, 10, &None, &None, None);
         assert_ne!(k1, k2, "different tenants should have different cache keys");
     }
 
     #[test]
     fn suppliers_list_cache_key_search_none_renders_none() {
-        let key = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None);
+        let key = suppliers_list_cache_key("test-tenant", 1, 10, &None, &None, None);
         assert!(
             key.contains("search:None"),
             "key should contain search:None, got {}",
