@@ -5,7 +5,7 @@
 //!
 //! # 使用示例
 //!
-//! ```rust
+//! ```rust,no_run
 //! use axum::Router;
 //! use crate::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
 //!
