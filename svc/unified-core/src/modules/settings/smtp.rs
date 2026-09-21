@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use uuid::Uuid;
 
 const SMTP_CONFIG_KEY: &str = "smtp_config";
 const PASSWORD_MASK: &str = "********";
@@ -69,7 +70,11 @@ pub async fn get_smtp_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SmtpConfig>> {
-    let tenant_id = tenant_uuid(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_uuid(&claims))
+    };
 
     let result = sqlx::query(
         "SELECT setting_value FROM core_tenant_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND setting_key = $2",

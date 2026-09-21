@@ -67,7 +67,11 @@ pub async fn list_api_keys(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ApiKeyEntry>>> {
-    let tenant_id = tenant_uuid(&claims);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_uuid(&claims))
+    };
     let pattern = format!("{}%", API_KEY_PREFIX);
 
     let result = sqlx::query(

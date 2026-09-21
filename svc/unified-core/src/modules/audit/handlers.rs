@@ -1,12 +1,13 @@
 use axum::{
     extract::{Path, Query, State},
-    Json,
+    Extension, Json,
 };
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, api_success};
 
 use super::audit_query::AuditLogQueryParams;
@@ -16,6 +17,7 @@ use super::models::{
 
 pub async fn list_operation_logs(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<OperationLogQuery>,
 ) -> Json<ApiResponse<OperationLogListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
@@ -23,8 +25,12 @@ pub async fn list_operation_logs(
     let offset = (page - 1) * page_size;
 
     // 当前实现：租户上下文来自 middleware 注入或为系统租户。
-    // 后续可扩展为从 Claims.tenant_id 动态读取。
-    let tenant_id = Uuid::nil();
+    // 超管读全量，普通租户按系统租户过滤。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::nil())
+    };
 
     let user_id = query.user_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let user_name_like = query.user_name.as_ref().map(|s| format!("%{}%", s));
@@ -135,9 +141,14 @@ pub async fn list_operation_logs(
 
 pub async fn get_operation_log(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OperationLog>> {
-    let tenant_id = Uuid::nil();
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::nil())
+    };
 
     let log: Option<OperationLog> = match sqlx::query_as::<_, OperationLog>(
         r#"SELECT id, tenant_id, user_id, user_name, module, operation,
@@ -166,8 +177,13 @@ pub async fn get_operation_log(
 
 pub async fn get_operation_log_stats(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<OperationLogStatsResponse>> {
-    let tenant_id = Uuid::nil();
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::nil())
+    };
 
     let total: i64 = match sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM core_operation_logs WHERE ($1::uuid IS NULL OR tenant_id = $1)"#,

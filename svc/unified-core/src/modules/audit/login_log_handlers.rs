@@ -1,6 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
-    Json,
+    Extension, Json,
 };
 use chrono::{DateTime, Utc};
 use serde_json::json;
@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, api_success};
 
 use super::login_log_models::{
@@ -59,13 +60,18 @@ pub async fn record_login(
 
 pub async fn list_login_logs(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<LoginLogQuery>,
 ) -> Json<ApiResponse<LoginLogListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let tenant_id = Uuid::nil();
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::nil())
+    };
 
     let username_like = query.username.as_ref().map(|s| format!("%{}%", s));
     let ip_address_like = query.ip_address.as_ref().map(|s| format!("%{}%", s));
@@ -168,9 +174,14 @@ pub async fn list_login_logs(
 
 pub async fn get_login_log(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<LoginLog>> {
-    let tenant_id = Uuid::nil();
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(Uuid::nil())
+    };
 
     let log: Option<LoginLog> = match sqlx::query_as(
         r#"SELECT id, tenant_id, user_id, username, ip_address, user_agent, status, error_message, login_time, created_at

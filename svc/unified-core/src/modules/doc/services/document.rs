@@ -12,7 +12,7 @@ impl DocumentService {
         Self { pool }
     }
 
-    pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>> {
+    pub async fn list_documents(&self, tenant_id: Option<Uuid>) -> Result<Vec<Document>> {
         sqlx::query_as::<_, Document>(
             r#"SELECT id, tenant_id, name, description, document_type, file_path, file_size, version, folder_id, status, created_by, created_at, updated_at, deleted_at FROM core_doc_documents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"#,
         )
@@ -23,7 +23,7 @@ impl DocumentService {
 
     pub async fn get_document(
         &self,
-        tenant_id: Uuid,
+        tenant_id: Option<Uuid>,
         document_id: Uuid,
     ) -> Result<Option<Document>> {
         sqlx::query_as::<_, Document>(

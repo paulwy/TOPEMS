@@ -12,7 +12,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
-async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
+async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Option<Uuid>) -> i64 {
     match sqlx::query_scalar(&format!(
         "SELECT COUNT(*) FROM {} WHERE ($1::uuid IS NULL OR tenant_id = $1)",
         table
@@ -29,7 +29,7 @@ async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uu
 async fn count_table_with_tenant_and_status(
     pool: &sqlx::PgPool,
     table: &str,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     status: &str,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
@@ -49,7 +49,7 @@ async fn count_table_with_tenant_and_status(
 async fn count_table_with_tenant_and_enabled(
     pool: &sqlx::PgPool,
     table: &str,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     is_enabled: bool,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
@@ -69,7 +69,7 @@ async fn count_table_with_tenant_and_enabled(
 async fn count_table_with_tenant_and_condition(
     pool: &sqlx::PgPool,
     table: &str,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     condition: &str,
 ) -> i64 {
     match sqlx::query_scalar(&format!(
@@ -100,8 +100,9 @@ pub async fn list_documents(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<Document>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = DocumentService::new(state.pool.clone());
-    match service.list_documents(tenant_id).await {
+    match service.list_documents(opt_tenant_id).await {
         Ok(documents) => Json(ApiResponse::success(documents, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "list_documents",
@@ -129,8 +130,9 @@ pub async fn get_document(
     Path(document_id): Path<Uuid>,
 ) -> Json<ApiResponse<Option<Document>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = DocumentService::new(state.pool.clone());
-    match service.get_document(tenant_id, document_id).await {
+    match service.get_document(opt_tenant_id, document_id).await {
         Ok(document) => Json(ApiResponse::success(document, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("get_document", e))),
     }
@@ -239,8 +241,9 @@ pub async fn list_templates(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<Template>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = TemplateService::new(state.pool.clone());
-    match service.list_templates(tenant_id).await {
+    match service.list_templates(opt_tenant_id).await {
         Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "list_templates",
@@ -264,8 +267,9 @@ pub async fn list_template_categories(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<String>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = TemplateService::new(state.pool.clone());
-    match service.list_categories(tenant_id).await {
+    match service.list_categories(opt_tenant_id).await {
         Ok(categories) => Json(ApiResponse::success(categories, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "list_template_categories",
@@ -293,8 +297,9 @@ pub async fn get_template(
     Path(template_id): Path<Uuid>,
 ) -> Json<ApiResponse<Option<Template>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = TemplateService::new(state.pool.clone());
-    match service.get_template(tenant_id, template_id).await {
+    match service.get_template(opt_tenant_id, template_id).await {
         Ok(template) => Json(ApiResponse::success(template, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("get_template", e))),
     }
@@ -403,8 +408,9 @@ pub async fn list_folders(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<Folder>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = FolderService::new(state.pool.clone());
-    match service.list_folders(tenant_id).await {
+    match service.list_folders(opt_tenant_id).await {
         Ok(folders) => Json(ApiResponse::success(folders, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("list_folders", e))),
     }
@@ -429,8 +435,9 @@ pub async fn get_folder(
     Path(folder_id): Path<Uuid>,
 ) -> Json<ApiResponse<Option<Folder>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
     let service = FolderService::new(state.pool.clone());
-    match service.get_folder(tenant_id, folder_id).await {
+    match service.get_folder(opt_tenant_id, folder_id).await {
         Ok(folder) => Json(ApiResponse::success(folder, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("get_folder", e))),
     }
@@ -543,45 +550,46 @@ pub async fn get_dashboard_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DocDashboardStats>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
 
     let total_documents =
-        count_table_with_tenant(&state.pool, "core_doc_documents", tenant_id).await;
+        count_table_with_tenant(&state.pool, "core_doc_documents", opt_tenant_id).await;
     let published_documents = count_table_with_tenant_and_status(
         &state.pool,
         "core_doc_documents",
-        tenant_id,
+        opt_tenant_id,
         "published",
     )
     .await;
     let draft_documents =
-        count_table_with_tenant_and_status(&state.pool, "core_doc_documents", tenant_id, "draft")
+        count_table_with_tenant_and_status(&state.pool, "core_doc_documents", opt_tenant_id, "draft")
             .await;
     let archived_documents = count_table_with_tenant_and_condition(
         &state.pool,
         "core_doc_documents",
-        tenant_id,
+        opt_tenant_id,
         "archived_at IS NOT NULL",
     )
     .await;
 
-    let total_folders = count_table_with_tenant(&state.pool, "core_doc_folders", tenant_id).await;
+    let total_folders = count_table_with_tenant(&state.pool, "core_doc_folders", opt_tenant_id).await;
     let total_templates =
-        count_table_with_tenant(&state.pool, "core_doc_templates", tenant_id).await;
+        count_table_with_tenant(&state.pool, "core_doc_templates", opt_tenant_id).await;
     let active_templates =
-        count_table_with_tenant_and_enabled(&state.pool, "core_doc_templates", tenant_id, true)
+        count_table_with_tenant_and_enabled(&state.pool, "core_doc_templates", opt_tenant_id, true)
             .await;
 
     let this_month_created = count_table_with_tenant_and_condition(
         &state.pool,
         "core_doc_documents",
-        tenant_id,
+        opt_tenant_id,
         "DATE_TRUNC('month', created_at) = DATE_TRUNC('month', NOW())",
     )
     .await;
     let this_month_updated = count_table_with_tenant_and_condition(
         &state.pool,
         "core_doc_documents",
-        tenant_id,
+        opt_tenant_id,
         "DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', NOW())",
     )
     .await;

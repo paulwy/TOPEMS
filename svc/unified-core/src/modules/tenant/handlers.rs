@@ -1271,19 +1271,22 @@ pub async fn get_my_tenants(
         Err(_) => return Json(CoreResponse::error("Invalid user ID")),
     };
 
-    let tenants: Vec<Tenant> = sqlx::query_as(
-        "SELECT t.* FROM core_tenants t
-         INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
-         WHERE deleted_at IS NULL AND tu.user_id = $1 AND tu.status = 'active' AND ($2::uuid IS NULL OR tenant_id = $2) 
-         ORDER BY t.created_at DESC",
-    )
-    .bind(user_id)
-    .bind(
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
         claims
             .tenant_id
             .as_deref()
-            .unwrap_or("00000000-0000-0000-0000-000000000000"),
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+    let tenants: Vec<Tenant> = sqlx::query_as(
+        "SELECT t.* FROM core_tenants t
+         INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
+         WHERE deleted_at IS NULL AND tu.user_id = $1 AND tu.status = 'active' AND ($2::uuid IS NULL OR tenant_id = $2)
+         ORDER BY t.created_at DESC",
     )
+    .bind(user_id)
+    .bind(opt_tenant_id)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
