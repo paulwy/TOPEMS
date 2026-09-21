@@ -15,6 +15,7 @@ use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use topems_shared::auth::Claims;
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
@@ -41,6 +42,7 @@ pub struct CreatePositionRequest {
     pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: String,
+    pub name_en: Option<String>,
     pub code: Option<String>,
     pub level: Option<i32>,
     pub min_salary: Option<BigDecimal>,
@@ -54,6 +56,7 @@ pub struct UpdatePositionRequest {
     pub org_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub code: Option<String>,
     pub level: Option<i32>,
     pub min_salary: Option<BigDecimal>,
@@ -105,6 +108,7 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn list_positions(
     State(_state): State<ApiState>,
+    headers: HeaderMap,
     Query(params): Query<QueryParams>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -126,7 +130,9 @@ pub async fn list_positions(
 
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
+        SELECT id, tenant_id, organization_id AS org_id, department_id,
+               CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         FROM hrm.positions
         WHERE ($1::text IS NULL OR $1 = '' OR name ILIKE '%' || $1 || '%' OR code ILIKE '%' || $1 || '%')
           AND ($2::uuid IS NULL OR department_id = $2)
@@ -142,6 +148,7 @@ pub async fn list_positions(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -223,9 +230,11 @@ pub async fn create_position(
 
     let result = sqlx::query_as::<_, Position>(
         only_own_schema_query!("hrm", r#"
-        INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
-        RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
+        INSERT INTO hrm.positions (id, tenant_id, organization_id, department_id, name, code, level, salary_range_min, salary_range_max, description, requirements, status, created_at, updated_at, name_en)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13, $14)
+        RETURNING id, tenant_id, organization_id AS org_id, department_id,
+                  CASE WHEN $15 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         "#)
     )
     .bind(id)
@@ -241,6 +250,8 @@ pub async fn create_position(
     .bind(&req.requirements)
     .bind(now)
     .bind(now)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -303,6 +314,7 @@ pub async fn create_position(
 pub async fn get_position(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -310,9 +322,15 @@ pub async fn get_position(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Position>(
-        only_own_schema_query!("hrm", "SELECT id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at FROM hrm.positions WHERE deleted_at IS NULL AND id = $1")
+        only_own_schema_query!("hrm", r#"
+        SELECT id, tenant_id, organization_id AS org_id, department_id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
+        FROM hrm.positions WHERE deleted_at IS NULL AND id = $1
+        "#)
     )
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -345,6 +363,7 @@ pub async fn get_position(
 pub async fn update_position(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -368,9 +387,12 @@ pub async fn update_position(
             description = COALESCE($8, description),
             requirements = COALESCE($9, requirements),
             status = COALESCE($10, status),
-            updated_at = $11
+            updated_at = $11,
+            name_en = COALESCE($13, name_en)
         WHERE id = $12
-        RETURNING id, tenant_id, organization_id AS org_id, department_id, name, code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
+        RETURNING id, tenant_id, organization_id AS org_id, department_id,
+                  CASE WHEN $14 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                  code, level, salary_range_min AS min_salary, salary_range_max AS max_salary, description, requirements, status, created_at, updated_at
         "#)
     )
     .bind(req.org_id)
@@ -385,6 +407,8 @@ pub async fn update_position(
     .bind(&req.status)
     .bind(now)
     .bind(id)
+    .bind(&req.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -565,6 +589,7 @@ mod tests {
             org_id: Some(Uuid::new_v4()),
             department_id: Some(Uuid::new_v4()),
             name: "Tech Lead".to_string(),
+            name_en: None,
             code: Some("TL-001".to_string()),
             level: Some(7),
             min_salary: Some(dec(25000)),
@@ -581,6 +606,7 @@ mod tests {
             org_id: None,
             department_id: None,
             name: "Junior Dev".to_string(),
+            name_en: None,
             code: None,
             level: None,
             min_salary: None,
@@ -596,6 +622,7 @@ mod tests {
             org_id: None,
             department_id: None,
             name: None,
+            name_en: None,
             code: None,
             level: None,
             min_salary: None,
@@ -612,6 +639,7 @@ mod tests {
             org_id: Some(Uuid::new_v4()),
             department_id: Some(Uuid::new_v4()),
             name: Some("Updated Name".to_string()),
+            name_en: None,
             code: Some("UPD-001".to_string()),
             level: Some(8),
             min_salary: Some(dec(30000)),

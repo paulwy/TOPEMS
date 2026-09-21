@@ -12,6 +12,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::ListResponse;
@@ -105,7 +106,12 @@ pub async fn list_employees(
     let page_size = params.page_size.unwrap_or(20).min(100);
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
+    let service = EmployeeService::new(
+        state.db.clone(),
+        (*state.encryption).clone(),
+        tenant_id,
+        Locale::from_headers(&headers).as_sql(),
+    );
     let result = service
         .list_employees(
             page,
@@ -175,7 +181,12 @@ pub async fn get_employee(
         }
     }
 
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
+    let service = EmployeeService::new(
+        state.db.clone(),
+        (*state.encryption).clone(),
+        tenant_id,
+        Locale::from_headers(&headers).as_sql(),
+    );
     let result = service.get_employee(&id).await;
 
     if let ApiResponse {
@@ -236,9 +247,11 @@ pub async fn get_employee_details(
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT 
+        SELECT
             e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
-            e.employee_number, e.name, e.gender, e.hire_date,
+            e.employee_number,
+            CASE WHEN $3 = 'en' THEN COALESCE(e.name_en, e.name) ELSE e.name END AS name,
+            e.gender, e.hire_date,
             e.email, e.phone, e.status,
             e.created_at, e.updated_at,
             d.name as department_name,
@@ -253,6 +266,7 @@ pub async fn get_employee_details(
     ))
     .bind(id)
     .bind(tenant_id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -317,7 +331,12 @@ pub async fn create_employee(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
+    let service = EmployeeService::new(
+        state.db.clone(),
+        (*state.encryption).clone(),
+        tenant_id,
+        Locale::from_headers(&headers).as_sql(),
+    );
     let result = service.create_employee(req).await;
 
     let status_str: String;
@@ -460,7 +479,12 @@ pub async fn update_employee(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
+    let service = EmployeeService::new(
+        state.db.clone(),
+        (*state.encryption).clone(),
+        tenant_id,
+        Locale::from_headers(&headers).as_sql(),
+    );
     let result = service.update_employee(&id, req, &mut *txn).await;
 
     if result.code == 200 {
@@ -585,7 +609,12 @@ pub async fn delete_employee(
     }
 
     let tenant_id = get_tenant_id(&claims, &headers);
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
+    let service = EmployeeService::new(
+        state.db.clone(),
+        (*state.encryption).clone(),
+        tenant_id,
+        Locale::from_headers(&headers).as_sql(),
+    );
     let result = service.delete_employee(&id, &mut *txn).await;
 
     if result.code == 200 {

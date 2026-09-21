@@ -10,14 +10,22 @@ pub struct EmployeeService {
     db: PgPool,
     encryption: FieldEncryptionService,
     tenant_id: Uuid,
+    /// 请求语言 SQL 值（`"zh"` / `"en"`），用于 `e.name` 的双语 CASE 切换。
+    locale: &'static str,
 }
 
 impl EmployeeService {
-    pub fn new(db: PgPool, encryption: FieldEncryptionService, tenant_id: Uuid) -> Self {
+    pub fn new(
+        db: PgPool,
+        encryption: FieldEncryptionService,
+        tenant_id: Uuid,
+        locale: &'static str,
+    ) -> Self {
         Self {
             db,
             encryption,
             tenant_id,
+            locale,
         }
     }
 
@@ -36,7 +44,9 @@ impl EmployeeService {
         let employees = sqlx::query_as::<_, Employee>(
             r#"
             SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
-                   e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
+                   e.employee_number,
+                   CASE WHEN $8 = 'en' THEN COALESCE(e.name_en, e.name) ELSE e.name END AS name,
+                   e.gender, e.hire_date, e.email, e.phone,
                    e.id_card_number, e.address,
                    e.birth_date, e.regular_date, e.probation_period,
                    e.position, e.joblevel, e.work_location, e.report_to_name,
@@ -62,6 +72,7 @@ impl EmployeeService {
         .bind(self.tenant_id)
         .bind(page_size)
         .bind(offset)
+        .bind(self.locale)
         .fetch_all(&self.db)
         .await;
 
@@ -106,7 +117,9 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             SELECT e.id, e.tenant_id, e.org_id, e.department_id, e.position_id,
-                   e.employee_number, e.name, e.gender, e.hire_date, e.email, e.phone,
+                   e.employee_number,
+                   CASE WHEN $3 = 'en' THEN COALESCE(e.name_en, e.name) ELSE e.name END AS name,
+                   e.gender, e.hire_date, e.email, e.phone,
                    e.id_card_number, e.address,
                    e.birth_date, e.regular_date, e.probation_period,
                    e.position, e.joblevel, e.work_location, e.report_to_name,
@@ -121,6 +134,7 @@ impl EmployeeService {
         )
         .bind(id)
         .bind(self.tenant_id)
+        .bind(self.locale)
         .fetch_optional(&self.db)
         .await;
 
@@ -216,12 +230,14 @@ impl EmployeeService {
                 work_location, report_to_name, education,
                 emergency_contact_name, emergency_contact_phone, emergency_relation,
                 hukou_location, remark, employee_type, user_id,
-                status, created_at, updated_at
+                status, created_at, updated_at, name_en
             ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
                       $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
-                      'active', $29, $30)
+                      'active', $29, $30, $31)
             RETURNING id, tenant_id, org_id, department_id, position_id,
-                      employee_number, name, gender, hire_date, email, phone,
+                      employee_number,
+                      CASE WHEN $32 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                      gender, hire_date, email, phone,
                       id_card_number, address,
                       birth_date, regular_date, probation_period, position, joblevel,
                       work_location, report_to_name, education,
@@ -260,6 +276,8 @@ impl EmployeeService {
         .bind(req.user_id)
         .bind(now)
         .bind(now)
+        .bind(&req.name_en)
+        .bind(self.locale)
         .fetch_one(&self.db)
         .await;
 
@@ -391,10 +409,13 @@ impl EmployeeService {
                 education = $20, emergency_contact_name = $21, emergency_contact_phone = $22,
                 emergency_relation = $23, hukou_location = $24, remark = $25,
                 employee_type = $26, user_id = $27,
-                status = $28, updated_at = $29
+                status = $28, updated_at = $29,
+                name_en = COALESCE($30, name_en)
             WHERE id = $1 AND tenant_id = $2
             RETURNING id, tenant_id, org_id, department_id, position_id,
-                      employee_number, name, gender, hire_date, email, phone,
+                      employee_number,
+                      CASE WHEN $31 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                      gender, hire_date, email, phone,
                       id_card_number, address,
                       birth_date, regular_date, probation_period, position, joblevel,
                       work_location, report_to_name, education,
@@ -432,6 +453,8 @@ impl EmployeeService {
         .bind(user_id)
         .bind(&status)
         .bind(now)
+        .bind(&req.name_en)
+        .bind(self.locale)
         .fetch_one(&mut *conn)
         .await;
 

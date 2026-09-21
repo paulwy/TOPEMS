@@ -6,12 +6,13 @@
 
 use axum::{
     extract::{Path, Query, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -56,18 +57,34 @@ pub fn task_progress_for_status(status: &str, progress: i32) -> i32 {
 
 // ==================== Handlers ====================
 
-const TASK_RETURN: &str = r#"id, tenant_id, project_id, task_number, title, description, status,
-    priority, assignee, start_date, end_date, progress, created_by, created_at, updated_at"#;
+/// 构造 `pm.pm_tasks` 的 SELECT / RETURNING 列清单。
+///
+/// 多语言：`title` 按 `locale_placeholder`（SQL 占位符，如 `"$7"`）切换英文备用列
+/// `title_en`，未提供英文时 `COALESCE` 回退中文 `title`。其余列保持原始列名，
+/// `Task` 的 `FromRow` 结构体不新增字段。
+fn task_return_columns(locale_placeholder: &str) -> String {
+    format!(
+        "id, tenant_id, project_id, task_number,
+         CASE WHEN {p} = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+         description, status, priority, assignee, start_date, end_date, progress,
+         created_by, created_at, updated_at",
+        p = locale_placeholder
+    )
+}
 
 pub async fn list_tasks(
     State(pool): State<PgPool>,
     Query(query): Query<TaskQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<TaskListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
 
+    // 多语言：locale 追加为 $7，title 的 CASE 表达式引用它（既有 $1..$6 占位符不动）
+    let locale = Locale::from_headers(&headers).as_sql();
+    let return_cols = task_return_columns("$7");
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
-        "SELECT {TASK_RETURN} FROM pm.pm_tasks
+        "SELECT {return_cols} FROM pm.pm_tasks
          WHERE deleted_at IS NULL
            AND ($1::uuid IS NULL OR project_id = $1)
            AND ($2::text IS NULL OR status = $2)
@@ -81,6 +98,7 @@ pub async fn list_tasks(
     .bind(&query.assignee)
     .bind(page_size)
     .bind((page - 1) * page_size)
+    .bind(locale)
     .fetch_all(&pool)
     .await;
 
@@ -110,12 +128,16 @@ pub async fn list_tasks_by_project(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
     Query(query): Query<TaskQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<TaskListResponse>> {
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
 
+    // 多语言：locale 追加为 $5，title 的 CASE 表达式引用它（既有 $1..$4 占位符不动）
+    let locale = Locale::from_headers(&headers).as_sql();
+    let return_cols = task_return_columns("$5");
     let result: Result<Vec<Task>, sqlx::Error> = sqlx::query_as(&format!(
-        "SELECT {TASK_RETURN} FROM pm.pm_tasks
+        "SELECT {return_cols} FROM pm.pm_tasks
          WHERE project_id = $1 AND deleted_at IS NULL
            AND ($2::text IS NULL OR status = $2)
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"
@@ -124,6 +146,7 @@ pub async fn list_tasks_by_project(
     .bind(&query.status)
     .bind(page_size)
     .bind((page - 1) * page_size)
+    .bind(locale)
     .fetch_all(&pool)
     .await;
 
@@ -153,6 +176,7 @@ pub async fn list_tasks_by_project(
 
 pub async fn create_task(
     State(pool): State<PgPool>,
+    headers: HeaderMap,
     Json(req): Json<CreateTaskRequest>,
 ) -> Json<ApiResponse<Task>> {
     let id = Uuid::new_v4();
@@ -169,12 +193,15 @@ pub async fn create_task(
         ))
     });
 
+    // 多语言：title_en 追加为 $15，locale 追加为 $16，RETURNING 的 title CASE 引用 $16
+    let locale = Locale::from_headers(&headers).as_sql();
+    let return_cols = task_return_columns("$16");
     let result: Result<Task, sqlx::Error> = sqlx::query_as(&format!(
         r#"INSERT INTO pm.pm_tasks
         (id, tenant_id, project_id, task_number, title, description, status, priority, assignee,
-         start_date, end_date, progress, created_by, created_at, updated_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14)
-        RETURNING {TASK_RETURN}"#
+         start_date, end_date, progress, created_by, created_at, updated_at, title_en)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$14,$15)
+        RETURNING {return_cols}"#
     ))
     .bind(id)
     .bind(tenant_id)
@@ -190,6 +217,8 @@ pub async fn create_task(
     .bind(progress)
     .bind(&req.created_by)
     .bind(now)
+    .bind(&req.title_en)
+    .bind(locale)
     .fetch_one(&pool)
     .await;
 
@@ -202,11 +231,19 @@ pub async fn create_task(
     }
 }
 
-pub async fn get_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Task>> {
+pub async fn get_task(
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<Task>> {
+    // 多语言：locale 追加为 $2，title 的 CASE 表达式引用它
+    let locale = Locale::from_headers(&headers).as_sql();
+    let return_cols = task_return_columns("$2");
     let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
-        "SELECT {TASK_RETURN} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL"
+        "SELECT {return_cols} FROM pm.pm_tasks WHERE id = $1 AND deleted_at IS NULL"
     ))
     .bind(id)
+    .bind(locale)
     .fetch_optional(&pool)
     .await;
 
@@ -226,6 +263,7 @@ pub async fn get_task(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<
 pub async fn update_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateTaskRequest>,
 ) -> Json<ApiResponse<Task>> {
     let now = Utc::now();
@@ -246,6 +284,10 @@ pub async fn update_task(
         }
     }
 
+    // 多语言：title_en 追加为 $11，locale 追加为 $12，RETURNING 的 title CASE 引用 $12
+    // （既有 $1..$10 占位符与 progress 对 $4/$9 的引用均不动）
+    let locale = Locale::from_headers(&headers).as_sql();
+    let return_cols = task_return_columns("$12");
     let result: Result<Option<Task>, sqlx::Error> = sqlx::query_as(&format!(
         r#"UPDATE pm.pm_tasks SET
            title = COALESCE($2, title),
@@ -259,9 +301,10 @@ pub async fn update_task(
                            THEN CASE $4 WHEN 'done' THEN 100 WHEN 'todo' THEN 0
                                         ELSE COALESCE($9, progress) END
                            ELSE COALESCE($9, progress) END,
-           updated_at = $10
+           updated_at = $10,
+           title_en = COALESCE($11, title_en)
            WHERE id = $1 AND deleted_at IS NULL
-           RETURNING {TASK_RETURN}"#
+           RETURNING {return_cols}"#
     ))
     .bind(id)
     .bind(&req.title)
@@ -273,6 +316,8 @@ pub async fn update_task(
     .bind(req.end_date)
     .bind(req.progress)
     .bind(now)
+    .bind(&req.title_en)
+    .bind(locale)
     .fetch_optional(&pool)
     .await;
 

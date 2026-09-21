@@ -27,6 +27,7 @@ pub struct CreateTaskRequest {
     pub project_id: Uuid,
     pub task_number: Option<String>,
     pub title: String,
+    pub title_en: Option<String>,
     pub description: Option<String>,
     pub status: Option<String>,
     pub priority: Option<String>,
@@ -40,6 +41,7 @@ pub struct CreateTaskRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateTaskRequest {
     pub title: Option<String>,
+    pub title_en: Option<String>,
     pub description: Option<String>,
     pub status: Option<String>,
     pub priority: Option<String>,

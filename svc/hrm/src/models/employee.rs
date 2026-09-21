@@ -235,6 +235,8 @@ pub struct CreateEmployeeRequest {
     pub employee_number: String,
     #[schema(example = "张三")]
     pub name: String,
+    #[schema(example = "Zhang San")]
+    pub name_en: Option<String>,
     #[schema(example = "男")]
     pub gender: Option<String>,
     #[schema(example = "2024-01-01")]
@@ -301,6 +303,8 @@ pub struct UpdateEmployeeRequest {
     pub position_id: Option<Uuid>,
     #[schema(example = "张三")]
     pub name: Option<String>,
+    #[schema(example = "Zhang San")]
+    pub name_en: Option<String>,
     #[schema(example = "男")]
     pub gender: Option<String>,
     #[schema(example = "2020-06-01")]
@@ -417,6 +421,7 @@ mod tests {
             position_id: None,
             employee_number: "EMP002".to_string(),
             name: "Jane Smith".to_string(),
+            name_en: None,
             gender: Some("female".to_string()),
             hire_date: None,
             email: Some("jane@example.com".to_string()),
@@ -451,6 +456,7 @@ mod tests {
             department_id: None,
             position_id: None,
             name: Some("Jane Updated".to_string()),
+            name_en: None,
             gender: None,
             hire_date: None,
             email: None,
