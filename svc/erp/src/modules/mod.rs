@@ -81,6 +81,7 @@ pub mod production_order;
 pub mod purchase_order;
 pub mod sales_order;
 pub mod search;
+pub mod settings;
 pub mod supplier;
 pub mod vehicles;
 
@@ -147,6 +148,7 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(supplier::create_routes())
         .merge(sales_order::create_routes())
         .merge(search::create_routes())
+        .merge(settings::create_routes())
         // V15 Phase 3: HR 代理层
         .merge(hr_proxy::proxy_routes())
         // R12 Y-P0: ERP E2E 真实化采购链
