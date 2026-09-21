@@ -1,9 +1,10 @@
 //! 外部 ERP 集成（缺口#13 扩展版）
 //! 覆盖 /external-erp/* 全部路径，基于 erp_connections / erp_mappings / external_erp_sync_logs 真实表实现
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::{routing::get, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -42,14 +43,22 @@ struct SyncStatistics {
 
 // ===== connections =====
 
-async fn list_connections(State(state): State<AppState>) -> Json<ApiResponse<Vec<ErpConnection>>> {
+async fn list_connections(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<ErpConnection>>> {
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE tenant_id = $1 ORDER BY created_at DESC"
+         created_at, updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -193,17 +202,23 @@ async fn test_connection(
 
 async fn get_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ErpConnection>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+         created_at, updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(uuid)
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     {
@@ -285,19 +300,25 @@ async fn delete_connection(
 
 async fn list_entity_mappings(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<ErpMapping>>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at, updated_at FROM erp_mappings \
-         WHERE connection_id = $1 AND mapping_type = $2 AND tenant_id = $3 ORDER BY created_at DESC"
+         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) ORDER BY created_at DESC"
     ))
     .bind(uuid)
     .bind(&entity)
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -436,20 +457,26 @@ async fn batch_entity_mappings(
 
 async fn preview_entity(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<ErpMapping>>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at, updated_at FROM erp_mappings \
-         WHERE connection_id = $1 AND mapping_type = $2 AND tenant_id = $3 \
+         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) \
          ORDER BY created_at DESC LIMIT 20"
     ))
     .bind(uuid)
     .bind(&entity)
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -833,15 +860,23 @@ async fn sync_entity(
 
 // ===== sync-logs =====
 
-async fn sync_logs(State(state): State<AppState>) -> Json<ApiResponse<Vec<ExternalErpSyncLog>>> {
+async fn sync_logs(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<ExternalErpSyncLog>>> {
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at, completed_at, created_at \
-         FROM external_erp_sync_logs WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 100"
+         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -852,31 +887,39 @@ async fn sync_logs(State(state): State<AppState>) -> Json<ApiResponse<Vec<Extern
 
 // ===== sync-statistics =====
 
-async fn sync_statistics(State(state): State<AppState>) -> Json<ApiResponse<SyncStatistics>> {
+async fn sync_statistics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<SyncStatistics>> {
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     // 总量统计
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE tenant_id = $1"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1)"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
 
     let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE tenant_id = $1 AND status = 'success'"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) AND status = 'success'"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
 
     let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE tenant_id = $1 AND status = 'failed'"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) AND status = 'failed'"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
@@ -884,9 +927,9 @@ async fn sync_statistics(State(state): State<AppState>) -> Json<ApiResponse<Sync
     let last_sync: Option<(Option<chrono::NaiveDateTime>,)> =
         sqlx::query_as(only_own_schema_query!(
             "integration",
-            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE tenant_id = $1"
+            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1)"
         ))
-        .bind(TENANT_ID)
+        .bind(tid)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -894,9 +937,9 @@ async fn sync_statistics(State(state): State<AppState>) -> Json<ApiResponse<Sync
     // 按 entity 分组统计
     let by_entity_rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT entity, COUNT(*) FROM external_erp_sync_logs WHERE tenant_id = $1 GROUP BY entity ORDER BY COUNT(*) DESC"
+        "SELECT entity, COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) GROUP BY entity ORDER BY COUNT(*) DESC"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -920,14 +963,22 @@ async fn sync_statistics(State(state): State<AppState>) -> Json<ApiResponse<Sync
 
 // ===== export =====
 
-async fn export_mappings(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn export_mappings(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at FROM erp_mappings WHERE tenant_id = $1 ORDER BY created_at DESC"
+         created_at, updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -943,15 +994,23 @@ async fn export_mappings(State(state): State<AppState>) -> Json<ApiResponse<serd
     }
 }
 
-async fn export_sync_logs(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+async fn export_sync_logs(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at, completed_at, created_at \
-         FROM external_erp_sync_logs WHERE tenant_id = $1 ORDER BY created_at DESC"
+         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
-    .bind(TENANT_ID)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {

@@ -121,7 +121,11 @@ pub async fn list_shipments(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query_as::<_, Shipment>(
         r#"
@@ -129,7 +133,7 @@ pub async fn list_shipments(
                status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                notes, tenant_id, created_at, updated_at
         FROM tms.tms_shipments
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR shipment_no ILIKE $2 OR origin ILIKE $2 OR destination ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -149,7 +153,7 @@ pub async fn list_shipments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_shipments
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR shipment_no ILIKE $2 OR origin ILIKE $2 OR destination ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -270,14 +274,18 @@ pub async fn get_shipment(
 ) -> Json<ApiResponse<Shipment>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query_as::<_, Shipment>(
         r#"
         SELECT id, shipment_no, order_id, carrier_id, vehicle_id, driver_id, route_id, origin, destination,
                status, freight_amount, planned_departure, planned_arrival, actual_departure, actual_arrival,
                notes, tenant_id, created_at, updated_at
-        FROM tms.tms_shipments WHERE id = $1 AND tenant_id = $2
+        FROM tms.tms_shipments WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

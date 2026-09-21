@@ -1,8 +1,9 @@
 //! ERP 连接管理（缺口#11）
 //! GET/POST /erp/connections, GET/PUT/DELETE /erp/connections/{id}, POST /erp/connections/test
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -18,15 +19,20 @@ fn tenant_id(_state: &AppState) -> String {
 
 pub async fn list_connections(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ErpConnection>>> {
-    let tid = tenant_id(&state);
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE tenant_id = $1 ORDER BY created_at DESC"
+         created_at, updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
-    .bind(&tid)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -40,17 +46,22 @@ pub async fn list_connections(
 
 pub async fn get_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ErpConnection>> {
-    let tid = tenant_id(&state);
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+         created_at, updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     {

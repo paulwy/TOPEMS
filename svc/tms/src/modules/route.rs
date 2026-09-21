@@ -91,13 +91,17 @@ pub async fn list_routes(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query_as::<_, Route>(
         r#"
         SELECT id, route_no, name, origin, destination, distance_km, estimated_hours, status, tenant_id, created_at, updated_at
         FROM tms.tms_routes
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR route_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -117,7 +121,7 @@ pub async fn list_routes(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_routes
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR route_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -229,12 +233,16 @@ pub async fn get_route(
 ) -> Json<ApiResponse<Route>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query_as::<_, Route>(
         r#"
         SELECT id, route_no, name, origin, destination, distance_km, estimated_hours, status, tenant_id, created_at, updated_at
-        FROM tms.tms_routes WHERE id = $1 AND tenant_id = $2
+        FROM tms.tms_routes WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

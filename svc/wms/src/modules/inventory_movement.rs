@@ -81,12 +81,16 @@ async fn list_inventory_movements(
         return e;
     }
 
-    let tenant_id = match &claims.tenant_id {
-        Some(id) => match Uuid::parse_str(id) {
-            Ok(id) => id,
-            Err(_) => return Json(api_error(401, "无效的租户ID")),
-        },
-        None => return Json(api_error(401, "缺少租户ID")),
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(match &claims.tenant_id {
+            Some(id) => match Uuid::parse_str(id) {
+                Ok(id) => id,
+                Err(_) => return Json(api_error(401, "无效的租户ID")),
+            },
+            None => return Json(api_error(401, "缺少租户ID")),
+        })
     };
 
     let page = params.page.unwrap_or(1).max(1);
@@ -105,7 +109,7 @@ async fn list_inventory_movements(
                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
                status, performed_by, performed_at, notes, created_at, updated_at
         FROM wms.inventory_movements
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR movement_type = $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR reference_id = $4)
@@ -132,7 +136,7 @@ async fn list_inventory_movements(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.inventory_movements
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR movement_type = $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR reference_id = $4)
@@ -280,12 +284,16 @@ async fn get_inventory_movement(
         return e;
     }
 
-    let tenant_id = match &claims.tenant_id {
-        Some(id) => match Uuid::parse_str(id) {
-            Ok(id) => id,
-            Err(_) => return Json(api_error(401, "无效的租户ID")),
-        },
-        None => return Json(api_error(401, "缺少租户ID")),
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(match &claims.tenant_id {
+            Some(id) => match Uuid::parse_str(id) {
+                Ok(id) => id,
+                Err(_) => return Json(api_error(401, "无效的租户ID")),
+            },
+            None => return Json(api_error(401, "缺少租户ID")),
+        })
     };
 
     let result = sqlx::query_as::<_, InventoryMovement>(only_own_schema_query!(
@@ -296,7 +304,7 @@ async fn get_inventory_movement(
                from_location_id, to_location_id, from_warehouse_id, to_warehouse_id,
                status, performed_by, performed_at, notes, created_at, updated_at
         FROM wms.inventory_movements
-        WHERE id = $1 AND tenant_id = $2
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#
     ))
     .bind(id)

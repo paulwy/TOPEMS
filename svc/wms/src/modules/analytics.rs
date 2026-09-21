@@ -121,9 +121,13 @@ async fn get_inventory_turnover(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnalyticsQueryParams>,
 ) -> Json<ApiResponse<InventoryTurnoverResponse>> {
-    let tenant_id = match resolve_tenant_id(&claims) {
-        Ok(id) => id,
-        Err(e) => return Json(ApiResponse::error(401, &e)),
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(match resolve_tenant_id(&claims) {
+            Ok(id) => id,
+            Err(e) => return Json(ApiResponse::error(401, &e)),
+        })
     };
 
     let (start, end) = parse_date_range(&params);
@@ -142,7 +146,7 @@ async fn get_inventory_turnover(
             COUNT(*) AS outbound_count,
             COALESCE(SUM(quantity), 0) AS total_quantity
         FROM wms.inventory_movements
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND movement_type = 'outbound'
           AND status = 'completed'
           AND performed_at >= $2
@@ -173,7 +177,7 @@ async fn get_inventory_turnover(
 
     // 计算平均库存（简化：用当前库存作为平均库存的近似）
     let avg_inventory: f64 = sqlx::query_scalar(
-        "SELECT COALESCE(AVG(quantity), 0) FROM wms.inventory WHERE tenant_id = $1",
+        "SELECT COALESCE(AVG(quantity), 0) FROM wms.inventory WHERE ($1::uuid IS NULL OR tenant_id = $1)",
     )
     .bind(tenant_id)
     .fetch_one(&state.db)

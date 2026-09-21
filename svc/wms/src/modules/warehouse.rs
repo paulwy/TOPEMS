@@ -16,12 +16,12 @@ use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
-fn warehouse_cache_key(tenant_id: Uuid, id: Uuid) -> String {
-    format!("wms:warehouse:get:{}:{}", tenant_id, id)
+fn warehouse_cache_key(tenant_id: &Option<Uuid>, id: Uuid) -> String {
+    format!("wms:warehouse:get:{}:{}", tenant_id.map_or("all".to_string(), |t| t.to_string()), id)
 }
 
 fn warehouse_list_cache_key(
-    tenant_id: Uuid,
+    tenant_id: &Option<Uuid>,
     page: i64,
     page_size: i64,
     search: &Option<String>,
@@ -29,7 +29,8 @@ fn warehouse_list_cache_key(
 ) -> String {
     format!(
         "wms:warehouse:list:{}:page:{}:size:{}:search:{:?}:status:{:?}",
-        tenant_id, page, page_size, search, status
+        tenant_id.map_or("all".to_string(), |t| t.to_string()),
+        page, page_size, search, status
     )
 }
 
@@ -75,10 +76,14 @@ pub async fn list_warehouses(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let cache_key =
-        warehouse_list_cache_key(tenant_id, page, page_size, &params.search, &params.status);
+        warehouse_list_cache_key(&tenant_id, page, page_size, &params.search, &params.status);
 
     if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库列表缓存命中: {}", cache_key);
@@ -89,7 +94,7 @@ pub async fn list_warehouses(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, CASE WHEN $6 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND deleted_at IS NULL
@@ -112,7 +117,7 @@ pub async fn list_warehouses(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.warehouses
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND deleted_at IS NULL
@@ -274,8 +279,12 @@ pub async fn get_warehouse(
 ) -> Json<ApiResponse<Warehouse>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let cache_key = warehouse_cache_key(tenant_id, id);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
+    let cache_key = warehouse_cache_key(&tenant_id, id);
 
     if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库缓存命中: {}", cache_key);
@@ -287,7 +296,7 @@ pub async fn get_warehouse(
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FROM wms.warehouses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
         "#),
     )
     .bind(id)
@@ -412,7 +421,7 @@ pub async fn update_warehouse(
     };
 
     if status_str == "success" {
-        let cache_key = warehouse_cache_key(tenant_id, id);
+        let cache_key = warehouse_cache_key(&Some(tenant_id), id);
         state.warehouse_cache.remove(&cache_key).await;
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
@@ -518,7 +527,7 @@ pub async fn delete_warehouse(
     };
 
     if status_str == "success" {
-        let cache_key = warehouse_cache_key(tenant_id, id);
+        let cache_key = warehouse_cache_key(&Some(tenant_id), id);
         state.warehouse_cache.remove(&cache_key).await;
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
@@ -560,7 +569,7 @@ mod tests {
     fn test_warehouse_cache_key() {
         let tenant_id = Uuid::nil();
         let id = Uuid::nil();
-        let key = warehouse_cache_key(tenant_id, id);
+        let key = warehouse_cache_key(&Some(tenant_id), id);
         assert_eq!(key, format!("wms:warehouse:get:{}:{}", tenant_id, id));
         assert!(key.starts_with("wms:warehouse:get:"));
     }
@@ -570,8 +579,8 @@ mod tests {
         let tenant_id = Uuid::nil();
         let id1 = Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap();
         let id2 = Uuid::parse_str("22222222-2222-2222-2222-222222222222").unwrap();
-        let key1 = warehouse_cache_key(tenant_id, id1);
-        let key2 = warehouse_cache_key(tenant_id, id2);
+        let key1 = warehouse_cache_key(&Some(tenant_id), id1);
+        let key2 = warehouse_cache_key(&Some(tenant_id), id2);
         assert_ne!(key1, key2);
     }
 
@@ -579,7 +588,7 @@ mod tests {
     fn test_warehouse_list_cache_key() {
         let tenant_id = Uuid::nil();
         let key = warehouse_list_cache_key(
-            tenant_id,
+            &Some(tenant_id),
             1,
             20,
             &Some("test".to_string()),
@@ -595,7 +604,7 @@ mod tests {
     #[test]
     fn test_warehouse_list_cache_key_default() {
         let tenant_id = Uuid::nil();
-        let key = warehouse_list_cache_key(tenant_id, 1, 10, &None, &None);
+        let key = warehouse_list_cache_key(&Some(tenant_id), 1, 10, &None, &None);
         assert!(key.starts_with("wms:warehouse:list:"));
         assert!(key.contains("page:1"));
         assert!(key.contains("size:10"));
@@ -604,8 +613,8 @@ mod tests {
     #[test]
     fn test_warehouse_list_cache_key_different_pages() {
         let tenant_id = Uuid::nil();
-        let key1 = warehouse_list_cache_key(tenant_id, 1, 10, &None, &None);
-        let key2 = warehouse_list_cache_key(tenant_id, 2, 10, &None, &None);
+        let key1 = warehouse_list_cache_key(&Some(tenant_id), 1, 10, &None, &None);
+        let key2 = warehouse_list_cache_key(&Some(tenant_id), 2, 10, &None, &None);
         assert_ne!(key1, key2);
     }
 }

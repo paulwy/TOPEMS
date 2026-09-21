@@ -1,23 +1,31 @@
 //! ERP 字段映射管理（缺口#12）
 //! GET/POST /erp/mappings, GET/PUT/DELETE /erp/mappings/{id}
 
-use axum::extract::{Path, State};
+use axum::extract::{Extension, Path, State};
 use axum::Json;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMappingRequest};
 
-pub async fn list_mappings(State(state): State<AppState>) -> Json<ApiResponse<Vec<ErpMapping>>> {
-    let tid = "default".to_string();
+pub async fn list_mappings(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<ErpMapping>>> {
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at FROM erp_mappings WHERE tenant_id = $1 ORDER BY created_at DESC"
+         created_at, updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
-    .bind(&tid)
+    .bind(tid)
     .fetch_all(&state.pool)
     .await
     {
@@ -31,17 +39,22 @@ pub async fn list_mappings(State(state): State<AppState>) -> Json<ApiResponse<Ve
 
 pub async fn get_mapping(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ErpMapping>> {
-    let tid = "default".to_string();
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at FROM erp_mappings WHERE id = $1 AND tenant_id = $2"
+         created_at, updated_at FROM erp_mappings WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
-    .bind(&tid)
+    .bind(tid)
     .fetch_optional(&state.pool)
     .await
     {

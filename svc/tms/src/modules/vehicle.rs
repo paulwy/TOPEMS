@@ -94,12 +94,17 @@ pub async fn list_vehicles(
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
+    let tenant_key = tenant_id.map_or("all".to_string(), |t| t.to_string());
 
     // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
     let cache_key = format!(
         "tms:vehicle:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
-        tenant_id,
+        tenant_key,
         page,
         page_size,
         params.search.clone().unwrap_or_else(|| "none".to_string()),
@@ -114,7 +119,7 @@ pub async fn list_vehicles(
             service = "tms",
             entity = "vehicle",
             operation = "list",
-            tenant_id = %tenant_id,
+            tenant_id = ?tenant_id,
             cache_key = %cache_key,
             "车辆列表缓存命中"
         );
@@ -131,7 +136,7 @@ pub async fn list_vehicles(
         r#"
         SELECT id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
         FROM tms.tms_vehicles
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR vehicle_no ILIKE $2 OR plate_number ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -151,7 +156,7 @@ pub async fn list_vehicles(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM tms.tms_vehicles
-                WHERE tenant_id = $1
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR vehicle_no ILIKE $2 OR plate_number ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -181,7 +186,7 @@ pub async fn list_vehicles(
                 service = "tms",
                 entity = "vehicle",
                 operation = "list",
-                tenant_id = %tenant_id,
+                tenant_id = ?tenant_id,
                 cache_key = %cache_key,
                 "车辆列表缓存写入"
             );
@@ -301,12 +306,16 @@ pub async fn get_vehicle(
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query_as::<_, Vehicle>(
         r#"
         SELECT id, vehicle_no, plate_number, vehicle_type, capacity, status, carrier_id, notes, tenant_id, created_at, updated_at
-        FROM tms.tms_vehicles WHERE id = $1 AND tenant_id = $2
+        FROM tms.tms_vehicles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
