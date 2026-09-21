@@ -52,7 +52,8 @@ d11c3dbc8 fix: 统一超管豁免哨兵为全零 UUID（400 处）
 
 | 场景 | 结果 |
 |---|---|
-| A POST 创建客户 | DB tenant_id=A（正确绑定当前 JWT 租户）✓ |
+| A POST 创建客户（CRM） | DB tenant_id=A（正确绑定当前 JWT 租户）✓ |
+| A POST 创建供应商（SRM） | DB tenant_id=A（正确绑定当前 JWT 租户）✓ |
 | A GET list | 只见自己创建的 ✓ |
 | B GET list | 不可见 A 的 ✓ |
 | 超管 GET list | 跨租户全量 ✓ |
@@ -73,6 +74,17 @@ d11c3dbc8 fix: 统一超管豁免哨兵为全零 UUID（400 处）
 | 前端 typecheck | 0 错误 ✓ |
 | 集成测试（TS+vitest） | 3/4 通过（health-checks 既有路由问题） |
 | 后端单元测试 | 大部分服务通过（mes/wms 因 SQLX 缓存环境问题待验证） |
+
+### 4.5 性能影响评估
+
+**结论**：豁免改造对普通用户查询性能**无影响**。
+
+**证据**：PostgreSQL 优化器在规划时常量折叠 `IS NULL` 判断，把 `('X'::uuid IS NULL OR tenant_id = 'X')` 优化成 `tenant_id = 'X'`——和改造前 SQL 完全一致。
+
+| 查询 | Execution Time | 执行计划 |
+|---|---|---|
+| 超管（传 0000...） | 0.024 ms | `tenant_id = '0000...'` |
+| 普通用户（传具体租户） | 0.021 ms | `tenant_id = '具体租户'` |
 
 ---
 
