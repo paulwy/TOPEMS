@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Extension, Json, Router,
 };
@@ -10,6 +11,7 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::{
@@ -967,6 +969,7 @@ pub async fn create_sla_policy_handler(
 pub async fn list_sla_policies_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TicketSlaPolicy>>> {
     let service = TicketSlaService::new(pool);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -974,8 +977,9 @@ pub async fn list_sla_policies_handler(
     } else {
         Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
     };
+    let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.list_policies(opt_tenant_id).await {
+    match service.list_policies(opt_tenant_id, locale).await {
         Ok(policies) => Json(ApiResponse::success(policies, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA策略失败", e))),
     }
@@ -985,6 +989,7 @@ pub async fn get_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<TicketSlaPolicy>> {
     let service = TicketSlaService::new(pool);
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
@@ -992,8 +997,9 @@ pub async fn get_sla_policy_handler(
     } else {
         Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
     };
+    let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.get_policy(opt_tenant_id, id).await {
+    match service.get_policy(opt_tenant_id, id, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "查询成功")),
         Err(e) => Json(ApiResponse::from({
             tracing::warn!("SLA策略不存在: {}", e);
@@ -1265,19 +1271,20 @@ pub async fn create_automation_rule_handler(
 pub async fn list_automation_rules_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<AutomationRule>>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, AutomationRule>(
-        "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+        "SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
          FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
     )
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_all(&pool)
     .await
     {
@@ -1290,20 +1297,21 @@ pub async fn get_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<AutomationRule>> {
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id =
-        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, AutomationRule>(
-        "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+        "SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
          FROM ticket.ticket_automation_rules WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&pool)
     .await
     {

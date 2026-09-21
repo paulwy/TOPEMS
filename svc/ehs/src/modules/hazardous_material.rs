@@ -3,7 +3,9 @@
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -278,15 +280,80 @@ pub struct UpdateMsdsRequest {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_materials(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
-    tracing::debug!("Listing hazardous materials");
-    Json(ApiResponse::success(
-        Vec::<HazardousMaterial>::new(),
-        "获取危险品列表成功",
-    ))
+    let _ = &claims;
+    let locale = Locale::from_headers(&headers).as_sql();
+    let result = sqlx::query(
+        r#"
+        SELECT
+            id::text AS id, material_no,
+            CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+            alias, english_name, cas_no, category, hazard_level,
+            hazard_class::text AS hazard_class,
+            specification, unit, packaging, storage_condition, storage_location,
+            max_stock::float8 AS max_stock, min_stock::float8 AS min_stock, current_stock::float8 AS current_stock,
+            safety_data_sheet, emergency_measures, supplier, status, remarks,
+            created_at::text AS created_at, updated_at::text AS updated_at
+        FROM qa_ehs_hazardous_materials
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 200
+        "#,
+    )
+    .bind(locale)
+    .fetch_all(&state.pool)
+    .await;
+
+    let rows = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list materials: {}", e);
+            return Json(ApiResponse::error(500, "获取危险品列表失败"));
+        }
+    };
+
+    let materials: Vec<HazardousMaterial> = rows
+        .iter()
+        .map(|r| {
+            let hc = r
+                .try_get::<Option<String>, _>("hazard_class")
+                .ok()
+                .flatten()
+                .and_then(|t| serde_json::from_str(&t).ok());
+            HazardousMaterial {
+                id: r.try_get::<String, _>("id").unwrap_or_default(),
+                material_no: r.try_get::<String, _>("material_no").unwrap_or_default(),
+                name: r.try_get::<String, _>("name").unwrap_or_default(),
+                alias: r.try_get::<Option<String>, _>("alias").ok().flatten(),
+                english_name: r.try_get::<Option<String>, _>("english_name").ok().flatten(),
+                cas_no: r.try_get::<Option<String>, _>("cas_no").ok().flatten(),
+                category: r.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
+                hazard_level: r.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
+                hazard_class: hc,
+                specification: r.try_get::<Option<String>, _>("specification").ok().flatten(),
+                unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
+                packaging: r.try_get::<Option<String>, _>("packaging").ok().flatten(),
+                storage_condition: r.try_get::<Option<String>, _>("storage_condition").ok().flatten(),
+                storage_location: r.try_get::<Option<String>, _>("storage_location").ok().flatten(),
+                max_stock: r.try_get::<Option<f64>, _>("max_stock").ok().flatten(),
+                min_stock: r.try_get::<Option<f64>, _>("min_stock").ok().flatten(),
+                current_stock: r.try_get::<Option<f64>, _>("current_stock").ok().flatten(),
+                safety_data_sheet: r.try_get::<Option<String>, _>("safety_data_sheet").ok().flatten(),
+                emergency_measures: r.try_get::<Option<String>, _>("emergency_measures").ok().flatten(),
+                supplier: r.try_get::<Option<String>, _>("supplier").ok().flatten(),
+                status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+                remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
+                created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
+                updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+                tenant_id: uuid::Uuid::nil(),
+            }
+        })
+        .collect();
+
+    Json(ApiResponse::success(materials, "获取危险品列表成功"))
 }
 
 #[utoipa::path(
@@ -360,117 +427,80 @@ pub async fn create_material(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_material(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let _ = &claims;
+    let locale = Locale::from_headers(&headers).as_sql();
+    let result = sqlx::query(
+        r#"
+        SELECT
+            id::text AS id, material_no,
+            CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+            alias, english_name, cas_no, category, hazard_level,
+            hazard_class::text AS hazard_class,
+            specification, unit, packaging, storage_condition, storage_location,
+            max_stock::float8 AS max_stock, min_stock::float8 AS min_stock, current_stock::float8 AS current_stock,
+            safety_data_sheet, emergency_measures, supplier, status, remarks,
+            created_at::text AS created_at, updated_at::text AS updated_at
+        FROM qa_ehs_hazardous_materials
+        WHERE id = $1::uuid AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(locale)
+    .fetch_optional(&state.pool)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to get material: {}", e);
+            return Json(ApiResponse::error(500, "获取危险品详情失败"));
+        }
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
-    tracing::debug!("Getting hazardous material: {}", id);
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "危险品不存在")),
+    };
+
+    let hc = row
+        .try_get::<Option<String>, _>("hazard_class")
+        .ok()
+        .flatten()
+        .and_then(|t| serde_json::from_str(&t).ok());
+    let material = HazardousMaterial {
+        id: row.try_get::<String, _>("id").unwrap_or_default(),
+        material_no: row.try_get::<String, _>("material_no").unwrap_or_default(),
+        name: row.try_get::<String, _>("name").unwrap_or_default(),
+        alias: row.try_get::<Option<String>, _>("alias").ok().flatten(),
+        english_name: row.try_get::<Option<String>, _>("english_name").ok().flatten(),
+        cas_no: row.try_get::<Option<String>, _>("cas_no").ok().flatten(),
+        category: row.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
+        hazard_level: row.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
+        hazard_class: hc,
+        specification: row.try_get::<Option<String>, _>("specification").ok().flatten(),
+        unit: row.try_get::<Option<String>, _>("unit").ok().flatten(),
+        packaging: row.try_get::<Option<String>, _>("packaging").ok().flatten(),
+        storage_condition: row.try_get::<Option<String>, _>("storage_condition").ok().flatten(),
+        storage_location: row.try_get::<Option<String>, _>("storage_location").ok().flatten(),
+        max_stock: row.try_get::<Option<f64>, _>("max_stock").ok().flatten(),
+        min_stock: row.try_get::<Option<f64>, _>("min_stock").ok().flatten(),
+        current_stock: row.try_get::<Option<f64>, _>("current_stock").ok().flatten(),
+        safety_data_sheet: row.try_get::<Option<String>, _>("safety_data_sheet").ok().flatten(),
+        emergency_measures: row.try_get::<Option<String>, _>("emergency_measures").ok().flatten(),
+        supplier: row.try_get::<Option<String>, _>("supplier").ok().flatten(),
+        status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+        remarks: row.try_get::<Option<String>, _>("remarks").ok().flatten(),
+        created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten(),
+        updated_at: row.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+        tenant_id: uuid::Uuid::nil(),
+    };
+
     Json(ApiResponse::success(
-        MaterialDetail {
-            material: HazardousMaterial {
-                id: id.clone(),
-                material_no: "HM-2024001".to_string(),
-                name: "浓硫酸".to_string(),
-                alias: Some("硫酸".to_string()),
-                english_name: Some("Sulfuric acid".to_string()),
-                cas_no: Some("7664-93-9".to_string()),
-                category: "corrosive".to_string(),
-                hazard_level: Some("high".to_string()),
-                hazard_class: Some(vec!["腐蚀性".to_string(), "强氧化性".to_string()]),
-                specification: Some("98%".to_string()),
-                unit: Some("kg".to_string()),
-                packaging: Some("25L塑料桶".to_string()),
-                storage_condition: Some("阴凉、干燥、通风处储存".to_string()),
-                storage_location: Some("危险品仓库A区".to_string()),
-                max_stock: Some(500.0),
-                min_stock: Some(50.0),
-                current_stock: Some(200.0),
-                safety_data_sheet: Some("详见MSDS".to_string()),
-                emergency_measures: Some("皮肤接触立即用大量清水冲洗...".to_string()),
-                supplier: Some("某某化工有限公司".to_string()),
-                status: "active".to_string(),
-                remarks: None,
-                created_at: Some(chrono::Utc::now().to_rfc3339()),
-                updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-                tenant_id,
-            },
-            stocks: vec![
-                MaterialStock {
-                    id: "stock-001".to_string(),
-                    material_id: id.clone(),
-                    material_name: "浓硫酸".to_string(),
-                    batch_no: Some("B2024001".to_string()),
-                    quantity: 100.0,
-                    unit: Some("kg".to_string()),
-                    storage_location: Some("危险品仓库A区".to_string()),
-                    received_date: Some("2024-05-01".to_string()),
-                    expiry_date: Some("2026-04-30".to_string()),
-                    supplier: Some("某某化工有限公司".to_string()),
-                    status: "normal".to_string(),
-                    remarks: None,
-                    created_at: Some(chrono::Utc::now().to_rfc3339()),
-                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-                    tenant_id,
-                },
-                MaterialStock {
-                    id: "stock-002".to_string(),
-                    material_id: id.clone(),
-                    material_name: "浓硫酸".to_string(),
-                    batch_no: Some("B2024002".to_string()),
-                    quantity: 100.0,
-                    unit: Some("kg".to_string()),
-                    storage_location: Some("危险品仓库A区".to_string()),
-                    received_date: Some("2024-06-01".to_string()),
-                    expiry_date: Some("2026-05-31".to_string()),
-                    supplier: Some("某某化工有限公司".to_string()),
-                    status: "normal".to_string(),
-                    remarks: None,
-                    created_at: Some(chrono::Utc::now().to_rfc3339()),
-                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-                    tenant_id,
-                },
-            ],
-            msds: Some(MsdsData {
-                id: "msds-001".to_string(),
-                material_id: id.clone(),
-                material_name: "浓硫酸".to_string(),
-                version: Some("V1.0".to_string()),
-                ingredients: Some("硫酸 98%".to_string()),
-                hazard_identification: Some("腐蚀性，强氧化性".to_string()),
-                first_aid_measures: Some(
-                    "皮肤接触：立即脱去污染的衣着，用大量流动清水冲洗至少15分钟...".to_string(),
-                ),
-                fire_fighting_measures: Some("消防人员必须穿全身耐酸碱消防服...".to_string()),
-                accidental_release_measures: Some("迅速撤离泄漏污染区人员至安全区...".to_string()),
-                handling_and_storage: Some("密闭操作，注意通风...".to_string()),
-                exposure_control: Some("密闭操作，提供安全淋浴和洗眼设备...".to_string()),
-                physical_chemical_properties: Some("无色透明油状液体，无臭...".to_string()),
-                stability_reactivity: Some("稳定，遇水大量放热...".to_string()),
-                toxicological_info: Some("具有强腐蚀性...".to_string()),
-                ecological_info: Some("对环境有危害，对水体和土壤可造成污染...".to_string()),
-                disposal_considerations: Some("缓慢加入碱液-石灰水中，并不断搅拌...".to_string()),
-                transport_info: Some("铁路运输时应严格按照铁道部...".to_string()),
-                regulatory_info: Some("化学危险物品安全管理条例...".to_string()),
-                other_info: None,
-                updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-                tenant_id,
-            }),
-            recent_records: vec![],
-            tenant_id,
-        },
+        MaterialDetail { material, stocks: vec![], msds: None, recent_records: vec![], tenant_id: uuid::Uuid::nil() },
         "获取危险品详情成功",
     ))
 }

@@ -470,22 +470,30 @@ impl TicketSlaService {
         .execute(&self.pool)
         .await?;
 
-        self.get_policy(Some(tenant_id), policy_id).await
+        self.get_policy(Some(tenant_id), policy_id, "zh").await
     }
 
     pub async fn get_policy(
         &self,
         tenant_id: Option<Uuid>,
         policy_id: Uuid,
+        locale: &str,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
+            SELECT id, tenant_id,
+              CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+              description, ticket_type, severity, response_hours, resolution_hours,
+              escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3,
+              working_hours_only, business_hours_start, business_hours_end, weekend_excluded,
+              is_default, is_active, created_at, updated_at
+            FROM ticket.core_ticket_sla_policies
             WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             "#,
         )
         .bind(policy_id)
         .bind(tenant_id)
+        .bind(locale)
         .fetch_one(&self.pool)
         .await?;
 
@@ -495,15 +503,23 @@ impl TicketSlaService {
     pub async fn list_policies(
         &self,
         tenant_id: Option<Uuid>,
+        locale: &str,
     ) -> Result<Vec<TicketSlaPolicy>, sqlx::Error> {
         let policies = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
+            SELECT id, tenant_id,
+              CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+              description, ticket_type, severity, response_hours, resolution_hours,
+              escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3,
+              working_hours_only, business_hours_start, business_hours_end, weekend_excluded,
+              is_default, is_active, created_at, updated_at
+            FROM ticket.core_ticket_sla_policies
             WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
             ORDER BY is_default DESC, created_at DESC
             "#,
         )
         .bind(tenant_id)
+        .bind(locale)
         .fetch_all(&self.pool)
         .await?;
 
@@ -570,7 +586,7 @@ impl TicketSlaService {
         .execute(&self.pool)
         .await?;
 
-        self.get_policy(Some(tenant_id), policy_id).await
+        self.get_policy(Some(tenant_id), policy_id, "zh").await
     }
 
     pub async fn delete_policy(

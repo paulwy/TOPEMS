@@ -16,11 +16,13 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -129,6 +131,7 @@ pub async fn list_prompt_templates(
     State(state): State<AppState>,
     Query(params): Query<PromptTemplateListQuery>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<PromptTemplateList>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
@@ -138,6 +141,7 @@ pub async fn list_prompt_templates(
     let search: Option<String> = params.search.clone();
     let category: Option<String> = params.category.clone();
     let is_fav: Option<bool> = params.is_favorite.as_deref().map(|v| v == "true");
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let where_sql = "(tenant_id IS NULL OR tenant_id = $1)
        AND ($2::text IS NULL OR name ILIKE '%' || $2 || '%' OR description ILIKE '%' || $2 || '%')
@@ -146,7 +150,9 @@ pub async fn list_prompt_templates(
 
     let q_count = format!("SELECT COUNT(*) FROM ai.ai_prompt_templates WHERE {where_sql}");
     let q_list = format!(
-        "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
+        "SELECT id,
+                CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
          FROM ai.ai_prompt_templates WHERE {where_sql} ORDER BY updated_at DESC LIMIT $5 OFFSET $6"
     );
 
@@ -174,6 +180,7 @@ pub async fn list_prompt_templates(
         .bind(is_fav)
         .bind(pagesize)
         .bind(offset)
+        .bind(locale)
         .fetch_all(&state.pool)
         .await
     {
@@ -221,14 +228,19 @@ pub async fn get_prompt_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<PromptTemplateOut>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query(
-        "SELECT id, name, description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
+        "SELECT id,
+                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                description, category, fields, prompt_template, is_favorite, usage_count::bigint, created_at, updated_at
          FROM ai.ai_prompt_templates WHERE id = $1 AND (tenant_id IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await
     {

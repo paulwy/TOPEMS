@@ -8,6 +8,7 @@ use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
+use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
 
 /// 物料列表缓存 Key
@@ -17,11 +18,12 @@ fn materials_list_cache_key(
     page_size: i64,
     search: &Option<String>,
     status: &Option<String>,
+    locale: &str,
 ) -> String {
     format!(
-        "pdm:material:list:{}:page:{}:pagesize:{}:search:{:?}:status:{:?}",
+        "pdm:material:list:{}:page:{}:pagesize:{}:search:{:?}:status:{:?}:locale:{}",
         tenant_id.map_or("all".to_string(), |t| t.to_string()),
-        page, page_size, search, status
+        page, page_size, search, status, locale
     )
 }
 
@@ -86,7 +88,7 @@ pub async fn list_materials(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<MaterialQuery>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -97,10 +99,11 @@ pub async fn list_materials(
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // 构建缓存 Key 并检查缓存
     let cache_key =
-        materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status);
+        materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status, locale);
     if let Some(cached) = state.dict_cache.get(&cache_key).await {
         record_cache_hit("pdm", "material", "list");
         tracing::debug!(
@@ -119,18 +122,21 @@ pub async fn list_materials(
 
     let result = sqlx::query_as::<_, Material>(
         r#"
-        SELECT id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
+        SELECT id, tenant_id, material_no,
+               CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_materials
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
+    .bind(locale)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -141,7 +147,7 @@ pub async fn list_materials(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_materials
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR material_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -221,9 +227,9 @@ pub async fn create_material(
     let result = sqlx::query_as::<_, Material>(
         r#"
         INSERT INTO pdm_materials (
-            id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
+            id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
+        RETURNING id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
     )
     .bind(Uuid::new_v4())
@@ -342,7 +348,7 @@ pub async fn get_material(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Material>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -350,14 +356,18 @@ pub async fn get_material(
         Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, Material>(
         r#"
-        SELECT id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
-        FROM pdm_materials WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        SELECT id, tenant_id, material_no,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
+        FROM pdm_materials WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 
@@ -401,7 +411,7 @@ pub async fn update_material(
 
     let existing = sqlx::query_as::<_, Material>(
         r#"
-        SELECT id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
+        SELECT id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_materials WHERE id = $1 AND tenant_id = $2
         "#,
     )
@@ -432,7 +442,7 @@ pub async fn update_material(
             material_no = $2, name = $3, spec = $4, unit = $5,
             status = $6, updated_at = $7
         WHERE id = $1 AND tenant_id = $8
-        RETURNING id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
+        RETURNING id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
     )
     .bind(id)

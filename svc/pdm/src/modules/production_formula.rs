@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 // =============================================================================
@@ -352,7 +353,7 @@ pub async fn list_formulas(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<FormulaQuery>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -363,24 +364,28 @@ pub async fn list_formulas(
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
-        SELECT id, tenant_id, formula_no, name, product_id, description, formula_items,
-               status, created_at, updated_at
+        SELECT id, tenant_id, formula_no,
+               CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               product_id, description, formula_items,
+               status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_production_formulas
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
         "#,
     )
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(query.product_id)
+    .bind(locale)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -391,7 +396,7 @@ pub async fn list_formulas(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_formulas
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
@@ -462,7 +467,7 @@ pub async fn create_formula(
             tenant_id, formula_no, name, product_id, description, formula_items, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, tenant_id, formula_no, name, product_id, description, formula_items,
-                  status, created_at, updated_at
+                  status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
     )
     .bind(tenant_id)
@@ -499,7 +504,7 @@ pub async fn get_formula(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionFormula>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -507,15 +512,19 @@ pub async fn get_formula(
         Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
-        SELECT id, tenant_id, formula_no, name, product_id, description, formula_items,
-               status, created_at, updated_at
-        FROM pdm_production_formulas WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        SELECT id, tenant_id, formula_no,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               product_id, description, formula_items,
+               status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
+        FROM pdm_production_formulas WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 
@@ -570,7 +579,7 @@ pub async fn update_formula(
             updated_at = $8
         WHERE id = $1 AND tenant_id = $9
         RETURNING id, tenant_id, formula_no, name, product_id, description, formula_items,
-                  status, created_at, updated_at
+                  status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
     )
     .bind(id)

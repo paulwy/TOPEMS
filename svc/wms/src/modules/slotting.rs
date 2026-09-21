@@ -19,6 +19,7 @@
 
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -31,6 +32,7 @@ use uuid::Uuid;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 // ============================================
@@ -566,6 +568,7 @@ pub async fn list_zones(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ZoneQueryParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -577,14 +580,18 @@ pub async fn list_zones(
         Err(e) => return e,
     }
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let rows = match sqlx::query!(
         r#"
-        SELECT id, tenant_id, warehouse_id, name, zone_type, location_ids, is_active, created_at
+        SELECT id, tenant_id, warehouse_id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               zone_type, location_ids, is_active, created_at
         FROM wms.slotting_zones
         WHERE ($1::uuid IS NULL OR warehouse_id = $1)
         ORDER BY created_at
         "#,
         params.warehouse_id,
+        locale,
     )
     .fetch_all(&mut **txn)
     .await
@@ -599,7 +606,7 @@ pub async fn list_zones(
             id: r.id,
             tenant_id: r.tenant_id,
             warehouse_id: r.warehouse_id,
-            name: r.name,
+            name: r.name.unwrap_or_default(),
             zone_type: r.zone_type,
             location_ids: r.location_ids,
             is_active: r.is_active,

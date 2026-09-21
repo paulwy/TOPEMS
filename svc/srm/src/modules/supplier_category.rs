@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -9,6 +10,7 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use crate::models::{
@@ -56,7 +58,7 @@ pub async fn list_categories(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CategoryQueryParams>,
-    _headers: axum::http::HeaderMap,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -89,7 +91,9 @@ pub async fn list_categories(
 
     let result = sqlx::query_as::<_, SupplierCategory>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
+        SELECT id, tenant_id, category_no,
+               CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               description, parent_id, level, is_active, created_by, created_at, updated_at
         FROM srm.supplier_categories
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
@@ -105,6 +109,7 @@ pub async fn list_categories(
     .bind(parent_id_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -281,7 +286,7 @@ pub async fn get_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -302,14 +307,18 @@ pub async fn get_category(
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, SupplierCategory>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
+        SELECT id, tenant_id, category_no,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               description, parent_id, level, is_active, created_by, created_at, updated_at
         FROM srm.supplier_categories WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#, "srm"),
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 

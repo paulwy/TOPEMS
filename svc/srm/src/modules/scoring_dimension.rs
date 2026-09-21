@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -8,6 +9,7 @@ use chrono::Utc;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use crate::models::{
@@ -44,7 +46,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 pub async fn list_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    _headers: axum::http::HeaderMap,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -65,15 +67,19 @@ pub async fn list_dimensions(
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ScoringDimension>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        SELECT id, tenant_id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         FROM srm.scoring_dimensions
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY sort_order ASC, created_at DESC
         "#, "srm"),
     )
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 
@@ -92,7 +98,7 @@ pub async fn list_dimensions(
 pub async fn list_active_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    _headers: axum::http::HeaderMap,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -113,15 +119,19 @@ pub async fn list_active_dimensions(
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ScoringDimension>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        SELECT id, tenant_id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         FROM srm.scoring_dimensions
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND is_active = true
         ORDER BY sort_order ASC
         "#, "srm"),
     )
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 
@@ -141,7 +151,7 @@ pub async fn get_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -162,14 +172,18 @@ pub async fn get_dimension(
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ScoringDimension>(
         only_own_schema_query!("srm", r#"
-        SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        SELECT id, tenant_id,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         FROM srm.scoring_dimensions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#, "srm"),
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 

@@ -1,6 +1,7 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, http::HeaderMap, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -46,10 +47,13 @@ pub struct UpdateProcessRequest {
 
 pub async fn list_processes(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionProcess>>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let rows = sqlx::query(
-        "SELECT id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT FROM qa_lab_processes ORDER BY created_at DESC",
+        "SELECT id::TEXT, CASE WHEN $1 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT FROM qa_lab_processes ORDER BY created_at DESC",
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await;
 
@@ -85,6 +89,7 @@ pub async fn list_processes(
 
 pub async fn get_process(
     State(state): State<AppState>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionProcess>> {
     let uuid = match Uuid::parse_str(&id) {
@@ -92,10 +97,12 @@ pub async fn get_process(
         Err(_) => return Json(ApiResponse::error(400, "Invalid process ID")),
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let row = sqlx::query(
-        "SELECT id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id::TEXT, CASE WHEN $2 = 'en' THEN COALESCE(process_name_en, process_name) ELSE process_name END AS process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT FROM qa_lab_processes WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(uuid)
+    .bind(locale)
     .fetch_one(&state.pool)
     .await;
 

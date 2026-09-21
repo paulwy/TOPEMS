@@ -5,6 +5,7 @@
 use axum::Extension;
 use axum::{
     extract::{Path, State},
+    http::HeaderMap,
     Json,
 };
 use dashmap::DashMap;
@@ -19,6 +20,7 @@ use lettre::{
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use crate::models::{
@@ -633,6 +635,7 @@ pub async fn mark_as_read(
 pub async fn list_templates(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<serde_json::Value> {
     tracing::info!(
         "Communication mail list_templates called for user: {}",
@@ -648,15 +651,20 @@ pub async fn list_templates(
         }));
     }
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        SELECT id, name, subject_template, body_template, description, created_at, updated_at
+        SELECT id,
+               CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               subject_template, body_template, description,
+               created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM core_email_templates
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         "#
     ))
+    .bind(locale)
     .fetch_all(&pool)
     .await;
 
@@ -775,6 +783,7 @@ pub async fn get_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Json<serde_json::Value> {
     tracing::info!(
         "Communication mail get_template called with id: {} for user: {}",
@@ -804,15 +813,20 @@ pub async fn get_template(
         }
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        SELECT id, name, subject_template, body_template, description, created_at, updated_at
+        SELECT id,
+               CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               subject_template, body_template, description,
+               created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM core_email_templates
         WHERE id = $1 AND deleted_at IS NULL
         "#
     ))
     .bind(template_id)
+    .bind(locale)
     .fetch_optional(&pool)
     .await;
 

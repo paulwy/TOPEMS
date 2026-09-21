@@ -15,11 +15,13 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -253,8 +255,10 @@ pub struct ModelConfigUpdate {
 pub async fn list_models(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ModelItem>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<
         _,
         (
@@ -269,10 +273,13 @@ pub async fn list_models(
             Option<serde_json::Value>,
         ),
     >(
-        "SELECT id, name, provider, type, status, description, max_tokens, pricing, capabilities
+        "SELECT id,
+                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                provider, type, status, description, max_tokens, pricing, capabilities
          FROM ai.ai_models WHERE tenant_id IS NULL OR tenant_id = $1 ORDER BY created_at",
     )
     .bind(tenant_id)
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     {

@@ -1,7 +1,8 @@
-use axum::{extract::State, routing::get, Extension, Json, Router};
+use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Router};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -86,6 +87,7 @@ pub async fn list_reagents(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Query(query): axum::extract::Query<ReagentQuery>,
 ) -> Json<ApiResponse<Vec<Reagent>>> {
     let page = query.page.unwrap_or(1);
@@ -98,12 +100,13 @@ pub async fn list_reagents(
     };
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (Some(_), Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_)) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None) => "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let mut query_builder = sqlx::query(sql).bind(tenant_id);
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
@@ -111,19 +114,21 @@ pub async fn list_reagents(
                 .bind(st)
                 .bind(format!("%{}%", nm))
                 .bind(page_size)
-                .bind(offset);
+                .bind(offset)
+                .bind(locale);
         }
         (Some(st), None) => {
-            query_builder = query_builder.bind(st).bind(page_size).bind(offset);
+            query_builder = query_builder.bind(st).bind(page_size).bind(offset).bind(locale);
         }
         (None, Some(nm)) => {
             query_builder = query_builder
                 .bind(format!("%{}%", nm))
                 .bind(page_size)
-                .bind(offset);
+                .bind(offset)
+                .bind(locale);
         }
         (None, None) => {
-            query_builder = query_builder.bind(page_size).bind(offset);
+            query_builder = query_builder.bind(page_size).bind(offset).bind(locale);
         }
     }
 
@@ -262,6 +267,7 @@ pub async fn get_reagent(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Reagent>> {
     let id = match Uuid::parse_str(&id) {
@@ -274,11 +280,13 @@ pub async fn get_reagent(
         Some(ctx.tenant_id)
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let row = sqlx::query(
-        "SELECT id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
+        "SELECT id::TEXT, tenant_id::TEXT, reagent_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_reagents WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_one(&state.pool)
     .await;
 

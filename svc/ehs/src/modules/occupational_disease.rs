@@ -3,7 +3,9 @@
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -330,15 +332,75 @@ pub struct CreateHealthTrainingRequest {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_hazard_factors(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardFactor>>> {
-    tracing::debug!("Listing hazard factors");
-    Json(ApiResponse::success(
-        Vec::<HazardFactor>::new(),
-        "获取危害因素列表成功",
-    ))
+    let _ = &claims;
+    let locale = Locale::from_headers(&headers).as_sql();
+    let result = sqlx::query(
+        r#"
+        SELECT
+            id::text AS id, factor_no,
+            CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+            factor_type, category, description, hazard_level, exposure_limit, unit,
+            sources::text AS sources, affected_positions::text AS affected_positions,
+            affected_count, status, remarks,
+            created_at::text AS created_at, updated_at::text AS updated_at
+        FROM qa_ehs_hazard_factors
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 200
+        "#,
+    )
+    .bind(locale)
+    .fetch_all(&state.pool)
+    .await;
+
+    let rows = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list hazard factors: {}", e);
+            return Json(ApiResponse::error(500, "获取危害因素列表失败"));
+        }
+    };
+
+    let factors: Vec<HazardFactor> = rows
+        .iter()
+        .map(|r| {
+            let sources = r
+                .try_get::<Option<String>, _>("sources")
+                .ok()
+                .flatten()
+                .and_then(|t| serde_json::from_str(&t).ok());
+            let positions = r
+                .try_get::<Option<String>, _>("affected_positions")
+                .ok()
+                .flatten()
+                .and_then(|t| serde_json::from_str(&t).ok());
+            HazardFactor {
+                id: r.try_get::<String, _>("id").unwrap_or_default(),
+                factor_no: r.try_get::<String, _>("factor_no").unwrap_or_default(),
+                name: r.try_get::<String, _>("name").unwrap_or_default(),
+                factor_type: r.try_get::<String, _>("factor_type").unwrap_or_default(),
+                category: r.try_get::<Option<String>, _>("category").ok().flatten(),
+                description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+                hazard_level: r.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
+                exposure_limit: r.try_get::<Option<String>, _>("exposure_limit").ok().flatten(),
+                unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
+                sources,
+                affected_positions: positions,
+                affected_count: r.try_get::<Option<i32>, _>("affected_count").ok().flatten(),
+                status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+                remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
+                created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
+                updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+                tenant_id: uuid::Uuid::nil(),
+            }
+        })
+        .collect();
+
+    Json(ApiResponse::success(factors, "获取危害因素列表成功"))
 }
 
 // gate: admin-only
@@ -405,43 +467,74 @@ pub async fn create_hazard_factor(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_hazard_factor(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardFactor>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
-    tracing::debug!("Getting hazard factor: {}", id);
-    Json(ApiResponse::success(
-        HazardFactor {
-            id,
-            factor_no: "HF-2024001".to_string(),
-            name: "噪声".to_string(),
-            factor_type: "physical".to_string(),
-            category: Some("物理因素".to_string()),
-            description: Some("生产设备产生的噪声".to_string()),
-            hazard_level: Some("medium".to_string()),
-            exposure_limit: Some("85 dB(A)".to_string()),
-            unit: Some("dB(A)".to_string()),
-            sources: Some(vec!["冲压机".to_string(), "空压机".to_string()]),
-            affected_positions: Some(vec!["操作工".to_string(), "维修工".to_string()]),
-            affected_count: Some(50),
-            status: "active".to_string(),
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let _ = &claims;
+    let locale = Locale::from_headers(&headers).as_sql();
+    let result = sqlx::query(
+        r#"
+        SELECT
+            id::text AS id, factor_no,
+            CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+            factor_type, category, description, hazard_level, exposure_limit, unit,
+            sources::text AS sources, affected_positions::text AS affected_positions,
+            affected_count, status, remarks,
+            created_at::text AS created_at, updated_at::text AS updated_at
+        FROM qa_ehs_hazard_factors
+        WHERE id = $1::uuid AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(locale)
+    .fetch_optional(&state.pool)
+    .await;
 
-            tenant_id,
-        },
-        "获取危害因素详情成功",
-    ))
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to get hazard factor: {}", e);
+            return Json(ApiResponse::error(500, "获取危害因素详情失败"));
+        }
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "危害因素不存在")),
+    };
+
+    let sources = row
+        .try_get::<Option<String>, _>("sources")
+        .ok()
+        .flatten()
+        .and_then(|t| serde_json::from_str(&t).ok());
+    let positions = row
+        .try_get::<Option<String>, _>("affected_positions")
+        .ok()
+        .flatten()
+        .and_then(|t| serde_json::from_str(&t).ok());
+    let factor = HazardFactor {
+        id: row.try_get::<String, _>("id").unwrap_or_default(),
+        factor_no: row.try_get::<String, _>("factor_no").unwrap_or_default(),
+        name: row.try_get::<String, _>("name").unwrap_or_default(),
+        factor_type: row.try_get::<String, _>("factor_type").unwrap_or_default(),
+        category: row.try_get::<Option<String>, _>("category").ok().flatten(),
+        description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+        hazard_level: row.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
+        exposure_limit: row.try_get::<Option<String>, _>("exposure_limit").ok().flatten(),
+        unit: row.try_get::<Option<String>, _>("unit").ok().flatten(),
+        sources,
+        affected_positions: positions,
+        affected_count: row.try_get::<Option<i32>, _>("affected_count").ok().flatten(),
+        status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+        remarks: row.try_get::<Option<String>, _>("remarks").ok().flatten(),
+        created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten(),
+        updated_at: row.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+        tenant_id: uuid::Uuid::nil(),
+    };
+
+    Json(ApiResponse::success(factor, "获取危害因素详情成功"))
 }
 
 #[utoipa::path(

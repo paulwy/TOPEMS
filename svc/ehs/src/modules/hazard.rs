@@ -8,7 +8,9 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -178,42 +180,87 @@ pub struct CreateVerificationRequest {
 pub async fn list_hazards(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Query(query): Query<HazardQuery>,
 ) -> Json<ApiResponse<Vec<Hazard>>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _ = &claims;
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let cache_key = hazards_list_cache_key(
-        tenant_id,
-        page,
-        page_size,
-        &query.status,
-        &query.level,
-        &query.source,
+    let mut params: Vec<String> = Vec::new();
+    let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+
+    if let Some(status) = &query.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(status.clone());
+    }
+    if let Some(level) = &query.level {
+        where_clause.push_str(&format!(" AND level = ${}", params.len() + 1));
+        params.push(level.clone());
+    }
+    if let Some(source) = &query.source {
+        where_clause.push_str(&format!(" AND source = ${}", params.len() + 1));
+        params.push(source.clone());
+    }
+
+    // 多语言：locale 绑定到 params 末尾，CASE 引用它（LIMIT/OFFSET 顺延）
+    params.push(Locale::from_headers(&headers).as_sql().to_string());
+    let locale_placeholder = params.len();
+
+    let fetch_sql = format!(
+        r#"
+        SELECT
+            id::text AS id, hazard_no,
+            CASE WHEN ${locale} = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+            description, category, level, source, location, reported_by,
+            reported_at::TEXT AS reported_at, status,
+            inspection_id::text AS inspection_id,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        FROM qa_ehs_hazards
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#,
+        locale = locale_placeholder,
+        where_clause = where_clause,
     );
 
-    if let Some(cached) = state.hazard_cache.get(&cache_key).await {
-        tracing::debug!("📋 隐患列表缓存命中: {}", cache_key);
-        if let Ok(hazards) = serde_json::from_value::<Vec<Hazard>>(cached) {
-            return Json(ApiResponse::success(hazards, "获取隐患列表成功"));
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p);
+    }
+
+    let rows = match fetch_query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list hazards: {}", e);
+            return Json(ApiResponse::error(500, "获取隐患列表失败"));
         }
-    }
+    };
 
-    tracing::debug!("Listing hazards");
-    let hazards = Vec::<Hazard>::new();
-
-    if let Ok(value) = serde_json::to_value(&hazards) {
-        state.hazard_cache.set(cache_key, value).await;
-    }
+    let hazards: Vec<Hazard> = rows
+        .iter()
+        .map(|r| Hazard {
+            id: r.try_get::<String, _>("id").unwrap_or_default(),
+            hazard_no: r.try_get::<String, _>("hazard_no").unwrap_or_default(),
+            title: r.try_get::<String, _>("title").unwrap_or_default(),
+            description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+            category: r.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
+            level: r.try_get::<Option<String>, _>("level").ok().flatten().unwrap_or_default(),
+            source: r.try_get::<Option<String>, _>("source").ok().flatten().unwrap_or_else(|| "inspection".to_string()),
+            location: r.try_get::<Option<String>, _>("location").ok().flatten(),
+            reported_by: r.try_get::<Option<String>, _>("reported_by").ok().flatten(),
+            reported_at: r.try_get::<Option<String>, _>("reported_at").ok().flatten(),
+            status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "reported".to_string()),
+            inspection_id: r.try_get::<Option<String>, _>("inspection_id").ok().flatten(),
+            approval_workflow_id: None,
+            approval_status: None,
+            created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
+            updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+            tenant_id: uuid::Uuid::nil(),
+        })
+        .collect();
 
     Json(ApiResponse::success(hazards, "获取隐患列表成功"))
 }
@@ -361,72 +408,65 @@ pub async fn create_hazard(
 pub async fn get_hazard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardDetail>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
-    let cache_key = hazard_cache_key(tenant_id, &id);
+    let _ = &claims;
+    let locale = Locale::from_headers(&headers).as_sql();
+    let result = sqlx::query(
+        r#"
+        SELECT
+            id::text AS id, hazard_no,
+            CASE WHEN $2 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title,
+            description, category, level, source, location, reported_by,
+            reported_at::TEXT AS reported_at, status,
+            inspection_id::text AS inspection_id,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        FROM qa_ehs_hazards
+        WHERE id = $1::uuid AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(locale)
+    .fetch_optional(&state.pool)
+    .await;
 
-    if let Some(cached) = state.hazard_cache.get(&cache_key).await {
-        tracing::debug!("📋 隐患缓存命中: {}", cache_key);
-        if let Ok(detail) = serde_json::from_value::<HazardDetail>(cached) {
-            return Json(ApiResponse::success(detail, "获取隐患详情成功"));
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to get hazard: {}", e);
+            return Json(ApiResponse::error(500, "获取隐患详情失败"));
         }
-    }
-
-    tracing::debug!("Getting hazard: {}", id);
-    let detail = HazardDetail {
-        hazard: Hazard {
-            id: id.clone(),
-            hazard_no: "HZ-2024001".to_string(),
-            title: "消防通道堵塞".to_string(),
-            description: Some("生产车间A区消防通道被货物堵塞".to_string()),
-            category: "消防".to_string(),
-            level: "medium".to_string(),
-            source: "inspection".to_string(),
-            location: Some("生产车间A区".to_string()),
-            reported_by: Some("安全员A".to_string()),
-            reported_at: Some(chrono::Utc::now().to_rfc3339()),
-            status: "rectifying".to_string(),
-            inspection_id: Some("IR-2024001".to_string()),
-            approval_workflow_id: None,
-            approval_status: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        rectification: Some(Rectification {
-            id: "rect-001".to_string(),
-            hazard_id: id.clone(),
-            description: "清理消防通道，移走堵塞货物".to_string(),
-            responsible: Some("仓库管理员B".to_string()),
-            deadline: Some("2024-01-30".to_string()),
-            status: "in_progress".to_string(),
-            progress: 50,
-            started_at: Some(chrono::Utc::now().to_rfc3339()),
-            completed_at: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        }),
-        verification: None,
-        tenant_id,
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "隐患不存在")),
     };
 
-    if let Ok(value) = serde_json::to_value(&detail) {
-        state.hazard_cache.set(cache_key, value).await;
-    }
+    let hazard = Hazard {
+        id: row.try_get::<String, _>("id").unwrap_or_default(),
+        hazard_no: row.try_get::<String, _>("hazard_no").unwrap_or_default(),
+        title: row.try_get::<String, _>("title").unwrap_or_default(),
+        description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+        category: row.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
+        level: row.try_get::<Option<String>, _>("level").ok().flatten().unwrap_or_default(),
+        source: row.try_get::<Option<String>, _>("source").ok().flatten().unwrap_or_else(|| "inspection".to_string()),
+        location: row.try_get::<Option<String>, _>("location").ok().flatten(),
+        reported_by: row.try_get::<Option<String>, _>("reported_by").ok().flatten(),
+        reported_at: row.try_get::<Option<String>, _>("reported_at").ok().flatten(),
+        status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "reported".to_string()),
+        inspection_id: row.try_get::<Option<String>, _>("inspection_id").ok().flatten(),
+        approval_workflow_id: None,
+        approval_status: None,
+        created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten(),
+        updated_at: row.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+        tenant_id: uuid::Uuid::nil(),
+    };
 
-    Json(ApiResponse::success(detail, "获取隐患详情成功"))
+    Json(ApiResponse::success(
+        HazardDetail { hazard, rectification: None, verification: None, tenant_id: uuid::Uuid::nil() },
+        "获取隐患详情成功",
+    ))
 }
 
 #[utoipa::path(

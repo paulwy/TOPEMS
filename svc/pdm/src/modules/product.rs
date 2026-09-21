@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
@@ -67,7 +68,7 @@ pub async fn list_products(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ProductQuery>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -78,21 +79,25 @@ pub async fn list_products(
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let result = sqlx::query_as::<_, Product>(
         r#"
-        SELECT id, tenant_id, product_no, name, description, version, status, created_at, updated_at
+        SELECT id, tenant_id, product_no,
+               CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM pdm_products
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
     .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
+    .bind(locale)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -103,7 +108,7 @@ pub async fn list_products(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_products
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -169,7 +174,7 @@ pub async fn create_product(
         r#"
         INSERT INTO pdm_products (tenant_id, product_no, name, description, version, status)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, tenant_id, product_no, name, description, version, status, created_at, updated_at
+        RETURNING id, tenant_id, product_no, name, description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
     )
     .bind(tenant_id)
@@ -205,7 +210,7 @@ pub async fn get_product(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Product>> {
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -213,14 +218,18 @@ pub async fn get_product(
         Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, Product>(
         r#"
-        SELECT id, tenant_id, product_no, name, description, version, status, created_at, updated_at
-        FROM pdm_products WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        SELECT id, tenant_id, product_no,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
+        FROM pdm_products WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 
@@ -273,7 +282,7 @@ pub async fn update_product(
             status = COALESCE($6, status),
             updated_at = $7
         WHERE id = $1 AND tenant_id = $8
-        RETURNING id, tenant_id, product_no, name, description, version, status, created_at, updated_at
+        RETURNING id, tenant_id, product_no, name, description, version, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
     )
     .bind(id)

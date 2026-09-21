@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     Extension, Json,
 };
 use uuid::Uuid;
@@ -7,6 +8,7 @@ use uuid::Uuid;
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 
 // ============================================================================
 // Pure helper functions (no DB / async) — extracted for unit testing
@@ -152,6 +154,7 @@ pub async fn list_categories(
 pub async fn list_plugins(
     State(state): State<AppState>,
     Query(filters): Query<PluginFilters>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<PluginListResponse>> {
     tracing::info!("[Plugin] Listing plugins with filters: {:?}", filters);
 
@@ -194,10 +197,12 @@ pub async fn list_plugins(
     .await
     .unwrap_or((0,));
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&format!(
-        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
         where_clause, sort_order, page_size, offset
     ))
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     {
@@ -240,11 +245,14 @@ pub async fn list_plugins(
 pub async fn get_plugin(
     State(state): State<AppState>,
     Path(code): Path<String>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Getting plugin: {}", code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);

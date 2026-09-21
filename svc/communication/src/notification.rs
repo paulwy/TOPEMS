@@ -1,12 +1,14 @@
 use axum::Extension;
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use sqlx::PgPool;
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
 use crate::models::{
@@ -1922,6 +1924,7 @@ pub async fn list_channels(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ChannelQuery>,
+    headers: HeaderMap,
 ) -> Json<serde_json::Value> {
     let tenant_id: Option<String> = if claims.is_superuser {
         None
@@ -1937,19 +1940,24 @@ pub async fn list_channels(
 
     let type_filter = query.r#type.clone();
     let status_filter = query.status.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let rows = match sqlx::query_as::<_, NotificationChannel>(
-        "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
-         rate_limit_per_minute, retry_count, description, created_at, updated_at \
+        "SELECT id, tenant_id,
+                CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, \
+         created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
          FROM notification_channels \
          WHERE ($1::text IS NULL OR tenant_id = $1) \
            AND ($2::text IS NULL OR type = $2) \
            AND ($3::text IS NULL OR status = $3) \
-         ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+         ORDER BY created_at DESC LIMIT $5 OFFSET $6",
     )
     .bind(&tenant_id)
     .bind(type_filter)
     .bind(status_filter)
+    .bind(locale)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&pool)
@@ -1993,6 +2001,7 @@ pub async fn get_channel(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<serde_json::Value> {
     let tenant_id: Option<String> = if claims.is_superuser {
         None
@@ -2002,13 +2011,18 @@ pub async fn get_channel(
             .clone()
             .unwrap_or_else(|| "default".to_string()))
     };
+    let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, NotificationChannel>(
-        "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
-         rate_limit_per_minute, retry_count, description, created_at, updated_at \
+        "SELECT id, tenant_id,
+                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+                type, status, provider_id, is_default, config, \
+         rate_limit_per_minute, retry_count, description, \
+         created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
          FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(&tenant_id)
+    .bind(locale)
     .fetch_optional(&pool)
     .await
     {
