@@ -6,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -33,8 +34,12 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-fn test_method_cache_key(tenant_id: &Uuid, id: &str) -> String {
-    format!("test_method:{}:{}", tenant_id, id)
+fn test_method_cache_key(tenant_id: &Option<Uuid>, id: &str) -> String {
+    format!(
+        "test_method:{}:{}",
+        tenant_id.map_or("all".to_string(), |t| t.to_string()),
+        id
+    )
 }
 
 #[derive(Debug, Deserialize)]
@@ -197,15 +202,21 @@ const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, 
 pub async fn list_methods(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<TestMethodQuery>,
 ) -> Json<ApiResponse<Vec<TestMethod>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let mut where_clauses: Vec<String> = vec![
         "m.deleted_at IS NULL".to_string(),
-        "m.tenant_id = $1".to_string(),
+        "($1::uuid IS NULL OR m.tenant_id = $1)".to_string(),
     ];
     let mut param_idx = 2usize;
     if query.status.is_some() {
@@ -235,7 +246,7 @@ pub async fn list_methods(
         offset_idx
     );
 
-    let mut query_builder = sqlx::query(&sql).bind(ctx.tenant_id);
+    let mut query_builder = sqlx::query(&sql).bind(tenant_id);
     if let Some(st) = query.status.as_ref() {
         query_builder = query_builder.bind(st);
     }
@@ -371,6 +382,7 @@ pub async fn create_method(
 pub async fn get_method(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TestMethod>> {
     let id = match Uuid::parse_str(&id) {
@@ -378,7 +390,12 @@ pub async fn get_method(
         Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
     };
 
-    let cache_key = test_method_cache_key(&ctx.tenant_id, &id.to_string());
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
+    let cache_key = test_method_cache_key(&tenant_id, &id.to_string());
 
     if let Some(cached) = state.test_method_cache.get(&cache_key).await {
         return Json(ApiResponse::success(cached, "从内存缓存获取检测方法成功"));
@@ -389,12 +406,12 @@ pub async fn get_method(
         SELECT {}
         FROM qa_lims_test_methods m
         LEFT JOIN qa_lims_method_categories c ON m.category_id = c.id
-        WHERE m.id = $1 AND m.tenant_id = $2
+        WHERE m.id = $1 AND ($2::uuid IS NULL OR m.tenant_id = $2)
         "#,
         METHOD_SELECT_COLS
     ))
     .bind(id)
-    .bind(ctx.tenant_id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -497,7 +514,7 @@ pub async fn update_method(
         Ok(r) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()))
+                .remove(&test_method_cache_key(&Some(ctx.tenant_id), &id.to_string()))
                 .await;
             Json(ApiResponse::success(
                 TestMethod {
@@ -557,7 +574,7 @@ pub async fn delete_method(
         Ok(_) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&ctx.tenant_id, &id.to_string()))
+                .remove(&test_method_cache_key(&Some(ctx.tenant_id), &id.to_string()))
                 .await;
             Json(ApiResponse::success(true, "检测方法删除成功"))
         }
@@ -571,14 +588,20 @@ pub async fn delete_method(
 pub async fn list_categories(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
 ) -> Json<ApiResponse<Vec<MethodCategory>>> {
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let sql = match query.parent_id.as_ref() {
-        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND parent_id = $2 ORDER BY sort_order ASC, created_at DESC",
-        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND tenant_id = $1 AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2 ORDER BY sort_order ASC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, category_code, category_name, parent_id::TEXT, sort_order, description, status, created_at::TEXT, updated_at::TEXT FROM qa_lims_method_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id IS NULL ORDER BY sort_order ASC, created_at DESC",
     };
 
-    let mut query_builder = sqlx::query(sql).bind(ctx.tenant_id);
+    let mut query_builder = sqlx::query(sql).bind(tenant_id);
     if let Some(pid) = query.parent_id.as_ref() {
         let pid_uuid = Uuid::parse_str(pid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(pid_uuid);
@@ -743,14 +766,20 @@ pub async fn delete_category(
 pub async fn list_validations(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<MethodValidationQuery>,
 ) -> Json<ApiResponse<Vec<MethodValidationRecord>>> {
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let sql = match query.method_id.as_ref() {
-        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE method_id = $2 AND tenant_id = $1 ORDER BY validation_date DESC, created_at DESC",
-        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE tenant_id = $1 ORDER BY validation_date DESC, created_at DESC LIMIT 100",
+        Some(_) => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE method_id = $2 AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC",
+        None => "SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, method_code, method_name, version, validation_type, validation_date::TEXT, validated_by, conclusion, parameters, report_url, notes, status, created_at::TEXT FROM qa_lims_method_validations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY validation_date DESC, created_at DESC LIMIT 100",
     };
 
-    let mut query_builder = sqlx::query(sql).bind(ctx.tenant_id);
+    let mut query_builder = sqlx::query(sql).bind(tenant_id);
     if let Some(mid) = query.method_id.as_ref() {
         let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
         query_builder = query_builder.bind(mid_uuid);
@@ -1050,7 +1079,7 @@ mod tests {
     fn cache_key_prefix() {
         let tenant = Uuid::nil();
         assert_eq!(
-            test_method_cache_key(&tenant, "abc"),
+            test_method_cache_key(&Some(tenant), "abc"),
             "test_method:00000000-0000-0000-0000-000000000000:abc"
         );
     }
@@ -1059,7 +1088,7 @@ mod tests {
     fn cache_key_empty_id() {
         let tenant = Uuid::nil();
         assert_eq!(
-            test_method_cache_key(&tenant, ""),
+            test_method_cache_key(&Some(tenant), ""),
             "test_method:00000000-0000-0000-0000-000000000000:"
         );
     }
@@ -1068,7 +1097,7 @@ mod tests {
     fn cache_key_with_special_chars() {
         let tenant = Uuid::nil();
         assert_eq!(
-            test_method_cache_key(&tenant, "tm-001/abc"),
+            test_method_cache_key(&Some(tenant), "tm-001/abc"),
             "test_method:00000000-0000-0000-0000-000000000000:tm-001/abc"
         );
     }
