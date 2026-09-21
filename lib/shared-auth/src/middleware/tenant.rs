@@ -101,12 +101,12 @@ pub fn tenant_middleware() -> impl Fn(
                 }
             };
 
-            // 服务身份（service token）豁免租户上下文：服务间调用是全局基础设施，
-            // 无租户维度（service token 不携带 tenant_id）。为 RLS 受限用户切换铺路：
-            // 将租户上下文固定为 nil UUID —— 配合 RLS 策略中的
-            // `OR current = nil` 豁免条件，服务间调用在受限 DB 用户下仍可全量访问
-            // （与 owner 绕过行为一致），而普通用户请求维持租户隔离。
-            if is_service_claims(claims) {
+            // 服务身份（service token）与超管会话豁免租户上下文：服务间调用是全局
+            // 基础设施，无租户维度（service token 不携带 tenant_id）；超管亦无
+            // tenant_id。两者都将租户上下文固定为 nil UUID —— 配合 RLS 策略中的
+            // `OR current = nil` 豁免条件，超管/服务间调用在受限 DB 用户下仍可全量
+            // 访问（与 owner 绕过行为一致），而普通用户请求维持租户隔离。
+            if is_service_claims(claims) || claims.is_superuser {
                 tracing::debug!(
                     "service claims: set nil tenant context for {}",
                     claims.username
