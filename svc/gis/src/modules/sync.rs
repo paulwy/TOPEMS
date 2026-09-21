@@ -4,11 +4,12 @@ use crate::models::{DeviceLocation, EvidenceRecord, TrackPosition, TrackRecord};
 use axum::{
     extract::{FromRequestParts, State},
     http::request::Parts,
-    Json,
+    Extension, Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
@@ -261,8 +262,14 @@ pub async fn batch_upload_evidence(
 pub async fn download_offline_data(
     State(pool): State<PgPool>,
     TenantRequest { ctx }: TenantRequest,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<OfflineDataRequest>,
 ) -> Json<ApiResponse<OfflineDataResponse>> {
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let mut devices = Vec::new();
     let mut tracks = Vec::new();
     let mut track_positions = Vec::new();
@@ -271,9 +278,9 @@ pub async fn download_offline_data(
     // 下载设备数据
     if payload.include_devices {
         match sqlx::query_as::<_, DeviceLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE tenant_id = $1 ORDER BY created_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
         )
-        .bind(ctx.tenant_id)
+        .bind(tenant_id)
         .fetch_all(&pool)
         .await
         {
@@ -286,7 +293,7 @@ pub async fn download_offline_data(
 
     // 下载轨迹数据
     if payload.include_tracks {
-        let mut query = "id, tenant_id, device_id, device_name, start_time, end_time, total_distance, created_at FROM gis.track_records WHERE tenant_id = $1".to_string();
+        let mut query = "id, tenant_id, device_id, device_name, start_time, end_time, total_distance, created_at FROM gis.track_records WHERE ($1::uuid IS NULL OR tenant_id = $1)".to_string();
 
         if payload.track_date_from.is_some() {
             query.push_str(" AND start_time >= $2");
@@ -296,7 +303,7 @@ pub async fn download_offline_data(
         }
         query.push_str(" ORDER BY start_time DESC");
 
-        let mut q = sqlx::query_as::<_, TrackRecord>(&query).bind(ctx.tenant_id);
+        let mut q = sqlx::query_as::<_, TrackRecord>(&query).bind(tenant_id);
         if let Some(ref date_from) = payload.track_date_from {
             q = q.bind(date_from);
         }
@@ -330,9 +337,9 @@ pub async fn download_offline_data(
     // 下载取证数据
     if payload.include_evidence {
         match sqlx::query_as::<_, EvidenceRecord>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM gis.evidence_records WHERE tenant_id = $1 ORDER BY recorded_at DESC"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, title, evidence_type, position, file_url, thumbnail_url, duration, file_size, file_hash, recorded_by, recorded_at, tags, description, metadata, created_at, updated_at FROM gis.evidence_records WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY recorded_at DESC"),
         )
-        .bind(ctx.tenant_id)
+        .bind(tenant_id)
         .fetch_all(&pool)
         .await
         {
@@ -365,16 +372,22 @@ pub struct SyncStatusResponse {
 pub async fn get_sync_status(
     State(pool): State<PgPool>,
     TenantRequest { ctx }: TenantRequest,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SyncStatusResponse>> {
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     // 统计待处理的数据量（最近24小时内的位置记录）
     let result = sqlx::query_as::<_, (i64,)>(only_own_schema_query!(
         "gis",
         r#"
         SELECT COUNT(*) FROM gis.device_location_records
-        WHERE tenant_id = $1 AND recorded_at > NOW() - INTERVAL '24 hours'
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND recorded_at > NOW() - INTERVAL '24 hours'
         "#
     ))
-    .bind(ctx.tenant_id)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 

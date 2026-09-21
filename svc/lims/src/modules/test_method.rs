@@ -917,6 +917,7 @@ pub async fn create_validation(
 pub async fn list_method_versions(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MethodVersion>>> {
     let id = match Uuid::parse_str(&method_id) {
@@ -924,16 +925,22 @@ pub async fn list_method_versions(
         Err(_) => return Json(ApiResponse::error(400, "无效的方法ID")),
     };
 
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
+
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, method_id::TEXT, version, version_description, change_log, is_current, created_by, created_at::TEXT
         FROM qa_lims_method_versions
-        WHERE method_id = $1 AND tenant_id = $2
+        WHERE method_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at DESC
         "#
     )
     .bind(id)
-    .bind(ctx.tenant_id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 

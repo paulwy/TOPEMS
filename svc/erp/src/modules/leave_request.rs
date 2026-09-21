@@ -224,7 +224,11 @@ pub async fn list_leave_requests(
     let status_filter = params.status.clone();
     let type_filter = params.leave_type.clone();
     let employee_filter = params.employee_id;
-    let tenant = tenant_id_from_claims(&claims);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
         "erp",
@@ -237,7 +241,7 @@ pub async fn list_leave_requests(
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR leave_type = $3)
           AND ($4::uuid IS NULL OR employee_id = $4)
-          AND tenant_id = $5
+          AND ($5::uuid IS NULL OR tenant_id = $5)
         ORDER BY created_at DESC
         LIMIT $6 OFFSET $7
         "#
@@ -246,7 +250,7 @@ pub async fn list_leave_requests(
     .bind(&status_filter)
     .bind(&type_filter)
     .bind(employee_filter)
-    .bind(tenant)
+    .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&mut **txn)
@@ -261,14 +265,14 @@ pub async fn list_leave_requests(
                   AND ($2::text IS NULL OR status = $2)
                   AND ($3::text IS NULL OR leave_type = $3)
                   AND ($4::uuid IS NULL OR employee_id = $4)
-                  AND tenant_id = $5
+                  AND ($5::uuid IS NULL OR tenant_id = $5)
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&type_filter)
             .bind(employee_filter)
-            .bind(tenant)
+            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await;
 
@@ -430,7 +434,11 @@ pub async fn get_leave_request(
     let txn = guard.as_mut().expect("rls txn missing");
     ensure_table(&state).await;
 
-    let tenant = tenant_id_from_claims(&claims);
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
 
     let result = sqlx::query_as::<_, LeaveRequest>(only_own_schema_query!(
         "erp",
@@ -439,11 +447,11 @@ pub async fn get_leave_request(
                start_half_day, end_half_day, days, reason, status,
                approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
         FROM erp.leave_requests
-        WHERE id::TEXT = $1 AND tenant_id = $2
+        WHERE id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#
     ))
     .bind(id)
-    .bind(tenant)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

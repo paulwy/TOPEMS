@@ -105,7 +105,7 @@ pub async fn list_employees(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
     let service = EmployeeService::new(
         state.db.clone(),
         (*state.encryption).clone(),
@@ -158,7 +158,7 @@ pub async fn get_employee(
     }
 
     // 从 claims 和 headers 中获取 tenant_id，用于多租户缓存隔离
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
     let cache_key = employee_cache_key(&tenant_id, &id);
 
     if let Some(cached) = state.employee_cache.get(&cache_key).await {
@@ -243,7 +243,7 @@ pub async fn get_employee_details(
         return e;
     }
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         r#"
@@ -261,7 +261,7 @@ pub async fn get_employee_details(
         LEFT JOIN hrm.departments d ON e.department_id = d.id
         LEFT JOIN hrm.companies c ON e.org_id = c.id
         LEFT JOIN hrm.positions p ON e.position_id = p.id
-        WHERE e.id = $1 AND e.tenant_id = $2
+        WHERE e.id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2)
         "#
     ))
     .bind(id)
@@ -722,7 +722,7 @@ pub async fn export_employees(
     // 导出数量限制，防止大结果集导致的性能问题
     const MAX_EXPORT_COUNT: i64 = 10000;
 
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
 
     let employees = match &req.ids {
         Some(ids) => {
@@ -749,7 +749,7 @@ pub async fn export_employees(
                        d.name as department_name
                 FROM hrm.employees e
                 LEFT JOIN hrm.departments d ON e.department_id = d.id
-                WHERE e.tenant_id = $2 AND e.id = ANY($1)
+                WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2) AND e.id = ANY($1)
                 LIMIT $3
                 "#
             ))
@@ -774,7 +774,7 @@ pub async fn export_employees(
                        d.name as department_name
                 FROM hrm.employees e
                 LEFT JOIN hrm.departments d ON e.department_id = d.id
-                WHERE e.tenant_id = $1
+                WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $1)
                 LIMIT $2
                 "#
             ))
