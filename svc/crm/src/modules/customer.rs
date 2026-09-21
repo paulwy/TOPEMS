@@ -364,10 +364,10 @@ async fn get_customer(
     }
 
     match sqlx::query_as::<_, Customer>(
-        "SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND tenant_id = $2"
+        "SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
@@ -1102,6 +1102,33 @@ impl CustomerFinanceInfo {
     }
 }
 
+/// 运行时行结构（GET /customers/{id}/finance 读路径超管豁免；原 query! 离线缓存改 query_as 运行时）
+#[derive(Debug, sqlx::FromRow)]
+struct CustomerFinanceRow {
+    customer_id: Uuid,
+    customer_name: String,
+    credit_limit: sqlx::types::BigDecimal,
+    credit_used: sqlx::types::BigDecimal,
+    credit_available: sqlx::types::BigDecimal,
+    credit_term_days: i32,
+    receivable_balance: sqlx::types::BigDecimal,
+    accounts_receivable: sqlx::types::BigDecimal,
+    overdue_amount: sqlx::types::BigDecimal,
+    overdue_receivable: sqlx::types::BigDecimal,
+    avg_collection_days: i32,
+    total_sales: sqlx::types::BigDecimal,
+    total_received: sqlx::types::BigDecimal,
+    last_transaction_date: Option<DateTime<Utc>>,
+    payment_terms: String,
+    risklevel: String,
+    status: String,
+    bank_name: Option<String>,
+    bank_account: Option<String>,
+    account_name: Option<String>,
+    tax_number: Option<String>,
+    resolved_name: Option<String>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct UpdateCustomerFinanceRequest {
     pub credit_limit: Option<f64>,
@@ -1164,11 +1191,9 @@ async fn get_customer_finance(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
 
-    let row = sqlx::query!(
+    // 超管豁免：tenant_opt 为 None 时 $2::uuid IS NULL 恒真，跨租户可见；非超管按自身租户过滤
+    let row = sqlx::query_as::<_, CustomerFinanceRow>(
         r#"
         SELECT cf.customer_id, cf.customer_name, cf.credit_limit, cf.credit_used,
                cf.credit_available, cf.credit_term_days, cf.receivable_balance,
@@ -1179,11 +1204,11 @@ async fn get_customer_finance(
                COALESCE(c.name, cf.customer_name) AS resolved_name
         FROM crm.customer_finance cf
         LEFT JOIN crm.customers c ON c.id = cf.customer_id
-        WHERE cf.customer_id = $1 AND cf.tenant_id = $2
+        WHERE cf.customer_id = $1 AND ($2::uuid IS NULL OR cf.tenant_id = $2)
         "#,
-        id,
-        tenant_id,
     )
+    .bind(id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1216,15 +1241,15 @@ async fn get_customer_finance(
         )),
         Ok(None) => {
             // 无财务记录：返回默认财务信息（前端依赖默认展示，不 404）
-            let name = sqlx::query!(
-                "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
-                id,
-                tenant_id,
+            let name = sqlx::query_scalar::<_, String>(
+                "SELECT name FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
             )
+            .bind(id)
+            .bind(tenant_opt)
             .fetch_optional(&mut **txn)
             .await;
             let customer_name = match name {
-                Ok(Some(n)) => n.name,
+                Ok(Some(n)) => n,
                 _ => String::new(),
             };
             Json(ApiResponse::success(

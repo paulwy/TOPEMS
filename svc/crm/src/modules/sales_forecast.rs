@@ -70,14 +70,14 @@ async fn list_sales_forecasts(
         r#"
         SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         FROM crm.sales_forecasts
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR period_type = $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY period DESC
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&period_type_filter)
     .bind(&status_filter)
     .bind(page_size)
@@ -90,12 +90,12 @@ async fn list_sales_forecasts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.sales_forecasts
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR period_type = $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&period_type_filter)
             .bind(&status_filter)
             .fetch_one(&mut **txn)
@@ -148,11 +148,11 @@ async fn get_sales_forecast(
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
-        FROM crm.sales_forecasts WHERE id = $1 AND tenant_id = $2
+        FROM crm.sales_forecasts WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -621,14 +621,14 @@ async fn get_sales_trend(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy, trend
         FROM crm.sales_forecasts
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND period_type = $2
           AND ($3::text IS NULL OR period >= $3)
           AND ($4::text IS NULL OR period <= $4)
         ORDER BY period ASC
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)
@@ -732,11 +732,11 @@ async fn compare_sales_forecasts(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
         FROM crm.sales_forecasts
-        WHERE tenant_id = $1 AND period_type = $2 AND period = ANY($3)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND period_type = $2 AND period = ANY($3)
         ORDER BY period ASC
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&period_type)
     .bind(&periods)
     .fetch_all(&mut **txn)
@@ -848,7 +848,7 @@ async fn get_accuracy_report(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
         FROM crm.sales_forecasts
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND period_type = $2
           AND ($3::text IS NULL OR period >= $3)
           AND ($4::text IS NULL OR period <= $4)
@@ -856,7 +856,7 @@ async fn get_accuracy_report(
         ORDER BY period ASC
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)

@@ -81,13 +81,13 @@ async fn list_tags(
                CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                color, description, created_at, updated_at
         FROM crm.tags
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
@@ -100,11 +100,11 @@ async fn list_tags(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.tags
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR name ILIKE $2)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .fetch_one(&mut **txn)
             .await;
@@ -258,11 +258,11 @@ async fn get_tag(
         SELECT id, tenant_id,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                color, description, created_at, updated_at
-        FROM crm.tags WHERE id = $1 AND tenant_id = $2
+        FROM crm.tags WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
@@ -508,12 +508,12 @@ async fn get_customer_tags(
         SELECT t.id, t.tenant_id, t.name, t.color, t.description, t.created_at, t.updated_at
         FROM crm.tags t
         JOIN crm.customer_tags ct ON t.id = ct.tag_id
-        WHERE ct.customer_id = $1 AND t.tenant_id = $2
+        WHERE ct.customer_id = $1 AND ($2::uuid IS NULL OR t.tenant_id = $2)
         ORDER BY t.created_at DESC
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -740,12 +740,12 @@ async fn get_tagged_customers(
         SELECT c.id as customer_id, c.name as customer_name
         FROM crm.customers c
         JOIN crm.customer_tags ct ON c.id = ct.customer_id
-        WHERE ct.tag_id = $1 AND c.tenant_id = $2
+        WHERE ct.tag_id = $1 AND ($2::uuid IS NULL OR c.tenant_id = $2)
         ORDER BY c.created_at DESC
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -760,11 +760,11 @@ async fn get_tagged_customers(
                     SELECT t.id, t.tenant_id, t.name, t.color, t.description, t.created_at, t.updated_at
                     FROM crm.tags t
                     JOIN crm.customer_tags ct ON t.id = ct.tag_id
-                    WHERE ct.customer_id = $1 AND t.tenant_id = $2
+                    WHERE ct.customer_id = $1 AND ($2::uuid IS NULL OR t.tenant_id = $2)
                     "#,
                 )
                 .bind(customer_id)
-                .bind(tenant_id)
+                .bind(tenant_opt)
                 .fetch_all(&mut **txn)
                 .await
                 .unwrap_or_default();

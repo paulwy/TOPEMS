@@ -81,7 +81,7 @@ async fn list_contracts(
                status, sign_date, start_date, end_date, owner, type, remark,
                created_at, updated_at, deleted_at
         FROM crm.contracts
-        WHERE deleted_at IS NULL AND tenant_id = $1
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR contract_no ILIKE $2 OR title ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR type = $4)
@@ -89,7 +89,7 @@ async fn list_contracts(
         LIMIT $5 OFFSET $6
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&type_filter)
@@ -104,13 +104,13 @@ async fn list_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.contracts
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR contract_no ILIKE $2 OR title ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR type = $4)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&type_filter)
@@ -311,11 +311,11 @@ async fn get_contract(
                customer_name, amount,
                status, sign_date, start_date, end_date, owner, type, remark,
                created_at, updated_at, deleted_at
-        FROM crm.contracts WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2
+        FROM crm.contracts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(Locale::from_headers(&_headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;

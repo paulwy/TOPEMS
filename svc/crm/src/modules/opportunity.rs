@@ -914,27 +914,27 @@ async fn get_sales_funnel(
 
     for (stage, stage_label) in stages {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = $2",
+            "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = $2",
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(stage)
         .fetch_one(&mut **txn)
         .await
         .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = $2 AND value IS NOT NULL"
+            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = $2 AND value IS NOT NULL"
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(stage)
         .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
 
         let avg_probability: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(AVG(probability), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = $2 AND probability IS NOT NULL"
+            "SELECT COALESCE(AVG(probability), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = $2 AND probability IS NOT NULL"
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(stage)
         .fetch_optional(&mut **txn)
         .await
@@ -977,57 +977,57 @@ async fn get_opportunity_stats(
     });
 
     let total_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let total_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND value IS NOT NULL",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND value IS NOT NULL",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
     let weighted_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND value IS NOT NULL AND probability IS NOT NULL"
+        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND value IS NOT NULL AND probability IS NOT NULL"
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_won'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = 'closed_won'",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let won_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_won' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = 'closed_won' AND value IS NOT NULL"
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
 
     let lost_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_lost'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = 'closed_lost'",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let lost_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND tenant_id = $1 AND stage = 'closed_lost' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND stage = 'closed_lost' AND value IS NOT NULL"
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));
@@ -1090,10 +1090,10 @@ async fn get_opportunity_forecast(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
             FROM crm.opportunities 
-            WHERE tenant_id = $1 AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost')
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(month_start)
         .bind(month_end)
         .fetch_optional(&mut **txn)
@@ -1105,10 +1105,10 @@ async fn get_opportunity_forecast(
             r#"
             SELECT COUNT(*) 
             FROM crm.opportunities 
-            WHERE tenant_id = $1 AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost')
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(month_start)
         .bind(month_end)
         .fetch_optional(&mut **txn)
@@ -1120,10 +1120,10 @@ async fn get_opportunity_forecast(
             r#"
             SELECT COALESCE(AVG(probability), 0) 
             FROM crm.opportunities 
-            WHERE tenant_id = $1 AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost') AND probability IS NOT NULL
+            WHERE ($1::uuid IS NULL OR tenant_id = $1) AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost') AND probability IS NOT NULL
             "#,
         )
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .bind(month_start)
         .bind(month_end)
         .fetch_optional(&mut **txn)
@@ -1170,12 +1170,12 @@ async fn get_stage_transitions(
         r#"
         SELECT stage AS from_stage, stage AS to_stage, COUNT(*) as count
         FROM crm.opportunities
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY stage
         ORDER BY count DESC
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();

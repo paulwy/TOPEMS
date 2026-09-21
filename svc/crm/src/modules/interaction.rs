@@ -86,7 +86,7 @@ async fn list_interactions(
         r#"
         SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
         FROM crm.interactions
-        WHERE tenant_id = $1 AND deleted_at IS NULL
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
           AND ($2::text IS NULL OR subject ILIKE $2 OR content ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR customer_id = $4)
@@ -95,7 +95,7 @@ async fn list_interactions(
         LIMIT $6 OFFSET $7
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(customer_filter)
@@ -110,14 +110,14 @@ async fn list_interactions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.interactions
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR subject ILIKE $2 OR content ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR customer_id = $4)
                   AND ($5::uuid IS NULL OR contact_id = $5)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(customer_filter)
@@ -167,11 +167,11 @@ async fn get_interaction(
     let result = sqlx::query_as::<_, Interaction>(
         r#"
         SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
-        FROM crm.interactions WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+        FROM crm.interactions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

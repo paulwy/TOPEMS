@@ -55,93 +55,93 @@ async fn get_dashboard_stats(
     });
 
     let customers_total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1")
-            .bind(tenant_id)
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
     let customers_active: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND status = 'active'",
+        "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let by_industry: Vec<IndustryCount> = sqlx::query_as(
-        "SELECT industry, COUNT(*) as count FROM crm.customers WHERE tenant_id = $1 AND industry IS NOT NULL GROUP BY industry ORDER BY count DESC"
+        "SELECT industry, COUNT(*) as count FROM crm.customers WHERE ($1::uuid IS NULL OR tenant_id = $1) AND industry IS NOT NULL GROUP BY industry ORDER BY count DESC"
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
     let contacts_total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.contacts WHERE tenant_id = $1")
-            .bind(tenant_id)
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.contacts WHERE ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
     let contacts_active: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.contacts WHERE tenant_id = $1 AND status = 'active'",
+        "SELECT COUNT(*) FROM crm.contacts WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active'",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let opportunities_total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1")
-            .bind(tenant_id)
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
     let by_stage: Vec<StageCount> = sqlx::query_as(
-        "SELECT stage, COUNT(*) as count FROM crm.opportunities WHERE tenant_id = $1 GROUP BY stage ORDER BY count DESC",
+        "SELECT stage, COUNT(*) as count FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY stage ORDER BY count DESC",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
 
     let total_value: Option<i64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE ($1::uuid IS NULL OR tenant_id = $1) AND value IS NOT NULL",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0));
 
     let interactions_total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1")
-            .bind(tenant_id)
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.interactions WHERE ($1::uuid IS NULL OR tenant_id = $1)")
+            .bind(tenant_opt)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
 
     let interactions_scheduled: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1 AND status = 'scheduled'",
+        "SELECT COUNT(*) FROM crm.interactions WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'scheduled'",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let interactions_completed: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1 AND status = 'completed'",
+        "SELECT COUNT(*) FROM crm.interactions WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'completed'",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let by_type: Vec<TypeCount> = sqlx::query_as(
-        "SELECT type, COUNT(*) as count FROM crm.interactions WHERE tenant_id = $1 GROUP BY type ORDER BY count DESC",
+        "SELECT type, COUNT(*) as count FROM crm.interactions WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY type ORDER BY count DESC",
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -294,19 +294,19 @@ async fn get_sales_funnel(
 
     for (stage, stage_label) in stages {
         let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1 AND tenant_id = $2",
+            "SELECT COUNT(*) FROM crm.opportunities WHERE stage = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
         )
         .bind(stage)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_one(&mut **txn)
         .await
         .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = $1 AND tenant_id = $2 AND value IS NOT NULL"
+            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND value IS NOT NULL"
         )
         .bind(stage)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
@@ -366,12 +366,12 @@ async fn get_sales_forecast(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
             FROM crm.opportunities 
-            WHERE tenant_id = $3 AND close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            WHERE ($3::uuid IS NULL OR tenant_id = $3) AND close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
         .bind(month_start)
         .bind(month_end)
-        .bind(tenant_id)
+        .bind(tenant_opt)
         .fetch_optional(&mut **txn)
         .await
         .unwrap_or(Some(0.0));
@@ -397,12 +397,12 @@ async fn get_sales_forecast(
         r#"
         SELECT COALESCE(SUM(value), 0) 
         FROM crm.opportunities 
-        WHERE tenant_id = $3 AND close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
+        WHERE ($3::uuid IS NULL OR tenant_id = $3) AND close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
         "#,
     )
     .bind(last_month_start)
     .bind(last_month_end)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(Some(0.0));

@@ -79,14 +79,14 @@ async fn list_customer_scores(
         r#"
         SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
         FROM crm.customer_scores
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::uuid IS NULL OR customer_id = $2)
           AND ($3::text IS NULL OR score_level = $3)
         ORDER BY scoring_date DESC
         LIMIT $4 OFFSET $5
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(customer_id_filter)
     .bind(&score_level_filter)
     .bind(page_size)
@@ -99,12 +99,12 @@ async fn list_customer_scores(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.customer_scores
-                WHERE deleted_at IS NULL AND tenant_id = $1
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::uuid IS NULL OR customer_id = $2)
                   AND ($3::text IS NULL OR score_level = $3)
                 "#,
             )
-            .bind(tenant_id)
+            .bind(tenant_opt)
             .bind(customer_id_filter)
             .bind(&score_level_filter)
             .fetch_one(&mut **txn)
@@ -157,11 +157,11 @@ async fn get_customer_score(
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
         SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-        FROM crm.customer_scores WHERE id = $1 AND tenant_id = $2
+        FROM crm.customer_scores WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

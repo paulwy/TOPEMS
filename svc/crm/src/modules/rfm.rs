@@ -363,13 +363,13 @@ async fn analyze_rfm(
             ON o.customer_id = c.id
            AND o.status = 'completed'
            AND o.order_date >= $3
-        WHERE c.tenant_id = $2 AND c.deleted_at IS NULL
+        WHERE ($2::uuid IS NULL OR c.tenant_id = $2) AND c.deleted_at IS NULL
         GROUP BY c.id, c.name
         ORDER BY c.name
         "#,
     )
     .bind(reference_date)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(period_start)
     .fetch_all(&mut **txn)
     .await;
@@ -471,11 +471,11 @@ async fn get_segments(
             COALESCE(AVG(recency_days), 0)::float8 AS avg_recency_days,
             COALESCE(AVG(rfm_score), 0)::float8 AS avg_rfm_score
         FROM crm.rfm_results
-        WHERE tenant_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY segment
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_all(&mut **txn)
     .await;
 
@@ -560,20 +560,20 @@ async fn get_customer_rfm(
         SELECT customer_id, recency_days, frequency, monetary,
                r_score, f_score, m_score, rfm_score, segment
         FROM crm.rfm_results
-        WHERE tenant_id = $1 AND customer_id = $2
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND customer_id = $2
         "#,
     )
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .bind(id)
     .fetch_optional(&mut **txn)
     .await;
 
     // 获取客户名称
     let name_result = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT name FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await;
 

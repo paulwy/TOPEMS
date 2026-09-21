@@ -1747,10 +1747,10 @@ async fn get_return_finance_status(
 
     // 校验退换单存在且属于租户
     let exists: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .ok()
@@ -1830,10 +1830,10 @@ async fn get_return_inventory_status(
 
     // 校验退换单存在且属于租户
     let exists: Option<Uuid> = sqlx::query_scalar(
-        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2",
+        "SELECT id FROM crm.returns WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(tenant_id)
+    .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
     .ok()
