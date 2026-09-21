@@ -580,20 +580,25 @@ const LIFECYCLE_STAGES: &[(&str, &str)] = &[
 pub async fn get_sample_lifecycle(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<SampleLifecycleRecord>>> {
     let id = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let rows = sqlx::query(
         r#"
         SELECT id::TEXT, tenant_id::TEXT, sample_id::TEXT, sample_no, lifecycle_stage, stage_description,
                operator, notes, location, created_at::TEXT
         FROM public.qa_lab_sample_lifecycle
-        WHERE sample_id = $1 AND tenant_id = $2
+        WHERE sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at ASC
         "#,
     )
@@ -868,19 +873,24 @@ pub async fn get_lifecycle_stage(
 pub async fn get_sample_traceability(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
-    let tenant_id = ctx.tenant_id;
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
 
     let sample_row = sqlx::query(
         r#"
-        SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit,
+        SELECT id::TEXT, tenant_id::TEXT, sample_no, sample_name, sample_type, source, quantity, unit,
                status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
-        FROM public.qa_lab_samples WHERE id = $1 AND tenant_id = $2
+        FROM public.qa_lab_samples WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -912,7 +922,7 @@ pub async fn get_sample_traceability(
         r#"
         SELECT id::TEXT, lifecycle_stage, stage_description, operator, notes, location, created_at::TEXT
         FROM public.qa_lab_sample_lifecycle
-        WHERE sample_id = $1 AND tenant_id = $2
+        WHERE sample_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at ASC
         "#,
     )
