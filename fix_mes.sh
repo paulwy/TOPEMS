@@ -1,53 +1,34 @@
 #!/bin/bash
-# MES 编译修复脚本
+# MES 编译修复脚本（v2）
+#
+# 历史问题（已修复）：
+#   v1 曾在 public schema 创建 30 个"表视图"（CREATE VIEW public.equipment AS SELECT * FROM mes.equipment），
+#   但 PostgreSQL 视图列被 information_schema 保守推断为可空（is_nullable=YES），
+#   导致 sqlx 宏把 NOT NULL 列（id/flow_id/name 等）解析成 Option<T>，编译报 353 个类型错误。
+#   同时 public 遗留的旧表（process_flows/process_flow_steps 等）结构与 mes schema 不一致，同样污染解析。
+#
+# 正确做法：
+#   1. public schema 不得有 mes 同名视图/旧表遮蔽；
+#   2. 编译时 DATABASE_URL 必须带 search_path=mes,public，让 sqlx 宏解析到 mes schema 的真实表（NOT NULL 语义正确）。
+#
+# 若日后出现 "table does not exist" / "Option<Uuid> 类型不匹配" 类错误，按上面两点排查。
 
 set -e
 
-echo "=== MES 编译修复脚本 ==="
+echo "=== MES 编译修复脚本 v2 ==="
 
-# 1. 创建所有缺失表的视图
-echo "1. 创建数据库视图..."
-psql topems << 'EOF'
--- 在 public schema 中创建所有 MES 表的视图
-CREATE OR REPLACE VIEW public.equipment AS SELECT * FROM mes.equipment;
-CREATE OR REPLACE VIEW public.equipment_maintenance_records AS SELECT * FROM mes.equipment_maintenance_records;
-CREATE OR REPLACE VIEW public.equipment_inspections AS SELECT * FROM mes.equipment_inspections;
-CREATE OR REPLACE VIEW public.equipment_oee AS SELECT * FROM mes.equipment_oee;
-CREATE OR REPLACE VIEW public.work_orders AS SELECT * FROM mes.work_orders;
-CREATE OR REPLACE VIEW public.work_reports AS SELECT * FROM mes.work_reports;
-CREATE OR REPLACE VIEW public.work_stations AS SELECT * FROM mes.work_stations;
-CREATE OR REPLACE VIEW public.production_orders AS SELECT * FROM mes.production_orders;
-CREATE OR REPLACE VIEW public.production_records AS SELECT * FROM mes.production_records;
-CREATE OR REPLACE VIEW public.production_processes AS SELECT * FROM mes.production_processes;
-CREATE OR REPLACE VIEW public.production_schedules AS SELECT * FROM mes.production_schedules;
-CREATE OR REPLACE VIEW public.process_routes AS SELECT * FROM mes.process_routes;
-CREATE OR REPLACE VIEW public.process_route_steps AS SELECT * FROM mes.process_route_steps;
-CREATE OR REPLACE VIEW public.process_flows AS SELECT * FROM mes.process_flows;
-CREATE OR REPLACE VIEW public.process_flow_steps AS SELECT * FROM mes.process_flow_steps;
-CREATE OR REPLACE VIEW public.material_boms AS SELECT * FROM mes.material_boms;
-CREATE OR REPLACE VIEW public.bom_items AS SELECT * FROM mes.bom_items;
-CREATE OR REPLACE VIEW public.material_issues AS SELECT * FROM mes.material_issues;
-CREATE OR REPLACE VIEW public.material_issue_items AS SELECT * FROM mes.material_issue_items;
-CREATE OR REPLACE VIEW public.material_returns AS SELECT * FROM mes.material_returns;
-CREATE OR REPLACE VIEW public.material_return_items AS SELECT * FROM mes.material_return_items;
-CREATE OR REPLACE VIEW public.material_requirements AS SELECT * FROM mes.material_requirements;
-CREATE OR REPLACE VIEW public.quality_inspections AS SELECT * FROM mes.quality_inspections;
-CREATE OR REPLACE VIEW public.quality_patrols AS SELECT * FROM mes.quality_patrols;
-CREATE OR REPLACE VIEW public.quality_patrol_items AS SELECT * FROM mes.quality_patrol_items;
-CREATE OR REPLACE VIEW public.quality_standards AS SELECT * FROM mes.quality_standards;
-CREATE OR REPLACE VIEW public.quality_standard_values AS SELECT * FROM mes.quality_standard_values;
-CREATE OR REPLACE VIEW public.batch_records AS SELECT * FROM mes.batch_records;
-CREATE OR REPLACE VIEW public.wips AS SELECT * FROM mes.wips;
-CREATE OR REPLACE VIEW public.wip_transfers AS SELECT * FROM mes.wip_transfers;
-
--- 授权
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO topems;
-
+# 0. 清理 public schema 中可能存在的 mes 遮蔽对象（幂等，安全）
+echo "0. 清理 public 中 mes 遮蔽对象（视图/旧表，幂等）..."
+psql "postgresql://topems_app:topems_app_secret@localhost:5432/topems" << 'EOF'
+-- 历史 v1 创建的视图（DROP VIEW 失败即非视图，继续）
+DROP VIEW IF EXISTS public.equipment, public.equipment_maintenance_records, public.equipment_inspections, public.equipment_oee, public.work_orders, public.work_reports, public.work_stations, public.production_orders, public.production_records, public.production_processes, public.production_schedules, public.process_routes, public.process_route_steps, public.material_boms, public.bom_items, public.material_issues, public.material_issue_items, public.material_returns, public.material_return_items, public.material_requirements, public.quality_inspections, public.quality_patrols, public.quality_patrol_items, public.quality_standards, public.quality_standard_values, public.batch_records, public.wips, public.wip_transfers;
+-- 历史遗留旧表（与 mes schema 重复且结构不一致）
+DROP TABLE IF EXISTS public.process_flows, public.process_flow_steps, public.material_plans, public.production_plans, public.quality_records, public.material_categories, public.material_requirement_items;
 EOF
-echo "   视图创建完成"
+echo "   清理完成"
 
-# 2. 修复代码中的语法错误
-echo "2. 修复代码语法错误..."
+# 1. 修复代码语法错误（幂等）
+echo "1. 修复代码语法错误..."
 cd /Users/air/TOPEMS/svc/mes/src/modules
 
 # 修复 Some(description) 语法错误
@@ -58,10 +39,14 @@ sed -i '' 's/now\.naive_utc()/now/g' equipment_oee.rs material_bom/*.rs material
 
 echo "   代码修复完成"
 
-# 3. 编译 MES
-echo "3. 编译 MES 服务..."
+# 2. 编译 MES（search_path 必须指向 mes schema）
+echo "2. 编译 MES 服务..."
 cd /Users/air/TOPEMS/svc/mes
-export DATABASE_URL="postgresql://topems@localhost:5432/topems"
+# 注意：?options=-csearch_path%3Dmes%2Cpublic 让 sqlx 宏在线解析到 mes schema 真实表
+# 重要：必须删除 .sqlx 离线缓存（gitignore，不入库）。prepare 中断产生的残留缓存
+#       会让宏走离线解析并命中错误类型（Option<T>），导致 167 个编译错误。
+rm -f .sqlx/query-*.json
+export DATABASE_URL="postgresql://topems@localhost:5432/topems?options=-csearch_path%3Dmes%2Cpublic"
 export MES_FORCE_ONLINE=1
 
-cargo build --release 2>&1 | grep "error\[" | wc -l
+cargo build --release 2>&1 | grep -E "error\[|Finished|error: could not compile" | head -20

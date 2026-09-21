@@ -324,3 +324,4 @@ test-results/
 docs/MES模块问题诊断与修复报告.md
 docs/全模块共性错误审计报告.md
 docs/可空tenant_id补齐处理结果.md
+.stash-backup-*/

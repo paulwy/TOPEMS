@@ -148,12 +148,12 @@ pub async fn list_material_returns(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = query.status {
         where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(status);
     }
 
     if let Some(search) = query.search {
@@ -167,7 +167,7 @@ pub async fn list_material_returns(
                 params.len() + 1
             ));
         }
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!(

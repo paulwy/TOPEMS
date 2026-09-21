@@ -130,12 +130,12 @@ pub async fn list_records(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE deleted_at IS NULL");
 
     if let Some(status) = query.status {
         where_clause.push_str(" AND status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(status);
     }
 
     if let Some(search) = query.search {
@@ -149,13 +149,13 @@ pub async fn list_records(
                 params.len() + 1
             ));
         }
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     // 租户过滤：非 superuser 仅见本租户
     if let Some(t) = tenant_opt {
         let tidx = params.len() + 1;
-        params.push(serde_json::Value::String(t.to_string()));
+        params.push(t.to_string());
         where_clause.push_str(&format!(" AND (tenant_id = ${}::uuid)", tidx));
     }
 

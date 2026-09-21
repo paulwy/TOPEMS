@@ -482,12 +482,12 @@ pub async fn list_quality_records(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = &query.status {
         where_clause.push_str(" WHERE quality_status = $1");
-        params.push(serde_json::Value::String(status.clone()));
+        params.push(status.clone());
     }
 
     if let Some(record_type) = &query.record_type {
@@ -496,7 +496,7 @@ pub async fn list_quality_records(
         } else {
             where_clause.push_str(&format!(" AND record_type = ${}", params.len() + 1));
         }
-        params.push(serde_json::Value::String(record_type.clone()));
+        params.push(record_type.clone());
     }
 
     if let Some(order_id) = &query.order_id {
@@ -505,7 +505,7 @@ pub async fn list_quality_records(
         } else {
             where_clause.push_str(&format!(" AND order_id = ${}::uuid", params.len() + 1));
         }
-        params.push(serde_json::Value::String(order_id.clone()));
+        params.push(order_id.clone());
     }
 
     if let Some(batch_no) = &query.batch_no {
@@ -514,7 +514,7 @@ pub async fn list_quality_records(
         } else {
             where_clause.push_str(&format!(" AND batch_no = ${}", params.len() + 1));
         }
-        params.push(serde_json::Value::String(batch_no.clone()));
+        params.push(batch_no.clone());
     }
 
     if let Some(search) = &query.search {
@@ -531,7 +531,7 @@ pub async fn list_quality_records(
                 params.len() + 1
             ));
         }
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!(

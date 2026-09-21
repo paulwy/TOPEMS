@@ -224,12 +224,12 @@ pub async fn list_equipment(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = query.status {
         where_clause.push_str(" WHERE status = $1");
-        params.push(serde_json::Value::String(status));
+        params.push(status);
     }
 
     if let Some(search) = query.search {
@@ -246,7 +246,7 @@ pub async fn list_equipment(
                 params.len() + 1
             ));
         }
-        params.push(serde_json::Value::String(pattern));
+        params.push(pattern);
     }
 
     let count_sql = format!("SELECT COUNT(*) as total FROM equipment{}", where_clause);
@@ -266,9 +266,7 @@ pub async fn list_equipment(
     };
 
     // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
-    params.push(serde_json::Value::String(
-        Locale::from_headers(&headers).as_sql().to_string(),
-    ));
+    params.push(Locale::from_headers(&headers).as_sql().to_string());
     let locale_placeholder = params.len();
 
     let fetch_sql = format!(
