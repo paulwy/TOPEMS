@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::*,
     Json, Router,
 };
@@ -16,6 +17,7 @@ use crate::modules::customer_calc::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
@@ -82,6 +84,7 @@ pub async fn list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerListParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -110,7 +113,7 @@ pub async fn list_customers(
         let customer_type = customer_type_filter.clone();
 
         sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at
+            only_own_schema_query!("erp", r#"SELECT id, code, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at
                FROM erp.customers
                WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
@@ -122,14 +125,16 @@ pub async fn list_customers(
         .bind(customer_type.unwrap_or_default())
         .bind(page_size)
         .bind(offset)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&mut **txn)
         .await
     };
@@ -181,6 +186,7 @@ pub async fn get_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -192,9 +198,10 @@ pub async fn get_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -221,6 +228,7 @@ pub async fn get_customer(
 pub async fn create_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -233,7 +241,7 @@ pub async fn create_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -250,6 +258,8 @@ pub async fn create_customer(
     .bind(body.scale)
     .bind(default_credit_limit(body.credit_limit))
     .bind(default_customer_status(body.status))
+    .bind(body.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -281,6 +291,7 @@ pub async fn update_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -293,7 +304,7 @@ pub async fn update_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.short_name)
@@ -310,6 +321,8 @@ pub async fn update_customer(
     .bind(body.credit_limit)
     .bind(body.status)
     .bind(id)
+    .bind(body.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -450,11 +463,16 @@ struct CustomerRecentResponse {
     pagesize: i64,
 }
 
-const CUSTOMER_SELECT_COLS: &str = "id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at";
+fn customer_select_cols(locale_placeholder: &str) -> String {
+    format!(
+        "id, code, CASE WHEN {locale_placeholder} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+    )
+}
 
 async fn batch_list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -477,9 +495,10 @@ async fn batch_list_customers(
         return Json(ApiResponse::success(vec![], "批量查询成功"));
     }
     let placeholders: Vec<String> = (1..=uuids.len()).map(|i| format!("${}", i)).collect();
+    let locale_placeholder = format!("${}", uuids.len() + 1);
     let sql = format!(
         "SELECT {} FROM erp.customers WHERE deleted_at IS NULL AND id = ANY(array[{}]::uuid[])",
-        CUSTOMER_SELECT_COLS,
+        customer_select_cols(&locale_placeholder),
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -498,6 +517,7 @@ async fn batch_list_customers(
 async fn batch_create_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -512,13 +532,15 @@ async fn batch_create_customers(
     for req in &body.customers {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
         ))
         .bind(&req.code).bind(&req.name).bind(&req.short_name).bind(&req.contact_person)
         .bind(&req.contact_phone).bind(&req.email).bind(&req.address).bind(&req.province)
         .bind(&req.city).bind(&req.district).bind(&req.customer_type).bind(&req.industry)
         .bind(&req.scale).bind(default_credit_limit(req.credit_limit))
         .bind(default_customer_status(req.status.clone()))
+        .bind(&req.name_en)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(c)) = result {
             created.push(c);
@@ -536,6 +558,7 @@ async fn batch_create_customers(
 async fn batch_update_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -550,7 +573,7 @@ async fn batch_update_customers(
     for item in &body.updates {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW() WHERE id = $15 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND deleted_at IS NULL RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
         ))
         .bind(&item.payload.name).bind(&item.payload.short_name).bind(&item.payload.contact_person)
         .bind(&item.payload.contact_phone).bind(&item.payload.email).bind(&item.payload.address)
@@ -620,6 +643,7 @@ async fn change_customer_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -632,9 +656,9 @@ async fn change_customer_status(
     }
     let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
         "erp",
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
     ))
-    .bind(&body.status).bind(id).fetch_optional(&mut **txn).await;
+    .bind(&body.status).bind(id).bind(Locale::from_headers(&headers).as_sql()).fetch_optional(&mut **txn).await;
     match result {
         Ok(Some(customer)) => {
             if let Some(t) = guard.take() {
@@ -653,6 +677,7 @@ async fn change_customer_status(
 async fn batch_change_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -695,6 +720,7 @@ async fn batch_change_status(
 async fn batch_change_category(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -791,6 +817,7 @@ async fn list_recent_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RecentParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -801,7 +828,7 @@ async fn list_recent_customers(
         return e;
     }
     let limit = params.limit.unwrap_or(20).clamp(1, 100);
-    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).fetch_all(&mut **txn).await.unwrap_or_default();
+    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).bind(Locale::from_headers(&headers).as_sql()).fetch_all(&mut **txn).await.unwrap_or_default();
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
         "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL"

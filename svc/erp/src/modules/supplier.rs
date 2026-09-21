@@ -7,6 +7,7 @@
 
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::*,
     Json, Router,
 };
@@ -20,6 +21,7 @@ use crate::models::material::{CreateSupplierRequest, Supplier, UpdateSupplierReq
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]
@@ -73,6 +75,7 @@ pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierListParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -100,7 +103,7 @@ pub async fn list_suppliers(
         let supplier_type = supplier_type_filter.clone();
 
         sqlx::query_as::<_, Supplier>(
-            only_own_schema_query!("erp", r#"SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at
+            only_own_schema_query!("erp", r#"SELECT id, code, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at
                FROM erp.suppliers
                WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
@@ -112,14 +115,16 @@ pub async fn list_suppliers(
         .bind(supplier_type.unwrap_or_default())
         .bind(page_size)
         .bind(offset)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&mut **txn)
         .await
     } else {
         sqlx::query_as::<_, Supplier>(
-            only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_all(&mut **txn)
         .await
     };
@@ -171,6 +176,7 @@ pub async fn get_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -182,9 +188,10 @@ pub async fn get_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("erp", "SELECT id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at FROM erp.suppliers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -211,6 +218,7 @@ pub async fn get_supplier(
 pub async fn create_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -223,7 +231,7 @@ pub async fn create_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("erp", "INSERT INTO erp.suppliers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.suppliers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, code, CASE WHEN $16 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -239,6 +247,8 @@ pub async fn create_supplier(
     .bind(body.industry)
     .bind(body.qualification_level)
     .bind(body.status.unwrap_or_else(|| "active".to_string()))
+    .bind(body.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -270,6 +280,7 @@ pub async fn update_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -282,7 +293,7 @@ pub async fn update_supplier(
     }
 
     let result = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("erp", "UPDATE erp.suppliers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), supplier_type = COALESCE($10, supplier_type), industry = COALESCE($11, industry), qualification_level = COALESCE($12, qualification_level), status = COALESCE($13, status), updated_at = NOW() WHERE id = $14 RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.suppliers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), supplier_type = COALESCE($10, supplier_type), industry = COALESCE($11, industry), qualification_level = COALESCE($12, qualification_level), status = COALESCE($13, status), updated_at = NOW(), name_en = COALESCE($15, name_en) WHERE id = $14 RETURNING id, code, CASE WHEN $16 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, supplier_type, industry, qualification_level, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.short_name)
@@ -298,6 +309,8 @@ pub async fn update_supplier(
     .bind(body.qualification_level)
     .bind(body.status)
     .bind(id)
+    .bind(body.name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 

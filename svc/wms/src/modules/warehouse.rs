@@ -13,6 +13,7 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 
 fn warehouse_cache_key(tenant_id: Uuid, id: Uuid) -> String {
@@ -86,7 +87,7 @@ pub async fn list_warehouses(
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        SELECT id, tenant_id, CASE WHEN $6 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
@@ -101,6 +102,7 @@ pub async fn list_warehouses(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -172,9 +174,9 @@ pub async fn create_warehouse(
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO wms.warehouses (id, tenant_id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
-        VALUES ($1, $2, '00000000-0000-0000-0000-000000000001', $3, $4, $5, $6, $7, 'active', $8, $9)
-        RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        INSERT INTO wms.warehouses (id, tenant_id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at, warehouse_name_en)
+        VALUES ($1, $2, '00000000-0000-0000-0000-000000000001', $3, $4, $5, $6, $7, 'active', $8, $9, $10)
+        RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -186,6 +188,8 @@ pub async fn create_warehouse(
     .bind(&req.phone)
     .bind(now)
     .bind(now)
+    .bind(&req.warehouse_name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 
@@ -282,12 +286,13 @@ pub async fn get_warehouse(
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        SELECT id, tenant_id, CASE WHEN $3 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#),
     )
     .bind(id)
     .bind(tenant_id)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -365,9 +370,9 @@ pub async fn update_warehouse(
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.warehouses SET
-            warehouse_name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8
+            warehouse_name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8, warehouse_name_en = COALESCE($10, warehouse_name_en)
         WHERE id = $1 AND tenant_id = $9 AND deleted_at IS NULL
-        RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        RETURNING id, tenant_id, CASE WHEN $11 = 'en' THEN COALESCE(warehouse_name_en, warehouse_name) ELSE warehouse_name END AS name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -379,6 +384,8 @@ pub async fn update_warehouse(
     .bind(&status)
     .bind(now)
     .bind(tenant_id)
+    .bind(&req.warehouse_name_en)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
     .await;
 

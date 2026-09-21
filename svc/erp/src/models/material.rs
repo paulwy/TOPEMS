@@ -84,6 +84,7 @@ pub struct Customer {
 pub struct CreateCustomerRequest {
     pub code: String,
     pub name: String,
+    pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_person: Option<String>,
     pub contact_phone: Option<String>,
@@ -102,6 +103,7 @@ pub struct CreateCustomerRequest {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateCustomerRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_person: Option<String>,
     pub contact_phone: Option<String>,
@@ -142,6 +144,7 @@ pub struct Supplier {
 pub struct CreateSupplierRequest {
     pub code: String,
     pub name: String,
+    pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_person: Option<String>,
     pub contact_phone: Option<String>,
@@ -159,6 +162,7 @@ pub struct CreateSupplierRequest {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateSupplierRequest {
     pub name: Option<String>,
+    pub name_en: Option<String>,
     pub short_name: Option<String>,
     pub contact_person: Option<String>,
     pub contact_phone: Option<String>,
@@ -578,6 +582,7 @@ mod tests {
         let r = CreateCustomerRequest {
             code: "NEW-C".into(),
             name: "新客户".into(),
+            name_en: None,
             short_name: Some("NC".into()),
             contact_person: None,
             contact_phone: None,
@@ -602,6 +607,7 @@ mod tests {
     fn test_update_customer_request_mixed() {
         let r = UpdateCustomerRequest {
             name: Some("改名".into()),
+            name_en: None,
             short_name: None,
             contact_person: Some("新联系人".into()),
             contact_phone: None,
@@ -656,6 +662,7 @@ mod tests {
         let r = CreateSupplierRequest {
             code: "NEW-S".into(),
             name: "新供应商".into(),
+            name_en: None,
             short_name: Some("NS".into()),
             contact_person: Some("C".into()),
             contact_phone: None,
@@ -679,6 +686,7 @@ mod tests {
     fn test_update_supplier_request_none() {
         let r = UpdateSupplierRequest {
             name: None,
+            name_en: None,
             short_name: None,
             contact_person: None,
             contact_phone: None,

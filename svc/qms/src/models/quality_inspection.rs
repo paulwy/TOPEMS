@@ -52,6 +52,7 @@ pub struct CreateInspectionRequest {
     pub inspection_type: String,
     pub product_id: Option<String>,
     pub product_name: Option<String>,
+    pub product_name_en: Option<String>,
     pub standard_id: Option<String>,
     pub quantity: BigDecimal,
     pub created_by: Option<String>,
@@ -77,6 +78,7 @@ pub struct SubmitInspectionResultRequest {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct InspectionResultItem {
     pub item_name: String,
+    pub item_name_en: Option<String>,
     pub standard_value: Option<String>,
     pub measured_value: Option<String>,
     pub is_qualified: bool,
@@ -192,6 +194,7 @@ mod tests {
             inspection_type: "i".to_string(),
             product_id: None,
             product_name: None,
+            product_name_en: None,
             standard_id: None,
             quantity: BigDecimal::from(0),
             created_by: None,
@@ -217,6 +220,7 @@ mod tests {
             inspector: "ins".to_string(),
             results: Some(vec![InspectionResultItem {
                 item_name: "n".to_string(),
+                item_name_en: None,
                 standard_value: None,
                 measured_value: None,
                 is_qualified: true,
@@ -326,6 +330,7 @@ mod tests {
     fn test_inspection_result_item_all_fields_filled() {
         roundtrip(&InspectionResultItem {
             item_name: "dim A".to_string(),
+            item_name_en: Some("Dimension A".to_string()),
             standard_value: Some("10.0 ± 0.1".to_string()),
             measured_value: Some("10.05".to_string()),
             is_qualified: true,
@@ -339,6 +344,7 @@ mod tests {
             inspection_type: "incoming".to_string(),
             product_id: Some("p1".to_string()),
             product_name: Some("P1".to_string()),
+            product_name_en: Some("P1 En".to_string()),
             standard_id: Some("s1".to_string()),
             quantity: BigDecimal::from(100),
             created_by: Some("user1".to_string()),

@@ -21,6 +21,7 @@ pub struct Warehouse {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateWarehouseRequest {
     pub name: String,
+    pub warehouse_name_en: Option<String>,
     pub code: Option<String>,
     pub address: Option<String>,
     pub manager: Option<String>,
@@ -30,6 +31,7 @@ pub struct CreateWarehouseRequest {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateWarehouseRequest {
     pub name: Option<String>,
+    pub warehouse_name_en: Option<String>,
     pub code: Option<String>,
     pub address: Option<String>,
     pub manager: Option<String>,
@@ -95,6 +97,7 @@ mod tests {
     fn create_warehouse_request_serde_roundtrip() {
         let req = CreateWarehouseRequest {
             name: "WH-2".into(),
+            warehouse_name_en: None,
             code: Some("WH-002".into()),
             address: Some("456 Ave".into()),
             manager: Some("Bob".into()),
@@ -110,6 +113,7 @@ mod tests {
     fn create_warehouse_request_minimal_fields() {
         let req = CreateWarehouseRequest {
             name: "Bare WH".into(),
+            warehouse_name_en: None,
             code: None,
             address: None,
             manager: None,
@@ -125,6 +129,7 @@ mod tests {
     fn update_warehouse_request_all_none() {
         let req = UpdateWarehouseRequest {
             name: None,
+            warehouse_name_en: None,
             code: None,
             address: None,
             manager: None,
@@ -141,6 +146,7 @@ mod tests {
     fn update_warehouse_request_partial() {
         let req = UpdateWarehouseRequest {
             name: Some("Updated".into()),
+            warehouse_name_en: None,
             code: None,
             address: None,
             manager: Some("Charlie".into()),
