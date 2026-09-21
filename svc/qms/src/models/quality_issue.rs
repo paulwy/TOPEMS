@@ -41,6 +41,7 @@ pub struct QualityIssueWithWorkflow {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateIssueRequest {
     pub title: String,
+    pub title_en: Option<String>,
     pub description: Option<String>,
     pub severity: Option<String>,
     pub source: Option<String>,
@@ -127,6 +128,7 @@ mod tests {
     fn test_create_issue_request() {
         roundtrip(&CreateIssueRequest {
             title: "x".to_string(),
+            title_en: None,
             description: None,
             severity: None,
             source: None,
@@ -208,6 +210,7 @@ mod tests {
     fn test_create_issue_request_all_some() {
         roundtrip(&CreateIssueRequest {
             title: "Defect A".to_string(),
+            title_en: Some("Defect A EN".to_string()),
             description: Some("d".to_string()),
             severity: Some("minor".to_string()),
             source: Some("customer".to_string()),
