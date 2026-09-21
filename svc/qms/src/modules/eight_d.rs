@@ -31,8 +31,15 @@ pub async fn list_eightd_reports(
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
-    params.push(tenant_id.to_string());
+    let mut where_clause = String::from(" WHERE 1=1");
+    let mut __has_tenant = false;
+    if !claims.is_superuser {
+        where_clause = String::from(" WHERE tenant_id = $1::uuid");
+        __has_tenant = true;
+    }
+    if __has_tenant {
+        params.push(tenant_id.to_string());
+    }
 
     if let Some(status) = &query.status {
         where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
@@ -166,13 +173,18 @@ pub async fn get_eightd_report(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EightDReport>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let report = sqlx::query_as::<_, EightDReport>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_eightd_reports WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -470,13 +482,18 @@ pub async fn get_eightd_audit_logs(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<EightDAuditLog>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, report_id, action, step, operator, comment, created_at::TEXT FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"#)).bind(id).bind(tenant_id)
+    let logs = sqlx::query_as::<_, EightDAuditLog>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, report_id, action, step, operator, comment, created_at::TEXT FROM qms.qa_eightd_audit_logs WHERE report_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 

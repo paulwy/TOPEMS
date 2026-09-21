@@ -19,22 +19,27 @@ pub async fn list_fmea_analyses(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaQuery>,
 ) -> Json<ApiResponse<Vec<FmeaAnalysis>>> {
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let analyses = match (query.status.as_ref(), query.product_id.as_ref()) {
-        (Some(st), Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(st).bind(pid).bind(page_size).bind(offset)
+        (Some(st), Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(st).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(st).bind(page_size).bind(offset)
+        (Some(st), None) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(pid).bind(page_size).bind(offset)
+        (None, Some(pid)) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -88,13 +93,18 @@ pub async fn get_fmea_analysis(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<FmeaAnalysis>> {
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA分析ID")),
     };
 
-    let fmea = sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let fmea = sqlx::query_as::<_, FmeaAnalysis>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_analyses WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -171,6 +181,11 @@ pub async fn list_fmea_items(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaItemQuery>,
 ) -> Json<ApiResponse<Vec<FmeaItem>>> {
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let fmea_id = match query.fmea_id.as_ref() {
         Some(id) => match Uuid::parse_str(id) {
@@ -181,11 +196,11 @@ pub async fn list_fmea_items(
     };
 
     let items = if let Some(fid) = fmea_id {
-        sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_items WHERE tenant_id = $1 AND fmea_id = $2 ORDER BY rpn DESC"#)).bind(tenant_id).bind(fid)
+        sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_items WHERE ($1::uuid IS NULL OR tenant_id = $1) AND fmea_id = $2 ORDER BY rpn DESC"#)).bind(tenant_opt).bind(fid)
         .fetch_all(&state.pool)
         .await
     } else {
-        sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_items WHERE tenant_id = $1 ORDER BY rpn DESC LIMIT 100"#)).bind(tenant_id)
+        sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_items WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY rpn DESC LIMIT 100"#)).bind(tenant_opt)
         .fetch_all(&state.pool)
         .await
     };
@@ -235,13 +250,18 @@ pub async fn get_fmea_item(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<FmeaItem>> {
+        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA条目ID")),
     };
 
-    let item = sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_items WHERE id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let item = sqlx::query_as::<_, FmeaItem>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT FROM qms.qa_fmea_items WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

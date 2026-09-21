@@ -330,8 +330,15 @@ pub async fn get_cost_statistics(
 ) -> Json<ApiResponse<QualityCostStatistics>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
-    params.push(tenant_id.to_string());
+    let mut where_clause = String::from(" WHERE 1=1");
+    let mut __has_tenant = false;
+    if !claims.is_superuser {
+        where_clause = String::from(" WHERE tenant_id = $1::uuid");
+        __has_tenant = true;
+    }
+    if __has_tenant {
+        params.push(tenant_id.to_string());
+    }
 
     if let Some(category) = &query.cost_category {
         where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
@@ -479,8 +486,15 @@ pub async fn get_cost_trend(
 ) -> Json<ApiResponse<Vec<CostTrendItem>>> {
     let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE tenant_id = $1::uuid");
-    params.push(tenant_id.to_string());
+    let mut where_clause = String::from(" WHERE 1=1");
+    let mut __has_tenant = false;
+    if !claims.is_superuser {
+        where_clause = String::from(" WHERE tenant_id = $1::uuid");
+        __has_tenant = true;
+    }
+    if __has_tenant {
+        params.push(tenant_id.to_string());
+    }
 
     if let Some(start) = &query.start_date {
         where_clause.push_str(&format!(

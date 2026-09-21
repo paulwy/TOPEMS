@@ -48,6 +48,11 @@ pub async fn list_issues(
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
 
@@ -56,44 +61,44 @@ pub async fn list_issues(
         (Some(st), Some(sv)) => {
             let cols = issue_select_cols("$6");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_id).bind(st).bind(sv).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt).bind(st).bind(sv).bind(page_size).bind(offset).bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
         (Some(st), None) => {
             let cols = issue_select_cols("$5");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_id).bind(st).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt).bind(st).bind(page_size).bind(offset).bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
         (None, Some(sv)) => {
             let cols = issue_select_cols("$5");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_id).bind(sv).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt).bind(sv).bind(page_size).bind(offset).bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
         (None, None) => {
             let cols = issue_select_cols("$4");
             let sql = format!(
-                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+                "SELECT {} FROM qms.qa_quality_issues WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_id).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt).bind(page_size).bind(offset).bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }

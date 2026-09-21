@@ -18,22 +18,27 @@ pub async fn list_audit_plans(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditPlanQuery>,
 ) -> Json<ApiResponse<Vec<AuditPlan>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let plans = match (query.status.as_ref(), query.audit_type.as_ref()) {
-        (Some(st), Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE tenant_id = $1 AND status = $2 AND audit_type = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(st).bind(at).bind(page_size).bind(offset)
+        (Some(st), Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 AND audit_type = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(st).bind(at).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(st).bind(page_size).bind(offset)
+        (Some(st), None) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE tenant_id = $1 AND audit_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(at).bind(page_size).bind(offset)
+        (None, Some(at)) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND audit_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(at).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -82,13 +87,18 @@ pub async fn get_audit_plan(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<AuditPlan>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE id = $1 AND tenant_id = $2"#)).bind(id).bind(tenant_id)
+    let plan = sqlx::query_as::<_, AuditPlan>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_plans WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -159,6 +169,11 @@ pub async fn list_audit_tasks(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditTaskQuery>,
 ) -> Json<ApiResponse<Vec<AuditTask>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -167,16 +182,16 @@ pub async fn list_audit_tasks(
     let plan_id = query.plan_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     let tasks = match (plan_id, query.status.as_ref()) {
-        (Some(plan), Some(st)) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE tenant_id = $1 AND plan_id = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(plan).bind(st).bind(page_size).bind(offset)
+        (Some(plan), Some(st)) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(plan).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), None) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE tenant_id = $1 AND plan_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(plan).bind(page_size).bind(offset)
+        (Some(plan), None) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(plan).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(st)) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(st).bind(page_size).bind(offset)
+        (None, Some(st)) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, AuditTask>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_tasks WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -252,6 +267,11 @@ pub async fn list_audit_findings(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<AuditFindingQuery>,
 ) -> Json<ApiResponse<Vec<AuditFinding>>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
     let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
@@ -260,28 +280,28 @@ pub async fn list_audit_findings(
     let plan_id = query.plan_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     let findings = match (plan_id, query.severity.as_ref(), query.status.as_ref()) {
-        (Some(plan), Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND plan_id = $2 AND severity = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"#)).bind(tenant_id).bind(plan).bind(sv).bind(st).bind(page_size).bind(offset)
+        (Some(plan), Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND severity = $3 AND status = $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6"#)).bind(tenant_opt).bind(plan).bind(sv).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), Some(sv), None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND plan_id = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(plan).bind(sv).bind(page_size).bind(offset)
+        (Some(plan), Some(sv), None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(plan).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), None, Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND plan_id = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(plan).bind(st).bind(page_size).bind(offset)
+        (Some(plan), None, Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(plan).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND severity = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_id).bind(sv).bind(st).bind(page_size).bind(offset)
+        (None, Some(sv), Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 AND status = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(sv).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(plan), None, None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND plan_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(plan).bind(page_size).bind(offset)
+        (Some(plan), None, None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(plan).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv), None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(sv).bind(page_size).bind(offset)
+        (None, Some(sv), None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None, Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_id).bind(st).bind(page_size).bind(offset)
+        (None, None, Some(st)) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None, None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_id).bind(page_size).bind(offset)
+        (None, None, None) => sqlx::query_as::<_, AuditFinding>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, finding_no, task_id::TEXT, plan_id::TEXT, title, description, severity, category, status, recommendation, responsible, target_date::TEXT, verified_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_audit_findings WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
