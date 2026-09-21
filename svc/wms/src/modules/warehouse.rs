@@ -238,6 +238,12 @@ pub async fn create_warehouse(
     };
 
     if status == "success" {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库列表缓存已清空（创建仓库）");
         if let Some(publisher) = &state.event_publisher {
@@ -438,6 +444,12 @@ pub async fn update_warehouse(
     };
 
     if status_str == "success" {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
         let cache_key = warehouse_cache_key(&Some(tenant_id), id, None);
         state.warehouse_cache.remove(&cache_key).await;
         state.warehouse_cache.clear_l1();
