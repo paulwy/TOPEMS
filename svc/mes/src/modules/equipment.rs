@@ -909,13 +909,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time,
-        end_time,
+        start_time.naive_utc(),
+        end_time.map(|d| d.naive_utc()),
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -970,7 +970,7 @@ pub async fn create_maintenance(
             description: Some(description),
             maintainer: maintainer,
             start_time: start_time,
-            end_time,
+            end_time.map(|d| d.naive_utc()),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: status,
@@ -1024,7 +1024,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1080,7 +1080,7 @@ pub async fn update_maintenance_status(
             description: Some(description),
             maintainer: maintainer,
             start_time: start_time,
-            end_time,
+            end_time.map(|d| d.naive_utc()),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: status,
