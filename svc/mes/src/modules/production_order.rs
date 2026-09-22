@@ -488,7 +488,7 @@ pub async fn create_production_order(
         req.planned_end_date.map(|d| d.naive_utc()),
         req.workshop_id,
         req.notes,
-        now,
+        now.naive_utc(),
         tenant_id,
     )
     .fetch_one(&mut *tx)
@@ -651,7 +651,7 @@ pub async fn create_from_erp(
         planned_end.date_naive(),
         req.workshop_id,
         req.notes,
-        now,
+        now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&mut *tx)
@@ -1025,7 +1025,7 @@ pub async fn start_production_order(
         "#,
         id,
         now.date_naive(),
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1115,7 +1115,7 @@ pub async fn complete_production_order(
         "#,
         id,
         now.date_naive(),
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1202,7 +1202,7 @@ pub async fn cancel_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1289,7 +1289,7 @@ pub async fn release_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
