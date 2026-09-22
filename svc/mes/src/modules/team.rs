@@ -451,7 +451,7 @@ pub async fn create_team(
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
         created_at: datetime_to_string(result.created_at.map(|d| d.naive_utc())),
-        updated_at: datetime_to_string(result.updated_at.naive_utc()),
+        updated_at: datetime_to_string(result.updated_at.map(|d| d.naive_utc())),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
