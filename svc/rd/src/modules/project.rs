@@ -20,6 +20,7 @@ use crate::services::project_permission::{
     check_project_owner, check_project_permission, ProjectPermission,
 };
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -87,6 +88,7 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn list_projects(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Query(params): Query<ListProjectsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -102,10 +104,13 @@ pub async fn list_projects(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, tenant_id, name, code, description, project_type, status, leader,
+        SELECT id, tenant_id,
+               CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
@@ -122,6 +127,7 @@ pub async fn list_projects(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 

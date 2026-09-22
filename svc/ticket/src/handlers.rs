@@ -47,6 +47,7 @@ impl TicketService {
         tenant_id: Uuid,
         reporter_id: Option<Uuid>,
         req: CreateTicketRequest,
+        locale: &str,
     ) -> Result<Ticket, sqlx::Error> {
         let ticket_no = self.generate_ticket_no();
         let ticket_type = req.ticket_type.clone();
@@ -95,10 +96,11 @@ impl TicketService {
 
         // 自动化规则应用：按租户启用规则评估并应用变更（assignee/severity/tags）
         let rules = sqlx::query_as::<_, AutomationRule>(
-            "SELECT id, tenant_id, name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
+            "SELECT id, tenant_id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, condition_field, condition_value, action_type, action_value, priority, enabled, created_at, updated_at
              FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND enabled = true",
         )
         .bind(tenant_id)
+        .bind(locale)
         .fetch_all(&self.pool)
         .await?;
 
@@ -616,14 +618,16 @@ impl TicketService {
 pub async fn create_ticket_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateTicketRequest>,
 ) -> Json<ApiResponse<Ticket>> {
     let service = TicketService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let reporter_id = Uuid::parse_str(&claims.sub).ok();
+    let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.create_ticket(tenant_id, reporter_id, req).await {
+    match service.create_ticket(tenant_id, reporter_id, req, locale).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单创建成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("创建工单失败", e))),
     }

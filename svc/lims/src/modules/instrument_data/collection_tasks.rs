@@ -1,6 +1,7 @@
 use axum::{extract::State, Json};
 use sqlx::types::Uuid;
 use sqlx::Row;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{
@@ -150,10 +151,12 @@ pub async fn trigger_collection(
 pub async fn list_collection_tasks(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<CollectionTaskQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<CollectionTask>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let sql = match query.status.as_ref() {
         Some(_) => {
@@ -162,7 +165,7 @@ pub async fn list_collection_tasks(
              t.parse_rule_id, t.status, t.last_run_at::TEXT, t.next_run_at::TEXT, \
              t.total_collections, t.success_count, t.failed_count, \
              t.created_by, t.created_at::TEXT, t.updated_at::TEXT, \
-             i.instrument_no, i.name as instrument_name \
+             i.instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
              FROM qa_lims_collection_tasks t \
              LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
              WHERE t.status = $1 \
@@ -174,7 +177,7 @@ pub async fn list_collection_tasks(
              t.parse_rule_id, t.status, t.last_run_at::TEXT, t.next_run_at::TEXT, \
              t.total_collections, t.success_count, t.failed_count, \
              t.created_by, t.created_at::TEXT, t.updated_at::TEXT, \
-             i.instrument_no, i.name as instrument_name \
+             i.instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
              FROM qa_lims_collection_tasks t \
              LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
              ORDER BY t.created_at DESC LIMIT $1 OFFSET $2"
@@ -184,10 +187,10 @@ pub async fn list_collection_tasks(
     let mut query_builder = sqlx::query(sql);
     match query.status.as_ref() {
         Some(status) => {
-            query_builder = query_builder.bind(status).bind(page_size).bind(offset);
+            query_builder = query_builder.bind(status).bind(page_size).bind(offset).bind(locale);
         }
         None => {
-            query_builder = query_builder.bind(page_size).bind(offset);
+            query_builder = query_builder.bind(page_size).bind(offset).bind(locale);
         }
     }
 
@@ -231,11 +234,13 @@ pub async fn list_collection_tasks(
 pub async fn get_collection_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<CollectionTask>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let row = sqlx::query(
         r#"
@@ -244,13 +249,14 @@ pub async fn get_collection_task(
                t.parse_rule_id, t.status, t.last_run_at::TEXT, t.next_run_at::TEXT,
                t.total_collections, t.success_count, t.failed_count,
                t.created_by, t.created_at::TEXT, t.updated_at::TEXT,
-               i.instrument_no, i.name as instrument_name
+               i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name
         FROM qa_lims_collection_tasks t
         LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id
         WHERE t.id = $1
         "#,
     )
     .bind(id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 

@@ -526,18 +526,21 @@ pub async fn get_calibration_history(
 
 pub async fn create_calibration_record(
     State(state): State<crate::shared::AppState>,
+    headers: HeaderMap,
     Json(req): Json<CreateCalibrationRecordRequest>,
 ) -> Json<ApiResponse<CalibrationRecord>> {
     let instrument_id = match Uuid::parse_str(&req.instrument_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
     };
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // Get instrument info
     let instrument_row = sqlx::query(
-        "SELECT instrument_no, name FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1",
+        "SELECT instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name FROM qa_lab_instruments WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(instrument_id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 

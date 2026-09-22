@@ -1,11 +1,13 @@
 use axum::{
     extract::{Path, State},
+    http::HeaderMap,
     Json,
 };
 use uuid::Uuid;
 
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
+use topems_shared_core::locale::Locale;
 
 /// Helper struct for plugin details with permissions
 #[derive(serde::Serialize)]
@@ -17,12 +19,14 @@ pub struct PluginDetailsResponse {
 /// Simplified: List installed plugins with runtime status
 pub async fn list_installed_plugins(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<PluginWithRuntimeStatus>>> {
     tracing::info!("[Plugin] Listing installed plugins");
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let plugins: Vec<PluginWithRuntimeStatus> = sqlx::query_as(
         r#"
-        SELECT p.id, p.code, p.name, p.description, p.version, p.plugin_type,
+        SELECT p.id, p.code, CASE WHEN $1 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS name, p.description, p.version, p.plugin_type,
                p.is_published, p.category,
                pi.runtime_status, pi.runtime_url, pi.base_path, pi.last_heartbeat
         FROM core.core_plugins p
@@ -31,6 +35,7 @@ pub async fn list_installed_plugins(
         ORDER BY p.code
         "#,
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -42,11 +47,14 @@ pub async fn list_installed_plugins(
 pub async fn get_plugin_details(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<PluginDetailsResponse>> {
     tracing::info!("[Plugin] Getting plugin details: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -101,9 +109,11 @@ pub async fn install_plugin_simple(
     );
 
     // Get plugin
+    let locale = Locale::from_headers(&headers).as_sql();
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
+            .bind(locale)
             .fetch_optional(&state.pool)
             .await
             .unwrap_or(None);
@@ -185,8 +195,10 @@ pub async fn uninstall_plugin_simple(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -363,12 +375,13 @@ pub async fn list_tenant_installed_plugins(
         tenant_id
     );
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let plugins: Vec<TenantPluginWithRuntimeStatus> = sqlx::query_as(
         r#"
         SELECT tp.id, tp.tenant_id, tp.plugin_id, tp.installed_version, tp.is_active,
                tp.license_type, tp.license_expires_at, tp.activated_at, tp.last_used_at,
                tp.usage_count, tp.created_at, tp.updated_at,
-               p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
+               p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
                p.version as plugin_version, p.category as plugin_category,
                pi.runtime_status, pi.runtime_url, pi.last_heartbeat
         FROM core.core_tenant_plugins tp
@@ -379,6 +392,7 @@ pub async fn list_tenant_installed_plugins(
         "#,
     )
     .bind(tenant_id)
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();

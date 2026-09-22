@@ -3,6 +3,7 @@
 
 use axum::{
     extract::{Path, State},
+    http::HeaderMap,
     routing::{delete, get, post},
     Json, Router,
 };
@@ -12,6 +13,7 @@ use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::models::is_valid_ticket_transition;
@@ -159,13 +161,16 @@ struct WorkflowRuleView {
 async fn list_workflow_automation_rules(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<WorkflowRuleView>>> {
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query(
-        "SELECT id, name, condition_field, action_type, enabled
+        "SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, condition_field, action_type, enabled
          FROM ticket.ticket_automation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY priority ASC, created_at ASC",
     )
     .bind(opt_tenant_id)
+    .bind(locale)
     .fetch_all(&pool)
     .await
     {

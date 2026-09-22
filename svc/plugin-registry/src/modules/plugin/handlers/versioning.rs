@@ -1,10 +1,12 @@
 use axum::{
     extract::{Path, State},
+    http::HeaderMap,
     Json,
 };
 
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
+use topems_shared_core::locale::Locale;
 
 // ============================================================================
 // Pure helper functions (no DB / async) — extracted for unit testing
@@ -123,11 +125,14 @@ fn parse_release_notes(from_version: String, to_version: String) -> Vec<VersionC
 pub async fn check_plugin_updates(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<UpgradeCheckResult>> {
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -195,6 +200,7 @@ fn compare_version_levels(current: &str, latest: &str) -> (bool, bool) {
 pub async fn rollback_plugin_version(
     State(state): State<AppState>,
     Path((plugin_code, target_version)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<RollbackResult>> {
     tracing::info!(
         "[Plugin] Rolling back plugin {} to version: {}",
@@ -202,8 +208,10 @@ pub async fn rollback_plugin_version(
         target_version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -265,10 +273,13 @@ pub async fn rollback_plugin_version(
 /// Check updates for all installed plugins
 pub async fn check_all_updates(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<UpgradeCheckResult>>> {
     tracing::info!("[Plugin] Checking updates for all plugins");
 
-    let plugins: Vec<Plugin> = match sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugins: Vec<Plugin> = match sqlx::query_as("SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true")
+            .bind(locale)
             .fetch_all(&state.pool)
             .await
         {

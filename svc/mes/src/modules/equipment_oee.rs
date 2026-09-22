@@ -438,6 +438,7 @@ pub async fn list_oee_records(
 pub async fn create_oee_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateOeeRecordRequest>,
 ) -> Json<ApiResponse<OeeRecordResponse>> {
     if let Err(e) =
@@ -510,8 +511,9 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1"#,
-        req.equipment_id
+        r#"SELECT CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1"#,
+        req.equipment_id,
+        topems_shared_core::locale::Locale::from_headers(&headers).as_sql()
     )
     .fetch_optional(&state.pool)
     .await
@@ -519,7 +521,7 @@ pub async fn create_oee_record(
     .flatten();
 
     let record = OeeRecordResponse {
-        id: result.id,        equipment_id: result.equipment_id,        equipment_name: equipment.as_ref().and_then(|e| Some(e.name.clone())),
+        id: result.id,        equipment_id: result.equipment_id,        equipment_name: equipment.as_ref().and_then(|e| e.name.clone()),
         equipment_code: equipment.as_ref().and_then(|e| Some(e.equipment_no.clone())),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),

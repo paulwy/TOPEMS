@@ -597,6 +597,7 @@ pub struct CalculateRequirementsRequest {
 pub async fn calculate_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(body): Json<CalculateRequirementsRequest>,
 ) -> Json<ApiResponse<Vec<MaterialRequirementResponse>>> {
     if let Err(e) =
@@ -614,11 +615,14 @@ pub async fn calculate_requirements(
 
     let order_result = sqlx::query!(
         r#"
-        SELECT order_number AS order_no, product_code, product_name, quantity
+        SELECT order_number AS order_no, product_code,
+        CASE WHEN $2 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
+        quantity
         FROM production_orders
         WHERE id = $1
         "#,
         order_uuid,
+        topems_shared_core::locale::Locale::from_headers(&headers).as_sql(),
     )
     .fetch_one(&state.pool)
     .await;

@@ -1,10 +1,12 @@
 use axum::{
     extract::{Path, State},
+    http::HeaderMap,
     Json,
 };
 
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
+use topems_shared_core::locale::Locale;
 
 // ============================================================================
 // Pure helper functions (no DB / async) — extracted for unit testing
@@ -64,6 +66,7 @@ pub fn is_safe_upgrade(current: &str, target: &str) -> bool {
 pub async fn start_plugin_upgrade(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
+    headers: HeaderMap,
     Json(req): Json<UpgradeRequest>,
 ) -> Json<CoreResponse<UpgradeResult>> {
     tracing::info!(
@@ -72,8 +75,10 @@ pub async fn start_plugin_upgrade(
         req.target_version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -191,6 +196,7 @@ async fn execute_upgrade(
 pub async fn verify_plugin_version(
     State(state): State<AppState>,
     Path((plugin_code, version)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<VerificationResult>> {
     tracing::info!(
         "[Plugin] Verifying plugin {} version: {}",
@@ -198,8 +204,10 @@ pub async fn verify_plugin_version(
         version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);

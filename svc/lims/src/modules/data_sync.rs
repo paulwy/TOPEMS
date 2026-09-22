@@ -7,6 +7,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -271,18 +272,21 @@ pub async fn sync_record_to_qms(
 
 pub async fn sync_reagent_to_ehs(
     State(state): State<crate::shared::AppState>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<SyncReagentToEhsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let reagent_id = match Uuid::parse_str(&req.reagent_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的试剂ID")),
     };
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // Fetch reagent data
     let reagent = sqlx::query(
-        "SELECT id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT FROM qa_lab_reagents WHERE id = $1"
+        "SELECT id::TEXT, reagent_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT FROM qa_lab_reagents WHERE id = $1"
     )
     .bind(reagent_id)
+    .bind(locale)
     .fetch_one(&state.pool)
     .await;
 

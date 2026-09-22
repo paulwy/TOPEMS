@@ -114,6 +114,7 @@ fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<DashboardResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
@@ -225,11 +226,14 @@ pub async fn get_dashboard(
     let orders = sqlx::query!(
         r#"
         SELECT
-            id, order_number AS order_no, product_name, quantity, completed_quantity, status
+            id, order_number AS order_no,
+            CASE WHEN $1 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
+            quantity, completed_quantity, status
         FROM production_orders
         ORDER BY created_at DESC
         LIMIT 10
-        "#
+        "#,
+        topems_shared_core::locale::Locale::from_headers(&headers).as_sql()
     )
     .fetch_all(&state.pool)
     .await;
@@ -248,7 +252,7 @@ pub async fn get_dashboard(
                 OrderProgressResponse {
                     order_id: r.id.to_string(),
                     order_number: r.order_no,
-                    product_name: r.product_name,
+                    product_name: r.product_name.unwrap_or_default(),
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
@@ -469,6 +473,7 @@ pub async fn get_dashboard(
 pub async fn get_order_progress(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<OrderProgressResponse>>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
@@ -478,10 +483,13 @@ pub async fn get_order_progress(
     let result = sqlx::query!(
         r#"
         SELECT
-            id, order_number AS order_no, product_name, quantity, completed_quantity, status
+            id, order_number AS order_no,
+            CASE WHEN $1 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
+            quantity, completed_quantity, status
         FROM production_orders
         ORDER BY created_at DESC
-        "#
+        "#,
+        topems_shared_core::locale::Locale::from_headers(&headers).as_sql()
     )
     .fetch_all(&state.pool)
     .await;
@@ -507,7 +515,7 @@ pub async fn get_order_progress(
             OrderProgressResponse {
                 order_id: r.id.to_string(),
                 order_number: r.order_no,
-                product_name: r.product_name,
+                product_name: r.product_name.unwrap_or_default(),
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,

@@ -4,6 +4,7 @@
 
 use axum::{
     extract::{Extension, FromRef, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 // ===== 数据类型 =====
@@ -262,9 +264,11 @@ pub async fn get_carrier_performance(
 pub async fn get_route_efficiency(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<RouteEfficiencyItem>>> {
     tracing::info!("获取TMS路线效率数据");
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(
         Option<String>,
         Option<String>,
@@ -273,9 +277,9 @@ pub async fn get_route_efficiency(
         Option<i64>,
         Option<f64>,
     )> = sqlx::query_as(
-        "SELECT 
+        "SELECT
             r.id::text as route_id,
-            COALESCE(r.name, r.route_no) as route_name,
+            COALESCE(CASE WHEN $1 = 'en' THEN COALESCE(r.name_en, r.name) ELSE r.name END, r.route_no) as route_name,
             COALESCE(r.distance_km, 0)::float8 as distance_km,
             COALESCE(r.estimated_hours, 0)::float8 as estimated_hours,
             COUNT(s.id) as total_trips,
@@ -286,6 +290,7 @@ pub async fn get_route_efficiency(
          ORDER BY total_trips DESC
          LIMIT 20",
     )
+    .bind(locale)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();

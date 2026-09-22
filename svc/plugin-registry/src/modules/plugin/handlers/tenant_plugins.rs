@@ -1,5 +1,6 @@
 use axum::{
     extract::{Path, Query, State},
+    http::HeaderMap,
     Extension, Json,
 };
 use uuid::Uuid;
@@ -8,6 +9,7 @@ use super::super::models::*;
 use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
+use topems_shared_core::locale::Locale;
 
 // ============================================================================
 // Pure helper functions (no DB / async) — extracted for unit testing
@@ -110,16 +112,18 @@ pub fn requires_confirmation(tier: &str) -> bool {
 pub async fn list_tenant_plugins(
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<TenantPluginWithDetails>>> {
     tracing::info!("[Plugin] Listing plugins for tenant: {}", tenant_id);
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let installations: Vec<TenantPluginWithDetails> = sqlx::query_as(
         r#"
         SELECT
             tp.id, tp.tenant_id, tp.plugin_id, tp.installed_version, tp.is_active,
             tp.license_type, tp.license_expires_at, tp.purchase_order_id,
             tp.activated_at, tp.last_used_at, tp.usage_count, tp.created_at, tp.updated_at,
-            p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
+            p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
         FROM core.core_tenant_plugins tp
@@ -129,6 +133,7 @@ pub async fn list_tenant_plugins(
         "#,
     )
     .bind(tenant_id)
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -144,6 +149,7 @@ pub async fn list_my_plugins(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<TenantPluginWithDetails>>> {
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
@@ -156,13 +162,14 @@ pub async fn list_my_plugins(
         tenant_id
     );
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let installations: Vec<TenantPluginWithDetails> = sqlx::query_as(
         r#"
         SELECT
             tp.id, tp.tenant_id, tp.plugin_id, tp.installed_version, tp.is_active,
             tp.license_type, tp.license_expires_at, tp.purchase_order_id,
             tp.activated_at, tp.last_used_at, tp.usage_count, tp.created_at, tp.updated_at,
-            p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
+            p.code as plugin_code, CASE WHEN $2 = 'en' THEN COALESCE(p.name_en, p.name) ELSE p.name END AS plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
         FROM core.core_tenant_plugins tp
@@ -172,6 +179,7 @@ pub async fn list_my_plugins(
         "#,
     )
     .bind(tenant_id)
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -183,6 +191,7 @@ async fn install_plugin_inner(
     state: AppState,
     tenant_id: Uuid,
     plugin_code: String,
+    headers: &HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
     tracing::info!(
         "[Plugin] Installing plugin {} for tenant: {}",
@@ -190,9 +199,11 @@ async fn install_plugin_inner(
         tenant_id
     );
 
+    let locale = Locale::from_headers(headers).as_sql();
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
+            .bind(locale)
             .fetch_optional(&state.pool)
             .await
             .unwrap_or(None);
@@ -307,8 +318,9 @@ async fn install_plugin_inner(
 pub async fn install_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    install_plugin_inner(state, tenant_id, plugin_code).await
+    install_plugin_inner(state, tenant_id, plugin_code, &headers).await
 }
 
 /// Install plugin for current user's tenant
@@ -316,6 +328,7 @@ pub async fn install_my_plugin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
     let tenant_id = match claims.tenant_id {
         Some(id) => match Uuid::parse_str(&id) {
@@ -337,7 +350,7 @@ pub async fn install_my_plugin(
         tenant_id
     );
 
-    install_plugin_inner(state, tenant_id, plugin_code).await
+    install_plugin_inner(state, tenant_id, plugin_code, &headers).await
 }
 
 async fn uninstall_plugin_inner(
@@ -345,6 +358,7 @@ async fn uninstall_plugin_inner(
     tenant_id: Uuid,
     plugin_code: String,
     req: UninstallRequest,
+    headers: &HeaderMap,
 ) -> Json<CoreResponse<UninstallResult>> {
     tracing::info!(
         "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
@@ -364,8 +378,10 @@ async fn uninstall_plugin_inner(
         }
     }
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);
@@ -542,9 +558,10 @@ async fn uninstall_plugin_inner(
 pub async fn uninstall_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
+    headers: HeaderMap,
     Json(req): Json<UninstallRequest>,
 ) -> Json<CoreResponse<UninstallResult>> {
-    uninstall_plugin_inner(state, tenant_id, plugin_code, req).await
+    uninstall_plugin_inner(state, tenant_id, plugin_code, req, &headers).await
 }
 
 /// Uninstall plugin for current user's tenant (with three-tier strategy)
@@ -552,6 +569,7 @@ pub async fn uninstall_my_plugin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(plugin_code): Path<String>,
+    headers: HeaderMap,
     Json(req): Json<UninstallRequest>,
 ) -> Json<CoreResponse<UninstallResult>> {
     let tenant_id = match claims.tenant_id {
@@ -575,7 +593,7 @@ pub async fn uninstall_my_plugin(
         req.uninstall_tier
     );
 
-    uninstall_plugin_inner(state, tenant_id, plugin_code, req).await
+    uninstall_plugin_inner(state, tenant_id, plugin_code, req, &headers).await
 }
 
 async fn activate_plugin_inner(
@@ -719,12 +737,14 @@ pub async fn get_available_plugins(
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
     Query(filters): Query<PluginFilters>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<Vec<PluginWithStatus>>> {
     tracing::info!(
         "[Plugin] Getting available plugins for tenant: {}",
         tenant_id
     );
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let category = filters.category.as_ref();
     let search = filters.search.as_ref();
 
@@ -744,9 +764,10 @@ pub async fn get_available_plugins(
     let where_clause = where_clauses.join(" AND ");
 
     let plugins: Vec<Plugin> = sqlx::query_as(&format!(
-        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
         where_clause
     ))
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
@@ -833,6 +854,7 @@ pub async fn upload_plugin(
 pub async fn upload_plugin_version(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
+    headers: HeaderMap,
     Json(req): Json<UploadVersionRequest>,
 ) -> Json<CoreResponse<PluginVersion>> {
     tracing::info!(
@@ -842,8 +864,10 @@ pub async fn upload_plugin_version(
     );
 
     // Get plugin id
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
+    let locale = Locale::from_headers(&headers).as_sql();
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
+        .bind(locale)
         .fetch_optional(&state.pool)
         .await
         .unwrap_or(None);

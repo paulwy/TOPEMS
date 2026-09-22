@@ -4,6 +4,7 @@
 
 use axum::{
     extract::{Extension, FromRef, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -16,6 +17,7 @@ use num_traits::cast::ToPrimitive;
 
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 // ===== 查询参数 =====
@@ -1055,20 +1057,24 @@ pub struct DailyTrendItem {
 pub async fn get_inventory_distribution(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InventoryDistributionItem>>> {
     tracing::info!("获取WMS库存分布数据");
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(String, Option<String>, Option<f64>, Option<i64>)> = sqlx::query_as(
-        "SELECT i.warehouse_id::text as warehouse_id, w.name as warehouse_name, 
-                COALESCE(SUM(i.quantity), 0) as quantity, 
+        "SELECT i.warehouse_id::text as warehouse_id,
+                CASE WHEN $1 = 'en' THEN COALESCE(w.warehouse_name_en, w.warehouse_name) ELSE w.warehouse_name END as warehouse_name,
+                COALESCE(SUM(i.quantity), 0) as quantity,
                 COUNT(DISTINCT i.material_code) as sku_count
          FROM wms.inventory i
          LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
          WHERE i.deleted_at IS NULL
-         GROUP BY i.warehouse_id, w.name
+         GROUP BY i.warehouse_id, w.warehouse_name
          ORDER BY quantity DESC
          LIMIT 10",
     )
+    .bind(locale)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();

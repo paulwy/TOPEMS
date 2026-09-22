@@ -10,6 +10,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== Data Structures ====================
@@ -193,13 +194,15 @@ pub async fn sync_inspection_to_lims(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // Fetch inspection data
     let inspection = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id, inspection_no, inspection_type, product_name, quantity, qualified_quantity, unqualified_quantity, qualification_rate, result, status, inspector, inspected_at::TEXT FROM qms.qa_quality_inspections WHERE id = $1 AND tenant_id = $2")
+        only_own_schema_query!("qms", "SELECT id, inspection_no, inspection_type, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, quantity, qualified_quantity, unqualified_quantity, qualification_rate, result, status, inspector, inspected_at::TEXT FROM qms.qa_quality_inspections WHERE id = $1 AND tenant_id = $2")
     )
     .bind(inspection_id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_one(&state.pool)
     .await;
 
@@ -300,13 +303,15 @@ pub async fn sync_issue_to_ehs(
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
     let tenant_id = get_tenant_id(&claims, &headers);
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // Fetch issue data
     let issue = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id, issue_no, title, description, severity, status, related_inspection_id, created_by FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2")
+        only_own_schema_query!("qms", "SELECT id, issue_no, CASE WHEN $3 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title, description, severity, status, related_inspection_id, created_by FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2")
     )
     .bind(issue_id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_one(&state.pool)
     .await;
 

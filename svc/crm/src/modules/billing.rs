@@ -13,6 +13,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use sqlx::Row;
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 
 pub fn create_routes() -> Router<ApiState> {
@@ -173,7 +174,7 @@ async fn create_billing_record(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<CreateBillingRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
@@ -201,11 +202,13 @@ async fn create_billing_record(
     let now = chrono::Utc::now();
 
     // 反查客户名称（非租户维度，仅展示字段；缺失时留空）
+    let locale = Locale::from_headers(&headers).as_sql();
     let customer_name = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(req.customer_id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None)

@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -12,6 +13,7 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 
 #[derive(Debug, Serialize)]
@@ -207,6 +209,7 @@ async fn create_recommendation(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<RecommendationRequest>,
 ) -> Json<ApiResponse<RecommendationResult>> {
     let mut guard = txn_arc.lock().await;
@@ -216,9 +219,11 @@ async fn create_recommendation(
         Err(e) => return e,
     }
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let customer_name_result =
-        sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
+        sqlx::query_scalar::<_, Option<String>>("SELECT CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1")
             .bind(req.customer_id)
+            .bind(locale)
             .fetch_optional(&mut **txn)
             .await;
 
@@ -300,6 +305,7 @@ async fn get_customer_recommendations(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Path(id): Path<Uuid>,
     Query(params): Query<RecommendationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -310,9 +316,11 @@ async fn get_customer_recommendations(
         Err(e) => return e,
     }
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let customer_name_result =
-        sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
+        sqlx::query_scalar::<_, Option<String>>("SELECT CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1")
             .bind(id)
+            .bind(locale)
             .fetch_optional(&mut **txn)
             .await;
 

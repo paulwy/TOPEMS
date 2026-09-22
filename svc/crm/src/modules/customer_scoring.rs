@@ -22,6 +22,7 @@ use crate::modules::scoring_logic::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize)]
@@ -200,11 +201,13 @@ async fn create_customer_score(
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let customer = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+        "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(req.customer_id)
     .bind(tenant_id)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 

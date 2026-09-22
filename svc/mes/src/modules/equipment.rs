@@ -771,6 +771,7 @@ pub async fn list_maintenances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListMaintenancesParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
@@ -783,7 +784,9 @@ pub async fn list_maintenances(
     let result = sqlx::query!(
         r#"
         SELECT 
-            m.id, m.equipment_id, e.equipment_name as equipment_name, e.equipment_code as equipment_no,
+            m.id, m.equipment_id,
+            CASE WHEN $4 = 'en' THEN COALESCE(e.equipment_name_en, e.equipment_name) ELSE e.equipment_name END as equipment_name,
+            e.equipment_code as equipment_no,
             m.maintenance_type, m.description, m.maintainer,
             m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,
             m.created_at, m.updated_at
@@ -796,6 +799,7 @@ pub async fn list_maintenances(
         params.equipment_id,
         page_size,
         offset,
+        Locale::from_headers(&headers).as_sql(),
     )
     .fetch_all(&state.pool)
     .await;
@@ -813,7 +817,7 @@ pub async fn list_maintenances(
         .map(|r| MaintenanceRecord {
             id: r.id,
             equipment_id: r.equipment_id,
-            equipment_name: Some(r.equipment_name),
+            equipment_name: r.equipment_name,
             equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
             description: Some(r.description),
@@ -866,6 +870,7 @@ pub async fn list_maintenances(
 pub async fn create_maintenance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaintenanceRecord>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
@@ -929,9 +934,11 @@ pub async fn create_maintenance(
     let created_at = result.created_at;
     let updated_at = result.updated_at;
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
+        locale,
     )
     .fetch_optional(&state.pool)
     .await
@@ -951,7 +958,7 @@ pub async fn create_maintenance(
         MaintenanceRecord {
             id: id,
             equipment_id: equipment_id,
-            equipment_name: Some(equipment_name.unwrap_or_default()),
+            equipment_name: Some(equipment_name.flatten().unwrap_or_default()),
             equipment_no: Some(equipment_no.unwrap_or_default()),
             maintenance_type: maintenance_type,
             description: Some(description),
@@ -987,6 +994,7 @@ pub async fn update_maintenance_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateMaintenanceStatus>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
@@ -1036,9 +1044,11 @@ pub async fn update_maintenance_status(
     let created_at = result.created_at;
     let updated_at = result.updated_at;
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
+        locale,
     )
     .fetch_optional(&state.pool)
     .await
@@ -1058,7 +1068,7 @@ pub async fn update_maintenance_status(
         MaintenanceRecord {
             id: id,
             equipment_id: equipment_id,
-            equipment_name: Some(equipment_name.unwrap_or_default()),
+            equipment_name: Some(equipment_name.flatten().unwrap_or_default()),
             equipment_no: Some(equipment_no.unwrap_or_default()),
             maintenance_type: maintenance_type,
             description: Some(description),

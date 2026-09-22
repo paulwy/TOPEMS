@@ -4,6 +4,7 @@
 
 use axum::{
     extract::{Extension, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -11,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 // ===== 数据类型 =====
@@ -126,11 +128,14 @@ pub async fn get_purchase_status(
 pub async fn get_supplier_ranking(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<SupplierRankingItem>>> {
     tracing::info!("获取SCM供应商采购排名");
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(Option<String>, Option<String>, Option<i64>, Option<f64>)> = sqlx::query_as(
-        "SELECT po.supplier_id::text as supplier_id, s.name as supplier_name, 
+        "SELECT po.supplier_id::text as supplier_id,
+                CASE WHEN $1 = 'en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name,
                 COUNT(*) as order_count, COALESCE(SUM(po.total_amount), 0) as total_amount
          FROM scm.purchase_orders po
          LEFT JOIN scm.suppliers s ON po.supplier_id = s.id
@@ -139,6 +144,7 @@ pub async fn get_supplier_ranking(
          ORDER BY total_amount DESC
          LIMIT 10",
     )
+    .bind(locale)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();

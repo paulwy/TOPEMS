@@ -10,10 +10,6 @@ use crate::{AppState, CoreResponse};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 
-// ============================================================================
-// Pure helper functions (no DB / async) — extracted for unit testing
-// ============================================================================
-
 /// Sort plugins by popularity: descending downloads, then descending rating,
 /// then ascending name for stable ordering of ties.
 /// Tuple shape: (name, downloads, rating).
@@ -55,8 +51,11 @@ pub fn paginate(page: Option<u32>, page_size: Option<u32>) -> (u32, u32, u32) {
 )]
 pub async fn get_marketplace_summary(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Json<CoreResponse<MarketplaceSummary>> {
     tracing::info!("[Plugin] Getting marketplace summary");
+
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let total: (i64,) =
         sqlx::query_as("SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true")
@@ -72,22 +71,25 @@ pub async fn get_marketplace_summary(
     .unwrap_or_default();
 
     let featured: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let new_plugins: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let top_rated: Vec<Plugin> = sqlx::query_as(
-        "SELECT id, code, name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
+        "SELECT id, code, CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, description, version, plugin_type, is_free, price_cents, remote_url, entry_point, dependencies, author_name, author_url, homepage_url, screenshots, tags, category, is_published, is_featured, is_recommended, install_count, rating, rating_count, published_at, created_at, updated_at, is_installed, installed_at, is_active, activated_at, checksum FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();

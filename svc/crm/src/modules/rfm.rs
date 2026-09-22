@@ -22,6 +22,7 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::response::{api_error, ApiResponse};
+use topems_shared_core::locale::Locale;
 // ---------------------------------------------------------------------------
 // 数据模型
 // ---------------------------------------------------------------------------
@@ -523,7 +524,7 @@ async fn get_customer_rfm(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<RfmRecord>> {
     let mut guard = txn_arc.lock().await;
@@ -569,11 +570,13 @@ async fn get_customer_rfm(
     .await;
 
     // 获取客户名称
+    let locale = Locale::from_headers(&headers).as_sql();
     let name_result = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+        "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 
