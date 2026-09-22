@@ -392,7 +392,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now.naive_utc(),
+        now,
         new_tenant,
     )
     .fetch_one(&state.pool)
@@ -419,7 +419,7 @@ pub async fn create_team(
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -432,7 +432,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now.naive_utc(),
+            now,
         )
         .execute(&state.pool)
         .await;
@@ -624,8 +624,8 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.map(|id| id.to_string()),
-            employee_id: r.employee_id.map(|id| id.to_string()),
+            team_id: r.team_id.map(|id| id.to_string()).unwrap_or_default(),
+            employee_id: r.employee_id.map(|id| id.to_string()).unwrap_or_default(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
@@ -668,7 +668,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -688,14 +688,14 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .execute(&state.pool)
     .await;
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.map(|id| id.to_string()),
+        team_id: result.team_id.map(|id| id.to_string()).unwrap_or_default(),
         employee_id: result.employee_id.map(|id| id.to_string()),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
