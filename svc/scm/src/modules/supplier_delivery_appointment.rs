@@ -16,7 +16,7 @@ use crate::models::supplier_delivery_appointment::{
     UpdateSupplierDeliveryAppointmentRequest,
 };
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
@@ -333,7 +333,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/delivery-appointments/stats", get(appointment_stats))
 }
 
-const SELECT_COLUMNS: &str = "id, appointment_no, purchase_order_id, purchase_order_no, supplier_id, supplier_name, delivery_date, delivery_time, delivery_method, vehicle_no, driver_name, driver_phone, cargo_description, total_quantity, total_weight, destination_warehouse, expected_arrival_time, actual_arrival_time, status, applicant, approver, approved_at, rejection_reason, remarks, created_by, created_at, updated_at";
+const SELECT_COLUMNS: &str = "id, appointment_no, purchase_order_id, purchase_order_no, supplier_id, supplier_name, delivery_date, delivery_time, delivery_method, vehicle_no, driver_name, driver_phone, cargo_description, total_quantity::float8, total_weight::float8, destination_warehouse, expected_arrival_time, actual_arrival_time, status, applicant, approver, approved_at, rejection_reason, remarks, created_by, created_at, updated_at";
 
 pub async fn list_appointments(
     State(state): State<ApiState>,
@@ -355,6 +355,7 @@ pub async fn list_appointments(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -369,6 +370,7 @@ pub async fn list_appointments(
           AND ($3::uuid IS NULL OR supplier_id = $3)
           AND ($4::date IS NULL OR delivery_date >= $4)
           AND ($5::date IS NULL OR delivery_date <= $5)
+          AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8)
         ORDER BY delivery_date DESC, created_at DESC
         LIMIT $6 OFFSET $7
         "#
@@ -382,6 +384,7 @@ pub async fn list_appointments(
         .bind(params.end_date)
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_bind)
         .fetch_all(&mut **txn)
         .await;
 
@@ -394,6 +397,7 @@ pub async fn list_appointments(
                   AND ($3::uuid IS NULL OR supplier_id = $3)
                   AND ($4::date IS NULL OR delivery_date >= $4)
                   AND ($5::date IS NULL OR delivery_date <= $5)
+                  AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
                 "#.to_string();
             let count_result = sqlx::query_scalar::<_, i64>(&count_query)
                 .bind(&search_pattern)
@@ -401,6 +405,7 @@ pub async fn list_appointments(
                 .bind(params.supplier_id)
                 .bind(params.start_date)
                 .bind(params.end_date)
+                .bind(tenant_bind)
                 .fetch_one(&mut **txn)
                 .await;
             let total = count_result.unwrap_or(0);
@@ -449,6 +454,7 @@ pub async fn create_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     if req.delivery_method.trim().is_empty() {
         return Json(api_error(400, "送货方式不能为空"));
@@ -467,9 +473,9 @@ pub async fn create_appointment(
             delivery_method, vehicle_no, driver_name, driver_phone,
             cargo_description, total_quantity, total_weight,
             destination_warehouse, expected_arrival_time, status,
-            applicant, remarks, created_at, updated_at
+            applicant, remarks, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'pending', $18, $19, $20, $21)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'pending', $18, $19, $20, $21, $22)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -496,6 +502,7 @@ pub async fn create_appointment(
         .bind(&req.remarks)
         .bind(now)
         .bind(now)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -537,6 +544,13 @@ pub async fn create_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -560,11 +574,13 @@ pub async fn get_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(&query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
 
@@ -600,12 +616,14 @@ pub async fn update_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
@@ -648,7 +666,7 @@ pub async fn update_appointment(
             cargo_description = $10, total_quantity = $11, total_weight = $12,
             destination_warehouse = $13, expected_arrival_time = $14,
             status = $15, remarks = $16, updated_at = $17
-        WHERE id = $1
+        WHERE id = $1 AND ($18 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $18)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -671,6 +689,7 @@ pub async fn update_appointment(
         .bind(&status)
         .bind(&remarks)
         .bind(now)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -712,6 +731,13 @@ pub async fn update_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -736,12 +762,14 @@ pub async fn delete_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE scm.supplier_delivery_appointments SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
@@ -791,6 +819,13 @@ pub async fn delete_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -822,11 +857,13 @@ pub async fn approve_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
@@ -859,7 +896,7 @@ pub async fn approve_appointment(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
             status = 'approved', approver = $2, approved_at = $3, remarks = $4, updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -869,6 +906,7 @@ pub async fn approve_appointment(
         .bind(&approver)
         .bind(now)
         .bind(&new_remarks)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -911,6 +949,13 @@ pub async fn approve_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -936,11 +981,13 @@ pub async fn reject_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
@@ -975,7 +1022,7 @@ pub async fn reject_appointment(
         UPDATE scm.supplier_delivery_appointments SET
             status = 'rejected', approver = $2, approved_at = $3,
             rejection_reason = $4, remarks = $5, updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -986,6 +1033,7 @@ pub async fn reject_appointment(
         .bind(now)
         .bind(&reject_reason)
         .bind(&new_remarks)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -1028,6 +1076,13 @@ pub async fn reject_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -1053,11 +1108,13 @@ pub async fn confirm_arrival(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
@@ -1089,7 +1146,7 @@ pub async fn confirm_arrival(
         UPDATE scm.supplier_delivery_appointments SET
             status = 'arrived', actual_arrival_time = $2,
             remarks = $3, updated_at = $4
-        WHERE id = $1
+        WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -1099,6 +1156,7 @@ pub async fn confirm_arrival(
         .bind(actual_arrival)
         .bind(&new_remarks)
         .bind(now)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -1141,6 +1199,13 @@ pub async fn confirm_arrival(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -1166,11 +1231,13 @@ pub async fn complete_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
@@ -1200,7 +1267,7 @@ pub async fn complete_appointment(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
             status = 'completed', remarks = $2, updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -1209,6 +1276,7 @@ pub async fn complete_appointment(
         .bind(id)
         .bind(&new_remarks)
         .bind(now)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -1251,6 +1319,13 @@ pub async fn complete_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -1276,11 +1351,13 @@ pub async fn cancel_appointment(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let select_query =
-        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1");
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
+        .bind(tenant_bind)
         .fetch_optional(&mut **txn)
         .await;
     let existing = match existing {
@@ -1307,7 +1384,7 @@ pub async fn cancel_appointment(
         r#"
         UPDATE scm.supplier_delivery_appointments SET
             status = 'cancelled', remarks = $2, updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING {SELECT_COLUMNS}
         "#
     );
@@ -1316,6 +1393,7 @@ pub async fn cancel_appointment(
         .bind(id)
         .bind(&new_remarks)
         .bind(now)
+        .bind(tenant_bind)
         .fetch_one(&mut **txn)
         .await;
 
@@ -1358,6 +1436,13 @@ pub async fn cancel_appointment(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     response
 }
 
@@ -1381,6 +1466,7 @@ pub async fn appointment_stats(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let _ = params; // 当前未使用
 
     let by_status = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
@@ -1388,16 +1474,19 @@ pub async fn appointment_stats(
         r#"
         SELECT status, COUNT(*)::bigint AS count
         FROM scm.supplier_delivery_appointments
+        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
         GROUP BY status
         "#
     ))
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments"
+        "SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -1408,9 +1497,11 @@ pub async fn appointment_stats(
         r#"
         SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments
         WHERE deleted_at IS NULL AND delivery_date >= $1 AND status IN ('pending', 'approved')
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(today)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -1420,9 +1511,11 @@ pub async fn appointment_stats(
         r#"
         SELECT COUNT(*)::bigint FROM scm.supplier_delivery_appointments
         WHERE deleted_at IS NULL AND delivery_date < $1 AND status IN ('pending', 'approved')
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(today)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
