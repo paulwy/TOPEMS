@@ -4,8 +4,6 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use topems_shared_boundary::only_own_schema_query;
-
 use crate::modules::ApiState;
 use topems_shared_core::response::ApiResponse;
 
@@ -122,15 +120,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(
-    State(_state): State<ApiState>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
+    State(state): State<ApiState>,
 ) -> Json<ApiResponse<()>> {
-    let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
-    match sqlx::query(only_own_schema_query!("scm", "SELECT 1"))
-        .fetch_one(&mut **txn)
+    match sqlx::query("SELECT 1")
+        .fetch_one(&state.db)
         .await
     {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
