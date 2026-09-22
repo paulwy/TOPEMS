@@ -528,8 +528,8 @@ pub async fn get_wip(
                 last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -616,8 +616,8 @@ pub async fn update_wip(
                 last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -865,11 +865,11 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: Some(from_process_name.unwrap_or_default()),
+        from_process_name: from_process_name.unwrap_or_default(),
         from_work_station_id: transfer.from_work_station_id,
         from_work_station_name: Some(from_workstation_name.unwrap_or_default()),
         to_process_id: transfer.to_process_id,
-        to_process_name: Some(to_process_name.unwrap_or_default()),
+        to_process_name: to_process_name.unwrap_or_default(),
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: to_workstation_name.unwrap_or_default(),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
