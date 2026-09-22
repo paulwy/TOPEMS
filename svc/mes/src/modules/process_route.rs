@@ -370,7 +370,7 @@ pub async fn get_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
+                    code: r.code.unwrap_or_default(),
                     name: r.name,
                     description: r.description,
                     version: None,
@@ -442,7 +442,7 @@ pub async fn create_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
+                    code: r.code.unwrap_or_default(),
                     name: r.name,
                     description: r.description,
                     version: None,
@@ -527,7 +527,7 @@ pub async fn update_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
+                    code: r.code.unwrap_or_default(),
                     name: r.name,
                     description: r.description,
                     version: None,
