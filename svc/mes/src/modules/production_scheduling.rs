@@ -578,7 +578,7 @@ pub async fn get_production_schedule(
                 work_station_id: r.work_station_id,
                 work_station_name: Some(r.work_station_name.unwrap_or_default()),
                 equipment_id: r.equipment_id,
-                equipment_name: r.equipment_name.unwrap_or_default(),
+                equipment_name: Some(r.equipment_name.unwrap_or_default()),
                 process_id: r.process_id,
                 process_name: Some(r.process_name.unwrap_or_default()),
                 planned_start_time: opt_naive_to_utc(r.planned_start_time),
