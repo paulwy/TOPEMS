@@ -404,7 +404,7 @@ pub async fn get_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
@@ -644,7 +644,7 @@ pub async fn update_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
@@ -792,7 +792,7 @@ pub async fn start_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
@@ -882,7 +882,7 @@ pub async fn complete_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
@@ -972,7 +972,7 @@ pub async fn cancel_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
@@ -1062,7 +1062,7 @@ pub async fn pause_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
@@ -1152,7 +1152,7 @@ pub async fn resume_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: Some(r.order_id.to_string()),
+                order_id: r.order_id.map(|id| id.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
