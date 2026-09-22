@@ -332,6 +332,12 @@ pub async fn update_contract(
                     .await;
                 }
             }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success(item, "更新采购合同成功"))
         }
         Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购合同不存在")),
@@ -440,7 +446,15 @@ pub async fn submit_contract(
     .await;
 
     match contract {
-        Ok(item) => Json(ApiResponse::success(item, "提交采购合同成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "提交采购合同成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法提交")),
         Err(e) => {
             tracing::error!("提交采购合同失败: {}", e);
@@ -494,7 +508,15 @@ pub async fn approve_contract(
     .await;
 
     match contract {
-        Ok(item) => Json(ApiResponse::success(item, "审批通过采购合同成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "审批通过采购合同成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法审批")),
         Err(e) => {
             tracing::error!("审批采购合同失败: {}", e);
@@ -548,7 +570,15 @@ pub async fn reject_contract(
     .await;
 
     match contract {
-        Ok(item) => Json(ApiResponse::success(item, "拒绝采购合同成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "拒绝采购合同成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法拒绝")),
         Err(e) => {
             tracing::error!("拒绝采购合同失败: {}", e);
@@ -594,7 +624,15 @@ pub async fn cancel_contract(
     .await;
 
     match contract {
-        Ok(item) => Json(ApiResponse::success(item, "取消采购合同成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "取消采购合同成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法取消")),
         Err(e) => {
             tracing::error!("取消采购合同失败: {}", e);
@@ -640,7 +678,15 @@ pub async fn terminate_contract(
     .await;
 
     match contract {
-        Ok(item) => Json(ApiResponse::success(item, "终止采购合同成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "终止采购合同成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法终止")),
         Err(e) => {
             tracing::error!("终止采购合同失败: {}", e);
@@ -679,7 +725,15 @@ pub async fn renew_contract(
     .await;
 
     match contract {
-        Ok(item) => Json(ApiResponse::success(item, "续签采购合同成功")),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+            Json(ApiResponse::success(item, "续签采购合同成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法续签")),
         Err(e) => {
             tracing::error!("续签采购合同失败: {}", e);
