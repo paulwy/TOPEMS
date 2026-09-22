@@ -374,7 +374,7 @@ pub struct UpdateIncidentRequest {
 )]
 pub async fn list_regulations(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
     tracing::debug!("Listing environmental regulations");
@@ -559,7 +559,7 @@ pub async fn update_regulation(
 )]
 pub async fn delete_regulation(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -576,7 +576,7 @@ pub async fn delete_regulation(
 )]
 pub async fn list_evaluations(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
     tracing::debug!("Listing compliance evaluations");
@@ -767,7 +767,7 @@ pub async fn update_evaluation(
 )]
 pub async fn delete_evaluation(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -784,7 +784,7 @@ pub async fn delete_evaluation(
 )]
 pub async fn list_monitor_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
     tracing::debug!("Listing environment monitor records");
@@ -917,7 +917,7 @@ pub async fn get_monitor_record(
 )]
 pub async fn delete_monitor_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -934,7 +934,7 @@ pub async fn delete_monitor_record(
 )]
 pub async fn list_permits(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
     tracing::debug!("Listing discharge permits");
@@ -1124,7 +1124,7 @@ pub async fn update_permit(
 )]
 pub async fn delete_permit(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -1141,7 +1141,7 @@ pub async fn delete_permit(
 )]
 pub async fn list_incidents(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
     tracing::debug!("Listing environment incidents");
@@ -1347,7 +1347,7 @@ pub async fn update_incident(
 )]
 pub async fn delete_incident(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -1415,7 +1415,7 @@ pub async fn get_compliance_statistics(
 )]
 pub async fn list_regulation_categories(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing regulation categories");
@@ -1439,7 +1439,7 @@ pub async fn list_regulation_categories(
 )]
 pub async fn list_monitor_types(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing monitor types");

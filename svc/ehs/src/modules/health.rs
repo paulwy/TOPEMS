@@ -41,7 +41,7 @@ pub struct HealthRecord {
 )]
 pub async fn list_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
     tracing::debug!("Listing health records");

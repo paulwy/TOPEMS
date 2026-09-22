@@ -71,7 +71,7 @@ pub async fn list_purchase_orders(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let _tenant_id = tenant_opt.unwrap_or_else(|| {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
     let page = params.page.unwrap_or(1).max(1);
@@ -298,7 +298,7 @@ pub async fn get_purchase_order(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let _tenant_id = tenant_opt.unwrap_or_else(|| {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 

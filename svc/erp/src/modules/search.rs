@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::repository::ListQueryParams;
 
 use super::ApiState;
 

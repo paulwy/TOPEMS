@@ -1272,13 +1272,13 @@ mod tests {
             .unwrap()
             .and_hms_opt(3, 4, 5)
             .unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(naive_to_utc(Some(dt)));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_is_valid_rfc3339() {
-        let s = datetime_to_string(None);
+        let s = datetime_to_string(naive_to_utc(None));
         assert!(s.contains('T'), "got {}", s);
         assert!(
             s.contains("2024") || s.contains("2025") || s.contains("2026"),
@@ -1294,7 +1294,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(12, 0, 0)
             .unwrap();
-        let r = opt_datetime_to_string(Some(dt));
+        let r = opt_datetime_to_string(Some(naive_to_utc(Some(dt))));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }

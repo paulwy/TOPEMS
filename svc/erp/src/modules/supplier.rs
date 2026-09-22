@@ -13,7 +13,6 @@ use axum::{
 };
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
 use super::ApiState;

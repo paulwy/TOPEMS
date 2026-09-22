@@ -402,7 +402,7 @@ pub struct MasterDataRef {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::redis_pubsub::{self, ActiveSubscription};
+    use crate::test_helpers::redis_pubsub::{self};
     use serde_json::json;
 
     // =====================================================================

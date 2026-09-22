@@ -67,7 +67,7 @@ async fn test_create_product() {
     assert_eq!(product.product_no, product_no);
     assert_eq!(product.name, "测试产品");
     assert_eq!(product.status, "active");
-    assert_eq!(product.tenant_id, tenant_id);
+    assert_eq!(product.tenant_id, Some(tenant_id));
 }
 
 #[tokio::test]

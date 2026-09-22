@@ -15,7 +15,6 @@ use crate::models::{
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {

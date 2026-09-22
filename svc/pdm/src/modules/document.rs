@@ -936,7 +936,7 @@ mod tests {
     #[test]
     fn test_get_tenant_id_from_claims() {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
-        let headers = axum::http::HeaderMap::new();
+        let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -976,7 +976,7 @@ mod tests {
     #[test]
     fn test_get_tenant_id_fallback_generates_v4() {
         let claims = make_claims(None);
-        let headers = axum::http::HeaderMap::new();
+        let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {

@@ -4,13 +4,12 @@
 
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use sqlx::{FromRow, PgPool, Row};
+use sqlx::{FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -36,7 +35,7 @@ where
 // ==================== 员工拣货效率 ====================
 
 #[derive(Serialize, FromRow)]
-struct LaborEfficiencyRow {
+pub struct LaborEfficiencyRow {
     user_id: Option<Uuid>,
     user_name: Option<String>,
     total_lists: i64,
@@ -51,7 +50,7 @@ struct LaborEfficiencyRow {
 }
 
 #[derive(Deserialize)]
-struct LaborQuery {
+pub struct LaborQuery {
     date_from: Option<chrono::NaiveDate>,
     date_to: Option<chrono::NaiveDate>,
     warehouse_id: Option<Uuid>,
@@ -171,7 +170,7 @@ pub async fn user_labor_efficiency(
 // ==================== 生产率汇总 ====================
 
 #[derive(Serialize)]
-struct ProductivityStats {
+pub struct ProductivityStats {
     total_workers: i64,
     total_lists: i64,
     completed_lists: i64,
@@ -262,7 +261,7 @@ pub async fn labor_productivity(
 // ==================== 工作量分布 ====================
 
 #[derive(Serialize)]
-struct WorkloadItem {
+pub struct WorkloadItem {
     date: String,
     total_lists: i64,
     completed_lists: i64,
@@ -337,7 +336,7 @@ pub async fn labor_workload(
 // ==================== 绩效仪表盘 ====================
 
 #[derive(Serialize)]
-struct PerformanceDashboard {
+pub struct PerformanceDashboard {
     total_workers: i64,
     total_lists: i64,
     completed_lists: i64,

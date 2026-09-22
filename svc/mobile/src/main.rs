@@ -14,7 +14,6 @@ use serde_json::json;
 use sqlx::PgPool;
 use std::sync::Arc;
 use utoipa::OpenApi;
-use uuid::Uuid;
 
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
@@ -26,80 +25,10 @@ use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application,
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_db::rls::rls_middleware;
 use topems_shared_observability::telemetry::telemetry_middleware;
-use topems_shared_service_client::service_client::{
-    api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-    api::qms_api::QmsApi, api::wms_api::WmsApi, TypedServiceClient, WorkflowApi,
-};
 
 use db::repository::*;
-use models::*;
-use modules::approval::{
-    approve_approval_task, delegate_approval_task, get_approval_history, get_approval_task,
-    get_pending_approval_tasks, list_approval_tasks, reject_approval_task,
-};
-use modules::attendance::{
-    apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
-    list_attendance_records, list_leave_applications,
-};
-use modules::barcode_scanner::{
-    delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
-};
-use modules::device::{register_device, update_push_token};
-use modules::inventory::{
-    create_stocktake_record, get_inventory_item, list_inbound_orders, list_inventory_items,
-    list_outbound_orders, list_stocktake_tasks,
-};
-use modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
-use modules::offline::{get_offline_status, sync_offline_data};
-use modules::offline_records::{
-    clear_synced as clear_offline_synced, get_pending_records as get_offline_pending_records,
-    mark_synced as mark_offline_record_synced, sync_records as sync_offline_records,
-};
-use modules::offline_sync::{
-    get_offline_status as get_offline_sync_status, get_sync_history, get_sync_policy,
-    retry_failed_sync, sync_data, update_sync_policy,
-};
-use modules::patrol::{
-    create_patrol_record, delete_patrol_record, get_all_patrol_records, get_patrol_record,
-    update_patrol_record,
-};
-use modules::photo_upload::{
-    batch_upload_photos, delete_photo, get_photo_by_id, get_photo_list, get_upload_progress,
-    upload_photo,
-};
-use modules::production::{
-    get_production_order, list_equipment, list_production_orders, list_work_reports,
-    submit_work_report,
-};
-use modules::push_notification::{
-    create_template, get_devices, get_notification_by_id, get_notification_list,
-    get_notification_stats, get_templates, register_device as register_push_device, send_broadcast,
-    send_notification,
-};
-use modules::quality::{
-    get_quality_task, list_defect_records, list_quality_tasks, report_defect,
-    update_quality_task_status,
-};
-use modules::scan::{image_ocr, scan_qrcode};
-use modules::shortcut::{create_shortcut, get_shortcuts};
-use modules::stats::{get_dashboard_stats, get_patrol_stats, get_task_stats};
-use modules::task::{
-    create_task, delete_task, get_all_tasks, get_task, update_task, update_task_status,
-};
-use modules::user::{get_profile, update_profile, upload_avatar};
-use modules::workbench::get_workbench_data;
 
-use modules::missing_endpoints::{
-    get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config,
-    update_push_template,
-};
 use modules::mobile_plugin::create_routes;
-use modules::oa::{
-    complete_oa_task, create_calendar_event, create_meeting, create_oa_task, delete_calendar_event,
-    delete_meeting, delete_oa_task, get_announcement, get_meeting, get_oa_stats, get_oa_task,
-    join_meeting, leave_meeting, list_announcements, list_calendar_events, list_meetings,
-    list_oa_tasks, mark_announcement_read, update_calendar_event, update_meeting, update_oa_task,
-};
 use shared::AppState;
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -787,7 +787,7 @@ pub async fn get_sync_logs(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let _tenant_id = tenant_opt.unwrap_or_else(|| {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
 

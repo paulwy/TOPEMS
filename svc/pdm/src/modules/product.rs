@@ -375,7 +375,7 @@ mod tests {
     #[test]
     fn test_get_tenant_id_from_claims() {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
-        let headers = axum::http::HeaderMap::new();
+        let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -438,7 +438,7 @@ mod tests {
     fn test_get_tenant_id_fallback_generates_uuid() {
         // 当 claims 和 header 都没有合法 tenant_id 时，应生成一个新的 v4 UUID
         let claims = make_claims(None);
-        let headers = axum::http::HeaderMap::new();
+        let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -462,7 +462,7 @@ mod tests {
         let now = Utc::now();
         let p = Product {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             product_no: "P-001".to_string(),
             name: "测试产品".to_string(),
             description: Some("描述".to_string()),
@@ -484,7 +484,7 @@ mod tests {
         let now = Utc::now();
         let p = Product {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             product_no: "P-002".to_string(),
             name: "最小产品".to_string(),
             description: None,

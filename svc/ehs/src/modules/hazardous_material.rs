@@ -599,7 +599,7 @@ pub async fn update_material(
 )]
 pub async fn delete_material(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -620,7 +620,7 @@ pub async fn delete_material(
 )]
 pub async fn list_material_stocks(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MaterialStock>>> {
@@ -640,7 +640,7 @@ pub async fn list_material_stocks(
 )]
 pub async fn list_stock_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
     tracing::debug!("Listing stock records");
@@ -981,7 +981,7 @@ pub async fn get_material_statistics(
 )]
 pub async fn list_material_categories(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing material categories");
@@ -1008,7 +1008,7 @@ pub async fn list_material_categories(
 )]
 pub async fn create_material_category(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {

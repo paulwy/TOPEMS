@@ -6,7 +6,6 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_db::repository::ListQueryParams;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -472,7 +471,7 @@ fn customer_select_cols(locale_placeholder: &str) -> String {
 async fn batch_list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -558,7 +557,7 @@ async fn batch_create_customers(
 async fn batch_update_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -677,7 +676,7 @@ async fn change_customer_status(
 async fn batch_change_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -720,7 +719,7 @@ async fn batch_change_status(
 async fn batch_change_category(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,

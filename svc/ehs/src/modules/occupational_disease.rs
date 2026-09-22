@@ -624,7 +624,7 @@ pub async fn update_hazard_factor(
 )]
 pub async fn delete_hazard_factor(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -641,7 +641,7 @@ pub async fn delete_hazard_factor(
 )]
 pub async fn list_detection_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DetectionRecord>>> {
     tracing::debug!("Listing detection records");
@@ -772,7 +772,7 @@ pub async fn get_detection_record(
 )]
 pub async fn delete_detection_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -789,7 +789,7 @@ pub async fn delete_detection_record(
 )]
 pub async fn list_disease_cases(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DiseaseCase>>> {
     tracing::debug!("Listing disease cases");
@@ -989,7 +989,7 @@ pub async fn update_disease_case(
 )]
 pub async fn delete_disease_case(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -1006,7 +1006,7 @@ pub async fn delete_disease_case(
 )]
 pub async fn list_protection_measures(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
     tracing::debug!("Listing protection measures");
@@ -1191,7 +1191,7 @@ pub async fn update_protection_measure(
 )]
 pub async fn delete_protection_measure(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -1208,7 +1208,7 @@ pub async fn delete_protection_measure(
 )]
 pub async fn list_health_trainings(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthTraining>>> {
     tracing::debug!("Listing health trainings");
@@ -1331,7 +1331,7 @@ pub async fn get_health_training(
 )]
 pub async fn delete_health_training(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -1397,7 +1397,7 @@ pub async fn get_disease_statistics(
 )]
 pub async fn list_factor_types(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing factor types");

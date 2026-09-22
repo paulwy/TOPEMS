@@ -795,7 +795,7 @@ pub async fn list_maintenance(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
     };
-    let tenant_id: Option<Uuid> = if claims.is_superuser {
+    let _tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         Some(ctx.tenant_id)

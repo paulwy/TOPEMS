@@ -124,7 +124,7 @@ pub struct TrainingCertificate {
 )]
 pub async fn list_trainings(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Training>>> {
     tracing::debug!("Listing trainings");
@@ -301,7 +301,7 @@ pub async fn update_training(
 )]
 pub async fn delete_training(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -318,7 +318,7 @@ pub async fn delete_training(
 )]
 pub async fn list_training_plans(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingPlan>>> {
     tracing::debug!("Listing training plans");
@@ -505,7 +505,7 @@ pub async fn update_training_plan(
 )]
 pub async fn delete_training_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -522,7 +522,7 @@ pub async fn delete_training_plan(
 )]
 pub async fn list_training_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingRecord>>> {
     tracing::debug!("Listing training records");
@@ -715,7 +715,7 @@ pub async fn update_training_record(
 )]
 pub async fn delete_training_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -732,7 +732,7 @@ pub async fn delete_training_record(
 )]
 pub async fn list_certificates(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<TrainingCertificate>>> {
     tracing::debug!("Listing training certificates");
@@ -914,7 +914,7 @@ pub async fn update_certificate(
 )]
 pub async fn delete_certificate(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {

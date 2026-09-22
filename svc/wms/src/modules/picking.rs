@@ -7,9 +7,9 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
-use sqlx::{FromRow, PgPool, Row};
+use sqlx::{Row};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -103,7 +103,7 @@ pub async fn list_picking_lists(
                 "拣货单列表获取成功",
             ))
         }
-        Err(e) => Json(api_error(500, "获取拣货单列表失败")),
+        Err(_e) => Json(api_error(500, "获取拣货单列表失败")),
     }
 }
 
@@ -163,14 +163,14 @@ pub async fn get_picking_list(
             ))
         }
         Ok(None) => Json(api_error(404, "拣货单不存在")),
-        Err(e) => Json(api_error(500, "获取拣货单详情失败")),
+        Err(_e) => Json(api_error(500, "获取拣货单详情失败")),
     }
 }
 
 // ==================== 拣货统计 ====================
 
 #[derive(Serialize)]
-struct PickingStats {
+pub struct PickingStats {
     total_lists: i64,
     pending: i64,
     in_progress: i64,
@@ -275,7 +275,7 @@ pub async fn picking_statistics(
 // ==================== 拣货策略（静态配置） ====================
 
 #[derive(Serialize)]
-struct PickingStrategy {
+pub struct PickingStrategy {
     code: String,
     name: String,
     description: String,

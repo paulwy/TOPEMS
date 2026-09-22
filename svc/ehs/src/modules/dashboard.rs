@@ -49,7 +49,7 @@ pub async fn get_dashboard(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let nil_uuid = "00000000-0000-0000-0000-000000000000";
+    let _nil_uuid = "00000000-0000-0000-0000-000000000000";
 
     // --- 事故统计 ---
     let total_accidents: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")

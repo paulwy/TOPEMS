@@ -37,9 +37,9 @@ pub async fn build_router_embedded(
 }
 
 async fn build_router_inner(
-    db: sqlx::PgPool,
-    event_publisher: Option<Arc<EventPublisher>>,
-    public_routes: Router<AppState>,
+    _db: sqlx::PgPool,
+    _event_publisher: Option<Arc<EventPublisher>>,
+    _public_routes: Router<AppState>,
     embed_mode: bool,
 ) -> anyhow::Result<Router> {
     // 嵌入模式 search_path：flow 业务表（approvals/approval_records/core_workflow_*）为权威。
@@ -274,7 +274,7 @@ async fn build_router_inner(
 }
 
 /// 启动后台任务
-async fn spawn_background_tasks(state: &AppState, pool: sqlx::PgPool) {
+async fn spawn_background_tasks(state: &AppState, _pool: sqlx::PgPool) {
     // WebSocket cleanup
     let ws_state_cleanup = state.ws_state.clone();
     tokio::spawn(async move {

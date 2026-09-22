@@ -10,8 +10,6 @@
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
-use std::sync::Arc;
-use topems_unified_core::embedded::build_router;
 
 /// 真实 Unified Core 模块：持有数据库连接池 + 完整业务路由
 pub struct UnifiedCoreRealModule {

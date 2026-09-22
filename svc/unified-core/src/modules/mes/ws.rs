@@ -5,7 +5,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use futures_util::{sink::SinkExt, stream::StreamExt};
+use futures_util::stream::StreamExt;
 use serde_json::json;
 use std::time::Duration;
 use tokio::time::interval;

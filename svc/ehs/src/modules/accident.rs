@@ -204,7 +204,7 @@ pub struct CreateReviewRequest {
 )]
 pub async fn list_accidents(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Accident>>> {
     tracing::debug!("Listing accidents");
@@ -437,7 +437,7 @@ pub async fn update_accident(
 )]
 pub async fn delete_accident(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {

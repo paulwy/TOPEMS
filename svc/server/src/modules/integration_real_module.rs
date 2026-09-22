@@ -8,7 +8,6 @@
 #![cfg(feature = "module-integration")]
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
-use axum::routing::get;
 use axum::Router;
 use std::sync::Arc;
 use topems_integration::mes_erp_sync::MesErpSyncService;

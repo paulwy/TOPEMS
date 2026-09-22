@@ -177,7 +177,7 @@ pub struct UpdateInspectionRecordRequest {
 )]
 pub async fn list_plans(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionPlan>>> {
     tracing::debug!("Listing inspection plans");
@@ -342,7 +342,7 @@ pub async fn update_plan(
 )]
 pub async fn delete_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -481,7 +481,7 @@ pub async fn create_plan_item(
 )]
 pub async fn delete_plan_item(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((plan_id, item_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
@@ -498,7 +498,7 @@ pub async fn delete_plan_item(
 )]
 pub async fn list_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
     tracing::debug!("Listing inspection records");
@@ -705,7 +705,7 @@ pub async fn update_record(
 )]
 pub async fn delete_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {

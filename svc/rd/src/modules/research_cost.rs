@@ -10,7 +10,6 @@ use uuid::Uuid;
 
 use crate::modules::ApiState;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
 pub struct ResearchCost {

@@ -329,7 +329,7 @@ pub struct UpdateAbnormalityRequest {
 )]
 pub async fn list_exam_plans(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
     tracing::debug!("Listing health exam plans");
@@ -503,7 +503,7 @@ pub async fn update_exam_plan(
 )]
 pub async fn delete_exam_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -520,7 +520,7 @@ pub async fn delete_exam_plan(
 )]
 pub async fn list_exam_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
     tracing::debug!("Listing health exam records");
@@ -737,7 +737,7 @@ pub async fn update_exam_record(
 )]
 pub async fn delete_exam_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -799,7 +799,7 @@ pub async fn get_health_archive(
 )]
 pub async fn list_contraindications(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
     tracing::debug!("Listing contraindications");
@@ -976,7 +976,7 @@ pub async fn update_contraindication(
 )]
 pub async fn delete_contraindication(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -993,7 +993,7 @@ pub async fn delete_contraindication(
 )]
 pub async fn list_abnormalities(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthAbnormality>>> {
     tracing::debug!("Listing health abnormalities");
@@ -1111,7 +1111,7 @@ pub async fn get_health_statistics(
 )]
 pub async fn list_exam_types(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing exam types");

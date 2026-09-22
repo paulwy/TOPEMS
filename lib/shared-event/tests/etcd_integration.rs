@@ -4,7 +4,6 @@
 //! 运行：`ETCD_TEST_ENDPOINTS=http://localhost:2379 cargo test -p topems-shared-event --test etcd_integration`
 //! 未设置 ETCD_TEST_ENDPOINTS 时测试自动 skip（CI 友好）。
 
-use std::collections::HashMap;
 use std::env;
 use std::time::Duration;
 
@@ -165,7 +164,7 @@ async fn test_multi_instance_discovery() {
         )
         .await
         .expect("g1 注册失败");
-    let mut g2 = client
+    let g2 = client
         .register_service(
             ServiceRegistration::new("wms-b", "topems-wms", 9002).with_address("10.0.0.2"),
         )

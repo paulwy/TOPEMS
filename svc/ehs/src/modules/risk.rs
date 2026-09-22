@@ -100,7 +100,7 @@ pub async fn list_risks(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
             .unwrap_or_else(uuid::Uuid::nil)
     }};
-    let rls_tenant = if claims.is_superuser {{
+    let _rls_tenant = if claims.is_superuser {{
         uuid::Uuid::nil()
     }} else {{
         tenant_id
@@ -180,7 +180,7 @@ pub async fn create_risk(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-        let tenant_bind: String = if claims.is_superuser {
+        let _tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -208,7 +208,7 @@ pub async fn create_risk(
 
     let risk_id = uuid::Uuid::new_v4();
     let risk_no = format!("RSK-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    let now = chrono::Utc::now().to_rfc3339();
+    let _now = chrono::Utc::now().to_rfc3339();
     let title = req.get("title").and_then(|v| v.as_str()).unwrap_or("未命名风险").to_string();
 
     let mut txn = match state.pool.begin().await {
@@ -317,7 +317,7 @@ pub async fn get_risk(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
             .unwrap_or_else(uuid::Uuid::nil)
     }};
-    let rls_tenant = if claims.is_superuser {{
+    let _rls_tenant = if claims.is_superuser {{
         uuid::Uuid::nil()
     }} else {{
         tenant_id
@@ -741,7 +741,7 @@ pub async fn list_control_measures(    State(state): State<crate::shared::AppSta
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
             .unwrap_or_else(uuid::Uuid::nil)
     };
-    let rls_tenant = if claims.is_superuser {
+    let _rls_tenant = if claims.is_superuser {
         uuid::Uuid::nil()
     } else {
         tenant_id

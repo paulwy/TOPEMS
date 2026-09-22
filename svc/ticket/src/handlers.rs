@@ -1433,7 +1433,7 @@ pub async fn list_knowledge_articles_handler(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id =
+    let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let q = params.get("q").cloned().unwrap_or_default();
     let articles = match sqlx::query_as::<_, KnowledgeArticle>(
@@ -1478,7 +1478,7 @@ pub async fn get_knowledge_article_handler(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id =
+    let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     match sqlx::query_as::<_, KnowledgeArticle>(
         "SELECT id, tenant_id, title, content, category, keywords, created_at, updated_at

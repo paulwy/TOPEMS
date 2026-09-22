@@ -1,10 +1,9 @@
 //! MES API 处理器
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Query};
 use axum::Json;
 use serde::Deserialize;
 
-use crate::AppState;
 
 use super::models::*;
 use super::service::MesService;

@@ -266,7 +266,7 @@ pub struct UpdateDrillProblemRequest {
 )]
 pub async fn list_drill_plans(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
     tracing::debug!("Listing drill plans");
@@ -443,7 +443,7 @@ pub async fn update_drill_plan(
 )]
 pub async fn delete_drill_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -460,7 +460,7 @@ pub async fn delete_drill_plan(
 )]
 pub async fn list_drill_records(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
     tracing::debug!("Listing drill records");
@@ -686,7 +686,7 @@ pub async fn update_drill_record(
 )]
 pub async fn delete_drill_record(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -756,7 +756,7 @@ pub async fn create_drill_evaluation(
 )]
 pub async fn list_drill_problems(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<DrillProblem>>> {
@@ -947,7 +947,7 @@ pub async fn get_drill_statistics(
 )]
 pub async fn list_drill_types(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing drill types");

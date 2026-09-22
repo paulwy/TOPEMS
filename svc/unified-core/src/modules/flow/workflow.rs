@@ -192,7 +192,7 @@ pub async fn create_workflow(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+    let _tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
@@ -831,7 +831,7 @@ pub async fn get_workflow_version(
     Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<WorkflowVersion>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+    let _tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())

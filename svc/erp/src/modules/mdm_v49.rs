@@ -29,7 +29,6 @@ use mdm_v49_archive::*;
 use mdm_v49_lifecycle::*;
 use mdm_v49_retirement::*;
 use mdm_v49_stats::*;
-use mdm_v49_types::*;
 
 // ==================== 路由注册 ====================
 

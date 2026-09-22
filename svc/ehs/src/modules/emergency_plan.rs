@@ -186,7 +186,7 @@ pub struct ApprovalRequest {
 )]
 pub async fn list_plans(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
     tracing::debug!("Listing emergency plans");
@@ -446,7 +446,7 @@ pub async fn update_plan(
 )]
 pub async fn delete_plan(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -467,7 +467,7 @@ pub async fn delete_plan(
 )]
 pub async fn list_plan_supplies(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanSupply>>> {
@@ -539,7 +539,7 @@ pub async fn add_plan_supply(
 )]
 pub async fn delete_plan_supply(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((_plan_id, supply_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
@@ -662,7 +662,7 @@ pub async fn approve_plan(
 )]
 pub async fn list_plan_versions(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanVersion>>> {
@@ -729,7 +729,7 @@ pub async fn create_new_version(
 )]
 pub async fn list_plan_categories(
     State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     tracing::debug!("Listing plan categories");

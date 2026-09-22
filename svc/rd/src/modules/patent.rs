@@ -12,7 +12,6 @@ use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
-use topems_shared_db::repository::ListQueryParams;
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {

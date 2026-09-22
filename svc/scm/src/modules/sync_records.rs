@@ -93,7 +93,7 @@ async fn current_tenant_id(claims: &Claims) -> Option<uuid::Uuid> {
 
 pub async fn list_sync_records(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Query(params): Query<ListSyncRecordParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -161,7 +161,7 @@ pub async fn list_sync_records(
 
 pub async fn get_sync_record(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let result = sqlx::query_as::<_, SyncRecord>(
@@ -250,7 +250,7 @@ pub async fn create_sync_record(
 
 pub async fn retry_sync_record(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<SyncResult>> {
     let now = Utc::now();
@@ -294,7 +294,7 @@ pub async fn retry_sync_record(
 
 pub async fn list_sync_details(
     State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(sync_id): Path<uuid::Uuid>,
     Query(params): Query<ListSyncRecordParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {

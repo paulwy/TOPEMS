@@ -145,7 +145,6 @@ use crate::modules::oa::{
     join_meeting, leave_meeting, list_announcements, list_calendar_events, list_meetings,
     list_oa_tasks, mark_announcement_read, update_calendar_event, update_meeting, update_oa_task,
 };
-use crate::modules::mobile_plugin::create_routes;
 use axum::Router;
 
 /// 6 个服务客户端统一初始化（service token：最小权限 + 短时效），
@@ -283,7 +282,7 @@ pub async fn build_service_clients(
     )
 }
 
-pub fn build_protected_routes(state: AppState) -> Router<AppState> {
+pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
     axum::Router::new()
         // 由 main.rs 原有 protected 路由提炼（2026-09-17）
         .route(

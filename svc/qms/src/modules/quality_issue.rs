@@ -53,7 +53,7 @@ pub async fn list_issues(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
 
     // 多语言：title 按 locale 切换；各分支 locale 绑定在参数末尾，序号随分支不同。
@@ -215,7 +215,7 @@ pub async fn get_issue(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
 
     let cols = issue_select_cols("$3");
@@ -352,7 +352,7 @@ pub async fn start_issue_approval(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = get_tenant_id(&claims, &headers);
+    let _tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),

@@ -326,7 +326,7 @@ pub async fn get_model_config(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = get_tenant_id_from_claims(&claims);
+    let _tenant_id = get_tenant_id_from_claims(&claims);
     match sqlx::query_as::<_, (Uuid, f64, Option<i32>, f64, f64, f64, Option<String>)>(
         "SELECT id, temperature::float8, max_tokens, top_p::float8, frequency_penalty::float8,
                 presence_penalty::float8, system_prompt
