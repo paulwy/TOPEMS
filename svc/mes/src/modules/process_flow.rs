@@ -693,7 +693,7 @@ pub async fn get_flow_steps(
             ws.station_name as work_station_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id AND ws.tenant_id = pfs.tenant_id
+        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -1091,7 +1091,7 @@ pub async fn reorder_flow_steps(
             ws.station_name as work_station_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id AND ws.tenant_id = pfs.tenant_id
+        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
