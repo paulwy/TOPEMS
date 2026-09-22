@@ -44,7 +44,7 @@ describe('EHS Module API Tests', () => {
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await hazardApi.listHazards({ page: 1, pagesize: 10, search: 'test', status: 'active' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/hazards?page=1&pagesize=10&search=test&status=active'
+        '/issues?page=1&pagesize=10&search=test&status=active'
       );
     });
 
@@ -53,7 +53,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await hazardApi.listHazards();
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/hazards?');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith('/issues?');
     });
 
     it('getHazard should call GET /hazards/:id', async () => {
@@ -61,7 +61,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
       await hazardApi.getHazard('hazard-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/hazards/hazard-001');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith('/issues/hazard-001');
     });
 
     it('createHazard should call POST /hazards with data', async () => {
@@ -70,7 +70,7 @@ describe('EHS Module API Tests', () => {
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Test Hazard', category: 'safety', severity: 'high' };
       await hazardApi.createHazard(data as unknown as CreateSafetyHazardRequest);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/hazards', data);
+      expect(apiClient.ehs.post).toHaveBeenCalledWith('/issues', data);
     });
 
     it('updateHazard should call PUT /hazards/:id with data', async () => {
@@ -79,14 +79,14 @@ describe('EHS Module API Tests', () => {
       (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
       const data = { name: 'Updated Hazard', status: 'inactive' };
       await hazardApi.updateHazard('hazard-001', data as Partial<CreateSafetyHazardRequest>);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/hazards/hazard-001', data);
+      expect(apiClient.ehs.put).toHaveBeenCalledWith('/issues/hazard-001', data);
     });
 
     it('deleteHazard should call DELETE /hazards/:id', async () => {
       const { hazardApi } = await import('../hazard');
       const { apiClient } = await import('../../client');
       await hazardApi.deleteHazard('hazard-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/hazards/hazard-001');
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/issues/hazard-001');
     });
 
     it('listRiskAssessments should call GET /hazards/:id/assessments', async () => {

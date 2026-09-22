@@ -21,26 +21,26 @@ export const hazardApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(`/hazards?${queryParams.toString()}`);
+    return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(`/issues?${queryParams.toString()}`);
   },
 
   getHazard: async (id: string): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.get<SafetyHazard>(`/hazards/${id}`);
+    return apiClient.ehs.get<SafetyHazard>(`/issues/${id}`);
   },
 
   createHazard: async (data: CreateSafetyHazardRequest): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.post<SafetyHazard>('/hazards', data);
+    return apiClient.ehs.post<SafetyHazard>('/issues', data);
   },
 
   updateHazard: async (
     id: string,
     data: Partial<CreateSafetyHazardRequest>
   ): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.put<SafetyHazard>(`/hazards/${id}`, data);
+    return apiClient.ehs.put<SafetyHazard>(`/issues/${id}`, data);
   },
 
   deleteHazard: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/hazards/${id}`);
+    return apiClient.ehs.delete<void>(`/issues/${id}`);
   },
 
   listRiskAssessments: async (
