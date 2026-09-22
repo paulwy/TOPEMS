@@ -122,12 +122,12 @@ pub async fn list_material_boms(
                 .unwrap_or_else(|| "draft".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at").map(|d| d.map(|d| d.and_utc()))
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at").map(|d| d.map(|d| d.and_utc()))
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -274,8 +274,8 @@ pub async fn create_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: datetime_to_string(Some(bom.created_at.and_utc())),
-        updated_at: datetime_to_string(Some(bom.updated_at.and_utc())),
+        created_at: datetime_to_string(Some(bom.created_at)),
+        updated_at: datetime_to_string(Some(bom.updated_at)),
     };
 
     Json(ApiResponse::success(
@@ -350,8 +350,8 @@ pub async fn get_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: datetime_to_string(Some(bom.created_at.and_utc())),
-        updated_at: datetime_to_string(Some(bom.updated_at.and_utc())),
+        created_at: datetime_to_string(Some(bom.created_at)),
+        updated_at: datetime_to_string(Some(bom.updated_at)),
     };
 
     let item_responses: Vec<BomItemResponse> = items

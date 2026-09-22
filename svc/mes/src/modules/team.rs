@@ -339,8 +339,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: datetime_to_string(r.created_at.naive_utc()),
+                updated_at: datetime_to_string(r.updated_at.naive_utc()),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -392,7 +392,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now.naive_utc(),
+        now,
         new_tenant,
     )
     .fetch_one(&state.pool)
@@ -415,11 +415,11 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                &member.employee_id,
+                member.employee_id.parse().unwrap_or_default(),
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -432,7 +432,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now.naive_utc(),
+            now,
         )
         .execute(&state.pool)
         .await;
@@ -450,8 +450,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: datetime_to_string(result.created_at),
-        updated_at: datetime_to_string(result.updated_at),
+        created_at: datetime_to_string(result.created_at.naive_utc()),
+        updated_at: datetime_to_string(result.updated_at.naive_utc()),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -507,7 +507,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now().naive_utc(),
+        Utc::now(),
         tenant_opt,
     )
     .fetch_optional(&state.pool)
@@ -535,8 +535,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: datetime_to_string(r.created_at.naive_utc()),
+                updated_at: datetime_to_string(r.updated_at.naive_utc()),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -624,8 +624,8 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.map(|id| id.to_string()),
-            employee_id: r.employee_id.map(|id| id.to_string()),
+            team_id: r.team_id.map(|id| id.to_string()).unwrap_or_default(),
+            employee_id: r.employee_id.map(|id| id.to_string()).unwrap_or_default(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
@@ -664,11 +664,11 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        &req.employee_id,
+        req.employee_id.parse().unwrap_or_default(),
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -688,15 +688,15 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .execute(&state.pool)
     .await;
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.to_string(),
-        employee_id: result.employee_id.to_string(),
+        team_id: result.team_id.map(|id| id.to_string()).unwrap_or_default(),
+        employee_id: result.employee_id.map(|id| id.to_string()).unwrap_or_default(),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,
@@ -747,7 +747,7 @@ pub async fn remove_team_member(
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now().naive_utc(),
+            Utc::now(),
         )
         .execute(&state.pool)
         .await;

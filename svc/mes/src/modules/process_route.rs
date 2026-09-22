@@ -370,16 +370,16 @@ pub async fn get_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes,
                     process_count,
-                    created_at: r.created_at.to_rfc3339(),
-                    updated_at: r.updated_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&r.created_at).to_rfc3339(),
+                    updated_at: Utc.from_utc_datetime(&r.updated_at).to_rfc3339(),
                 },
                 "获取工艺路线成功",
             ))
@@ -442,16 +442,16 @@ pub async fn create_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.to_rfc3339(),
-                    updated_at: r.updated_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&r.created_at).to_rfc3339(),
+                    updated_at: Utc.from_utc_datetime(&r.updated_at).to_rfc3339(),
                 },
                 "创建工艺路线成功",
             ))
@@ -527,16 +527,16 @@ pub async fn update_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.to_rfc3339(),
-                    updated_at: r.updated_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&r.created_at).to_rfc3339(),
+                    updated_at: Utc.from_utc_datetime(&r.updated_at).to_rfc3339(),
                 },
                 "更新工艺路线成功",
             ))
@@ -649,16 +649,16 @@ pub async fn get_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: s.process_name,
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
-                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
+                    estimated_time_minutes: s.estimated_time_minutes,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 })
                 .collect();
 
@@ -739,22 +739,22 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (Some(String::new()), String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
-                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
+                    estimated_time_minutes: s.estimated_time_minutes,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 },
                 "添加工艺路线步骤成功",
             ))
@@ -824,22 +824,22 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (Some(String::new()), String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
-                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
+                    estimated_time_minutes: s.estimated_time_minutes,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 },
                 "更新工艺路线步骤成功",
             ))
@@ -971,16 +971,16 @@ pub async fn reorder_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: s.process_name,
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
+                    process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
-                    estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
+                    estimated_time_minutes: s.estimated_time_minutes,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 })
                 .collect();
 
