@@ -717,48 +717,81 @@ pub async fn delete_risk(
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_control_measures(
-    State(_state): State<crate::shared::AppState>,
+pub async fn list_control_measures(    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<RiskControlMeasure>>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    };
+    let rls_tenant = if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        tenant_id
+    };
     tracing::debug!("Listing control measures for risk: {}", id);
-    Json(ApiResponse::success(
-        vec![
-            RiskControlMeasure {
-                id: uuid::Uuid::new_v4().to_string(),
-                risk_id: id.clone(),
-                title: "安装烟雾报警器".to_string(),
-                description: Some("在生产车间安装烟雾报警器".to_string()),
-                measure_type: Some("engineering".to_string()),
-                status: "completed".to_string(),
-                created_at: "2024-01-15T10:00:00Z".to_string(),
 
-                tenant_id,
-            },
-            RiskControlMeasure {
-                id: uuid::Uuid::new_v4().to_string(),
-                risk_id: id,
-                title: "消防安全培训".to_string(),
-                description: Some("定期组织员工消防安全培训".to_string()),
-                measure_type: Some("administrative".to_string()),
-                status: "in_progress".to_string(),
-                created_at: "2024-01-20T14:00:00Z".to_string(),
+    let result = sqlx::query(
+        r#"
+        SELECT id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at
+        FROM ehs.qa_ehs_risk_controls
+        WHERE risk_id = $1::uuid AND deleted_at IS NULL
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+        ORDER BY created_at DESC
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .fetch_all(&state.pool)
+    .await;
 
-                tenant_id,
-            },
-        ],
-        "获取控制措施列表成功",
-    ))
+    let rows = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list control measures: {}", e);
+            return Json(ApiResponse::error(500, "获取控制措施列表失败"));
+        }
+    };
+    let measures = rows
+        .iter()
+        .map(|r| RiskControlMeasure {
+            id: r.try_get::<String, _>("id").unwrap_or_default(),
+            risk_id: r.try_get::<String, _>("risk_id").unwrap_or_default(),
+            title: r.try_get::<String, _>("title").unwrap_or_default(),
+            description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+            measure_type: r.try_get::<Option<String>, _>("measure_type").ok().flatten(),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "active".to_string()),
+            created_at: r
+                .try_get::<Option<String>, _>("created_at")
+                .ok()
+                .flatten()
+                .unwrap_or_default(),
+            tenant_id: uuid::Uuid::nil(),
+        })
+        .collect();
+
+    Json(ApiResponse::success(measures, "获取控制措施列表成功"))
 }
 
 #[utoipa::path(
@@ -773,42 +806,124 @@ pub async fn list_control_measures(
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn create_control_measure(
-    State(_state): State<crate::shared::AppState>,
+pub async fn create_control_measure(    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    };
+    let rls_tenant = if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        tenant_id
+    };
+    let title = req
+        .get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("未命名措施")
+        .to_string();
+    let measure_no = format!("CM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
     tracing::debug!("Creating control measure for risk {}: {:?}", id, req);
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin control measure txn: {}", e);
+            return Json(ApiResponse::error(500, "创建控制措施失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for control create: {}", e);
+        return Json(ApiResponse::error(500, "创建控制措施失败"));
+    }
+
+    let owned = sqlx::query_as::<_, (String,)>(
+        r#"
+        SELECT id::text FROM ehs.qa_ehs_risks
+        WHERE id = $1::uuid AND deleted_at IS NULL
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .fetch_optional(&mut *txn)
+    .await;
+
+    let owned = match owned {
+        Ok(o) => o,
+        Err(e) => {
+            tracing::error!("Failed to verify risk ownership: {}", e);
+            return Json(ApiResponse::error(500, "创建控制措施失败"));
+        }
+    };
+    if owned.is_none() {
+        return Json(ApiResponse::error(404, "风险不存在或无权访问"));
+    }
+
+    let result = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_risk_controls (risk_id, measure_no, title, description, measure_type, status, tenant_id)
+        VALUES ($1::uuid, $2, $3, $4, $5, 'active', $6::uuid)
+        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at
+        "#,
+    )
+    .bind(&id)
+    .bind(&measure_no)
+    .bind(&title)
+    .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(tenant_id.to_string())
+    .fetch_optional(&mut *txn)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create control measure: {}", e);
+            return Json(ApiResponse::error(500, "创建控制措施失败"));
+        }
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(500, "创建控制措施失败")),
+    };
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit control create: {}", e);
+        return Json(ApiResponse::error(500, "创建控制措施失败"));
+    }
+
     Json(ApiResponse::success(
         RiskControlMeasure {
-            id: uuid::Uuid::new_v4().to_string(),
-            risk_id: id,
-            title: req
-                .get("title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("新控制措施")
-                .to_string(),
-            description: req
-                .get("description")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            measure_type: req
-                .get("measure_type")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            status: "pending".to_string(),
-            created_at: "2024-01-25T10:00:00Z".to_string(),
-
+            id: row.try_get::<String, _>("id").unwrap_or_default(),
+            risk_id: row.try_get::<String, _>("risk_id").unwrap_or_default(),
+            title: row.try_get::<String, _>("title").unwrap_or_default(),
+            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            measure_type: row.try_get::<Option<String>, _>("measure_type").ok().flatten(),
+            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+            created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten().unwrap_or_default(),
             tenant_id,
         },
         "控制措施创建成功",
@@ -828,51 +943,107 @@ pub async fn create_control_measure(
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn update_control_measure(
-    State(_state): State<crate::shared::AppState>,
+pub async fn update_control_measure(    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+    let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    };
+    let rls_tenant = if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        tenant_id
+    };
     tracing::debug!(
         "Updating control measure {} for risk {}: {:?}",
         measure_id,
         id,
         req
     );
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin control update txn: {}", e);
+            return Json(ApiResponse::error(500, "更新控制措施失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for control update: {}", e);
+        return Json(ApiResponse::error(500, "更新控制措施失败"));
+    }
+
+    let result = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_risk_controls SET
+            title = COALESCE($3, title),
+            description = COALESCE($4, description),
+            measure_type = COALESCE($5, measure_type),
+            status = COALESCE($6, status),
+            updated_at = NOW()
+        WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $7)
+        RETURNING id::text AS id, risk_id::text AS risk_id, title, description, measure_type, status, created_at
+        "#,
+    )
+    .bind(&id)
+    .bind(&measure_id)
+    .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("measure_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(&tenant_bind)
+    .fetch_optional(&mut *txn)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to update control measure: {}", e);
+            return Json(ApiResponse::error(500, "更新控制措施失败"));
+        }
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "控制措施不存在或无权访问")),
+    };
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit control update: {}", e);
+        return Json(ApiResponse::error(500, "更新控制措施失败"));
+    }
+
     Json(ApiResponse::success(
         RiskControlMeasure {
-            id: measure_id,
-            risk_id: id,
-            title: req
-                .get("title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("控制措施")
-                .to_string(),
-            description: req
-                .get("description")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            measure_type: req
-                .get("measure_type")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            status: req
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("pending")
-                .to_string(),
-            created_at: "2024-01-25T10:00:00Z".to_string(),
-
+            id: row.try_get::<String, _>("id").unwrap_or_default(),
+            risk_id: row.try_get::<String, _>("risk_id").unwrap_or_default(),
+            title: row.try_get::<String, _>("title").unwrap_or_default(),
+            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            measure_type: row.try_get::<Option<String>, _>("measure_type").ok().flatten(),
+            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+            created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten().unwrap_or_default(),
             tenant_id,
         },
         "控制措施更新成功",
@@ -891,13 +1062,80 @@ pub async fn update_control_measure(
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn delete_control_measure(
-    State(_state): State<crate::shared::AppState>,
+pub async fn delete_control_measure(    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path((_id, measure_id)): axum::extract::Path<(String, String)>,
+    axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting control measure: {}", measure_id);
+    let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
+    let tenant_id = if claims.is_superuser {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    };
+    let rls_tenant = if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        tenant_id
+    };
+    tracing::debug!("Deleting control measure {} for risk {}", measure_id, id);
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin control delete txn: {}", e);
+            return Json(ApiResponse::error(500, "删除控制措施失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for control delete: {}", e);
+        return Json(ApiResponse::error(500, "删除控制措施失败"));
+    }
+
+    let result = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_risk_controls SET deleted_at = NOW(), updated_at = NOW()
+        WHERE risk_id = $1::uuid AND id = $2::uuid AND deleted_at IS NULL
+          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+        RETURNING id
+        "#,
+    )
+    .bind(&id)
+    .bind(&measure_id)
+    .bind(&tenant_bind)
+    .fetch_optional(&mut *txn)
+    .await;
+
+    match result {
+        Ok(Some(_)) => {}
+        Ok(None) => return Json(ApiResponse::error(404, "控制措施不存在或无权访问")),
+        Err(e) => {
+            tracing::error!("Failed to delete control measure: {}", e);
+            return Json(ApiResponse::error(500, "删除控制措施失败"));
+        }
+    }
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit control delete: {}", e);
+        return Json(ApiResponse::error(500, "删除控制措施失败"));
+    }
+
     Json(ApiResponse::success((), "控制措施删除成功"))
 }
 
