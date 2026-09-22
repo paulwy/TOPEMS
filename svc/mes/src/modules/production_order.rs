@@ -900,10 +900,10 @@ pub async fn update_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
@@ -916,8 +916,8 @@ pub async fn update_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单更新成功"))
         }
@@ -1042,10 +1042,10 @@ pub async fn start_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
@@ -1058,8 +1058,8 @@ pub async fn start_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单启动成功"))
         }
@@ -1132,10 +1132,10 @@ pub async fn complete_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
@@ -1148,8 +1148,8 @@ pub async fn complete_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单完成成功"))
         }
@@ -1219,10 +1219,10 @@ pub async fn cancel_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
@@ -1235,8 +1235,8 @@ pub async fn cancel_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单取消成功"))
         }
@@ -1306,10 +1306,10 @@ pub async fn release_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
@@ -1322,8 +1322,8 @@ pub async fn release_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单发布成功"))
         }
