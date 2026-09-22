@@ -15,7 +15,7 @@ use crate::models::price_comparison::{
     CreatePriceComparisonRequest, CreatePurchaseInquiryRequest, CreateSupplierQuoteRequest,
     PurchaseInquiry,
 };
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -281,7 +281,7 @@ pub struct QuoteItem {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QuoteListRecord {
     pub id: Uuid,
-    pub inquiry_id: Uuid,
+    pub inquiry_id: Option<Uuid>,
     pub supplier_id: Uuid,
     pub quote_no: String,
     pub quote_date: DateTime<Utc>,
@@ -366,6 +366,7 @@ pub async fn list_inquiries(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -380,6 +381,7 @@ pub async fn list_inquiries(
         WHERE ($1::text IS NULL OR title ILIKE $1 OR inquiry_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
           AND deleted_at IS NULL
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -388,6 +390,7 @@ pub async fn list_inquiries(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -400,10 +403,12 @@ pub async fn list_inquiries(
                 WHERE ($1::text IS NULL OR title ILIKE $1 OR inquiry_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
                   AND deleted_at IS NULL
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -437,14 +442,15 @@ pub async fn create_inquiry(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let id = Uuid::new_v4();
     let inquiry_no = format!("INQ-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseInquiry>(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.purchase_inquiries (id, inquiry_no, title, description, inquiry_date, deadline, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8)
+        INSERT INTO scm.purchase_inquiries (id, inquiry_no, title, description, inquiry_date, deadline, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9)
         RETURNING id, inquiry_no, title, description, inquiry_date, deadline, status, created_by, created_at, updated_at
         "#),
     )
@@ -456,6 +462,7 @@ pub async fn create_inquiry(
     .bind(req.deadline)
     .bind(now)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -464,8 +471,8 @@ pub async fn create_inquiry(
             for item in req.items {
                 if let Err(e) = sqlx::query(
                     only_own_schema_query!("scm", r#"
-                    INSERT INTO scm.purchase_inquiry_items (id, inquiry_id, item_name, specification, unit, quantity, target_price, remarks)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    INSERT INTO scm.purchase_inquiry_items (id, inquiry_id, item_name, specification, unit, quantity, target_price, remarks, tenant_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     "#),
                 )
                 .bind(Uuid::new_v4())
@@ -476,6 +483,7 @@ pub async fn create_inquiry(
                 .bind(item.quantity)
                 .bind(item.target_price)
                 .bind(&item.remarks)
+                .bind(tenant_bind)
                 .execute(&mut **txn)
                 .await
                 {
@@ -512,14 +520,16 @@ pub async fn get_inquiry(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, PurchaseInquiry>(
         only_own_schema_query!("scm", r#"
         SELECT id, inquiry_no, title, description, inquiry_date, deadline, status, created_by, created_at, updated_at
         FROM scm.purchase_inquiries
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#),
     )
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -528,20 +538,22 @@ pub async fn get_inquiry(
             let items = sqlx::query_as::<_, InquiryItem>(only_own_schema_query!(
                 "scm",
                 r#"
-                SELECT id, item_name, specification, unit, quantity, target_price, remarks
+                SELECT id, item_name, specification, unit, quantity::float8, target_price::float8, remarks
                 FROM scm.purchase_inquiry_items
-                WHERE inquiry_id = $1
+                WHERE inquiry_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
                 "#
             ))
             .bind(id)
+            .bind(tenant_bind)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
 
             let quotes_count = sqlx::query_scalar::<_, i64>(
-                only_own_schema_query!("scm", "SELECT COUNT(*) FROM scm.supplier_quotes WHERE inquiry_id = $1 AND deleted_at IS NULL"),
+                only_own_schema_query!("scm", "SELECT COUNT(*) FROM scm.supplier_quotes WHERE inquiry_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
             )
             .bind(id)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await
             .unwrap_or(0);
@@ -574,18 +586,27 @@ pub async fn delete_inquiry(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.purchase_inquiries
         SET deleted_at = $1, status = 'cancelled'
-        WHERE id = $2 AND status = 'draft'
+        WHERE id = $2 AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         "#
     ))
     .bind(Utc::now())
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
@@ -611,18 +632,27 @@ pub async fn publish_inquiry(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.purchase_inquiries
-        SET status = 'published', updated_at = $1
-        WHERE id = $2 AND status = 'draft'
+        SET status = 'pending', updated_at = $1
+        WHERE id = $2 AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         "#
     ))
     .bind(Utc::now())
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
@@ -648,6 +678,7 @@ pub async fn list_quotes(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -658,7 +689,7 @@ pub async fn list_quotes(
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
         r#"
-        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount, 
+        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount::float8, 
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks, 
                q.created_at, q.updated_at,
                s.name as supplier_name
@@ -667,6 +698,7 @@ pub async fn list_quotes(
         WHERE ($1::text IS NULL OR q.quote_no ILIKE $1 OR s.name ILIKE $1)
           AND ($2::text IS NULL OR q.status = $2)
           AND q.deleted_at IS NULL
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $5)
         ORDER BY q.created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -675,6 +707,7 @@ pub async fn list_quotes(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -688,10 +721,12 @@ pub async fn list_quotes(
                 WHERE ($1::text IS NULL OR q.quote_no ILIKE $1 OR s.name ILIKE $1)
                   AND ($2::text IS NULL OR q.status = $2)
                   AND q.deleted_at IS NULL
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $3)
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -725,14 +760,15 @@ pub async fn create_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let id = Uuid::new_v4();
     let quote_no = format!("QT-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
 
     let result = sqlx::query(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.supplier_quotes (id, supplier_id, quote_no, quote_date, currency, delivery_days, valid_until, payment_terms, status, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
+        INSERT INTO scm.supplier_quotes (id, supplier_id, quote_no, quote_date, currency, delivery_days, valid_until, payment_terms, status, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12)
         "#),
     )
     .bind(id)
@@ -746,8 +782,16 @@ pub async fn create_quote(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     match result {
         Ok(_) => Json(ApiResponse::success(
@@ -772,19 +816,21 @@ pub async fn get_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
         r#"
-        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount,
+        SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount::float8,
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks,
                q.created_at, q.updated_at,
                s.name as supplier_name
         FROM scm.supplier_quotes q
         LEFT JOIN scm.suppliers s ON q.supplier_id = s.id
-        WHERE q.id = $1 AND q.deleted_at IS NULL
+        WHERE q.id = $1 AND q.deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -793,14 +839,15 @@ pub async fn get_quote(
             let items = sqlx::query_as::<_, QuoteItem>(only_own_schema_query!(
                 "scm",
                 r#"
-                SELECT qi.id, qi.item_name, qi.specification, qi.unit, qi.quantity, qi.target_price,
-                       sqi.unit_price, sqi.total_price, sqi.lead_time_days
+                SELECT qi.id, qi.item_name, qi.specification, qi.unit, qi.quantity::float8, qi.target_price::float8,
+                       sqi.unit_price::float8, sqi.total_price::float8, sqi.lead_time_days
                 FROM scm.supplier_quote_items sqi
                 JOIN scm.purchase_inquiry_items qi ON sqi.inquiry_item_id = qi.id
-                WHERE sqi.quote_id = $1
+                WHERE sqi.quote_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR sqi.tenant_id = $2)
                 "#
             ))
             .bind(id)
+            .bind(tenant_bind)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
@@ -833,12 +880,13 @@ pub async fn update_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.supplier_quotes
         SET delivery_days = $1, valid_until = $2, payment_terms = $3, remarks = $4, updated_at = $5
-        WHERE id = $6 AND status = 'draft'
+        WHERE id = $6 AND status = 'draft' AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
         "#
     ))
     .bind(req.delivery_days)
@@ -847,8 +895,16 @@ pub async fn update_quote(
     .bind(&req.remarks)
     .bind(Utc::now())
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
@@ -874,18 +930,27 @@ pub async fn submit_quote(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.supplier_quotes
         SET status = 'submitted', updated_at = $1
-        WHERE id = $2 AND status = 'draft'
+        WHERE id = $2 AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         "#
     ))
     .bind(Utc::now())
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
@@ -911,6 +976,7 @@ pub async fn list_comparisons(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -920,14 +986,15 @@ pub async fn list_comparisons(
     let result = sqlx::query_as::<_, ComparisonListRecord>(
         only_own_schema_query!("scm", r#"
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
-               c.recommended_quote_id, c.total_score, c.quality_score, c.price_score,
-               c.delivery_score, c.service_score, c.remarks, c.created_by, c.created_at, c.updated_at,
+               c.recommended_quote_id, c.total_score::float8, c.quality_score::float8, c.price_score::float8,
+               c.delivery_score::float8, c.service_score::float8, c.remarks, c.created_by, c.created_at, c.updated_at,
                s.name as recommended_supplier_name,
                i.title as inquiry_title
         FROM scm.price_comparisons c
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
         LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
-        WHERE $1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1
+        WHERE ($1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $4)
         ORDER BY c.created_at DESC
         LIMIT $2 OFFSET $3
         "#),
@@ -935,6 +1002,7 @@ pub async fn list_comparisons(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -945,10 +1013,12 @@ pub async fn list_comparisons(
                 r#"
                 SELECT COUNT(*) FROM scm.price_comparisons c
                 LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
-                WHERE $1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1
+                WHERE ($1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1)
+                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $2)
                 "#
             ))
             .bind(&search_pattern)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -982,6 +1052,7 @@ pub async fn create_comparison(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let id = Uuid::new_v4();
     let comparison_no = format!("PC-{}", Utc::now().format("%Y%m%d%H%M"));
     let now = Utc::now();
@@ -995,8 +1066,8 @@ pub async fn create_comparison(
         only_own_schema_query!("scm", r#"
         INSERT INTO scm.price_comparisons (id, comparison_no, compared_at, recommended_supplier_id, 
                                        recommended_quote_id, total_score, quality_score, price_score, 
-                                       delivery_score, service_score, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                                       delivery_score, service_score, remarks, created_at, updated_at, inquiry_id, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         "#),
     )
     .bind(id)
@@ -1012,6 +1083,8 @@ pub async fn create_comparison(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(req.inquiry_id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
@@ -1027,8 +1100,8 @@ pub async fn create_comparison(
                 let _ = sqlx::query(
                     only_own_schema_query!("scm", r#"
                     INSERT INTO scm.price_comparison_items (id, comparison_id, supplier_id, quote_id, quality_score, 
-                                                        price_score, delivery_score, service_score, total_score, rank, remarks)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                                                        price_score, delivery_score, service_score, total_score, rank, remarks, tenant_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                     "#),
                 )
                 .bind(Uuid::new_v4())
@@ -1042,10 +1115,18 @@ pub async fn create_comparison(
                 .bind(item_total)
                 .bind(rank)
                 .bind(&item.remarks)
+                .bind(tenant_bind)
                 .execute(&mut **txn)
                 .await;
 
                 rank += 1;
+            }
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
             }
 
             Json(ApiResponse::success(
@@ -1071,20 +1152,22 @@ pub async fn get_comparison(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, ComparisonListRecord>(
         only_own_schema_query!("scm", r#"
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
-               c.recommended_quote_id, c.total_score, c.quality_score, c.price_score,
-               c.delivery_score, c.service_score, c.remarks, c.created_by, c.created_at, c.updated_at,
+               c.recommended_quote_id, c.total_score::float8, c.quality_score::float8, c.price_score::float8,
+               c.delivery_score::float8, c.service_score::float8, c.remarks, c.created_by, c.created_at, c.updated_at,
                s.name as recommended_supplier_name,
                i.title as inquiry_title
         FROM scm.price_comparisons c
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
         LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
-        WHERE c.id = $1
+        WHERE c.id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $2)
         "#),
     )
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1093,16 +1176,17 @@ pub async fn get_comparison(
             let items = sqlx::query_as::<_, ComparisonItemRecord>(only_own_schema_query!(
                 "scm",
                 r#"
-                SELECT ci.id, ci.supplier_id, ci.quote_id, ci.quality_score, ci.price_score,
-                       ci.delivery_score, ci.service_score, ci.total_score, ci.rank, ci.remarks,
+                SELECT ci.id, ci.supplier_id, ci.quote_id, ci.quality_score::float8, ci.price_score::float8,
+                       ci.delivery_score::float8, ci.service_score::float8, ci.total_score::float8, ci.rank, ci.remarks,
                        s.name as supplier_name
                 FROM scm.price_comparison_items ci
                 LEFT JOIN scm.suppliers s ON ci.supplier_id = s.id
-                WHERE ci.comparison_id = $1
+                WHERE ci.comparison_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR ci.tenant_id = $2)
                 ORDER BY ci.rank
                 "#
             ))
             .bind(id)
+            .bind(tenant_bind)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
@@ -1134,6 +1218,7 @@ pub async fn approve_comparison(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let now_str = Utc::now().to_rfc3339();
     let now = Utc::now();
 
@@ -1142,14 +1227,22 @@ pub async fn approve_comparison(
         r#"
         UPDATE scm.price_comparisons
         SET remarks = CONCAT(COALESCE(remarks, ''), ' | 已审批: ', $1), updated_at = $2
-        WHERE id = $3
+        WHERE id = $3 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         "#
     ))
     .bind(now_str)
     .bind(now)
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(

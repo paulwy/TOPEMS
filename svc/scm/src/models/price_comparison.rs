@@ -92,6 +92,7 @@ pub struct PriceComparison {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreatePriceComparisonRequest {
+    pub inquiry_id: Option<Uuid>,
     pub recommended_supplier_id: Uuid,
     pub recommended_quote_id: Uuid,
     pub quality_score: Option<f64>,
