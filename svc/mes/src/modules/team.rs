@@ -392,7 +392,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now,
+        now.naive_utc(),
         new_tenant,
     )
     .fetch_one(&state.pool)
@@ -419,7 +419,7 @@ pub async fn create_team(
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now,
+                now.naive_utc(),
             )
             .execute(&state.pool)
             .await;
@@ -432,7 +432,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now,
+            now.naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -664,11 +664,11 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        req.employee_id.parse().unwrap_or_default(),
+        req.employee_id.unwrap_or_default().parse().unwrap_or_default(),
         req.employee_name,
         req.employee_code,
         req.position,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -688,7 +688,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now,
+        now.naive_utc(),
     )
     .execute(&state.pool)
     .await;
