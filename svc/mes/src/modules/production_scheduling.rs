@@ -894,8 +894,8 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone(),
-                name: resource_name.clone(),
+                id: resource_name.clone().unwrap_or_default(),
+                name: resource_name.clone().unwrap_or_default(),
                 category: "workstation".to_string(),
             });
         }
