@@ -834,7 +834,7 @@ pub async fn add_flow_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (p.name, p.process_no.unwrap_or_default()),
+                Ok(p) => (p.name.unwrap_or_default(), p.process_no.unwrap_or_default()),
                 Err(_) => (String::new(), String::new()),
             };
 
@@ -960,7 +960,7 @@ pub async fn update_flow_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (p.name, p.process_no.unwrap_or_default()),
+                Ok(p) => (p.name.unwrap_or_default(), p.process_no.unwrap_or_default()),
                 Err(_) => (String::new(), String::new()),
             };
 
