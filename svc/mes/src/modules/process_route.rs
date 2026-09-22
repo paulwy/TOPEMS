@@ -371,7 +371,7 @@ pub async fn get_process_route(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
-                    name: r.name,
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
                     status: r.status,
@@ -443,7 +443,7 @@ pub async fn create_process_route(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
-                    name: r.name,
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
                     status: r.status,
@@ -528,7 +528,7 @@ pub async fn update_process_route(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
-                    name: r.name,
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
                     status: r.status,
