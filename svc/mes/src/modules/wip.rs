@@ -947,7 +947,7 @@ pub async fn list_wip_transfers(
             from_process_id: r.from_process_id,
             from_process_name: Some(r.from_process_name.unwrap_or_default()),
             from_work_station_id: r.from_work_station_id,
-            from_work_station_name: r.from_work_station_name.unwrap_or_default(),
+            from_work_station_name: Some(r.from_work_station_name.unwrap_or_default()),
             to_process_id: r.to_process_id,
             to_process_name: Some(r.to_process_name.unwrap_or_default()),
             to_work_station_id: r.to_work_station_id,
