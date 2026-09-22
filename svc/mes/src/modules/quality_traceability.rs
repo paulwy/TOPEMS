@@ -203,7 +203,7 @@ pub async fn forward_traceability(
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone().unwrap_or_default()),
-            timestamp: Some(record.start_time),
+            timestamp: Some(record.start_time.and_utc()),
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
