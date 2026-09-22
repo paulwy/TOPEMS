@@ -497,8 +497,8 @@ pub async fn create_production_schedule(
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: naive_to_utc(Some(result.created_at)),
+        updated_at: naive_to_utc(Some(result.updated_at)),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
