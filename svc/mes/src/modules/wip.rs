@@ -521,7 +521,7 @@ pub async fn get_wip(
                 current_process_id: r.current_process_id,
                 current_process_name: Some(r.process_name.unwrap_or_default()),
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: r.work_station_name.unwrap_or_default(),
+                current_work_station_name: Some(r.work_station_name.unwrap_or_default()),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
                 start_time: opt_naive_to_utc(r.start_time),
