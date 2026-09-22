@@ -12,7 +12,7 @@ use topems_shared_boundary::only_own_schema_query;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -42,6 +42,7 @@ pub async fn get_settings(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -49,9 +50,11 @@ pub async fn get_settings(
         SELECT key, value
         FROM scm.module_settings
         WHERE category = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(&category)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -94,6 +97,7 @@ pub async fn update_settings(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
@@ -102,8 +106,8 @@ pub async fn update_settings(
         let result = sqlx::query(only_own_schema_query!(
             "scm",
             r#"
-            INSERT INTO scm.module_settings (category, key, value, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $4)
+            INSERT INTO scm.module_settings (category, key, value, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $4, $5)
             ON CONFLICT (tenant_id, category, key)
             DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
             "#
@@ -112,6 +116,7 @@ pub async fn update_settings(
         .bind(key)
         .bind(value)
         .bind(now)
+        .bind(tenant_bind)
         .execute(&mut **txn)
         .await;
 
@@ -121,6 +126,13 @@ pub async fn update_settings(
                 tracing::error!("更新模块设置失败 (key={}): {}", key, e);
                 return Json(api_error(500, &format!("更新设置项失败: {}", key)));
             }
+        }
+    }
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
         }
     }
 
