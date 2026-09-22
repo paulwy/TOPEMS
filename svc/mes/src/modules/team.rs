@@ -664,7 +664,7 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        req.employee_id.unwrap_or_default().parse().unwrap_or_default(),
+        req.employee_id,
         req.employee_name,
         req.employee_code,
         req.position,
