@@ -907,7 +907,7 @@ pub async fn get_gantt_data(
             end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
-            resource: Some(resource_name),
+            resource: resource_name.unwrap_or_default(),
             parent: None,
         });
     }
