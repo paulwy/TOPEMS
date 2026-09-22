@@ -340,7 +340,7 @@ pub async fn get_team(
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
                 created_at: datetime_to_string(r.created_at.naive_utc()),
-                updated_at: datetime_to_string(r.updated_at),
+                updated_at: datetime_to_string(r.updated_at.naive_utc()),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -392,7 +392,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now.naive_utc(),
+        now,
         new_tenant,
     )
     .fetch_one(&state.pool)
@@ -415,11 +415,11 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                &member.employee_id,
+                member.employee_id.parse().unwrap_or_default(),
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -432,7 +432,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now.naive_utc(),
+            now,
         )
         .execute(&state.pool)
         .await;
@@ -450,8 +450,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: datetime_to_string(result.created_at),
-        updated_at: datetime_to_string(result.updated_at),
+        created_at: datetime_to_string(result.created_at.naive_utc()),
+        updated_at: datetime_to_string(result.updated_at.naive_utc()),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -536,7 +536,7 @@ pub async fn update_team(
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
                 created_at: datetime_to_string(r.created_at.naive_utc()),
-                updated_at: datetime_to_string(r.updated_at),
+                updated_at: datetime_to_string(r.updated_at.naive_utc()),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -668,7 +668,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -688,7 +688,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .execute(&state.pool)
     .await;
