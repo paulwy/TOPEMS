@@ -88,16 +88,15 @@ pub type ModulePermission = ScmPermission;
 
 /// 计算租户绑定值：超管返回 nil uuid（0000…000，RLS policy 豁免分支），
 /// 普通用户返回其 tenant_id（缺失/非法时回退 nil，保证最严隔离）。
-pub fn tenant_bind_value(claims: &Claims) -> String {
+pub fn tenant_bind_value(claims: &Claims) -> Uuid {
     if claims.is_superuser {
-        Uuid::nil().to_string()
+        Uuid::nil()
     } else {
         claims
             .tenant_id
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
             .unwrap_or_else(Uuid::nil)
-            .to_string()
     }
 }
 
