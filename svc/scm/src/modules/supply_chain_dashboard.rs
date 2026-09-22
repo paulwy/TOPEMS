@@ -64,11 +64,11 @@ pub async fn overview(
             COUNT(*) FILTER (WHERE status = 'approved') as approved_orders,
             COUNT(*) FILTER (WHERE status = 'rejected') as rejected_orders,
             COUNT(*) FILTER (WHERE status = 'completed') as completed_orders,
-            COALESCE(SUM(total_amount), 0) as total_amount,
-            COALESCE(AVG(total_amount), 0) as avg_order_amount
+            COALESCE(SUM(total_amount)::float8, 0) as total_amount,
+            COALESCE(AVG(total_amount)::float8, 0) as avg_order_amount
         FROM scm.purchase_orders
         WHERE created_at >= $1::timestamptz
-          AND created_at <= $2::timestamptz
+          AND created_at < ($2::timestamptz + INTERVAL '1 day')
           AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         "#
     ))
@@ -111,12 +111,12 @@ pub async fn overview(
         r#"
         SELECT 
             COUNT(*) as total_inbound,
-            COALESCE(SUM(total_quantity), 0) as total_inbound_quantity,
+            COALESCE(SUM(total_quantity)::float8, 0) as total_inbound_quantity,
             COUNT(*) FILTER (WHERE status = 'pending') as pending_inbound,
             COUNT(*) FILTER (WHERE status = 'completed' OR status = 'received') as completed_inbound
         FROM scm.wms_inbound_order_snapshots
         WHERE created_at >= $1::timestamptz
-          AND created_at <= $2::timestamptz
+          AND created_at < ($2::timestamptz + INTERVAL '1 day')
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
@@ -134,12 +134,12 @@ pub async fn overview(
         r#"
         SELECT 
             COUNT(*) as total_outbound,
-            COALESCE(SUM(total_quantity), 0) as total_outbound_quantity,
+            COALESCE(SUM(total_quantity)::float8, 0) as total_outbound_quantity,
             COUNT(*) FILTER (WHERE status = 'pending') as pending_outbound,
             COUNT(*) FILTER (WHERE status = 'completed' OR status = 'shipped') as completed_outbound
         FROM scm.wms_outbound_order_snapshots
         WHERE created_at >= $1::timestamptz
-          AND created_at <= $2::timestamptz
+          AND created_at < ($2::timestamptz + INTERVAL '1 day')
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
@@ -238,10 +238,10 @@ pub async fn purchase_inbound_outbound_stats(
         SELECT 
             DATE_TRUNC('day', created_at) as date,
             COUNT(*) as order_count,
-            COALESCE(SUM(total_amount), 0) as total_amount
+            COALESCE(SUM(total_amount)::float8, 0) as total_amount
         FROM scm.purchase_orders
         WHERE created_at >= $1::timestamptz
-          AND created_at <= $2::timestamptz
+          AND created_at < ($2::timestamptz + INTERVAL '1 day')
           AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
@@ -259,10 +259,10 @@ pub async fn purchase_inbound_outbound_stats(
         SELECT 
             DATE_TRUNC('day', created_at) as date,
             COUNT(*) as order_count,
-            COALESCE(SUM(total_quantity), 0) as total_quantity
+            COALESCE(SUM(total_quantity)::float8, 0) as total_quantity
         FROM scm.wms_inbound_order_snapshots
         WHERE created_at >= $1::timestamptz
-          AND created_at <= $2::timestamptz
+          AND created_at < ($2::timestamptz + INTERVAL '1 day')
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
@@ -283,10 +283,10 @@ pub async fn purchase_inbound_outbound_stats(
         SELECT 
             DATE_TRUNC('day', created_at) as date,
             COUNT(*) as order_count,
-            COALESCE(SUM(total_quantity), 0) as total_quantity
+            COALESCE(SUM(total_quantity)::float8, 0) as total_quantity
         FROM scm.wms_outbound_order_snapshots
         WHERE created_at >= $1::timestamptz
-          AND created_at <= $2::timestamptz
+          AND created_at < ($2::timestamptz + INTERVAL '1 day')
           AND ($3::uuid IS NULL OR warehouse_id = $3)
           AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
@@ -397,12 +397,12 @@ pub async fn supplier_performance(
             s.code,
             s.category,
             COUNT(po.id) as total_orders,
-            COALESCE(SUM(po.total_amount), 0) as total_amount,
+            COALESCE(SUM(po.total_amount)::float8, 0) as total_amount,
             COALESCE(AVG(CASE 
                 WHEN po.delivery_date IS NOT NULL AND po.updated_at <= po.delivery_date THEN 100
                 WHEN po.delivery_date IS NOT NULL THEN 50
                 ELSE 70
-            END), 0) as on_time_delivery_rate,
+            END)::float8, 0) as on_time_delivery_rate,
             COALESCE(AVG(CASE 
                 WHEN EXISTS (
                     SELECT 1 FROM scm.incoming_inspections ii
@@ -419,23 +419,23 @@ pub async fn supplier_performance(
                     ) AND ii.status = 'failed'
                 ) THEN 60
                 ELSE 85
-            END), 0) as quality_pass_rate,
+            END)::float8, 0) as quality_pass_rate,
             COALESCE(AVG(
                 EXTRACT(EPOCH FROM (po.created_at - s.created_at)) / 3600
-            ), 0) as avg_response_time_hours,
-            COALESCE(se.total_score, 0) as overall_score,
+            )::float8, 0) as avg_response_time_hours,
+            COALESCE(se.total_score::float8, 0) as overall_score,
             s.level
         FROM scm.suppliers s
         LEFT JOIN scm.purchase_orders po 
             ON po.supplier_id = s.id
             AND po.created_at >= $1::timestamptz
-            AND po.created_at <= $2::timestamptz
+            AND po.created_at < ($2::timestamptz + INTERVAL '1 day')
             AND ($3 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $3)
         LEFT JOIN (
             SELECT supplier_id, MAX(total_score) as total_score
             FROM scm.supplier_evaluations
             WHERE created_at >= $1::timestamptz
-              AND created_at <= $2::timestamptz
+              AND created_at < ($2::timestamptz + INTERVAL '1 day')
               AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
             GROUP BY supplier_id
         ) se ON s.id = se.supplier_id
@@ -482,12 +482,12 @@ pub async fn supplier_performance(
                     SELECT 
                         s.category,
                         s.id,
-                        COALESCE(SUM(po.total_amount), 0) as total_amount
+                        COALESCE(SUM(po.total_amount)::float8, 0) as total_amount
                     FROM scm.suppliers s
                     LEFT JOIN scm.purchase_orders po 
                         ON po.supplier_id = s.id
                         AND po.created_at >= $1::timestamptz
-                        AND po.created_at <= $2::timestamptz
+                        AND po.created_at < ($2::timestamptz + INTERVAL '1 day')
                         AND ($3 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $3)
                     WHERE s.status = 'active'
                       AND ($3 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $3)
