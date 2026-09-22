@@ -624,9 +624,9 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.to_string(),
-            employee_id: r.employee_id.to_string(),
-            employee_name: r.employee_name,
+            team_id: r.team_id.map(|id| id.to_string()),
+            employee_id: r.employee_id.map(|id| id.to_string()),
+            employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
             join_date: r.join_date.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()),
