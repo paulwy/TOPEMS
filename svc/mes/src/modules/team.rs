@@ -625,7 +625,7 @@ pub async fn get_team_members(
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
             team_id: r.team_id.unwrap_or_default().to_string(),
-            employee_id: r.employee_id.to_string(),
+            employee_id: r.employee_id.unwrap_or_default().to_string(),
             employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
