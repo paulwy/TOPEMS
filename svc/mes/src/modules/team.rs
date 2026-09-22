@@ -195,7 +195,7 @@ pub async fn list_teams(
             t.created_at, t.updated_at,
             COALESCE(ws.station_name, '') as work_station_name
         FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id AND ws.tenant_id = t.tenant_id
+        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         {}
         ORDER BY t.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -307,7 +307,7 @@ pub async fn get_team(
             t.created_at, t.updated_at,
             ws.station_name as work_station_name
         FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id AND ws.tenant_id = t.tenant_id
+        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
           AND ($2::uuid IS NULL OR t.tenant_id = $2)
         "#,
@@ -333,7 +333,7 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: Some(r.work_station_name).filter(|s| !s.is_empty()),
+                work_station_name: r.work_station_name.filter(|s| !s.is_empty()),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
