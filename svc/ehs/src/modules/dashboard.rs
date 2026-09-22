@@ -4,8 +4,10 @@
 //! 从 qa_ehs_accidents / qa_ehs_hazards / qa_ehs_trainings / qa_ehs_drill_records
 //! 聚合统计数据返回。
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::extract::{State, Extension};
+use axum::{routing::get, Json, Router};
 use serde::Serialize;
+use topems_shared_auth::auth::Claims;
 use sqlx::Row;
 use topems_shared_core::response::ApiResponse;
 
@@ -34,11 +36,24 @@ pub struct EhsDashboardStats {
 
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<EhsDashboardStats>> {
     let pool = &state.pool;
+    let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
+    let nil_uuid = "00000000-0000-0000-0000-000000000000";
 
     // --- 事故统计 ---
-    let total_accidents: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents")
+    let total_accidents: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")
+        .bind(&tenant_bind)
         .fetch_one(pool)
         .await
         .ok()
@@ -46,7 +61,8 @@ pub async fn get_dashboard(
         .unwrap_or(0);
 
     let reported_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'reported'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'reported'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -54,7 +70,8 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let investigating_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'investigating'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'investigating'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -62,7 +79,8 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let treating_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'treating'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'treating'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -70,7 +88,8 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let closed_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'closed'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'closed'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -79,7 +98,8 @@ pub async fn get_dashboard(
 
     // --- 隐患统计 ---
     let pending_hazards: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_hazards WHERE status != 'closed'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_hazards WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status != 'closed'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -88,8 +108,9 @@ pub async fn get_dashboard(
 
     // 隐患按类别分组
     let hazard_rows = sqlx::query(
-        "SELECT COALESCE(category, '未分类') AS cat, COUNT(*) AS cnt FROM ehs.qa_ehs_hazards GROUP BY category ORDER BY cnt DESC LIMIT 10",
+        "SELECT COALESCE(category, '未分类') AS cat, COUNT(*) AS cnt FROM ehs.qa_ehs_hazards WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) GROUP BY category ORDER BY cnt DESC LIMIT 10",
     )
+    .bind(&tenant_bind)
     .fetch_all(pool)
     .await
     .ok();
@@ -108,7 +129,8 @@ pub async fn get_dashboard(
         .unwrap_or_default();
 
     // --- 培训统计 ---
-    let total_trainings: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings")
+    let total_trainings: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")
+        .bind(&tenant_bind)
         .fetch_one(pool)
         .await
         .ok()
@@ -116,7 +138,8 @@ pub async fn get_dashboard(
         .unwrap_or(0);
 
     let completed_trainings: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE status = 'completed'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'completed'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -124,7 +147,8 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let scheduled_trainings: i64 =
-        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE status = 'scheduled'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND status = 'scheduled'")
+            .bind(&tenant_bind)
             .fetch_one(pool)
             .await
             .ok()
@@ -138,7 +162,8 @@ pub async fn get_dashboard(
     };
 
     // --- 应急演练统计 ---
-    let drill_count: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_drill_records")
+    let drill_count: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1)")
+        .bind(&tenant_bind)
         .fetch_one(pool)
         .await
         .ok()

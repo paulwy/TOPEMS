@@ -284,7 +284,16 @@ pub async fn list_materials(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
-    let _ = &claims;
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(
         r#"
@@ -298,12 +307,13 @@ pub async fn list_materials(
             safety_data_sheet, emergency_measures, supplier, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE deleted_at IS NULL
+        WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 200
         "#,
     )
     .bind(locale)
+    .bind(&tenant_bind)
     .fetch_all(&state.pool)
     .await;
 
@@ -432,7 +442,16 @@ pub async fn get_material(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
-    let _ = &claims;
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(
         r#"
@@ -446,11 +465,12 @@ pub async fn get_material(
             safety_data_sheet, emergency_measures, supplier, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE id = $1::uuid AND deleted_at IS NULL
+        WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3) AND id = $1::uuid AND deleted_at IS NULL
         "#,
     )
     .bind(&id)
     .bind(locale)
+    .bind(&tenant_bind)
     .fetch_optional(&state.pool)
     .await;
 

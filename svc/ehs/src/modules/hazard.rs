@@ -421,7 +421,16 @@ pub async fn get_hazard(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardDetail>> {
-    let _ = &claims;
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(
         r#"
@@ -433,11 +442,12 @@ pub async fn get_hazard(
             inspection_id::text AS inspection_id,
             created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
         FROM ehs.qa_ehs_hazards
-        WHERE id = $1::uuid AND deleted_at IS NULL
+        WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3) AND id = $1::uuid AND deleted_at IS NULL
         "#,
     )
     .bind(&id)
     .bind(locale)
+    .bind(&tenant_bind)
     .fetch_optional(&state.pool)
     .await;
 
