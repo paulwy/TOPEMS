@@ -580,7 +580,7 @@ pub async fn get_production_schedule(
                 equipment_id: r.equipment_id.unwrap_or_default(),
                 equipment_name: Some(r.equipment_name.unwrap_or_default()),
                 process_id: r.process_id,
-                process_name: Some(r.process_name),
+                process_name: Some(r.process_name.unwrap_or_default()),
                 planned_start_time: opt_naive_to_utc(r.planned_start_time),
                 planned_end_time: opt_naive_to_utc(r.planned_end_time),
                 actual_start_time: opt_naive_to_utc(r.actual_start_time),
