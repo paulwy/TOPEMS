@@ -715,13 +715,13 @@ pub async fn add_route_step(
         )
         VALUES ($1, $2, $3, $4)
         RETURNING id, route_id, process_id, sequence,
-            estimated_time_minutes,
+            estimated_time_minutes: estimated_time_minutes.map(f64_to_big_decimal),
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
         "#,
         route_uuid,
         process_uuid,
         body.sequence,
-        estimated_time_minutes,
+        estimated_time_minutes: estimated_time_minutes.map(f64_to_big_decimal),
     )
     .fetch_one(&state.pool)
     .await;
@@ -801,11 +801,11 @@ pub async fn update_route_step(
             estimated_time_minutes = COALESCE($2, estimated_time_minutes)
         WHERE id = $3
         RETURNING id, route_id, process_id, sequence,
-            estimated_time_minutes,
+            estimated_time_minutes: estimated_time_minutes.map(f64_to_big_decimal),
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
         "#,
         body.sequence,
-        estimated_time_minutes,
+        estimated_time_minutes: estimated_time_minutes.map(f64_to_big_decimal),
         step_uuid,
     )
     .fetch_one(&state.pool)
