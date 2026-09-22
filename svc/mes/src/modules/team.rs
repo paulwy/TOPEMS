@@ -415,7 +415,7 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                &member.employee_id,member.employee_id.parse().unwrap_or_default(),
+                &member.employee_id,
                 member.employee_name,
                 member.employee_code,
                 member.position,
@@ -624,9 +624,9 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.unwrap_or_default().to_string(),
-            employee_id: r.employee_id.unwrap_or_default().to_string(),
-            employee_name: r.employee_name.unwrap_or_default(),
+            team_id: r.team_id.to_string(),
+            employee_id: r.employee_id.to_string(),
+            employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
             join_date: r.join_date.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()),
@@ -664,7 +664,7 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        &req.employee_id,req.employee_id.parse().unwrap_or_default(),
+        &req.employee_id,
         req.employee_name,
         req.employee_code,
         req.position,

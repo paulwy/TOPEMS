@@ -113,18 +113,18 @@ pub struct WorkOrderResponse {
 
 // ==================== Helper Functions ====================
 
-fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
+fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     match dt {
-        Some(d) => d,
+        Some(d) => Utc.from_utc_datetime(&d),
         None => Utc::now(),
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
     naive_to_utc(dt).to_rfc3339()
 }
 
-fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
     dt.map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
 }
 
@@ -133,7 +133,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
+fn parse_datetime(s: &str) -> Option<NaiveDateTime> {
     DateTime::parse_from_rfc3339(s)
         .ok()
         .map(|dt| dt.naive_utc())
@@ -145,7 +145,7 @@ fn parse_opt_uuid(s: &Option<String>) -> Option<Uuid> {
     s.as_ref().and_then(|id| Uuid::parse_str(id).ok())
 }
 
-fn parse_opt_datetime(s: &Option<String>) -> Option<DateTime<Utc>> {
+fn parse_opt_datetime(s: &Option<String>) -> Option<NaiveDateTime> {
     s.as_ref().and_then(|d| parse_datetime(d))
 }
 
@@ -234,7 +234,7 @@ pub async fn list_work_orders(
             wo.product_code, wo.product_name,
             wo.work_station_id, wo.process_id,
             wo.planned_quantity, wo.completed_quantity,
-            wo.plan_start_date: plan_start_date.map(|d| d.naive_utc()), wo.plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            wo.plan_start_date, wo.plan_end_date,
             wo.actual_start_date, wo.actual_end_date,
             wo.team_id, wo.operator,
             wo.status, wo.priority, wo.remark,
@@ -269,20 +269,23 @@ pub async fn list_work_orders(
             id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
             work_order_no: r.try_get::<String, _>("work_order_no").unwrap_or_default(),
             order_id: r
-                .try_get::<Option<String>, _>("order_id")
+                .try_get::<Option<Uuid>, _>("order_id")
                 .ok()
-                .flatten(),
+                .flatten()
+                .map(|u| u.to_string()),
             order_no: r.try_get::<Option<String>, _>("order_no").ok().flatten(),
             product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
             product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
             work_station_id: r
-                .try_get::<Option<String>, _>("work_station_id")
+                .try_get::<Option<Uuid>, _>("work_station_id")
                 .ok()
-                .flatten(),
+                .flatten()
+                .map(|u| u.to_string()),
             process_id: r
-                .try_get::<Option<String>, _>("process_id")
+                .try_get::<Option<Uuid>, _>("process_id")
                 .ok()
-                .flatten(),
+                .flatten()
+                .map(|u| u.to_string()),
             planned_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("planned_quantity")
                     .ok()
@@ -294,29 +297,30 @@ pub async fn list_work_orders(
                     .flatten(),
             ),
             plan_start_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
+                r.try_get::<Option<NaiveDateTime>, _>("plan_start_date")
                     .ok()
                     .flatten(),
             ),
             plan_end_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
+                r.try_get::<Option<NaiveDateTime>, _>("plan_end_date")
                     .ok()
                     .flatten(),
             ),
             actual_start_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
                     .ok()
                     .flatten(),
             ),
             actual_end_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
                     .ok()
                     .flatten(),
             ),
             team_id: r
-                .try_get::<Option<String>, _>("team_id")
+                .try_get::<Option<Uuid>, _>("team_id")
                 .ok()
-                .flatten(),
+                .flatten()
+                .map(|u| u.to_string()),
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             status: r
                 .try_get::<Option<String>, _>("status")
@@ -326,12 +330,12 @@ pub async fn list_work_orders(
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -386,7 +390,7 @@ pub async fn get_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -404,19 +408,19 @@ pub async fn get_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
@@ -472,7 +476,7 @@ pub async fn create_work_order(
             work_order_no, order_id, order_no, product_code, product_name,
             work_station_id, process_id,
             planned_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             team_id, operator,
             status, priority, remark
         )
@@ -482,7 +486,7 @@ pub async fn create_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -496,11 +500,11 @@ pub async fn create_work_order(
         work_station_id,
         process_id,
         planned_quantity,
-        plan_start_date: plan_start_date.map(|d| d.naive_utc()),
-        plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+        plan_start_date,
+        plan_end_date,
         team_id,
         body.operator,
-        priority,
+        priority.parse::<i32>().unwrap_or(0),
         body.remark,
     )
     .fetch_one(&state.pool)
@@ -511,25 +515,25 @@ pub async fn create_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|v| v.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
-                product_name: r.product_name,
-                work_station_id: Some(r.work_station_id.map(|u| u.to_string()).unwrap_or_default()),
-                process_id: Some(r.process_id.map(|u| u.to_string()).unwrap_or_default()),
-                planned_quantity: big_decimal_to_f64(Some(r.planned_quantity)),
-                completed_quantity: big_decimal_to_f64(Some(r.completed_quantity)),
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
+                planned_quantity: big_decimal_to_f64(r.planned_quantity),
+                completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|v| v.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: datetime_to_string(Some(r.created_at)),
-                updated_at: datetime_to_string(Some(r.updated_at)),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "创建工单成功",
         )),
@@ -613,7 +617,7 @@ pub async fn update_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -628,8 +632,8 @@ pub async fn update_work_order(
         process_id,
         planned_quantity,
         completed_quantity,
-        plan_start_date: plan_start_date.map(|d| d.naive_utc()),
-        plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+        plan_start_date,
+        plan_end_date,
         team_id,
         body.operator,
         body.priority.map(|v| v.parse::<i32>().unwrap_or(0)),
@@ -644,19 +648,19 @@ pub async fn update_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
@@ -776,7 +780,7 @@ pub async fn start_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -792,19 +796,19 @@ pub async fn start_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
@@ -866,7 +870,7 @@ pub async fn complete_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -882,19 +886,19 @@ pub async fn complete_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
@@ -956,7 +960,7 @@ pub async fn cancel_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -972,19 +976,19 @@ pub async fn cancel_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
@@ -1046,7 +1050,7 @@ pub async fn pause_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -1062,19 +1066,19 @@ pub async fn pause_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
@@ -1136,7 +1140,7 @@ pub async fn resume_work_order(
             product_code, product_name,
             work_station_id, process_id,
             planned_quantity, completed_quantity,
-            plan_start_date: plan_start_date.map(|d| d.naive_utc()), plan_end_date: plan_end_date.map(|d| d.naive_utc()),
+            plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
             status, priority, remark,
@@ -1152,19 +1156,19 @@ pub async fn resume_work_order(
             WorkOrderResponse {
                 id: r.id.to_string(),
                 work_order_no: r.work_order_no,
-                order_id: r.order_id.map(|id| id.to_string()),
+                order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
-                work_station_id: r.work_station_id.map(|id| id.to_string()),
-                process_id: r.process_id.map(|id| id.to_string()),
+                work_station_id: r.work_station_id.map(|u| u.to_string()),
+                process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
                 plan_start_date: opt_datetime_to_string(r.plan_start_date),
                 plan_end_date: opt_datetime_to_string(r.plan_end_date),
                 actual_start_date: opt_datetime_to_string(r.actual_start_date),
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
-                team_id: r.team_id.map(|id| id.to_string()),
+                team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
