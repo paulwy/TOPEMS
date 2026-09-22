@@ -487,7 +487,7 @@ pub async fn deactivate_process(
             created_at, updated_at
         "#,
         id,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -505,11 +505,11 @@ pub async fn deactivate_process(
             let process = ProductionProcessResponse {
                 id: r.id,
                 process_no: r.process_no.unwrap_or_default(),
-                name: r.name,
+                name: r.name.unwrap_or_default(),
                 description: r.description,
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status,
-                sequence: r.sequence,
+                status: r.status.unwrap_or_default(),
+                sequence: r.sequence.unwrap_or_default(),
                 equipment_required: false,
                 estimated_duration: 0,
                 created_at: r.created_at,
