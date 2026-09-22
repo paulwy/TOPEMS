@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
@@ -198,13 +198,13 @@ fn notice_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
         "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
         "expected_arrival_date": row.try_get::<Option<chrono::NaiveDate>, _>("expected_arrival_date").ok(),
-        "actual_arrival_date": row.try_get::<Option<chrono::NaiveDate>, _>("actual_arrival_date").ok(),
+        "actual_arrival_date": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("actual_arrival_date").ok(),
         "status": row.try_get::<String, _>("status").ok(),
         "total_quantity": row.try_get::<f64, _>("total_quantity").ok(),
         "inspection_required": row.try_get::<bool, _>("inspection_required").ok(),
         "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
-        "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-        "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+        "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok().map(|t| t.to_string()),
+        "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok().map(|t| t.to_string()),
     })
 }
 
@@ -232,8 +232,8 @@ fn inspection_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "status": row.try_get::<String, _>("status").ok(),
         "inspection_items": row.try_get::<Option<serde_json::Value>, _>("inspection_items").ok(),
         "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
-        "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-        "updated_at": row.try_get::<chrono::NaiveDateTime, _>("updated_at").ok().map(|t| t.to_string()),
+        "created_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("created_at").ok().map(|t| t.to_string()),
+        "updated_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("updated_at").ok().map(|t| t.to_string()),
     })
 }
 
@@ -251,6 +251,7 @@ pub async fn list_notices(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -264,10 +265,11 @@ pub async fn list_notices(
         SELECT id, notice_number, purchase_order_id, purchase_order_number,
                supplier_id, supplier_name, warehouse_id, warehouse_name,
                expected_arrival_date, actual_arrival_date, status,
-               total_quantity, inspection_required, remarks, created_at, updated_at
+               total_quantity::float8, inspection_required, remarks, created_at, updated_at
         FROM scm.incoming_notices
         WHERE ($1::text IS NULL OR notice_number ILIKE $1 OR supplier_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -276,6 +278,7 @@ pub async fn list_notices(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -287,10 +290,12 @@ pub async fn list_notices(
                 SELECT COUNT(*) FROM scm.incoming_notices
                 WHERE ($1::text IS NULL OR notice_number ILIKE $1 OR supplier_name ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -343,6 +348,7 @@ pub async fn create_notice(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -356,12 +362,12 @@ pub async fn create_notice(
         (id, notice_number, purchase_order_id, purchase_order_number,
          supplier_id, supplier_name, warehouse_id, warehouse_name,
          expected_arrival_date, status, total_quantity, inspection_required,
-         remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14)
+         remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14, $15)
         RETURNING id, notice_number, purchase_order_id, purchase_order_number,
                   supplier_id, supplier_name, warehouse_id, warehouse_name,
                   expected_arrival_date, actual_arrival_date, status,
-                  total_quantity, inspection_required, remarks, created_at, updated_at
+                  total_quantity::float8, inspection_required, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -378,6 +384,7 @@ pub async fn create_notice(
     .bind(&req.remarks)
     .bind(now.naive_utc())
     .bind(now.naive_utc())
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -418,6 +425,10 @@ pub async fn create_notice(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        let _ = t.commit().await;
+    }
+
     response
 }
 
@@ -435,17 +446,19 @@ pub async fn get_notice(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         SELECT id, notice_number, purchase_order_id, purchase_order_number,
                supplier_id, supplier_name, warehouse_id, warehouse_name,
                expected_arrival_date, actual_arrival_date, status,
-               total_quantity, inspection_required, remarks, created_at, updated_at
-        FROM scm.incoming_notices WHERE id = $1
+               total_quantity::float8, inspection_required, remarks, created_at, updated_at
+        FROM scm.incoming_notices WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -485,6 +498,7 @@ pub async fn update_notice(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
@@ -492,10 +506,11 @@ pub async fn update_notice(
         "scm",
         r#"
         SELECT id, notice_number, status, actual_arrival_date, remarks
-        FROM scm.incoming_notices WHERE id = $1
+        FROM scm.incoming_notices WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -512,17 +527,17 @@ pub async fn update_notice(
         r#"
         UPDATE scm.incoming_notices SET
             status = COALESCE($2, status),
-            actual_arrival_date = COALESCE($3, actual_arrival_date),
+            actual_arrival_date = COALESCE($3::timestamptz, actual_arrival_date),
             remarks = CASE 
                 WHEN remarks IS NOT NULL AND $4 IS NOT NULL THEN remarks || ' | ' || $4
                 ELSE COALESCE(remarks, $4)
             END,
             updated_at = $5
-        WHERE id = $1
+        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
         RETURNING id, notice_number, purchase_order_id, purchase_order_number,
                   supplier_id, supplier_name, warehouse_id, warehouse_name,
                   expected_arrival_date, actual_arrival_date, status,
-                  total_quantity, inspection_required, remarks, created_at, updated_at
+                  total_quantity::float8, inspection_required, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -530,6 +545,7 @@ pub async fn update_notice(
     .bind(req.actual_arrival_date)
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -570,6 +586,10 @@ pub async fn update_notice(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        let _ = t.commit().await;
+    }
+
     response
 }
 
@@ -587,6 +607,7 @@ pub async fn list_inspections(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -598,13 +619,13 @@ pub async fn list_inspections(
         only_own_schema_query!("scm", r#"
         SELECT id, inspection_number, notice_id, notice_number,
                material_code, material_name, specification, unit,
-               batch_number, inspected_quantity, passed_quantity, failed_quantity,
-               sampling_quantity, inspection_result, inspection_date,
-               inspector_id, inspector_name, inbound_order_id, inbound_order_number,
+               batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
+               sampling_quantity::float8, inspection_result,
                status, inspection_items, remarks, created_at, updated_at
         FROM scm.incoming_inspections
         WHERE ($1::text IS NULL OR inspection_number ILIKE $1 OR material_name ILIKE $1 OR material_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -613,6 +634,7 @@ pub async fn list_inspections(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -623,10 +645,12 @@ pub async fn list_inspections(
                 SELECT COUNT(*) FROM scm.incoming_inspections
                 WHERE ($1::text IS NULL OR inspection_number ILIKE $1 OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -680,6 +704,7 @@ pub async fn create_inspection(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -687,9 +712,10 @@ pub async fn create_inspection(
 
     let notice_info = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT notice_number FROM scm.incoming_notices WHERE id = $1"
+        "SELECT notice_number FROM scm.incoming_notices WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(req.notice_id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -705,13 +731,12 @@ pub async fn create_inspection(
          material_code, material_name, specification, unit,
          batch_number, inspected_quantity, passed_quantity, failed_quantity,
          sampling_quantity, inspection_result, status, inspection_items,
-         remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 0, $11, 'pending', 'pending', $12, $13, $14, $15)
+         remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 0, $11, 'pending', 'pending', COALESCE($12, '{}'::jsonb), $13, $14, $15, $16)
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
-                  batch_number, inspected_quantity, passed_quantity, failed_quantity,
-                  sampling_quantity, inspection_result, inspection_date,
-                  inspector_id, inspector_name, inbound_order_id, inbound_order_number,
+                  batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
+                  sampling_quantity::float8, inspection_result,
                   status, inspection_items, remarks, created_at, updated_at
         "#),
     )
@@ -730,6 +755,7 @@ pub async fn create_inspection(
     .bind(&req.remarks)
     .bind(now.naive_utc())
     .bind(now.naive_utc())
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -770,6 +796,10 @@ pub async fn create_inspection(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        let _ = t.commit().await;
+    }
+
     response
 }
 
@@ -787,19 +817,20 @@ pub async fn get_inspection(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         SELECT id, inspection_number, notice_id, notice_number,
                material_code, material_name, specification, unit,
-               batch_number, inspected_quantity, passed_quantity, failed_quantity,
-               sampling_quantity, inspection_result, inspection_date,
-               inspector_id, inspector_name, inbound_order_id, inbound_order_number,
+               batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
+               sampling_quantity::float8, inspection_result,
                status, inspection_items, remarks, created_at, updated_at
-        FROM scm.incoming_inspections WHERE id = $1
+        FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -840,14 +871,16 @@ pub async fn update_inspection(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT id, status FROM scm.incoming_inspections WHERE id = $1"
+        "SELECT id, status FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -871,12 +904,11 @@ pub async fn update_inspection(
                 ELSE COALESCE(remarks, $5)
             END,
             updated_at = $6
-        WHERE id = $1
+        WHERE id = $1 AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
-                  batch_number, inspected_quantity, passed_quantity, failed_quantity,
-                  sampling_quantity, inspection_result, inspection_date,
-                  inspector_id, inspector_name, inbound_order_id, inbound_order_number,
+                  batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
+                  sampling_quantity::float8, inspection_result,
                   status, inspection_items, remarks, created_at, updated_at
         "#
     ))
@@ -886,6 +918,7 @@ pub async fn update_inspection(
     .bind(&req.inspection_items)
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -926,6 +959,10 @@ pub async fn update_inspection(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        let _ = t.commit().await;
+    }
+
     response
 }
 
@@ -953,14 +990,16 @@ pub async fn inspection_pass(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1"
+        "SELECT id, status, inspected_quantity::float8 FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -988,28 +1027,25 @@ pub async fn inspection_pass(
             inspection_result = 'pass',
             passed_quantity = $2,
             failed_quantity = $3,
-            inspection_date = CURRENT_DATE,
-            inspector_name = COALESCE($4, inspector_name),
             remarks = CASE 
                 WHEN remarks IS NOT NULL THEN remarks || ' | 检验合格'
                 ELSE '检验合格'
-            END || CASE WHEN $5 IS NOT NULL THEN ': ' || $5 ELSE '' END,
-            updated_at = $6
-        WHERE id = $1
+            END || CASE WHEN $4 IS NOT NULL THEN ': ' || $4 ELSE '' END,
+            updated_at = $5
+        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
-                  batch_number, inspected_quantity, passed_quantity, failed_quantity,
-                  sampling_quantity, inspection_result, inspection_date,
-                  inspector_id, inspector_name, inbound_order_id, inbound_order_number,
+                  batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
+                  sampling_quantity::float8, inspection_result,
                   status, inspection_items, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
     .bind(req.passed_quantity)
     .bind(failed_qty)
-    .bind(&req.inspector_name)
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1050,6 +1086,10 @@ pub async fn inspection_pass(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        let _ = t.commit().await;
+    }
+
     response
 }
 
@@ -1069,14 +1109,16 @@ pub async fn inspection_fail(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
     let existing = sqlx::query(only_own_schema_query!(
         "scm",
-        "SELECT id, status, inspected_quantity FROM scm.incoming_inspections WHERE id = $1"
+        "SELECT id, status, inspected_quantity::float8 FROM scm.incoming_inspections WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1105,28 +1147,25 @@ pub async fn inspection_fail(
             inspection_result = 'fail',
             passed_quantity = $2,
             failed_quantity = $3,
-            inspection_date = CURRENT_DATE,
-            inspector_name = COALESCE($4, inspector_name),
             remarks = CASE 
                 WHEN remarks IS NOT NULL THEN remarks || ' | 检验不合格'
                 ELSE '检验不合格'
-            END || CASE WHEN $5 IS NOT NULL THEN ': ' || $5 ELSE '' END,
-            updated_at = $6
-        WHERE id = $1
+            END || CASE WHEN $4 IS NOT NULL THEN ': ' || $4 ELSE '' END,
+            updated_at = $5
+        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
         RETURNING id, inspection_number, notice_id, notice_number,
                   material_code, material_name, specification, unit,
-                  batch_number, inspected_quantity, passed_quantity, failed_quantity,
-                  sampling_quantity, inspection_result, inspection_date,
-                  inspector_id, inspector_name, inbound_order_id, inbound_order_number,
+                  batch_number, inspected_quantity::float8, passed_quantity::float8, failed_quantity::float8,
+                  sampling_quantity::float8, inspection_result,
                   status, inspection_items, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
     .bind(passed_qty)
     .bind(failed_qty)
-    .bind(&req.inspector_name)
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1166,6 +1205,10 @@ pub async fn inspection_fail(
         &headers,
     )
     .await;
+
+    if let Some(t) = guard.take() {
+        let _ = t.commit().await;
+    }
 
     response
 }
@@ -1227,6 +1270,7 @@ pub async fn list_inspection_records(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -1235,11 +1279,12 @@ pub async fn list_inspection_records(
                batch_no, quantity, samplesize, inspectionitems, inspection_method,
                inspection_standard, result, defect_details, created_at, updated_at
         FROM scm.inspection_records
-        WHERE inspection_id = $1
+        WHERE inspection_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         ORDER BY created_at DESC
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1279,8 +1324,9 @@ pub async fn create_inspection_record(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
-    let tenant_id = claims.tenant_id.clone();
+    let tenant_id = tenant_bind;
 
     let result = sqlx::query(only_own_schema_query!(
         "scm",
@@ -1289,7 +1335,7 @@ pub async fn create_inspection_record(
             (tenant_id, inspection_id, item_code, item_name, specification, unit,
              batch_no, quantity, samplesize, inspectionitems, inspection_method,
              inspection_standard, result, defect_details)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, 0), $10, $11, $12, $13, $14)
         RETURNING id, inspection_id, item_code, item_name, specification, unit,
                   batch_no, quantity, samplesize, inspectionitems, inspection_method,
                   inspection_standard, result, defect_details, created_at, updated_at
@@ -1314,6 +1360,9 @@ pub async fn create_inspection_record(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
             let record = inspection_record_row_to_json(&row);
             Json(ApiResponse::success(record, "创建检验记录明细成功"))
         }
