@@ -218,7 +218,7 @@ pub async fn list_standards(
             for v in value_rows {
                 let sid = v.standard_id;
                 values_map
-                    .entry(sid)
+                    .entry(sid.unwrap_or_default())
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
@@ -374,7 +374,7 @@ pub async fn get_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -521,7 +521,7 @@ pub async fn create_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -732,7 +732,7 @@ pub async fn update_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
