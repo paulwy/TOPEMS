@@ -832,10 +832,10 @@ pub async fn list_maintenances(
             end_time: r.end_time.map(|d| d.and_utc()),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status,
+            status: r.status.unwrap_or_default(),
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.and_utc(),
+            updated_at: r.updated_at.and_utc(),
         })
         .collect();
 
