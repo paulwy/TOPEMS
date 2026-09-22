@@ -102,6 +102,35 @@ impl RedisL2Backend {
             format!("{}:{}", self.prefix, key)
         }
     }
+
+    async fn delete_pattern(&self, pattern: &str) {
+        let full_pattern = self.full_key(pattern);
+        let mut manager = self.manager.clone();
+        let mut cursor: u64 = 0;
+        loop {
+            let res: redis::RedisResult<(u64, Vec<String>)> = redis::cmd("SCAN")
+                .arg(cursor)
+                .arg("MATCH")
+                .arg(&full_pattern)
+                .arg("COUNT")
+                .arg(500)
+                .query_async(&mut manager)
+                .await;
+            match res {
+                Ok((next, keys)) => {
+                    if !keys.is_empty() {
+                        let _: redis::RedisResult<()> =
+                            redis::cmd("DEL").arg(keys).query_async(&mut manager).await;
+                    }
+                    cursor = next;
+                    if cursor == 0 {
+                        break;
+                    }
+                }
+                Err(_) => break,
+            }
+        }
+    }
 }
 
 impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
@@ -270,6 +299,9 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
             .query_async(&mut manager)
             .await;
     }
+
+    /// 按通配符模式删除 Redis L2 key（SCAN 迭代 + DEL）
+
 
     // ===== 公共 API =====
 
@@ -456,6 +488,14 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
     /// 清空 L1（不清空 L2，避免跨实例误删）
     pub fn clear_l1(&self) {
         self.l1.clear();
+    }
+
+    /// 清空 L1 + 本实例 L2（写操作后调用，确保本实例不命中旧缓存；跨实例由缓存失效事件同步）
+    pub async fn clear_all(&self) {
+        self.l1.clear();
+        if let Some(l2) = &self.l2 {
+            l2.delete_pattern("*").await;
+        }
     }
 }
 

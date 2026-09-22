@@ -305,10 +305,35 @@ impl CacheService for RedisCacheService {
     async fn delete(&self, key: &str) -> Result<()> {
         let full_key = self.build_key(key);
         let mut conn = self.pool.get_connection().await?;
-        redis::cmd("DEL")
-            .arg(full_key)
-            .query::<()>(&mut conn)
-            .map_err(|e| TopemsError::Config(format!("Redis DEL failed: {}", e)))?;
+        if full_key.contains('*') {
+            // 支持通配符模式删除：SCAN 迭代匹配后 DEL（避免 DEL 把 '*' 当字面量）
+            let mut cursor: u64 = 0;
+            loop {
+                let (next_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+                    .arg(cursor)
+                    .arg("MATCH")
+                    .arg(&full_key)
+                    .arg("COUNT")
+                    .arg(500)
+                    .query(&mut conn)
+                    .map_err(|e| TopemsError::Config(format!("Redis SCAN failed: {}", e)))?;
+                if !keys.is_empty() {
+                    redis::cmd("DEL")
+                        .arg(keys)
+                        .query::<()>(&mut conn)
+                        .map_err(|e| TopemsError::Config(format!("Redis DEL failed: {}", e)))?;
+                }
+                cursor = next_cursor;
+                if cursor == 0 {
+                    break;
+                }
+            }
+        } else {
+            redis::cmd("DEL")
+                .arg(full_key)
+                .query::<()>(&mut conn)
+                .map_err(|e| TopemsError::Config(format!("Redis DEL failed: {}", e)))?;
+        }
         Ok(())
     }
 

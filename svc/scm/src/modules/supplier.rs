@@ -203,7 +203,7 @@ pub async fn list_suppliers(
         FROM scm.suppliers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $6)
+          AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -213,7 +213,7 @@ pub async fn list_suppliers(
     .bind(page_size)
     .bind(offset)
     .bind(Locale::from_headers(&headers).as_sql())
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -224,12 +224,12 @@ pub async fn list_suppliers(
                 SELECT COUNT(*) FROM scm.suppliers
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&tenant_bind)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -314,7 +314,7 @@ pub async fn create_supplier(
     .bind(now)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -347,7 +347,7 @@ pub async fn create_supplier(
                 return Json(ApiResponse::error(500, "事务提交失败"));
             }
         }
-        state.supplier_cache.clear_l1();
+        state.supplier_cache.clear_all().await;
         tracing::debug!("🗑️ 供应商内存缓存已清空（创建供应商）");
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -502,12 +502,12 @@ pub async fn get_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
         SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
-        FROM scm.suppliers WHERE id = $1 AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+        FROM scm.suppliers WHERE id = $1 AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         "#),
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -567,10 +567,10 @@ pub async fn update_supplier(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("scm", "SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)"),
+        only_own_schema_query!("scm", "SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
     )
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -595,7 +595,7 @@ pub async fn update_supplier(
         only_own_schema_query!("scm", r#"
         UPDATE scm.suppliers SET
             name = $2, legal_name = $3, contact_person = $4, phone = $5, email = $6, address = $7, bank_account = $8, tax_id = $9, status = $10, updated_at = $11, name_en = COALESCE($12, name_en)
-        WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $14)
+        WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14)
         RETURNING id, CASE WHEN $13 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
@@ -612,7 +612,7 @@ pub async fn update_supplier(
     .bind(now)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -652,7 +652,7 @@ pub async fn update_supplier(
             .unwrap_or_else(|| "default".to_string());
         let cache_key = supplier_cache_key(&tenant_id, &id, None);
         state.supplier_cache.remove(&cache_key).await;
-        state.supplier_cache.clear_l1();
+        state.supplier_cache.clear_all().await;
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -775,10 +775,10 @@ pub async fn delete_supplier(
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)"
+        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
@@ -823,7 +823,7 @@ pub async fn delete_supplier(
             .unwrap_or_else(|| "default".to_string());
         let cache_key = supplier_cache_key(&tenant_id, &id, None);
         state.supplier_cache.remove(&cache_key).await;
-        state.supplier_cache.clear_l1();
+        state.supplier_cache.clear_all().await;
         tracing::debug!("🗑️ 供应商内存缓存已失效: {}", cache_key);
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
