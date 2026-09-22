@@ -218,11 +218,11 @@ pub async fn list_standards(
             for v in value_rows {
                 let sid = v.standard_id;
                 values_map
-                    .entry(sid)
+                    .entry(sid.unwrap_or_default())
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.to_string(),
+                        standard_id: sid.map(|id| id.to_string()),
                         item_name: v.item_name,
                         lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -352,7 +352,7 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.map(|id| id.to_string()),
+                standard_id: v.standard_id.map(|id| id.to_string()).unwrap_or_default(),
                 item_name: v.item_name,
                 lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                 upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -708,7 +708,7 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.map(|id| id.to_string()),
+                    standard_id: v.standard_id.map(|id| id.to_string()).unwrap_or_default(),
                     item_name: v.item_name,
                     lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                     upper_limit: opt_big_decimal_to_f64(v.upper_limit),
