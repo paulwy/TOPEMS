@@ -242,7 +242,7 @@ pub async fn get_dashboard(
         Ok(rows) => rows
             .into_iter()
             .map(|r| {
-                let planned = r.quantity as f64;
+                let planned = r.quantity.to_string().parse::<f64>().unwrap_or_default();
                 let completed = r.completed_quantity.unwrap_or_default().to_string().parse::<f64>().unwrap_or_default();
                 let progress = if planned > 0.0 {
                     (completed / planned) * 100.0
@@ -505,7 +505,7 @@ pub async fn get_order_progress(
     let list: Vec<OrderProgressResponse> = orders
         .into_iter()
         .map(|r| {
-            let planned = r.quantity as f64;
+            let planned = r.quantity.to_string().parse::<f64>().unwrap_or_default();
             let completed = r.completed_quantity.unwrap_or_default().to_string().parse::<f64>().unwrap_or_default();
             let progress = if planned > 0.0 {
                 (completed / planned) * 100.0
