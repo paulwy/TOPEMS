@@ -256,7 +256,7 @@ pub async fn get_dashboard(
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                 }
             })
             .collect(),
@@ -519,7 +519,7 @@ pub async fn get_order_progress(
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,
-                status: r.status,
+                status: r.status.unwrap_or_default(),
             }
         })
         .collect();
