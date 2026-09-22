@@ -14,7 +14,7 @@ use crate::models::purchase_order::{
     CreatePurchaseOrderRequest, PurchaseOrder, UpdatePurchaseOrderRequest,
 };
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use topems_shared_event::event::{EventType, PurchaseOrderApprovedPayload};
@@ -53,6 +53,7 @@ pub async fn list_orders(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -66,6 +67,7 @@ pub async fn list_orders(
         FROM scm.purchase_orders
         WHERE ($1::text IS NULL OR po_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -74,6 +76,7 @@ pub async fn list_orders(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(&tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -85,10 +88,12 @@ pub async fn list_orders(
                 SELECT COUNT(*) FROM scm.purchase_orders
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR po_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(&tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -136,14 +141,15 @@ pub async fn create_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.purchase_orders (id, po_no, supplier_id, order_date, expected_date, total_amount, status, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9)
+        INSERT INTO scm.purchase_orders (id, po_no, supplier_id, order_date, expected_date, total_amount, status, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
@@ -156,6 +162,7 @@ pub async fn create_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(&tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -227,13 +234,15 @@ pub async fn get_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
-        FROM scm.purchase_orders WHERE id = $1
+        FROM scm.purchase_orders WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
         "#),
     )
     .bind(id)
+    .bind(&tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -277,12 +286,14 @@ pub async fn update_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
+    .bind(&tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -303,7 +314,7 @@ pub async fn update_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             supplier_id = $2, expected_date = $3, total_amount = $4, status = $5, remarks = $6, updated_at = $7
-        WHERE id = $1
+        WHERE id = $1 AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $8)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
@@ -314,6 +325,7 @@ pub async fn update_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
+    .bind(&tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -386,11 +398,13 @@ pub async fn delete_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)"
     ))
     .bind(id)
+    .bind(&tenant_bind)
     .execute(&mut **txn)
     .await;
 
@@ -477,11 +491,13 @@ pub async fn approve_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
+    .bind(&tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -525,13 +541,14 @@ pub async fn approve_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'approved', remarks = $2, updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $4)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(&new_remarks)
     .bind(now)
+    .bind(&tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -660,11 +677,13 @@ pub async fn reject_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let existing = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
+    .bind(&tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -703,13 +722,14 @@ pub async fn reject_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'rejected', remarks = $2, updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $4)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(&new_remarks)
     .bind(now)
+    .bind(&tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 

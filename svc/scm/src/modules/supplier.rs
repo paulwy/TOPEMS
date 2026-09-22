@@ -20,7 +20,7 @@ use super::ApiState;
 use crate::models::supplier::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared::{auth::Claims, ApiResponse};
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss};
 use topems_shared_core::locale::Locale;
@@ -153,6 +153,7 @@ pub async fn list_suppliers(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -202,6 +203,7 @@ pub async fn list_suppliers(
         FROM scm.suppliers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $6)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -211,6 +213,7 @@ pub async fn list_suppliers(
     .bind(page_size)
     .bind(offset)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -221,10 +224,12 @@ pub async fn list_suppliers(
                 SELECT COUNT(*) FROM scm.suppliers
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1 OR contact_person ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(&tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -284,14 +289,15 @@ pub async fn create_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.suppliers (id, name, legal_name, contact_person, phone, email, address, bank_account, tax_id, status, created_at, updated_at, name_en)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11, $12)
+        INSERT INTO scm.suppliers (id, name, legal_name, contact_person, phone, email, address, bank_account, tax_id, status, created_at, updated_at, name_en, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11, $12, $14)
         RETURNING id, CASE WHEN $13 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
@@ -308,6 +314,7 @@ pub async fn create_supplier(
     .bind(now)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -460,6 +467,7 @@ pub async fn get_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     // 从 claims 中获取 tenant_id，用于多租户缓存隔离
     let tenant_id = claims
@@ -494,11 +502,12 @@ pub async fn get_supplier(
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("scm", r#"
         SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
-        FROM scm.suppliers WHERE id = $1
+        FROM scm.suppliers WHERE id = $1 AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
         "#),
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -554,12 +563,14 @@ pub async fn update_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, Supplier>(
-        only_own_schema_query!("scm", "SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("scm", "SELECT id, name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at FROM scm.suppliers WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)"),
     )
     .bind(id)
+    .bind(&tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -584,7 +595,7 @@ pub async fn update_supplier(
         only_own_schema_query!("scm", r#"
         UPDATE scm.suppliers SET
             name = $2, legal_name = $3, contact_person = $4, phone = $5, email = $6, address = $7, bank_account = $8, tax_id = $9, status = $10, updated_at = $11, name_en = COALESCE($12, name_en)
-        WHERE id = $1
+        WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $14)
         RETURNING id, CASE WHEN $13 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name AS short_name, contact_person AS contact_name, phone AS contact_phone, email, address, bank_account, tax_id AS tax_number, status, created_at, updated_at
         "#),
     )
@@ -601,6 +612,7 @@ pub async fn update_supplier(
     .bind(now)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(&tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -760,11 +772,13 @@ pub async fn delete_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE scm.suppliers SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)"
     ))
     .bind(id)
+    .bind(&tenant_bind)
     .execute(&mut **txn)
     .await;
 
