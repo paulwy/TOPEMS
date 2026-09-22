@@ -472,7 +472,7 @@ pub async fn create_work_order(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO work_orders (
+        INSERT INTO mes.work_orders (
             work_order_no, order_id, order_no, product_code, product_name,
             work_station_id, process_id,
             planned_quantity,
