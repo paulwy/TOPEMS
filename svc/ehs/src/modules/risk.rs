@@ -1,7 +1,8 @@
 //! Risk handlers
 
-use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use axum::{extract::{Query, State}, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -72,14 +73,99 @@ pub struct RiskControlMeasure {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_risks(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(query): Query<RiskQuery>,
 ) -> Json<ApiResponse<Vec<Risk>>> {
-    tracing::debug!("Listing risks");
-    Json(ApiResponse::success(Vec::<Risk>::new(), "获取风险列表成功"))
-}
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
+    let tenant_id = if claims.is_superuser {{
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    }} else {{
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }};
+    let rls_tenant = if claims.is_superuser {{
+        uuid::Uuid::nil()
+    }} else {{
+        tenant_id
+    }};
 
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(" WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL");
+
+    if let Some(status) = &query.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(status.clone());
+    }
+    if let Some(level) = &query.risk_level {
+        where_clause.push_str(&format!(" AND risk_level = ${}", params.len() + 1));
+        params.push(level.clone());
+    }
+
+    let fetch_sql = format!(
+        r#"
+        SELECT
+            id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+            likelihood, severity, risk_level, control_measures, status,
+            assessed_by, assessed_at::TEXT AS assessed_at,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        FROM ehs.qa_ehs_risks
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#,
+        where_clause = where_clause,
+    );
+
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p);
+    }
+
+    let rows = match fetch_query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list risks: {}", e);
+            return Json(ApiResponse::error(500, "获取风险列表失败"));
+        }
+    };
+
+    let risks: Vec<Risk> = rows
+        .iter()
+        .map(|r| Risk {
+            id: r.try_get::<String, _>("id").unwrap_or_default(),
+            risk_no: r.try_get::<String, _>("risk_no").unwrap_or_default(),
+            title: r.try_get::<String, _>("title").unwrap_or_default(),
+            description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+            risk_type: r.try_get::<Option<String>, _>("risk_type").ok().flatten(),
+            hazard_factor: r.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            likelihood: r.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
+            severity: r.try_get::<Option<i32>, _>("severity").ok().flatten(),
+            risk_level: r.try_get::<Option<String>, _>("risk_level").ok().flatten(),
+            control_measures: r.try_get::<Option<String>, _>("control_measures").ok().flatten(),
+            status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            tenant_id: uuid::Uuid::nil(),
+        })
+        .collect();
+
+    Json(ApiResponse::success(risks, "获取风险列表成功"))
+}
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:risk:write"])),
@@ -89,43 +175,112 @@ pub async fn list_risks(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_risk(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {{
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    }} else {{
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }};
+    let rls_tenant = if claims.is_superuser {{
+        uuid::Uuid::nil()
+    }} else {{
+        tenant_id
+    }};
     tracing::debug!("Creating risk: {:?}", req);
+
+    let risk_id = uuid::Uuid::new_v4();
+    let risk_no = format!("RSK-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let now = chrono::Utc::now().to_rfc3339();
+    let title = req.get("title").and_then(|v| v.as_str()).unwrap_or("未命名风险").to_string();
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin risk txn: {}", e);
+            return Json(ApiResponse::error(500, "创建风险失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for risk create: {}", e);
+        return Json(ApiResponse::error(500, "创建风险失败"));
+    }
+    let result = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_risks (id, risk_no, title, description, risk_type, hazard_factor,
+            likelihood, severity, risk_level, control_measures, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+            likelihood, severity, risk_level, control_measures, status, tenant_id::text AS tenant_id,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        "#,
+    )
+    .bind(risk_id)
+    .bind(&risk_no)
+    .bind(&title)
+    .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("risk_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("hazard_factor").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("likelihood").and_then(|v| v.as_i64()).map(|i| i as i32))
+    .bind(req.get("severity").and_then(|v| v.as_i64()).map(|i| i as i32))
+    .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("status").and_then(|v| v.as_str()).unwrap_or("identified").to_string())
+    .bind(tenant_id)
+    .fetch_one(&mut *txn)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create risk: {}", e);
+            return Json(ApiResponse::error(500, "创建风险失败"));
+        }
+    };
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit risk create: {}", e);
+        return Json(ApiResponse::error(500, "创建风险失败"));
+    }
+
     Json(ApiResponse::success(
         Risk {
-            id: uuid::Uuid::new_v4().to_string(),
-            risk_no: format!(
-                "RSK-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: "风险".to_string(),
-            description: None,
-            risk_type: None,
-            hazard_factor: None,
-            likelihood: Some(3),
-            severity: Some(3),
-            risk_level: Some("medium".to_string()),
-            control_measures: None,
-            status: "identified".to_string(),
-
-            tenant_id,
+            id: row.try_get::<String, _>("id").unwrap_or_default(),
+            risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
+            title: row.try_get::<String, _>("title").unwrap_or_default(),
+            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
+            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
+            severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
+            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
+            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
+            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            tenant_id: uuid::Uuid::nil(),
         },
         "风险创建成功",
     ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:risk:read"])),
@@ -138,40 +293,83 @@ pub async fn create_risk(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_risk(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {{
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    }} else {{
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }};
+    let rls_tenant = if claims.is_superuser {{
+        uuid::Uuid::nil()
+    }} else {{
+        tenant_id
+    }};
     tracing::debug!("Getting risk: {}", id);
+
+    let result = sqlx::query(
+        r#"
+        SELECT
+            id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+            likelihood, severity, risk_level, control_measures, status,
+            assessed_by, assessed_at::TEXT AS assessed_at,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        FROM ehs.qa_ehs_risks
+        WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND id = $1::uuid AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .fetch_optional(&state.pool)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to get risk: {}", e);
+            return Json(ApiResponse::error(500, "获取风险详情失败"));
+        }
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "风险不存在")),
+    };
+
     Json(ApiResponse::success(
         Risk {
-            id,
-            risk_no: "RSK-001".to_string(),
-            title: "火灾风险".to_string(),
-            description: Some("生产车间存在火灾隐患".to_string()),
-            risk_type: Some("火灾".to_string()),
-            hazard_factor: Some("易燃物品".to_string()),
-            likelihood: Some(3),
-            severity: Some(4),
-            risk_level: Some("high".to_string()),
-            control_measures: Some("配备消防器材".to_string()),
-            status: "assessed".to_string(),
-
-            tenant_id,
+            id: row.try_get::<String, _>("id").unwrap_or_default(),
+            risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
+            title: row.try_get::<String, _>("title").unwrap_or_default(),
+            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
+            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
+            severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
+            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
+            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
+            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            tenant_id: uuid::Uuid::nil(),
         },
         "获取风险成功",
     ))
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:risk:write"])),
@@ -185,41 +383,120 @@ pub async fn get_risk(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_risk(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {{
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    }} else {{
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }};
+    let rls_tenant = if claims.is_superuser {{
+        uuid::Uuid::nil()
+    }} else {{
+        tenant_id
+    }};
     tracing::debug!("Updating risk {}: {:?}", id, req);
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin risk txn: {}", e);
+            return Json(ApiResponse::error(500, "风险操作失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for risk op: {}", e);
+        return Json(ApiResponse::error(500, "风险操作失败"));
+    }
+    let result = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_risks SET
+            title = COALESCE($3, title),
+            description = COALESCE($4, description),
+            risk_type = COALESCE($5, risk_type),
+            hazard_factor = COALESCE($6, hazard_factor),
+            likelihood = COALESCE($7, likelihood),
+            severity = COALESCE($8, severity),
+            risk_level = COALESCE($9, risk_level),
+            control_measures = COALESCE($10, control_measures),
+            status = COALESCE($11, status),
+            updated_at = NOW()
+        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
+        RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+            likelihood, severity, risk_level, control_measures, status,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        "#,
+    )
+    .bind(&tenant_bind)
+    .bind(&id)
+    .bind(req.get("title").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("risk_type").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("hazard_factor").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("likelihood").and_then(|v| v.as_i64()).map(|i| i as i32))
+    .bind(req.get("severity").and_then(|v| v.as_i64()).map(|i| i as i32))
+    .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .fetch_optional(&mut *txn)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to update risk: {}", e);
+            return Json(ApiResponse::error(500, "更新风险失败"));
+        }
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "风险不存在或无权访问")),
+    };
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit risk update: {}", e);
+        return Json(ApiResponse::error(500, "更新风险失败"));
+    }
+
     Json(ApiResponse::success(
         Risk {
-            id,
-            risk_no: "RSK-001".to_string(),
-            title: "火灾风险".to_string(),
-            description: Some("生产车间存在火灾隐患".to_string()),
-            risk_type: Some("火灾".to_string()),
-            hazard_factor: Some("易燃物品".to_string()),
-            likelihood: Some(3),
-            severity: Some(4),
-            risk_level: Some("high".to_string()),
-            control_measures: Some("配备消防器材".to_string()),
-            status: "assessed".to_string(),
-
-            tenant_id,
+            id: row.try_get::<String, _>("id").unwrap_or_default(),
+            risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
+            title: row.try_get::<String, _>("title").unwrap_or_default(),
+            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
+            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
+            severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
+            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
+            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
+            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            tenant_id: uuid::Uuid::nil(),
         },
         "风险更新成功",
     ))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:risk:write"])),
@@ -233,41 +510,117 @@ pub async fn update_risk(
     responses((status = 200, description = "OK")),
 )]
 pub async fn assess_risk(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
+    let tenant_id = if claims.is_superuser {{
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    }} else {{
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }};
+    let rls_tenant = if claims.is_superuser {{
+        uuid::Uuid::nil()
+    }} else {{
+        tenant_id
+    }};
     tracing::debug!("Assessing risk {}: {:?}", id, req);
+    let assessed_by = claims.username.clone();
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin risk txn: {}", e);
+            return Json(ApiResponse::error(500, "风险操作失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for risk op: {}", e);
+        return Json(ApiResponse::error(500, "风险操作失败"));
+    }
+    let result = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_risks SET
+            likelihood = COALESCE($3, likelihood),
+            severity = COALESCE($4, severity),
+            risk_level = COALESCE($5, risk_level),
+            control_measures = COALESCE($6, control_measures),
+            status = COALESCE($7, status),
+            assessed_by = $8,
+            assessed_at = NOW(),
+            updated_at = NOW()
+        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
+        RETURNING id::text AS id, risk_no, title, description, risk_type, hazard_factor,
+            likelihood, severity, risk_level, control_measures, status,
+            assessed_by, assessed_at::TEXT AS assessed_at,
+            created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
+        "#,
+    )
+    .bind(&tenant_bind)
+    .bind(&id)
+    .bind(req.get("likelihood").and_then(|v| v.as_i64()).map(|i| i as i32))
+    .bind(req.get("severity").and_then(|v| v.as_i64()).map(|i| i as i32))
+    .bind(req.get("risk_level").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("control_measures").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(req.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()))
+    .bind(assessed_by)
+    .fetch_optional(&mut *txn)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to assess risk: {}", e);
+            return Json(ApiResponse::error(500, "风险评估失败"));
+        }
+    };
+    let row = match row {
+        Some(r) => r,
+        None => return Json(ApiResponse::error(404, "风险不存在或无权访问")),
+    };
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit risk assess: {}", e);
+        return Json(ApiResponse::error(500, "风险评估失败"));
+    }
+
     Json(ApiResponse::success(
         Risk {
-            id,
-            risk_no: "RSK-001".to_string(),
-            title: "火灾风险".to_string(),
-            description: Some("生产车间存在火灾隐患".to_string()),
-            risk_type: Some("火灾".to_string()),
-            hazard_factor: Some("易燃物品".to_string()),
-            likelihood: Some(3),
-            severity: Some(4),
-            risk_level: Some("high".to_string()),
-            control_measures: Some("配备消防器材".to_string()),
-            status: "controlled".to_string(),
-
-            tenant_id,
+            id: row.try_get::<String, _>("id").unwrap_or_default(),
+            risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
+            title: row.try_get::<String, _>("title").unwrap_or_default(),
+            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
+            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
+            severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
+            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
+            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
+            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            tenant_id: uuid::Uuid::nil(),
         },
         "风险评估成功",
     ))
 }
-
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:risk:write"])),
@@ -280,15 +633,79 @@ pub async fn assess_risk(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_risk(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+        let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
+    let tenant_id = if claims.is_superuser {{
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    }} else {{
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }};
+    let rls_tenant = if claims.is_superuser {{
+        uuid::Uuid::nil()
+    }} else {{
+        tenant_id
+    }};
     tracing::debug!("Deleting risk: {}", id);
+
+    let mut txn = match state.pool.begin().await {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("Failed to begin risk txn: {}", e);
+            return Json(ApiResponse::error(500, "风险操作失败"));
+        }
+    };
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(rls_tenant.to_string())
+        .execute(&mut *txn)
+        .await
+    {
+        tracing::error!("Failed to set RLS context for risk op: {}", e);
+        return Json(ApiResponse::error(500, "风险操作失败"));
+    }
+    let result = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_risks SET deleted_at = NOW(), updated_at = NOW()
+        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND id = $2::uuid AND deleted_at IS NULL
+        RETURNING id
+        "#,
+    )
+    .bind(&tenant_bind)
+    .bind(&id)
+    .fetch_optional(&mut *txn)
+    .await;
+
+    match result {
+        Ok(Some(_)) => {}
+        Ok(None) => return Json(ApiResponse::error(404, "风险不存在或无权访问")),
+        Err(e) => {
+            tracing::error!("Failed to delete risk: {}", e);
+            return Json(ApiResponse::error(500, "删除风险失败"));
+        }
+    }
+    if let Err(e) = txn.commit().await {
+        tracing::error!("Failed to commit risk delete: {}", e);
+        return Json(ApiResponse::error(500, "删除风险失败"));
+    }
+
     Json(ApiResponse::success((), "风险删除成功"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
