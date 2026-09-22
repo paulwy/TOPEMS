@@ -577,7 +577,7 @@ pub async fn get_production_schedule(
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: Some(r.work_station_name.unwrap_or_default()),
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_id: Some(r.equipment_id),
                 equipment_name: Some(r.equipment_name.unwrap_or_default()),
                 process_id: r.process_id,
                 process_name: Some(r.process_name.unwrap_or_default()),
@@ -589,8 +589,8 @@ pub async fn get_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -687,7 +687,7 @@ pub async fn update_production_schedule(
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: None,
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_id: Some(r.equipment_id),
                 equipment_name: None,
                 process_id: r.process_id,
                 process_name: None,
@@ -699,8 +699,8 @@ pub async fn update_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
