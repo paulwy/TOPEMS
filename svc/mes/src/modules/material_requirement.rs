@@ -655,7 +655,7 @@ pub async fn calculate_requirements(
     match bom_items_result {
         Ok(items) => {
             for item in items {
-                let required_quantity_bd = item.quantity * BigDecimal::from(order.quantity);
+                let required_quantity_bd = item.quantity * BigDecimal::from(order.quantity.clone());
                 let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
                 let now_str = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
