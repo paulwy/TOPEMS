@@ -11,7 +11,7 @@ use crate::models::supplier_admission::{
     AuditRequest, CreateSupplierAdmissionRequest, SupplierAdmission, SupplierAdmissionQueryParams,
     UpdateSupplierAdmissionRequest,
 };
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -51,23 +51,26 @@ pub async fn list_admissions(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let admissions = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL"
+        "SELECT COUNT(*) FROM scm.supplier_admissions WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -103,6 +106,7 @@ pub async fn create_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
         only_own_schema_query!("scm", r#"
@@ -111,8 +115,8 @@ pub async fn create_admission(
             contact_phone, contact_email, address, business_license,
             tax_registration, organization_code, legal_representative,
             registered_capital, established_date, business_scope,
-            supplier_category, applicant, remarks, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 'draft')
+            supplier_category, applicant, remarks, status, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::date, $14, $15, $16, $17, 'draft', $18)
         RETURNING *
         "#),
     )
@@ -133,6 +137,7 @@ pub async fn create_admission(
     .bind(&data.supplier_category)
     .bind(&data.applicant)
     .bind(&data.remarks)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -167,6 +172,7 @@ pub async fn get_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -174,9 +180,10 @@ pub async fn get_admission(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, supplier_id, supplier_name, admission_type, status, review_result, reviewed_by, reviewed_at, created_by, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL"),
+        only_own_schema_query!("scm", "SELECT id, admission_no, supplier_name, short_name, contact_person, contact_phone, contact_email, address, business_license, tax_registration, organization_code, legal_representative, registered_capital, established_date, business_scope, supplier_category, risk_level, status, approval_status, approver, approved_at, applicant, application_date, remarks, created_at, updated_at, deleted_at FROM scm.supplier_admissions WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
     )
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -205,6 +212,7 @@ pub async fn update_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -226,13 +234,14 @@ pub async fn update_admission(
             organization_code = COALESCE($9, organization_code),
             legal_representative = COALESCE($10, legal_representative),
             registered_capital = COALESCE($11, registered_capital),
-            established_date = COALESCE($12, established_date),
+            established_date = COALESCE($12::date, established_date),
             business_scope = COALESCE($13, business_scope),
             supplier_category = COALESCE($14, supplier_category),
             risk_level = COALESCE($15, risk_level),
             status = COALESCE($16, status),
             remarks = COALESCE($17, remarks)
         WHERE id = $18 AND deleted_at IS NULL
+          AND ($19 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $19)
         RETURNING *
         "#
     ))
@@ -254,6 +263,7 @@ pub async fn update_admission(
     .bind(&data.status)
     .bind(&data.remarks)
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -289,6 +299,7 @@ pub async fn delete_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -296,14 +307,21 @@ pub async fn delete_admission(
     };
 
     let result = sqlx::query(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
     )
     .bind(admission_id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除供应商准入成功"))
         }
         Ok(_) => Json(api_error(404, "供应商准入不存在")),
@@ -329,6 +347,7 @@ pub async fn submit_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -341,10 +360,11 @@ pub async fn submit_admission(
         .map(|s| s.to_string());
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING *"),
     )
     .bind(remarks)
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -381,6 +401,7 @@ pub async fn approve_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -399,12 +420,14 @@ pub async fn approve_admission(
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING *
         "#
     ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -441,6 +464,7 @@ pub async fn reject_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -459,12 +483,14 @@ pub async fn reject_admission(
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
         WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING *
         "#
     ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -501,6 +527,7 @@ pub async fn audit_admission(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -512,8 +539,8 @@ pub async fn audit_admission(
             "scm",
             r#"
             INSERT INTO scm.supplier_admission_audit_items (
-                admission_id, audit_item, audit_result, auditor, remarks
-            ) VALUES ($1, $2, $3, $4, $5)
+                admission_id, audit_item, audit_result, auditor, remarks, tenant_id
+            ) VALUES ($1, $2, $3, $4, $5, $6)
             "#
         ))
         .bind(admission_id)
@@ -521,6 +548,7 @@ pub async fn audit_admission(
         .bind(&item.audit_result)
         .bind(&claims.sub)
         .bind(&item.remarks)
+        .bind(tenant_bind)
         .execute(&mut **txn)
         .await;
     }
@@ -536,6 +564,7 @@ pub async fn audit_admission(
             status = $1, approval_status = $2, 
             approver = $3, approved_at = NOW()
         WHERE id = $4 AND deleted_at IS NULL 
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         RETURNING *
         "#
     ))
@@ -543,6 +572,7 @@ pub async fn audit_admission(
     .bind(approval_status)
     .bind(&claims.sub)
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -578,6 +608,7 @@ pub async fn activate_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -585,9 +616,10 @@ pub async fn activate_supplier(
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
-        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.supplier_admissions SET status = 'active' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) RETURNING *"),
     )
     .bind(admission_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
