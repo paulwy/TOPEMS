@@ -835,7 +835,7 @@ pub async fn add_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (Some(String::new()), String::new()),
             };
 
             Json(ApiResponse::success(
@@ -961,7 +961,7 @@ pub async fn update_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (Some(String::new()), String::new()),
             };
 
             Json(ApiResponse::success(
