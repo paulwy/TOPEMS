@@ -352,7 +352,7 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.to_string(),
+                standard_id: v.standard_id.map(|id| id.to_string()),
                 item_name: v.item_name,
                 lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                 upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -374,7 +374,7 @@ pub async fn get_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -491,7 +491,7 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
+                        standard_id: r.standard_id.map(|id| id.to_string()),
                         item_name: r.item_name,
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
@@ -521,7 +521,7 @@ pub async fn create_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -674,7 +674,7 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
+                        standard_id: r.standard_id.map(|id| id.to_string()),
                         item_name: r.item_name,
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
@@ -708,7 +708,7 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.to_string(),
+                    standard_id: v.standard_id.map(|id| id.to_string()),
                     item_name: v.item_name,
                     lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                     upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -732,7 +732,7 @@ pub async fn update_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
