@@ -649,7 +649,7 @@ pub async fn get_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
+                    route_id: s.route_id.unwrap_or_default().to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
@@ -745,7 +745,7 @@ pub async fn add_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
+                    route_id: s.route_id.unwrap_or_default().to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name,
                     process_code,
@@ -830,7 +830,7 @@ pub async fn update_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
+                    route_id: s.route_id.unwrap_or_default().to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name,
                     process_code,
@@ -971,7 +971,7 @@ pub async fn reorder_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
+                    route_id: s.route_id.unwrap_or_default().to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
