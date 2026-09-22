@@ -1216,7 +1216,7 @@ pub async fn list_inspections(
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                     inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date,
+                    inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1232,10 +1232,10 @@ pub async fn list_inspections(
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r.items,
+                    items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: naive_to_utc(r.created_at).to_rfc3339(),
+                    created_at: naive_to_utc(Some(r.created_at)).to_rfc3339(),
                 })
                 .collect();
 
@@ -1346,7 +1346,7 @@ pub async fn create_inspection(
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                 inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date,
+                inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1362,10 +1362,10 @@ pub async fn create_inspection(
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r.items,
+                items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: naive_to_utc(r.created_at).to_rfc3339(),
+                created_at: naive_to_utc(Some(r.created_at)).to_rfc3339(),
             },
             "创建点检记录成功",
         )),
