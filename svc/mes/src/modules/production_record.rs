@@ -332,13 +332,13 @@ pub async fn create_record(
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
         start_time: result.start_time,
-        end_time: result.end_time,
-        quantity_produced: result.quantity_produced as f64,
+        end_time: result.end_time.map(|d| d.and_utc()),
+        quantity_produced: result.quantity_produced.unwrap_or_default(),
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.and_utc(),
+        updated_at: result.updated_at.and_utc(),
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))

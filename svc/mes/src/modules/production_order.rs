@@ -1024,7 +1024,7 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.date_naive(),
+        now.naive_utc(),
         now.naive_utc(),
     )
     .fetch_optional(&state.pool)
@@ -1114,7 +1114,7 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.date_naive(),
+        now.naive_utc(),
         now.naive_utc(),
     )
     .fetch_optional(&state.pool)
