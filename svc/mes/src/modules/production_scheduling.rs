@@ -448,7 +448,7 @@ pub async fn create_production_schedule(
         "#,
         schedule_no,
         req.order_id,
-        order_no_arg: order_no_arg.as_deref(),
+        order_no_arg.as_deref(),
         req.product_id,
         req.product_name,
         req.product_code,
