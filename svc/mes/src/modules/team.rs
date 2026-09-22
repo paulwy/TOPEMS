@@ -339,7 +339,7 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(r.created_at),
+                created_at: datetime_to_string(r.created_at.naive_utc()),
                 updated_at: datetime_to_string(r.updated_at),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
@@ -507,7 +507,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now().naive_utc(),
+        Utc::now(),
         tenant_opt,
     )
     .fetch_optional(&state.pool)
@@ -535,7 +535,7 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(r.created_at),
+                created_at: datetime_to_string(r.created_at.naive_utc()),
                 updated_at: datetime_to_string(r.updated_at),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
@@ -747,7 +747,7 @@ pub async fn remove_team_member(
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now().naive_utc(),
+            Utc::now(),
         )
         .execute(&state.pool)
         .await;
