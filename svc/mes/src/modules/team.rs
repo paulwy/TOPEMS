@@ -195,7 +195,7 @@ pub async fn list_teams(
             t.created_at, t.updated_at,
             COALESCE(ws.station_name, '') as work_station_name
         FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id AND ws.tenant_id = t.tenant_id
+        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         {}
         ORDER BY t.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -307,7 +307,7 @@ pub async fn get_team(
             t.created_at, t.updated_at,
             ws.station_name as work_station_name
         FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id AND ws.tenant_id = t.tenant_id
+        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
           AND ($2::uuid IS NULL OR t.tenant_id = $2)
         "#,
@@ -333,7 +333,7 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: Some(r.work_station_name).filter(|s| !s.is_empty()),
+                work_station_name: r.work_station_name.filter(|s| !s.is_empty()),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
@@ -392,7 +392,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now.naive_utc(),
+        now,
         new_tenant,
     )
     .fetch_one(&state.pool)
@@ -415,11 +415,11 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                member.employee_id.parse().unwrap_or_default(),
+                member.employee_id.as_deref().and_then(|s| s.parse().ok()).unwrap_or_default(),
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -432,7 +432,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now.naive_utc(),
+            now,
         )
         .execute(&state.pool)
         .await;
@@ -668,7 +668,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -688,7 +688,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .execute(&state.pool)
     .await;
