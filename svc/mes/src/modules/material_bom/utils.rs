@@ -15,7 +15,7 @@ pub(crate) fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
 }
 
 pub(crate) fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
-    dt.map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
+    opt_naive_to_utc(dt).map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
 }
 
 pub(crate) fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
