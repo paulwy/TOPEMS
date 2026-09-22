@@ -224,7 +224,7 @@ pub async fn forward_traceability(
         node_type: "finished_product".to_string(),
         name: format!("{} 成品", order.product_name.clone()),
         code: order.order_no.clone().unwrap_or_default(),
-        quantity: order.completed_quantity.map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
+        quantity: order.completed_quantity.clone().map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
         batch_no: Some(format!("BATCH{}", order.order_no.unwrap_or_default())),
         status: Some(order.status.clone().unwrap_or_default()),
@@ -239,7 +239,7 @@ pub async fn forward_traceability(
         from_id: prev_node_id.clone(),
         to_id: finished_node_id.clone(),
         link_type: "completion".to_string(),
-        quantity: order.completed_quantity.map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
+        quantity: order.completed_quantity.clone().map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
     });
 
     Json(ApiResponse::success(
