@@ -54,6 +54,12 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
                 error!("Failed to set search path: {}", e);
                 e
             })?;
+            if let Ok(sp) = sqlx::query_scalar::<_, String>("SHOW search_path")
+                .fetch_one(&mut *conn)
+                .await
+            {
+                debug!("after_connect: verified search_path = {}", sp);
+            }
             if let Some(t) = default_tenant {
                 debug!("after_connect: setting default tenant context to {}", t);
                 if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")

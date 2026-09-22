@@ -297,7 +297,7 @@ pub async fn list_materials(
             max_stock::float8 AS max_stock, min_stock::float8 AS min_stock, current_stock::float8 AS current_stock,
             safety_data_sheet, emergency_measures, supplier, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at
-        FROM qa_ehs_hazardous_materials
+        FROM ehs.qa_ehs_hazardous_materials
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 200
@@ -445,7 +445,7 @@ pub async fn get_material(
             max_stock::float8 AS max_stock, min_stock::float8 AS min_stock, current_stock::float8 AS current_stock,
             safety_data_sheet, emergency_measures, supplier, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at
-        FROM qa_ehs_hazardous_materials
+        FROM ehs.qa_ehs_hazardous_materials
         WHERE id = $1::uuid AND deleted_at IS NULL
         "#,
     )

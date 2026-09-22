@@ -347,7 +347,7 @@ pub async fn list_hazard_factors(
             sources::text AS sources, affected_positions::text AS affected_positions,
             affected_count, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at
-        FROM qa_ehs_hazard_factors
+        FROM ehs.qa_ehs_hazard_factors
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 200
@@ -483,7 +483,7 @@ pub async fn get_hazard_factor(
             sources::text AS sources, affected_positions::text AS affected_positions,
             affected_count, status, remarks,
             created_at::text AS created_at, updated_at::text AS updated_at
-        FROM qa_ehs_hazard_factors
+        FROM ehs.qa_ehs_hazard_factors
         WHERE id = $1::uuid AND deleted_at IS NULL
         "#,
     )

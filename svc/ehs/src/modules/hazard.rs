@@ -188,8 +188,18 @@ pub async fn list_hazards(
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE deleted_at IS NULL");
+    let tenant_bind: String = if claims.is_superuser {
+        uuid::Uuid::nil().to_string()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+            .to_string()
+    };
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(" WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL");
 
     if let Some(status) = &query.status {
         where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
@@ -217,7 +227,7 @@ pub async fn list_hazards(
             reported_at::TEXT AS reported_at, status,
             inspection_id::text AS inspection_id,
             created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
-        FROM qa_ehs_hazards
+        FROM ehs.qa_ehs_hazards
         {where_clause}
         ORDER BY created_at DESC
         LIMIT {page_size} OFFSET {offset}
@@ -422,7 +432,7 @@ pub async fn get_hazard(
             reported_at::TEXT AS reported_at, status,
             inspection_id::text AS inspection_id,
             created_at::TEXT AS created_at, updated_at::TEXT AS updated_at
-        FROM qa_ehs_hazards
+        FROM ehs.qa_ehs_hazards
         WHERE id = $1::uuid AND deleted_at IS NULL
         "#,
     )

@@ -38,7 +38,7 @@ pub async fn get_dashboard(
     let pool = &state.pool;
 
     // --- 事故统计 ---
-    let total_accidents: i64 = sqlx::query("SELECT COUNT(*) FROM qa_ehs_accidents")
+    let total_accidents: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents")
         .fetch_one(pool)
         .await
         .ok()
@@ -46,7 +46,7 @@ pub async fn get_dashboard(
         .unwrap_or(0);
 
     let reported_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_accidents WHERE status = 'reported'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'reported'")
             .fetch_one(pool)
             .await
             .ok()
@@ -54,7 +54,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let investigating_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_accidents WHERE status = 'investigating'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'investigating'")
             .fetch_one(pool)
             .await
             .ok()
@@ -62,7 +62,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let treating_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_accidents WHERE status = 'treating'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'treating'")
             .fetch_one(pool)
             .await
             .ok()
@@ -70,7 +70,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let closed_accidents: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_accidents WHERE status = 'closed'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_accidents WHERE status = 'closed'")
             .fetch_one(pool)
             .await
             .ok()
@@ -79,7 +79,7 @@ pub async fn get_dashboard(
 
     // --- 隐患统计 ---
     let pending_hazards: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_hazards WHERE status != 'closed'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_hazards WHERE status != 'closed'")
             .fetch_one(pool)
             .await
             .ok()
@@ -88,7 +88,7 @@ pub async fn get_dashboard(
 
     // 隐患按类别分组
     let hazard_rows = sqlx::query(
-        "SELECT COALESCE(category, '未分类') AS cat, COUNT(*) AS cnt FROM qa_ehs_hazards GROUP BY category ORDER BY cnt DESC LIMIT 10",
+        "SELECT COALESCE(category, '未分类') AS cat, COUNT(*) AS cnt FROM ehs.qa_ehs_hazards GROUP BY category ORDER BY cnt DESC LIMIT 10",
     )
     .fetch_all(pool)
     .await
@@ -108,7 +108,7 @@ pub async fn get_dashboard(
         .unwrap_or_default();
 
     // --- 培训统计 ---
-    let total_trainings: i64 = sqlx::query("SELECT COUNT(*) FROM qa_ehs_trainings")
+    let total_trainings: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings")
         .fetch_one(pool)
         .await
         .ok()
@@ -116,7 +116,7 @@ pub async fn get_dashboard(
         .unwrap_or(0);
 
     let completed_trainings: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_trainings WHERE status = 'completed'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE status = 'completed'")
             .fetch_one(pool)
             .await
             .ok()
@@ -124,7 +124,7 @@ pub async fn get_dashboard(
             .unwrap_or(0);
 
     let scheduled_trainings: i64 =
-        sqlx::query("SELECT COUNT(*) FROM qa_ehs_trainings WHERE status = 'scheduled'")
+        sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_trainings WHERE status = 'scheduled'")
             .fetch_one(pool)
             .await
             .ok()
@@ -138,7 +138,7 @@ pub async fn get_dashboard(
     };
 
     // --- 应急演练统计 ---
-    let drill_count: i64 = sqlx::query("SELECT COUNT(*) FROM qa_ehs_drill_records")
+    let drill_count: i64 = sqlx::query("SELECT COUNT(*) FROM ehs.qa_ehs_drill_records")
         .fetch_one(pool)
         .await
         .ok()
