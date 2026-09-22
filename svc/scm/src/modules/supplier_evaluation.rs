@@ -14,7 +14,7 @@ use crate::models::supplier_evaluation::{
     CreateSupplierEvaluationRequest, SupplierEvaluation, UpdateSupplierEvaluationRequest,
 };
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -59,15 +59,17 @@ pub async fn list_evaluations(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
-        SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
+        SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
         FROM scm.supplier_evaluations
         WHERE ($1::uuid IS NULL OR supplier_id = $1)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         ORDER BY evaluation_date DESC
         LIMIT $2 OFFSET $3
         "#),
@@ -75,6 +77,7 @@ pub async fn list_evaluations(
     .bind(params.supplier_id)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -85,9 +88,11 @@ pub async fn list_evaluations(
                 r#"
                 SELECT COUNT(*) FROM scm.supplier_evaluations
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR supplier_id = $1)
+                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
                 "#
             ))
             .bind(params.supplier_id)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -131,18 +136,21 @@ pub async fn create_evaluation(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
+    let evaluation_no = format!("EVAL-{}", &id.simple().to_string()[..12]);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
-        INSERT INTO scm.supplier_evaluations (id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
+        INSERT INTO scm.supplier_evaluations (id, evaluation_no, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5::numeric, $6::numeric, $7::numeric, $8::numeric, $9::numeric, $10, $11, $12, $13, $14)
+        RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
         "#),
     )
     .bind(id)
+    .bind(&evaluation_no)
     .bind(req.supplier_id)
     .bind(req.evaluation_date)
     .bind(req.quality_score)
@@ -154,6 +162,7 @@ pub async fn create_evaluation(
     .bind(&req.evaluator)
     .bind(now)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -181,6 +190,15 @@ pub async fn create_evaluation(
     } else {
         None
     };
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("rls commit failed: {}", e);
+                return Json(ApiResponse::error(500, "提交事务失败"));
+            }
+        }
+    }
 
     log_audit_event(
         &state.db,
@@ -221,13 +239,15 @@ pub async fn get_evaluation(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
-        SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
-        FROM scm.supplier_evaluations WHERE id = $1
+        SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
+        FROM scm.supplier_evaluations WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#),
     )
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -263,12 +283,14 @@ pub async fn update_evaluation(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        only_own_schema_query!("scm", "SELECT id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("scm", "SELECT id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at FROM scm.supplier_evaluations WHERE deleted_at IS NULL AND id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
     )
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -290,9 +312,9 @@ pub async fn update_evaluation(
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         only_own_schema_query!("scm", r#"
         UPDATE scm.supplier_evaluations SET
-            quality_score = $2, delivery_score = $3, service_score = $4, price_score = $5, overall_score = $6, comments = $7, evaluator = $8, updated_at = $9
-        WHERE id = $1
-        RETURNING id, supplier_id, evaluation_date, quality_score, delivery_score, service_score, price_score, overall_score, comments, evaluator, created_at, updated_at
+            quality_score = $2::numeric, delivery_score = $3::numeric, service_score = $4::numeric, price_score = $5::numeric, overall_score = $6::numeric, comments = $7, evaluator = $8, updated_at = $9
+        WHERE id = $1 AND ($10 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $10)
+        RETURNING id, supplier_id, evaluation_date, quality_score::float8, delivery_score::float8, service_score::float8, price_score::float8, overall_score::float8, comments, evaluator, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -304,6 +326,7 @@ pub async fn update_evaluation(
     .bind(&comments)
     .bind(&evaluator)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -331,6 +354,15 @@ pub async fn update_evaluation(
     } else {
         None
     };
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("rls commit failed: {}", e);
+                return Json(ApiResponse::error(500, "提交事务失败"));
+            }
+        }
+    }
 
     log_audit_event(
         &state.db,
@@ -372,11 +404,13 @@ pub async fn delete_evaluation(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE scm.supplier_evaluations SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
@@ -406,6 +440,15 @@ pub async fn delete_evaluation(
     } else {
         None
     };
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("rls commit failed: {}", e);
+                return Json(ApiResponse::error(500, "提交事务失败"));
+            }
+        }
+    }
 
     log_audit_event(
         &state.db,
