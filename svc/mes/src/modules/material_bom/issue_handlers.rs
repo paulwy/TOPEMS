@@ -66,7 +66,7 @@ pub async fn create_material_issue(
         "#,
         issue_no,
         req.order_id,
-        order_no_arg.as_deref(),
+        order_no_arg.flatten().as_deref(),
         req.bom_id,
         req.warehouse_id,
         req.operator_id,
