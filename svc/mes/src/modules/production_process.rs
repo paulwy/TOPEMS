@@ -101,8 +101,8 @@ impl From<ProductionProcessRow> for ProductionProcessResponse {
             sequence: r.sequence.unwrap_or_default(),
             equipment_required: false,
             estimated_duration: 0,
-            created_at: r.created_at.and_utc(),
-            updated_at: r.updated_at.and_utc(),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         }
     }
 }
@@ -512,8 +512,8 @@ pub async fn deactivate_process(
                 sequence: r.sequence.unwrap_or_default(),
                 equipment_required: false,
                 estimated_duration: 0,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }
