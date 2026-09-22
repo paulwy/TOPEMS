@@ -9,7 +9,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -45,6 +45,7 @@ pub async fn overview(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(30);
@@ -68,10 +69,12 @@ pub async fn overview(
         FROM scm.purchase_orders
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
+          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         "#
     ))
     .bind(&start_date)
     .bind(&end_date)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -79,8 +82,10 @@ pub async fn overview(
         "scm",
         r#"
         SELECT COUNT(*) FROM scm.suppliers WHERE status = 'active'
+          AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
         "#
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -93,9 +98,11 @@ pub async fn overview(
             COUNT(*) FILTER (WHERE available_quantity < COALESCE(min_quantity, 0)) as low_stock_count
         FROM scm.wms_inventory_snapshots
         WHERE ($1::uuid IS NULL OR warehouse_id = $1)
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#),
     )
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -111,12 +118,14 @@ pub async fn overview(
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
         "#
     ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -132,12 +141,14 @@ pub async fn overview(
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
         "#
     ))
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -211,6 +222,7 @@ pub async fn purchase_inbound_outbound_stats(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -230,12 +242,14 @@ pub async fn purchase_inbound_outbound_stats(
         FROM scm.purchase_orders
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
+          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
         "#
     ))
     .bind(&start_date)
     .bind(&end_date)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -250,6 +264,7 @@ pub async fn purchase_inbound_outbound_stats(
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
@@ -258,6 +273,7 @@ pub async fn purchase_inbound_outbound_stats(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -272,6 +288,7 @@ pub async fn purchase_inbound_outbound_stats(
         WHERE created_at >= $1::timestamptz
           AND created_at <= $2::timestamptz
           AND ($3::uuid IS NULL OR warehouse_id = $3)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
           AND deleted_at IS NULL
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date
@@ -280,6 +297,7 @@ pub async fn purchase_inbound_outbound_stats(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -360,6 +378,7 @@ pub async fn supplier_performance(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -411,14 +430,17 @@ pub async fn supplier_performance(
             ON po.supplier_id = s.id
             AND po.created_at >= $1::timestamptz
             AND po.created_at <= $2::timestamptz
+            AND ($3 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $3)
         LEFT JOIN (
             SELECT supplier_id, MAX(total_score) as total_score
             FROM scm.supplier_evaluations
             WHERE created_at >= $1::timestamptz
               AND created_at <= $2::timestamptz
+              AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
             GROUP BY supplier_id
         ) se ON s.id = se.supplier_id
         WHERE s.status = 'active'
+          AND ($3 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $3)
         GROUP BY s.id, s.name, s.code, s.category, se.total_score, s.level
         ORDER BY overall_score DESC
         LIMIT 10
@@ -426,6 +448,7 @@ pub async fn supplier_performance(
     ))
     .bind(&start_date)
     .bind(&end_date)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -465,7 +488,9 @@ pub async fn supplier_performance(
                         ON po.supplier_id = s.id
                         AND po.created_at >= $1::timestamptz
                         AND po.created_at <= $2::timestamptz
+                        AND ($3 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $3)
                     WHERE s.status = 'active'
+                      AND ($3 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $3)
                     GROUP BY s.category, s.id
                 ) sub
                 GROUP BY category
@@ -474,6 +499,7 @@ pub async fn supplier_performance(
             ))
             .bind(&start_date)
             .bind(&end_date)
+            .bind(tenant_bind)
             .fetch_all(&mut **txn)
             .await;
 
@@ -527,11 +553,14 @@ pub async fn real_time_status(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let pending_purchase = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.purchase_orders WHERE status = 'pending'"
+        "SELECT COUNT(*) FROM scm.purchase_orders WHERE status = 'pending'
+          AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -542,10 +571,12 @@ pub async fn real_time_status(
         SELECT COUNT(*) FROM scm.wms_inbound_order_snapshots 
         WHERE status = 'pending'
           AND ($1::uuid IS NULL OR warehouse_id = $1)
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
           AND deleted_at IS NULL
         "#
     ))
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -556,10 +587,12 @@ pub async fn real_time_status(
         SELECT COUNT(*) FROM scm.wms_outbound_order_snapshots 
         WHERE status = 'pending'
           AND ($1::uuid IS NULL OR warehouse_id = $1)
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
           AND deleted_at IS NULL
         "#
     ))
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -570,17 +603,21 @@ pub async fn real_time_status(
         SELECT COUNT(*) FROM scm.wms_inventory_snapshots
         WHERE available_quantity < COALESCE(min_quantity, 0)
           AND ($1::uuid IS NULL OR warehouse_id = $1)
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let pending_inspection = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.incoming_inspections WHERE status = 'pending'"
+        "SELECT COUNT(*) FROM scm.incoming_inspections WHERE status = 'pending'
+          AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -589,16 +626,20 @@ pub async fn real_time_status(
         "scm",
         r#"
         SELECT COUNT(*) FROM scm.wms_replenishment_suggestion_snapshots WHERE status = 'draft'
+          AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
         "#
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
 
     let mrp_suggestions = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.mrp_suggestions WHERE status = 'draft'"
+        "SELECT COUNT(*) FROM scm.mrp_suggestions WHERE status = 'draft'
+          AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
