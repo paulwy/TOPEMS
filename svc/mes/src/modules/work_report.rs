@@ -137,7 +137,7 @@ fn datetime_to_string(dt: DateTime<Utc>) -> String {
 }
 
 fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
+    dt.map(|d| d.to_rfc3339())
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
