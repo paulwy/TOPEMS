@@ -164,7 +164,7 @@ pub async fn forward_traceability(
         quantity: Some(order.quantity as f64),
         unit: Some("件".to_string()),
         batch_no: None,
-        status: order.status.clone().unwrap_or_default(),
+        status: Some(order.status.clone().unwrap_or_default()),
         timestamp: order
             .actual_start_date
             .map(|d| Utc.from_utc_datetime(&d.and_hms_opt(0, 0, 0).unwrap_or_default())),
@@ -227,7 +227,7 @@ pub async fn forward_traceability(
         quantity: order.completed_quantity.map(|v| v as f64),
         unit: Some("件".to_string()),
         batch_no: Some(format!("BATCH{}", order.order_no)),
-        status: order.status.clone().unwrap_or_default(),
+        status: Some(order.status.clone().unwrap_or_default()),
         timestamp: order
             .actual_end_date
             .map(|d| Utc.from_utc_datetime(&d.and_hms_opt(0, 0, 0).unwrap_or_default())),
