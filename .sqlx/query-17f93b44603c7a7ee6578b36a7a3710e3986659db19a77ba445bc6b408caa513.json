@@ -1,0 +1,109 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            m.id, m.equipment_id,\n            CASE WHEN $4 = 'en' THEN COALESCE(e.equipment_name_en, e.equipment_name) ELSE e.equipment_name END as equipment_name,\n            e.equipment_code as equipment_no,\n            m.maintenance_type, m.description, m.maintainer,\n            m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,\n            m.created_at, m.updated_at\n        FROM equipment_maintenance_records m\n        LEFT JOIN equipment e ON m.equipment_id = e.id\n        WHERE ($1::uuid IS NULL OR m.equipment_id = $1)\n        ORDER BY m.created_at DESC\n        LIMIT $2 OFFSET $3\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "equipment_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "equipment_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "equipment_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "maintenance_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "maintainer",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "start_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "end_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "cost",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 10,
+        "name": "result",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 12,
+        "name": "remarks",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "17f93b44603c7a7ee6578b36a7a3710e3986659db19a77ba445bc6b408caa513"
+}

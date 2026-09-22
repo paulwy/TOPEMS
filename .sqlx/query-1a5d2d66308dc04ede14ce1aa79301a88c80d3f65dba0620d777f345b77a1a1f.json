@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT order_number AS order_no, product_code,\n        CASE WHEN $2 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,\n        quantity\n        FROM production_orders\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "order_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "product_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "product_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "quantity",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      null,
+      false
+    ]
+  },
+  "hash": "1a5d2d66308dc04ede14ce1aa79301a88c80d3f65dba0620d777f345b77a1a1f"
+}
