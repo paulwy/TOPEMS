@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
@@ -238,6 +238,7 @@ pub async fn list_suggestions(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -249,12 +250,14 @@ pub async fn list_suggestions(
         "scm",
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
-               current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
+               current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
         FROM scm.mrp_suggestions
-        WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -263,6 +266,7 @@ pub async fn list_suggestions(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -273,10 +277,12 @@ pub async fn list_suggestions(
                 SELECT COUNT(*) FROM scm.mrp_suggestions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
                 "#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -315,17 +321,19 @@ pub async fn get_suggestion(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
-               current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
+               current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
-        FROM scm.mrp_suggestions WHERE id = $1
+        FROM scm.mrp_suggestions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -357,6 +365,7 @@ pub async fn compute_mrp(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let forecast_days = req.forecast_days.unwrap_or(30);
     let safety_factor = req.safety_stock_factor.unwrap_or(1.2);
@@ -373,8 +382,9 @@ pub async fn compute_mrp(
 
     let clear_result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft'"
+        "UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .execute(&mut *tx)
     .await;
 
@@ -396,7 +406,7 @@ pub async fn compute_mrp(
          current_stock, required_quantity, suggested_quantity, 
          supplier_id, supplier_name, lead_time_days,
          suggested_order_date, suggested_delivery_date, status, source_type,
-         remarks, created_at, updated_at)
+         remarks, created_at, updated_at, tenant_id)
         SELECT 
             gen_random_uuid(),
             $1 || '_' || ROW_NUMBER() OVER (),
@@ -423,13 +433,15 @@ pub async fn compute_mrp(
             END as source_type,
             '系统自动生成' as remarks,
             $3,
-            $3
+            $3,
+            $7
         FROM scm.materials m
         LEFT JOIN (
             SELECT material_code, SUM(quantity) as total
             FROM scm.sales_order_items
             WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
               AND $4 = true
+              AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
             GROUP BY material_code
         ) sales_orders ON m.material_code = sales_orders.material_code
         LEFT JOIN (
@@ -438,11 +450,13 @@ pub async fn compute_mrp(
             WHERE forecast_date >= CURRENT_DATE 
               AND forecast_date <= CURRENT_DATE + ($5 || ' days')::INTERVAL
               AND $6 = true
+              AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
             GROUP BY material_code
         ) forecast ON m.material_code = forecast.material_code
         LEFT JOIN (
             SELECT item_code, SUM(quantity) as quantity
             FROM scm.wms_inventory_snapshots
+            WHERE ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
             GROUP BY item_code
         ) i ON m.material_code = i.item_code
         LEFT JOIN (
@@ -451,11 +465,13 @@ pub async fn compute_mrp(
             FROM scm.supplier_products sp
             JOIN scm.suppliers s ON sp.supplier_id = s.id
             WHERE s.status = 'active'
+              AND ($7 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $7)
             ORDER BY sp.material_code, sp.priority
         ) s ON m.material_code = s.material_code
         WHERE (COALESCE(sales_orders.total, 0) + COALESCE(forecast.total, 0)) > 0
+          AND ($7 = '00000000-0000-0000-0000-000000000000' OR m.tenant_id = $7)
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
-                  current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
+                  current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
                   source_type, source_order_id, remarks, created_at, updated_at
         "#),
@@ -466,6 +482,7 @@ pub async fn compute_mrp(
     .bind(include_sales)
     .bind(forecast_days)
     .bind(include_forecast)
+    .bind(tenant_bind)
     .fetch_all(&mut *tx)
     .await;
 
@@ -556,6 +573,7 @@ pub async fn confirm_suggestion(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
@@ -563,13 +581,14 @@ pub async fn confirm_suggestion(
         "scm",
         r#"
         SELECT id, suggestion_number, material_code, material_name, specification, unit,
-               current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
+               current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
-        FROM scm.mrp_suggestions WHERE id = $1
+        FROM scm.mrp_suggestions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -596,16 +615,16 @@ pub async fn confirm_suggestion(
         r#"
         UPDATE scm.mrp_suggestions SET
             status = 'confirmed',
-            suggested_quantity = $2,
+            suggested_quantity = $2::numeric,
             supplier_id = COALESCE($3, supplier_id),
             remarks = CASE 
                 WHEN remarks IS NOT NULL THEN remarks || ' | ' || $4
                 ELSE $4 
             END,
             updated_at = $5
-        WHERE id = $1
+        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
-                  current_stock, required_quantity, suggested_quantity, supplier_id, supplier_name,
+                  current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
                   source_type, source_order_id, remarks, created_at, updated_at
         "#
@@ -615,6 +634,7 @@ pub async fn confirm_suggestion(
     .bind(req.supplier_id)
     .bind(req.remarks.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -672,6 +692,7 @@ pub async fn material_requirement_summary(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -686,13 +707,15 @@ pub async fn material_requirement_summary(
             material_name,
             MAX(specification) as specification,
             MAX(unit) as unit,
-            SUM(required_quantity) as total_required,
-            MAX(current_stock) as current_stock,
-            GREATEST(0, SUM(required_quantity) - MAX(current_stock)) as shortage,
+            SUM(required_quantity)::float8 as total_required,
+            MAX(current_stock)::float8 as current_stock,
+            GREATEST(0, SUM(required_quantity)::float8 - MAX(current_stock)::float8) as shortage,
             COUNT(*) as suggestion_count,
-            SUM(suggested_quantity) as suggested_total
+            SUM(suggested_quantity)::float8 as suggested_total
         FROM scm.mrp_suggestions
-        WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+        WHERE deleted_at IS NULL
+          AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         GROUP BY material_code, material_name
         ORDER BY shortage DESC
         LIMIT $2 OFFSET $3
@@ -701,6 +724,7 @@ pub async fn material_requirement_summary(
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -711,10 +735,13 @@ pub async fn material_requirement_summary(
                 r#"
                 SELECT COUNT(DISTINCT material_code) 
                 FROM scm.mrp_suggestions
-                WHERE ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+                WHERE deleted_at IS NULL
+                  AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
+                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
                 "#
             ))
             .bind(&search_pattern)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
