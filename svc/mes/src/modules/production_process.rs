@@ -487,7 +487,7 @@ pub async fn deactivate_process(
             created_at, updated_at
         "#,
         id,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
