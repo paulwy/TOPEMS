@@ -11,6 +11,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 use crate::modules::ApiState;
+use crate::shared::permission::tenant_bind_value;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
@@ -44,9 +45,10 @@ pub struct SupplierRankingItem {
 /// 获取采购趋势（最近7天）
 pub async fn get_purchase_trend(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<PurchaseTrendItem>>> {
     tracing::info!("获取SCM采购趋势数据");
+    let tenant_bind = tenant_bind_value(&claims);
 
     let rows: Vec<(Option<String>, Option<i64>, Option<f64>)> = sqlx::query_as(
         "SELECT 
@@ -57,13 +59,15 @@ pub async fn get_purchase_trend(
              SELECT generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day')::date as date
          ) dates
          LEFT JOIN (
-             SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(total_amount), 0) as amount
+             SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(total_amount)::float8, 0) as amount
              FROM scm.purchase_orders
              WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days'
+               AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
              GROUP BY DATE(created_at)
          ) po ON dates.date = po.date
          ORDER BY dates.date"
     )
+    .bind(tenant_bind)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -83,12 +87,14 @@ pub async fn get_purchase_trend(
 /// 获取采购状态分布
 pub async fn get_purchase_status(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<PurchaseStatusItem>>> {
     tracing::info!("获取SCM采购状态分布");
+    let tenant_bind = tenant_bind_value(&claims);
 
     let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL")
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)")
+            .bind(tenant_bind)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
@@ -97,9 +103,11 @@ pub async fn get_purchase_status(
         "SELECT status, COUNT(*) as count
          FROM scm.purchase_orders
          WHERE deleted_at IS NULL
+           AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
          GROUP BY status
          ORDER BY count DESC",
     )
+    .bind(tenant_bind)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -127,24 +135,28 @@ pub async fn get_purchase_status(
 /// 获取供应商采购排名
 pub async fn get_supplier_ranking(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<SupplierRankingItem>>> {
     tracing::info!("获取SCM供应商采购排名");
+    let tenant_bind = tenant_bind_value(&claims);
 
     let locale = Locale::from_headers(&headers).as_sql();
     let rows: Vec<(Option<String>, Option<String>, Option<i64>, Option<f64>)> = sqlx::query_as(
         "SELECT po.supplier_id::text as supplier_id,
                 CASE WHEN $1 = 'en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name,
-                COUNT(*) as order_count, COALESCE(SUM(po.total_amount), 0) as total_amount
+                COUNT(*) as order_count, COALESCE(SUM(po.total_amount)::float8, 0) as total_amount
          FROM scm.purchase_orders po
          LEFT JOIN scm.suppliers s ON po.supplier_id = s.id
          WHERE po.deleted_at IS NULL AND po.supplier_id IS NOT NULL
-         GROUP BY po.supplier_id, s.name
+           AND ($2 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $2)
+           AND ($2 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $2)
+         GROUP BY po.supplier_id, s.name, s.name_en
          ORDER BY total_amount DESC
          LIMIT 10",
     )
     .bind(locale)
+    .bind(tenant_bind)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
