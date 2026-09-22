@@ -709,7 +709,7 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
@@ -842,7 +842,7 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name: process_name,
                     process_code,
                     sequence: s.sequence,
@@ -968,7 +968,7 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name: process_name,
                     process_code,
                     sequence: s.sequence,
@@ -1107,7 +1107,7 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.unwrap_or_default().to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
