@@ -407,7 +407,7 @@ pub async fn create_wip(
         "#,
         wip_no,
         req.order_id,
-        order_no_arg,
+        order_no_arg: order_no_arg.as_deref(),
         req.product_id,
         req.product_name,
         req.product_code,

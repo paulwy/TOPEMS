@@ -66,7 +66,7 @@ pub async fn create_material_return(
         "#,
         return_no,
         req.order_id,
-        order_no_arg,
+        order_no_arg: order_no_arg.as_deref(),
         req.warehouse_id,
         req.operator_id,
         req.notes,
