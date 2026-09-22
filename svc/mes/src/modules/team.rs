@@ -415,7 +415,7 @@ pub async fn create_team(
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                &member.employee_id,
+                &member.employee_id,member.employee_id.parse().unwrap_or_default(),
                 member.employee_name,
                 member.employee_code,
                 member.position,
@@ -664,7 +664,7 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        &req.employee_id,
+        &req.employee_id,req.employee_id.parse().unwrap_or_default(),
         req.employee_name,
         req.employee_code,
         req.position,
