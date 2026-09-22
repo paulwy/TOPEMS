@@ -66,7 +66,7 @@ pub async fn create_material_issue(
         "#,
         issue_no,
         req.order_id,
-        order_no_arg.flatten().as_deref(),
+        order_no_arg,
         req.bom_id,
         req.warehouse_id,
         req.operator_id,
@@ -131,8 +131,8 @@ pub async fn create_material_issue(
         operator_id: issue.operator_id.map(|u| u.to_string()),
         issue_time: opt_datetime_to_string(issue.issue_time),
         notes: issue.notes,
-        created_at: datetime_to_string(Some(issue.created_at)),
-        updated_at: datetime_to_string(Some(issue.updated_at)),
+        created_at: datetime_to_string(issue.created_at),
+        updated_at: datetime_to_string(issue.updated_at),
     };
 
     Json(ApiResponse::success(response, "物料领用单创建成功"))
@@ -348,8 +348,8 @@ pub async fn get_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": opt_datetime_to_string(issue.issue_time),
         "notes": issue.notes,
-        "created_at": datetime_to_string(Some(issue.created_at)),
-        "updated_at": datetime_to_string(Some(issue.updated_at)),
+        "created_at": datetime_to_string(issue.created_at),
+        "updated_at": datetime_to_string(issue.updated_at),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -425,8 +425,8 @@ pub async fn update_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": opt_datetime_to_string(issue.issue_time),
         "notes": issue.notes,
-        "created_at": datetime_to_string(Some(issue.created_at)),
-        "updated_at": datetime_to_string(Some(issue.updated_at)),
+        "created_at": datetime_to_string(issue.created_at),
+        "updated_at": datetime_to_string(issue.updated_at),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

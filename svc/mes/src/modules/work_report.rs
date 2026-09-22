@@ -164,7 +164,7 @@ pub struct TodayOutputQuery {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mes:production:read"])),
-    path = "/api/mes/work-reports/today-output",
+    path = "/api/mes/work-reports/today/output",
     tag = "WorkReport",
     responses(
         (status = 200, description = "今日产量", body = ApiResponse<serde_json::Value>),
@@ -468,8 +468,8 @@ pub async fn get_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.to_string(),
+                reporter_name: r.reporter_name,
+                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -477,10 +477,10 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.and_utc()),
-                updated_at: datetime_to_string(r.updated_at.and_utc()),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "获取工报成功",
         )),
@@ -666,8 +666,8 @@ pub async fn create_work_report(
                     order_no: r.order_no,
                     work_station_id: r.work_station_id.map(|u| u.to_string()),
                     work_station_name: r.work_station_name,
-                    reporter_name: r.reporter_name.unwrap_or_default(),
-                    report_date: r.report_date.to_string(),
+                    reporter_name: r.reporter_name,
+                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                     shift: r.shift,
                     output_quantity: big_decimal_to_f64(r.output_quantity),
                     defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -675,10 +675,10 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                    approved_at: opt_datetime_to_string(r.approved_at),
                     approval_remark: r.approval_remark,
-                    created_at: datetime_to_string(r.created_at.and_utc()),
-                    updated_at: datetime_to_string(r.updated_at.and_utc()),
+                    created_at: datetime_to_string(r.created_at),
+                    updated_at: datetime_to_string(r.updated_at),
                 },
                 "创建工报成功",
             ))
@@ -812,8 +812,8 @@ pub async fn update_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.to_string(),
+                reporter_name: r.reporter_name,
+                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -821,10 +821,10 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.and_utc()),
-                updated_at: datetime_to_string(r.updated_at.and_utc()),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "更新工报成功",
         )),
@@ -952,8 +952,8 @@ pub async fn approve_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.to_string(),
+                reporter_name: r.reporter_name,
+                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -961,10 +961,10 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.and_utc()),
-                updated_at: datetime_to_string(r.updated_at.and_utc()),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "审批通过成功",
         )),
@@ -1047,8 +1047,8 @@ pub async fn reject_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name.unwrap_or_default(),
-                report_date: r.report_date.to_string(),
+                reporter_name: r.reporter_name,
+                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -1056,10 +1056,10 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.and_utc()),
-                updated_at: datetime_to_string(r.updated_at.and_utc()),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "审批驳回成功",
         )),
@@ -1272,13 +1272,13 @@ mod tests {
             .unwrap()
             .and_hms_opt(3, 4, 5)
             .unwrap();
-        let s = datetime_to_string(naive_to_utc(Some(dt)));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_is_valid_rfc3339() {
-        let s = datetime_to_string(naive_to_utc(None));
+        let s = datetime_to_string(None);
         assert!(s.contains('T'), "got {}", s);
         assert!(
             s.contains("2024") || s.contains("2025") || s.contains("2026"),
@@ -1294,7 +1294,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(12, 0, 0)
             .unwrap();
-        let r = opt_datetime_to_string(Some(naive_to_utc(Some(dt))));
+        let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }

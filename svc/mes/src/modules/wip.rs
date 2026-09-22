@@ -407,7 +407,7 @@ pub async fn create_wip(
         "#,
         wip_no,
         req.order_id,
-        order_no_arg.flatten().as_deref(),
+        order_no_arg,
         req.product_id,
         req.product_name,
         req.product_code,
@@ -450,8 +450,8 @@ pub async fn create_wip(
         last_transfer_time: opt_naive_to_utc(result.last_transfer_time),
         operator: result.operator,
         notes: result.notes,
-        created_at: naive_to_utc(Some(result.created_at)),
-        updated_at: naive_to_utc(Some(result.updated_at)),
+        created_at: naive_to_utc(result.created_at),
+        updated_at: naive_to_utc(result.updated_at),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -519,17 +519,17 @@ pub async fn get_wip(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
-                current_process_name: Some(r.process_name.unwrap_or_default()),
+                current_process_name: Some(r.process_name),
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: Some(r.work_station_name.unwrap_or_default()),
+                current_work_station_name: Some(r.work_station_name),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
                 start_time: opt_naive_to_utc(r.start_time),
                 last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(Some(r.created_at)),
-                updated_at: naive_to_utc(Some(r.updated_at)),
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -616,8 +616,8 @@ pub async fn update_wip(
                 last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(Some(r.created_at)),
-                updated_at: naive_to_utc(Some(r.updated_at)),
+                created_at: naive_to_utc(r.created_at),
+                updated_at: naive_to_utc(r.updated_at),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -692,12 +692,6 @@ pub async fn transfer_wip(
         return e;
     }
 
-    let tenant_opt: Option<String> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.clone()
-    };
-
     let now = Utc::now();
     let transfer_no = format!(
         "TRF{}{:04}",
@@ -713,11 +707,10 @@ pub async fn transfer_wip(
         }
     };
 
-    let wip = sqlx::query(
-        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#,
+    let wip = sqlx::query!(
+        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1"#,
+        req.wip_id
     )
-    .bind(req.wip_id)
-    .bind(tenant_opt)
     .fetch_optional(&mut *tx)
     .await;
 
@@ -734,9 +727,7 @@ pub async fn transfer_wip(
         }
     };
 
-    let current_qty = big_decimal_to_f64(
-        wip.try_get::<Option<BigDecimal>, _>("quantity").unwrap_or_default()
-    );
+    let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
         let _ = tx.rollback().await;
         return Json(ApiResponse::error(400, "转移数量不能大于当前WIP数量"));
@@ -865,13 +856,13 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: from_process_name.unwrap_or_default(),
+        from_process_name: Some(from_process_name.unwrap_or_default()),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: from_workstation_name.unwrap_or_default(),
+        from_work_station_name: Some(from_workstation_name.unwrap_or_default()),
         to_process_id: transfer.to_process_id,
-        to_process_name: to_process_name.unwrap_or_default(),
+        to_process_name: Some(to_process_name.unwrap_or_default()),
         to_work_station_id: transfer.to_work_station_id,
-        to_work_station_name: to_workstation_name.unwrap_or_default(),
+        to_work_station_name: Some(to_workstation_name.unwrap_or_default()),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
         transfer_time: naive_to_utc(Some(transfer.transfer_time)),
         operator: transfer.operator,
@@ -945,13 +936,13 @@ pub async fn list_wip_transfers(
             transfer_no: r.transfer_no,
             wip_id: r.wip_id,
             from_process_id: r.from_process_id,
-            from_process_name: Some(r.from_process_name.unwrap_or_default()),
+            from_process_name: Some(r.from_process_name),
             from_work_station_id: r.from_work_station_id,
-            from_work_station_name: Some(r.from_work_station_name.unwrap_or_default()),
+            from_work_station_name: Some(r.from_work_station_name),
             to_process_id: r.to_process_id,
-            to_process_name: Some(r.to_process_name.unwrap_or_default()),
+            to_process_name: Some(r.to_process_name),
             to_work_station_id: r.to_work_station_id,
-            to_work_station_name: Some(r.to_work_station_name.unwrap_or_default()),
+            to_work_station_name: Some(r.to_work_station_name),
             quantity: big_decimal_to_f64(Some(r.quantity)),
             transfer_time: naive_to_utc(Some(r.transfer_time)),
             operator: r.operator,

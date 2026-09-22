@@ -232,7 +232,7 @@ pub async fn list_work_stations(
     let fetch_sql = format!(
         r#"
         SELECT 
-            ws.id, ws.station_no, ws.station_name AS name, ws.workshop_id, ws.location,
+            ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
             ws.description, ws.created_at, ws.updated_at,
             e.equipment_name as equipment_name,
@@ -316,12 +316,12 @@ pub async fn create_work_station(
     let result = sqlx::query(
         r#"
         INSERT INTO work_stations (
-            station_no, station_name, workshop_id, location, status,
+            station_no, name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9)
         RETURNING 
-            id, station_no, station_name AS name, workshop_id, location,
+            id, station_no, name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
@@ -365,7 +365,7 @@ pub async fn get_work_station(
     let result = sqlx::query(
         r#"
         SELECT 
-            ws.id, ws.station_no, ws.station_name AS name, ws.workshop_id, ws.location,
+            ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
             ws.description, ws.created_at, ws.updated_at,
             e.equipment_name as equipment_name,
@@ -426,7 +426,7 @@ pub async fn update_work_station(
     let result = sqlx::query(
         r#"
         UPDATE work_stations SET
-            station_name = COALESCE($2, station_name),
+            name = COALESCE($2, name),
             workshop_id = COALESCE($3, workshop_id),
             location = COALESCE($4, location),
             status = COALESCE($5, status),
@@ -437,7 +437,7 @@ pub async fn update_work_station(
             updated_at = $10
         WHERE id = $1
         RETURNING 
-            id, station_no, station_name AS name, workshop_id, location,
+            id, station_no, name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
@@ -526,7 +526,7 @@ pub async fn activate_work_station(
             updated_at = $2
         WHERE id = $1
         RETURNING 
-            id, station_no, station_name AS name, workshop_id, location,
+            id, station_no, name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
@@ -571,7 +571,7 @@ pub async fn deactivate_work_station(
             updated_at = $2
         WHERE id = $1 AND status = 'active'
         RETURNING 
-            id, station_no, station_name AS name, workshop_id, location,
+            id, station_no, name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,

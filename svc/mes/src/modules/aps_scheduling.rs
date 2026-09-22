@@ -777,7 +777,7 @@ async fn fetch_available_work_stations(
 ) -> Result<Vec<WorkStationInfo>, String> {
     let rows = sqlx::query(
         r#"
-        SELECT id, station_name AS name, capacity, status, equipment_id, process_id
+        SELECT id, name, capacity, status, equipment_id, process_id
         FROM work_stations
         WHERE status = 'active'
           AND ($1::uuid IS NULL OR tenant_id = $1)
@@ -816,7 +816,7 @@ async fn fetch_equipment_map(
 ) -> Result<HashMap<Uuid, EquipmentInfo>, String> {
     let rows = sqlx::query(
         r#"
-        SELECT id, equipment_name AS name, status, next_maintenance_date
+        SELECT id, name, status, next_maintenance_date
         FROM equipment
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
         "#,
@@ -1147,7 +1147,7 @@ pub async fn check_schedule_constraints(
         if req.check_equipment.unwrap_or(true) {
             let equipment = sqlx::query(
                 r#"
-                SELECT id, equipment_name AS name, status, next_maintenance_date
+                SELECT id, name, status, next_maintenance_date
                 FROM equipment
                 WHERE status = 'normal'
                   AND ($1::uuid IS NULL OR tenant_id = $1)
@@ -1318,7 +1318,7 @@ pub async fn get_optimization_report(
     // 按工位统计负载
     let station_loads = sqlx::query(
         r#"
-        SELECT ws.station_name AS name, COUNT(ps.id) as task_count,
+        SELECT ws.station_name, COUNT(ps.id) as task_count,
                SUM(EXTRACT(EPOCH FROM (ps.planned_end_time - ps.planned_start_time)) / 3600) as total_hours
         FROM work_stations ws
         LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
@@ -1507,7 +1507,7 @@ pub async fn get_bottleneck_analysis(
     let mut bottleneck_resources = Vec::new();
     let station_stats = sqlx::query(
         r#"
-        SELECT ws.station_name AS name,
+        SELECT ws.station_name,
                COUNT(ps.id) as scheduled_tasks,
                COUNT(DISTINCT ps.order_id) as unique_orders
         FROM work_stations ws
