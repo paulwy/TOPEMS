@@ -75,7 +75,7 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("public", "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
+            only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, 'environment', 'high', $3, 'reported', 'lims_abnormal', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
              ON CONFLICT (hazard_no) DO NOTHING
              RETURNING id"),
@@ -131,7 +131,7 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("public", "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
+            only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_hazards (hazard_no, title, category, level, description, status, source, reported_by, tenant_id, created_at, updated_at)
              VALUES ($1, $2, 'quality_corrective', 'medium', $3, 'reported', 'qms_corrective', 'system', '00000000-0000-0000-0000-000000000000', $4, $4)
              ON CONFLICT (hazard_no) DO NOTHING
              RETURNING id"),
@@ -223,7 +223,7 @@ impl EhsEventHandlers {
         let now = Utc::now();
 
         let result = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("public", "INSERT INTO qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at, tenant_id)
+            only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_employees (id, name, email, department_id, status, created_at, updated_at, tenant_id)
              VALUES ($1, $2, $3, $4, 'active', $5, $5, $6)
              ON CONFLICT (id) DO UPDATE SET
                 name = COALESCE(EXCLUDED.name, qa_ehs_employees.name),

@@ -88,16 +88,16 @@ pub async fn list_sync_records(
 
     let sql = match (query.sync_type.as_ref(), query.status.as_ref()) {
         (Some(_), Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"
         }
         (Some(_), None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE sync_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, Some(_)) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
         }
         (None, None) => {
-            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         }
     };
 
@@ -166,7 +166,7 @@ pub async fn get_sync_record(
     };
 
     let row = sqlx::query(
-        only_own_schema_query!("public", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM qa_ehs_sync_records WHERE id = $1")
+        only_own_schema_query!("ehs", "SELECT id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT FROM ehs.qa_ehs_sync_records WHERE id = $1")
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -217,7 +217,7 @@ pub async fn sync_hazard_to_qms(
 
     // Fetch hazard data
     let hazard = sqlx::query(
-        only_own_schema_query!("public", "SELECT id, hazard_no, title, description, category, level, source, location, reported_by, reported_at::TEXT, status, inspection_id FROM qa_ehs_hazards WHERE id = $1")
+        only_own_schema_query!("ehs", "SELECT id, hazard_no, title, description, category, level, source, location, reported_by, reported_at::TEXT, status, inspection_id FROM qa_ehs_hazards WHERE id = $1")
     )
     .bind(hazard_id)
     .fetch_one(&state.pool)
@@ -264,7 +264,7 @@ pub async fn sync_hazard_to_qms(
     });
 
     let row = sqlx::query(
-        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&sync_no)
     .bind(req.hazard_id)
@@ -320,7 +320,7 @@ pub async fn sync_accident_to_lims(
 
     // Fetch accident data
     let accident = sqlx::query(
-        only_own_schema_query!("public", "SELECT id, accident_no, title, description, accident_type, severity, location, occurred_at::TEXT, casualties, economic_loss, status, reported_by FROM qa_ehs_accidents WHERE id = $1")
+        only_own_schema_query!("ehs", "SELECT id, accident_no, title, description, accident_type, severity, location, occurred_at::TEXT, casualties, economic_loss, status, reported_by FROM qa_ehs_accidents WHERE id = $1")
     )
     .bind(accident_id)
     .fetch_one(&state.pool)
@@ -372,7 +372,7 @@ pub async fn sync_accident_to_lims(
     });
 
     let row = sqlx::query(
-        only_own_schema_query!("public", "INSERT INTO qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(&sync_no)
     .bind(req.accident_id)
@@ -430,7 +430,7 @@ pub async fn retry_sync(
     };
 
     let row = sqlx::query(
-        only_own_schema_query!("public", "UPDATE qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
+        only_own_schema_query!("ehs", "UPDATE ehs.qa_ehs_sync_records SET status = 'pending', updated_at = NOW() WHERE id = $1 RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -482,8 +482,8 @@ pub async fn delete_sync_record(
     };
 
     let result = sqlx::query(only_own_schema_query!(
-        "public",
-        "DELETE FROM qa_ehs_sync_records WHERE id = $1"
+        "ehs",
+        "DELETE FROM ehs.qa_ehs_sync_records WHERE id = $1"
     ))
     .bind(id)
     .execute(&state.pool)
