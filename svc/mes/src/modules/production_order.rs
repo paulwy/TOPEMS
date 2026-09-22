@@ -878,7 +878,7 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.map(|q| BigDecimal::from_f64(q).unwrap()),
+        req.quantity.map(|q| BigDecimal::from_i64(q as i64).unwrap()),
         req.planned_start_date.map(|d| d.naive_utc()),
         req.planned_end_date.map(|d| d.naive_utc()),
         req.workshop_id,
