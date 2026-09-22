@@ -1215,7 +1215,7 @@ pub async fn list_inspections(
                     equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                    inspector: r.inspector,
+                    inspector: r.inspector.unwrap_or_default(),
                     inspection_date: r.inspection_date,
                     location: r.location,
                     temperature: r
@@ -1345,7 +1345,7 @@ pub async fn create_inspection(
                 equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 inspection_date: r.inspection_date,
                 location: r.location,
                 temperature: r
