@@ -695,8 +695,8 @@ pub async fn add_team_member(
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.to_string(),
-        employee_id: result.employee_id.to_string(),
+        team_id: result.team_id.map(|id| id.to_string()),
+        employee_id: result.employee_id.map(|id| id.to_string()),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,
