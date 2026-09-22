@@ -1234,13 +1234,13 @@ pub async fn analyze_capacity(
         if step_utilization > max_utilization {
             max_utilization = step_utilization;
             bottleneck = Some(BottleneckStep {
-                step_name: step.process_name.clone(),
+                step_name: step.process_name.clone().unwrap_or_default(),
                 utilization_rate: step_utilization,
             });
         }
 
         by_step.push(StepCapacity {
-            step_name: step.process_name.clone(),
+            step_name: step.process_name.clone().unwrap_or_default(),
             capacity: step_capacity,
             utilization_rate: step_utilization,
         });
