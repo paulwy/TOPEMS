@@ -1212,7 +1212,7 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.to_string(),
+                    equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                     inspector: r.inspector,
@@ -1342,7 +1342,7 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.to_string(),
+                equipment_id: r.equipment_id.unwrap_or_default().to_string(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                 inspector: r.inspector,
