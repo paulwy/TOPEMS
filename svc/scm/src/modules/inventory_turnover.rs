@@ -9,7 +9,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::ApiState;
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
@@ -259,6 +259,7 @@ pub async fn calculate_turnover(
     let page = pagination.page.unwrap_or(1).max(1);
     let page_size = pagination.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+    let tenant_bind = tenant_bind_value(&claims);
 
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
@@ -287,6 +288,7 @@ pub async fn calculate_turnover(
             FROM scm.wms_inventory_snapshots i
             WHERE ($5::uuid IS NULL OR i.warehouse_id = $5)
               AND ($6::text IS NULL OR i.category = $6)
+              AND ($8 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $8)
         ),
         movement_summary AS (
             SELECT 
@@ -297,8 +299,9 @@ pub async fn calculate_turnover(
                 SUM(CASE WHEN movement_type = 'outbound' THEN total_value ELSE 0 END) as total_outbound_value
             FROM scm.wms_inventory_movement_snapshots
             WHERE movement_date >= $1::timestamptz
-              AND movement_date <= $2::timestamptz
+              AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND ($5::uuid IS NULL OR warehouse_id = $5)
+              AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8)
             GROUP BY item_code, warehouse_id
         )
         SELECT 
@@ -309,23 +312,23 @@ pub async fn calculate_turnover(
             ci.category,
             ci.warehouse_id,
             ci.warehouse_name,
-            COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) as beginning_inventory,
+            COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory)::float8 as beginning_inventory,
             ci.ending_inventory,
-            (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 as average_inventory,
-            COALESCE(ms.total_outbound_value, 0) as cost_of_goods_sold,
+            (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2::float8 as average_inventory,
+            COALESCE(ms.total_outbound_value, 0)::float8 as cost_of_goods_sold,
             CASE 
                 WHEN (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 > 0
                 THEN COALESCE(ms.total_outbound_value, 0) / ((COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2)
                 ELSE 0
-            END as turnover_rate,
+            END::float8 as turnover_rate,
             CASE 
                 WHEN 
                     (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 > 0
                     AND COALESCE(ms.total_outbound_value, 0) > 0
                 THEN ((COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2) * 90 / COALESCE(ms.total_outbound_value, 1)
                 ELSE 999
-            END as turnover_days,
-            ci.ending_value as inventory_value
+            END::float8 as turnover_days,
+            ci.ending_value::float8 as inventory_value
         FROM current_inventory ci
         LEFT JOIN movement_summary ms 
             ON ci.material_code = ms.material_code 
@@ -342,6 +345,7 @@ pub async fn calculate_turnover(
     .bind(params.warehouse_id)
     .bind(&params.category)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -355,11 +359,13 @@ pub async fn calculate_turnover(
                 WHERE ($1::uuid IS NULL OR i.warehouse_id = $1)
                   AND ($2::text IS NULL OR i.category = $2)
                   AND ($3::text IS NULL OR i.item_name ILIKE $3 OR i.item_code ILIKE $3)
+                  AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
                 "#
             ))
             .bind(params.warehouse_id)
             .bind(&params.category)
             .bind(&search_pattern)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -417,6 +423,7 @@ pub async fn turnover_days(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -435,6 +442,7 @@ pub async fn turnover_days(
                 COUNT(*) as sku_count
             FROM scm.wms_inventory_snapshots i
             WHERE ($3::uuid IS NULL OR i.warehouse_id = $3)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
         ),
         outbound_stats AS (
             SELECT 
@@ -443,24 +451,25 @@ pub async fn turnover_days(
             FROM scm.wms_inventory_movement_snapshots
             WHERE movement_type = 'outbound'
               AND movement_date >= $1::timestamptz
-              AND movement_date <= $2::timestamptz
+              AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND ($3::uuid IS NULL OR warehouse_id = $3)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         )
         SELECT 
-            os.total_outbound_value,
+            os.total_outbound_value::float8,
             os.active_skus,
-            os2.total_inventory_value,
+            os2.total_inventory_value::float8,
             os2.sku_count,
             CASE 
                 WHEN os2.total_inventory_value > 0 AND os.total_outbound_value > 0
                 THEN os2.total_inventory_value * 90 / os.total_outbound_value
                 ELSE 0
-            END as overall_turnover_days,
+            END::float8 as overall_turnover_days,
             CASE 
                 WHEN os2.total_inventory_value > 0
                 THEN os.total_outbound_value / os2.total_inventory_value
                 ELSE 0
-            END as overall_turnover_rate
+            END::float8 as overall_turnover_rate
         FROM outbound_stats os
         CROSS JOIN overall_stats os2
         "#
@@ -468,6 +477,7 @@ pub async fn turnover_days(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -527,6 +537,7 @@ pub async fn abc_analysis(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -542,18 +553,20 @@ pub async fn abc_analysis(
             SELECT 
                 i.item_code as material_code,
                 i.item_name as material_name,
-                COALESCE(i.total_value, 0) as inventory_value,
-                SUM(COALESCE(im.total_value, 0)) as outbound_value,
+                COALESCE(i.total_value, 0)::float8 as inventory_value,
+                SUM(COALESCE(im.total_value, 0))::float8 as outbound_value,
                 ROW_NUMBER() OVER (ORDER BY COALESCE(i.total_value, 0) DESC) as rn,
                 COUNT(*) OVER () as total_count,
-                SUM(COALESCE(i.total_value, 0)) OVER () as total_value
+                SUM(COALESCE(i.total_value, 0)) OVER ()::float8 as total_value
             FROM scm.wms_inventory_snapshots i
             LEFT JOIN scm.wms_inventory_movement_snapshots im 
                 ON i.item_code = im.item_code 
                 AND im.movement_type = 'outbound'
                 AND im.movement_date >= $1::timestamptz
-                AND im.movement_date <= $2::timestamptz
+                AND im.movement_date < ($2::timestamptz + INTERVAL '1 day')
+                AND ($4 = '00000000-0000-0000-0000-000000000000' OR im.tenant_id = $4)
             WHERE ($3::uuid IS NULL OR i.warehouse_id = $3)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
             GROUP BY i.item_code, i.item_name, i.total_value
         ),
         cumulative AS (
@@ -577,17 +590,17 @@ pub async fn abc_analysis(
             abc_category as category,
             COUNT(*) as sku_count,
             (COUNT(*) * 100.0 / NULLIF(MAX(total_count), 0)) as sku_percentage,
-            SUM(inventory_value) as inventory_value,
-            (SUM(inventory_value) * 100.0 / NULLIF(MAX(total_value), 0)) as value_percentage,
+            SUM(inventory_value)::float8 as inventory_value,
+            (SUM(inventory_value) * 100.0 / NULLIF(MAX(total_value), 0))::float8 as value_percentage,
             AVG(CASE 
                 WHEN inventory_value > 0 THEN outbound_value / inventory_value
                 ELSE 0
-            END) as avg_turnover_rate,
+            END)::float8 as avg_turnover_rate,
             AVG(CASE 
                 WHEN inventory_value > 0 AND outbound_value > 0
                 THEN inventory_value * 90 / outbound_value
                 ELSE 999
-            END) as avg_turnover_days
+            END)::float8 as avg_turnover_days
         FROM abc_classified
         GROUP BY abc_category
         ORDER BY abc_category
@@ -596,6 +609,7 @@ pub async fn abc_analysis(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -644,6 +658,7 @@ pub async fn turnover_trend(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(180);
@@ -657,24 +672,26 @@ pub async fn turnover_trend(
         only_own_schema_query!("scm", r#"
         WITH monthly_data AS (
             SELECT 
-                DATE_TRUNC('month', movement_date) as month,
-                SUM(CASE WHEN movement_type = 'outbound' THEN total_value ELSE 0 END) as outbound_value,
-                SUM(CASE WHEN movement_type = 'inbound' THEN total_value ELSE 0 END) as inbound_value
+                TO_CHAR(DATE_TRUNC('month', movement_date), 'YYYY-MM') as month,
+                SUM(CASE WHEN movement_type = 'outbound' THEN total_value ELSE 0 END)::float8 as outbound_value,
+                SUM(CASE WHEN movement_type = 'inbound' THEN total_value ELSE 0 END)::float8 as inbound_value
             FROM scm.wms_inventory_movement_snapshots
             WHERE movement_date >= $1::timestamptz
-              AND movement_date <= $2::timestamptz
+              AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND ($3::uuid IS NULL OR warehouse_id = $3)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
             GROUP BY DATE_TRUNC('month', movement_date)
             ORDER BY month
         ),
         monthly_inventory AS (
             SELECT 
-                DATE_TRUNC('month', synced_at) as month,
-                AVG(total_value) as avg_inventory_value
+                TO_CHAR(DATE_TRUNC('month', synced_at), 'YYYY-MM') as month,
+                AVG(total_value)::float8 as avg_inventory_value
             FROM scm.wms_inventory_snapshots
             WHERE synced_at >= $1::timestamptz
-              AND synced_at <= $2::timestamptz
+              AND synced_at < ($2::timestamptz + INTERVAL '1 day')
               AND ($3::uuid IS NULL OR warehouse_id = $3)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
             GROUP BY DATE_TRUNC('month', synced_at)
         )
         SELECT 
@@ -686,12 +703,12 @@ pub async fn turnover_trend(
                 WHEN mi.avg_inventory_value > 0 AND md.outbound_value > 0
                 THEN md.outbound_value / mi.avg_inventory_value
                 ELSE 0
-            END as turnover_rate,
+            END::float8 as turnover_rate,
             CASE 
                 WHEN mi.avg_inventory_value > 0 AND md.outbound_value > 0
                 THEN mi.avg_inventory_value * 30 / md.outbound_value
                 ELSE 0
-            END as turnover_days
+            END::float8 as turnover_days
         FROM monthly_data md
         LEFT JOIN monthly_inventory mi ON md.month = mi.month
         ORDER BY md.month
@@ -700,6 +717,7 @@ pub async fn turnover_trend(
     .bind(&start_date)
     .bind(&end_date)
     .bind(params.warehouse_id)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -709,7 +727,7 @@ pub async fn turnover_trend(
                 .iter()
                 .map(|row| {
                     serde_json::json!({
-                        "month": row.try_get::<chrono::NaiveDateTime, _>("month").ok().map(|m| m.format("%Y-%m").to_string()),
+                        "month": row.try_get::<String, _>("month").ok(),
                         "outbound_value": row.try_get::<f64, _>("outbound_value").unwrap_or(0.0),
                         "inbound_value": row.try_get::<f64, _>("inbound_value").unwrap_or(0.0),
                         "avg_inventory_value": row.try_get::<Option<f64>, _>("avg_inventory_value").unwrap_or(Some(0.0)),
