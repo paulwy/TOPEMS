@@ -39,7 +39,7 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
     }
     const data = response.data;
     return {
-      data: (data?.items || []) as unknown as SafetyIssue[],
+      data: (Array.isArray(data) ? data : data?.items || []) as unknown as SafetyIssue[],
       total: data?.total || 0,
     };
   },
@@ -56,7 +56,9 @@ const EhsHazardPage: React.FC = () => {
   });
 
   const stats = useMemo(() => {
-    const issues = issuesResp?.data?.items || [];
+    const issues = Array.isArray(issuesResp?.data)
+      ? issuesResp.data
+      : issuesResp?.data?.items || [];
     return {
       total: issues.length,
       major: issues.filter((i) => i.level === 'major').length,

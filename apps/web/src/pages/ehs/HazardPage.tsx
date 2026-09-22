@@ -22,7 +22,7 @@ const HazardStats: React.FC = () => {
       >[0]);
       if (!response.success) throw new Error(i18n.t('ehs.hazard_page.k0'));
       const result = response.data;
-      return result?.items || [];
+      return Array.isArray(result) ? result : result?.items || [];
     },
     staleTime: 5 * 60 * 1000,
   });
