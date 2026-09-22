@@ -649,7 +649,7 @@ pub async fn get_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|id| id.to_string()),
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
@@ -739,13 +739,13 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (Some(String::new()), String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|id| id.to_string()),
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_name: process_name,
                     process_code,
@@ -824,13 +824,13 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (Some(String::new()), String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|id| id.to_string()),
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_name: process_name,
                     process_code,
@@ -971,7 +971,7 @@ pub async fn reorder_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|id| id.to_string()),
+                    route_id: s.route_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_id: s.process_id.map(|id| id.to_string()).unwrap_or_default(),
                     process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
