@@ -2866,7 +2866,11 @@ export function ListPageTemplate<
                 }}
               >
                 {resolvedPagination
-                  ? resolvedPagination.page * resolvedPagination.pageSize + index + 1
+                  ? (resolvedPagination.page -
+                      ((effectiveListState?.baseIndex ?? 1) === 1 ? 1 : 0)) *
+                      resolvedPagination.pageSize +
+                    index +
+                    1
                   : index + 1}
               </TableCell>
             )}
@@ -3191,14 +3195,14 @@ export function ListPageTemplate<
       <TablePagination
         component='div'
         count={resolvedPagination.total}
-        page={resolvedPagination.page}
+        page={resolvedPagination.page - ((effectiveListState?.baseIndex ?? 1) === 1 ? 1 : 0)}
         onPageChange={(_, page) => resolvedPagination.onPageChange(page)}
         rowsPerPage={resolvedPagination.pageSize}
         onRowsPerPageChange={(e) => resolvedPagination.onPageSizeChange?.(Number(e.target.value))}
         rowsPerPageOptions={[10, 20, 50, 100]}
         labelRowsPerPage={i18n.t('templates.list_page_template.k26')}
         labelDisplayedRows={({ from, to, count }) =>
-          `${from}-${to}${i18n.t('components.list_page_template.k15')}${count}${i18n.t('components.list_page_template.k16')}`
+          `${from}-${to} ${i18n.t('components.list_page_template.k15')} ${count} ${i18n.t('components.list_page_template.k16')}`
         }
       />
     );
@@ -3703,7 +3707,8 @@ export function ListPageTemplate<
                       color='primary'
                       sx={{ whiteSpace: 'nowrap' }}
                     >
-                      {i18n.t('templates.listPage.k4')} {selectedIds.size} {i18n.t('templates.listPage.selected_items')}
+                      {i18n.t('templates.listPage.k4')} {selectedIds.size}{' '}
+                      {i18n.t('templates.listPage.selected_items')}
                     </Button>
                     {resolvedBatchActions?.map((action, index) => (
                       <Button
