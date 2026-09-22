@@ -656,7 +656,7 @@ pub async fn get_route_steps(
                     sequence: s.sequence,
                     estimated_time_minutes: Some(s.estimated_time_minutes.unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name,
                     description: s.description,
                     created_at: s.created_at.to_rfc3339(),
                 })
@@ -978,7 +978,7 @@ pub async fn reorder_route_steps(
                     sequence: s.sequence,
                     estimated_time_minutes: Some(s.estimated_time_minutes.unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name,
                     description: s.description,
                     created_at: s.created_at.to_rfc3339(),
                 })
