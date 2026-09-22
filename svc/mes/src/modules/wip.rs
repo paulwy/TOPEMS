@@ -519,7 +519,7 @@ pub async fn get_wip(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
-                current_process_name: Some(r.process_name),
+                current_process_name: r.process_name.unwrap_or_default(),
                 current_work_station_id: r.current_work_station_id,
                 current_work_station_name: Some(r.work_station_name),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
