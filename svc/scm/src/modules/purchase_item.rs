@@ -212,10 +212,11 @@ pub async fn get_item(
     let result = sqlx::query_as::<_, PurchaseItem>(
         only_own_schema_query!("scm", r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
-        FROM scm.purchase_items WHERE id = $1
+        FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#),
     )
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 

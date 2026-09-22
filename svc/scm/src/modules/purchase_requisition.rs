@@ -12,7 +12,7 @@ use crate::models::purchase_requisition::{
     CreatePurchaseRequisitionRequest, PurchaseRequisition, PurchaseRequisitionQueryParams,
     UpdatePurchaseRequisitionRequest,
 };
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -64,23 +64,26 @@ pub async fn list_requisitions(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let requisitions = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, applicant_id, applicant_name, department_id, department_name, request_date, required_date, total_amount, currency, status, priority, supplier_id, supplier_name, approval_status, approver, approved_at, remarks, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE deleted_at IS NULL AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL"
+        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -116,6 +119,7 @@ pub async fn create_requisition(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let request_date = DateTime::parse_from_rfc3339(&data.request_date)
         .unwrap_or_else(|_| chrono::Utc::now().into())
@@ -145,8 +149,8 @@ pub async fn create_requisition(
         r#"
         INSERT INTO scm.purchase_requisitions (
             requisition_no, title, applicant_id, department_id,
-            request_date, required_date, priority, supplier_id, remarks, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
+            request_date, required_date, priority, supplier_id, remarks, status, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10)
         RETURNING *
         "#
     ))
@@ -159,6 +163,7 @@ pub async fn create_requisition(
     .bind(&data.priority)
     .bind(supplier_id)
     .bind(&data.remarks)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -199,10 +204,12 @@ pub async fn get_requisition(
         Err(_) => return Json(api_error(400, "无效的采购申请ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, description, department_id, requester_id, priority, status, expected_date, total_amount, currency, approval_status, created_by, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, requisition_no, title, applicant_id, applicant_name, department_id, department_name, request_date, required_date, total_amount, currency, status, priority, supplier_id, supplier_name, approval_status, approver, approved_at, remarks, created_at, updated_at, deleted_at FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)")
     )
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -236,6 +243,7 @@ pub async fn update_requisition(
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的采购申请ID")),
     };
+    let tenant_bind = tenant_bind_value(&claims);
 
     let required_date = data.required_date.as_ref().map(|d| {
         DateTime::parse_from_rfc3339(d)
@@ -258,7 +266,7 @@ pub async fn update_requisition(
             supplier_id = COALESCE($4, supplier_id),
             status = COALESCE($5, status),
             remarks = COALESCE($6, remarks)
-        WHERE id = $7 AND deleted_at IS NULL
+        WHERE id = $7 AND deleted_at IS NULL AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8)
         RETURNING *
         "#
     ))
@@ -269,6 +277,7 @@ pub async fn update_requisition(
     .bind(&data.status)
     .bind(&data.remarks)
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -310,15 +319,23 @@ pub async fn delete_requisition(
         Err(_) => return Json(api_error(400, "无效的采购申请ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)")
     )
     .bind(requisition_id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除采购申请成功"))
         }
         Ok(_) => Json(api_error(404, "采购申请不存在")),
@@ -355,11 +372,13 @@ pub async fn submit_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING *"),
     )
     .bind(remarks)
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -407,19 +426,21 @@ pub async fn approve_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
-        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING *
         "#
     ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -467,19 +488,21 @@ pub async fn reject_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.purchase_requisitions SET 
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
-        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING *
         "#
     ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -527,11 +550,13 @@ pub async fn cancel_requisition(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING *"),
     )
     .bind(remarks)
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -573,10 +598,12 @@ pub async fn convert_to_order(
         Err(_) => return Json(api_error(400, "无效的采购申请ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) RETURNING *"),
     )
     .bind(requisition_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
