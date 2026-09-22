@@ -11,7 +11,7 @@ use crate::models::purchase_contract::{
     CreatePurchaseContractRequest, PurchaseContract, PurchaseContractItem,
     PurchaseContractQueryParams, UpdatePurchaseContractRequest,
 };
-use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -52,23 +52,26 @@ pub async fn list_contracts(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_bind = tenant_bind_value(&claims);
 
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let contracts = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL"
+        "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
     ))
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await
     .unwrap_or(0);
@@ -105,14 +108,15 @@ pub async fn create_contract(
         Err(e) => return e,
     }
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
         "scm",
         r#"
         INSERT INTO scm.purchase_contracts (
             contract_no, title, contract_type, supplier_id,
             sign_date, effective_date, expiry_date, total_amount,
-            currency, payment_terms, delivery_terms, signed_by, remarks, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'draft')
+            currency, payment_terms, delivery_terms, signed_by, remarks, status, tenant_id
+        ) VALUES ($1, $2, $3, $4::uuid, $5::date, $6::date, $7::date, $8, $9, $10, $11, $12, $13, 'draft', $14)
         RETURNING *
         "#
     ))
@@ -129,6 +133,7 @@ pub async fn create_contract(
     .bind(&data.delivery_terms)
     .bind(&data.signed_by)
     .bind(&data.remarks)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -141,8 +146,8 @@ pub async fn create_contract(
                         r#"
                         INSERT INTO scm.purchase_contract_items (
                             contract_id, line_number, product_code, product_name,
-                            specification, unit, quantity, unit_price, delivery_date, remarks
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            specification, unit, quantity, unit_price, delivery_date, remarks, tenant_id
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11)
                         "#
                     ))
                     .bind(item.id)
@@ -155,6 +160,7 @@ pub async fn create_contract(
                     .bind(item_data.unit_price)
                     .bind(&item_data.delivery_date)
                     .bind(&item_data.remarks)
+                    .bind(tenant_bind)
                     .execute(&mut **txn)
                     .await;
                 }
@@ -194,19 +200,22 @@ pub async fn get_contract(
         Err(_) => return Json(api_error(400, "无效的采购合同ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, contract_name, supplier_id, supplier_name, contract_type, amount, currency, start_date, end_date, status, sign_date, created_by, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
     )
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
     match contract {
         Ok(contract) => {
             let items = sqlx::query_as::<_, PurchaseContractItem>(
-                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, item_code, item_name, specification, quantity, unit, unit_price, total_amount, tax_rate, delivery_date, status, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 ORDER BY line_number"),
+                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, item_code, item_name, specification, quantity, unit, unit_price, total_amount, tax_rate, delivery_date, status, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) ORDER BY line_number"),
             )
             .bind(contract_id)
+            .bind(tenant_bind)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();
@@ -248,6 +257,7 @@ pub async fn update_contract(
         Err(_) => return Json(api_error(400, "无效的采购合同ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
         "scm",
         r#"
@@ -264,7 +274,7 @@ pub async fn update_contract(
             delivery_terms = COALESCE($10, delivery_terms),
             status = COALESCE($11, status),
             remarks = COALESCE($12, remarks)
-        WHERE id = $13 AND deleted_at IS NULL
+        WHERE id = $13 AND deleted_at IS NULL AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14)
         RETURNING *
         "#
     ))
@@ -281,6 +291,7 @@ pub async fn update_contract(
     .bind(&data.status)
     .bind(&data.remarks)
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -289,9 +300,10 @@ pub async fn update_contract(
             if let Some(items) = &data.items {
                 let _ = sqlx::query(only_own_schema_query!(
                     "scm",
-                    "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1"
+                    "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
                 ))
                 .bind(contract_id)
+                .bind(tenant_bind)
                 .execute(&mut **txn)
                 .await;
 
@@ -301,8 +313,8 @@ pub async fn update_contract(
                         r#"
                         INSERT INTO scm.purchase_contract_items (
                             contract_id, line_number, product_code, product_name,
-                            specification, unit, quantity, unit_price, delivery_date, remarks
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            specification, unit, quantity, unit_price, delivery_date, remarks, tenant_id
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::date, $10, $11)
                         "#
                     ))
                     .bind(contract_id)
@@ -315,6 +327,7 @@ pub async fn update_contract(
                     .bind(item_data.unit_price)
                     .bind(&item_data.delivery_date)
                     .bind(&item_data.remarks)
+                    .bind(tenant_bind)
                     .execute(&mut **txn)
                     .await;
                 }
@@ -349,16 +362,24 @@ pub async fn delete_contract(
         Err(_) => return Json(api_error(400, "无效的采购合同ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+        "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(contract_id)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "删除采购合同成功"))
         }
         Ok(_) => Json(api_error(404, "采购合同不存在")),
@@ -395,11 +416,13 @@ pub async fn submit_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING *"),
     )
     .bind(remarks)
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -439,19 +462,21 @@ pub async fn approve_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.purchase_contracts SET 
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
-        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING *
         "#
     ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -491,19 +516,21 @@ pub async fn reject_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(only_own_schema_query!(
         "scm",
         r#"
         UPDATE scm.purchase_contracts SET 
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
-        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING *
         "#
     ))
     .bind(&claims.sub)
     .bind(remarks)
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -543,11 +570,13 @@ pub async fn cancel_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'approved') RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'approved') AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING *"),
     )
     .bind(remarks)
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -587,11 +616,13 @@ pub async fn terminate_contract(
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'terminated', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'terminated', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING *"),
     )
     .bind(remarks)
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -625,10 +656,12 @@ pub async fn renew_contract(
         Err(_) => return Json(api_error(400, "无效的采购合同ID")),
     };
 
+    let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') RETURNING *"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) RETURNING *"),
     )
     .bind(contract_id)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 

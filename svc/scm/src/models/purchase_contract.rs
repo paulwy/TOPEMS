@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -11,9 +11,9 @@ pub struct PurchaseContract {
     pub contract_type: String,
     pub supplier_id: String,
     pub supplier_name: Option<String>,
-    pub sign_date: Option<String>,
-    pub effective_date: Option<String>,
-    pub expiry_date: Option<String>,
+    pub sign_date: Option<NaiveDate>,
+    pub effective_date: Option<NaiveDate>,
+    pub expiry_date: Option<NaiveDate>,
     pub total_amount: Option<f64>,
     pub currency: Option<String>,
     pub payment_terms: Option<String>,
@@ -42,7 +42,7 @@ pub struct PurchaseContractItem {
     pub quantity: f64,
     pub unit_price: Option<f64>,
     pub amount: Option<f64>,
-    pub delivery_date: Option<String>,
+    pub delivery_date: Option<NaiveDate>,
     pub remarks: Option<String>,
     pub created_at: DateTime<Utc>,
 }
@@ -73,7 +73,7 @@ pub struct CreatePurchaseContractItemRequest {
     pub unit: Option<String>,
     pub quantity: f64,
     pub unit_price: Option<f64>,
-    pub delivery_date: Option<String>,
+    pub delivery_date: Option<NaiveDate>,
     pub remarks: Option<String>,
 }
 

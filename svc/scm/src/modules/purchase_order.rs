@@ -67,7 +67,7 @@ pub async fn list_orders(
         FROM scm.purchase_orders
         WHERE ($1::text IS NULL OR po_no ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $5)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -76,7 +76,7 @@ pub async fn list_orders(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -88,12 +88,12 @@ pub async fn list_orders(
                 SELECT COUNT(*) FROM scm.purchase_orders
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR po_no ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
                 "#
             ))
             .bind(&search_pattern)
             .bind(&status_filter)
-            .bind(&tenant_bind)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -162,7 +162,7 @@ pub async fn create_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -238,11 +238,11 @@ pub async fn get_order(
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
-        FROM scm.purchase_orders WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+        FROM scm.purchase_orders WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#),
     )
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -293,7 +293,7 @@ pub async fn update_order(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -314,7 +314,7 @@ pub async fn update_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             supplier_id = $2, expected_date = $3, total_amount = $4, status = $5, remarks = $6, updated_at = $7
-        WHERE id = $1 AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $8)
+        WHERE id = $1 AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
@@ -325,7 +325,7 @@ pub async fn update_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -401,10 +401,10 @@ pub async fn delete_order(
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)"
+        "UPDATE scm.purchase_orders SET deleted_at = NOW() WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
     ))
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .execute(&mut **txn)
     .await;
 
@@ -497,7 +497,7 @@ pub async fn approve_order(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -541,14 +541,14 @@ pub async fn approve_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'approved', remarks = $2, updated_at = $3
-        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $4)
+        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(&new_remarks)
     .bind(now)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
@@ -683,7 +683,7 @@ pub async fn reject_order(
         only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -722,14 +722,14 @@ pub async fn reject_order(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_orders SET
             status = 'rejected', remarks = $2, updated_at = $3
-        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $4)
+        WHERE id = $1 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
     .bind(&new_remarks)
     .bind(now)
-    .bind(&tenant_bind)
+    .bind(tenant_bind)
     .fetch_one(&mut **txn)
     .await;
 
