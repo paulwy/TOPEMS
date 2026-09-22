@@ -261,12 +261,12 @@ pub async fn list_material_issues(
             ),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at").map(|d| d.and_utc())
+                r.try_get::<Option<NaiveDateTime>, _>("created_at").map(|d| d.and_then(|x| Some(x.and_utc())))
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at").map(|d| d.and_utc())
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at").map(|d| d.and_then(|x| Some(x.and_utc())))
                     .ok()
                     .flatten(),
             ),
