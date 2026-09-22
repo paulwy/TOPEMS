@@ -375,7 +375,7 @@ pub async fn create_team(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO teams (
+        INSERT INTO mes.teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at, tenant_id
@@ -410,7 +410,7 @@ pub async fn create_team(
         for member in members {
             let _ = sqlx::query!(
                 r#"
-                    INSERT INTO team_members (
+                    INSERT INTO mes.team_members (
                         team_id, employee_id, employee_name, employee_code, position, join_date
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
@@ -450,7 +450,7 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: datetime_to_string(result.created_at.naive_utc()),
+        created_at: datetime_to_string(result.created_at.map(|d| d.naive_utc())),
         updated_at: datetime_to_string(result.updated_at.naive_utc()),
     };
 
@@ -656,7 +656,7 @@ pub async fn add_team_member(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO team_members (
+        INSERT INTO mes.team_members (
             team_id, employee_id, employee_name, employee_code, position, join_date
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING 
