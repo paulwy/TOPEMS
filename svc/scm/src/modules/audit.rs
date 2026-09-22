@@ -11,6 +11,8 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::audit_log::AuditLog;
+use crate::shared::permission::tenant_bind_value;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize)]
@@ -33,6 +35,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 pub async fn list_audit_logs(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListAuditLogsQuery>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -40,6 +43,7 @@ pub async fn list_audit_logs(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -58,6 +62,7 @@ pub async fn list_audit_logs(
           AND ($3::text IS NULL OR changed_by::text = $3)
           AND ($4::text IS NULL OR changed_at >= $4::timestamptz)
           AND ($5::text IS NULL OR changed_at <= $5::timestamptz)
+          AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8)
         ORDER BY changed_at DESC
         LIMIT $6 OFFSET $7
         "#
@@ -69,6 +74,7 @@ pub async fn list_audit_logs(
     .bind(params.end_date.clone())
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&mut **txn)
     .await;
 
@@ -83,6 +89,7 @@ pub async fn list_audit_logs(
                   AND ($3::text IS NULL OR changed_by::text = $3)
                   AND ($4::text IS NULL OR changed_at >= $4::timestamptz)
                   AND ($5::text IS NULL OR changed_at <= $5::timestamptz)
+                  AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
                 "#
             ))
             .bind(&params.action)
@@ -90,6 +97,7 @@ pub async fn list_audit_logs(
             .bind(&params.user_id)
             .bind(params.start_date)
             .bind(params.end_date)
+            .bind(tenant_bind)
             .fetch_one(&mut **txn)
             .await;
 
@@ -114,6 +122,7 @@ pub async fn list_audit_logs(
 
 pub async fn get_audit_log(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -121,6 +130,7 @@ pub async fn get_audit_log(
 ) -> Json<ApiResponse<AuditLog>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "scm",
         r#"
@@ -129,10 +139,11 @@ pub async fn get_audit_log(
                old_values as request_details, new_values as response_details,
                'success' as status, NULL as error_message, ip_address, user_agent, 
                changed_at as created_at
-        FROM scm.audit_logs WHERE id = $1
+        FROM scm.audit_logs WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#
     ))
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&mut **txn)
     .await;
 
