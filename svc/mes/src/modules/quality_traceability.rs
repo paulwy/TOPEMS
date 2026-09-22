@@ -161,7 +161,7 @@ pub async fn forward_traceability(
         node_type: "order".to_string(),
         name: order.product_name.clone(),
         code: order.order_no.clone().unwrap_or_default(),
-        quantity: Some(order.quantity as f64),
+        quantity: Some(order.quantity.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
         batch_no: None,
         status: Some(order.status.clone().unwrap_or_default()),
