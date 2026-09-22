@@ -249,6 +249,12 @@ pub async fn list_equipment(
         params.push(pattern);
     }
 
+    if where_clause.is_empty() {
+        where_clause.push_str(" WHERE deleted_at IS NULL");
+    } else {
+        where_clause.push_str(" AND deleted_at IS NULL");
+    }
+
     let count_sql = format!("SELECT COUNT(*) as total FROM equipment{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(&count_sql);
@@ -484,7 +490,7 @@ pub async fn update_equipment(
     let result = sqlx::query(
         r#"
         UPDATE equipment SET
-            name = COALESCE($2, name),
+            equipment_name = COALESCE($2, equipment_name),
             equipment_name_en = COALESCE($14, equipment_name_en),
             model = COALESCE($3, model),
             manufacturer = COALESCE($4, manufacturer),
