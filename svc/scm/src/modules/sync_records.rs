@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 
 use crate::modules::ApiState;
+use crate::shared::permission::tenant_bind_value;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -93,9 +94,10 @@ async fn current_tenant_id(claims: &Claims) -> Option<uuid::Uuid> {
 
 pub async fn list_sync_records(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListSyncRecordParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -110,6 +112,7 @@ pub async fn list_sync_records(
           AND ($2::text IS NULL OR target_system = $2)
           AND ($3::text IS NULL OR sync_type = $3)
           AND ($4::text IS NULL OR status = $4)
+          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#,
@@ -120,6 +123,7 @@ pub async fn list_sync_records(
     .bind(&params.status)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&state.db)
     .await;
 
@@ -132,12 +136,14 @@ pub async fn list_sync_records(
                   AND ($2::text IS NULL OR target_system = $2)
                   AND ($3::text IS NULL OR sync_type = $3)
                   AND ($4::text IS NULL OR status = $4)
+                  AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
                 "#,
             )
             .bind(&params.source_system)
             .bind(&params.target_system)
             .bind(&params.sync_type)
             .bind(&params.status)
+            .bind(tenant_bind)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
@@ -161,18 +167,21 @@ pub async fn list_sync_records(
 
 pub async fn get_sync_record(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<SyncRecord>> {
+    let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query_as::<_, SyncRecord>(
         r#"
         SELECT id, sync_no, source_system, target_system, sync_type, sync_direction,
                status, total_count, success_count, failed_count, started_at, completed_at,
                duration_seconds, error_message, tenant_id, created_at
         FROM scm.sync_records WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
         "#,
     )
     .bind(id)
+    .bind(tenant_bind)
     .fetch_optional(&state.db)
     .await;
 
@@ -191,7 +200,7 @@ pub async fn create_sync_record(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSyncRecordRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let tenant_id = current_tenant_id(&claims).await.unwrap_or_else(uuid::Uuid::nil);
+    let tenant_id = tenant_bind_value(&claims);
     let sync_no = format!(
         "SYNC-{}-{:04}",
         Utc::now().format("%Y%m%d"),
@@ -225,6 +234,7 @@ pub async fn create_sync_record(
             // 异步模拟完成：标记 completed
             let rid = record.id;
             let db = state.db.clone();
+            let tenant = tenant_id;
             tokio::spawn(async move {
                 let _ = sqlx::query(
                     r#"
@@ -232,10 +242,11 @@ pub async fn create_sync_record(
                     SET status = 'completed', total_count = 0, success_count = 0,
                         failed_count = 0, completed_at = NOW(),
                         duration_seconds = 0
-                    WHERE id = $1
+                    WHERE id = $1 AND tenant_id = $2
                     "#,
                 )
                 .bind(rid)
+                .bind(tenant)
                 .execute(&db)
                 .await;
             });
@@ -250,9 +261,10 @@ pub async fn create_sync_record(
 
 pub async fn retry_sync_record(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<uuid::Uuid>,
 ) -> Json<ApiResponse<SyncResult>> {
+    let tenant_bind = tenant_bind_value(&claims);
     let now = Utc::now();
     let updated = sqlx::query(
         r#"
@@ -260,11 +272,13 @@ pub async fn retry_sync_record(
         SET status = 'completed', started_at = $2, completed_at = NOW(),
             duration_seconds = 0, error_message = NULL, updated_at = NOW()
         WHERE id = $1
+          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
         RETURNING id
         "#,
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_bind)
     .fetch_optional(&state.db)
     .await;
 
@@ -294,10 +308,11 @@ pub async fn retry_sync_record(
 
 pub async fn list_sync_details(
     State(state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(sync_id): Path<uuid::Uuid>,
     Query(params): Query<ListSyncRecordParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_bind = tenant_bind_value(&claims);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -307,6 +322,7 @@ pub async fn list_sync_details(
         SELECT id, sync_id, record_id, record_name, status, error_message, created_at
         FROM scm.sync_record_details
         WHERE sync_id = $1
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
         "#,
@@ -314,15 +330,17 @@ pub async fn list_sync_details(
     .bind(sync_id)
     .bind(page_size)
     .bind(offset)
+    .bind(tenant_bind)
     .fetch_all(&state.db)
     .await;
 
     match items {
         Ok(items) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM scm.sync_record_details WHERE sync_id = $1",
+                "SELECT COUNT(*) FROM scm.sync_record_details WHERE sync_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)",
             )
             .bind(sync_id)
+            .bind(tenant_bind)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
@@ -351,7 +369,7 @@ async fn trigger_sync(
     source: &str,
     target: &str,
 ) -> Json<ApiResponse<SyncResult>> {
-    let tenant_id = current_tenant_id(&claims).await.unwrap_or_else(uuid::Uuid::nil);
+    let tenant_id = tenant_bind_value(&claims);
     let now = Utc::now();
     let sync_no = format!(
         "SYNC-{}-{:04}",
