@@ -19,7 +19,7 @@ pub struct U8ImportRecord {
     pub success_count: i32,
     pub failed_count: i32,
     pub status: String,
-    pub error_log: Option<String>,
+    pub error_message: Option<String>,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -137,7 +137,7 @@ impl FinanceService {
             r#"
             UPDATE finance_u8_import_records SET
                 success_count = $2, failed_count = $3, status = $4, 
-                error_log = $5, updated_at = $6
+                error_message = $5, updated_at = $6
             WHERE tenant_id = $1 AND id = $7
             "#
         ))
@@ -191,7 +191,7 @@ impl FinanceService {
             total_count: record.total_count,
             success_count: record.success_count,
             failed_count: record.failed_count,
-            error_log: record.error_log,
+            error_log: record.error_message,
         })
     }
 
@@ -304,7 +304,7 @@ mod tests {
             success_count: 99,
             failed_count: 1,
             status: "completed".into(),
-            error_log: Some("row 50 boom".into()),
+            error_message: Some("row 50 boom".into()),
             created_by: Some("admin".into()),
             created_at: now(),
             updated_at: now(),
@@ -321,7 +321,7 @@ mod tests {
             success_count: 0,
             failed_count: 0,
             status: "processing".into(),
-            error_log: None,
+            error_message: None,
             created_by: None,
             created_at: now(),
             updated_at: now(),

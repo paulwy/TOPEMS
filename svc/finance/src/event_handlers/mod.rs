@@ -115,9 +115,9 @@ impl FinanceEventHandlers {
         let created_by = created_by.unwrap_or("system");
 
         let voucher_id = sqlx::query_scalar::<_, uuid::Uuid>(
-            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_type, source_id, created_by)
+            only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, source_module, source_id, created_by)
              VALUES ($11, $1, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
-             ON CONFLICT (tenant_id, source_type, source_id) DO NOTHING
+             ON CONFLICT (tenant_id, source_module, source_id) DO NOTHING
              RETURNING id"),
         )
         .bind(&voucher_no)

@@ -29,7 +29,7 @@ pub struct MesErpSyncRecord {
     pub sync_status: String,
     pub retry_count: i32,
     pub max_retries: i32,
-    pub error_message: Option<String>,
+    pub sync_error: Option<String>,
     pub last_synced_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -605,7 +605,7 @@ impl MesErpSyncService {
                 UPDATE integration.mes_erp_sync SET
                     mes_order_id = COALESCE($2, mes_order_id),
                     sync_status = 'success',
-                    error_message = NULL,
+                    sync_error = NULL,
                     last_synced_at = $3,
                     updated_at = $3
                 WHERE id = $1
@@ -623,7 +623,7 @@ impl MesErpSyncService {
                 r#"
                 UPDATE integration.mes_erp_sync SET
                     sync_status = 'success',
-                    error_message = NULL,
+                    sync_error = NULL,
                     last_synced_at = $2,
                     updated_at = $2
                 WHERE id = $1
@@ -652,7 +652,7 @@ impl MesErpSyncService {
             r#"
             UPDATE integration.mes_erp_sync SET
                 sync_status = 'failed',
-                error_message = $2,
+                sync_error = $2,
                 retry_count = $3,
                 updated_at = $4
             WHERE id = $1
@@ -713,7 +713,7 @@ impl MesErpSyncService {
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
-                   error_message, last_synced_at, created_at, updated_at
+                   sync_error, last_synced_at, created_at, updated_at
             FROM integration.mes_erp_sync
             WHERE id = $1
             "#
@@ -767,7 +767,7 @@ impl MesErpSyncService {
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
-                   error_message, last_synced_at, created_at, updated_at
+                   sync_error, last_synced_at, created_at, updated_at
             FROM integration.mes_erp_sync
             WHERE ($1::VARCHAR IS NULL OR sync_direction = $1)
               AND ($2::VARCHAR IS NULL OR sync_status = $2)
@@ -790,7 +790,7 @@ impl MesErpSyncService {
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
-                   error_message, last_synced_at, created_at, updated_at
+                   sync_error, last_synced_at, created_at, updated_at
             FROM integration.mes_erp_sync
             WHERE id = $1
             "#
