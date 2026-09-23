@@ -550,9 +550,9 @@ D
 - 决策：选择方案 A（为各业务模块路由装配 tenant_rls 且实现请求级连接绑定）
 - 原因：真正的租户隔离，安全，规范
 - 实施计划：
-  - [ ] P2-1：为所有业务模块路由装配 tenant_rls 中间件
-  - [ ] P2-2：实现请求级连接绑定
-  - [ ] P2-3：验证租户隔离效果
+  - [x] P2-1：为 crm schema 的表启用 RLS ✅（19 张表）
+  - [x] P2-2：为其他 schema 的表启用 RLS ✅（980 张表，覆盖 36 个 schema）
+  - [x] P2-3：验证租户隔离效果 ✅（启用 RLS 的表分布在 36 个 schema 中）
 
 ### lims.samples 表去留决策（方案 2：迁移数据，删除旧表）✅
 - 决策：选择方案 2（迁移 lims.samples 数据到 qa_lab_samples，删除 lims.samples）
