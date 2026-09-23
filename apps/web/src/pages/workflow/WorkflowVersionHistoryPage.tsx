@@ -8,8 +8,6 @@ import {
   DialogActions,
   TextField,
   Chip,
-  Tooltip,
-  IconButton,
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';

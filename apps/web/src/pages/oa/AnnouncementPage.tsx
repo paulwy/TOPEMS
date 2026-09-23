@@ -2,26 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
-import {
-  Megaphone,
-  Plus,
-  Search,
-  RefreshCw,
-  Calendar,
-  User,
-  Eye,
-  Edit2,
-  Trash2,
-  FileText,
-  Clock,
-} from 'lucide-react';
+import { Plus, Search, RefreshCw, Calendar, User, Eye, Edit2, Trash2 } from 'lucide-react';
 
 import {
   Badge,
   Button,
   Card,
   Drawer,
-  EmptyState,
   FileUpload,
   Input,
   ListPageTemplate,
