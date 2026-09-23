@@ -47,6 +47,8 @@ impl FinanceService {
                 credit: Decimal::new(0, 0),
                 project_id: None,
                 department_id: None,
+                aux_type: None,
+                aux_id: None,
             },
             VoucherLineRequest {
                 account_code: "1002".to_string(),
@@ -58,6 +60,8 @@ impl FinanceService {
                 credit: total_amount,
                 project_id: None,
                 department_id: None,
+                aux_type: None,
+                aux_id: None,
             },
         ];
 
@@ -324,6 +328,8 @@ impl FinanceService {
                 credit: Decimal::new(0, 0),
                 project_id: None,
                 department_id: None,
+                aux_type: None,
+                aux_id: None,
             },
             VoucherLineRequest {
                 account_code: "1002".to_string(),
@@ -335,6 +341,8 @@ impl FinanceService {
                 credit: total_amount,
                 project_id: None,
                 department_id: None,
+                aux_type: None,
+                aux_id: None,
             },
         ];
 

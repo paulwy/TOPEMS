@@ -363,6 +363,8 @@ pub struct VoucherLine {
     pub credit: Decimal,
     pub project_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
+    pub aux_type: Option<String>,
+    pub aux_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -568,6 +570,10 @@ pub struct VoucherLineRequest {
     pub credit: Decimal,
     pub project_id: Option<Uuid>,
     pub department_id: Option<Uuid>,
+    #[serde(default)]
+    pub aux_type: Option<String>,
+    #[serde(default)]
+    pub aux_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

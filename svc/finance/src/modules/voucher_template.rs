@@ -747,6 +747,8 @@ pub async fn generate_from_source(
                     credit,
                     project_id: None,
                     department_id: None,
+                    aux_type: None,
+                    aux_id: None,
                 }
             })
             .collect();
@@ -959,6 +961,8 @@ pub async fn regenerate(
             credit: line.debit,
             project_id: line.project_id,
             department_id: line.department_id,
+            aux_type: line.aux_type.clone(),
+            aux_id: line.aux_id,
         })
         .collect();
 
@@ -989,6 +993,8 @@ pub async fn regenerate(
             credit: line.credit,
             project_id: line.project_id,
             department_id: line.department_id,
+            aux_type: line.aux_type.clone(),
+            aux_id: line.aux_id,
         })
         .collect();
 

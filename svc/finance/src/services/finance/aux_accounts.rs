@@ -104,6 +104,7 @@ impl FinanceService {
             r#"
             SELECT
                 l.id,
+                l.tenant_id,
                 l.period,
                 l.voucher_no,
                 l.voucher_date,

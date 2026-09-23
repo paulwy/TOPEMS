@@ -79,8 +79,8 @@ impl FinanceService {
                 .await?;
 
             let voucher_line = sqlx::query_as(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, tenant_id)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, tenant_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                  RETURNING *"),
             )
             .bind(voucher.id)
@@ -93,6 +93,8 @@ impl FinanceService {
             .bind(line.credit)
             .bind(line.project_id)
             .bind(line.department_id)
+            .bind(line.aux_type.clone())
+            .bind(line.aux_id)
                 .bind(tenant_id)
             .fetch_one(&self.db_pool)
             .await?;
@@ -290,7 +292,7 @@ impl FinanceService {
         }
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
         )
         .bind(voucher.id)
         .fetch_all(&self.db_pool)
@@ -307,8 +309,8 @@ impl FinanceService {
             };
 
             sqlx::query(
-                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_ledger (tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"),
+                only_own_schema_query!("finance", "INSERT INTO finance.core_finance_ledger (tenant_id, account_id, account_code, account_name, voucher_id, voucher_no, voucher_date, period, description, debit, credit, balance, aux_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"),
             )
             .bind(tenant_id)
             .bind(line.account_id)
@@ -322,8 +324,30 @@ impl FinanceService {
             .bind(line.debit)
             .bind(line.credit)
             .bind(new_balance)
+            .bind(line.aux_id)
             .execute(&self.db_pool)
             .await?;
+
+            // 辅助核算余额：凭证行带 aux 时同步 upsert aux_balances（按 租户+科目+aux+期间 累加）
+            if let (Some(aux_type), Some(aux_id)) = (line.aux_type.as_deref(), line.aux_id) {
+                sqlx::query(only_own_schema_query!("finance", r#"
+                    INSERT INTO finance.core_finance_aux_balances (tenant_id, account_id, aux_type, aux_id, period, debit_balance, credit_balance)
+                    VALUES ($1, $2, $3::public.aux_type, $4, $5, $6, $7)
+                    ON CONFLICT (tenant_id, account_id, aux_type, aux_id, period)
+                    DO UPDATE SET debit_balance = finance.core_finance_aux_balances.debit_balance + EXCLUDED.debit_balance,
+                                  credit_balance = finance.core_finance_aux_balances.credit_balance + EXCLUDED.credit_balance,
+                                  updated_at = CURRENT_TIMESTAMP
+                "#))
+                .bind(tenant_id)
+                .bind(line.account_id)
+                .bind(aux_type)
+                .bind(aux_id)
+                .bind(voucher.period.clone())
+                .bind(line.debit)
+                .bind(line.credit)
+                .execute(&self.db_pool)
+                .await?;
+            }
         }
 
         let updated_voucher = sqlx::query_as(
@@ -371,7 +395,7 @@ impl FinanceService {
                 .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
         )
         .bind(voucher.id)
         .fetch_all(&self.db_pool)
@@ -751,7 +775,7 @@ impl FinanceService {
             .await?;
 
             let existing_lines: Vec<VoucherLine> = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id, aux_type, aux_id, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no"),
             )
             .bind(voucher_id)
             .fetch_all(&self.db_pool)
@@ -835,6 +859,29 @@ impl FinanceService {
             .bind(voucher_id)
             .execute(&self.db_pool)
             .await?;
+
+        // 辅助核算余额回滚：按该凭证的 aux 行减回 aux_balances（软删 ledger 的同时）
+        let aux_lines: Vec<(Uuid, String, Uuid, Decimal, Decimal)> = sqlx::query_as(
+            only_own_schema_query!("finance", "SELECT account_id, aux_type, aux_id, debit, credit FROM finance.core_finance_voucher_lines WHERE tenant_id = $1 AND voucher_id = $2 AND aux_id IS NOT NULL AND deleted_at IS NULL"),
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
+        .fetch_all(&self.db_pool)
+        .await?;
+        for (account_id, aux_type, aux_id, debit, credit) in aux_lines {
+            sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_aux_balances
+                SET debit_balance = GREATEST(debit_balance - $3, 0), credit_balance = GREATEST(credit_balance - $4, 0), updated_at = CURRENT_TIMESTAMP
+                WHERE tenant_id = $1 AND account_id = $2 AND aux_type = $5::public.aux_type AND aux_id = $6 AND period = $7"))
+                .bind(tenant_id)
+                .bind(account_id)
+                .bind(debit)
+                .bind(credit)
+                .bind(aux_type)
+                .bind(aux_id)
+                .bind(&existing.period)
+                .execute(&self.db_pool)
+                .await?;
+        }
 
         let voucher = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'approved', posted_by = NULL, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = $1 AND id = $2 RETURNING *"),
