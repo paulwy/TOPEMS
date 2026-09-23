@@ -116,6 +116,27 @@ def fix_errors(errors):
                 # 需要在 Option<Uuid> 后加 .unwrap_or_default()
                 pass
             
+            # 错误模式 10: expected DateTime<Utc>, found NaiveDateTime
+            if 'expected `DateTime<Utc>`, found `NaiveDateTime`' in error['context']:
+                # 需要在 NaiveDateTime 后加 .and_utc()
+                # 但这需要知道具体是哪个变量
+                pass
+            
+            # 错误模式 11: expected Option<NaiveDateTime>, found NaiveDateTime
+            if 'expected `Option<NaiveDateTime>`, found `NaiveDateTime`' in error['context']:
+                # 需要在 NaiveDateTime 前加 Some(...)
+                pass
+            
+            # 错误模式 12: expected String, found Option<String>
+            if 'expected `String`, found `Option<String>`' in error['context']:
+                # 需要在 Option<String> 后加 .unwrap_or_default()
+                pass
+            
+            # 错误模式 13: expected Option<String>, found String
+            if 'expected `Option<String>`, found `String`' in error['context']:
+                # 需要在 String 前加 Some(...)
+                pass
+            
             if line != original_line:
                 lines[line_num] = line
                 fixes_applied += 1
