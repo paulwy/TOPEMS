@@ -6,7 +6,7 @@
       {
         "ordinal": 0,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -15,7 +15,7 @@
       ]
     },
     "nullable": [
-      false
+      true
     ]
   },
   "hash": "0e64fb1ef35475e4dcc68aa575413ed9a9f83299a17632d8b3e0b08a5d4e78d8"

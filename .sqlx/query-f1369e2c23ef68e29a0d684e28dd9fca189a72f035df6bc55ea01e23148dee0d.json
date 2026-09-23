@@ -6,12 +6,12 @@
       {
         "ordinal": 0,
         "name": "equipment_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -20,8 +20,8 @@
       ]
     },
     "nullable": [
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "f1369e2c23ef68e29a0d684e28dd9fca189a72f035df6bc55ea01e23148dee0d"

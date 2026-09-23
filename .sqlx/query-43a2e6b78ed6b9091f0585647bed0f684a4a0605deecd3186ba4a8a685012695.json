@@ -76,7 +76,7 @@
       {
         "ordinal": 14,
         "name": "inspection_time",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 15,
@@ -114,22 +114,22 @@
       false,
       true,
       true,
-      false,
-      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       true,
       true,
       false,
-      false,
-      false,
-      false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true
+      false
     ]
   },
   "hash": "43a2e6b78ed6b9091f0585647bed0f684a4a0605deecd3186ba4a8a685012695"

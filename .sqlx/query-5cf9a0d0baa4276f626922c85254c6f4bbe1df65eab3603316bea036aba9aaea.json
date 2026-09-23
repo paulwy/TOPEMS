@@ -66,7 +66,7 @@
       {
         "ordinal": 12,
         "name": "route_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -87,7 +87,7 @@
       true,
       false,
       false,
-      false
+      true
     ]
   },
   "hash": "5cf9a0d0baa4276f626922c85254c6f4bbe1df65eab3603316bea036aba9aaea"

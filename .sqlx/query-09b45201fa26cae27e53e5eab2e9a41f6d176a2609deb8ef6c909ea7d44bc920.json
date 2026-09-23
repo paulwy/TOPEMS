@@ -66,22 +66,22 @@
       {
         "ordinal": 12,
         "name": "from_process_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 13,
         "name": "to_process_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 14,
         "name": "from_work_station_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 15,
         "name": "to_work_station_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -102,10 +102,10 @@
       true,
       true,
       true,
-      false,
-      false,
-      false,
-      false
+      true,
+      true,
+      true,
+      true
     ]
   },
   "hash": "09b45201fa26cae27e53e5eab2e9a41f6d176a2609deb8ef6c909ea7d44bc920"

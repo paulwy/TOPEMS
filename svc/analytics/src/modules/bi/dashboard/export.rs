@@ -59,8 +59,8 @@ pub async fn export_dashboard(
                     "layout": row.layout,
                     "owner_id": row.owner_id,
                     "is_public": row.is_public.unwrap_or(false),
-                    "created_at": row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                    "updated_at": row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                    "created_at": row.created_at.and_utc().to_rfc3339(),
+                    "updated_at": row.updated_at.and_utc().to_rfc3339(),
                 },
                 "export_time": Utc::now().to_string(),
             });

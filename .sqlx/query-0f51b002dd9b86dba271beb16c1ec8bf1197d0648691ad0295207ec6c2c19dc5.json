@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "inspection_date",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 6,
@@ -61,7 +61,7 @@
       {
         "ordinal": 11,
         "name": "items",
-        "type_info": "Jsonb"
+        "type_info": "Text"
       },
       {
         "ordinal": 12,
@@ -95,34 +95,34 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Varchar",
+        "Timestamp",
         "Varchar",
         "Numeric",
         "Numeric",
         "Numeric",
         "Varchar",
-        "Jsonb",
+        "Text",
         "Text",
         "Text"
       ]
     },
     "nullable": [
       false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
       false,
-      true,
-      true,
       false,
-      false,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
-      true,
       true
     ]
   },

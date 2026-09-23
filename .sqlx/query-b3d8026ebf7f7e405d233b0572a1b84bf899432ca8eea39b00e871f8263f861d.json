@@ -26,7 +26,7 @@
       {
         "ordinal": 4,
         "name": "estimated_time_minutes",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 5,
@@ -41,22 +41,22 @@
       {
         "ordinal": 7,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 8,
         "name": "process_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,
         "name": "process_code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 10,
         "name": "work_station_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -66,16 +66,16 @@
     },
     "nullable": [
       false,
-      false,
-      false,
+      true,
+      true,
       false,
       true,
       true,
       null,
       false,
-      false,
       true,
-      false
+      true,
+      true
     ]
   },
   "hash": "b3d8026ebf7f7e405d233b0572a1b84bf899432ca8eea39b00e871f8263f861d"

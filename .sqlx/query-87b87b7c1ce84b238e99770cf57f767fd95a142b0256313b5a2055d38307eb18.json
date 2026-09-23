@@ -36,17 +36,17 @@
       {
         "ordinal": 6,
         "name": "start_time",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 7,
         "name": "end_time",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 8,
         "name": "quantity_produced",
-        "type_info": "Int4"
+        "type_info": "Float8"
       },
       {
         "ordinal": 9,
@@ -66,12 +66,12 @@
       {
         "ordinal": 12,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 13,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -80,11 +80,11 @@
         "Uuid",
         "Uuid",
         "Uuid",
-        "Timestamptz",
-        "Int4",
+        "Timestamp",
+        "Float8",
         "Varchar",
         "Text",
-        "Timestamptz"
+        "Timestamp"
       ]
     },
     "nullable": [
@@ -96,9 +96,9 @@
       true,
       false,
       true,
-      false,
+      true,
       null,
-      false,
+      true,
       true,
       false,
       false

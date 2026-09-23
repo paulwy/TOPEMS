@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -102,30 +102,30 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Date",
-        "Timestamptz"
+        "Timestamp",
+        "Timestamp"
       ]
     },
     "nullable": [
       false,
-      false,
-      null,
-      false,
       true,
-      null,
       null,
       false,
-      null,
-      true,
-      true,
-      null,
-      null,
-      null,
-      null,
-      true,
-      true,
       false,
-      false
+      null,
+      null,
+      true,
+      null,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null,
+      true,
+      true,
+      null,
+      null
     ]
   },
   "hash": "92b578b38d5eb0895f6295f7835ee4f88ea39f20db8599fab0041ced8885e9d3"

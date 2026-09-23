@@ -321,8 +321,8 @@ pub async fn list_datasources(
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                r.created_at,
-                r.updated_at,
+                Some(r.created_at),
+                Some(r.updated_at),
             )
         })
         .collect();
@@ -411,8 +411,8 @@ pub async fn create_datasource(
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                r.created_at,
-                r.updated_at,
+                Some(r.created_at),
+                Some(r.updated_at),
             )
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -477,8 +477,8 @@ pub async fn get_datasource(
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                r.created_at,
-                r.updated_at,
+                Some(r.created_at),
+                Some(r.updated_at),
             )
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -578,8 +578,8 @@ pub async fn update_datasource(
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                r.created_at,
-                r.updated_at,
+                Some(r.created_at),
+                Some(r.updated_at),
             )
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(

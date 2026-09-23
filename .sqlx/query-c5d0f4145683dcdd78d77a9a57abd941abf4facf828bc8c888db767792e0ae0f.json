@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "inspection_date",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 6,
@@ -61,7 +61,7 @@
       {
         "ordinal": 11,
         "name": "items",
-        "type_info": "Jsonb"
+        "type_info": "Text"
       },
       {
         "ordinal": 12,
@@ -88,11 +88,6 @@
     },
     "nullable": [
       false,
-      false,
-      true,
-      true,
-      false,
-      false,
       true,
       true,
       true,
@@ -101,7 +96,12 @@
       true,
       true,
       true,
-      true
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
     ]
   },
   "hash": "c5d0f4145683dcdd78d77a9a57abd941abf4facf828bc8c888db767792e0ae0f"

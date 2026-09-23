@@ -66,17 +66,17 @@
       {
         "ordinal": 12,
         "name": "process_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 13,
         "name": "process_code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 14,
         "name": "work_station_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -97,9 +97,9 @@
       true,
       true,
       false,
-      false,
       true,
-      false
+      true,
+      true
     ]
   },
   "hash": "7bd0c8a82a8c7459bc62fd31266b7e0141a9e5384299b6c7f57304dfb1fcb10c"

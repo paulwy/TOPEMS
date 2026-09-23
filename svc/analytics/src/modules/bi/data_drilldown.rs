@@ -119,8 +119,8 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
             levels: row.levels.unwrap_or(serde_json::json!([])),
             measures: row.measures.unwrap_or(serde_json::json!([])),
             owner_id: row.owner_id,
-            created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
+            updated_at: row.updated_at.and_utc().to_rfc3339(),
         })
         .collect();
 
@@ -185,8 +185,8 @@ pub async fn create_drilldown_path(
                 levels: row.levels.unwrap_or(serde_json::json!([])),
                 measures: row.measures.unwrap_or(serde_json::json!([])),
                 owner_id: row.owner_id,
-                created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -239,8 +239,8 @@ pub async fn get_drilldown_path(
                 levels: row.levels.unwrap_or(serde_json::json!([])),
                 measures: row.measures.unwrap_or(serde_json::json!([])),
                 owner_id: row.owner_id,
-                created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -300,8 +300,8 @@ pub async fn update_drilldown_path(
                 levels: row.levels.unwrap_or(serde_json::json!([])),
                 measures: row.measures.unwrap_or(serde_json::json!([])),
                 owner_id: row.owner_id,
-                created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -589,7 +589,7 @@ pub async fn get_drilldown_history(
             drill_dimension: row.drill_dimension,
             drill_value: row.drill_value,
             filters: row.filters,
-            created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
         })
         .collect();
 

@@ -31,12 +31,12 @@
       {
         "ordinal": 5,
         "name": "start_time",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 6,
         "name": "end_time",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 7,
@@ -61,12 +61,12 @@
       {
         "ordinal": 11,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 12,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -75,26 +75,26 @@
         "Varchar",
         "Text",
         "Varchar",
-        "Timestamptz",
-        "Timestamptz",
+        "Timestamp",
+        "Timestamp",
         "Numeric",
         "Varchar",
         "Varchar",
         "Text",
-        "Timestamptz"
+        "Timestamp"
       ]
     },
     "nullable": [
       false,
+      true,
       false,
-      false,
-      false,
-      false,
+      true,
+      true,
       false,
       true,
       true,
       true,
-      false,
+      true,
       true,
       false,
       false

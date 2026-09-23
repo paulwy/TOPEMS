@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -106,24 +106,24 @@
     },
     "nullable": [
       false,
-      false,
-      null,
-      false,
       true,
-      null,
       null,
       false,
-      null,
-      true,
-      true,
-      null,
-      null,
-      null,
-      null,
-      true,
-      true,
       false,
-      false
+      null,
+      null,
+      true,
+      null,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null,
+      true,
+      true,
+      null,
+      null
     ]
   },
   "hash": "a1cde334a1f86778eea751d8d44105dee597692c59bdc46d0b63638d5335b90a"

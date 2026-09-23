@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -31,12 +31,12 @@
       {
         "ordinal": 5,
         "name": "quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 6,
         "name": "completed_quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 7,
@@ -46,12 +46,12 @@
       {
         "ordinal": 8,
         "name": "actual_start_date",
-        "type_info": "Date"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 9,
         "name": "actual_end_date",
-        "type_info": "Date"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -61,13 +61,13 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       null,
       false,
-      true,
+      false,
       false,
       true,
-      false,
+      true,
       true,
       true
     ]

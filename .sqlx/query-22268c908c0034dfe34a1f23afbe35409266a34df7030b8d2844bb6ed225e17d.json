@@ -71,7 +71,7 @@
       {
         "ordinal": 13,
         "name": "required_date",
-        "type_info": "Varchar"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 14,
@@ -114,22 +114,22 @@
       false,
       true,
       true,
-      false,
-      false,
-      false,
-      false,
       true,
       true,
       false,
+      false,
       true,
-      true,
+      false,
       false,
       true,
       true,
       true,
       true,
       true,
-      true
+      true,
+      true,
+      false,
+      false
     ]
   },
   "hash": "22268c908c0034dfe34a1f23afbe35409266a34df7030b8d2844bb6ed225e17d"

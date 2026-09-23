@@ -6,12 +6,12 @@
       {
         "ordinal": 0,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 1,
         "name": "process_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -20,7 +20,7 @@
       ]
     },
     "nullable": [
-      false,
+      true,
       true
     ]
   },

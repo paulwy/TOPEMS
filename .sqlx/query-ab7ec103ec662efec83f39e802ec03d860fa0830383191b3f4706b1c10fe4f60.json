@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -104,34 +104,34 @@
         "Uuid",
         "Varchar",
         "Varchar",
-        "Int4",
-        "Date",
-        "Date",
+        "Numeric",
+        "Timestamp",
+        "Timestamp",
         "Uuid",
         "Text",
-        "Timestamptz"
+        "Timestamp"
       ]
     },
     "nullable": [
       false,
-      false,
-      null,
-      false,
       true,
-      null,
       null,
       false,
-      null,
-      true,
-      true,
-      null,
-      null,
-      null,
-      null,
-      true,
-      true,
       false,
-      false
+      null,
+      null,
+      true,
+      null,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null,
+      true,
+      true,
+      null,
+      null
     ]
   },
   "hash": "ab7ec103ec662efec83f39e802ec03d860fa0830383191b3f4706b1c10fe4f60"

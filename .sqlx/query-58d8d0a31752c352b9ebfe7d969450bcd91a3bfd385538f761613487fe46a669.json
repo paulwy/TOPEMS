@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -21,12 +21,12 @@
       {
         "ordinal": 3,
         "name": "quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 4,
         "name": "completed_quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 5,
@@ -39,11 +39,11 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       false,
       false,
       true,
-      false
+      true
     ]
   },
   "hash": "58d8d0a31752c352b9ebfe7d969450bcd91a3bfd385538f761613487fe46a669"

@@ -57,8 +57,8 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
+            updated_at: row.updated_at.and_utc().to_rfc3339(),
         })
         .collect();
 
@@ -194,8 +194,8 @@ pub async fn get_dashboard(
                 layout: row.layout,
                 owner_id: row.owner_id,
                 is_public: row.is_public.unwrap_or(false),
-                created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -267,8 +267,8 @@ pub async fn update_dashboard(
                 layout: row.layout,
                 owner_id: row.owner_id,
                 is_public: row.is_public.unwrap_or(false),
-                created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -370,8 +370,8 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
+            updated_at: row.updated_at.and_utc().to_rfc3339(),
         })
         .collect();
 
@@ -429,8 +429,8 @@ pub async fn get_user_dashboards(
             layout: row.layout,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
+            updated_at: row.updated_at.and_utc().to_rfc3339(),
         })
         .collect();
 
@@ -514,8 +514,8 @@ pub async fn clone_dashboard(
                         layout: new_row.layout,
                         owner_id: new_row.owner_id,
                         is_public: new_row.is_public.unwrap_or(false),
-                        created_at: new_row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                        updated_at: new_row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                        created_at: new_row.created_at.and_utc().to_rfc3339(),
+                        updated_at: new_row.updated_at.and_utc().to_rfc3339(),
                     }
                 })),
                 Err(e) => Json(topems_shared_core::response::error_value(
@@ -578,8 +578,8 @@ pub async fn import_dashboard(
                 layout: row.layout,
                 owner_id: row.owner_id,
                 is_public: row.is_public.unwrap_or(false),
-                created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
-                updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(

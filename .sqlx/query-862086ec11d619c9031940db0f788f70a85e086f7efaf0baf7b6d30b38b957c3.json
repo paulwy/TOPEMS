@@ -86,12 +86,12 @@
       {
         "ordinal": 16,
         "name": "approved_by",
-        "type_info": "Uuid"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 17,
         "name": "approved_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 18,
@@ -101,12 +101,12 @@
       {
         "ordinal": 19,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 20,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -125,8 +125,8 @@
       true,
       true,
       true,
-      false,
       true,
+      false,
       true,
       true,
       true,

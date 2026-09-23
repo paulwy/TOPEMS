@@ -6,7 +6,7 @@
       {
         "ordinal": 0,
         "name": "equipment_code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -15,7 +15,7 @@
       ]
     },
     "nullable": [
-      false
+      true
     ]
   },
   "hash": "610b474abce49e1fc3364dd2eaea35e8f2eab0a0422bcefb1768e62e9955efa5"

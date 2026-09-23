@@ -21,7 +21,7 @@
       {
         "ordinal": 3,
         "name": "process_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -31,9 +31,9 @@
     },
     "nullable": [
       false,
-      false,
       true,
-      false
+      true,
+      true
     ]
   },
   "hash": "70a5aadd6da86ae09e5fbe61dfabb018a3554e9daf22bba452b1ea908d73d331"

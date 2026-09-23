@@ -6,7 +6,7 @@
       {
         "ordinal": 0,
         "name": "order_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -15,7 +15,7 @@
       ]
     },
     "nullable": [
-      false
+      true
     ]
   },
   "hash": "6888e2edab6214d3741ac31b2479e41fcceb1d67a5d09475ce0983dd9381988f"

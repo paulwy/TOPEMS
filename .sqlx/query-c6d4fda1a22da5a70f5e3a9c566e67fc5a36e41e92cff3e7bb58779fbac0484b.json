@@ -11,12 +11,12 @@
       {
         "ordinal": 1,
         "name": "code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -31,17 +31,17 @@
       {
         "ordinal": 5,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 6,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
       "Left": [
-        "Varchar",
+        "Text",
         "Text",
         "Varchar",
         "Uuid"
@@ -49,10 +49,10 @@
     },
     "nullable": [
       false,
-      false,
-      false,
       true,
-      false,
+      true,
+      true,
+      true,
       false,
       false
     ]

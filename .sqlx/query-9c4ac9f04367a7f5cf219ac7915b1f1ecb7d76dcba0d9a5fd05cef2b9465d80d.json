@@ -56,7 +56,7 @@
       {
         "ordinal": 10,
         "name": "work_station_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -73,7 +73,7 @@
       true,
       false,
       true,
-      false
+      true
     ]
   },
   "hash": "9c4ac9f04367a7f5cf219ac7915b1f1ecb7d76dcba0d9a5fd05cef2b9465d80d"

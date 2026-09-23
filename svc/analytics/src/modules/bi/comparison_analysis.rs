@@ -201,8 +201,8 @@ pub async fn list_comparisons(
             status: row.status,
             last_run_at: row.last_run_at.map(to_rfc3339),
             created_by: row.created_by,
-            created_at: row.created_at.map(to_rfc3339).unwrap_or_default(),
-            updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
+            updated_at: row.updated_at.and_utc().to_rfc3339(),
         })
         .collect();
 
@@ -282,8 +282,8 @@ pub async fn get_comparison(
                 status: row.status,
                 last_run_at: row.last_run_at.map(to_rfc3339),
                 created_by: row.created_by,
-                created_at: row.created_at.map(to_rfc3339).unwrap_or_default(),
-                updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -351,8 +351,8 @@ pub async fn create_comparison(
                 status: row.status,
                 last_run_at: row.last_run_at.map(to_rfc3339),
                 created_by: row.created_by,
-                created_at: row.created_at.map(to_rfc3339).unwrap_or_default(),
-                updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -435,8 +435,8 @@ pub async fn update_comparison(
                 status: row.status,
                 last_run_at: row.last_run_at.map(to_rfc3339),
                 created_by: row.created_by,
-                created_at: row.created_at.map(to_rfc3339).unwrap_or_default(),
-                updated_at: row.updated_at.map(to_rfc3339).unwrap_or_default(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -764,7 +764,7 @@ pub async fn get_comparison_result(
             status: row.status,
             data: data_points,
             summary: row.summary,
-            generated_at: row.generated_at.map(to_rfc3339).unwrap_or_default(),
+            generated_at: row.generated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
         }
     }))
 }

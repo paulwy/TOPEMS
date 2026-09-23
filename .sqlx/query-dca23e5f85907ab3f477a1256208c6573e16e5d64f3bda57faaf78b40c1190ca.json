@@ -11,12 +11,12 @@
       {
         "ordinal": 1,
         "name": "equipment_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "equipment_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -51,13 +51,13 @@
     },
     "nullable": [
       false,
-      false,
-      false,
+      true,
+      true,
       null,
       null,
       null,
       null,
-      false
+      true
     ]
   },
   "hash": "dca23e5f85907ab3f477a1256208c6573e16e5d64f3bda57faaf78b40c1190ca"

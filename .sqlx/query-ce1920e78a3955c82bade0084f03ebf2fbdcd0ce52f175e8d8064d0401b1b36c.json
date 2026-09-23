@@ -11,12 +11,12 @@
       {
         "ordinal": 1,
         "name": "process_no",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
@@ -51,28 +51,28 @@
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 10,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
       "Left": [
         "Uuid",
-        "Timestamptz"
+        "Timestamp"
       ]
     },
     "nullable": [
       false,
       true,
-      false,
       true,
       true,
-      false,
-      false,
+      true,
+      true,
+      true,
       null,
       null,
       false,
