@@ -366,7 +366,7 @@ pub async fn get_record(
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
                 start_time: r.start_time.and_utc(),
-                end_time: r.end_time.map(|d| d.and_utc()),
+                end_time: r.end_time.map(|d| d.and_utc()).,
                 quantity_produced: r.quantity_produced.unwrap_or_default(),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
