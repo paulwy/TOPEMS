@@ -35,7 +35,6 @@ import type { DataTableColumn, Toast } from '@/components/redesign';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { inboundOrderApi } from '@/api/wms/inbound';
 import type { InboundOrder as ApiInboundOrder } from '@/api/wms/types';
-import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';

@@ -128,7 +128,7 @@ export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {
                       height: '16px',
                       borderRadius: '8px',
                       backgroundColor: 'var(--status-error)',
-                      color: '#fff',
+                      color: 'white',
                       fontSize: '10px',
                       fontWeight: 600,
                       display: 'flex',

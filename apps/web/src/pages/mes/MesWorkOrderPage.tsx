@@ -40,7 +40,6 @@ import {
 import type { DataTableColumn, Toast, UploadFile, DateRange } from '@/components/redesign';
 import { mesApi } from '@/api/mes';
 import type { WorkOrder as ApiWorkOrder } from '@/api/mes/types';
-import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
@@ -462,7 +461,7 @@ const MesWorkOrderPage: React.FC = () => {
               height: 24,
               borderRadius: '50%',
               backgroundColor: 'var(--accent-primary)',
-              color: '#fff',
+              color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

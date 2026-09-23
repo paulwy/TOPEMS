@@ -1,6 +1,5 @@
 import React from 'react';
 import { GlobalLayoutV3 } from './GlobalLayoutV3';
-import { MobileLayoutV3 } from './MobileLayoutV3';
 import { useResponsive } from '../hooks/useResponsive';
 import { useAuthStore, type User } from '@/store';
 

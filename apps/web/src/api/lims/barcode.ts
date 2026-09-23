@@ -7,7 +7,6 @@ import type {
   UpdateBarcodeRequest,
   BarcodeType,
   PrintBarcodeRequest,
-  ScanBarcodeResult,
   BarcodeScanRecord,
   SampleTraceability,
   RfidTag,

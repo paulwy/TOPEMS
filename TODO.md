@@ -632,3 +632,109 @@ D
 - [x] 本地 DB 清除 RLS 实测遗留：test_tenant_b_user/test_pm_user 两账号（sessions/refresh_tokens 级联）、0002 租户（RLS测试租户0002）、tenant_users/user_roles 绑定、workflow_tasks 2 条（11111111-2222-3333-4444-555555555555 / 22222222-3333-4444-5555-666666666666）、workflow_versions 1.1（eead40d8-e629-4d24-9b34-a2aab306e007）
 - [x] 验证：B 登录 401（账号已删）、S 登录正常回归；删除前快照备份 /tmp/topems_testdata_cleanup_20260924_052302.sql
 - [x] 纯本地 DB 变更，未入迁移
+
+---
+
+## 2026-09-24 DateTime<Utc> 迁移专项（完成）
+
+### 统一原则（对齐 CRM 模块）
+- DB schema：timestamptz
+- 代码 struct：DateTime<Utc>
+- 辅助函数签名：统一为 Option<DateTime<Utc>>
+
+### MES 模块编译错误修复
+- [x] 初始错误数：449 个
+- [x] 修复模式：
+  - 删除 .and_utc() 调用（DateTime<Utc> 没有此方法）
+  - 删除 .naive_utc() 调用（统一使用 DateTime<Utc>）
+  - Option<String> ↔ String 混用修复
+  - Option<DateTime<Utc>> ↔ DateTime<Utc> 混用修复
+  - BigDecimal ↔ f64 类型转换
+  - borrow of moved value 修复
+- [x] 最终状态：0 错误，46 个测试通过 1 个业务逻辑失败
+- [x] 提交：60e5d0be1（lib）、4f598124d（测试）
+
+### Analytics 模块编译错误修复
+- [x] 初始错误数：136 个
+- [x] 错误类型：
+  - E0599 (and_utc)：76 个 → 批量删除 .and_utc() 修复
+  - E0308 类型不匹配：55 个 → 修改结构体定义、to_rfc3339 函数签名
+  - E0631 函数参数不匹配：4 个 → 修改 to_rfc3339 函数签名
+- [x] 最终状态：0 错误，23 个测试全部通过
+- [x] 提交：6b42b1d2b
+
+### 全工作区验证
+- [x] SQLX_OFFLINE=false cargo check --workspace → 0 错误
+- [x] 代码 warnings 清理：4 → 1（zookeeper 依赖 future-incompat warning）
+- [x] 服务启动：http://localhost:8099，31 个模块注册成功
+- [x] API 测试：所有模块正常（CRM/MES/HRM/Finance/LIMS/WMS/QMS/Analytics）
+- [x] 全量单元测试：1256 个全部通过
+- [x] 代码已推送远端 main
+
+---
+
+## 下一步任务规划（2026-09-24）
+
+### 🔥 P0 - 紧急重要（本周完成）
+- [ ] **P0-1 前端 typecheck + lint** ← 当前任务
+  - 确保前端代码质量
+  - 修复所有 typecheck 错误
+  - 修复所有 lint 错误
+  - 预计时间：2 小时
+- [ ] **P0-2 前端单元测试**
+  - 确保前端功能正确
+  - 运行所有前端单元测试
+  - 修复失败的测试
+  - 预计时间：4 小时
+- [ ] **P0-3 端到端测试**
+  - 登录 → 各模块操作 → 登出
+  - 验证完整业务流程
+  - 预计时间：4 小时
+- [ ] **P0-4 性能测试**
+  - API 响应时间
+  - 数据库查询性能
+  - 预计时间：2 小时
+
+### ⚡ P1 - 重要（下周完成）
+- [ ] **P1-1 清理剩余 warning**
+  - zookeeper 依赖的 future-incompat warning
+  - 预计时间：1 小时
+- [ ] **P1-2 API 文档完善**
+  - 自动生成 OpenAPI 文档
+  - 预计时间：4 小时
+- [ ] **P1-3 错误处理优化**
+  - 统一错误格式、友好提示
+  - 预计时间：4 小时
+- [ ] **P1-4 日志优化**
+  - 结构化日志、日志级别调整
+  - 预计时间：2 小时
+- [ ] **P1-5 数据库索引优化**
+  - 慢查询优化
+  - 预计时间：4 小时
+
+### 🎯 P2 - 改进（本月完成）
+- [ ] **P2-1 Docker 部署优化**
+  - 多阶段构建、镜像大小优化
+  - 预计时间：4 小时
+- [ ] **P2-2 CI/CD 配置**
+  - 自动测试、自动部署
+  - 预计时间：8 小时
+- [ ] **P2-3 监控告警**
+  - Prometheus + Grafana
+  - 预计时间：8 小时
+- [ ] **P2-4 安全审计**
+  - 权限检查、数据加密
+  - 预计时间：8 小时
+- [ ] **P2-5 性能优化**
+  - 缓存、数据库连接池
+  - 预计时间：8 小时
+
+### 🚀 P3 - 长期（下季度完成）
+- [ ] **P3-1 微服务拆分**
+  - 从模块化单体拆分为微服务
+- [ ] **P3-2 容器编排**
+  - Kubernetes 部署
+- [ ] **P3-3 多租户优化**
+  - 数据隔离、性能优化
+- [ ] **P3-4 AI 功能增强**
+  - 智能推荐、自动报表

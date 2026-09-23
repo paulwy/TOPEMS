@@ -29,7 +29,6 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { tenantApi } from '@/api/tenant';
 import type { Tenant, TenantStatus, TenantPlan } from '@/api/tenant/types';
-import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';

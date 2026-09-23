@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -36,7 +35,6 @@ import {
 import type { DateRange } from '@/components/redesign';
 import { getDashboard } from '@/api/bff';
 import { mesAnalyticsApi } from '@/api/mes/analytics';
-import { productionOrderApi } from '@/api/mes/productionOrder';
 import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';
@@ -414,7 +412,7 @@ const DashboardPage: React.FC = () => {
                         height: 40,
                         borderRadius: 'var(--radius-sm)',
                         backgroundColor: 'var(--accent-primary)',
-                        color: '#fff',
+                        color: 'white',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -670,7 +668,7 @@ const DashboardPage: React.FC = () => {
                       height: 40,
                       borderRadius: 'var(--radius-sm)',
                       backgroundColor: 'var(--accent-primary)',
-                      color: '#fff',
+                      color: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

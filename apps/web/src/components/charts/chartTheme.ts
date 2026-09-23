@@ -2,7 +2,6 @@
 // A cohesive, professional color scheme for business intelligence dashboards
 
 import { useTheme } from '@mui/material/styles';
-import { useThemeStore } from '@/store';
 import { designTokens } from '@topems/tokens';
 
 // ── Chart type enum for future MUI X Charts migration ──────────────────────

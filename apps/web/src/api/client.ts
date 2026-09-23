@@ -220,7 +220,7 @@ const isGisGraceRead = (
   return GIS_READ_GRACE_PATHS.some((re) => re.test(url));
 };
 
-const GIS_GRACE_FALLBACK = (): ApiResponse => ({
+const gisGraceFallback = (): ApiResponse => ({
   code: 0,
   success: true,
   data: {},
@@ -551,7 +551,7 @@ export const createAxiosClient = ({
 
         // GIS 只读查询接口：401 不 reject、不触发登出，降级为空数据（未登录/测试身份友好）
         if (isGisGraceRead(error.config?.method, url, baseURL)) {
-          const fallback = GIS_GRACE_FALLBACK();
+          const fallback = gisGraceFallback();
           apiLogger.debug(
             `[GIS Grace] 401 on ${fullUrl}, returning empty fallback instead of rejecting`
           );

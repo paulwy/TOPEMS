@@ -418,7 +418,7 @@ const PurchaseOrderPage: React.FC = () => {
               height: 24,
               borderRadius: '50%',
               backgroundColor: 'var(--accent-primary)',
-              color: '#fff',
+              color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

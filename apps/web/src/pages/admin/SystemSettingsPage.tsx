@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings, Mail, MessageSquare, FileText, Save, RefreshCw } from 'lucide-react';
 
 import {
   Button,
@@ -14,7 +13,6 @@ import {
 } from '@/components/redesign';
 import type { Toast } from '@/components/redesign';
 import { systemSettingApi } from '@/api/admin/systemSetting';
-import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';

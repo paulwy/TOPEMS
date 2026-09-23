@@ -30,7 +30,6 @@ import {
   ToastContainer,
   Toggle,
 } from '@/components/redesign';
-import type { DataTableColumn, Toast } from '@/components/redesign';
 import type { LucideIcon } from 'lucide-react';
 import {
   getNotifications,
@@ -39,7 +38,6 @@ import {
   deleteNotification,
 } from '@/api/notification';
 import type { Notification, NotificationTypeEnum } from '@/api/notification';
-import i18n from '@/i18n';
 import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';

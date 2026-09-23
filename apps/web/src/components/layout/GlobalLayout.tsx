@@ -9,7 +9,6 @@ import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import {
   useUIStore,
-  useThemeStore,
   useSetUnreadNotificationCount,
   useUnreadNotificationCount,
 } from '@/store';
