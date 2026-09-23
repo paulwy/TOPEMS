@@ -1282,7 +1282,7 @@ async fn update_customer_finance(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateCustomerFinanceRequest>,
 ) -> Json<ApiResponse<CustomerFinanceInfo>> {
     let mut guard = txn_arc.lock().await;
@@ -1299,6 +1299,7 @@ async fn update_customer_finance(
     let tenant_id = tenant_opt.unwrap_or_else(|| {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // 读取现值（无则默认），与请求合并
     let cur = {
@@ -1310,13 +1311,14 @@ async fn update_customer_finance(
                    cf.total_sales, cf.total_received, cf.last_transaction_date,
                    cf.payment_terms, cf.risklevel, cf.status, cf.bank_name,
                    cf.bank_account, cf.account_name, cf.tax_number, cf.customer_name,
-                   COALESCE(c.name, cf.customer_name) AS resolved_name
+                   COALESCE(CASE WHEN $3 = 'en' THEN COALESCE(c.name_en, c.name) ELSE c.name END, cf.customer_name) AS resolved_name
             FROM crm.customer_finance cf
             LEFT JOIN crm.customers c ON c.id = cf.customer_id
             WHERE cf.customer_id = $1 AND cf.tenant_id = $2
             "#,
             id,
             tenant_id,
+            locale,
         )
         .fetch_optional(&mut **txn)
         .await;
@@ -1346,14 +1348,15 @@ async fn update_customer_finance(
             },
             Ok(None) => {
                 let name = sqlx::query!(
-                    "SELECT name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
+                    "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name FROM crm.customers WHERE id = $1 AND tenant_id = $2",
                     id,
                     tenant_id,
+                    locale,
                 )
                 .fetch_optional(&mut **txn)
                 .await;
                 let customer_name = match name {
-                    Ok(Some(n)) => n.name,
+                    Ok(Some(n)) => n.name.unwrap_or_default(),
                     _ => String::new(),
                 };
                 CustomerFinanceInfo::default_for(id, customer_name)

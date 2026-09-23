@@ -718,6 +718,9 @@ pub struct AuxiliaryAccount {
     pub aux_type: AuxType,
     pub code: String,
     pub name: String,
+    #[serde(default)]
+    #[sqlx(default)]
+    pub name_en: Option<String>,
     pub parent_id: Option<Uuid>,
     pub level: i32,
     pub is_enabled: bool,

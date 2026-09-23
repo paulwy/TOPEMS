@@ -49,21 +49,24 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         aux_type: Option<AuxType>,
+        locale: &str,
     ) -> Result<Vec<AuxiliaryAccount>, TopemsError> {
         let accounts = if let Some(t) = aux_type {
             let type_str = t.to_string();
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND aux_type::text = $2 ORDER BY code"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND aux_type::text = $2 ORDER BY code"),
             )
             .bind(tenant_id)
             .bind(type_str)
+            .bind(locale)
             .fetch_all(&self.db_pool)
             .await?
         } else {
             sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) ORDER BY aux_type, code"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) ORDER BY aux_type, code"),
             )
             .bind(tenant_id)
+            .bind(locale)
             .fetch_all(&self.db_pool)
             .await?
         };
@@ -75,12 +78,14 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         aux_id: Uuid,
+        locale: &str,
     ) -> Result<AuxiliaryAccount, TopemsError> {
         let account = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, aux_type, code, CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, level, is_enabled, description, created_at, updated_at FROM finance.core_finance_aux_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(aux_id)
+        .bind(locale)
         .fetch_one(&self.db_pool)
         .await?;
 
@@ -91,6 +96,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         query: AuxLedgerQuery,
+        locale: &str,
     ) -> Result<Vec<AuxLedgerEntry>, TopemsError> {
         let type_str = query.aux_type.to_string();
         let aux_id = query.aux_id;
@@ -112,7 +118,7 @@ impl FinanceService {
                 l.account_name,
                 la.aux_type,
                 la.id as aux_id,
-                la.name as aux_name,
+                CASE WHEN $8 = 'en' THEN COALESCE(la.name_en, la.name) ELSE la.name END AS aux_name,
                 l.description,
                 l.debit,
                 l.credit,
@@ -136,6 +142,7 @@ impl FinanceService {
         .bind(period)
         .bind(start_date)
         .bind(end_date)
+        .bind(locale)
         .fetch_all(&self.db_pool)
         .await?;
 
@@ -158,7 +165,7 @@ impl FinanceService {
             r#"
             SELECT
                 la.id as aux_id,
-                la.name as aux_name,
+                CASE WHEN $6 = 'en' THEN COALESCE(la.name_en, la.name) ELSE la.name END AS aux_name,
                 la.code as aux_code,
                 a.id as account_id,
                 a.code as account_code,
@@ -174,7 +181,7 @@ impl FinanceService {
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR la.id = $3)
               AND ($5::uuid IS NULL OR a.id = $5)
-            GROUP BY la.id, la.name, la.code, a.id, a.code, CASE WHEN $6 = 'en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
+            GROUP BY la.id, CASE WHEN $6 = 'en' THEN COALESCE(la.name_en, la.name) ELSE la.name END, la.code, a.id, a.code, CASE WHEN $6 = 'en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
             ORDER BY la.code, a.code
             "#
         ))

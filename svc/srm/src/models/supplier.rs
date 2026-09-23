@@ -9,6 +9,9 @@ pub struct Supplier {
     pub tenant_id: Uuid,
     pub supplier_no: String,
     pub name: String,
+    #[serde(default)]
+    #[sqlx(default)]
+    pub name_en: Option<String>,
     pub legal_name: Option<String>,
     pub category: String,
     pub status: String,

@@ -10,6 +10,9 @@ pub struct Workflow {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub name: String,
+    #[serde(default)]
+    #[sqlx(default)]
+    pub name_en: Option<String>,
     pub code: Option<String>,
     pub description: Option<String>,
     pub definition: serde_json::Value,

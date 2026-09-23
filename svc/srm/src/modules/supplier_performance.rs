@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::models::{SupplierEvaluation, SupplierPerformance};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -68,7 +69,7 @@ pub async fn get_performance_reports(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -116,7 +117,7 @@ pub async fn get_performance_reports(
         r#"
         SELECT 
             s.id as supplier_id,
-            s.name as supplier_name,
+            CASE WHEN $11='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -189,6 +190,7 @@ pub async fn get_performance_reports(
     .bind(min_score)
     .bind(max_score)
     .bind(offset)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -254,7 +256,7 @@ pub async fn get_performance_report(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -279,7 +281,7 @@ pub async fn get_performance_report(
         sqlx::query_as::<_, (String, String, String, String)>(only_own_schema_query!(
             "srm",
             r#"
-        SELECT name, category, status, contact_person
+        SELECT CASE WHEN $3='en' THEN COALESCE(name_en, name) ELSE name END AS name, category, status, contact_person
         FROM srm.suppliers
         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'
         "#,
@@ -287,6 +289,7 @@ pub async fn get_performance_report(
         ))
         .bind(id)
         .bind(tenant_opt)
+        .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&mut **txn)
         .await;
 
@@ -312,7 +315,7 @@ pub async fn get_performance_report(
         r#"
         SELECT 
             s.id as supplier_id,
-            s.name as supplier_name,
+            CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -365,6 +368,7 @@ pub async fn get_performance_report(
     ))
     .bind(id)
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await;
 
@@ -465,7 +469,7 @@ pub async fn compare_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareParams>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -503,12 +507,13 @@ pub async fn compare_supplier_performance(
         .map(|i| format!("${}", i))
         .collect();
     let placeholders_str = placeholders.join(", ");
+    let locale_idx = supplier_ids.len() + 2;
 
     let query = format!(
         r#"
         SELECT 
             s.id as supplier_id,
-            s.name as supplier_name,
+            CASE WHEN {}='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -557,7 +562,7 @@ pub async fn compare_supplier_performance(
         WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.id IN ({}) AND s.status != 'deleted'
         ORDER BY e.avg_overall_score DESC NULLS LAST
         "#,
-        placeholders_str
+        locale_idx, placeholders_str
     );
 
     let mut query_builder = sqlx::query_as::<_, SupplierPerformance>(&query);
@@ -565,6 +570,7 @@ pub async fn compare_supplier_performance(
     for id in &supplier_ids {
         query_builder = query_builder.bind(*id);
     }
+    query_builder = query_builder.bind(Locale::from_headers(&headers).as_sql());
 
     let result = query_builder.fetch_all(&mut **txn).await;
 
@@ -714,7 +720,7 @@ pub async fn get_performance_trend(
 pub async fn get_top_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -739,7 +745,7 @@ pub async fn get_top_suppliers(
         only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
-            s.name as supplier_name,
+            CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -775,6 +781,7 @@ pub async fn get_top_suppliers(
         "#, "srm"),
     )
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -783,7 +790,7 @@ pub async fn get_top_suppliers(
         only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
-            s.name as supplier_name,
+            CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -819,6 +826,7 @@ pub async fn get_top_suppliers(
         "#, "srm"),
     )
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await
     .unwrap_or_default();
@@ -835,7 +843,7 @@ pub async fn export_performance_report(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PerformanceQueryParams>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -878,7 +886,7 @@ pub async fn export_performance_report(
         only_own_schema_query!("srm", r#"
         SELECT 
             s.id as supplier_id,
-            s.name as supplier_name,
+            CASE WHEN $9='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS supplier_name,
             COALESCE(po.total_orders, 0) as total_orders,
             COALESCE(po.total_amount, 0) as total_amount,
             COALESCE(e.avg_quality_score, NULL) as avg_quality_score,
@@ -931,6 +939,7 @@ pub async fn export_performance_report(
     .bind(end_date)
     .bind(min_score)
     .bind(max_score)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_all(&mut **txn)
     .await;
 
@@ -1052,7 +1061,7 @@ pub async fn get_score_level_distribution(
 pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -1105,17 +1114,18 @@ pub async fn get_performance_summary(
     let top_supplier = sqlx::query_as::<_, (String, f64)>(only_own_schema_query!(
         "srm",
         r#"
-        SELECT s.name, AVG(e.overall_score) as avg_score
+        SELECT CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
         JOIN srm.suppliers s ON e.supplier_id = s.id
         WHERE e.($1::uuid IS NULL OR tenant_id = $1) AND e.overall_score IS NOT NULL
-        GROUP BY s.name
+        GROUP BY CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY avg_score DESC
         LIMIT 1
         "#,
         "srm"
     ))
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);
@@ -1123,17 +1133,18 @@ pub async fn get_performance_summary(
     let bottom_supplier = sqlx::query_as::<_, (String, f64)>(only_own_schema_query!(
         "srm",
         r#"
-        SELECT s.name, AVG(e.overall_score) as avg_score
+        SELECT CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
         JOIN srm.suppliers s ON e.supplier_id = s.id
         WHERE e.($1::uuid IS NULL OR tenant_id = $1) AND e.overall_score IS NOT NULL
-        GROUP BY s.name
+        GROUP BY CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY avg_score ASC
         LIMIT 1
         "#,
         "srm"
     ))
     .bind(tenant_opt)
+    .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)
     .await
     .unwrap_or(None);

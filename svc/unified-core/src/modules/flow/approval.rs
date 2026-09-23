@@ -1,6 +1,7 @@
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     Json,
 };
 use chrono::{DateTime, Utc};
@@ -11,6 +12,7 @@ use uuid::Uuid;
 
 use topems_shared::ApiResponse;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 
 use super::models::{TaskActionRequest, Workflow, WorkflowInstance, WorkflowTask};
@@ -122,7 +124,9 @@ pub struct ApprovalTaskListResponse {
 pub async fn list_approval_tasks(
     State(state): State<AppState>,
     Query(query): Query<ApprovalTaskQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ApprovalTaskListResponse>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -152,7 +156,7 @@ pub async fn list_approval_tasks(
     let tasks: Vec<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
-                  w.id as workflow_id, w.name as workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
+                  w.id as workflow_id, CASE WHEN $5='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
            FROM core_workflow_tasks t
            JOIN core_workflow_instances i ON t.instance_id = i.id
            JOIN core_workflows w ON i.workflow_id = w.id
@@ -165,6 +169,7 @@ pub async fn list_approval_tasks(
     .bind(assignee_id.clone())
     .bind(page_size)
     .bind(offset)
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     {
@@ -227,7 +232,9 @@ pub async fn list_approval_tasks(
 pub async fn get_approval_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -236,13 +243,14 @@ pub async fn get_approval_task(
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
-                  w.id as workflow_id, w.name as workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
+                  w.id as workflow_id, CASE WHEN $2='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
            FROM core_workflow_tasks t
            JOIN core_workflow_instances i ON t.instance_id = i.id
            JOIN core_workflows w ON i.workflow_id = w.id
            WHERE t.id = $1"#,
     )
     .bind(task_id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await
     {
@@ -292,11 +300,13 @@ pub async fn get_approval_task(
 )]
 pub async fn list_pending_approvals(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ApprovalTask>>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let tasks: Vec<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
-                  w.id as workflow_id, w.name as workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
+                  w.id as workflow_id, CASE WHEN $1='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
            FROM core_workflow_tasks t
            JOIN core_workflow_instances i ON t.instance_id = i.id
            JOIN core_workflows w ON i.workflow_id = w.id
@@ -304,6 +314,7 @@ pub async fn list_pending_approvals(
            ORDER BY t.created_at DESC
            LIMIT 20"#,
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     {
@@ -359,8 +370,10 @@ pub async fn list_pending_approvals(
 pub async fn approve_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -401,9 +414,10 @@ pub async fn approve_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
+            .bind(locale)
             .fetch_one(&state.pool)
             .await
             {
@@ -457,8 +471,10 @@ pub async fn approve_task(
 pub async fn reject_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -499,9 +515,10 @@ pub async fn reject_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
+            .bind(locale)
             .fetch_one(&state.pool)
             .await
             {
@@ -554,7 +571,9 @@ pub async fn reject_task(
 pub async fn claim_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -592,9 +611,10 @@ pub async fn claim_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
+            .bind(locale)
             .fetch_one(&state.pool)
             .await
             {
@@ -647,7 +667,9 @@ pub async fn claim_task(
 pub async fn unclaim_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -685,9 +707,10 @@ pub async fn unclaim_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
+            .bind(locale)
             .fetch_one(&state.pool)
             .await
             {
@@ -741,8 +764,10 @@ pub async fn unclaim_task(
 pub async fn delegate_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -791,9 +816,10 @@ pub async fn delegate_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
+            .bind(locale)
             .fetch_one(&state.pool)
             .await
             {
@@ -847,8 +873,10 @@ pub async fn delegate_task(
 pub async fn reassign_task(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => return Json(api_error(400, "无效的任务ID")),
@@ -897,9 +925,10 @@ pub async fn reassign_task(
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
-                "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+                "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
             )
             .bind(instance.workflow_id)
+            .bind(locale)
             .fetch_one(&state.pool)
             .await
             {
@@ -944,17 +973,22 @@ pub async fn reassign_task(
         (status = 500, description = "查询失败"),
     ),
 )]
-pub async fn list_approvals(State(state): State<AppState>) -> Json<ApiResponse<Vec<ApprovalTask>>> {
+pub async fn list_approvals(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<Vec<ApprovalTask>>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let tasks: Vec<ApprovalTaskRow> = match sqlx::query_as(
         r#"SELECT t.id as task_id, t.instance_id as task_instance_id, t.node_id as task_node_id, t.assignee_id as task_assignee_id, t.status as task_status, t.comment as task_comment, t.created_at as task_created_at, t.completed_at as task_completed_at,
                   i.id as instance_id, i.workflow_id as instance_workflow_id, i.title as instance_title, i.initiator_id as instance_initiator_id, i.status as instance_status, i.started_at as instance_started_at, i.completed_at as instance_completed_at,
-                  w.id as workflow_id, w.name as workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
+                  w.id as workflow_id, CASE WHEN $1='en' THEN COALESCE(w.name_en, w.name) ELSE w.name END AS workflow_name, w.description as workflow_description, w.definition as workflow_definition, w.status as workflow_status, w.version as workflow_version, w.created_by as workflow_created_by, w.created_at as workflow_created_at, w.updated_at as workflow_updated_at, w.published_at as workflow_published_at
            FROM core_workflow_tasks t
            JOIN core_workflow_instances i ON t.instance_id = i.id
            JOIN core_workflows w ON i.workflow_id = w.id
            ORDER BY t.created_at DESC
            LIMIT 20"#,
     )
+    .bind(locale)
     .fetch_all(&state.pool)
     .await
     {
@@ -1009,8 +1043,9 @@ pub async fn list_approvals(State(state): State<AppState>) -> Json<ApiResponse<V
 pub async fn get_approval(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ApprovalTask>> {
-    get_approval_task(State(state), Path(id)).await
+    get_approval_task(State(state), Path(id), headers).await
 }
 
 #[utoipa::path(
@@ -1028,8 +1063,10 @@ pub async fn get_approval(
 pub async fn create_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let locale = Locale::from_headers(&headers).as_sql();
     let create_tenant: Uuid = claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow_id_str = match payload.get("workflow_id") {
         Some(v) => v.as_str().unwrap_or_default(),
@@ -1103,9 +1140,10 @@ pub async fn create_approval(
     };
 
     let workflow = match sqlx::query_as::<_, Workflow>(
-        "SELECT id, name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
+        "SELECT id, CASE WHEN $2='en' THEN COALESCE(name_en, name) ELSE name END AS name, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE id = $1",
     )
     .bind(workflow_id)
+    .bind(locale)
     .fetch_one(&state.pool)
     .await
     {
@@ -1156,6 +1194,7 @@ pub async fn create_approval(
 pub async fn process_approval(
     State(state): State<AppState>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<ApprovalTask>> {
     let action = match payload.variables.as_ref().and_then(|v| v.get("action")) {
@@ -1164,8 +1203,8 @@ pub async fn process_approval(
     };
 
     match action {
-        "approve" => approve_task(State(state), Path(id), Json(payload)).await,
-        "reject" => reject_task(State(state), Path(id), Json(payload)).await,
+        "approve" => approve_task(State(state), Path(id), headers, Json(payload)).await,
+        "reject" => reject_task(State(state), Path(id), headers, Json(payload)).await,
         _ => Json(api_error(400, "无效的操作类型")),
     }
 }

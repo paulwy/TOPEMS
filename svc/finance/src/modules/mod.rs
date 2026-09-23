@@ -727,6 +727,7 @@ async fn list_aux_accounts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<AuxiliaryAccount>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -741,7 +742,8 @@ async fn list_aux_accounts(
         "custom3" => Some(AuxType::Custom3),
         _ => None,
     };
-    match service.list_aux_accounts(tenant_id, aux_type).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.list_aux_accounts(tenant_id, aux_type, locale).await {
         Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -768,6 +770,7 @@ async fn get_aux_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<AuxLedgerEntry>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -790,7 +793,8 @@ async fn get_aux_ledger(
         start_date: params.start_date,
         end_date: params.end_date,
     };
-    match service.get_aux_ledger(tenant_id, query).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.get_aux_ledger(tenant_id, query, locale).await {
         Ok(entries) => Json(ApiResponse::success(entries, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

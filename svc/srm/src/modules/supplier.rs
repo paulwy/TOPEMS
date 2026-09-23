@@ -20,6 +20,7 @@ use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::l2_cache::AsyncL2Cache;
+use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{
     EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
     SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
@@ -97,8 +98,8 @@ pub async fn create_routes(
     Ok(app)
 }
 
-fn supplier_cache_key(tenant_id: Uuid, id: Uuid) -> String {
-    format!("srm:supplier:{}:{}", tenant_id, id)
+fn supplier_cache_key(tenant_id: Uuid, id: Uuid, locale: &str) -> String {
+    format!("srm:supplier:{}:{}:locale:{}", tenant_id, id, locale)
 }
 
 fn suppliers_list_cache_key(
@@ -110,10 +111,11 @@ fn suppliers_list_cache_key(
     category: &Option<String>,
     sort_by: &str,
     sort_order: &str,
+    locale: &str,
 ) -> String {
     format!(
-        "srm:suppliers:{}:page:{}:size:{}:search:{:?}:status:{:?}:category:{:?}:sort:{}:order:{}",
-        tenant_id, page, page_size, search, status, category, sort_by, sort_order
+        "srm:suppliers:{}:page:{}:size:{}:search:{:?}:status:{:?}:category:{:?}:sort:{}:order:{}:locale:{}",
+        tenant_id, page, page_size, search, status, category, sort_by, sort_order, locale
     )
 }
 
@@ -132,7 +134,7 @@ pub async fn list_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -143,6 +145,8 @@ pub async fn list_suppliers(
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -174,6 +178,7 @@ pub async fn list_suppliers(
         &params.category,
         &sort_by,
         &sort_order,
+        &locale,
     );
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
@@ -203,7 +208,7 @@ pub async fn list_suppliers(
 
     let query = format!(
         r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         FROM srm.suppliers
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
@@ -222,6 +227,7 @@ pub async fn list_suppliers(
         .bind(&category_filter)
         .bind(page_size)
         .bind(offset)
+        .bind(locale)
         .fetch_all(&mut **txn)
         .await;
 
@@ -494,7 +500,7 @@ pub async fn get_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -506,6 +512,8 @@ pub async fn get_supplier(
         Err(e) => return e,
     }
 
+    let locale = Locale::from_headers(&headers).as_sql();
+
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -514,7 +522,7 @@ pub async fn get_supplier(
     let tenant_id = tenant_opt.unwrap_or_else(|| {
         uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
     });
-    let cache_key = supplier_cache_key(tenant_id, id);
+    let cache_key = supplier_cache_key(tenant_id, id, &locale);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("srm", "supplier", "get");
@@ -529,12 +537,13 @@ pub async fn get_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", r#"
-        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#, "srm"),
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -571,7 +580,7 @@ pub async fn update_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -583,6 +592,8 @@ pub async fn update_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -659,7 +670,7 @@ pub async fn update_supplier(
 
     match result {
         Ok(supplier) => {
-            let cache_key = supplier_cache_key(tenant_id, id);
+            let cache_key = supplier_cache_key(tenant_id, id, &locale);
             state.supplier_cache.remove(&cache_key).await;
             state.supplier_cache.clear_l1();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
@@ -761,7 +772,7 @@ pub async fn delete_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -772,6 +783,8 @@ pub async fn delete_supplier(
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
@@ -807,7 +820,7 @@ pub async fn delete_supplier(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            let cache_key = supplier_cache_key(tenant_id, id);
+            let cache_key = supplier_cache_key(tenant_id, id, &locale);
             state.supplier_cache.remove(&cache_key).await;
             state.supplier_cache.clear_l1();
             tracing::debug!("🗑️ 供应商缓存已失效: {}", cache_key);
