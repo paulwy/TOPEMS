@@ -247,18 +247,18 @@ pub async fn list_material_returns(
                 .flatten()
                 .map(|u| u.to_string()),
             return_time: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("return_time")
+                r.try_get::<Option<NaiveDateTime>, _>("return_time")
                     .ok()
                     .flatten(),
             ),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

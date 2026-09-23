@@ -627,7 +627,7 @@ pub async fn list_quality_records(
                 .unwrap_or_else(|| "pending".to_string()),
             inspector: r.try_get::<Option<String>, _>("inspector").ok().flatten(),
             inspection_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
+                r.try_get::<Option<NaiveDateTime>, _>("inspection_time")
                     .ok()
                     .flatten(),
             ),
@@ -637,12 +637,12 @@ pub async fn list_quality_records(
                 .flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

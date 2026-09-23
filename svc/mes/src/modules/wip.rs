@@ -313,24 +313,24 @@ pub async fn list_wips(
                 .unwrap_or_else(|| "in_progress".to_string()),
             batch_no: r.try_get::<Option<String>, _>("batch_no").ok().flatten(),
             start_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("start_time")
+                r.try_get::<Option<NaiveDateTime>, _>("start_time")
                     .ok()
                     .flatten(),
             ),
             last_transfer_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("last_transfer_time")
+                r.try_get::<Option<NaiveDateTime>, _>("last_transfer_time")
                     .ok()
                     .flatten(),
             ),
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

@@ -321,22 +321,22 @@ pub async fn list_production_schedules(
                 .ok()
                 .flatten(),
             planned_start_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("planned_start_time")
+                r.try_get::<Option<NaiveDateTime>, _>("planned_start_time")
                     .ok()
                     .flatten(),
             ),
             planned_end_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("planned_end_time")
+                r.try_get::<Option<NaiveDateTime>, _>("planned_end_time")
                     .ok()
                     .flatten(),
             ),
             actual_start_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_start_time")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_start_time")
                     .ok()
                     .flatten(),
             ),
             actual_end_time: opt_naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_end_time")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_end_time")
                     .ok()
                     .flatten(),
             ),
@@ -357,12 +357,12 @@ pub async fn list_production_schedules(
                 .unwrap_or(0),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

@@ -184,12 +184,12 @@ pub async fn list_patrols(
             findings: r.try_get::<Option<String>, _>("findings").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

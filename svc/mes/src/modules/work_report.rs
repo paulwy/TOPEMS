@@ -378,7 +378,7 @@ pub async fn list_work_reports(
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
             approved_at: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
+                r.try_get::<Option<NaiveDateTime>, _>("approved_at")
                     .ok()
                     .flatten(),
             ),
@@ -387,12 +387,12 @@ pub async fn list_work_reports(
                 .ok()
                 .flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

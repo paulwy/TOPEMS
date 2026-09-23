@@ -297,22 +297,22 @@ pub async fn list_work_orders(
                     .flatten(),
             ),
             plan_start_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
+                r.try_get::<Option<NaiveDateTime>, _>("plan_start_date")
                     .ok()
                     .flatten(),
             ),
             plan_end_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
+                r.try_get::<Option<NaiveDateTime>, _>("plan_end_date")
                     .ok()
                     .flatten(),
             ),
             actual_start_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
                     .ok()
                     .flatten(),
             ),
             actual_end_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
                     .ok()
                     .flatten(),
             ),
@@ -330,12 +330,12 @@ pub async fn list_work_orders(
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

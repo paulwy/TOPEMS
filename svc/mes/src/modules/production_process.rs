@@ -242,12 +242,12 @@ pub async fn list_processes(
                 .flatten()
                 .unwrap_or(0),
             created_at: r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
                 .flatten()
                 .unwrap_or(Utc::now()),
             updated_at: r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
                 .flatten()
                 .unwrap_or(Utc::now()),
