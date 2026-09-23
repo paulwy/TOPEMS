@@ -520,3 +520,10 @@ D
 - 6 个 warnings（MES 模块未使用的导入）
 
 ### 本地全量验证（我方补充，2026-09-23）
+
+
+## 2026-09-23 聚合 server（:8099）代理链路验证（完成）
+- [x] 聚合 server 手动拉起（topems-server 不在 topems.sh 服务表，需 nohup 手动启动；SERVER_PORT 默认 8099）
+- [x] 修复登录 500：public.core_users.created_at/updated_at 为 TIMESTAMP，unified-core UserRow 期望 TIMESTAMPTZ → ALTER 改列（按 UTC 解释存量值）+ 新增迁移 20260923140000_core_users_timestamptz.sql；改列后需重启 server（连接池 cached plan 失效）
+- [x] 链路实测（经 8099 + token）：iam 登录 ✓；pm/tasks、mes/work-orders、crm/customers、erp/materials、scm/purchase-orders|suppliers、qms/apqp/projects|risks 全部 200；无 token 401 拦截正常；qms 真实路径为 /apqp/* 等（inspections 等为猜错路径）
+- [x] 前端仍指向 VITE_API_BASE_URL=localhost:8000（不消费 8099）；聚合 server 为演示/备用入口
