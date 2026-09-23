@@ -114,7 +114,7 @@ pub struct ListTeamMembersResponse {
 }
 
 fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
-    dt.into().map(|d| Utc.from_utc_datetime(&d))
+    dt.into().map(|d| d)
         .unwrap_or_else(Utc::now)
 }
 

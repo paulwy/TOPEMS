@@ -498,7 +498,7 @@ async fn run_aps_scheduling(
                 // 后向排程：从期望完工时间往前推
                 let desired_end = order
                     .planned_end_date
-                    .map(|d| Utc.from_utc_datetime(&d))
+                    .map(|d| d)
                     .unwrap_or(schedule_start + Duration::days(7));
                 let start = desired_end - Duration::seconds((processing_time * 3600.0) as i64);
 
@@ -510,7 +510,7 @@ async fn run_aps_scheduling(
                 // 双向排程：先后向，再前向微调
                 let desired_end = order
                     .planned_end_date
-                    .map(|d| Utc.from_utc_datetime(&d))
+                    .map(|d| d)
                     .unwrap_or(schedule_start + Duration::days(7));
                 let mut start = desired_end - Duration::seconds((processing_time * 3600.0) as i64);
 
@@ -571,7 +571,7 @@ async fn run_aps_scheduling(
         // 6.9 计算风险等级
         let risk = calculate_risk_level(
             end_time: end_time.,
-            order.planned_end_date.map(|d| Utc.from_utc_datetime(&d)),
+            order.planned_end_date.map(|d| d),
             material_ready,
             selected_station.status == "active",
         );
@@ -1184,7 +1184,7 @@ pub async fn check_schedule_constraints(
             .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
             .ok()
             .flatten()
-            .map(|d| Utc.from_utc_datetime(&d));
+            .map(|d| d);
 
         results.push(ConstraintCheckResult {
             order_id: *order_id,

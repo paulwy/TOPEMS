@@ -876,11 +876,11 @@ pub async fn get_gantt_data(
     for s in &schedules {
         let start = s
             .planned_start_time
-            .map(|d| Utc.from_utc_datetime(&d))
+            .map(|d| d)
             .unwrap_or_else(Utc::now);
         let end = s
             .planned_end_time
-            .map(|d| Utc.from_utc_datetime(&d))
+            .map(|d| d)
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(s.quantity.clone());
