@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, State},
+    extract::State,
     routing::get,
     Json, Router,
 };

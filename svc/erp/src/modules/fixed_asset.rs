@@ -407,7 +407,7 @@ pub async fn update_fixed_asset(
     let accumulated_depreciation = req
         .accumulated_depreciation
         .unwrap_or(existing.accumulated_depreciation);
-    let net_value = original_value - accumulated_depreciation;
+    let _net_value = original_value - accumulated_depreciation;
     let depreciation_method = req
         .depreciation_method
         .or(Some(existing.depreciation_method));

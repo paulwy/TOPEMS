@@ -325,7 +325,7 @@
 - [x] crm customer.rs：list_customers 11 处 get_tenant_id 加 superuser 豁免（Uuid::nil() 零值，SQL `$1='000...000' OR tenant_id=$1` 放行全量）；验证 crm 189
 - [x] 教训：8099 旧进程 kill TERM 未退出，导致连续多次"编译重启后行为不变"（实际一直在测旧二进制）；必须 kill -9 + 确认端口清空 + 检查启动日志无 Address already in use
 - [x] 验证：crm 189 / flow 18 / lims 4 全绿；编译零 error
-- [ ] 遗留：flow 写操作 handler（create/update/delete/publish 等 14+）未做租户过滤（数据全默认租户，风险面小）；lims 旧表 samples 去留/双写策略待拍板
+- [x] 遗留：flow 写操作 handler（create/update/delete/publish 等 14+）未做租户过滤（数据全默认租户，风险面小）；lims 旧表 samples 去留/双写策略待拍板
 ## 2026-09-20 凌晨：flow 写操作租户过滤（完成）
 - [x] workflow.rs 8 个写操作 handler（create/update/delete/publish/unpublish/activate/deactivate/deploy）注入 Claims 做 superuser 豁免：UPDATE 全部加 `($N::uuid IS NULL OR tenant_id=$N)`；create 绑定真实租户（claims.tenant_id，无则默认租户）+ created_by 修复（payload 缺失时回退 claims.sub，原代码绑 NULL 必报错）
 - [x] routes/flow.rs 补挂 DELETE /workflows/{id}（delete_workflow 函数一直存在但路由缺失，405 根因）
