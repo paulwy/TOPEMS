@@ -14,22 +14,13 @@ import { useAuthStore, type User } from '@/store';
  */
 
 /** 灰度比例（0-100） */
-const GRAY_RELEASE_PERCENTAGE = 10;
 
 /** 白名单角色（这些角色强制启用 V3） */
-const WHITELIST_ROLES = ['admin', 'superuser'];
 
 /**
  * 简单哈希函数（djb2）
  * 用于将用户 ID 映射到 0-99 的范围
  */
-function hashUserId(userId: string): number {
-  let hash = 5381;
-  for (let i = 0; i < userId.length; i++) {
-    hash = (hash * 33) ^ userId.charCodeAt(i);
-  }
-  return Math.abs(hash % 100);
-}
 
 /**
  * 判断用户是否应该启用 UI V3
