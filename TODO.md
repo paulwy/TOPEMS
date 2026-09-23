@@ -298,7 +298,7 @@
 ## 2026-09-19 方案 A 落地（superuser RLS 豁免，tenant.rs 已推）
 - [x] 用户选 A（业务模块装配 tenant_rls + 请求级连接绑定）。侦察修正：crm 等 build_application 模块**已有** tenant_middleware（txn 事务绑定连接）+ handler 从 extensions 取 txn 查询——**连接绑定已存在**；0 可见根因是 admin 租户上下文（05a97…）过滤（数据已归默认租户 000…0001，无 NULL 兜底）
 - [x] shared-auth tenant_middleware 普通用户分支：**superuser 会话 RLS set_config 改 nil 租户**（配合策略零值豁免条件全量可见），TenantContext 保留实际租户供业务过滤——编译通过，重启验证 **admin 列表 crm.customers 189 全量可见**（修复前 0）
-- [ ] 遗留（业务层租户过滤）：pm/lims 等 handler 用 ctx.tenant_id 直接过滤 SQL（tenant_id = $1），superuser（05a97…）看不到默认租户数据（pm.projects 9 全默认租户、列表 0）——需业务层豁免（跨 handler 改造，列为后续项）；unified-core 侧 handler 用 state.pool 无 txn 绑定（flow 18 全 NULL 可见，暂不受影响）
+- [x] 遗留（业务层租户过滤）：pm/lims 等 handler 用 ctx.tenant_id 直接过滤 SQL（tenant_id = $1），superuser（05a97…）看不到默认租户数据（pm.projects 9 全默认租户、列表 0）——需业务层豁免（跨 handler 改造，列为后续项）；unified-core 侧 handler 用 state.pool 无 txn 绑定（flow 18 全 NULL 可见，暂不受影响）。**2026-09-23 完成**：pm 12+1 模块 15 处写操作 nil 绑定改 effective_tenant_id（superuser 回退默认租户 000…0001，普通用户会话租户），helper 落 modules/mod.rs（lib/bin 共用）+ handler 注入 TenantContext/Claims extractor；存量 nil 任务 1 行迁移默认租户；pm_tasks 补 title_en/description_en（schema 漂移）；编译 0 错误 + RLS 实测（租户 0001 可见、0002 隔离、nil 会话豁免）已推送
 
 ## 2026-09-19 方案 A 延伸：lims 业务层豁免（sample.rs）
 - [x] 澄清：pm.projects 9 行**本来就可见**（响应字段是 data.projects 非 data.items，此前 items 0 为字段解析误判）；pm.projects 无业务层租户过滤（全表查询），RLS 策略含空上下文放行分支
