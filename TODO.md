@@ -573,3 +573,12 @@ D
 - [x] 验证：SQL 三会话隔离 ✓（租户 0001 见 2、0002 见 0、superuser 零值见 2）；API 建 workflow/instance 返回 tenant_id=0001 ✓；列表 200（0 行 = 用户维度可见性过滤正确行为，admin 未参与实例）
 - [x] 编译：unified-core 全量 0 错误；iam 重启冒烟通过
 - [x] 遗留：flow 其余 UPDATE/DELETE 写操作（13+）租户绑定未逐一核查（UPDATE 走 RLS 行可见性约束，创建即绑定后天然正确；存量 NULL 行 0 条无碍）
+
+## 2026-09-23 flow 其余表租户加固（完成，第二批复盘）
+- [x] 复盘全部写操作：approval.rs 6×UPDATE tasks + instance.rs 7×UPDATE instances + monitor.rs 3×UPDATE + task.rs 8×UPDATE（均走 RLS 行可见性，创建即绑定后天然正确）；workflow.rs versions INSERT 原本无租户绑定
+- [x] 代码：workflow.rs create_workflow_version 的 versions INSERT 绑定 tenant_id（$6，tenant_opt 派生默认 0001）
+- [x] DB（迁移 20260923160000 固化）：core_workflow_versions 补 tenant_id 列；core_workflows / core_workflow_versions / approvals / approval_records 统一标准策略 + ENABLE/FORCE RLS（6 张 flow 表全部 FORCE）
+- [x] 验证：versions/workflows 三会话隔离 ✓（0001 见各自行、0002 见 0、零值全量）；API workflows/instances/approvals-pending 全 200；建版本落库 tenant_id=0001 ✓
+- [x] 存量数据 0 NULL 行（approvals/records/versions/workflows 均无未绑定行）
+- [x] 编译 0 错误；iam 重启冒烟通过
+- [x] 收尾：flow 模块 6 张 public 表（workflows/versions/instances/tasks/approvals/approval_records）全部租户列 + FORCE RLS + 标准策略，写操作创建即绑定——租户隔离完整闭环

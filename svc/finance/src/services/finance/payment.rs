@@ -15,6 +15,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreatePaymentRequest,
         created_by: &str,
+        locale: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment_date = req.payment_date.unwrap_or_else(|| Utc::now().date_naive());
         let voucher_date = chrono::DateTime::<Utc>::from_naive_utc_and_offset(
@@ -69,7 +70,7 @@ impl FinanceService {
         };
 
         let voucher = self
-            .create_voucher_with_tx(&mut tx, tenant_id, voucher_req, created_by)
+            .create_voucher_with_tx(&mut tx, tenant_id, voucher_req, created_by, locale)
             .await?;
 
         let payment_no = self.generate_payment_no(tenant_id).await?;
@@ -284,6 +285,7 @@ impl FinanceService {
         payment_id: Uuid,
         req: CreatePaymentRequest,
         updated_by: &str,
+        locale: &str,
     ) -> Result<PaymentResponse, TopemsError> {
         let payment: Payment =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, exchange_rate, payment_date, actual_payment_date, bank_transaction_no, executed_by, executed_at, remark, attachment_url, created_by, approved_by, created_at, updated_at FROM finance.core_finance_payments WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
@@ -342,6 +344,7 @@ impl FinanceService {
             payment.voucher_id,
             voucher_lines,
             updated_by,
+            locale,
         )
         .await?;
 

@@ -1002,6 +1002,7 @@ async fn year_end_close(
 pub async fn create_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
@@ -1009,7 +1010,8 @@ pub async fn create_payment_handler(
     let created_by = claims.username.clone();
     let supplier_id = req.supplier_id;
     let payment_method = req.payment_method.clone();
-    match service.create_payment(tenant_id, req, &created_by).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.create_payment(tenant_id, req, &created_by, locale).await {
         Ok(payment) => {
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
@@ -1138,13 +1140,15 @@ pub async fn update_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
 ) -> Json<ApiResponse<PaymentResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .update_payment(tenant_id, payment_id, req, &updated_by)
+        .update_payment(tenant_id, payment_id, req, &updated_by, locale)
         .await
     {
         Ok(payment) => Json(ApiResponse::success(payment, "更新成功")),

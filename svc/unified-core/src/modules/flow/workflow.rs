@@ -790,8 +790,8 @@ pub async fn create_workflow_version(
 
     let version = sqlx::query_as::<_, WorkflowVersion>(
         "INSERT INTO core_workflow_versions
-         (workflow_id, version, definition, change_description, created_by)
-         VALUES ($1, $2, $3, $4, $5)
+         (workflow_id, version, definition, change_description, created_by, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING id, workflow_id, version, definition, change_description, created_by, isactive, created_at",
     )
     .bind(workflow_id)
@@ -799,6 +799,7 @@ pub async fn create_workflow_version(
     .bind(definition)
     .bind(&payload.change_description)
     .bind(payload.created_by.as_deref().unwrap_or("system"))
+    .bind(tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()))
     .fetch_one(&state.pool)
     .await;
 

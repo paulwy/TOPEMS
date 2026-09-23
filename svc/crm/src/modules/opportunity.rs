@@ -178,8 +178,8 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// 单条商机详情缓存 key（含 tenant_id 做租户隔离）
-fn opportunity_detail_cache_key(tenant_id: Uuid, id: Uuid) -> String {
-    format!("crm:opportunity:{}:{}", tenant_id, id)
+fn opportunity_detail_cache_key(tenant_id: Uuid, id: Uuid, locale: &str) -> String {
+    format!("crm:opportunity:{}:{}:locale:{}", tenant_id, id, locale)
 }
 
 /// 商机列表缓存 key（含 tenant_id 与查询参数 hash）
@@ -190,10 +190,11 @@ fn opportunity_list_cache_key(
     search: &Option<String>,
     stage: &Option<String>,
     customer_id: &Option<Uuid>,
+    locale: &str,
 ) -> String {
     format!(
-        "crm:opportunity:list:{}:page:{}:size:{}:search:{:?}:stage:{:?}:customer:{:?}",
-        tenant_id, page, page_size, search, stage, customer_id
+        "crm:opportunity:list:{}:page:{}:size:{}:search:{:?}:stage:{:?}:customer:{:?}:locale:{}",
+        tenant_id, page, page_size, search, stage, customer_id, locale
     )
 }
 
@@ -267,6 +268,7 @@ async fn list_opportunities(
         &params.search,
         &stage_filter,
         &customer_filter,
+        Locale::from_headers(&_headers).as_sql(),
     );
     if let Some(cached) = state.opportunity_cache.get(&list_cache_key).await {
         tracing::debug!("📋 商机列表缓存命中: {}", list_cache_key);
@@ -503,7 +505,7 @@ async fn get_opportunity(
     });
 
     // 缓存命中则直接返回
-    let detail_key = opportunity_detail_cache_key(tenant_id, id);
+    let detail_key = opportunity_detail_cache_key(tenant_id, id, Locale::from_headers(&_headers).as_sql());
     if let Some(cached) = state.opportunity_cache.get(&detail_key).await {
         match serde_json::from_value::<Opportunity>(cached) {
             Ok(opportunity) => {

@@ -851,6 +851,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreateVoucherRequest,
         created_by: &str,
+        locale: &str,
     ) -> Result<VoucherResponse, TopemsError> {
         let period = format!(
             "{:04}{:02}",
@@ -885,10 +886,11 @@ impl FinanceService {
         let mut lines = Vec::new();
         for (i, line) in req.lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
             )
             .bind(tenant_id)
             .bind(&line.account_code)
+            .bind(locale)
             .fetch_one(&mut *tx)
             .await?;
 
@@ -964,6 +966,7 @@ impl FinanceService {
         voucher_id: Uuid,
         lines: Vec<VoucherLineRequest>,
         _updated_by: &str,
+        locale: &str,
     ) -> Result<(), TopemsError> {
         let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
         let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
@@ -979,10 +982,11 @@ impl FinanceService {
 
         for (i, line) in lines.iter().enumerate() {
             let account: Account = sqlx::query_as(
-                only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
+                only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE tenant_id = $1 AND code = $2"),
             )
             .bind(tenant_id)
             .bind(&line.account_code)
+            .bind(locale)
             .fetch_one(&mut *tx)
             .await?;
 

@@ -344,6 +344,7 @@ pub async fn get_project(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -360,7 +361,8 @@ pub async fn get_project(
         Err(e) => return e,
     }
 
-    let cache_key = format!("project:{}", id);
+    let locale = Locale::from_headers(&headers).as_sql();
+    let cache_key = format!("project:{}:{}", id, locale);
 
     if let Some(cached) = cache_get(&cache_key).await {
         return Json(ApiResponse::success(cached, "获取项目成功"));
@@ -368,7 +370,9 @@ pub async fn get_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, tenant_id, name, code, description, project_type, status, leader,
+        SELECT id, tenant_id,
+               CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
@@ -377,6 +381,7 @@ pub async fn get_project(
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 
