@@ -790,7 +790,7 @@ pub async fn list_maintenances(
         .into_iter()
         .map(|r| MaintenanceRecord {
             id: r.id,
-            equipment_id: r.equipment_id,
+            equipment_id: r.equipment_id.unwrap_or_default(),
             equipment_name: r.equipment_name,
             equipment_no: r.equipment_no,
             maintenance_type: r.maintenance_type,
