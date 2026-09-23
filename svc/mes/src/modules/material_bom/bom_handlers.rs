@@ -268,10 +268,10 @@ pub async fn create_material_bom(
 
     let bom_response = MaterialBomResponse {
         id: bom.id.to_string(),
-        bom_no: bom.bom_no.unwrap_or_default(),
+        bom_no: bom.bom_no,
         product_id: bom.product_id.map(|u| u.to_string()),
-        product_name: bom.product_name.unwrap_or_default(),
-        product_code: bom.product_code.unwrap_or_default(),
+        product_name: bom.product_name,
+        product_code: bom.product_code,
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
@@ -344,10 +344,10 @@ pub async fn get_material_bom(
 
     let bom_response = MaterialBomResponse {
         id: bom.id.to_string(),
-        bom_no: bom.bom_no.unwrap_or_default(),
+        bom_no: bom.bom_no,
         product_id: bom.product_id.map(|u| u.to_string()),
-        product_name: bom.product_name.unwrap_or_default(),
-        product_code: bom.product_code.unwrap_or_default(),
+        product_name: bom.product_name,
+        product_code: bom.product_code,
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,

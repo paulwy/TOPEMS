@@ -613,7 +613,7 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence.unwrap_or_default(),
@@ -746,7 +746,7 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
@@ -872,7 +872,7 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
@@ -1011,7 +1011,7 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence.unwrap_or_default(),
