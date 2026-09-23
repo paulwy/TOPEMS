@@ -187,7 +187,9 @@ const UserManagementPage: React.FC = () => {
         align: 'center',
         render: (row) => (
           <Badge variant={row.isactive ? 'success' : 'default'}>
-            {row.isactive ? i18n.t('iam.user_management.status_active') : i18n.t('iam.user_management.status_inactive')}
+            {row.isactive
+              ? i18n.t('iam.user_management.status_active')
+              : i18n.t('iam.user_management.status_inactive')}
           </Badge>
         ),
       },

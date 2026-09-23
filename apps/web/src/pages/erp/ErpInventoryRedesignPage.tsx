@@ -158,12 +158,27 @@ const ErpInventoryRedesignPage: React.FC = () => {
     },
   ];
 
-  const statusConfig = useMemo(() => ({
-    in_stock: { label: t('erp.erp_inventory_redesign.status.in_stock'), variant: 'success' as const },
-    low_stock: { label: t('erp.erp_inventory_redesign.status.low_stock'), variant: 'warning' as const },
-    out_of_stock: { label: t('erp.erp_inventory_redesign.status.out_of_stock'), variant: 'error' as const },
-    overstock: { label: t('erp.erp_inventory_redesign.status.overstock'), variant: 'info' as const },
-  }), [t]);
+  const statusConfig = useMemo(
+    () => ({
+      in_stock: {
+        label: t('erp.erp_inventory_redesign.status.in_stock'),
+        variant: 'success' as const,
+      },
+      low_stock: {
+        label: t('erp.erp_inventory_redesign.status.low_stock'),
+        variant: 'warning' as const,
+      },
+      out_of_stock: {
+        label: t('erp.erp_inventory_redesign.status.out_of_stock'),
+        variant: 'error' as const,
+      },
+      overstock: {
+        label: t('erp.erp_inventory_redesign.status.overstock'),
+        variant: 'info' as const,
+      },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>(
     'all'
@@ -253,15 +268,29 @@ const ErpInventoryRedesignPage: React.FC = () => {
       label: t('erp.erp_inventory_redesign.tab.in_stock'),
       badge: items.filter((i) => i.status === 'in_stock').length,
     },
-    { id: 'low_stock', label: t('erp.erp_inventory_redesign.tab.low_stock'), badge: stats.lowStock },
-    { id: 'out_of_stock', label: t('erp.erp_inventory_redesign.tab.out_of_stock'), badge: stats.outOfStock },
+    {
+      id: 'low_stock',
+      label: t('erp.erp_inventory_redesign.tab.low_stock'),
+      badge: stats.lowStock,
+    },
+    {
+      id: 'out_of_stock',
+      label: t('erp.erp_inventory_redesign.tab.out_of_stock'),
+      badge: stats.outOfStock,
+    },
   ];
 
   const getStockLevel = (item: InventoryItem) => {
     const ratio = item.quantity / item.safety_stock;
-    if (ratio >= 2) return { color: 'var(--success)', label: t('erp.erp_inventory_redesign.stock_level.sufficient') };
-    if (ratio >= 1) return { color: 'var(--warning)', label: t('erp.erp_inventory_redesign.stock_level.normal') };
-    if (ratio >= 0.5) return { color: 'var(--error)', label: t('erp.erp_inventory_redesign.stock_level.low') };
+    if (ratio >= 2)
+      return {
+        color: 'var(--success)',
+        label: t('erp.erp_inventory_redesign.stock_level.sufficient'),
+      };
+    if (ratio >= 1)
+      return { color: 'var(--warning)', label: t('erp.erp_inventory_redesign.stock_level.normal') };
+    if (ratio >= 0.5)
+      return { color: 'var(--error)', label: t('erp.erp_inventory_redesign.stock_level.low') };
     return { color: 'var(--error)', label: t('erp.erp_inventory_redesign.stock_level.critical') };
   };
 
@@ -425,9 +454,18 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('erp.erp_inventory_redesign.filter.all_warehouses') },
-                  { value: t('erp.erp_inventory_redesign.warehouse.east'), label: t('erp.erp_inventory_redesign.warehouse.east') },
-                  { value: t('erp.erp_inventory_redesign.warehouse.south'), label: t('erp.erp_inventory_redesign.warehouse.south') },
-                  { value: t('erp.erp_inventory_redesign.warehouse.north'), label: t('erp.erp_inventory_redesign.warehouse.north') },
+                  {
+                    value: t('erp.erp_inventory_redesign.warehouse.east'),
+                    label: t('erp.erp_inventory_redesign.warehouse.east'),
+                  },
+                  {
+                    value: t('erp.erp_inventory_redesign.warehouse.south'),
+                    label: t('erp.erp_inventory_redesign.warehouse.south'),
+                  },
+                  {
+                    value: t('erp.erp_inventory_redesign.warehouse.north'),
+                    label: t('erp.erp_inventory_redesign.warehouse.north'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -548,7 +586,8 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedItem.status]?.variant || 'default'}>
-                  {statusConfig[selectedItem.status]?.label || t('erp.erp_inventory_redesign.status.unknown')}
+                  {statusConfig[selectedItem.status]?.label ||
+                    t('erp.erp_inventory_redesign.status.unknown')}
                 </Badge>
               </div>
             </Card>
@@ -597,7 +636,10 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   }}
                 >
                   <span>
-                    {t('"+K+".drawer.safety_stock_label', { value: selectedItem.safety_stock, unit: selectedItem.unit })}
+                    {t('"+K+".drawer.safety_stock_label', {
+                      value: selectedItem.safety_stock,
+                      unit: selectedItem.unit,
+                    })}
                   </span>
                   <span>{getStockLevel(selectedItem).label}</span>
                 </div>

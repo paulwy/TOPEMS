@@ -700,10 +700,12 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={levelConfig[selectedEmployee.level]?.variant || 'default'}>
-                    {levelConfig[selectedEmployee.level]?.label || t('hrm.employee_redesign_page.k31')}
+                    {levelConfig[selectedEmployee.level]?.label ||
+                      t('hrm.employee_redesign_page.k31')}
                   </Badge>
                   <Badge variant={statusConfig[selectedEmployee.status]?.variant || 'default'}>
-                    {statusConfig[selectedEmployee.status]?.label || t('hrm.employee_redesign_page.k31')}
+                    {statusConfig[selectedEmployee.status]?.label ||
+                      t('hrm.employee_redesign_page.k31')}
                   </Badge>
                 </div>
               </div>
@@ -792,21 +794,16 @@ const HrmEmployeeRedesignPage: React.FC = () => {
               variant='primary'
               onClick={() => {
                 const formData: Partial<Employee> = {
-                  name:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
-                  emp_no:
-                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
+                  name: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  emp_no: (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   department:
                     (document.getElementById('field-3') as HTMLSelectElement)?.value || '',
-                  position:
-                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
+                  position: (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                   level:
                     ((document.getElementById('field-5') as HTMLSelectElement)
                       ?.value as Employee['level']) || 'P5',
-                  phone:
-                    (document.getElementById('field-7') as HTMLInputElement)?.value || '',
-                  join_date:
-                    (document.getElementById('field-8') as HTMLInputElement)?.value || '',
+                  phone: (document.getElementById('field-7') as HTMLInputElement)?.value || '',
+                  join_date: (document.getElementById('field-8') as HTMLInputElement)?.value || '',
                   salary: Number(
                     (document.getElementById('field-6') as HTMLInputElement)?.value || 0
                   ),

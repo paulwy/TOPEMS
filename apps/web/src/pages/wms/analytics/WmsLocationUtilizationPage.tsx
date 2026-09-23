@@ -152,11 +152,21 @@ export default function WmsLocationUtilizationPage() {
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left font-medium'>{t('wms.location_utilization.col_warehouse')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_total_locations')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_used_locations')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_utilization')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.location_utilization.col_dead_stock')}</th>
+                <th className='px-3 py-2 text-left font-medium'>
+                  {t('wms.location_utilization.col_warehouse')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.location_utilization.col_total_locations')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.location_utilization.col_used_locations')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.location_utilization.col_utilization')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.location_utilization.col_dead_stock')}
+                </th>
               </tr>
             </thead>
             <tbody>

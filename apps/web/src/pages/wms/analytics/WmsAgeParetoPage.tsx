@@ -155,10 +155,18 @@ export default function WmsAgeParetoPage() {
           <table className='w-full text-sm'>
             <thead className='bg-gray-50'>
               <tr>
-                <th className='px-3 py-2 text-left font-medium'>{t('wms.age_pareto.col_age_bucket')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.age_pareto.col_material_count')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.age_pareto.col_inventory_value')}</th>
-                <th className='px-3 py-2 text-right font-medium'>{t('wms.age_pareto.col_cumulative')}</th>
+                <th className='px-3 py-2 text-left font-medium'>
+                  {t('wms.age_pareto.col_age_bucket')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.age_pareto.col_material_count')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.age_pareto.col_inventory_value')}
+                </th>
+                <th className='px-3 py-2 text-right font-medium'>
+                  {t('wms.age_pareto.col_cumulative')}
+                </th>
               </tr>
             </thead>
             <tbody>

@@ -177,11 +177,31 @@ const QmsNonconformancePage: React.FC = () => {
 
   const statusConfig = useMemo(
     () => ({
-      open: { label: t('qms.nonconformance_redesign.status_open'), variant: 'warning' as const, icon: AlertTriangle },
-      investigating: { label: t('qms.nonconformance_redesign.status_investigating'), variant: 'info' as const, icon: Clock },
-      contained: { label: t('qms.nonconformance_redesign.status_contained'), variant: 'amber' as const, icon: Package },
-      resolved: { label: t('qms.nonconformance_redesign.status_resolved'), variant: 'success' as const, icon: CheckCircle },
-      closed: { label: t('qms.nonconformance_redesign.status_closed'), variant: 'default' as const, icon: XCircle },
+      open: {
+        label: t('qms.nonconformance_redesign.status_open'),
+        variant: 'warning' as const,
+        icon: AlertTriangle,
+      },
+      investigating: {
+        label: t('qms.nonconformance_redesign.status_investigating'),
+        variant: 'info' as const,
+        icon: Clock,
+      },
+      contained: {
+        label: t('qms.nonconformance_redesign.status_contained'),
+        variant: 'amber' as const,
+        icon: Package,
+      },
+      resolved: {
+        label: t('qms.nonconformance_redesign.status_resolved'),
+        variant: 'success' as const,
+        icon: CheckCircle,
+      },
+      closed: {
+        label: t('qms.nonconformance_redesign.status_closed'),
+        variant: 'default' as const,
+        icon: XCircle,
+      },
     }),
     [t]
   );
@@ -190,17 +210,32 @@ const QmsNonconformancePage: React.FC = () => {
     () => ({
       product: { label: t('qms.nonconformance_redesign.type_product'), variant: 'cyan' as const },
       process: { label: t('qms.nonconformance_redesign.type_process'), variant: 'info' as const },
-      material: { label: t('qms.nonconformance_redesign.type_material'), variant: 'amber' as const },
-      service: { label: t('qms.nonconformance_redesign.type_service'), variant: 'default' as const },
+      material: {
+        label: t('qms.nonconformance_redesign.type_material'),
+        variant: 'amber' as const,
+      },
+      service: {
+        label: t('qms.nonconformance_redesign.type_service'),
+        variant: 'default' as const,
+      },
     }),
     [t]
   );
 
   const severityConfig = useMemo(
     () => ({
-      minor: { label: t('qms.nonconformance_redesign.severity_minor'), variant: 'default' as const },
-      major: { label: t('qms.nonconformance_redesign.severity_major'), variant: 'warning' as const },
-      critical: { label: t('qms.nonconformance_redesign.severity_critical'), variant: 'error' as const },
+      minor: {
+        label: t('qms.nonconformance_redesign.severity_minor'),
+        variant: 'default' as const,
+      },
+      major: {
+        label: t('qms.nonconformance_redesign.severity_major'),
+        variant: 'warning' as const,
+      },
+      critical: {
+        label: t('qms.nonconformance_redesign.severity_critical'),
+        variant: 'error' as const,
+      },
     }),
     [t]
   );
@@ -380,7 +415,11 @@ const QmsNonconformancePage: React.FC = () => {
   const tabsConfig = useMemo(
     () => [
       { id: 'all', label: t('qms.nonconformance_redesign.tab_all') },
-      { id: 'open', label: t('qms.nonconformance_redesign.tab_open'), badge: items.filter((i) => i.status === 'open').length },
+      {
+        id: 'open',
+        label: t('qms.nonconformance_redesign.tab_open'),
+        badge: items.filter((i) => i.status === 'open').length,
+      },
       {
         id: 'investigating',
         label: t('qms.nonconformance_redesign.tab_investigating'),
@@ -695,10 +734,12 @@ const QmsNonconformancePage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={severityConfig[selectedNc.severity]?.variant || 'default'}>
-                    {severityConfig[selectedNc.severity]?.label || t('qms.nonconformance_redesign.unknown')}
+                    {severityConfig[selectedNc.severity]?.label ||
+                      t('qms.nonconformance_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedNc.status]?.variant || 'default'}>
-                    {statusConfig[selectedNc.status]?.label || t('qms.nonconformance_redesign.unknown')}
+                    {statusConfig[selectedNc.status]?.label ||
+                      t('qms.nonconformance_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
@@ -765,9 +806,14 @@ const QmsNonconformancePage: React.FC = () => {
 
             <Card title={t('qms.nonconformance_redesign.card_category')}>
               <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-                <Tag variant='default'>{typeConfig[selectedNc.nc_type]?.label || t('qms.nonconformance_redesign.unknown')}</Tag>
                 <Tag variant='default'>
-                  {severityConfig[selectedNc.severity]?.label || t('qms.nonconformance_redesign.unknown')} {t('qms.nonconformance_redesign.severity_suffix')}
+                  {typeConfig[selectedNc.nc_type]?.label ||
+                    t('qms.nonconformance_redesign.unknown')}
+                </Tag>
+                <Tag variant='default'>
+                  {severityConfig[selectedNc.severity]?.label ||
+                    t('qms.nonconformance_redesign.unknown')}{' '}
+                  {t('qms.nonconformance_redesign.severity_suffix')}
                 </Tag>
               </div>
             </Card>

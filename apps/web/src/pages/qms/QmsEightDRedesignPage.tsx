@@ -160,9 +160,7 @@ const QmsEightDRedesignPage: React.FC = () => {
     },
   ];
 
-  const statusConfig = useMemo<
-    Record<string, { label: string; variant: any; step: number }>
-  >(
+  const statusConfig = useMemo<Record<string, { label: string; variant: any; step: number }>>(
     () => ({
       d1: { label: t('qms.eight_d_redesign.status_d1'), variant: 'warning', step: 1 },
       d2: { label: t('qms.eight_d_redesign.status_d2'), variant: 'warning', step: 2 },
@@ -369,7 +367,11 @@ const QmsEightDRedesignPage: React.FC = () => {
   const tabsConfig = useMemo(
     () => [
       { id: 'all', label: t('qms.eight_d_redesign.tab_all') },
-      { id: 'in_progress', label: t('qms.eight_d_redesign.tab_in_progress'), badge: stats.inProgress },
+      {
+        id: 'in_progress',
+        label: t('qms.eight_d_redesign.tab_in_progress'),
+        badge: stats.inProgress,
+      },
       { id: 'closed', label: t('qms.eight_d_redesign.tab_closed'), badge: stats.closed },
     ],
     [stats, t]
@@ -715,10 +717,12 @@ const QmsEightDRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={severityConfig[selectedReport.severity]?.variant || 'default'}>
-                    {severityConfig[selectedReport.severity]?.label || t('qms.eight_d_redesign.unknown')}
+                    {severityConfig[selectedReport.severity]?.label ||
+                      t('qms.eight_d_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedReport.status]?.variant || 'default'}>
-                    {statusConfig[selectedReport.status]?.label || t('qms.eight_d_redesign.unknown')}
+                    {statusConfig[selectedReport.status]?.label ||
+                      t('qms.eight_d_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
@@ -728,7 +732,8 @@ const QmsEightDRedesignPage: React.FC = () => {
             <Card title={t('qms.eight_d_redesign.drawer_steps_title')}>
               <div style={{ marginTop: 'var(--space-2)' }}>
                 <div style={{ fontSize: 'var(--text-sm)', marginBottom: 'var(--space-2)' }}>
-                  {t('qms.eight_d_redesign.drawer_current_step')}{selectedReport.current_step}
+                  {t('qms.eight_d_redesign.drawer_current_step')}
+                  {selectedReport.current_step}
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((step) => (
@@ -784,7 +789,8 @@ const QmsEightDRedesignPage: React.FC = () => {
                     {t('qms.eight_d_redesign.drawer_problem_source')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {sourceConfig[selectedReport.problem_source]?.label || t('qms.eight_d_redesign.unknown')}
+                    {sourceConfig[selectedReport.problem_source]?.label ||
+                      t('qms.eight_d_redesign.unknown')}
                   </div>
                 </div>
                 {selectedReport.customer_name && (
@@ -848,15 +854,12 @@ const QmsEightDRedesignPage: React.FC = () => {
               onClick={() => {
                 const formData: Partial<EightDReport> = {
                   report_no: '',
-                  title:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  title: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   customer_name: '',
                   product_name:
                     (document.getElementById('field-4') as HTMLInputElement)?.value || '',
-                  owner:
-                    (document.getElementById('field-5') as HTMLInputElement)?.value || '',
-                  due_date:
-                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
+                  owner: (document.getElementById('field-5') as HTMLInputElement)?.value || '',
+                  due_date: (document.getElementById('field-6') as HTMLInputElement)?.value || '',
                 };
                 if (selectedReport) {
                   updateMutation.mutate({ id: selectedReport.id, data: formData });

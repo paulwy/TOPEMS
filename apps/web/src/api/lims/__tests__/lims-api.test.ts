@@ -112,10 +112,10 @@ describe('LIMS Module API Tests', () => {
         'sample-001',
         data as unknown as TransitionStageRequest
       );
-      expect(apiClient.lims.post).toHaveBeenCalledWith(
-        '/samples/sample-001/stage/testing',
-        { operator: 'John', notes: undefined }
-      );
+      expect(apiClient.lims.post).toHaveBeenCalledWith('/samples/sample-001/stage/testing', {
+        operator: 'John',
+        notes: undefined,
+      });
     });
 
     it('getSampleTraceability should call GET /samples/:id/traceability', async () => {

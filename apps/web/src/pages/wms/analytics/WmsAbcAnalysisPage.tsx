@@ -167,11 +167,21 @@ export default function WmsAbcAnalysisPage() {
             <table className='w-full text-sm'>
               <thead className='bg-gray-50'>
                 <tr>
-                  <th className='px-3 py-2 text-left font-medium'>{t('wms.abc_analysis.col_category')}</th>
-                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_sku_count')}</th>
-                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_count_pct')}</th>
-                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_inventory_value')}</th>
-                  <th className='px-3 py-2 text-right font-medium'>{t('wms.abc_analysis.col_value_pct')}</th>
+                  <th className='px-3 py-2 text-left font-medium'>
+                    {t('wms.abc_analysis.col_category')}
+                  </th>
+                  <th className='px-3 py-2 text-right font-medium'>
+                    {t('wms.abc_analysis.col_sku_count')}
+                  </th>
+                  <th className='px-3 py-2 text-right font-medium'>
+                    {t('wms.abc_analysis.col_count_pct')}
+                  </th>
+                  <th className='px-3 py-2 text-right font-medium'>
+                    {t('wms.abc_analysis.col_inventory_value')}
+                  </th>
+                  <th className='px-3 py-2 text-right font-medium'>
+                    {t('wms.abc_analysis.col_value_pct')}
+                  </th>
                 </tr>
               </thead>
               <tbody>

@@ -169,13 +169,28 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
     },
   ];
 
-  const statusConfig = useMemo(() => ({
-    draft: { label: t('erp.erp_sales_order_redesign.status.draft'), variant: 'default' as const },
-    confirmed: { label: t('erp.erp_sales_order_redesign.status.confirmed'), variant: 'info' as const },
-    shipped: { label: t('erp.erp_sales_order_redesign.status.shipped'), variant: 'warning' as const },
-    delivered: { label: t('erp.erp_sales_order_redesign.status.delivered'), variant: 'success' as const },
-    cancelled: { label: t('erp.erp_sales_order_redesign.status.cancelled'), variant: 'error' as const },
-  }), [t]);
+  const statusConfig = useMemo(
+    () => ({
+      draft: { label: t('erp.erp_sales_order_redesign.status.draft'), variant: 'default' as const },
+      confirmed: {
+        label: t('erp.erp_sales_order_redesign.status.confirmed'),
+        variant: 'info' as const,
+      },
+      shipped: {
+        label: t('erp.erp_sales_order_redesign.status.shipped'),
+        variant: 'warning' as const,
+      },
+      delivered: {
+        label: t('erp.erp_sales_order_redesign.status.delivered'),
+        variant: 'success' as const,
+      },
+      cancelled: {
+        label: t('erp.erp_sales_order_redesign.status.cancelled'),
+        variant: 'error' as const,
+      },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<'all' | 'confirmed' | 'shipped' | 'delivered'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -355,7 +370,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
   const tabsConfig = useMemo(
     () => [
       { id: 'all', label: t('erp.erp_sales_order_redesign.tab.all') },
-      { id: 'confirmed', label: t('erp.erp_sales_order_redesign.tab.confirmed'), badge: stats.confirmed },
+      {
+        id: 'confirmed',
+        label: t('erp.erp_sales_order_redesign.tab.confirmed'),
+        badge: stats.confirmed,
+      },
       { id: 'shipped', label: t('erp.erp_sales_order_redesign.tab.shipped'), badge: stats.shipped },
       {
         id: 'delivered',
@@ -672,7 +691,8 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                  {statusConfig[selectedOrder.status]?.label || t('erp.erp_sales_order_redesign.status.unknown')}
+                  {statusConfig[selectedOrder.status]?.label ||
+                    t('erp.erp_sales_order_redesign.status.unknown')}
                 </Badge>
               </div>
             </Card>
@@ -748,7 +768,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? t('erp.erp_sales_order_redesign.modal.edit_title') : t('erp.erp_sales_order_redesign.modal.create_title')}
+        title={
+          selectedOrder
+            ? t('erp.erp_sales_order_redesign.modal.edit_title')
+            : t('erp.erp_sales_order_redesign.modal.create_title')
+        }
         size='lg'
         footer={
           <>
@@ -782,7 +806,9 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? t('erp.erp_sales_order_redesign.modal.save_changes') : t('erp.erp_sales_order_redesign.modal.create')}
+              {selectedOrder
+                ? t('erp.erp_sales_order_redesign.modal.save_changes')
+                : t('erp.erp_sales_order_redesign.modal.create')}
             </Button>
           </>
         }
@@ -936,7 +962,9 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          {t('erp.erp_sales_order_redesign.delete.confirm_message', { order_no: deleteTarget?.order_no })}
+          {t('erp.erp_sales_order_redesign.delete.confirm_message', {
+            order_no: deleteTarget?.order_no,
+          })}
         </p>
       </Modal>
 

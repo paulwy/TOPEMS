@@ -191,7 +191,6 @@ const WmsInventoryPage: React.FC = () => {
     },
   ];
 
-
   const formatAmount = (value: number) => {
     if (value >= 10000) {
       return `${(value / 10000).toFixed(1)}${t('wms.inventory_page.unit_wan')}`;
@@ -287,10 +286,26 @@ const WmsInventoryPage: React.FC = () => {
 
   const tabsConfig = [
     { id: 'all', label: t('wms.inventory_page.tab_all') },
-    { id: 'normal', label: t('wms.inventory_page.status_normal'), badge: items.filter((i) => i.status === 'normal').length },
-    { id: 'low', label: t('wms.inventory_page.status_low'), badge: items.filter((i) => i.status === 'low').length },
-    { id: 'out', label: t('wms.inventory_page.status_out'), badge: items.filter((i) => i.status === 'out').length },
-    { id: 'overstock', label: t('wms.inventory_page.status_overstock'), badge: items.filter((i) => i.status === 'overstock').length },
+    {
+      id: 'normal',
+      label: t('wms.inventory_page.status_normal'),
+      badge: items.filter((i) => i.status === 'normal').length,
+    },
+    {
+      id: 'low',
+      label: t('wms.inventory_page.status_low'),
+      badge: items.filter((i) => i.status === 'low').length,
+    },
+    {
+      id: 'out',
+      label: t('wms.inventory_page.status_out'),
+      badge: items.filter((i) => i.status === 'out').length,
+    },
+    {
+      id: 'overstock',
+      label: t('wms.inventory_page.status_overstock'),
+      badge: items.filter((i) => i.status === 'overstock').length,
+    },
   ];
 
   const columns: DataTableColumn<InventoryItem>[] = [
@@ -430,9 +445,18 @@ const WmsInventoryPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.inventory_page.filter_all_warehouse') },
-                  { value: t('wms.inventory_page.wh_raw_material'), label: t('wms.inventory_page.wh_raw_material') },
-                  { value: t('wms.inventory_page.wh_semi_finished'), label: t('wms.inventory_page.wh_semi_finished') },
-                  { value: t('wms.inventory_page.wh_finished'), label: t('wms.inventory_page.wh_finished') },
+                  {
+                    value: t('wms.inventory_page.wh_raw_material'),
+                    label: t('wms.inventory_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.inventory_page.wh_semi_finished'),
+                    label: t('wms.inventory_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.inventory_page.wh_finished'),
+                    label: t('wms.inventory_page.wh_finished'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -560,7 +584,8 @@ const WmsInventoryPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedItem.status]?.variant || 'default'}>
-                  {statusConfig[selectedItem.status]?.label || t('wms.inventory_page.status_unknown')}
+                  {statusConfig[selectedItem.status]?.label ||
+                    t('wms.inventory_page.status_unknown')}
                 </Badge>
               </div>
             </Card>
@@ -656,7 +681,9 @@ const WmsInventoryPage: React.FC = () => {
                     marginTop: 'var(--space-2)',
                   }}
                 >
-                  {t('wms.inventory_page.last_updated', { date: formatDateTime(selectedItem.updated_at) })}
+                  {t('wms.inventory_page.last_updated', {
+                    date: formatDateTime(selectedItem.updated_at),
+                  })}
                 </div>
               </div>
             </Card>

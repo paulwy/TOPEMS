@@ -181,7 +181,6 @@ const CrmContractRedesignPage: React.FC = () => {
     terminated: { label: t('crm.contract_redesign.status_terminated'), variant: 'error' as const },
   };
 
-
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'pending' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -673,10 +672,12 @@ const CrmContractRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={typeConfig[selectedContract.type]?.variant || 'default'}>
-                    {typeConfig[selectedContract.type]?.label || t('crm.contract_redesign.label_unknown')}
+                    {typeConfig[selectedContract.type]?.label ||
+                      t('crm.contract_redesign.label_unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedContract.status]?.variant || 'default'}>
-                    {statusConfig[selectedContract.status]?.label || t('crm.contract_redesign.label_unknown')}
+                    {statusConfig[selectedContract.status]?.label ||
+                      t('crm.contract_redesign.label_unknown')}
                   </Badge>
                 </div>
               </div>
@@ -738,7 +739,11 @@ const CrmContractRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedContract ? t('crm.contract_redesign.modal_edit_title') : t('crm.contract_redesign.modal_create_title')}
+        title={
+          selectedContract
+            ? t('crm.contract_redesign.modal_edit_title')
+            : t('crm.contract_redesign.modal_create_title')
+        }
         size='lg'
         footer={
           <>
@@ -752,17 +757,14 @@ const CrmContractRedesignPage: React.FC = () => {
               variant='primary'
               onClick={() => {
                 const formData: Partial<Contract> = {
-                  title:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  title: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   customer_name:
                     (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   amount: Number(
                     (document.getElementById('field-4') as HTMLInputElement)?.value || 0
                   ),
-                  sign_date:
-                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
-                  end_date:
-                    (document.getElementById('field-7') as HTMLInputElement)?.value || '',
+                  sign_date: (document.getElementById('field-6') as HTMLInputElement)?.value || '',
+                  end_date: (document.getElementById('field-7') as HTMLInputElement)?.value || '',
                   owner: '',
                 };
                 if (selectedContract) {
@@ -772,7 +774,9 @@ const CrmContractRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedContract ? t('crm.contract_redesign.btn_save') : t('crm.contract_redesign.btn_submit_create')}
+              {selectedContract
+                ? t('crm.contract_redesign.btn_save')
+                : t('crm.contract_redesign.btn_submit_create')}
             </Button>
           </>
         }

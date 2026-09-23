@@ -70,7 +70,12 @@ describe('RoleManagementPage', () => {
     (authApi.listRoles as any).mockResolvedValue({
       success: true,
       data: [
-        { id: 'role-1', name: '管理员', description: '系统管理员', created_at: '2024-01-01T00:00:00Z' },
+        {
+          id: 'role-1',
+          name: '管理员',
+          description: '系统管理员',
+          created_at: '2024-01-01T00:00:00Z',
+        },
       ],
     });
 

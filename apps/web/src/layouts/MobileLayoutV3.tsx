@@ -1,12 +1,7 @@
 import React, { useMemo } from 'react';
 import i18n from '@/i18n';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  Home,
-  Factory,
-  MessageSquare,
-  User,
-} from 'lucide-react';
+import { Home, Factory, MessageSquare, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 /**
@@ -46,7 +41,7 @@ export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {
 
   const activeTabId = useMemo(() => {
     for (const tab of mobileTabs) {
-      if (location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')) {
+      if (location.pathname === tab.path || location.pathname.startsWith(`${tab.path}/`)) {
         return tab.id;
       }
     }
@@ -119,7 +114,10 @@ export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {
               }}
             >
               <div style={{ position: 'relative' }}>
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <Icon
+                  size={22}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
                 {tab.badge && tab.badge > 0 && (
                   <span
                     style={{

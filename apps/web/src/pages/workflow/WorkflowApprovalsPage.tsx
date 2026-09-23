@@ -65,16 +65,44 @@ const tabsConfig = [
 ];
 
 const priorityConfig = {
-  high: { labelKey: 'workflow.approvals_page.priority_high', variant: 'error' as const, color: 'var(--error-500)' },
-  medium: { labelKey: 'workflow.approvals_page.priority_medium', variant: 'warning' as const, color: 'var(--warning-500)' },
-  low: { labelKey: 'workflow.approvals_page.priority_low', variant: 'default' as const, color: 'var(--text-secondary)' },
+  high: {
+    labelKey: 'workflow.approvals_page.priority_high',
+    variant: 'error' as const,
+    color: 'var(--error-500)',
+  },
+  medium: {
+    labelKey: 'workflow.approvals_page.priority_medium',
+    variant: 'warning' as const,
+    color: 'var(--warning-500)',
+  },
+  low: {
+    labelKey: 'workflow.approvals_page.priority_low',
+    variant: 'default' as const,
+    color: 'var(--text-secondary)',
+  },
 };
 
 const statusConfig = {
-  pending: { labelKey: 'workflow.workflow_approvals_page.k17', variant: 'warning' as const, icon: Clock },
-  approved: { labelKey: 'workflow.workflow_approvals_page.k18', variant: 'success' as const, icon: CheckCircle },
-  rejected: { labelKey: 'workflow.workflow_approvals_page.k19', variant: 'error' as const, icon: XCircle },
-  claimed: { labelKey: 'workflow.approvals_page.status_claimed', variant: 'info' as const, icon: Eye },
+  pending: {
+    labelKey: 'workflow.workflow_approvals_page.k17',
+    variant: 'warning' as const,
+    icon: Clock,
+  },
+  approved: {
+    labelKey: 'workflow.workflow_approvals_page.k18',
+    variant: 'success' as const,
+    icon: CheckCircle,
+  },
+  rejected: {
+    labelKey: 'workflow.workflow_approvals_page.k19',
+    variant: 'error' as const,
+    icon: XCircle,
+  },
+  claimed: {
+    labelKey: 'workflow.approvals_page.status_claimed',
+    variant: 'info' as const,
+    icon: Eye,
+  },
 };
 
 const WorkflowApprovalsPage: React.FC = () => {
@@ -477,7 +505,11 @@ const WorkflowApprovalsPage: React.FC = () => {
               >
                 {t('workflow.approvals_page.btn_refresh')}
               </Button>
-              {pendingCount > 0 && <Badge variant='warning'>{t('workflow.approvals_page.pending_badge', { count: pendingCount })}</Badge>}
+              {pendingCount > 0 && (
+                <Badge variant='warning'>
+                  {t('workflow.approvals_page.pending_badge', { count: pendingCount })}
+                </Badge>
+              )}
             </div>
           </>
         }
@@ -607,7 +639,9 @@ const WorkflowApprovalsPage: React.FC = () => {
                 <FlowStep
                   icon={<User size={16} />}
                   title={t('workflow.approvals_page.flow_start_title')}
-                  description={t('workflow.approvals_page.flow_start_desc', { initiator: selectedTask.initiator })}
+                  description={t('workflow.approvals_page.flow_start_desc', {
+                    initiator: selectedTask.initiator,
+                  })}
                   status='completed'
                   time={formatTime(selectedTask.receivedAt)}
                 />
@@ -701,7 +735,9 @@ const WorkflowApprovalsPage: React.FC = () => {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{t('workflow.approvals_page.reject_reason_label')}</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+            {t('workflow.approvals_page.reject_reason_label')}
+          </p>
           <textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}

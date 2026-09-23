@@ -576,7 +576,10 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
             <LocalizationProvider
               key={field.name}
               dateAdapter={AdapterDayjs}
-              localeText={(i18n.language === 'en' ? enUS : zhCN).components.MuiLocalizationProvider.defaultProps.localeText}
+              localeText={
+                (i18n.language === 'en' ? enUS : zhCN).components.MuiLocalizationProvider
+                  .defaultProps.localeText
+              }
             >
               <DatePicker
                 label={field.label}
@@ -602,7 +605,10 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
             <LocalizationProvider
               key={field.name}
               dateAdapter={AdapterDayjs}
-              localeText={(i18n.language === 'en' ? enUS : zhCN).components.MuiLocalizationProvider.defaultProps.localeText}
+              localeText={
+                (i18n.language === 'en' ? enUS : zhCN).components.MuiLocalizationProvider
+                  .defaultProps.localeText
+              }
             >
               <DatePicker
                 label={field.label}

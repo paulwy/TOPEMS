@@ -80,10 +80,26 @@ const mapApiLocations = (apiLocations: ApiLocation[]): Location[] => {
 // Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockLocations
 
 const buildStatusConfig = (t: (k: string) => string) => ({
-  available: { label: t('wms.location_page.status_available'), variant: 'success' as const, icon: CheckCircle },
-  occupied: { label: t('wms.location_page.status_occupied'), variant: 'info' as const, icon: Package },
-  locked: { label: t('wms.location_page.status_locked'), variant: 'warning' as const, icon: AlertTriangle },
-  maintenance: { label: t('wms.location_page.status_maintenance'), variant: 'default' as const, icon: Clock },
+  available: {
+    label: t('wms.location_page.status_available'),
+    variant: 'success' as const,
+    icon: CheckCircle,
+  },
+  occupied: {
+    label: t('wms.location_page.status_occupied'),
+    variant: 'info' as const,
+    icon: Package,
+  },
+  locked: {
+    label: t('wms.location_page.status_locked'),
+    variant: 'warning' as const,
+    icon: AlertTriangle,
+  },
+  maintenance: {
+    label: t('wms.location_page.status_maintenance'),
+    variant: 'default' as const,
+    icon: Clock,
+  },
 });
 
 const formatDateTime = (value?: string) => {
@@ -183,7 +199,6 @@ const WmsLocationPage: React.FC = () => {
       created_at: '2026-02-20 14:00:00',
     },
   ];
-
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'available' | 'occupied' | 'locked' | 'maintenance'
@@ -567,9 +582,18 @@ const WmsLocationPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.location_page.filter_all_warehouse') },
-                  { value: t('wms.location_page.wh_raw_material'), label: t('wms.location_page.wh_raw_material') },
-                  { value: t('wms.location_page.wh_semi_finished'), label: t('wms.location_page.wh_semi_finished') },
-                  { value: t('wms.location_page.wh_finished'), label: t('wms.location_page.wh_finished') },
+                  {
+                    value: t('wms.location_page.wh_raw_material'),
+                    label: t('wms.location_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.location_page.wh_semi_finished'),
+                    label: t('wms.location_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.location_page.wh_finished'),
+                    label: t('wms.location_page.wh_finished'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -704,7 +728,8 @@ const WmsLocationPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedLocation.status]?.variant || 'default'}>
-                  {statusConfig[selectedLocation.status]?.label || t('wms.location_page.status_unknown')}
+                  {statusConfig[selectedLocation.status]?.label ||
+                    t('wms.location_page.status_unknown')}
                 </Badge>
               </div>
             </Card>
@@ -820,7 +845,11 @@ const WmsLocationPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedLocation ? t('wms.location_page.modal_edit_title') : t('wms.location_page.action_new')}
+        title={
+          selectedLocation
+            ? t('wms.location_page.modal_edit_title')
+            : t('wms.location_page.action_new')
+        }
         size='lg'
         footer={
           <>
@@ -852,7 +881,9 @@ const WmsLocationPage: React.FC = () => {
                 }
               }}
             >
-              {selectedLocation ? t('wms.location_page.button_save') : t('wms.location_page.button_create')}
+              {selectedLocation
+                ? t('wms.location_page.button_save')
+                : t('wms.location_page.button_create')}
             </Button>
           </>
         }
@@ -896,9 +927,18 @@ const WmsLocationPage: React.FC = () => {
                 id='field-3'
                 defaultValue={selectedLocation?.warehouse || t('wms.location_page.wh_raw_material')}
                 options={[
-                  { value: t('wms.location_page.wh_raw_material'), label: t('wms.location_page.wh_raw_material') },
-                  { value: t('wms.location_page.wh_semi_finished'), label: t('wms.location_page.wh_semi_finished') },
-                  { value: t('wms.location_page.wh_finished'), label: t('wms.location_page.wh_finished') },
+                  {
+                    value: t('wms.location_page.wh_raw_material'),
+                    label: t('wms.location_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.location_page.wh_semi_finished'),
+                    label: t('wms.location_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.location_page.wh_finished'),
+                    label: t('wms.location_page.wh_finished'),
+                  },
                 ]}
               />
             </div>

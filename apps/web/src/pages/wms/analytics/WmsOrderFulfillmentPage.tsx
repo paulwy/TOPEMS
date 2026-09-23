@@ -126,7 +126,9 @@ export default function WmsOrderFulfillmentPage() {
         showTables={false}
       >
         <div className='flex h-64 flex-col items-center justify-center gap-4'>
-          <div className='text-red-500'>{t('wms.order_fulfillment.load_failed')}: {error}</div>
+          <div className='text-red-500'>
+            {t('wms.order_fulfillment.load_failed')}: {error}
+          </div>
           <button
             onClick={reload}
             className='rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark'
@@ -153,7 +155,9 @@ export default function WmsOrderFulfillmentPage() {
       <div className='space-y-4'>
         {/* 时间粒度选择 */}
         <div className='flex items-center gap-4'>
-          <span className='text-sm text-gray-600'>{t('wms.order_fulfillment.time_granularity')}:</span>
+          <span className='text-sm text-gray-600'>
+            {t('wms.order_fulfillment.time_granularity')}:
+          </span>
           <div className='flex gap-2'>
             {(['month', 'week', 'day'] as const).map((g) => (
               <button
@@ -177,7 +181,9 @@ export default function WmsOrderFulfillmentPage() {
 
         {/* 履约率趋势图 */}
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{t('wms.order_fulfillment.chart_fulfillment_trend')}</h3>
+          <h3 className='mb-2 font-semibold'>
+            {t('wms.order_fulfillment.chart_fulfillment_trend')}
+          </h3>
           <ResponsiveContainer
             width='100%'
             height={360}
@@ -260,7 +266,9 @@ export default function WmsOrderFulfillmentPage() {
 
         {/* 订单数量对比 */}
         <div className='rounded-lg border p-4'>
-          <h3 className='mb-2 font-semibold'>{t('wms.order_fulfillment.chart_order_comparison')}</h3>
+          <h3 className='mb-2 font-semibold'>
+            {t('wms.order_fulfillment.chart_order_comparison')}
+          </h3>
           <ResponsiveContainer
             width='100%'
             height={300}

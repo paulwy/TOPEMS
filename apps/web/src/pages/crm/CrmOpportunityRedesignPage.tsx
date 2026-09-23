@@ -160,9 +160,21 @@ const CrmOpportunityRedesignPage: React.FC = () => {
 
   const stageConfig = {
     lead: { label: t('crm.opportunity_redesign.stage_lead'), variant: 'default' as const, step: 1 },
-    qualified: { label: t('crm.opportunity_redesign.stage_qualified'), variant: 'info' as const, step: 2 },
-    proposal: { label: t('crm.opportunity_redesign.stage_proposal'), variant: 'amber' as const, step: 3 },
-    negotiation: { label: t('crm.opportunity_redesign.stage_negotiation'), variant: 'warning' as const, step: 4 },
+    qualified: {
+      label: t('crm.opportunity_redesign.stage_qualified'),
+      variant: 'info' as const,
+      step: 2,
+    },
+    proposal: {
+      label: t('crm.opportunity_redesign.stage_proposal'),
+      variant: 'amber' as const,
+      step: 3,
+    },
+    negotiation: {
+      label: t('crm.opportunity_redesign.stage_negotiation'),
+      variant: 'warning' as const,
+      step: 4,
+    },
     won: { label: t('crm.opportunity_redesign.stage_won'), variant: 'success' as const, step: 5 },
     lost: { label: t('crm.opportunity_redesign.stage_lost'), variant: 'error' as const, step: 6 },
   };
@@ -171,10 +183,12 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     referral: { label: t('crm.opportunity_redesign.source_referral'), variant: 'success' as const },
     website: { label: t('crm.opportunity_redesign.source_website'), variant: 'info' as const },
     cold_call: { label: t('crm.opportunity_redesign.source_cold_call'), variant: 'cyan' as const },
-    exhibition: { label: t('crm.opportunity_redesign.source_exhibition'), variant: 'amber' as const },
+    exhibition: {
+      label: t('crm.opportunity_redesign.source_exhibition'),
+      variant: 'amber' as const,
+    },
     other: { label: t('crm.opportunity_redesign.source_other'), variant: 'default' as const },
   };
-
 
   const [activeTab, setActiveTab] = useState<'all' | 'pipeline' | 'won' | 'lost'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -365,8 +379,16 @@ const CrmOpportunityRedesignPage: React.FC = () => {
     () => [
       { id: 'all', label: t('crm.opportunity_redesign.tab_all') },
       { id: 'pipeline', label: t('crm.opportunity_redesign.tab_pipeline'), badge: stats.pipeline },
-      { id: 'won', label: t('crm.opportunity_redesign.stage_won'), badge: opportunities.filter((o) => o.stage === 'won').length },
-      { id: 'lost', label: t('crm.opportunity_redesign.stage_lost'), badge: opportunities.filter((o) => o.stage === 'lost').length },
+      {
+        id: 'won',
+        label: t('crm.opportunity_redesign.stage_won'),
+        badge: opportunities.filter((o) => o.stage === 'won').length,
+      },
+      {
+        id: 'lost',
+        label: t('crm.opportunity_redesign.stage_lost'),
+        badge: opportunities.filter((o) => o.stage === 'lost').length,
+      },
     ],
     [stats, opportunities, t]
   );
@@ -682,7 +704,8 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={stageConfig[selectedOpp.stage]?.variant || 'default'}>
-                  {stageConfig[selectedOpp.stage]?.label || t('crm.opportunity_redesign.label_unknown')}
+                  {stageConfig[selectedOpp.stage]?.label ||
+                    t('crm.opportunity_redesign.label_unknown')}
                 </Badge>
               </div>
             </Card>
@@ -747,7 +770,8 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                     {t('crm.opportunity_redesign.field_source')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {sourceConfig[selectedOpp.source]?.label || t('crm.opportunity_redesign.label_unknown')}
+                    {sourceConfig[selectedOpp.source]?.label ||
+                      t('crm.opportunity_redesign.label_unknown')}
                   </div>
                 </div>
                 <div>
@@ -776,7 +800,11 @@ const CrmOpportunityRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOpp ? t('crm.opportunity_redesign.modal_edit_title') : t('crm.opportunity_redesign.modal_create_title')}
+        title={
+          selectedOpp
+            ? t('crm.opportunity_redesign.modal_edit_title')
+            : t('crm.opportunity_redesign.modal_create_title')
+        }
         size='lg'
         footer={
           <>
@@ -790,8 +818,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
               variant='primary'
               onClick={() => {
                 const formData: Partial<Opportunity> = {
-                  name:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  name: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   customer_name:
                     (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   amount: Number(
@@ -811,7 +838,9 @@ const CrmOpportunityRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOpp ? t('crm.opportunity_redesign.btn_save') : t('crm.opportunity_redesign.btn_submit_create')}
+              {selectedOpp
+                ? t('crm.opportunity_redesign.btn_save')
+                : t('crm.opportunity_redesign.btn_submit_create')}
             </Button>
           </>
         }

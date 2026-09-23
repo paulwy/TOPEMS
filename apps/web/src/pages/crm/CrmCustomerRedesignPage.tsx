@@ -180,9 +180,17 @@ const CrmCustomerRedesignPage: React.FC = () => {
 
   const levelConfig = {
     A: { label: t('crm.customer_list_page.badge_level_a'), variant: 'error' as const, icon: Star },
-    B: { label: t('crm.customer_list_page.badge_level_b'), variant: 'warning' as const, icon: Star },
+    B: {
+      label: t('crm.customer_list_page.badge_level_b'),
+      variant: 'warning' as const,
+      icon: Star,
+    },
     C: { label: t('crm.customer_list_page.badge_level_c'), variant: 'info' as const, icon: Star },
-    D: { label: t('crm.customer_list_page.badge_level_d'), variant: 'default' as const, icon: Star },
+    D: {
+      label: t('crm.customer_list_page.badge_level_d'),
+      variant: 'default' as const,
+      icon: Star,
+    },
   };
 
   const statusConfig = {
@@ -697,10 +705,12 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={levelConfig[selectedCustomer.level]?.variant || 'default'}>
-                    {levelConfig[selectedCustomer.level]?.label || t('crm.customer_list_page.label_unknown')}
+                    {levelConfig[selectedCustomer.level]?.label ||
+                      t('crm.customer_list_page.label_unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedCustomer.status]?.variant || 'default'}>
-                    {statusConfig[selectedCustomer.status]?.label || t('crm.customer_list_page.label_unknown')}
+                    {statusConfig[selectedCustomer.status]?.label ||
+                      t('crm.customer_list_page.label_unknown')}
                   </Badge>
                 </div>
               </div>
@@ -787,7 +797,11 @@ const CrmCustomerRedesignPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedCustomer ? t('crm.customer_list_page.modal_edit_title') : t('crm.customer_list_page.modal_create_title')}
+        title={
+          selectedCustomer
+            ? t('crm.customer_list_page.modal_edit_title')
+            : t('crm.customer_list_page.modal_create_title')
+        }
         size='lg'
         footer={
           <>
@@ -805,15 +819,12 @@ const CrmCustomerRedesignPage: React.FC = () => {
                     (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   contact_phone:
                     (document.getElementById('field-5') as HTMLInputElement)?.value || '',
-                  email:
-                    (document.getElementById('field-6') as HTMLInputElement)?.value || '',
-                  address:
-                    (document.getElementById('field-7') as HTMLInputElement)?.value || '',
-                  industry:
-                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
+                  email: (document.getElementById('field-6') as HTMLInputElement)?.value || '',
+                  address: (document.getElementById('field-7') as HTMLInputElement)?.value || '',
+                  industry: (document.getElementById('field-2') as HTMLInputElement)?.value || '',
                   level:
-                    (document.getElementById('field-3') as HTMLSelectElement)
-                      ?.value as Customer['level'] || 'C',
+                    ((document.getElementById('field-3') as HTMLSelectElement)
+                      ?.value as Customer['level']) || 'C',
                   status: 'active',
                 };
                 if (selectedCustomer) {
@@ -823,7 +834,9 @@ const CrmCustomerRedesignPage: React.FC = () => {
                 }
               }}
             >
-              {selectedCustomer ? t('crm.customer_list_page.btn_save') : t('crm.customer_list_page.btn_submit_create')}
+              {selectedCustomer
+                ? t('crm.customer_list_page.btn_save')
+                : t('crm.customer_list_page.btn_submit_create')}
             </Button>
           </>
         }
@@ -955,7 +968,9 @@ const CrmCustomerRedesignPage: React.FC = () => {
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          {t('crm.customer_list_page.delete_confirm_message', { name: deleteTarget?.customer_name })}
+          {t('crm.customer_list_page.delete_confirm_message', {
+            name: deleteTarget?.customer_name,
+          })}
         </p>
       </Modal>
 

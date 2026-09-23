@@ -334,7 +334,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
 
 /** 模块标识 → 功能定义 映射 */
 const MODULE_MAP: Map<string, ModuleFeature> = new Map(
-  TIER_FEATURE_MATRIX.map((m) => [m.module, m]),
+  TIER_FEATURE_MATRIX.map((m) => [m.module, m])
 );
 
 /**
@@ -411,12 +411,12 @@ export function isPathAvailable(path: string, tier: PlanTier): boolean {
 export function filterModulesByTier<T extends { module?: string; path?: string }>(
   modules: T[],
   tier: PlanTier,
-  getModule?: (item: T) => string,
+  getModule?: (item: T) => string
 ): T[] {
   return modules.filter((item) => {
     const module = getModule
       ? getModule(item)
-      : item.module ?? item.path?.match(/^\/([^/]+)/)?.[1] ?? '';
+      : (item.module ?? item.path?.match(/^\/([^/]+)/)?.[1] ?? '');
     return isModuleAvailable(module, tier);
   });
 }

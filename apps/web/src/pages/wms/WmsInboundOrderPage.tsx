@@ -79,10 +79,26 @@ const mapApiInboundOrders = (apiOrders: ApiInboundOrder[]): InboundOrder[] => {
 // Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockOrders
 
 const buildStatusConfig = (t: (k: string) => string) => ({
-  pending: { label: t('wms.inbound_order_page.status_pending'), variant: 'warning' as const, icon: Clock },
-  in_progress: { label: t('wms.inbound_order_page.status_in_progress'), variant: 'info' as const, icon: Truck },
-  completed: { label: t('wms.inbound_order_page.status_completed'), variant: 'success' as const, icon: CheckCircle },
-  cancelled: { label: t('wms.inbound_order_page.status_cancelled'), variant: 'default' as const, icon: AlertCircle },
+  pending: {
+    label: t('wms.inbound_order_page.status_pending'),
+    variant: 'warning' as const,
+    icon: Clock,
+  },
+  in_progress: {
+    label: t('wms.inbound_order_page.status_in_progress'),
+    variant: 'info' as const,
+    icon: Truck,
+  },
+  completed: {
+    label: t('wms.inbound_order_page.status_completed'),
+    variant: 'success' as const,
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: t('wms.inbound_order_page.status_cancelled'),
+    variant: 'default' as const,
+    icon: AlertCircle,
+  },
 });
 
 const formatDateTime = (value?: string) => {
@@ -160,7 +176,6 @@ const WmsInboundOrderPage: React.FC = () => {
       created_at: '2026-09-01 11:00:00',
     },
   ];
-
 
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'in_progress' | 'completed'>(
     'all'
@@ -338,7 +353,11 @@ const WmsInboundOrderPage: React.FC = () => {
     () => [
       { id: 'all', label: t('wms.inbound_order_page.tab_all') },
       { id: 'pending', label: t('wms.inbound_order_page.status_pending'), badge: stats.pending },
-      { id: 'in_progress', label: t('wms.inbound_order_page.status_in_progress'), badge: stats.inProgress },
+      {
+        id: 'in_progress',
+        label: t('wms.inbound_order_page.status_in_progress'),
+        badge: stats.inProgress,
+      },
       { id: 'completed', label: t('wms.inbound_order_page.status_completed') },
     ],
     [stats, t]
@@ -488,11 +507,26 @@ const WmsInboundOrderPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.inbound_order_page.filter_all_warehouse') },
-                  { value: t('wms.inbound_order_page.wh_raw_material'), label: t('wms.inbound_order_page.wh_raw_material') },
-                  { value: t('wms.inbound_order_page.wh_semi_finished'), label: t('wms.inbound_order_page.wh_semi_finished') },
-                  { value: t('wms.inbound_order_page.wh_finished'), label: t('wms.inbound_order_page.wh_finished') },
-                  { value: t('wms.inbound_order_page.wh_chemical'), label: t('wms.inbound_order_page.wh_chemical') },
-                  { value: t('wms.inbound_order_page.wh_packaging'), label: t('wms.inbound_order_page.wh_packaging') },
+                  {
+                    value: t('wms.inbound_order_page.wh_raw_material'),
+                    label: t('wms.inbound_order_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_semi_finished'),
+                    label: t('wms.inbound_order_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_finished'),
+                    label: t('wms.inbound_order_page.wh_finished'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_chemical'),
+                    label: t('wms.inbound_order_page.wh_chemical'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_packaging'),
+                    label: t('wms.inbound_order_page.wh_packaging'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -622,7 +656,8 @@ const WmsInboundOrderPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                  {statusConfig[selectedOrder.status]?.label || t('wms.inbound_order_page.status_unknown')}
+                  {statusConfig[selectedOrder.status]?.label ||
+                    t('wms.inbound_order_page.status_unknown')}
                 </Badge>
               </div>
             </Card>
@@ -721,7 +756,11 @@ const WmsInboundOrderPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? t('wms.inbound_order_page.modal_edit_title') : t('wms.inbound_order_page.action_new')}
+        title={
+          selectedOrder
+            ? t('wms.inbound_order_page.modal_edit_title')
+            : t('wms.inbound_order_page.action_new')
+        }
         size='lg'
         footer={
           <>
@@ -735,8 +774,12 @@ const WmsInboundOrderPage: React.FC = () => {
               variant='primary'
               onClick={() => {
                 const supplierEl = document.getElementById('supplier') as HTMLInputElement | null;
-                const warehouseEl = document.getElementById('warehouse') as HTMLSelectElement | null;
-                const expectedEl = document.getElementById('expected-date') as HTMLInputElement | null;
+                const warehouseEl = document.getElementById(
+                  'warehouse'
+                ) as HTMLSelectElement | null;
+                const expectedEl = document.getElementById(
+                  'expected-date'
+                ) as HTMLInputElement | null;
                 const formData: Partial<InboundOrder> = {
                   supplier_name: supplierEl?.value || '',
                   warehouse: warehouseEl?.value || '',
@@ -749,7 +792,9 @@ const WmsInboundOrderPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? t('wms.inbound_order_page.button_save') : t('wms.inbound_order_page.button_create')}
+              {selectedOrder
+                ? t('wms.inbound_order_page.button_save')
+                : t('wms.inbound_order_page.button_create')}
             </Button>
           </>
         }
@@ -778,13 +823,30 @@ const WmsInboundOrderPage: React.FC = () => {
               </label>
               <Select
                 id='warehouse'
-                defaultValue={selectedOrder?.warehouse || t('wms.inbound_order_page.wh_raw_material')}
+                defaultValue={
+                  selectedOrder?.warehouse || t('wms.inbound_order_page.wh_raw_material')
+                }
                 options={[
-                  { value: t('wms.inbound_order_page.wh_raw_material'), label: t('wms.inbound_order_page.wh_raw_material') },
-                  { value: t('wms.inbound_order_page.wh_semi_finished'), label: t('wms.inbound_order_page.wh_semi_finished') },
-                  { value: t('wms.inbound_order_page.wh_finished'), label: t('wms.inbound_order_page.wh_finished') },
-                  { value: t('wms.inbound_order_page.wh_chemical'), label: t('wms.inbound_order_page.wh_chemical') },
-                  { value: t('wms.inbound_order_page.wh_packaging'), label: t('wms.inbound_order_page.wh_packaging') },
+                  {
+                    value: t('wms.inbound_order_page.wh_raw_material'),
+                    label: t('wms.inbound_order_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_semi_finished'),
+                    label: t('wms.inbound_order_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_finished'),
+                    label: t('wms.inbound_order_page.wh_finished'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_chemical'),
+                    label: t('wms.inbound_order_page.wh_chemical'),
+                  },
+                  {
+                    value: t('wms.inbound_order_page.wh_packaging'),
+                    label: t('wms.inbound_order_page.wh_packaging'),
+                  },
                 ]}
               />
             </div>

@@ -555,9 +555,18 @@ const MesWorkOrderPage: React.FC = () => {
                 onChange={(e) => setWorkshopFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('mes.work_order_page.workshop_all') },
-                  { value: t('mes.work_order_page.workshop_1'), label: t('mes.work_order_page.workshop_1') },
-                  { value: t('mes.work_order_page.workshop_2'), label: t('mes.work_order_page.workshop_2') },
-                  { value: t('mes.work_order_page.workshop_3'), label: t('mes.work_order_page.workshop_3') },
+                  {
+                    value: t('mes.work_order_page.workshop_1'),
+                    label: t('mes.work_order_page.workshop_1'),
+                  },
+                  {
+                    value: t('mes.work_order_page.workshop_2'),
+                    label: t('mes.work_order_page.workshop_2'),
+                  },
+                  {
+                    value: t('mes.work_order_page.workshop_3'),
+                    label: t('mes.work_order_page.workshop_3'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -710,7 +719,9 @@ const MesWorkOrderPage: React.FC = () => {
               {/* 进度条 */}
               <div style={{ marginTop: 'var(--space-4)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('mes.work_order_page.progress_label')}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                    {t('mes.work_order_page.progress_label')}
+                  </span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                     {selectedOrder.completed_quantity} / {selectedOrder.quantity} (
                     {getProgress(selectedOrder)}%)
@@ -953,9 +964,18 @@ const MesWorkOrderPage: React.FC = () => {
                 id='wo-workshop'
                 defaultValue={t('mes.work_order_page.workshop_1')}
                 options={[
-                  { value: t('mes.work_order_page.workshop_1'), label: t('mes.work_order_page.workshop_1') },
-                  { value: t('mes.work_order_page.workshop_2'), label: t('mes.work_order_page.workshop_2') },
-                  { value: t('mes.work_order_page.workshop_3'), label: t('mes.work_order_page.workshop_3') },
+                  {
+                    value: t('mes.work_order_page.workshop_1'),
+                    label: t('mes.work_order_page.workshop_1'),
+                  },
+                  {
+                    value: t('mes.work_order_page.workshop_2'),
+                    label: t('mes.work_order_page.workshop_2'),
+                  },
+                  {
+                    value: t('mes.work_order_page.workshop_3'),
+                    label: t('mes.work_order_page.workshop_3'),
+                  },
                 ]}
               />
             </div>

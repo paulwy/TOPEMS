@@ -49,14 +49,41 @@ const QUERY_KEY = ['notifications', 'list'];
 
 type NotificationFilterType = 'all' | 'unread' | NotificationTypeEnum;
 
-const notificationTypeConfig: Record<string, { labelKey: string; icon: LucideIcon; color: string }> = {
+const notificationTypeConfig: Record<
+  string,
+  { labelKey: string; icon: LucideIcon; color: string }
+> = {
   info: { labelKey: 'notification.notification_center.k13', icon: Info, color: 'var(--info-500)' },
-  success: { labelKey: 'notification.notification_center.type_success', icon: CheckCircle2, color: 'var(--success-500)' },
-  warning: { labelKey: 'notification.notification_center.type_warning', icon: AlertTriangle, color: 'var(--warning-500)' },
-  error: { labelKey: 'notification.notification_center.type_error', icon: AlertCircle, color: 'var(--error-500)' },
-  message: { labelKey: 'notification.notification_center.k17', icon: MessageSquare, color: 'var(--accent-primary)' },
-  reminder: { labelKey: 'notification.notification_center.k15', icon: Calendar, color: 'var(--warning-500)' },
-  system: { labelKey: 'notification.notification_center.type_system_update', icon: Cpu, color: 'var(--text-secondary)' },
+  success: {
+    labelKey: 'notification.notification_center.type_success',
+    icon: CheckCircle2,
+    color: 'var(--success-500)',
+  },
+  warning: {
+    labelKey: 'notification.notification_center.type_warning',
+    icon: AlertTriangle,
+    color: 'var(--warning-500)',
+  },
+  error: {
+    labelKey: 'notification.notification_center.type_error',
+    icon: AlertCircle,
+    color: 'var(--error-500)',
+  },
+  message: {
+    labelKey: 'notification.notification_center.k17',
+    icon: MessageSquare,
+    color: 'var(--accent-primary)',
+  },
+  reminder: {
+    labelKey: 'notification.notification_center.k15',
+    icon: Calendar,
+    color: 'var(--warning-500)',
+  },
+  system: {
+    labelKey: 'notification.notification_center.type_system_update',
+    icon: Cpu,
+    color: 'var(--text-secondary)',
+  },
 };
 
 const filterTabs = [
@@ -175,7 +202,8 @@ const NotificationCenter: React.FC = () => {
       const days = Math.floor(diff / 86400000);
 
       if (minutes < 1) return t('notification.notification_center.just_now');
-      if (minutes < 60) return t('notification.notification_center.minutes_ago', { count: minutes });
+      if (minutes < 60)
+        return t('notification.notification_center.minutes_ago', { count: minutes });
       if (hours < 24) return t('notification.notification_center.hours_ago', { count: hours });
       if (days < 7) return t('notification.notification_center.days_ago', { count: days });
 
@@ -237,8 +265,12 @@ const NotificationCenter: React.FC = () => {
                 style={{ width: 240 }}
               />
               {selectedIds.size > 0 && (
-              <Badge variant='cyan'>{t('notification.notification_center.selected_badge', { count: selectedIds.size })}</Badge>
-            )}
+                <Badge variant='cyan'>
+                  {t('notification.notification_center.selected_badge', {
+                    count: selectedIds.size,
+                  })}
+                </Badge>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
               <Button
@@ -279,7 +311,10 @@ const NotificationCenter: React.FC = () => {
         footer={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              {t('notification.notification_center.footer_summary', { total: notifications.length, unread: unreadCount })}
+              {t('notification.notification_center.footer_summary', {
+                total: notifications.length,
+                unread: unreadCount,
+              })}
             </span>
             <Button
               size='sm'
@@ -330,7 +365,9 @@ const NotificationCenter: React.FC = () => {
               />
               <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                 {selectedIds.size > 0
-                  ? t('notification.notification_center.selected_count', { count: selectedIds.size })
+                  ? t('notification.notification_center.selected_count', {
+                      count: selectedIds.size,
+                    })
                   : t('notification.notification_center.k21')}
               </span>
             </div>

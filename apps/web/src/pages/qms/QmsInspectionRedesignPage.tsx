@@ -154,10 +154,26 @@ const QmsInspectionPage: React.FC = () => {
 
   const statusConfig = useMemo(
     () => ({
-      pending: { label: t('qms.inspection_redesign.status_pending'), variant: 'warning' as const, icon: Clock },
-      in_progress: { label: t('qms.inspection_redesign.status_in_progress'), variant: 'info' as const, icon: ClipboardCheck },
-      completed: { label: t('qms.inspection_redesign.status_completed'), variant: 'success' as const, icon: CheckCircle },
-      rejected: { label: t('qms.inspection_redesign.status_rejected'), variant: 'error' as const, icon: XCircle },
+      pending: {
+        label: t('qms.inspection_redesign.status_pending'),
+        variant: 'warning' as const,
+        icon: Clock,
+      },
+      in_progress: {
+        label: t('qms.inspection_redesign.status_in_progress'),
+        variant: 'info' as const,
+        icon: ClipboardCheck,
+      },
+      completed: {
+        label: t('qms.inspection_redesign.status_completed'),
+        variant: 'success' as const,
+        icon: CheckCircle,
+      },
+      rejected: {
+        label: t('qms.inspection_redesign.status_rejected'),
+        variant: 'error' as const,
+        icon: XCircle,
+      },
     }),
     [t]
   );
@@ -173,8 +189,14 @@ const QmsInspectionPage: React.FC = () => {
 
   const resultConfig = useMemo(
     () => ({
-      qualified: { label: t('qms.inspection_redesign.result_qualified'), variant: 'success' as const },
-      unqualified: { label: t('qms.inspection_redesign.result_unqualified'), variant: 'error' as const },
+      qualified: {
+        label: t('qms.inspection_redesign.result_qualified'),
+        variant: 'success' as const,
+      },
+      unqualified: {
+        label: t('qms.inspection_redesign.result_unqualified'),
+        variant: 'error' as const,
+      },
       pending: { label: t('qms.inspection_redesign.result_pending'), variant: 'default' as const },
     }),
     [t]
@@ -354,8 +376,16 @@ const QmsInspectionPage: React.FC = () => {
     () => [
       { id: 'all', label: t('qms.inspection_redesign.tab_all') },
       { id: 'pending', label: t('qms.inspection_redesign.tab_pending'), badge: stats.pending },
-      { id: 'in_progress', label: t('qms.inspection_redesign.tab_in_progress'), badge: stats.inProgress },
-      { id: 'completed', label: t('qms.inspection_redesign.tab_completed'), badge: stats.completed },
+      {
+        id: 'in_progress',
+        label: t('qms.inspection_redesign.tab_in_progress'),
+        badge: stats.inProgress,
+      },
+      {
+        id: 'completed',
+        label: t('qms.inspection_redesign.tab_completed'),
+        badge: stats.completed,
+      },
       { id: 'rejected', label: t('qms.inspection_redesign.tab_rejected'), badge: stats.rejected },
     ],
     [stats, t]
@@ -670,10 +700,12 @@ const QmsInspectionPage: React.FC = () => {
                   <Badge
                     variant={typeConfig[selectedInspection.inspection_type]?.variant || 'default'}
                   >
-                    {typeConfig[selectedInspection.inspection_type]?.label || t('qms.inspection_redesign.unknown')}
+                    {typeConfig[selectedInspection.inspection_type]?.label ||
+                      t('qms.inspection_redesign.unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedInspection.status]?.variant || 'default'}>
-                    {statusConfig[selectedInspection.status]?.label || t('qms.inspection_redesign.unknown')}
+                    {statusConfig[selectedInspection.status]?.label ||
+                      t('qms.inspection_redesign.unknown')}
                   </Badge>
                 </div>
               </div>
@@ -792,8 +824,7 @@ const QmsInspectionPage: React.FC = () => {
                   check_no: '',
                   product_name:
                     (document.getElementById('field-3') as HTMLInputElement)?.value || '',
-                  batch_no:
-                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
+                  batch_no: (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                   inspection_type:
                     ((document.getElementById('field-2') as HTMLSelectElement)
                       ?.value as Inspection['inspection_type']) || 'incoming',

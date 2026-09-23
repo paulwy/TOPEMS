@@ -161,10 +161,26 @@ const QmsAuditRedesignPage: React.FC = () => {
 
   const statusConfig = useMemo(
     () => ({
-      planned: { label: t('qms.audit_redesign.status_planned'), variant: 'info' as const, icon: Calendar },
-      in_progress: { label: t('qms.audit_redesign.status_in_progress'), variant: 'warning' as const, icon: ClipboardCheck },
-      completed: { label: t('qms.audit_redesign.status_completed'), variant: 'success' as const, icon: CheckCircle },
-      cancelled: { label: t('qms.audit_redesign.status_cancelled'), variant: 'default' as const, icon: AlertTriangle },
+      planned: {
+        label: t('qms.audit_redesign.status_planned'),
+        variant: 'info' as const,
+        icon: Calendar,
+      },
+      in_progress: {
+        label: t('qms.audit_redesign.status_in_progress'),
+        variant: 'warning' as const,
+        icon: ClipboardCheck,
+      },
+      completed: {
+        label: t('qms.audit_redesign.status_completed'),
+        variant: 'success' as const,
+        icon: CheckCircle,
+      },
+      cancelled: {
+        label: t('qms.audit_redesign.status_cancelled'),
+        variant: 'default' as const,
+        icon: AlertTriangle,
+      },
     }),
     [t]
   );
@@ -354,7 +370,11 @@ const QmsAuditRedesignPage: React.FC = () => {
     () => [
       { id: 'all', label: t('qms.audit_redesign.tab_all') },
       { id: 'planned', label: t('qms.audit_redesign.tab_planned'), badge: stats.planned },
-      { id: 'in_progress', label: t('qms.audit_redesign.tab_in_progress'), badge: stats.inProgress },
+      {
+        id: 'in_progress',
+        label: t('qms.audit_redesign.tab_in_progress'),
+        badge: stats.inProgress,
+      },
       { id: 'completed', label: t('qms.audit_redesign.tab_completed'), badge: stats.completed },
     ],
     [stats, t]
@@ -418,7 +438,9 @@ const QmsAuditRedesignPage: React.FC = () => {
         align: 'center',
         render: (row) =>
           row.findings > 0 ? (
-            <Badge variant='warning'>{row.findings} {t('qms.audit_redesign.findings_unit')}</Badge>
+            <Badge variant='warning'>
+              {row.findings} {t('qms.audit_redesign.findings_unit')}
+            </Badge>
           ) : (
             <span style={{ color: 'var(--text-tertiary)' }}>-</span>
           ),
@@ -733,9 +755,7 @@ const QmsAuditRedesignPage: React.FC = () => {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         title={
-          selectedAudit
-            ? t('qms.audit_redesign.modal_edit_title')
-            : t('qms.audit_redesign.create')
+          selectedAudit ? t('qms.audit_redesign.modal_edit_title') : t('qms.audit_redesign.create')
         }
         size='lg'
         footer={
@@ -751,15 +771,12 @@ const QmsAuditRedesignPage: React.FC = () => {
               onClick={() => {
                 const formData: Partial<AuditPlan> = {
                   audit_no: '',
-                  title:
-                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  title: (document.getElementById('field-1') as HTMLInputElement)?.value || '',
                   audit_type:
                     ((document.getElementById('field-2') as HTMLSelectElement)
                       ?.value as AuditPlan['audit_type']) || 'internal',
-                  auditor:
-                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
-                  plan_date:
-                    (document.getElementById('field-5') as HTMLInputElement)?.value || '',
+                  auditor: (document.getElementById('field-3') as HTMLInputElement)?.value || '',
+                  plan_date: (document.getElementById('field-5') as HTMLInputElement)?.value || '',
                 };
                 if (selectedAudit) {
                   updateMutation.mutate({ id: selectedAudit.id, data: formData });

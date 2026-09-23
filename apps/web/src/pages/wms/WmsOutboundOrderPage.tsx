@@ -81,11 +81,31 @@ const mapApiOutboundOrders = (apiOrders: ApiOutboundOrder[]): OutboundOrder[] =>
 // Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockOrders
 
 const buildStatusConfig = (t: (k: string) => string) => ({
-  pending: { label: t('wms.outbound_order_page.status_pending'), variant: 'warning' as const, icon: Clock },
-  picking: { label: t('wms.outbound_order_page.status_picking'), variant: 'info' as const, icon: Package },
-  shipped: { label: t('wms.outbound_order_page.status_shipped'), variant: 'cyan' as const, icon: Truck },
-  completed: { label: t('wms.outbound_order_page.status_completed'), variant: 'success' as const, icon: CheckCircle },
-  cancelled: { label: t('wms.outbound_order_page.status_cancelled'), variant: 'default' as const, icon: AlertCircle },
+  pending: {
+    label: t('wms.outbound_order_page.status_pending'),
+    variant: 'warning' as const,
+    icon: Clock,
+  },
+  picking: {
+    label: t('wms.outbound_order_page.status_picking'),
+    variant: 'info' as const,
+    icon: Package,
+  },
+  shipped: {
+    label: t('wms.outbound_order_page.status_shipped'),
+    variant: 'cyan' as const,
+    icon: Truck,
+  },
+  completed: {
+    label: t('wms.outbound_order_page.status_completed'),
+    variant: 'success' as const,
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: t('wms.outbound_order_page.status_cancelled'),
+    variant: 'default' as const,
+    icon: AlertCircle,
+  },
 });
 
 const buildPriorityConfig = (t: (k: string) => string) => ({
@@ -175,7 +195,6 @@ const WmsOutboundOrderPage: React.FC = () => {
       created_at: '2026-09-01 11:00:00',
     },
   ];
-
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'pending' | 'picking' | 'shipped' | 'completed'
@@ -511,9 +530,18 @@ const WmsOutboundOrderPage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.outbound_order_page.filter_all_warehouse') },
-                  { value: t('wms.outbound_order_page.wh_raw_material'), label: t('wms.outbound_order_page.wh_raw_material') },
-                  { value: t('wms.outbound_order_page.wh_semi_finished'), label: t('wms.outbound_order_page.wh_semi_finished') },
-                  { value: t('wms.outbound_order_page.wh_finished'), label: t('wms.outbound_order_page.wh_finished') },
+                  {
+                    value: t('wms.outbound_order_page.wh_raw_material'),
+                    label: t('wms.outbound_order_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.outbound_order_page.wh_semi_finished'),
+                    label: t('wms.outbound_order_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.outbound_order_page.wh_finished'),
+                    label: t('wms.outbound_order_page.wh_finished'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -643,10 +671,12 @@ const WmsOutboundOrderPage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={priorityConfig[selectedOrder.priority]?.variant || 'default'}>
-                    {priorityConfig[selectedOrder.priority]?.label || t('wms.outbound_order_page.priority_normal')}
+                    {priorityConfig[selectedOrder.priority]?.label ||
+                      t('wms.outbound_order_page.priority_normal')}
                   </Badge>
                   <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                    {statusConfig[selectedOrder.status]?.label || t('wms.outbound_order_page.status_unknown')}
+                    {statusConfig[selectedOrder.status]?.label ||
+                      t('wms.outbound_order_page.status_unknown')}
                   </Badge>
                 </div>
               </div>
@@ -743,7 +773,11 @@ const WmsOutboundOrderPage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? t('wms.outbound_order_page.modal_edit_title') : t('wms.outbound_order_page.action_new')}
+        title={
+          selectedOrder
+            ? t('wms.outbound_order_page.modal_edit_title')
+            : t('wms.outbound_order_page.action_new')
+        }
         size='lg'
         footer={
           <>
@@ -771,7 +805,9 @@ const WmsOutboundOrderPage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? t('wms.outbound_order_page.button_save') : t('wms.outbound_order_page.button_create')}
+              {selectedOrder
+                ? t('wms.outbound_order_page.button_save')
+                : t('wms.outbound_order_page.button_create')}
             </Button>
           </>
         }
@@ -802,9 +838,18 @@ const WmsOutboundOrderPage: React.FC = () => {
                 id='field-2'
                 defaultValue={selectedOrder?.warehouse || t('wms.outbound_order_page.wh_finished')}
                 options={[
-                  { value: t('wms.outbound_order_page.wh_raw_material'), label: t('wms.outbound_order_page.wh_raw_material') },
-                  { value: t('wms.outbound_order_page.wh_semi_finished'), label: t('wms.outbound_order_page.wh_semi_finished') },
-                  { value: t('wms.outbound_order_page.wh_finished'), label: t('wms.outbound_order_page.wh_finished') },
+                  {
+                    value: t('wms.outbound_order_page.wh_raw_material'),
+                    label: t('wms.outbound_order_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.outbound_order_page.wh_semi_finished'),
+                    label: t('wms.outbound_order_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.outbound_order_page.wh_finished'),
+                    label: t('wms.outbound_order_page.wh_finished'),
+                  },
                 ]}
               />
             </div>
@@ -892,7 +937,9 @@ const WmsOutboundOrderPage: React.FC = () => {
         }
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-          {t('wms.outbound_order_page.delete_confirm_message', { order_no: deleteTarget?.order_no })}
+          {t('wms.outbound_order_page.delete_confirm_message', {
+            order_no: deleteTarget?.order_no,
+          })}
         </p>
       </Modal>
 

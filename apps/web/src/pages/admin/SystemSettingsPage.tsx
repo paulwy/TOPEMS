@@ -126,7 +126,8 @@ const SystemSettingsPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('admin.system_settings_page.save_success'));
     },
-    onError: (err: Error) => pushToast('error', t('admin.system_settings_page.save_failed', { message: err.message })),
+    onError: (err: Error) =>
+      pushToast('error', t('admin.system_settings_page.save_failed', { message: err.message })),
   });
 
   const handleSave = () => {
@@ -201,7 +202,11 @@ const SystemSettingsPage: React.FC = () => {
           <Toggle
             checked={settings.mail.enabled}
             onChange={(checked) => updateField('mail', 'enabled', checked)}
-            label={settings.mail.enabled ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
+            label={
+              settings.mail.enabled
+                ? t('admin.system_settings_page.toggle_on')
+                : t('admin.system_settings_page.toggle_off')
+            }
           />
         </FormField>
       </FieldGroup>
@@ -254,7 +259,11 @@ const SystemSettingsPage: React.FC = () => {
           <Toggle
             checked={settings.mail.useTLS}
             onChange={(checked) => updateField('mail', 'useTLS', checked)}
-            label={settings.mail.useTLS ? t('admin.system_settings_page.tls_on') : t('admin.system_settings_page.tls_off')}
+            label={
+              settings.mail.useTLS
+                ? t('admin.system_settings_page.tls_on')
+                : t('admin.system_settings_page.tls_off')
+            }
             disabled={!settings.mail.enabled}
           />
         </FormField>
@@ -290,7 +299,11 @@ const SystemSettingsPage: React.FC = () => {
           <Toggle
             checked={settings.sms.enabled}
             onChange={(checked) => updateField('sms', 'enabled', checked)}
-            label={settings.sms.enabled ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
+            label={
+              settings.sms.enabled
+                ? t('admin.system_settings_page.toggle_on')
+                : t('admin.system_settings_page.toggle_off')
+            }
           />
         </FormField>
       </FieldGroup>
@@ -370,21 +383,33 @@ const SystemSettingsPage: React.FC = () => {
           <Toggle
             checked={settings.log.enableAccessLog}
             onChange={(checked) => updateField('log', 'enableAccessLog', checked)}
-            label={settings.log.enableAccessLog ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
+            label={
+              settings.log.enableAccessLog
+                ? t('admin.system_settings_page.toggle_on')
+                : t('admin.system_settings_page.toggle_off')
+            }
           />
         </FormField>
         <FormField label={t('admin.system_settings_page.operation_log')}>
           <Toggle
             checked={settings.log.enableOperationLog}
             onChange={(checked) => updateField('log', 'enableOperationLog', checked)}
-            label={settings.log.enableOperationLog ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
+            label={
+              settings.log.enableOperationLog
+                ? t('admin.system_settings_page.toggle_on')
+                : t('admin.system_settings_page.toggle_off')
+            }
           />
         </FormField>
         <FormField label={t('admin.system_settings_page.security_log')}>
           <Toggle
             checked={settings.log.enableSecurityLog}
             onChange={(checked) => updateField('log', 'enableSecurityLog', checked)}
-            label={settings.log.enableSecurityLog ? t('admin.system_settings_page.toggle_on') : t('admin.system_settings_page.toggle_off')}
+            label={
+              settings.log.enableSecurityLog
+                ? t('admin.system_settings_page.toggle_on')
+                : t('admin.system_settings_page.toggle_off')
+            }
           />
         </FormField>
       </FieldGroup>

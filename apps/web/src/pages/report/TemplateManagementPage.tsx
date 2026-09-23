@@ -948,7 +948,8 @@ const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, o
               {i18n.t('pages.template_management_page.templatecode_0')}
             </Typography>
             <Typography variant='body2'>
-              {i18n.t('report.template_management.category_label')}{template.category_name || i18n.t('pages.template_management_page.k0')}
+              {i18n.t('report.template_management.category_label')}
+              {template.category_name || i18n.t('pages.template_management_page.k0')}
             </Typography>
             <Typography variant='body2'>
               {i18n.t('pages.template_management_page.templatemodule_1')}

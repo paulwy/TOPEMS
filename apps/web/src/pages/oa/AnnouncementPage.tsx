@@ -518,10 +518,12 @@ const AnnouncementPage: React.FC = () => {
                 <Badge
                   variant={categoryConfig[selectedAnnouncement.category]?.variant || 'default'}
                 >
-                  {categoryConfig[selectedAnnouncement.category]?.label || t('oa.announcement_page.k9')}
+                  {categoryConfig[selectedAnnouncement.category]?.label ||
+                    t('oa.announcement_page.k9')}
                 </Badge>
                 <Badge variant={statusConfig[selectedAnnouncement.status]?.variant || 'default'}>
-                  {statusConfig[selectedAnnouncement.status]?.label || t('oa.announcement_page.k16')}
+                  {statusConfig[selectedAnnouncement.status]?.label ||
+                    t('oa.announcement_page.k16')}
                 </Badge>
               </div>
               <h2

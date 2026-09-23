@@ -354,15 +354,33 @@ const DataAssetCatalogPage: React.FC = () => {
           <Table size='small'>
             <TableHead>
               <TableRow sx={{ backgroundColor: 'grey.100' }}>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_name')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_display_name')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_type')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_status')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_sensitivity')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_owner')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_db_table')}</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>{i18n.t('master.data_asset_catalog.col_updated_at')}</TableCell>
-                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>{i18n.t('master.data_asset_catalog.col_actions')}</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_name')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_display_name')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_type')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_status')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_sensitivity')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_owner')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_db_table')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {i18n.t('master.data_asset_catalog.col_updated_at')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, textAlign: 'center' }}>
+                  {i18n.t('master.data_asset_catalog.col_actions')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -381,7 +399,9 @@ const DataAssetCatalogPage: React.FC = () => {
                     colSpan={9}
                     sx={{ textAlign: 'center', py: 4 }}
                   >
-                    <Typography color='text.secondary'>{i18n.t('master.data_asset_catalog.empty')}</Typography>
+                    <Typography color='text.secondary'>
+                      {i18n.t('master.data_asset_catalog.empty')}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -502,7 +522,9 @@ const DataAssetCatalogPage: React.FC = () => {
           }}
           rowsPerPageOptions={[10, 20, 50, 100]}
           labelRowsPerPage={i18n.t('master.data_asset_catalog.rows_per_page')}
-          labelDisplayedRows={({ from, to, count }) => i18n.t('master.data_asset_catalog.rows_range', { from, to, count })}
+          labelDisplayedRows={({ from, to, count }) =>
+            i18n.t('master.data_asset_catalog.rows_range', { from, to, count })
+          }
         />
       </Card>
 
@@ -742,7 +764,9 @@ const DataAssetCatalogPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailOpen(false)}>{i18n.t('master.data_asset_catalog.close')}</Button>
+          <Button onClick={() => setDetailOpen(false)}>
+            {i18n.t('master.data_asset_catalog.close')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -151,7 +151,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                 ? {
                     ...f,
                     status: 'error' as const,
-                    error: err instanceof Error ? err.message : t('components.file_upload.upload_failed'),
+                    error:
+                      err instanceof Error
+                        ? err.message
+                        : t('components.file_upload.upload_failed'),
                   }
                 : f
             );
@@ -276,7 +279,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             style={{ color: 'var(--text-secondary)' }}
           />
         </div>
-        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>{resolvedHint}</div>
+        <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>
+          {resolvedHint}
+        </div>
         {accept && (
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
             {t('components.file_upload.supported_formats', { accept })}

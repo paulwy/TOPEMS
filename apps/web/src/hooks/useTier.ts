@@ -98,7 +98,7 @@ export interface UseTierReturn {
   /** 过滤模块列表，只保留可用模块 */
   filterModules: <T extends { module?: string; path?: string }>(
     modules: T[],
-    getModule?: (item: T) => string,
+    getModule?: (item: T) => string
   ) => T[];
   /** 获取当前层级可用的所有模块定义 */
   availableModules: ModuleFeature[];
@@ -161,20 +161,15 @@ export function useTier(): UseTierReturn {
 
   const isModuleAvailableFn = useCallback(
     (module: string) => isModuleAvailable(module, tier),
-    [tier],
+    [tier]
   );
 
-  const isPathAvailableFn = useCallback(
-    (path: string) => isPathAvailable(path, tier),
-    [tier],
-  );
+  const isPathAvailableFn = useCallback((path: string) => isPathAvailable(path, tier), [tier]);
 
   const filterModulesFn = useCallback(
-    <T extends { module?: string; path?: string }>(
-      modules: T[],
-      getModule?: (item: T) => string,
-    ) => filterModulesByTier(modules, tier, getModule),
-    [tier],
+    <T extends { module?: string; path?: string }>(modules: T[], getModule?: (item: T) => string) =>
+      filterModulesByTier(modules, tier, getModule),
+    [tier]
   );
 
   const availableModules = useMemo(() => getModulesForTier(tier), [tier]);

@@ -76,7 +76,10 @@ const mapApiAttendance = (apiRecords: ApiAttendanceRecord[]): AttendanceRecord[]
 
 const statusConfig: Record<
   string,
-  { label: string; variant: 'success' | 'warning' | 'amber' | 'error' | 'info' | 'cyan' | 'default' }
+  {
+    label: string;
+    variant: 'success' | 'warning' | 'amber' | 'error' | 'info' | 'cyan' | 'default';
+  }
 > = {
   normal: { label: i18n.t('hrm.attendance_redesign_page.k15'), variant: 'success' },
   late: { label: i18n.t('hrm.attendance_redesign_page.k18'), variant: 'warning' },
@@ -658,7 +661,8 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <Badge variant={statusConfig[selectedRecord.status]?.variant || 'default'}>
-                  {statusConfig[selectedRecord.status]?.label || t('hrm.attendance_redesign_page.k34')}
+                  {statusConfig[selectedRecord.status]?.label ||
+                    t('hrm.attendance_redesign_page.k34')}
                 </Badge>
               </div>
             </Card>
@@ -765,12 +769,9 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 const formData: Partial<AttendanceRecord> = {
                   employee_name:
                     (document.getElementById('field-1') as HTMLSelectElement)?.value || '',
-                  date:
-                    (document.getElementById('field-2') as HTMLInputElement)?.value || '',
-                  check_in:
-                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
-                  check_out:
-                    (document.getElementById('field-4') as HTMLInputElement)?.value || '',
+                  date: (document.getElementById('field-2') as HTMLInputElement)?.value || '',
+                  check_in: (document.getElementById('field-3') as HTMLInputElement)?.value || '',
+                  check_out: (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                 };
                 if (selectedRecord) {
                   updateMutation.mutate({ id: selectedRecord.id, data: formData });
@@ -799,11 +800,26 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 id='field-1'
                 defaultValue={selectedRecord?.emp_no || 'EMP001'}
                 options={[
-                  { value: 'EMP001', label: `${t('hrm.demo.person_zhang')} (${t('hrm.demo.dept_tech')})` },
-                  { value: 'EMP002', label: `${t('hrm.demo.person_li')} (${t('hrm.demo.dept_product')})` },
-                  { value: 'EMP003', label: `${t('hrm.demo.person_wang')} (${t('hrm.demo.dept_design')})` },
-                  { value: 'EMP004', label: `${t('hrm.demo.person_zhao')} (${t('hrm.demo.dept_market')})` },
-                  { value: 'EMP005', label: `${t('hrm.demo.person_qian')} (${t('hrm.demo.dept_tech')})` },
+                  {
+                    value: 'EMP001',
+                    label: `${t('hrm.demo.person_zhang')} (${t('hrm.demo.dept_tech')})`,
+                  },
+                  {
+                    value: 'EMP002',
+                    label: `${t('hrm.demo.person_li')} (${t('hrm.demo.dept_product')})`,
+                  },
+                  {
+                    value: 'EMP003',
+                    label: `${t('hrm.demo.person_wang')} (${t('hrm.demo.dept_design')})`,
+                  },
+                  {
+                    value: 'EMP004',
+                    label: `${t('hrm.demo.person_zhao')} (${t('hrm.demo.dept_market')})`,
+                  },
+                  {
+                    value: 'EMP005',
+                    label: `${t('hrm.demo.person_qian')} (${t('hrm.demo.dept_tech')})`,
+                  },
                 ]}
               />
             </div>

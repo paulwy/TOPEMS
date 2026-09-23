@@ -58,18 +58,43 @@ const defaultItems: NavItem[] = [
     icon: Factory,
     path: '/mes/dashboard',
     children: [
-      { id: 'mes-dashboard', label: 'shared.sidebar.mes_dashboard', icon: BarChart3, path: '/mes/dashboard' },
+      {
+        id: 'mes-dashboard',
+        label: 'shared.sidebar.mes_dashboard',
+        icon: BarChart3,
+        path: '/mes/dashboard',
+      },
       {
         id: 'mes-production-orders',
         label: 'shared.sidebar.mes_production_orders',
         icon: FileText,
         path: '/mes/production-orders',
       },
-      { id: 'mes-work-orders', label: 'shared.sidebar.mes_work_orders', icon: ClipboardList, path: '/mes/work-orders' },
-      { id: 'mes-equipment', label: 'shared.sidebar.mes_equipment', icon: Cpu, path: '/mes/equipment' },
-      { id: 'mes-quality', label: 'shared.sidebar.mes_quality', icon: ShieldCheck, path: '/mes/quality' },
+      {
+        id: 'mes-work-orders',
+        label: 'shared.sidebar.mes_work_orders',
+        icon: ClipboardList,
+        path: '/mes/work-orders',
+      },
+      {
+        id: 'mes-equipment',
+        label: 'shared.sidebar.mes_equipment',
+        icon: Cpu,
+        path: '/mes/equipment',
+      },
+      {
+        id: 'mes-quality',
+        label: 'shared.sidebar.mes_quality',
+        icon: ShieldCheck,
+        path: '/mes/quality',
+      },
       { id: 'mes-wip', label: 'shared.sidebar.mes_wip', icon: Box, path: '/mes/wip' },
-      { id: 'mes-report', label: 'shared.sidebar.mes_report', icon: BarChart3, path: '/mes/production-record' },
+      {
+        id: 'mes-report',
+        label: 'shared.sidebar.mes_report',
+        icon: BarChart3,
+        path: '/mes/production-record',
+      },
     ],
   },
   {
@@ -78,10 +103,30 @@ const defaultItems: NavItem[] = [
     icon: Layers,
     path: '/erp/dashboard',
     children: [
-      { id: 'erp-purchase', label: 'shared.sidebar.erp_purchase', icon: ShoppingCart, path: '/erp/purchase-order' },
-      { id: 'erp-sales', label: 'shared.sidebar.erp_sales', icon: TrendingUp, path: '/erp/sales-order' },
-      { id: 'erp-inventory', label: 'shared.sidebar.erp_inventory', icon: Package, path: '/erp/inventory' },
-      { id: 'erp-finance', label: 'shared.sidebar.erp_finance', icon: DollarSign, path: '/erp/finance' },
+      {
+        id: 'erp-purchase',
+        label: 'shared.sidebar.erp_purchase',
+        icon: ShoppingCart,
+        path: '/erp/purchase-order',
+      },
+      {
+        id: 'erp-sales',
+        label: 'shared.sidebar.erp_sales',
+        icon: TrendingUp,
+        path: '/erp/sales-order',
+      },
+      {
+        id: 'erp-inventory',
+        label: 'shared.sidebar.erp_inventory',
+        icon: Package,
+        path: '/erp/inventory',
+      },
+      {
+        id: 'erp-finance',
+        label: 'shared.sidebar.erp_finance',
+        icon: DollarSign,
+        path: '/erp/finance',
+      },
     ],
   },
   {
@@ -90,9 +135,24 @@ const defaultItems: NavItem[] = [
     icon: Truck,
     path: '/scm/dashboard',
     children: [
-      { id: 'scm-supplier', label: 'shared.sidebar.scm_supplier', icon: Truck, path: '/scm/suppliers' },
-      { id: 'scm-purchase', label: 'shared.sidebar.scm_purchase', icon: ShoppingCart, path: '/scm/purchasing' },
-      { id: 'scm-logistics', label: 'shared.sidebar.scm_logistics', icon: Truck, path: '/scm/logistics' },
+      {
+        id: 'scm-supplier',
+        label: 'shared.sidebar.scm_supplier',
+        icon: Truck,
+        path: '/scm/suppliers',
+      },
+      {
+        id: 'scm-purchase',
+        label: 'shared.sidebar.scm_purchase',
+        icon: ShoppingCart,
+        path: '/scm/purchasing',
+      },
+      {
+        id: 'scm-logistics',
+        label: 'shared.sidebar.scm_logistics',
+        icon: Truck,
+        path: '/scm/logistics',
+      },
     ],
   },
   {
@@ -101,9 +161,24 @@ const defaultItems: NavItem[] = [
     icon: Users,
     path: '/crm/dashboard',
     children: [
-      { id: 'crm-customers', label: 'shared.sidebar.crm_customers', icon: Users, path: '/crm/customers' },
-      { id: 'crm-opportunities', label: 'shared.sidebar.crm_opportunities', icon: Target, path: '/crm/opportunities' },
-      { id: 'crm-contracts', label: 'shared.sidebar.crm_contracts', icon: FileText, path: '/crm/contracts' },
+      {
+        id: 'crm-customers',
+        label: 'shared.sidebar.crm_customers',
+        icon: Users,
+        path: '/crm/customers',
+      },
+      {
+        id: 'crm-opportunities',
+        label: 'shared.sidebar.crm_opportunities',
+        icon: Target,
+        path: '/crm/opportunities',
+      },
+      {
+        id: 'crm-contracts',
+        label: 'shared.sidebar.crm_contracts',
+        icon: FileText,
+        path: '/crm/contracts',
+      },
     ],
   },
   {
@@ -112,14 +187,24 @@ const defaultItems: NavItem[] = [
     icon: ShieldCheck,
     path: '/qms/dashboard',
     children: [
-      { id: 'qms-inspection', label: 'shared.sidebar.qms_inspection', icon: ShieldCheck, path: '/qms/inspection' },
+      {
+        id: 'qms-inspection',
+        label: 'shared.sidebar.qms_inspection',
+        icon: ShieldCheck,
+        path: '/qms/inspection',
+      },
       {
         id: 'qms-nonconformance',
         label: 'shared.sidebar.qms_nonconformance',
         icon: AlertTriangle,
         path: '/qms/nonconformance',
       },
-      { id: 'qms-eight-d', label: 'shared.sidebar.qms_eight_d', icon: FileText, path: '/qms/eight-d' },
+      {
+        id: 'qms-eight-d',
+        label: 'shared.sidebar.qms_eight_d',
+        icon: FileText,
+        path: '/qms/eight-d',
+      },
     ],
   },
   {
@@ -128,9 +213,24 @@ const defaultItems: NavItem[] = [
     icon: Box,
     path: '/wms/dashboard',
     children: [
-      { id: 'wms-inbound', label: 'shared.sidebar.wms_inbound', icon: Package, path: '/wms/inbound-orders' },
-      { id: 'wms-outbound', label: 'shared.sidebar.wms_outbound', icon: Package, path: '/wms/outbound-orders' },
-      { id: 'wms-inventory', label: 'shared.sidebar.wms_inventory', icon: Boxes, path: '/wms/inventory' },
+      {
+        id: 'wms-inbound',
+        label: 'shared.sidebar.wms_inbound',
+        icon: Package,
+        path: '/wms/inbound-orders',
+      },
+      {
+        id: 'wms-outbound',
+        label: 'shared.sidebar.wms_outbound',
+        icon: Package,
+        path: '/wms/outbound-orders',
+      },
+      {
+        id: 'wms-inventory',
+        label: 'shared.sidebar.wms_inventory',
+        icon: Boxes,
+        path: '/wms/inventory',
+      },
     ],
   },
   { id: 'bi', label: 'shared.sidebar.bi', icon: BarChart3, path: '/bi/dashboard' },

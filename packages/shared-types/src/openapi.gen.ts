@@ -20,7 +20,7 @@
  *           完成后可删除本桥接文件。
  */
 
-/* eslint-disable @typescript-eslint/no-empty-interface */
+ 
 import type {
   paths as _Paths,
   components as _Components,

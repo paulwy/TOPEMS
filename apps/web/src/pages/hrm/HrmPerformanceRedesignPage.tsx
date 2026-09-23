@@ -84,7 +84,10 @@ const ratingConfig = {
   D: { label: 'D', variant: 'default' as const, score: '<60' },
 };
 
-const statusConfig: Record<string, { label: string; variant: 'warning' | 'info' | 'success' | 'default' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; variant: 'warning' | 'info' | 'success' | 'default' }
+> = {
   pending: { label: i18n.t('hrm.performance_redesign_page.k15'), variant: 'warning' },
   in_review: { label: i18n.t('hrm.performance_redesign_page.k16'), variant: 'info' },
   completed: { label: i18n.t('hrm.performance_redesign_page.k17'), variant: 'success' },
@@ -700,7 +703,8 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                     {ratingConfig[selectedReview.rating]?.label || '-'}
                   </Badge>
                   <Badge variant={statusConfig[selectedReview.status]?.variant || 'default'}>
-                    {statusConfig[selectedReview.status]?.label || t('hrm.performance_redesign_page.k32')}
+                    {statusConfig[selectedReview.status]?.label ||
+                      t('hrm.performance_redesign_page.k32')}
                   </Badge>
                 </div>
               </div>
@@ -726,7 +730,8 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 </div>
                 <div style={{ textAlign: 'center', marginTop: 'var(--space-2)' }}>
                   <Badge variant={ratingConfig[selectedReview.rating]?.variant || 'default'}>
-                    {ratingConfig[selectedReview.rating]?.label} {t('hrm.performance_redesign_page.k31')}
+                    {ratingConfig[selectedReview.rating]?.label}{' '}
+                    {t('hrm.performance_redesign_page.k31')}
                   </Badge>
                 </div>
               </Card>
@@ -813,8 +818,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                   score: Number(
                     (document.getElementById('field-5') as HTMLInputElement)?.value || 0
                   ),
-                  reviewer:
-                    (document.getElementById('field-3') as HTMLInputElement)?.value || '',
+                  reviewer: (document.getElementById('field-3') as HTMLInputElement)?.value || '',
                 };
                 if (selectedReview) {
                   updateMutation.mutate({ id: selectedReview.id, data: formData });
@@ -843,11 +847,26 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 id='field-1'
                 defaultValue={selectedReview?.employee_name || t('hrm.demo.person_zhang')}
                 options={[
-                  { value: t('hrm.demo.person_zhang'), label: `${t('hrm.demo.person_zhang')} (${t('hrm.demo.dept_tech')})` },
-                  { value: t('hrm.demo.person_li'), label: `${t('hrm.demo.person_li')} (${t('hrm.demo.dept_product')})` },
-                  { value: t('hrm.demo.person_wang'), label: `${t('hrm.demo.person_wang')} (${t('hrm.demo.dept_design')})` },
-                  { value: t('hrm.demo.person_zhao'), label: `${t('hrm.demo.person_zhao')} (${t('hrm.demo.dept_market')})` },
-                  { value: t('hrm.demo.person_qian'), label: `${t('hrm.demo.person_qian')} (${t('hrm.demo.dept_tech')})` },
+                  {
+                    value: t('hrm.demo.person_zhang'),
+                    label: `${t('hrm.demo.person_zhang')} (${t('hrm.demo.dept_tech')})`,
+                  },
+                  {
+                    value: t('hrm.demo.person_li'),
+                    label: `${t('hrm.demo.person_li')} (${t('hrm.demo.dept_product')})`,
+                  },
+                  {
+                    value: t('hrm.demo.person_wang'),
+                    label: `${t('hrm.demo.person_wang')} (${t('hrm.demo.dept_design')})`,
+                  },
+                  {
+                    value: t('hrm.demo.person_zhao'),
+                    label: `${t('hrm.demo.person_zhao')} (${t('hrm.demo.dept_market')})`,
+                  },
+                  {
+                    value: t('hrm.demo.person_qian'),
+                    label: `${t('hrm.demo.person_qian')} (${t('hrm.demo.dept_tech')})`,
+                  },
                 ]}
               />
             </div>

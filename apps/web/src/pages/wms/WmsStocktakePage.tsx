@@ -85,10 +85,26 @@ const mapApiStocktakes = (apiRecords: ApiStockTake[]): StocktakeOrder[] => {
 // Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockStocktakes
 
 const buildStatusConfig = (t: (k: string) => string) => ({
-  draft: { label: t('wms.stocktake_page.status_draft'), variant: 'default' as const, icon: ClipboardList },
-  in_progress: { label: t('wms.stocktake_page.status_in_progress'), variant: 'info' as const, icon: Clock },
-  completed: { label: t('wms.stocktake_page.status_completed'), variant: 'success' as const, icon: CheckCircle },
-  cancelled: { label: t('wms.stocktake_page.status_cancelled'), variant: 'default' as const, icon: AlertTriangle },
+  draft: {
+    label: t('wms.stocktake_page.status_draft'),
+    variant: 'default' as const,
+    icon: ClipboardList,
+  },
+  in_progress: {
+    label: t('wms.stocktake_page.status_in_progress'),
+    variant: 'info' as const,
+    icon: Clock,
+  },
+  completed: {
+    label: t('wms.stocktake_page.status_completed'),
+    variant: 'success' as const,
+    icon: CheckCircle,
+  },
+  cancelled: {
+    label: t('wms.stocktake_page.status_cancelled'),
+    variant: 'default' as const,
+    icon: AlertTriangle,
+  },
 });
 
 const buildTypeConfig = (t: (k: string) => string) => ({
@@ -183,7 +199,6 @@ const WmsStocktakePage: React.FC = () => {
       created_at: '2026-06-25 16:00:00',
     },
   ];
-
 
   const [activeTab, setActiveTab] = useState<'all' | 'draft' | 'in_progress' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -353,8 +368,16 @@ const WmsStocktakePage: React.FC = () => {
   const tabsConfig = useMemo(
     () => [
       { id: 'all', label: t('wms.stocktake_page.tab_all') },
-      { id: 'draft', label: t('wms.stocktake_page.status_draft'), badge: orders.filter((o) => o.status === 'draft').length },
-      { id: 'in_progress', label: t('wms.stocktake_page.status_in_progress'), badge: stats.inProgress },
+      {
+        id: 'draft',
+        label: t('wms.stocktake_page.status_draft'),
+        badge: orders.filter((o) => o.status === 'draft').length,
+      },
+      {
+        id: 'in_progress',
+        label: t('wms.stocktake_page.status_in_progress'),
+        badge: stats.inProgress,
+      },
       { id: 'completed', label: t('wms.stocktake_page.status_completed'), badge: stats.completed },
     ],
     [stats, orders, t]
@@ -446,7 +469,9 @@ const WmsStocktakePage: React.FC = () => {
         align: 'center',
         render: (row) =>
           row.discrepancy_items > 0 ? (
-            <Badge variant='warning'>{t('wms.stocktake_page.items_unit', { count: row.discrepancy_items })}</Badge>
+            <Badge variant='warning'>
+              {t('wms.stocktake_page.items_unit', { count: row.discrepancy_items })}
+            </Badge>
           ) : (
             <span style={{ color: 'var(--text-tertiary)' }}>0</span>
           ),
@@ -567,9 +592,18 @@ const WmsStocktakePage: React.FC = () => {
                 onChange={(e) => setWarehouseFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('wms.stocktake_page.filter_all_warehouse') },
-                  { value: t('wms.stocktake_page.wh_raw_material'), label: t('wms.stocktake_page.wh_raw_material') },
-                  { value: t('wms.stocktake_page.wh_semi_finished'), label: t('wms.stocktake_page.wh_semi_finished') },
-                  { value: t('wms.stocktake_page.wh_finished'), label: t('wms.stocktake_page.wh_finished') },
+                  {
+                    value: t('wms.stocktake_page.wh_raw_material'),
+                    label: t('wms.stocktake_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.stocktake_page.wh_semi_finished'),
+                    label: t('wms.stocktake_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.stocktake_page.wh_finished'),
+                    label: t('wms.stocktake_page.wh_finished'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -698,10 +732,12 @@ const WmsStocktakePage: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                   <Badge variant={typeConfig[selectedOrder.type]?.variant || 'default'}>
-                    {typeConfig[selectedOrder.type]?.label || t('wms.stocktake_page.status_unknown')}
+                    {typeConfig[selectedOrder.type]?.label ||
+                      t('wms.stocktake_page.status_unknown')}
                   </Badge>
                   <Badge variant={statusConfig[selectedOrder.status]?.variant || 'default'}>
-                    {statusConfig[selectedOrder.status]?.label || t('wms.stocktake_page.status_unknown')}
+                    {statusConfig[selectedOrder.status]?.label ||
+                      t('wms.stocktake_page.status_unknown')}
                   </Badge>
                 </div>
               </div>
@@ -811,7 +847,11 @@ const WmsStocktakePage: React.FC = () => {
       <Modal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        title={selectedOrder ? t('wms.stocktake_page.modal_edit_title') : t('wms.stocktake_page.action_new')}
+        title={
+          selectedOrder
+            ? t('wms.stocktake_page.modal_edit_title')
+            : t('wms.stocktake_page.action_new')
+        }
         size='lg'
         footer={
           <>
@@ -837,7 +877,9 @@ const WmsStocktakePage: React.FC = () => {
                 }
               }}
             >
-              {selectedOrder ? t('wms.stocktake_page.button_save') : t('wms.stocktake_page.button_create')}
+              {selectedOrder
+                ? t('wms.stocktake_page.button_save')
+                : t('wms.stocktake_page.button_create')}
             </Button>
           </>
         }
@@ -868,10 +910,22 @@ const WmsStocktakePage: React.FC = () => {
                 id='field-2'
                 defaultValue={selectedOrder?.warehouse || t('wms.stocktake_page.wh_raw_material')}
                 options={[
-                  { value: t('wms.stocktake_page.wh_raw_material'), label: t('wms.stocktake_page.wh_raw_material') },
-                  { value: t('wms.stocktake_page.wh_semi_finished'), label: t('wms.stocktake_page.wh_semi_finished') },
-                  { value: t('wms.stocktake_page.wh_finished'), label: t('wms.stocktake_page.wh_finished') },
-                  { value: t('wms.stocktake_page.filter_all_warehouse'), label: t('wms.stocktake_page.filter_all_warehouse') },
+                  {
+                    value: t('wms.stocktake_page.wh_raw_material'),
+                    label: t('wms.stocktake_page.wh_raw_material'),
+                  },
+                  {
+                    value: t('wms.stocktake_page.wh_semi_finished'),
+                    label: t('wms.stocktake_page.wh_semi_finished'),
+                  },
+                  {
+                    value: t('wms.stocktake_page.wh_finished'),
+                    label: t('wms.stocktake_page.wh_finished'),
+                  },
+                  {
+                    value: t('wms.stocktake_page.filter_all_warehouse'),
+                    label: t('wms.stocktake_page.filter_all_warehouse'),
+                  },
                 ]}
               />
             </div>

@@ -139,9 +139,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           container.appendChild(pre);
         } else {
           logger.info(i18n.t('components.document_preview_modal.k8'));
-          setError(
-            `${i18n.t('components.document_preview_modal.unsupported')}: ${fileName}`
-          );
+          setError(`${i18n.t('components.document_preview_modal.unsupported')}: ${fileName}`);
         }
       } catch (err: unknown) {
         logger.error('Preview error:', err);

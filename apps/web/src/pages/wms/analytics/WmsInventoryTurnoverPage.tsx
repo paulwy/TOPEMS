@@ -125,7 +125,9 @@ export default function WmsInventoryTurnoverPage() {
         showTables={false}
       >
         <div className='flex h-64 flex-col items-center justify-center gap-4'>
-          <div className='text-red-500'>{t('wms.inventory_turnover.load_failed')}: {error}</div>
+          <div className='text-red-500'>
+            {t('wms.inventory_turnover.load_failed')}: {error}
+          </div>
           <button
             onClick={reload}
             className='rounded bg-primary px-4 py-2 text-white hover:bg-primary-dark'
@@ -152,7 +154,9 @@ export default function WmsInventoryTurnoverPage() {
       <div className='space-y-4'>
         {/* 时间粒度选择 */}
         <div className='flex items-center gap-4'>
-          <span className='text-sm text-gray-600'>{t('wms.inventory_turnover.time_granularity')}:</span>
+          <span className='text-sm text-gray-600'>
+            {t('wms.inventory_turnover.time_granularity')}:
+          </span>
           <div className='flex gap-2'>
             {(['month', 'week', 'day'] as const).map((g) => (
               <button

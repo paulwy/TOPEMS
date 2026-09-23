@@ -231,7 +231,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* 快速跳转 */}
         {showQuickJumper && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>{t('components.pagination.jump_to')}</span>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+              {t('components.pagination.jump_to')}
+            </span>
             <input
               type='number'
               min={1}
@@ -258,7 +260,9 @@ export const Pagination: React.FC<PaginationProps> = ({
                 textAlign: 'center',
               }}
             />
-            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>{t('components.pagination.page')}</span>
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+              {t('components.pagination.page')}
+            </span>
           </div>
         )}
       </div>

@@ -93,8 +93,10 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   style,
 }) => {
   const { t } = useTranslation();
-  const resolvedStartPlaceholder = startPlaceholder ?? t('components.date_range_picker.start_placeholder');
-  const resolvedEndPlaceholder = endPlaceholder ?? t('components.date_range_picker.end_placeholder');
+  const resolvedStartPlaceholder =
+    startPlaceholder ?? t('components.date_range_picker.start_placeholder');
+  const resolvedEndPlaceholder =
+    endPlaceholder ?? t('components.date_range_picker.end_placeholder');
   const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.({ start: e.target.value, end: value?.end || '' });
   };
@@ -164,7 +166,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             style={{ ...inputStyle, paddingLeft: 36 }}
           />
         </div>
-        <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>{t('components.date_range_picker.to')}</span>
+        <span style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>
+          {t('components.date_range_picker.to')}
+        </span>
         <div style={{ position: 'relative', flex: 1 }}>
           <Calendar
             size={16}

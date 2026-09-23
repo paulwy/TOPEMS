@@ -101,7 +101,10 @@ describe('searchApi', () => {
 
       await searchApi.globalSearch('myquery', 50);
 
-      expect(apiClient.search.get).toHaveBeenCalledWith('?keyword=myquery&page_size=50', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith(
+        '?keyword=myquery&page_size=50',
+        expect.any(Object)
+      );
     });
 
     it('should reject promise on API error (bubbles up)', async () => {
@@ -123,13 +126,19 @@ describe('searchApi', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.results).toEqual([]);
-      expect(apiClient.search.get).toHaveBeenCalledWith('?keyword=&page_size=20', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith(
+        '?keyword=&page_size=20',
+        expect.any(Object)
+      );
     });
 
     it('should accept custom limit', async () => {
       await searchApi.globalSearch('keyword', 50);
 
-      expect(apiClient.search.get).toHaveBeenCalledWith('?keyword=keyword&page_size=50', expect.any(Object));
+      expect(apiClient.search.get).toHaveBeenCalledWith(
+        '?keyword=keyword&page_size=50',
+        expect.any(Object)
+      );
     });
   });
 });

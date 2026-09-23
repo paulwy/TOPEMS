@@ -63,26 +63,59 @@ interface PurchaseOrder {
   remark?: string;
 }
 
-
 const PurchaseOrderPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const statusConfig = useMemo(() => ({
-    draft: { label: t('erp.purchase_order.status.draft'), variant: 'default' as const, color: 'var(--text-secondary)' },
-    pending_approval: { label: t('erp.purchase_order.status.pending_approval'), variant: 'warning' as const, color: 'var(--warning-500)' },
-    approved: { label: t('erp.purchase_order.status.approved'), variant: 'info' as const, color: 'var(--info-500)' },
-    rejected: { label: t('erp.purchase_order.status.rejected'), variant: 'error' as const, color: 'var(--error-500)' },
-    ordered: { label: t('erp.purchase_order.status.ordered'), variant: 'cyan' as const, color: 'var(--accent-primary)' },
-    received: { label: t('erp.purchase_order.status.received'), variant: 'success' as const, color: 'var(--success-500)' },
-    cancelled: { label: t('erp.purchase_order.status.cancelled'), variant: 'default' as const, color: 'var(--text-secondary)' },
-  }), [t]);
+  const statusConfig = useMemo(
+    () => ({
+      draft: {
+        label: t('erp.purchase_order.status.draft'),
+        variant: 'default' as const,
+        color: 'var(--text-secondary)',
+      },
+      pending_approval: {
+        label: t('erp.purchase_order.status.pending_approval'),
+        variant: 'warning' as const,
+        color: 'var(--warning-500)',
+      },
+      approved: {
+        label: t('erp.purchase_order.status.approved'),
+        variant: 'info' as const,
+        color: 'var(--info-500)',
+      },
+      rejected: {
+        label: t('erp.purchase_order.status.rejected'),
+        variant: 'error' as const,
+        color: 'var(--error-500)',
+      },
+      ordered: {
+        label: t('erp.purchase_order.status.ordered'),
+        variant: 'cyan' as const,
+        color: 'var(--accent-primary)',
+      },
+      received: {
+        label: t('erp.purchase_order.status.received'),
+        variant: 'success' as const,
+        color: 'var(--success-500)',
+      },
+      cancelled: {
+        label: t('erp.purchase_order.status.cancelled'),
+        variant: 'default' as const,
+        color: 'var(--text-secondary)',
+      },
+    }),
+    [t]
+  );
 
-  const priorityConfig = useMemo(() => ({
-    high: { label: t('erp.purchase_order.priority.high'), variant: 'error' as const },
-    medium: { label: t('erp.purchase_order.priority.medium'), variant: 'warning' as const },
-    low: { label: t('erp.purchase_order.priority.low'), variant: 'default' as const },
-  }), [t]);
+  const priorityConfig = useMemo(
+    () => ({
+      high: { label: t('erp.purchase_order.priority.high'), variant: 'error' as const },
+      medium: { label: t('erp.purchase_order.priority.medium'), variant: 'warning' as const },
+      low: { label: t('erp.purchase_order.priority.low'), variant: 'default' as const },
+    }),
+    [t]
+  );
 
   const [activeTab, setActiveTab] = useState<
     'all' | 'pending_approval' | 'approved' | 'ordered' | 'received'
@@ -304,7 +337,11 @@ const PurchaseOrderPage: React.FC = () => {
 
   const tabsConfig = [
     { id: 'all', label: t('erp.purchase_order.tab.all') },
-    { id: 'pending_approval', label: t('erp.purchase_order.tab.pending_approval'), badge: stats.pendingApproval },
+    {
+      id: 'pending_approval',
+      label: t('erp.purchase_order.tab.pending_approval'),
+      badge: stats.pendingApproval,
+    },
     { id: 'approved', label: t('erp.purchase_order.tab.approved') },
     { id: 'ordered', label: t('erp.purchase_order.tab.ordered') },
     { id: 'received', label: t('erp.purchase_order.tab.received') },
@@ -479,9 +516,18 @@ const PurchaseOrderPage: React.FC = () => {
                 onChange={(e) => setDepartmentFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('erp.purchase_order.filter.all_departments') },
-                  { value: t('erp.purchase_order.department.purchase'), label: t('erp.purchase_order.department.purchase') },
-                  { value: t('erp.purchase_order.department.production'), label: t('erp.purchase_order.department.production') },
-                  { value: t('erp.purchase_order.department.admin'), label: t('erp.purchase_order.department.admin') },
+                  {
+                    value: t('erp.purchase_order.department.purchase'),
+                    label: t('erp.purchase_order.department.purchase'),
+                  },
+                  {
+                    value: t('erp.purchase_order.department.production'),
+                    label: t('erp.purchase_order.department.production'),
+                  },
+                  {
+                    value: t('erp.purchase_order.department.admin'),
+                    label: t('erp.purchase_order.department.admin'),
+                  },
                 ]}
                 style={{ width: 140 }}
               />
@@ -719,7 +765,9 @@ const PurchaseOrderPage: React.FC = () => {
                 <Button
                   variant='primary'
                   leftIcon={<CheckCircle size={16} />}
-                  onClick={() => pushToast('success', t('erp.purchase_order.toast.confirm_received'))}
+                  onClick={() =>
+                    pushToast('success', t('erp.purchase_order.toast.confirm_received'))
+                  }
                 >
                   {t('erp.purchase_order.action.confirm_receipt')}
                 </Button>
@@ -792,9 +840,18 @@ const PurchaseOrderPage: React.FC = () => {
                 id='po-department'
                 defaultValue={t('erp.purchase_order.department.purchase')}
                 options={[
-                  { value: t('erp.purchase_order.department.purchase'), label: t('erp.purchase_order.department.purchase') },
-                  { value: t('erp.purchase_order.department.production'), label: t('erp.purchase_order.department.production') },
-                  { value: t('erp.purchase_order.department.admin'), label: t('erp.purchase_order.department.admin') },
+                  {
+                    value: t('erp.purchase_order.department.purchase'),
+                    label: t('erp.purchase_order.department.purchase'),
+                  },
+                  {
+                    value: t('erp.purchase_order.department.production'),
+                    label: t('erp.purchase_order.department.production'),
+                  },
+                  {
+                    value: t('erp.purchase_order.department.admin'),
+                    label: t('erp.purchase_order.department.admin'),
+                  },
                 ]}
               />
             </div>

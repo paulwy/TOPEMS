@@ -417,10 +417,10 @@ const RedesignDemo: React.FC = () => {
                     }
                   >
                     {task.priority === 'high'
-                        ? t('demo.priority.high')
-                        : task.priority === 'medium'
-                          ? t('demo.priority.medium')
-                          : t('demo.priority.low')}
+                      ? t('demo.priority.high')
+                      : task.priority === 'medium'
+                        ? t('demo.priority.medium')
+                        : t('demo.priority.low')}
                   </Badge>
                 </div>
               ))}
@@ -472,7 +472,9 @@ const RedesignDemo: React.FC = () => {
                   <StatusLight
                     state={svc.status}
                     label={
-                      svc.status === 'running' ? t('demo.svc_status.running') : t('demo.svc_status.idle')
+                      svc.status === 'running'
+                        ? t('demo.svc_status.running')
+                        : t('demo.svc_status.idle')
                     }
                     pulse={svc.status === 'running'}
                   />

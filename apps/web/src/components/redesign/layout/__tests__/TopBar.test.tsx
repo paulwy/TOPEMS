@@ -11,19 +11,31 @@ vi.mock('@/hooks/useAuth', () => ({
 
 describe('TopBar', () => {
   it('renders with title', () => {
-    render(<MemoryRouter><TopBar title='TOPEMS' /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <TopBar title='TOPEMS' />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText('TOPEMS')).toBeInTheDocument();
   });
 
   it('renders with menu toggle button', () => {
-    render(<MemoryRouter><TopBar onMenuToggle={() => {}} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <TopBar onMenuToggle={() => {}} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByLabelText('Collapse sidebar')).toBeInTheDocument();
   });
 
   it('renders with notifications button', () => {
-    render(<MemoryRouter><TopBar onNotificationsOpen={() => {}} /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <TopBar onNotificationsOpen={() => {}} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByLabelText('Notifications')).toBeInTheDocument();
   });

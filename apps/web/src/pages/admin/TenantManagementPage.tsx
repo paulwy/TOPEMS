@@ -340,7 +340,11 @@ const TenantManagementPage: React.FC = () => {
           setDrawerOpen(false);
           setEditingTenant(null);
         }}
-        title={editingTenant ? t('admin.tenant_management_page.drawer_edit_title') : t('admin.tenant_management_page.drawer_new_title')}
+        title={
+          editingTenant
+            ? t('admin.tenant_management_page.drawer_edit_title')
+            : t('admin.tenant_management_page.drawer_new_title')
+        }
         size='md'
       >
         <TenantForm
@@ -557,7 +561,9 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
           variant='primary'
           loading={submitting}
         >
-          {initialData ? t('admin.tenant_management_page.btn_save_edit') : t('admin.tenantOnboarding.创建租户')}
+          {initialData
+            ? t('admin.tenant_management_page.btn_save_edit')
+            : t('admin.tenantOnboarding.创建租户')}
         </Button>
       </div>
     </form>
