@@ -27,7 +27,6 @@ import { DetailPageTemplate } from '@/components/templates';
 import type { SectionConfig, TabConfig } from '@/components/templates/DetailPageTemplate';
 import { TMS_PATHS } from '@/modules/tms/config';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n';
 
 interface TransportPlanItem {
   shipment_no: string;
