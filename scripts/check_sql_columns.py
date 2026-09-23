@@ -23,7 +23,7 @@ RUN_DB = "postgresql://topems_app@localhost:5433/topems?options=-capp.tenant_id%
 PSQL_PREFIX = "PGPASSWORD=topems_app_secret psql " + RUN_DB
 
 def load_schema():
-    psql = f'{PSQL_PREFIX} -t -A -c "SELECT table_schema||\'.\\\'||table_name||\'.\'||column_name FROM information_schema.columns WHERE table_schema NOT IN (\'pg_catalog\',\'information_schema\')"'
+    psql = f'{PSQL_PREFIX} -t -A -c "SELECT table_schema || chr(46) || table_name || chr(46) || column_name FROM information_schema.columns WHERE table_schema NOT IN (chr(112)||chr(103)||chr(95)||chr(99)||chr(97)||chr(116)||chr(97)||chr(108)||chr(111)||chr(103), chr(105)||chr(110)||chr(102)||chr(111)||chr(114)||chr(109)||chr(97)||chr(116)||chr(105)||chr(111)||chr(110)||chr(95)||chr(115)||chr(99)||chr(104)||chr(101)||chr(109)||chr(97))"' 
     out = subprocess.run(psql, shell=True, capture_output=True, text=True).stdout
     cols_map = {}
     tbl_index = collections.defaultdict(set)
