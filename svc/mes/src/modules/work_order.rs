@@ -500,11 +500,11 @@ pub async fn create_work_order(
         work_station_id,
         process_id,
         planned_quantity,
-        plan_start_date,
-        plan_end_date,
+        plan_start_date.map(|d| d.naive_utc()),
+        plan_end_date.map(|d| d.naive_utc()),
         team_id,
         body.operator,
-        priority.parse::<i32>().unwrap_or(0),
+        priority,
         body.remark,
     )
     .fetch_one(&state.pool)

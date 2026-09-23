@@ -167,7 +167,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 }
 
 fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
-    dt.map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default())
+    dt.and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
