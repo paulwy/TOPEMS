@@ -100,37 +100,31 @@ pub async fn list_standards(
         return e;
     }
 
-    let tenant_opt: Option<String> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.clone()
-    };
-
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE ($1::uuid IS NULL OR qs.tenant_id = $1::uuid)");
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
 
     if let Some(status) = query.status {
-        where_clause.push_str(" AND qs.status = $2");
-        params.push(status);
+        where_clause.push_str(" WHERE qs.status = $1");
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(inspection_type) = query.inspection_type {
-        let idx = params.len() + 2;
+        let idx = params.len() + 1;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(" WHERE qs.inspection_type = ${}", idx));
         } else {
             where_clause.push_str(&format!(" AND qs.inspection_type = ${}", idx));
         }
-        params.push(inspection_type);
+        params.push(serde_json::Value::String(inspection_type));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
-        let idx = params.len() + 2;
+        let idx = params.len() + 1;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(
                 " WHERE (qs.code ILIKE ${} OR qs.name ILIKE ${} OR qs.product_code ILIKE ${})",
@@ -142,14 +136,14 @@ pub async fn list_standards(
                 idx, idx, idx
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM quality_standards qs{}",
         where_clause
     );
-    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt.clone());
+    let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -175,10 +169,10 @@ pub async fn list_standards(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 2,
-        params.len() + 3
+        params.len() + 1,
+        params.len() + 2
     );
-    let mut fetch_query = sqlx::query(&fetch_sql).bind(tenant_opt.clone());
+    let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -218,12 +212,12 @@ pub async fn list_standards(
             for v in value_rows {
                 let sid = v.standard_id;
                 values_map
-                    .entry(sid)
+                    .entry(sid.unwrap_or_default())
                     .or_default()
                     .push(StandardValueResponse {
-                        id: v.id.to_string(),
-                        standard_id: sid.to_string(),
-                        item_name: v.item_name,
+                        id: v.id.map(|v| v.to_string()).unwrap_or_default(),
+                        standard_id: sid.map(|v| v.to_string()).unwrap_or_default(),
+                        item_name: v.item_name.unwrap_or_default(),
                         lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(v.upper_limit),
                         unit: v.unit,
@@ -351,9 +345,9 @@ pub async fn get_standard(
         Ok(rows) => rows
             .into_iter()
             .map(|v| StandardValueResponse {
-                id: v.id.to_string(),
-                standard_id: v.standard_id.to_string(),
-                item_name: v.item_name,
+                id: v.id.map(|v| v.to_string()).unwrap_or_default(),
+                standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                item_name: v.item_name.unwrap_or_default(),
                 lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                 upper_limit: opt_big_decimal_to_f64(v.upper_limit),
                 unit: v.unit,
@@ -369,12 +363,12 @@ pub async fn get_standard(
 
     Json(ApiResponse::success(
         StandardResponse {
-            id: standard.id.to_string(),
-            code: standard.code,
-            name: standard.name,
+            id: standard.id.map(|v| v.to_string()).unwrap_or_default(),
+            code: standard.code.unwrap_or_default(),
+            name: standard.name.unwrap_or_default(),
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -490,9 +484,9 @@ pub async fn create_standard(
             match value_result {
                 Ok(r) => {
                     values.push(StandardValueResponse {
-                        id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
-                        item_name: r.item_name,
+                        id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                        item_name: r.item_name.unwrap_or_default(),
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
                         unit: r.unit,
@@ -516,12 +510,12 @@ pub async fn create_standard(
 
     Json(ApiResponse::success(
         StandardResponse {
-            id: standard.id.to_string(),
-            code: standard.code,
-            name: standard.name,
+            id: standard.id.map(|v| v.to_string()).unwrap_or_default(),
+            code: standard.code.unwrap_or_default(),
+            name: standard.name.unwrap_or_default(),
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -673,9 +667,9 @@ pub async fn update_standard(
             match value_result {
                 Ok(r) => {
                     values.push(StandardValueResponse {
-                        id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
-                        item_name: r.item_name,
+                        id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                        item_name: r.item_name.unwrap_or_default(),
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
                         unit: r.unit,
@@ -707,9 +701,9 @@ pub async fn update_standard(
         if let Ok(rows) = values_result {
             for v in rows {
                 values.push(StandardValueResponse {
-                    id: v.id.to_string(),
-                    standard_id: v.standard_id.to_string(),
-                    item_name: v.item_name,
+                    id: v.id.map(|v| v.to_string()).unwrap_or_default(),
+                    standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                    item_name: v.item_name.unwrap_or_default(),
                     lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                     upper_limit: opt_big_decimal_to_f64(v.upper_limit),
                     unit: v.unit,
@@ -727,12 +721,12 @@ pub async fn update_standard(
 
     Json(ApiResponse::success(
         StandardResponse {
-            id: standard.id.to_string(),
-            code: standard.code,
-            name: standard.name,
+            id: standard.id.map(|v| v.to_string()).unwrap_or_default(),
+            code: standard.code.unwrap_or_default(),
+            name: standard.name.unwrap_or_default(),
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),

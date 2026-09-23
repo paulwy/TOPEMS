@@ -132,22 +132,16 @@ pub async fn list_teams(
         return e;
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE t.deleted_at IS NULL");
 
     if let Some(status) = query.status {
         where_clause.push_str(" AND t.status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -161,14 +155,8 @@ pub async fn list_teams(
                 params.len() + 1
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
-
-    where_clause.push_str(&format!(
-        " AND (${}::uuid IS NULL OR t.tenant_id = ${})",
-        params.len() + 1,
-        params.len() + 1
-    ));
 
     let count_sql = format!("SELECT COUNT(*) as total FROM teams t{}", where_clause);
 
@@ -176,7 +164,6 @@ pub async fn list_teams(
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
-    count_query = count_query.bind(tenant_opt);
 
     let count_result = count_query.fetch_one(&state.pool).await;
     let total: Option<i64> = match count_result {
@@ -201,15 +188,14 @@ pub async fn list_teams(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 2,
-        params.len() + 3
+        params.len() + 1,
+        params.len() + 2
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(tenant_opt);
     fetch_query = fetch_query.bind(pagesize).bind(offset);
 
     let teams = match fetch_query.fetch_all(&state.pool).await {
@@ -293,12 +279,6 @@ pub async fn get_team(
         return e;
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-
     let result = sqlx::query!(
         r#"
         SELECT 
@@ -309,10 +289,8 @@ pub async fn get_team(
         FROM teams t
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
-          AND ($2::uuid IS NULL OR t.tenant_id = $2)
         "#,
         id,
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -329,18 +307,22 @@ pub async fn get_team(
         Some(r) => {
             let team = TeamResponse {
                 id: r.id.to_string(),
-                team_code: r.team_code,
-                team_name: r.team_name,
+                team_code: r.team_code.unwrap_or_default(),
+                team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name.filter(|s| !s.is_empty()),
+                work_station_name: if r.work_station_name.as_deref().unwrap_or("").is_empty() {
+                    None
+                } else {
+                    r.work_station_name
+                },
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(r.created_at.naive_utc()),
-                updated_at: datetime_to_string(r.updated_at.naive_utc()),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -361,12 +343,6 @@ pub async fn create_team(
 
     let now = Utc::now();
 
-    let new_tenant: uuid::Uuid = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| "00000000-0000-0000-0000-000000000001".parse().unwrap());
-
     let work_station_id: Option<Uuid> = req
         .work_station_id
         .as_ref()
@@ -375,11 +351,11 @@ pub async fn create_team(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.teams (
+        INSERT INTO teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
-            created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8, $9)
+            created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8)
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -392,8 +368,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now,
-        new_tenant,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -408,18 +383,20 @@ pub async fn create_team(
 
     if let Some(members) = req.members {
         for member in members {
+            let emp_uuid = Uuid::parse_str(&member.employee_id).ok();
+            let emp_uuid_arg = emp_uuid.as_ref().map(|u| u.to_string());
             let _ = sqlx::query!(
                 r#"
-                    INSERT INTO mes.team_members (
+                    INSERT INTO team_members (
                         team_id, employee_id, employee_name, employee_code, position, join_date
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                member.employee_id,
+                emp_uuid_arg.as_ref().and_then(|s| uuid::Uuid::parse_str(s).ok()),
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now,
+                now.naive_utc(),
             )
             .execute(&state.pool)
             .await;
@@ -432,7 +409,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now,
+            now.naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -440,8 +417,8 @@ pub async fn create_team(
 
     let team = TeamResponse {
         id: result.id.to_string(),
-        team_code: result.team_code,
-        team_name: result.team_name,
+        team_code: result.team_code.unwrap_or_default(),
+        team_name: result.team_name.unwrap_or_default(),
         team_type: result.team_type,
         work_station_id: result.work_station_id.map(|u| u.to_string()),
         work_station_name: None,
@@ -450,8 +427,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: datetime_to_string(result.created_at.map(|d| d.naive_utc())),
-        updated_at: datetime_to_string(result.updated_at.map(|d| d.naive_utc())),
+        created_at: datetime_to_string(result.created_at),
+        updated_at: datetime_to_string(result.updated_at),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -468,12 +445,6 @@ pub async fn update_team(
     {
         return e;
     }
-
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let work_station_id: Option<Uuid> = req
         .work_station_id
@@ -493,7 +464,6 @@ pub async fn update_team(
             description = COALESCE($8, description),
             updated_at = $9
         WHERE id = $1
-          AND ($10::uuid IS NULL OR tenant_id = $10)
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
@@ -507,8 +477,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now(),
-        tenant_opt,
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -525,8 +494,8 @@ pub async fn update_team(
         Some(r) => {
             let team = TeamResponse {
                 id: r.id.to_string(),
-                team_code: r.team_code,
-                team_name: r.team_name,
+                team_code: r.team_code.unwrap_or_default(),
+                team_name: r.team_name.unwrap_or_default(),
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: None,
@@ -535,8 +504,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(r.created_at.naive_utc()),
-                updated_at: datetime_to_string(r.updated_at.naive_utc()),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -555,20 +524,12 @@ pub async fn delete_team(
         return e;
     }
 
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-
     let result = sqlx::query!(
         r#"
         UPDATE teams SET deleted_at = NOW()
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
-        tenant_opt,
     )
     .execute(&state.pool)
     .await;
@@ -624,8 +585,8 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.map(|id| id.to_string()).unwrap_or_default(),
-            employee_id: r.employee_id.map(|id| id.to_string()).unwrap_or_default(),
+            team_id: r.team_id.to_string(),
+            employee_id: r.employee_id.map(|v| v.to_string()).unwrap_or_default(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
@@ -654,9 +615,12 @@ pub async fn add_team_member(
 
     let now = Utc::now();
 
+    let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
+    let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
+
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.team_members (
+        INSERT INTO team_members (
             team_id, employee_id, employee_name, employee_code, position, join_date
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING 
@@ -664,11 +628,11 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        req.employee_id,
+        employee_uuid_arg.as_ref().and_then(|s| uuid::Uuid::parse_str(s).ok()),
         req.employee_name,
         req.employee_code,
         req.position,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -688,7 +652,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now,
+        now.naive_utc(),
     )
     .execute(&state.pool)
     .await;
@@ -696,7 +660,7 @@ pub async fn add_team_member(
     let member = TeamMemberResponse {
         id: result.id.to_string(),
         team_id: result.team_id.to_string(),
-        employee_id: result.employee_id,
+        employee_id: result.employee_id.map(|v| v.to_string()).unwrap_or_default(),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,
@@ -747,7 +711,7 @@ pub async fn remove_team_member(
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now(),
+            Utc::now().naive_utc(),
         )
         .execute(&state.pool)
         .await;

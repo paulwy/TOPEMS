@@ -416,9 +416,6 @@ pub async fn calculate_work_order_cost(
     match calculate_work_order_cost_detail_db(&state.pool, id).await {
         Ok((result, _)) => Json(ApiResponse::success(result, "工单成本计算成功")),
         Err(err) => {
-            if err == "工单不存在" {
-                return Json(ApiResponse::error(404, &err));
-            }
             tracing::error!("计算工单成本失败: {}", err);
             Json(ApiResponse::error(
                 500,
@@ -442,9 +439,6 @@ pub async fn get_work_order_cost_detail(
     match calculate_work_order_cost_detail_db(&state.pool, id).await {
         Ok((result, _)) => Json(ApiResponse::success(result, "获取工单成本详情成功")),
         Err(err) => {
-            if err == "工单不存在" {
-                return Json(ApiResponse::error(404, &err));
-            }
             tracing::error!("获取工单成本详情失败: {}", err);
             Json(ApiResponse::error(
                 500,

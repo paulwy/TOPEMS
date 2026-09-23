@@ -74,27 +74,21 @@ pub async fn list_patrols(
         return e;
     }
 
-    let tenant_opt: Option<String> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.clone()
-    };
-
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE ($1::uuid IS NULL OR qp.tenant_id = $1::uuid)");
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
 
     if let Some(status) = query.status {
-        where_clause.push_str(" AND qp.status = $2");
-        params.push(status);
+        where_clause.push_str(" WHERE qp.status = $1");
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
-        let idx = params.len() + 2;
+        let idx = params.len() + 1;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(
                 " WHERE (qp.patrol_no ILIKE ${} OR qp.inspector ILIKE ${} OR qp.production_line ILIKE ${})",
@@ -106,14 +100,14 @@ pub async fn list_patrols(
                 idx, idx, idx
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM quality_patrols qp{}",
         where_clause
     );
-    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt.clone());
+    let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -139,10 +133,10 @@ pub async fn list_patrols(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 2,
-        params.len() + 3
+        params.len() + 1,
+        params.len() + 2
     );
-    let mut fetch_query = sqlx::query(&fetch_sql).bind(tenant_opt.clone());
+    let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -247,12 +241,12 @@ pub async fn get_patrol(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
-                id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.map(|v| v.to_string()).unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
@@ -336,12 +330,12 @@ pub async fn create_patrol(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
-                id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.map(|v| v.to_string()).unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
@@ -433,12 +427,12 @@ pub async fn update_patrol(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
-                id: r.id.to_string(),
-                patrol_no: r.patrol_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.map(|v| v.to_string()).unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
@@ -549,9 +543,9 @@ pub async fn list_patrol_items(
             let items: Vec<PatrolItemResponse> = rows
                 .into_iter()
                 .map(|r| PatrolItemResponse {
-                    id: r.id.to_string(),
-                    patrol_id: r.patrol_id.to_string(),
-                    item_name: r.item_name,
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                    item_name: r.item_name.unwrap_or_default(),
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
                     status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -611,9 +605,9 @@ pub async fn add_patrol_item(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
-                id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
-                item_name: r.item_name,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -681,9 +675,9 @@ pub async fn update_patrol_item(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
-                id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
-                item_name: r.item_name,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),

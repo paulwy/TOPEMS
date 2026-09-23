@@ -231,22 +231,17 @@ pub async fn list_oee_records(
     {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE oee.deleted_at IS NULL");
 
     if let Some(shift) = query.shift {
         where_clause.push_str(" AND oee.shift = $1");
-        params.push(shift);
+        params.push(serde_json::Value::String(shift));
     }
 
     if let Some(search) = query.search {
@@ -263,14 +258,7 @@ pub async fn list_oee_records(
                 params.len() + 1
             ));
         }
-        params.push(pattern);
-    }
-
-    // 租户过滤：非 superuser 仅见本租户
-    if let Some(t) = tenant_opt {
-        let tidx = params.len() + 1;
-        params.push(t.to_string());
-        where_clause.push_str(&format!(" AND (oee.tenant_id = ${}::uuid)", tidx));
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -445,13 +433,6 @@ pub async fn create_oee_record(
     {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let new_tenant: uuid::Uuid = tenant_opt
-        .unwrap_or(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
 
     let now = Utc::now();
 
@@ -470,8 +451,8 @@ pub async fn create_oee_record(
             planned_production_time, actual_run_time, downtime,
             ideal_cycle_time, actual_output, good_output, defective_output,
             availability, performance, quality_rate, oee,
-            shift, operator, notes, created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17, $18)
+            shift, operator, notes, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $17)
         RETURNING 
             id, equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
@@ -496,7 +477,6 @@ pub async fn create_oee_record(
         req.operator,
         req.notes,
         now.naive_utc(),
-        new_tenant,
     )
     .fetch_one(&state.pool)
     .await;
@@ -519,15 +499,17 @@ pub async fn create_oee_record(
     .flatten();
 
     let record = OeeRecordResponse {
-        id: result.id,        equipment_id: result.equipment_id,        equipment_name: equipment.as_ref().and_then(|e| Some(e.name.clone())),
-        equipment_code: equipment.as_ref().and_then(|e| Some(e.equipment_no.clone())),
-        record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
-        planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
-        run_time: big_decimal_to_f64(Some(result.actual_run_time)),
+        id: result.id.unwrap_or_default(),
+        equipment_id: result.equipment_id.unwrap_or_default(),
+        equipment_name: equipment.as_ref().map(|e| e.name.clone()).flatten(),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
+        record_date: opt_naive_date_to_utc(result.record_date).unwrap_or_else(Utc::now),
+        planned_production_time: big_decimal_to_f64(result.planned_production_time),
+        run_time: big_decimal_to_f64(result.actual_run_time),
         downtime: big_decimal_to_f64(result.downtime),
-        ideal_cycle_time: big_decimal_to_f64(Some(result.ideal_cycle_time)),
-        total_count: big_decimal_to_f64(Some(result.actual_output)),
-        good_count: big_decimal_to_f64(Some(result.good_output)),
+        ideal_cycle_time: big_decimal_to_f64(result.ideal_cycle_time),
+        total_count: big_decimal_to_f64(result.actual_output),
+        good_count: big_decimal_to_f64(result.good_output),
         reject_count: big_decimal_to_f64(result.defective_output),
         availability: big_decimal_to_f64(result.availability) * 100.0,
         performance: big_decimal_to_f64(result.performance) * 100.0,
@@ -566,11 +548,6 @@ pub async fn get_oee_record(
     {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let result = sqlx::query!(
         r#"
@@ -584,10 +561,8 @@ pub async fn get_oee_record(
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE oee.id = $1
-          AND ($2::uuid IS NULL OR oee.tenant_id = $2)
         "#,
         id,
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -603,15 +578,17 @@ pub async fn get_oee_record(
     match result {
         Some(r) => {
             let record = OeeRecordResponse {
-                id: r.id,                equipment_id: r.equipment_id,                equipment_name: Some(r.equipment_name),
-                equipment_code: Some(r.equipment_no),
-                record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
-                planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
-                run_time: big_decimal_to_f64(Some(r.actual_run_time)),
+                id: r.id.unwrap_or_default(),
+                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_name: r.equipment_name,
+                equipment_code: r.equipment_no,
+                record_date: opt_naive_date_to_utc(r.record_date).unwrap_or_else(Utc::now),
+                planned_production_time: big_decimal_to_f64(r.planned_production_time),
+                run_time: big_decimal_to_f64(r.actual_run_time),
                 downtime: big_decimal_to_f64(r.downtime),
-                ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
-                total_count: big_decimal_to_f64(Some(r.actual_output)),
-                good_count: big_decimal_to_f64(Some(r.good_output)),
+                ideal_cycle_time: big_decimal_to_f64(r.ideal_cycle_time),
+                total_count: big_decimal_to_f64(r.actual_output),
+                good_count: big_decimal_to_f64(r.good_output),
                 reject_count: big_decimal_to_f64(r.defective_output),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
@@ -654,21 +631,14 @@ pub async fn update_oee_record(
     {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let existing = sqlx::query!(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
                ideal_cycle_time, actual_output, good_output, defective_output
         FROM equipment_oee WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -684,19 +654,19 @@ pub async fn update_oee_record(
 
     let planned_time = req
         .planned_production_time
-        .unwrap_or(big_decimal_to_f64(Some(existing.planned_production_time)));
+        .unwrap_or(big_decimal_to_f64(existing.planned_production_time));
     let run_time = req
         .actual_run_time
-        .unwrap_or(big_decimal_to_f64(Some(existing.actual_run_time)));
+        .unwrap_or(big_decimal_to_f64(existing.actual_run_time));
     let cycle_time = req
         .ideal_cycle_time
-        .unwrap_or(big_decimal_to_f64(Some(existing.ideal_cycle_time)));
+        .unwrap_or(big_decimal_to_f64(existing.ideal_cycle_time));
     let output = req
         .actual_output
-        .unwrap_or(big_decimal_to_f64(Some(existing.actual_output)));
+        .unwrap_or(big_decimal_to_f64(existing.actual_output));
     let good = req
         .good_output
-        .unwrap_or(big_decimal_to_f64(Some(existing.good_output)));
+        .unwrap_or(big_decimal_to_f64(existing.good_output));
 
     let (availability, performance, quality_rate, oee) =
         calculate_oee(planned_time, run_time, cycle_time, output, good);
@@ -720,7 +690,6 @@ pub async fn update_oee_record(
             notes = COALESCE($15, notes),
             updated_at = $16
         WHERE id = $1
-          AND ($17::uuid IS NULL OR tenant_id = $17)
         RETURNING 
             id, equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
@@ -751,7 +720,6 @@ pub async fn update_oee_record(
         req.operator,
         req.notes,
         Utc::now().naive_utc(),
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -767,15 +735,17 @@ pub async fn update_oee_record(
     match result {
         Some(r) => {
             let record = OeeRecordResponse {
-                id: r.id,                equipment_id: r.equipment_id,                equipment_name: None,
+                id: r.id.unwrap_or_default(),
+                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_name: None,
                 equipment_code: None,
-                record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
-                planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
-                run_time: big_decimal_to_f64(Some(r.actual_run_time)),
+                record_date: opt_naive_date_to_utc(r.record_date).unwrap_or_else(Utc::now),
+                planned_production_time: big_decimal_to_f64(r.planned_production_time),
+                run_time: big_decimal_to_f64(r.actual_run_time),
                 downtime: big_decimal_to_f64(r.downtime),
-                ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
-                total_count: big_decimal_to_f64(Some(r.actual_output)),
-                good_count: big_decimal_to_f64(Some(r.good_output)),
+                ideal_cycle_time: big_decimal_to_f64(r.ideal_cycle_time),
+                total_count: big_decimal_to_f64(r.actual_output),
+                good_count: big_decimal_to_f64(r.good_output),
                 reject_count: big_decimal_to_f64(r.defective_output),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
@@ -816,17 +786,10 @@ pub async fn delete_oee_record(
     {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let result = sqlx::query!(
-        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
         id,
-        tenant_opt,
     )
     .execute(&state.pool)
     .await;
@@ -1007,7 +970,10 @@ pub async fn get_oee_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| OeeEquipmentStat {
-                equipment_id: r.equipment_id,                equipment_name: r.equipment_name,                equipment_code: r.equipment_code,                availability: big_decimal_to_f64(r.availability) * 100.0,
+                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_name: r.equipment_name.unwrap_or_default(),
+                equipment_code: r.equipment_code.unwrap_or_default(),
+                availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
                 oee: big_decimal_to_f64(r.oee) * 100.0,
@@ -1109,7 +1075,10 @@ pub async fn get_equipment_efficiency_analysis(
             };
 
             EquipmentEfficiencyAnalysis {
-                equipment_id: r.equipment_id,                equipment_name: r.equipment_name,                equipment_no: r.equipment_no,                oee: oee_val,
+                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_name: r.equipment_name.unwrap_or_default(),
+                equipment_no: r.equipment_no.unwrap_or_default(),
+                oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),
                 quality_rate: big_decimal_to_f64(r.quality_rate),

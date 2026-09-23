@@ -120,22 +120,17 @@ pub async fn list_records(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordRead).await {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE deleted_at IS NULL");
 
     if let Some(status) = query.status {
         where_clause.push_str(" AND status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -149,14 +144,7 @@ pub async fn list_records(
                 params.len() + 1
             ));
         }
-        params.push(pattern);
-    }
-
-    // 租户过滤：非 superuser 仅见本租户
-    if let Some(t) = tenant_opt {
-        let tidx = params.len() + 1;
-        params.push(t.to_string());
-        where_clause.push_str(&format!(" AND (tenant_id = ${}::uuid)", tidx));
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -279,13 +267,6 @@ pub async fn create_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let new_tenant: uuid::Uuid = tenant_opt
-        .unwrap_or(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
 
     let now = Utc::now();
 
@@ -295,8 +276,8 @@ pub async fn create_record(
             order_id, process_id, work_station_id,
             operator_id, start_time, end_time,
             completed_quantity, status, notes,
-            created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)
+            created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -311,7 +292,6 @@ pub async fn create_record(
         req.quantity_produced.map(|v| v as i32),
         req.notes,
         now,
-        new_tenant,
     )
     .fetch_one(&state.pool)
     .await;
@@ -325,20 +305,20 @@ pub async fn create_record(
     };
 
     let record = ProductionRecordResponse {
-        id: result.id,
-        order_id: result.order_id,
+        id: result.id.unwrap_or_default(),
+        order_id: result.order_id.unwrap_or_default(),
         process_id: result.process_id,
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: result.start_time,
+        start_time: result.start_time.unwrap_or_default(),
         end_time: result.end_time,
-        quantity_produced: result.quantity_produced as f64,
+        quantity_produced: result.quantity_produced.unwrap_or_default() as f64,
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))
@@ -352,11 +332,6 @@ pub async fn get_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordRead).await {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let result = sqlx::query!(
         r#"
@@ -367,10 +342,8 @@ pub async fn get_record(
             created_at, updated_at
         FROM production_records
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -386,20 +359,20 @@ pub async fn get_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id,
-                order_id: r.order_id,
+                id: r.id.unwrap_or_default(),
+                order_id: r.order_id.unwrap_or_default(),
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time,
+                start_time: r.start_time.unwrap_or_default(),
                 end_time: r.end_time,
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
@@ -416,11 +389,6 @@ pub async fn update_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let now = Utc::now();
     let status = if req.end_time.is_some() {
@@ -441,7 +409,6 @@ pub async fn update_record(
             notes = COALESCE($8, notes),
             updated_at = $9
         WHERE id = $1
-          AND ($10::uuid IS NULL OR tenant_id = $10)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -457,7 +424,6 @@ pub async fn update_record(
         status,
         req.notes,
         now,
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -473,20 +439,20 @@ pub async fn update_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id,
-                order_id: r.order_id,
+                id: r.id.unwrap_or_default(),
+                order_id: r.order_id.unwrap_or_default(),
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time,
+                start_time: r.start_time.unwrap_or_default(),
                 end_time: r.end_time,
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
@@ -502,20 +468,13 @@ pub async fn delete_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let result = sqlx::query!(
         r#"
         UPDATE production_records SET deleted_at = NOW()
         WHERE id = $1
-          AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
         id,
-        tenant_opt,
     )
     .execute(&state.pool)
     .await;
@@ -543,11 +502,6 @@ pub async fn complete_record(
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::RecordWrite).await {
         return e;
     }
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
 
     let now = Utc::now();
 
@@ -558,7 +512,6 @@ pub async fn complete_record(
             status = 'completed',
             updated_at = $2
         WHERE id = $1 AND status = 'in_progress'
-          AND ($3::uuid IS NULL OR tenant_id = $3)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -567,7 +520,6 @@ pub async fn complete_record(
         "#,
         id,
         now,
-        tenant_opt,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -583,20 +535,20 @@ pub async fn complete_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id,
-                order_id: r.order_id,
+                id: r.id.unwrap_or_default(),
+                order_id: r.order_id.unwrap_or_default(),
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time,
+                start_time: r.start_time.unwrap_or_default(),
                 end_time: r.end_time,
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }

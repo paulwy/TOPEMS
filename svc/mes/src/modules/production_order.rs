@@ -5,7 +5,6 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
-    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -16,7 +15,6 @@ use sqlx::{
     Row,
 };
 use topems_shared::auth::Claims;
-use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
 
@@ -224,7 +222,6 @@ pub async fn list_production_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProductionOrdersQuery>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
@@ -232,23 +229,16 @@ pub async fn list_production_orders(
         return e;
     }
 
-    let tenant_opt: Option<String> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.clone()
-    };
-
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
-    let mut where_clause =
-        String::from(" WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)");
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::from(" WHERE deleted_at IS NULL");
 
     if let Some(status) = query.status {
-        where_clause.push_str(" AND status = $2");
-        params.push(status);
+        where_clause.push_str(" AND status = $1");
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -260,12 +250,12 @@ pub async fn list_production_orders(
         } else {
             where_clause.push_str(&format!(
                 " AND (order_number ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
-                params.len() + 2,
-                params.len() + 2,
-                params.len() + 2
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -273,7 +263,7 @@ pub async fn list_production_orders(
         where_clause
     );
 
-    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt.clone());
+    let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -287,33 +277,26 @@ pub async fn list_production_orders(
         }
     };
 
-    // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
-    params.push(Locale::from_headers(&headers).as_sql().to_string());
-    let locale_placeholder = params.len() + 1;
-
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, order_number AS order_no, NULL::uuid AS product_id,
-            CASE WHEN ${locale_placeholder} = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
-            product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         FROM production_orders
-        {where_clause}
+        {}
         ORDER BY created_at DESC
-        LIMIT ${limit_placeholder} OFFSET ${offset_placeholder}
+        LIMIT ${} OFFSET ${}
         "#,
-        locale_placeholder = locale_placeholder,
-        where_clause = where_clause,
-        limit_placeholder = params.len() + 2,
-        offset_placeholder = params.len() + 3,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
     );
 
-    let mut fetch_query = sqlx::query(&fetch_sql).bind(tenant_opt.clone());
+    let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -467,11 +450,11 @@ pub async fn create_production_order(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_number, order_no, product_name, product_code,
+            order_number, product_name, product_code,
             quantity, completed_quantity, status,
             planned_start_date, planned_end_date, workshop_id, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
+        ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -538,7 +521,7 @@ pub async fn create_production_order(
         let pname = order.product_name.clone();
         let qty = order.quantity;
         let psd = order.planned_start_date;
-        let cby = claims.sub.clone();
+        let cby = Some(claims.sub.clone());
         tokio::spawn(async move {
             let payload = ProductionOrderCreatedPayload {
                 order_id: oid,
@@ -547,7 +530,7 @@ pub async fn create_production_order(
                 product_name: Some(pname),
                 quantity: Some(qty),
                 planned_start_date: psd,
-                created_by: Some(cby),
+                created_by: cby,
             };
             if let Err(e) = publisher
                 .publish_event(EventType::ProductionOrderCreated, payload)
@@ -628,11 +611,11 @@ pub async fn create_from_erp(
     let result = sqlx::query!(
         r#"
         INSERT INTO production_orders (
-            order_number, order_no, product_name, product_code, quantity,
+            order_number, product_name, product_code, quantity,
             status, source_order_id, source_order_number,
             planned_start_date, planned_end_date, workshop_id, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
+        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
@@ -720,7 +703,6 @@ pub async fn get_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
@@ -728,13 +710,10 @@ pub async fn get_production_order(
         return e;
     }
 
-    let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query(
+    let result = sqlx::query!(
         r#"
         SELECT 
-            id, order_number AS order_no, NULL::uuid AS product_id,
-            CASE WHEN $2 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name,
-            product_code,
+            id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
             quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, NULL::varchar AS source,
             source_order_id, source_order_number,
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
@@ -743,9 +722,8 @@ pub async fn get_production_order(
         FROM production_orders
         WHERE id = $1
         "#,
+        id,
     )
-    .bind(id)
-    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 
@@ -760,64 +738,25 @@ pub async fn get_production_order(
     match result {
         Some(r) => {
             let order = ProductionOrderResponse {
-                id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
-                order_no: r.try_get::<String, _>("order_no").unwrap_or_default(),
-                product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
-                product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
-                product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
-                quantity: r
-                    .try_get::<Option<f64>, _>("quantity")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_default(),
-                completed_quantity: r
-                    .try_get::<Option<f64>, _>("completed_quantity")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_default(),
-                status: r
-                    .try_get::<Option<String>, _>("status")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(|| "pending".to_string()),
-                source: r
-                    .try_get::<Option<String>, _>("source")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(|| "manual".to_string()),
-                source_order_id: r.try_get::<Option<Uuid>, _>("source_order_id").ok().flatten(),
-                source_order_number: r
-                    .try_get::<Option<String>, _>("source_order_number")
-                    .ok()
-                    .flatten(),
-                planned_start_date: r
-                    .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
-                    .ok()
-                    .flatten(),
-                planned_end_date: r
-                    .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
-                    .ok()
-                    .flatten(),
-                actual_start_date: r
-                    .try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
-                    .ok()
-                    .flatten(),
-                actual_end_date: r
-                    .try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
-                    .ok()
-                    .flatten(),
-                workshop_id: r.try_get::<Option<Uuid>, _>("workshop_id").ok().flatten(),
-                notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
-                created_at: r
-                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(Utc::now),
-                updated_at: r
-                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(Utc::now),
+                id: r.id,
+                order_no: r.order_no,
+                product_id: r.product_id,
+                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                quantity: r.quantity.unwrap_or_default(),
+                completed_quantity: r.completed_quantity.unwrap_or_default(),
+                status: r.status,
+                source: r.source.unwrap_or_else(|| "manual".to_string()),
+                source_order_id: r.source_order_id,
+                source_order_number: r.source_order_number,
+                planned_start_date: r.planned_start_date,
+                planned_end_date: r.planned_end_date,
+                actual_start_date: r.actual_start_date,
+                actual_end_date: r.actual_end_date,
+                workshop_id: r.workshop_id,
+                notes: r.notes,
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "获取生产工单成功"))
         }

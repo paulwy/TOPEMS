@@ -428,3 +428,46 @@
 ### 已修复
 - [x] process_flow.rs 的 tenant_id 问题（work_stations 表没有 tenant_id 列）
 - [x] production_order.rs 的类型推断问题（$1 用在两个不同类型的字段上）
+
+---
+
+## 2026-09-23 MES 编译错误系统性修复（518 个错误）—— 接着历史修复
+
+### 问题背景
+- 历史提交 39a19b31e（2026-09-20）已经修复了 MES 编译错误 447→0
+- 但后来数据库 schema 被改成了 timestamptz
+- 代码没有跟上，导致类型不匹配错误（518 个）
+
+### 错误分布
+- work_order.rs: 100 个
+- material_requirement.rs: 74 个
+- equipment_oee.rs: 66 个
+- production_order.rs: 56 个
+- wip.rs: 46 个
+
+### 错误类型
+- 期望 Option<NaiveDateTime>: 100 个
+- 期望 Option<BigDecimal>: 49 个
+- 期望 String: 31 个
+- 期望 NaiveDateTime: 19 个
+- 期望 DateTime<Utc>: 16 个
+
+### 统一原则（对齐 CRM 模块）
+- 数据库 schema：timestamptz
+- 代码 struct：DateTime<Utc>
+- 辅助函数：直接用 .to_rfc3339()，不需要辅助函数
+
+### 修复计划
+- [ ] P0-1：修改辅助函数签名为 DateTime<Utc>
+  - 修改 9 个文件中的 datetime_to_string 函数定义
+  - 修改 2 个文件中的 opt_datetime_to_string 函数定义
+- [ ] P0-2：批量修复调用点
+  - 把 r.try_get::<Option<NaiveDateTime>, _>("created_at") 改为 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+  - 把 r.created_at.unwrap_or_default() 改为 r.created_at.to_rfc3339()
+  - 其他类型转换
+- [ ] P0-3：重新生成 .sqlx 缓存
+- [ ] P0-4：验证编译通过
+
+### 历史参考
+- 提交 39a19b31e：之前修复 MES 编译错误 447→0（Option 类型适配）
+- 修复模式：删除 Some(Option) 嵌套、加 unwrap_or_default、改 map(|v| v.to_string()) 等

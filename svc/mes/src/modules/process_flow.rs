@@ -3,7 +3,6 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
-    http::HeaderMap,
     routing::{get, put},
     Json, Router,
 };
@@ -15,7 +14,6 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::locale::Locale;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -57,7 +55,6 @@ pub struct ListProcessFlowsQuery {
 pub struct CreateProcessFlowRequest {
     pub code: String,
     pub name: String,
-    pub name_en: Option<String>,
     pub description: Option<String>,
     pub version: Option<String>,
     pub route_id: Option<String>,
@@ -69,7 +66,6 @@ pub struct CreateProcessFlowRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateProcessFlowRequest {
     pub name: Option<String>,
-    pub name_en: Option<String>,
     pub description: Option<String>,
     pub version: Option<String>,
     pub route_id: Option<String>,
@@ -188,7 +184,6 @@ pub async fn list_process_flows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListProcessFlowsQuery>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
@@ -199,12 +194,12 @@ pub async fn list_process_flows(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = query.status {
         where_clause.push_str(" WHERE pf.status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -218,7 +213,7 @@ pub async fn list_process_flows(
                 params.len() + 1
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -240,29 +235,22 @@ pub async fn list_process_flows(
         }
     };
 
-    // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
-    params.push(Locale::from_headers(&headers).as_sql().to_string());
-    let locale_placeholder = params.len();
-
     let fetch_sql = format!(
         r#"
-        SELECT
-            pf.id, pf.code,
-            CASE WHEN ${locale_placeholder} = 'en' THEN COALESCE(pf.name_en, pf.name) ELSE pf.name END AS name,
-            pf.description, pf.version, pf.status,
+        SELECT 
+            pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
         FROM process_flows pf
         LEFT JOIN process_routes pr ON pf.route_id = pr.id
-        {where_clause}
+        {}
         ORDER BY pf.created_at DESC
-        LIMIT ${limit_placeholder} OFFSET ${offset_placeholder}
+        LIMIT ${} OFFSET ${}
         "#,
-        locale_placeholder = locale_placeholder,
-        where_clause = where_clause,
-        limit_placeholder = params.len() + 1,
-        offset_placeholder = params.len() + 2
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -336,7 +324,6 @@ pub async fn get_process_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<ProcessFlowResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
@@ -350,13 +337,10 @@ pub async fn get_process_flow(
         }
     };
 
-    let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query(
+    let result = sqlx::query!(
         r#"
-        SELECT
-            pf.id, pf.code,
-            CASE WHEN $2 = 'en' THEN COALESCE(pf.name_en, pf.name) ELSE pf.name END AS name,
-            pf.description, pf.version, pf.status,
+        SELECT 
+            pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
@@ -364,64 +348,35 @@ pub async fn get_process_flow(
         LEFT JOIN process_routes pr ON pf.route_id = pr.id
         WHERE pf.id = $1
         "#,
+        uuid,
     )
-    .bind(uuid)
-    .bind(locale)
-    .fetch_optional(&state.pool)
+    .fetch_one(&state.pool)
     .await;
 
-    let row = match result {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Failed to get process flow: {}", e);
-            return Json(ApiResponse::error(500, "获取工艺流程失败"));
-        }
-    };
-
-    match row {
-        Some(r) => Json(ApiResponse::success(
+    match result {
+        Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
-                id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
-                code: r.try_get::<String, _>("code").unwrap_or_default(),
-                name: r.try_get::<String, _>("name").unwrap_or_default(),
-                description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-                version: r
-                    .try_get::<Option<String>, _>("version")
-                    .ok()
-                    .flatten(),
-                status: r
-                    .try_get::<Option<String>, _>("status")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(|| "active".to_string()),
-                route_id: r
-                    .try_get::<Option<Uuid>, _>("route_id")
-                    .ok()
-                    .flatten()
-                    .map(|u| u.to_string()),
-                route_name: r.try_get::<Option<String>, _>("route_name").ok().flatten(),
-                production_line: r
-                    .try_get::<Option<String>, _>("production_line")
-                    .ok()
-                    .flatten(),
-                capacity: opt_big_decimal_to_f64(
-                    r.try_get::<Option<BigDecimal>, _>("capacity").ok().flatten(),
-                ),
-                unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-                created_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("created_at")
-                        .ok()
-                        .flatten(),
-                ),
-                updated_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("updated_at")
-                        .ok()
-                        .flatten(),
-                ),
+                id: r.id.to_string(),
+                code: r.code,
+                name: r.name,
+                description: r.description,
+                version: r.version.map(|v| v.to_string()),
+                status: r.status.unwrap_or_else(|| "active".to_string()),
+                route_id: r.route_id.map(|u| u.to_string()),
+                route_name: Some(r.route_name),
+                production_line: r.production_line,
+                capacity: opt_big_decimal_to_f64(r.capacity),
+                unit: r.unit,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "获取工艺流程成功",
         )),
-        None => Json(ApiResponse::error(404, "工艺流程不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工艺流程不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get process flow: {}", e);
+            Json(ApiResponse::error(500, "获取工艺流程失败"))
+        }
     }
 }
 
@@ -444,70 +399,45 @@ pub async fn create_process_flow(
         .capacity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
-    let result = sqlx::query(
+    let result = sqlx::query!(
         r#"
         INSERT INTO process_flows (
-            code, name, name_en, description, version, route_id,
+            code, name, description, version, route_id,
             production_line, capacity, unit
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
         "#,
+        body.code,
+        body.name,
+        body.description,
+        body.version,
+        route_id,
+        body.production_line,
+        capacity,
+        body.unit,
     )
-    .bind(&body.code)
-    .bind(&body.name)
-    .bind(&body.name_en)
-    .bind(&body.description)
-    .bind(&body.version)
-    .bind(route_id)
-    .bind(&body.production_line)
-    .bind(capacity)
-    .bind(&body.unit)
     .fetch_one(&state.pool)
     .await;
 
     match result {
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
-                id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
-                code: r.try_get::<String, _>("code").unwrap_or_default(),
-                name: r.try_get::<String, _>("name").unwrap_or_default(),
-                description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-                version: r
-                    .try_get::<Option<String>, _>("version")
-                    .ok()
-                    .flatten(),
-                status: r
-                    .try_get::<Option<String>, _>("status")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(|| "active".to_string()),
-                route_id: r
-                    .try_get::<Option<Uuid>, _>("route_id")
-                    .ok()
-                    .flatten()
-                    .map(|u| u.to_string()),
+                id: r.id.to_string(),
+                code: r.code,
+                name: r.name,
+                description: r.description,
+                version: r.version.map(|v| v.to_string()),
+                status: r.status.unwrap_or_else(|| "active".to_string()),
+                route_id: r.route_id.map(|u| u.to_string()),
                 route_name: None,
-                production_line: r
-                    .try_get::<Option<String>, _>("production_line")
-                    .ok()
-                    .flatten(),
-                capacity: opt_big_decimal_to_f64(
-                    r.try_get::<Option<BigDecimal>, _>("capacity").ok().flatten(),
-                ),
-                unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-                created_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("created_at")
-                        .ok()
-                        .flatten(),
-                ),
-                updated_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("updated_at")
-                        .ok()
-                        .flatten(),
-                ),
+                production_line: r.production_line,
+                capacity: opt_big_decimal_to_f64(r.capacity),
+                unit: r.unit,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "创建工艺流程成功",
         )),
@@ -545,79 +475,53 @@ pub async fn update_process_flow(
         .capacity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
 
-    let result = sqlx::query(
+    let result = sqlx::query!(
         r#"
         UPDATE process_flows
-        SET
+        SET 
             name = COALESCE($1, name),
-            name_en = COALESCE($2, name_en),
-            description = COALESCE($3, description),
-            version = COALESCE($4, version),
-            route_id = COALESCE($5, route_id),
-            production_line = COALESCE($6, production_line),
-            capacity = COALESCE($7, capacity),
-            unit = COALESCE($8, unit),
-            status = COALESCE($9, status),
+            description = COALESCE($2, description),
+            version = COALESCE($3, version),
+            route_id = COALESCE($4, route_id),
+            production_line = COALESCE($5, production_line),
+            capacity = COALESCE($6, capacity),
+            unit = COALESCE($7, unit),
+            status = COALESCE($8, status),
             updated_at = NOW()
-        WHERE id = $10
+        WHERE id = $9
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
         "#,
+        body.name,
+        body.description,
+        body.version,
+        route_id,
+        body.production_line,
+        capacity,
+        body.unit,
+        body.status,
+        uuid,
     )
-    .bind(&body.name)
-    .bind(&body.name_en)
-    .bind(&body.description)
-    .bind(&body.version)
-    .bind(route_id)
-    .bind(&body.production_line)
-    .bind(capacity)
-    .bind(&body.unit)
-    .bind(&body.status)
-    .bind(uuid)
     .fetch_one(&state.pool)
     .await;
 
     match result {
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
-                id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
-                code: r.try_get::<String, _>("code").unwrap_or_default(),
-                name: r.try_get::<String, _>("name").unwrap_or_default(),
-                description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-                version: r
-                    .try_get::<Option<String>, _>("version")
-                    .ok()
-                    .flatten(),
-                status: r
-                    .try_get::<Option<String>, _>("status")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(|| "active".to_string()),
-                route_id: r
-                    .try_get::<Option<Uuid>, _>("route_id")
-                    .ok()
-                    .flatten()
-                    .map(|u| u.to_string()),
+                id: r.id.to_string(),
+                code: r.code,
+                name: r.name,
+                description: r.description,
+                version: r.version.map(|v| v.to_string()),
+                status: r.status.unwrap_or_else(|| "active".to_string()),
+                route_id: r.route_id.map(|u| u.to_string()),
                 route_name: None,
-                production_line: r
-                    .try_get::<Option<String>, _>("production_line")
-                    .ok()
-                    .flatten(),
-                capacity: opt_big_decimal_to_f64(
-                    r.try_get::<Option<BigDecimal>, _>("capacity").ok().flatten(),
-                ),
-                unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-                created_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("created_at")
-                        .ok()
-                        .flatten(),
-                ),
-                updated_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("updated_at")
-                        .ok()
-                        .flatten(),
-                ),
+                production_line: r.production_line,
+                capacity: opt_big_decimal_to_f64(r.capacity),
+                unit: r.unit,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             },
             "更新工艺流程成功",
         )),
@@ -693,7 +597,7 @@ pub async fn get_flow_steps(
             ws.station_name as work_station_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id AND ws.tenant_id = pfs.tenant_id
+        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -709,12 +613,12 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name,
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
@@ -835,17 +739,17 @@ pub async fn add_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
@@ -961,17 +865,17 @@ pub async fn update_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
@@ -1091,7 +995,7 @@ pub async fn reorder_flow_steps(
             ws.station_name as work_station_name
         FROM process_flow_steps pfs
         LEFT JOIN production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id AND ws.tenant_id = pfs.tenant_id
+        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -1107,12 +1011,12 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name,
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),

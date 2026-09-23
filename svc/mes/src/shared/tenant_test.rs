@@ -29,7 +29,7 @@ fn make_claims(tenant_id: Option<&str>) -> Claims {
 fn returns_claims_tenant_id_when_present() {
     let headers = HeaderMap::new();
     let claims = make_claims(Some("00000000-0000-0000-0000-000000000000"));
-    assert_eq!(get_tenant_id(&claims, &headers), uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    assert_eq!(get_tenant_id(&claims, &headers), uuid::Uuid::nil());
 }
 
 #[test]
@@ -40,12 +40,12 @@ fn falls_back_to_x_tenant_id_header_when_claims_missing() {
         "00000000-0000-0000-0000-000000000000".parse().unwrap(),
     );
     let claims = make_claims(None);
-    assert_eq!(get_tenant_id(&claims, &headers), uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    assert_eq!(get_tenant_id(&claims, &headers), uuid::Uuid::nil());
 }
 
 #[test]
 fn returns_nil_uuid_when_neither_present() {
     let headers = HeaderMap::new();
     let claims = make_claims(None);
-    assert_eq!(get_tenant_id(&claims, &headers), uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    assert_eq!(get_tenant_id(&claims, &headers), uuid::Uuid::nil());
 }

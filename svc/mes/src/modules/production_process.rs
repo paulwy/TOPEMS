@@ -134,18 +134,13 @@ pub async fn list_processes(
 
     let tenant_id = tenant::get_tenant_id(&claims, &headers);
     let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
-    let tenant_opt: Option<Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
-    };
 
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10).min(100) as i64;
     let offset = (page - 1) * pagesize;
 
     let mut params: Vec<String> = Vec::new();
-    let mut where_clause = String::from(" WHERE ($1::uuid IS NULL OR tenant_id = $1)");
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
 
     if let Some(status) = query.status {
         let idx = params.len() + 2;
@@ -169,7 +164,7 @@ pub async fn list_processes(
     );
 
     let mut count_query = sqlx::query_scalar(&count_sql);
-    count_query = count_query.bind(tenant_opt);
+    count_query = count_query.bind(tenant_id);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -200,7 +195,7 @@ pub async fn list_processes(
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
-    fetch_query = fetch_query.bind(tenant_opt);
+    fetch_query = fetch_query.bind(tenant_id);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -503,17 +498,17 @@ pub async fn deactivate_process(
     match result {
         Some(r) => {
             let process = ProductionProcessResponse {
-                id: r.id,
+                id: r.id.unwrap_or_default(),
                 process_no: r.process_no.unwrap_or_default(),
-                name: r.name,
+                name: r.name.unwrap_or_default(),
                 description: r.description,
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status,
-                sequence: r.sequence,
+                status: r.status.unwrap_or_default(),
+                sequence: r.sequence.unwrap_or_default(),
                 equipment_required: false,
                 estimated_duration: 0,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }

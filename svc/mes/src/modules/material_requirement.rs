@@ -142,12 +142,12 @@ pub async fn list_material_requirements(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = query.status {
         where_clause.push_str(" WHERE status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -157,7 +157,7 @@ pub async fn list_material_requirements(
         } else {
             where_clause.push_str(&format!(" AND (material_code ILIKE ${} OR material_name ILIKE ${} OR product_code ILIKE ${} OR product_name ILIKE ${})", params.len() + 1, params.len() + 1, params.len() + 1, params.len() + 1));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -316,20 +316,20 @@ pub async fn get_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
-                mrp_no: r.mrp_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
-                material_code: r.material_code,
-                material_name: r.material_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
+                material_code: r.material_code.unwrap_or_default(),
+                material_name: r.material_name.unwrap_or_default(),
                 specification: r.specification,
                 unit: r.unit,
-                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                required_quantity: big_decimal_to_f64(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -415,20 +415,20 @@ pub async fn create_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
-                mrp_no: r.mrp_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
-                material_code: r.material_code,
-                material_name: r.material_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
+                material_code: r.material_code.unwrap_or_default(),
+                material_name: r.material_name.unwrap_or_default(),
                 specification: r.specification,
                 unit: r.unit,
-                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                required_quantity: big_decimal_to_f64(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -518,20 +518,20 @@ pub async fn update_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
-                mrp_no: r.mrp_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
-                material_code: r.material_code,
-                material_name: r.material_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
+                material_code: r.material_code.unwrap_or_default(),
+                material_name: r.material_name.unwrap_or_default(),
                 specification: r.specification,
                 unit: r.unit,
-                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                required_quantity: big_decimal_to_f64(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -651,7 +651,7 @@ pub async fn calculate_requirements(
     match bom_items_result {
         Ok(items) => {
             for item in items {
-                let required_quantity_bd = item.quantity * BigDecimal::from(order.quantity);
+                let required_quantity_bd = item.quantity.unwrap_or_default() * order.quantity.unwrap_or_default();
                 let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
                 let now_str = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
 
@@ -685,20 +685,20 @@ pub async fn calculate_requirements(
 
                 if let Ok(r) = insert_result {
                     requirements.push(MaterialRequirementResponse {
-                        id: r.id.to_string(),
-                        mrp_no: r.mrp_no,
+                        id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                        mrp_no: r.mrp_no.unwrap_or_default(),
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
-                        product_code: r.product_code,
-                        product_name: r.product_name,
-                        material_code: r.material_code,
-                        material_name: r.material_name,
+                        product_code: r.product_code.unwrap_or_default(),
+                        product_name: r.product_name.unwrap_or_default(),
+                        material_code: r.material_code.unwrap_or_default(),
+                        material_name: r.material_name.unwrap_or_default(),
                         specification: r.specification,
                         unit: r.unit,
-                        required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                        required_quantity: big_decimal_to_f64(r.required_quantity),
                         available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                         shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                        required_date: r.required_date,
+                        required_date: r.required_date.unwrap_or_default(),
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
@@ -750,20 +750,20 @@ pub async fn confirm_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
-                mrp_no: r.mrp_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
-                material_code: r.material_code,
-                material_name: r.material_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
+                material_code: r.material_code.unwrap_or_default(),
+                material_name: r.material_name.unwrap_or_default(),
                 specification: r.specification,
                 unit: r.unit,
-                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                required_quantity: big_decimal_to_f64(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -818,20 +818,20 @@ pub async fn release_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.to_string(),
-                mrp_no: r.mrp_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
-                material_code: r.material_code,
-                material_name: r.material_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
+                material_code: r.material_code.unwrap_or_default(),
+                material_name: r.material_name.unwrap_or_default(),
                 specification: r.specification,
                 unit: r.unit,
-                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                required_quantity: big_decimal_to_f64(r.required_quantity),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status

@@ -132,12 +132,12 @@ fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: DateTime<Utc>) -> String {
-    dt.to_rfc3339()
+fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
+    naive_to_utc(dt).to_rfc3339()
 }
 
-fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d.to_rfc3339())
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    dt.map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -243,12 +243,12 @@ pub async fn list_work_reports(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = query.status {
         where_clause.push_str(" WHERE wr.status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -263,7 +263,7 @@ pub async fn list_work_reports(
                 " AND (wr.report_no ILIKE ${idx} OR wr.reporter_name ILIKE ${idx} OR wr.work_order_no ILIKE ${idx} OR wr.order_no ILIKE ${idx})",
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -378,7 +378,7 @@ pub async fn list_work_reports(
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
             approved_at: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
+                r.try_get::<Option<NaiveDateTime>, _>("approved_at")
                     .ok()
                     .flatten(),
             ),
@@ -387,14 +387,14 @@ pub async fn list_work_reports(
                 .ok()
                 .flatten(),
             created_at: datetime_to_string(
-                r.try_get::<DateTime<Utc>, _>("created_at")
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
-                    .unwrap_or_else(Utc::now),
+                    .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<DateTime<Utc>, _>("updated_at")
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
-                    .unwrap_or_else(Utc::now),
+                    .flatten(),
             ),
         })
         .collect();
@@ -460,15 +460,15 @@ pub async fn get_work_report(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -477,10 +477,10 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
             },
             "获取工报成功",
         )),
@@ -658,15 +658,15 @@ pub async fn create_work_report(
             }
             Json(ApiResponse::success(
                 WorkReportResponse {
-                    id: r.id.to_string(),
-                    report_no: r.report_no,
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    report_no: r.report_no.unwrap_or_default(),
                     work_order_id: r.work_order_id.map(|u| u.to_string()),
                     work_order_no: r.work_order_no,
                     order_id: r.order_id.map(|u| u.to_string()),
                     order_no: r.order_no,
                     work_station_id: r.work_station_id.map(|u| u.to_string()),
                     work_station_name: r.work_station_name,
-                    reporter_name: r.reporter_name,
+                    reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
                     report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                     shift: r.shift,
                     output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -675,10 +675,10 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at),
+                    approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                     approval_remark: r.approval_remark,
-                    created_at: datetime_to_string(r.created_at),
-                    updated_at: datetime_to_string(r.updated_at),
+                    created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                    updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
                 },
                 "创建工报成功",
             ))
@@ -804,15 +804,15 @@ pub async fn update_work_report(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -821,10 +821,10 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
             },
             "更新工报成功",
         )),
@@ -944,15 +944,15 @@ pub async fn approve_work_report(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -961,10 +961,10 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
             },
             "审批通过成功",
         )),
@@ -1039,15 +1039,15 @@ pub async fn reject_work_report(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
-                id: r.id.to_string(),
-                report_no: r.report_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.map(|v| v.to_string()).unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -1056,10 +1056,10 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at),
-                updated_at: datetime_to_string(r.updated_at),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
             },
             "审批驳回成功",
         )),

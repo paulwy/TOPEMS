@@ -92,38 +92,31 @@ pub async fn list_inspections(
         return e;
     }
 
-    let tenant_opt: Option<String> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.clone()
-    };
-
     let page = query.page.unwrap_or(1) as i64;
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
-    let mut where_clause =
-        String::from(" WHERE ($1::uuid IS NULL OR qi.tenant_id = $1::uuid)");
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
 
     if let Some(status) = query.status {
-        where_clause.push_str(" AND qi.status = $2");
-        params.push(status);
+        where_clause.push_str(" WHERE qi.status = $1");
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(inspection_type) = query.inspection_type {
-        let idx = params.len() + 2;
+        let idx = params.len() + 1;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(" WHERE qi.inspection_type = ${}", idx));
         } else {
             where_clause.push_str(&format!(" AND qi.inspection_type = ${}", idx));
         }
-        params.push(inspection_type);
+        params.push(serde_json::Value::String(inspection_type));
     }
 
     if let Some(search) = query.search {
         let pattern = format!("%{}%", search);
-        let idx = params.len() + 2;
+        let idx = params.len() + 1;
         if where_clause.is_empty() {
             where_clause.push_str(&format!(
                 " WHERE (qi.inspection_no ILIKE ${} OR qi.product_code ILIKE ${} OR qi.product_name ILIKE ${})",
@@ -135,14 +128,14 @@ pub async fn list_inspections(
                 idx, idx, idx
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM quality_inspections qi{}",
         where_clause
     );
-    let mut count_query = sqlx::query_scalar(&count_sql).bind(tenant_opt.clone());
+    let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
         count_query = count_query.bind(p.clone());
     }
@@ -170,10 +163,10 @@ pub async fn list_inspections(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 2,
-        params.len() + 3
+        params.len() + 1,
+        params.len() + 2
     );
-    let mut fetch_query = sqlx::query(&fetch_sql).bind(tenant_opt.clone());
+    let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
@@ -313,15 +306,15 @@ pub async fn get_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
-                inspection_no: r.inspection_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
+                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type,
+                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -431,15 +424,15 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
-                inspection_no: r.inspection_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
+                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type,
+                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -539,15 +532,15 @@ pub async fn update_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
-                inspection_no: r.inspection_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
+                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type,
+                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),

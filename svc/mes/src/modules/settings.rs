@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::get_tenant_id;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 use crate::AppState;
@@ -33,18 +34,14 @@ pub async fn get_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
-        "SELECT key, value FROM mes.module_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND category = $2",
+        "SELECT key, value FROM mes.module_settings WHERE tenant_id = $1 AND category = $2",
     )
-    .bind(tenant_opt)
+    .bind(tenant_id)
     .bind(&category)
     .fetch_all(&state.pool)
     .await;
@@ -76,17 +73,10 @@ pub async fn update_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(category): Path<String>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<UpdateSettingsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = chrono::Utc::now().naive_utc();
 
     let mut updated = 0;

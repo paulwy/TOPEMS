@@ -185,12 +185,12 @@ pub async fn list_process_routes(
     // 缓存未命中，记录指标
     record_cache_miss("mes", "process_route", "list");
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE pr.deleted_at IS NULL");
 
     if let Some(status) = query.status {
         where_clause.push_str(" AND pr.status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -204,7 +204,7 @@ pub async fn list_process_routes(
                 params.len() + 1
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -369,17 +369,17 @@ pub async fn get_process_route(
 
             Json(ApiResponse::success(
                 ProcessRouteResponse {
-                    id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes,
                     process_count,
-                    created_at: r.created_at.to_rfc3339(),
-                    updated_at: r.updated_at.to_rfc3339(),
+                    created_at: r.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    updated_at: r.updated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 },
                 "获取工艺路线成功",
             ))
@@ -441,17 +441,17 @@ pub async fn create_process_route(
 
             Json(ApiResponse::success(
                 ProcessRouteResponse {
-                    id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.to_rfc3339(),
-                    updated_at: r.updated_at.to_rfc3339(),
+                    created_at: r.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    updated_at: r.updated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 },
                 "创建工艺路线成功",
             ))
@@ -526,17 +526,17 @@ pub async fn update_process_route(
 
             Json(ApiResponse::success(
                 ProcessRouteResponse {
-                    id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.to_rfc3339(),
-                    updated_at: r.updated_at.to_rfc3339(),
+                    created_at: r.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    updated_at: r.updated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 },
                 "更新工艺路线成功",
             ))
@@ -648,17 +648,17 @@ pub async fn get_route_steps(
             let step_responses: Vec<ProcessRouteStepResponse> = steps
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
-                    id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: s.process_name,
+                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
+                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: s.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 })
                 .collect();
 
@@ -739,22 +739,22 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
-                    id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
+                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: s.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 },
                 "添加工艺路线步骤成功",
             ))
@@ -824,22 +824,22 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (p.name, p.process_no.unwrap_or_default()),
-                Err(_) => (String::new(), String::new()),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
-                    id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
+                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: s.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 },
                 "更新工艺路线步骤成功",
             ))
@@ -970,17 +970,17 @@ pub async fn reorder_route_steps(
             let step_responses: Vec<ProcessRouteStepResponse> = steps
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
-                    id: s.id.to_string(),
-                    route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: s.process_name,
+                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
+                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     estimated_time_minutes: opt_big_decimal_to_f64(s.estimated_time_minutes),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: s.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 })
                 .collect();
 

@@ -5,7 +5,6 @@ use axum::{
     extract::Path,
     extract::Query,
     extract::State,
-    http::HeaderMap,
     routing::{get, post, put},
     Json, Router,
 };
@@ -21,7 +20,6 @@ use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
@@ -68,8 +66,6 @@ pub struct CreateEquipmentRequest {
     pub warranty_expiry_date: Option<chrono::NaiveDate>,
     pub maintenance_frequency_days: Option<i32>,
     pub description: Option<String>,
-    #[serde(default)]
-    pub equipment_name_en: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, ToSchema)]
@@ -85,8 +81,6 @@ pub struct UpdateEquipmentRequest {
     pub last_maintenance_date: Option<chrono::NaiveDate>,
     pub next_maintenance_date: Option<chrono::NaiveDate>,
     pub description: Option<String>,
-    #[serde(default)]
-    pub equipment_name_en: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -214,7 +208,6 @@ pub async fn list_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(query): Query<ListEquipmentQuery>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<ListEquipmentResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
@@ -224,12 +217,12 @@ pub async fn list_equipment(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
 
     if let Some(status) = query.status {
         where_clause.push_str(" WHERE status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -246,13 +239,7 @@ pub async fn list_equipment(
                 params.len() + 1
             ));
         }
-        params.push(pattern);
-    }
-
-    if where_clause.is_empty() {
-        where_clause.push_str(" WHERE deleted_at IS NULL");
-    } else {
-        where_clause.push_str(" AND deleted_at IS NULL");
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!("SELECT COUNT(*) as total FROM equipment{}", where_clause);
@@ -271,28 +258,21 @@ pub async fn list_equipment(
         }
     };
 
-    // 多语言：locale 绑定到 params 末尾，CASE 表达式引用它（LIMIT/OFFSET 序号顺延）
-    params.push(Locale::from_headers(&headers).as_sql().to_string());
-    let locale_placeholder = params.len();
-
     let fetch_sql = format!(
         r#"
         SELECT 
-            id, equipment_code AS equipment_no,
-            CASE WHEN ${locale_placeholder} = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END AS name,
-            model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
-        {where_clause}
+        {}
         ORDER BY created_at DESC
-        LIMIT ${limit_placeholder} OFFSET ${offset_placeholder}
+        LIMIT ${} OFFSET ${}
         "#,
-        locale_placeholder = locale_placeholder,
-        where_clause = where_clause,
-        limit_placeholder = params.len() + 1,
-        offset_placeholder = params.len() + 2,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);
@@ -365,8 +345,8 @@ pub async fn create_equipment(
             equipment_code, equipment_name, model, manufacturer, status,
             location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
-            description, created_at, updated_at, equipment_name_en
-        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11, $12)
+            description, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
@@ -385,7 +365,6 @@ pub async fn create_equipment(
     .bind(next_maintenance_date)
     .bind(&req.description)
     .bind(now)
-    .bind(&req.equipment_name_en)
     .fetch_one(&state.pool)
     .await;
 
@@ -420,19 +399,15 @@ pub async fn get_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<EquipmentResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
 
-    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query(
         r#"
         SELECT 
-            id, equipment_code AS equipment_no,
-            CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END AS name,
-            model, manufacturer,
+            id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
@@ -441,7 +416,6 @@ pub async fn get_equipment(
         "#,
     )
     .bind(id)
-    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 
@@ -490,8 +464,7 @@ pub async fn update_equipment(
     let result = sqlx::query(
         r#"
         UPDATE equipment SET
-            equipment_name = COALESCE($2, equipment_name),
-            equipment_name_en = COALESCE($14, equipment_name_en),
+            name = COALESCE($2, name),
             model = COALESCE($3, model),
             manufacturer = COALESCE($4, manufacturer),
             status = COALESCE($5, status),
@@ -524,7 +497,6 @@ pub async fn update_equipment(
     .bind(req.next_maintenance_date)
     .bind(&req.description)
     .bind(Utc::now().naive_utc())
-    .bind(&req.equipment_name_en)
     .fetch_optional(&state.pool)
     .await;
 
@@ -777,7 +749,6 @@ pub async fn list_maintenances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListMaintenancesParams>,
-    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
@@ -790,9 +761,7 @@ pub async fn list_maintenances(
     let result = sqlx::query!(
         r#"
         SELECT 
-            m.id, m.equipment_id,
-            CASE WHEN $4 = 'en' THEN COALESCE(e.equipment_name_en, e.equipment_name) ELSE e.equipment_name END as equipment_name,
-            e.equipment_code as equipment_no,
+            m.id, m.equipment_id, e.equipment_name as equipment_name, e.equipment_code as equipment_no,
             m.maintenance_type, m.description, m.maintainer,
             m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,
             m.created_at, m.updated_at
@@ -805,7 +774,6 @@ pub async fn list_maintenances(
         params.equipment_id,
         page_size,
         offset,
-        Locale::from_headers(&headers).as_sql(),
     )
     .fetch_all(&state.pool)
     .await;
@@ -821,21 +789,21 @@ pub async fn list_maintenances(
     let maintenance_records: Vec<MaintenanceRecord> = records
         .into_iter()
         .map(|r| MaintenanceRecord {
-            id: r.id,
+            id: r.id.unwrap_or_default(),
             equipment_id: r.equipment_id.unwrap_or_default(),
             equipment_name: r.equipment_name,
-            equipment_no: Some(r.equipment_no.unwrap_or_default()),
-            maintenance_type: r.maintenance_type,
-            description: Some(r.description.unwrap_or_default()),
+            equipment_no: r.equipment_no,
+            maintenance_type: r.maintenance_type.unwrap_or_default(),
+            description: r.description,
             maintainer: r.maintainer.unwrap_or_default(),
-            start_time: r.start_time.and_utc(),
-            end_time: r.end_time.map(|d| d.and_utc()),
+            start_time: r.start_time.unwrap_or_default(),
+            end_time: r.end_time,
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
             status: r.status.unwrap_or_default(),
             remarks: r.remarks,
-            created_at: r.created_at.and_utc(),
-            updated_at: r.updated_at.and_utc(),
+            created_at: r.created_at.unwrap_or_default(),
+            updated_at: r.updated_at.unwrap_or_default(),
         })
         .collect();
 
@@ -876,7 +844,6 @@ pub async fn list_maintenances(
 pub async fn create_maintenance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
     Json(req): Json<CreateMaintenanceRecord>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
@@ -909,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time.naive_utc(),
-        end_time.map(|d| d.naive_utc()),
+        start_time,
+        end_time,
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -940,11 +907,9 @@ pub async fn create_maintenance(
     let created_at = result.created_at;
     let updated_at = result.updated_at;
 
-    let locale = Locale::from_headers(&headers).as_sql();
     let equipment_name = sqlx::query_scalar!(
-        "SELECT CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
-        locale,
     )
     .fetch_optional(&state.pool)
     .await
@@ -962,21 +927,21 @@ pub async fn create_maintenance(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id: id,
+            id: id.unwrap_or_default(),
             equipment_id: equipment_id.unwrap_or_default(),
-            equipment_name: Some(equipment_name.flatten().unwrap_or_default()),
+            equipment_name: equipment_name.unwrap_or_default(),
             equipment_no: equipment_no.unwrap_or_default(),
-            maintenance_type: maintenance_type,
-            description: Some(description.unwrap_or_default()),
+            maintenance_type: maintenance_type.unwrap_or_default(),
+            description: description,
             maintainer: maintainer.unwrap_or_default(),
-            start_time: start_time.and_utc(),
-            end_time: end_time.map(|d| d.and_utc()),
+            start_time: start_time.unwrap_or_default(),
+            end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at: created_at.and_utc(),
-            updated_at: updated_at,
+            created_at: created_at.unwrap_or_default(),
+            updated_at: updated_at.unwrap_or_default(),
         },
         "维护记录创建成功",
     ))
@@ -1000,7 +965,6 @@ pub async fn update_maintenance_status(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    headers: HeaderMap,
     Json(req): Json<UpdateMaintenanceStatus>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
@@ -1024,7 +988,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1050,11 +1014,9 @@ pub async fn update_maintenance_status(
     let created_at = result.created_at;
     let updated_at = result.updated_at;
 
-    let locale = Locale::from_headers(&headers).as_sql();
     let equipment_name = sqlx::query_scalar!(
-        "SELECT CASE WHEN $2 = 'en' THEN COALESCE(equipment_name_en, equipment_name) ELSE equipment_name END FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
-        locale,
     )
     .fetch_optional(&state.pool)
     .await
@@ -1072,21 +1034,21 @@ pub async fn update_maintenance_status(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id: id,
+            id: id.unwrap_or_default(),
             equipment_id: equipment_id.unwrap_or_default(),
-            equipment_name: Some(equipment_name.flatten().unwrap_or_default()),
+            equipment_name: equipment_name.unwrap_or_default(),
             equipment_no: equipment_no.unwrap_or_default(),
-            maintenance_type: maintenance_type,
-            description: Some(description.unwrap_or_default()),
+            maintenance_type: maintenance_type.unwrap_or_default(),
+            description,
             maintainer: maintainer.unwrap_or_default(),
-            start_time: start_time.and_utc(),
-            end_time: end_time.map(|d| d.and_utc()),
+            start_time: start_time.unwrap_or_default(),
+            end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at: created_at.and_utc(),
-            updated_at: updated_at,
+            created_at: created_at.unwrap_or_default(),
+            updated_at: updated_at.unwrap_or_default(),
         },
         "维护状态更新成功",
     ))
@@ -1211,12 +1173,12 @@ pub async fn list_inspections(
             let inspections: Vec<InspectionResponse> = rows
                 .into_iter()
                 .map(|r| InspectionResponse {
-                    id: r.id.to_string(),
-                    equipment_id: r.equipment_id.unwrap_or_default().to_string(),
+                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                     inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()).unwrap_or_default(),
+                    inspection_date: r.inspection_date.unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1232,10 +1194,10 @@ pub async fn list_inspections(
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
+                    items: r.items,
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: naive_to_utc(Some(r.created_at)).to_rfc3339(),
+                    created_at: naive_to_utc(r.created_at).to_rfc3339(),
                 })
                 .collect();
 
@@ -1341,12 +1303,12 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.to_string(),
-                equipment_id: r.equipment_id.unwrap_or_default().to_string(),
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                 inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()).unwrap_or_default(),
+                inspection_date: r.inspection_date.unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1362,10 +1324,10 @@ pub async fn create_inspection(
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
+                items: r.items,
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: naive_to_utc(Some(r.created_at)).to_rfc3339(),
+                created_at: naive_to_utc(r.created_at).to_rfc3339(),
             },
             "创建点检记录成功",
         )),

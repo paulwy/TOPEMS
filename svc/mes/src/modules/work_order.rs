@@ -185,12 +185,12 @@ pub async fn list_work_orders(
     let pagesize = query.pagesize.unwrap_or(10) as i64;
     let offset = (page - 1) * pagesize;
 
-    let mut params: Vec<String> = Vec::new();
+    let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE wo.deleted_at IS NULL");
 
     if let Some(status) = query.status {
         where_clause.push_str(" AND wo.status = $1");
-        params.push(status);
+        params.push(serde_json::Value::String(status));
     }
 
     if let Some(search) = query.search {
@@ -205,7 +205,7 @@ pub async fn list_work_orders(
                 " AND (wo.work_order_no ILIKE ${idx} OR wo.order_no ILIKE ${idx} OR wo.product_code ILIKE ${idx} OR wo.product_name ILIKE ${idx})",
             ));
         }
-        params.push(pattern);
+        params.push(serde_json::Value::String(pattern));
     }
 
     let count_sql = format!(
@@ -513,8 +513,8 @@ pub async fn create_work_order(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkOrderResponse {
-                id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code.unwrap_or_default(),
