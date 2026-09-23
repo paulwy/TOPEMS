@@ -87,6 +87,12 @@ def fix_errors(errors):
                 if var_match:
                     var_name = var_match.group(2)
                     line = line.replace(f'r.{var_name},', f'r.{var_name}.unwrap_or_default(),')
+                
+                # 另一种模式: s.xxx,
+                var_match2 = re.search(r'(\w+):\s*s\.(\w+)', line)
+                if var_match2:
+                    var_name = var_match2.group(2)
+                    line = line.replace(f's.{var_name},', f's.{var_name}.unwrap_or_default(),')
             
             # 错误模式 2: expected Option<String>, found String
             # 修复方法: 在 String 前加 Some(...)
@@ -141,7 +147,7 @@ def fix_errors(errors):
     return fixes_applied
 
 def main():
-    log_file = '/tmp/mes_check_v455.log'
+    log_file = '/tmp/mes_check_v456.log'
     
     print(f"解析 {log_file}...")
     errors = parse_cargo_check(log_file)
