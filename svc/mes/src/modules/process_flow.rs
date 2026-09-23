@@ -363,12 +363,12 @@ pub async fn get_process_flow(
                 version: r.version.map(|v| v.to_string()),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
-                route_name: Some(r.route_name),
+                route_name: Some(r.route_name.unwrap_or_default()),
                 production_line: r.production_line,
-                capacity: r.capacity,
+                capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "获取工艺流程成功",
         )),
@@ -414,7 +414,7 @@ pub async fn create_process_flow(
         body.version,
         route_id,
         body.production_line,
-        capacity,
+        capacity.map(|d| d.to_string().parse::<BigDecimal>().unwrap_or_default()),
         body.unit,
     )
     .fetch_one(&state.pool)
@@ -432,10 +432,10 @@ pub async fn create_process_flow(
                 route_id: r.route_id.map(|u| u.to_string()),
                 route_name: None,
                 production_line: r.production_line,
-                capacity: r.capacity,
+                capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "创建工艺流程成功",
         )),
@@ -494,7 +494,7 @@ pub async fn update_process_flow(
         body.version,
         route_id,
         body.production_line,
-        capacity,
+        capacity.map(|d| d.to_string().parse::<BigDecimal>().unwrap_or_default()),
         body.unit,
         body.status,
         uuid,
@@ -514,10 +514,10 @@ pub async fn update_process_flow(
                 route_id: r.route_id.map(|u| u.to_string()),
                 route_name: None,
                 production_line: r.production_line,
-                capacity: r.capacity,
+                capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新工艺流程成功",
         )),
@@ -609,19 +609,19 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: s.process_name,
+                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
+                    process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time,
-                    wait_time: s.wait_time,
+                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -742,19 +742,19 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name.unwrap_or_default(),
+                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default().unwrap_or_default(),
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time,
-                    wait_time: s.wait_time,
+                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -868,19 +868,19 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: process_name.unwrap_or_default(),
+                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
+                    process_name: process_name.unwrap_or_default().unwrap_or_default(),
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time,
-                    wait_time: s.wait_time,
+                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1007,19 +1007,19 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
-                    process_name: s.process_name,
+                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
+                    process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time,
-                    wait_time: s.wait_time,
+                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -1097,10 +1097,10 @@ pub async fn analyze_capacity(
 
     let total_time: f64 = steps
         .iter()
-        .map(|s| s.standard_time.clone().unwrap_or(0.0))
+        .map(|s| s.standard_time.clone().unwrap_or(BigDecimal::from(0)).to_string().parse::<f64>().unwrap_or_default())
         .sum();
 
-    let flow_capacity = flow.capacity.clone().unwrap_or(0.0);
+    let flow_capacity = flow.capacity.clone().unwrap_or(BigDecimal::from(0));
     let theoretical_capacity = if total_time > 0.0 {
         480.0 / total_time
     } else {
@@ -1108,8 +1108,8 @@ pub async fn analyze_capacity(
     };
 
     let effective_capacity = theoretical_capacity * 0.85;
-    let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > 0.0 {
-        (flow_capacity / theoretical_capacity) * 100.0
+    let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
+        ((flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity) * 100.0)
     } else {
         0.0
     };
@@ -1119,14 +1119,14 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.clone().unwrap_or(0.0);
-        let step_capacity = if step_time > 0.0 {
-            480.0 / step_time
+        let step_time = step.standard_time.clone().unwrap_or(BigDecimal::from(0));
+        let step_capacity = if step_time > BigDecimal::from(0) {
+            480.0 / step_time.to_string().parse::<f64>().unwrap_or_default()
         } else {
             0.0
         };
-        let step_utilization = if step_capacity > 0.0 && flow_capacity > 0.0 {
-            (flow_capacity / step_capacity) * 100.0
+        let step_utilization = if step_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
+            ((flow_capacity.to_string().parse::<f64>().unwrap_or_default() / step_capacity) * 100.0)
         } else {
             0.0
         };
@@ -1134,13 +1134,13 @@ pub async fn analyze_capacity(
         if step_utilization > max_utilization {
             max_utilization = step_utilization;
             bottleneck = Some(BottleneckStep {
-                step_name: step.process_name.clone(),
+                step_name: step.process_name.clone().unwrap_or_default(),
                 utilization_rate: step_utilization,
             });
         }
 
         by_step.push(StepCapacity {
-            step_name: step.process_name.clone(),
+            step_name: step.process_name.clone().unwrap_or_default(),
             capacity: step_capacity,
             utilization_rate: step_utilization,
         });

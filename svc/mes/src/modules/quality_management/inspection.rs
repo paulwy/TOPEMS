@@ -310,11 +310,11 @@ pub async fn get_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type,
+                inspection_type: r.inspection_type.unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -324,8 +324,8 @@ pub async fn get_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "获取检验记录成功",
         )),
@@ -401,17 +401,17 @@ pub async fn create_inspection(
         BigDecimal::from_str("0").unwrap_or_default(),
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.with_timezone(&Utc))
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
                 })
         }),
         body.status.unwrap_or_else(|| "pending".to_string()),
@@ -428,11 +428,11 @@ pub async fn create_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type,
+                inspection_type: r.inspection_type.unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -442,8 +442,8 @@ pub async fn create_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "创建检验记录成功",
         )),
@@ -508,17 +508,17 @@ pub async fn update_inspection(
         unqualified_quantity,
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.with_timezone(&Utc))
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
                 })
         }),
         body.status,
@@ -536,11 +536,11 @@ pub async fn update_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type,
+                inspection_type: r.inspection_type.unwrap_or_default(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -550,8 +550,8 @@ pub async fn update_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新检验记录成功",
         )),

@@ -390,7 +390,7 @@ pub async fn create_wip(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.as_deref();
+    let order_no_arg = order_no_flat.and_then(|x| x);
     let result = sqlx::query!(
         r#"
         INSERT INTO wips (
@@ -415,10 +415,10 @@ pub async fn create_wip(
         req.process_id,
         req.work_station_id,
         req.batch_no,
-        now.naive_utc(),
+        now,
         req.operator,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -446,12 +446,12 @@ pub async fn create_wip(
         current_work_station_name: None,
         status: result.status.unwrap_or_else(|| "in_progress".to_string()),
         batch_no: result.batch_no,
-        start_time: result.start_time.map(|d| d.and_utc()),
-        last_transfer_time: result.last_transfer_time.map(|d| d.and_utc()),
+        start_time: result.start_time.map(|d| d),
+        last_transfer_time: result.last_transfer_time.map(|d| d),
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -519,17 +519,17 @@ pub async fn get_wip(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
-                current_process_name: Some(r.process_name),
+                current_process_name: Some(r.process_name.unwrap_or_default()),
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: Some(r.work_station_name),
+                current_work_station_name: Some(r.work_station_name.unwrap_or_default()),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time.map(|d| d),
+                last_transfer_time: r.last_transfer_time.map(|d| d),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -582,7 +582,7 @@ pub async fn update_wip(
         req.status,
         req.batch_no,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -612,12 +612,12 @@ pub async fn update_wip(
                 current_work_station_name: None,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time.map(|d| d),
+                last_transfer_time: r.last_transfer_time.map(|d| d),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -754,7 +754,7 @@ pub async fn transfer_wip(
         req.to_process_id,
         req.to_work_station_id,
         BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-        now.naive_utc(),
+        now,
         req.operator.clone(),
         req.transfer_type
             .clone()
@@ -785,7 +785,7 @@ pub async fn transfer_wip(
         req.wip_id,
         req.to_process_id,
         req.to_work_station_id,
-        now.naive_utc(),
+        now,
     )
     .execute(&mut *tx)
     .await;
@@ -856,15 +856,15 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: Some(from_process_name.unwrap_or_default()),
+        from_process_name: Some(from_process_name.unwrap_or_default().unwrap_or_default()),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: Some(from_workstation_name.unwrap_or_default()),
+        from_work_station_name: Some(from_workstation_name.unwrap_or_default().unwrap_or_default()),
         to_process_id: transfer.to_process_id,
-        to_process_name: Some(to_process_name.unwrap_or_default()),
+        to_process_name: Some(to_process_name.unwrap_or_default().unwrap_or_default()),
         to_work_station_id: transfer.to_work_station_id,
-        to_work_station_name: Some(to_workstation_name.unwrap_or_default()),
+        to_work_station_name: Some(to_workstation_name.unwrap_or_default().unwrap_or_default()),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
-        transfer_time: transfer.transfer_time.and_utc(),
+        transfer_time: transfer.transfer_time,
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
@@ -936,15 +936,15 @@ pub async fn list_wip_transfers(
             transfer_no: r.transfer_no,
             wip_id: r.wip_id,
             from_process_id: r.from_process_id,
-            from_process_name: Some(r.from_process_name),
+            from_process_name: Some(r.from_process_name.unwrap_or_default()),
             from_work_station_id: r.from_work_station_id,
-            from_work_station_name: Some(r.from_work_station_name),
+            from_work_station_name: Some(r.from_work_station_name.unwrap_or_default()),
             to_process_id: r.to_process_id,
-            to_process_name: Some(r.to_process_name),
+            to_process_name: Some(r.to_process_name.unwrap_or_default()),
             to_work_station_id: r.to_work_station_id,
-            to_work_station_name: Some(r.to_work_station_name),
+            to_work_station_name: Some(r.to_work_station_name.unwrap_or_default()),
             quantity: big_decimal_to_f64(Some(r.quantity)),
-            transfer_time: r.transfer_time.and_utc(),
+            transfer_time: r.transfer_time,
             operator: r.operator,
             transfer_type: r
                 .transfer_type
@@ -1083,7 +1083,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 45, 0)
             .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
+        let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.naive_utc().date(), dt.date());
         assert_eq!(utc.naive_utc().time(), dt.time());
     }
@@ -1102,7 +1102,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(23, 59, 59)
             .unwrap();
-        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
         assert_eq!(r.day(), 28);

@@ -468,8 +468,8 @@ pub async fn get_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -666,8 +666,8 @@ pub async fn create_work_report(
                     order_no: r.order_no,
                     work_station_id: r.work_station_id.map(|u| u.to_string()),
                     work_station_name: r.work_station_name,
-                    reporter_name: r.reporter_name,
-                    report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                    reporter_name: r.reporter_name.unwrap_or_default(),
+                    report_date: r.report_date.to_string(),
                     shift: r.shift,
                     output_quantity: big_decimal_to_f64(r.output_quantity),
                     defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -812,8 +812,8 @@ pub async fn update_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -952,8 +952,8 @@ pub async fn approve_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -1047,8 +1047,8 @@ pub async fn reject_work_report(
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
-                report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
+                reporter_name: r.reporter_name.unwrap_or_default(),
+                report_date: r.report_date.to_string(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
@@ -1248,7 +1248,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(8, 30, 15)
             .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
+        let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.year(), 2024);
         assert_eq!(utc.month(), 5);
         assert_eq!(utc.day(), 20);
@@ -1272,7 +1272,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(3, 4, 5)
             .unwrap();
-        let s = datetime_to_string(Some(dt.and_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
@@ -1289,7 +1289,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(12, 0, 0)
             .unwrap();
-        let r = opt_datetime_to_string(Some(dt.and_utc()));
+        let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }

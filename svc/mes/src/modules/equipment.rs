@@ -790,17 +790,17 @@ pub async fn list_maintenances(
         .into_iter()
         .map(|r| MaintenanceRecord {
             id: r.id,
-            equipment_id: r.equipment_id,
-            equipment_name: Some(r.equipment_name),
-            equipment_no: Some(r.equipment_no),
+            equipment_id: r.equipment_id.unwrap_or_default(),
+            equipment_name: Some(r.equipment_name.unwrap_or_default()),
+            equipment_no: Some(r.equipment_no.unwrap_or_default()),
             maintenance_type: r.maintenance_type,
-            description: Some(r.description),
-            maintainer: r.maintainer,
+            description: Some(r.description.unwrap_or_default()),
+            maintainer: r.maintainer.unwrap_or_default(),
             start_time: r.start_time,
             end_time: r.end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status,
+            status: r.status.unwrap_or_default(),
             remarks: r.remarks,
             created_at: r.created_at,
             updated_at: r.updated_at,
@@ -928,17 +928,17 @@ pub async fn create_maintenance(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: id,
-            equipment_id: equipment_id,
-            equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: Some(equipment_no.unwrap_or_default()),
+            equipment_id: equipment_id.unwrap_or_default(),
+            equipment_name: equipment_name.unwrap_or_default(),
+            equipment_no: equipment_no.unwrap_or_default(),
             maintenance_type: maintenance_type,
-            description: Some(description),
-            maintainer: maintainer,
+            description: Some(description.unwrap_or_default()),
+            maintainer: maintainer.unwrap_or_default(),
             start_time: start_time,
             end_time: end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
             created_at: created_at,
             updated_at: updated_at,
@@ -1035,17 +1035,17 @@ pub async fn update_maintenance_status(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: id,
-            equipment_id: equipment_id,
-            equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: Some(equipment_no.unwrap_or_default()),
+            equipment_id: equipment_id.unwrap_or_default(),
+            equipment_name: equipment_name.unwrap_or_default(),
+            equipment_no: equipment_no.unwrap_or_default(),
             maintenance_type: maintenance_type,
-            description: Some(description),
-            maintainer: maintainer,
+            description: Some(description.unwrap_or_default()),
+            maintainer: maintainer.unwrap_or_default(),
             start_time: start_time,
             end_time: end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
             created_at: created_at,
             updated_at: updated_at,
@@ -1174,11 +1174,11 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.to_string(),
+                    equipment_id: r.equipment_id.map(|d| d.to_string()).unwrap_or_default(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                    inspector: r.inspector,
-                    inspection_date: r.inspection_date,
+                    inspector: r.inspector.unwrap_or_default(),
+                    inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1194,10 +1194,10 @@ pub async fn list_inspections(
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r.items,
+                    items: r.items.map(|s| serde_json::Value::String(s)),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                    created_at: r.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -1304,11 +1304,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.to_string(),
+                equipment_id: r.equipment_id.map(|d| d.to_string()).unwrap_or_default(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                inspector: r.inspector,
-                inspection_date: r.inspection_date,
+                inspector: r.inspector.unwrap_or_default(),
+                inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1324,10 +1324,10 @@ pub async fn create_inspection(
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r.items,
+                items: r.items.map(|s| serde_json::Value::String(s)),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
             },
             "创建点检记录成功",
         )),
@@ -1350,7 +1350,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 45, 0)
             .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
+        let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.naive_utc().date(), dt.date());
         assert_eq!(utc.naive_utc().time(), dt.time());
     }
@@ -1431,7 +1431,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let s = datetime_to_string(Some(dt.and_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
