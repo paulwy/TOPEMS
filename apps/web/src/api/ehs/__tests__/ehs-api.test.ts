@@ -44,7 +44,7 @@ describe('EHS Module API Tests', () => {
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await hazardApi.listHazards({ page: 1, pagesize: 10, search: 'test', status: 'active' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/issues?page=1&pagesize=10&search=test&status=active'
+        '/issues?page=1&page_size=10&search=test&status=active'
       );
     });
 
