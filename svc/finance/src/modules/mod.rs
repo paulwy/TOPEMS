@@ -981,13 +981,15 @@ async fn export_vouchers(
 async fn year_end_close(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<YearEndCloseRequest>,
 ) -> Json<ApiResponse<YearEndCloseResult>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .year_end_close(tenant_id, req.year, &created_by, req.description)
+        .year_end_close(tenant_id, req.year, &created_by, req.description, locale)
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "年末结转成功")),

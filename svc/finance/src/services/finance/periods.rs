@@ -291,6 +291,7 @@ impl FinanceService {
         year: i32,
         created_by: &str,
         description: Option<String>,
+        locale: &str,
     ) -> Result<YearEndCloseResult, TopemsError> {
         let period_pattern = format!("{:04}%", year);
 
@@ -351,10 +352,10 @@ impl FinanceService {
             ));
         }
 
-        let profit_account = match self.get_account_by_code(tenant_id, "3101", "zh").await {
+        let profit_account = match self.get_account_by_code(tenant_id, "3101", locale).await {
             Ok(account) => account,
             Err(_) => self
-                .get_account_by_code(tenant_id, "3103", "zh")
+                .get_account_by_code(tenant_id, "3103", locale)
                 .await
                 .map_err(|_| {
                     TopemsError::ValidationFailed("未找到本年利润科目(3101或3103)".to_string())
