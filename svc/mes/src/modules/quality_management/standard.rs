@@ -213,11 +213,11 @@ pub async fn list_standards(
             for v in value_rows {
                 let sid = v.standard_id;
                 values_map
-                    .entry(sid.unwrap_or_default())
+                    .entry(sid)
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.map(|v| v.to_string()).unwrap_or_default(),
+                        standard_id: sid.to_string(),
                         item_name: v.item_name,
                         lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -347,7 +347,7 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                standard_id: v.standard_id.to_string(),
                 item_name: v.item_name,
                 lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                 upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -369,14 +369,14 @@ pub async fn get_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type.unwrap_or_default(),
+            inspection_type: standard.inspection_type,
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: datetime_to_string(Some(standard.created_at.and_utc())),
-            updated_at: datetime_to_string(Some(standard.updated_at.and_utc())),
+            created_at: datetime_to_string(standard.created_at.map(|d| d.and_utc())),
+            updated_at: datetime_to_string(standard.updated_at.map(|d| d.and_utc())),
         },
         "获取质量标准成功",
     ))
@@ -486,7 +486,7 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                        standard_id: r.standard_id.to_string(),
                         item_name: r.item_name,
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
@@ -516,14 +516,14 @@ pub async fn create_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type.unwrap_or_default(),
+            inspection_type: standard.inspection_type,
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: datetime_to_string(Some(standard.created_at.and_utc())),
-            updated_at: datetime_to_string(Some(standard.updated_at.and_utc())),
+            created_at: datetime_to_string(standard.created_at.map(|d| d.and_utc())),
+            updated_at: datetime_to_string(standard.updated_at.map(|d| d.and_utc())),
         },
         "创建质量标准成功",
     ))
@@ -669,7 +669,7 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                        standard_id: r.standard_id.to_string(),
                         item_name: r.item_name,
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
@@ -703,7 +703,7 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                    standard_id: v.standard_id.to_string(),
                     item_name: v.item_name,
                     lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                     upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -727,14 +727,14 @@ pub async fn update_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type.unwrap_or_default(),
+            inspection_type: standard.inspection_type,
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: datetime_to_string(Some(standard.created_at.and_utc())),
-            updated_at: datetime_to_string(Some(standard.updated_at.and_utc())),
+            created_at: datetime_to_string(standard.created_at.map(|d| d.and_utc())),
+            updated_at: datetime_to_string(standard.updated_at.map(|d| d.and_utc())),
         },
         "更新质量标准成功",
     ))

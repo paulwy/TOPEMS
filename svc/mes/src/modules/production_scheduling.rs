@@ -427,7 +427,7 @@ pub async fn create_production_schedule(
         None
     };
 
-    let order_no_flat = order_no.flatten();
+    let order_no_flat = order_no;
     let order_no_arg = order_no_flat.as_deref();
     let result = sqlx::query!(
         r#"
@@ -497,8 +497,8 @@ pub async fn create_production_schedule(
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: result.created_at.and_utc(),
-        updated_at: result.updated_at.and_utc(),
+        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -576,11 +576,11 @@ pub async fn get_production_schedule(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
-                work_station_name: r.work_station_name,
+                work_station_name: Some(r.work_station_name),
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
-                equipment_name: r.equipment_name,
+                equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
-                process_name: r.process_name,
+                process_name: Some(r.process_name),
                 planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
                 planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
                 actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
@@ -589,8 +589,8 @@ pub async fn get_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -699,8 +699,8 @@ pub async fn update_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
@@ -894,8 +894,8 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone().unwrap_or_default(),
-                name: resource_name.clone().unwrap_or_default(),
+                id: resource_name.clone(),
+                name: resource_name.clone(),
                 category: "workstation".to_string(),
             });
         }
@@ -907,7 +907,7 @@ pub async fn get_gantt_data(
             end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
-            resource: resource_name,
+            resource: Some(resource_name),
             parent: None,
         });
     }

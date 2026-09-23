@@ -389,7 +389,7 @@ pub async fn create_wip(
         None
     };
 
-    let order_no_flat = order_no.flatten();
+    let order_no_flat = order_no;
     let order_no_arg = order_no_flat.as_deref();
     let result = sqlx::query!(
         r#"
@@ -450,8 +450,8 @@ pub async fn create_wip(
         last_transfer_time: result.last_transfer_time.map(|d| d.and_utc()),
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.and_utc(),
-        updated_at: result.updated_at.and_utc(),
+        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -519,17 +519,17 @@ pub async fn get_wip(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
-                current_process_name: r.process_name,
+                current_process_name: Some(r.process_name),
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: r.work_station_name,
+                current_work_station_name: Some(r.work_station_name),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
                 start_time: r.start_time.map(|d| d.and_utc()),
                 last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -616,8 +616,8 @@ pub async fn update_wip(
                 last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -856,13 +856,13 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: from_process_name.unwrap_or_default(),
+        from_process_name: Some(from_process_name.unwrap_or_default()),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: from_workstation_name.unwrap_or_default(),
+        from_work_station_name: Some(from_workstation_name.unwrap_or_default()),
         to_process_id: transfer.to_process_id,
-        to_process_name: to_process_name.unwrap_or_default(),
+        to_process_name: Some(to_process_name.unwrap_or_default()),
         to_work_station_id: transfer.to_work_station_id,
-        to_work_station_name: to_workstation_name.unwrap_or_default(),
+        to_work_station_name: Some(to_workstation_name.unwrap_or_default()),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
         transfer_time: transfer.transfer_time.and_utc(),
         operator: transfer.operator,
@@ -936,13 +936,13 @@ pub async fn list_wip_transfers(
             transfer_no: r.transfer_no,
             wip_id: r.wip_id,
             from_process_id: r.from_process_id,
-            from_process_name: r.from_process_name,
+            from_process_name: Some(r.from_process_name),
             from_work_station_id: r.from_work_station_id,
-            from_work_station_name: r.from_work_station_name,
+            from_work_station_name: Some(r.from_work_station_name),
             to_process_id: r.to_process_id,
-            to_process_name: r.to_process_name,
+            to_process_name: Some(r.to_process_name),
             to_work_station_id: r.to_work_station_id,
-            to_work_station_name: r.to_work_station_name,
+            to_work_station_name: Some(r.to_work_station_name),
             quantity: big_decimal_to_f64(Some(r.quantity)),
             transfer_time: r.transfer_time.and_utc(),
             operator: r.operator,

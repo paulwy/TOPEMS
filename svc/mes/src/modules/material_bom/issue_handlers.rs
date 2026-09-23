@@ -51,7 +51,7 @@ pub async fn create_material_issue(
         }
     };
 
-    let order_no_flat = order_no.flatten();
+    let order_no_flat = order_no;
     let order_no_arg = order_no_flat.as_deref();
     let issue_result = sqlx::query!(
         r#"
@@ -131,8 +131,8 @@ pub async fn create_material_issue(
         operator_id: issue.operator_id.map(|u| u.to_string()),
         issue_time: opt_datetime_to_string(issue.issue_time.map(|d| d.and_utc())),
         notes: issue.notes,
-        created_at: datetime_to_string(Some(issue.created_at.and_utc())),
-        updated_at: datetime_to_string(Some(issue.updated_at.and_utc())),
+        created_at: datetime_to_string(issue.created_at.map(|d| d.and_utc())),
+        updated_at: datetime_to_string(issue.updated_at.map(|d| d.and_utc())),
     };
 
     Json(ApiResponse::success(response, "物料领用单创建成功"))
@@ -348,8 +348,8 @@ pub async fn get_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": opt_datetime_to_string(issue.issue_time.map(|d| d.and_utc())),
         "notes": issue.notes,
-        "created_at": datetime_to_string(Some(issue.created_at.and_utc())),
-        "updated_at": datetime_to_string(Some(issue.updated_at.and_utc())),
+        "created_at": datetime_to_string(issue.created_at.map(|d| d.and_utc())),
+        "updated_at": datetime_to_string(issue.updated_at.map(|d| d.and_utc())),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -425,8 +425,8 @@ pub async fn update_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": opt_datetime_to_string(issue.issue_time.map(|d| d.and_utc())),
         "notes": issue.notes,
-        "created_at": datetime_to_string(Some(issue.created_at.and_utc())),
-        "updated_at": datetime_to_string(Some(issue.updated_at.and_utc())),
+        "created_at": datetime_to_string(issue.created_at.map(|d| d.and_utc())),
+        "updated_at": datetime_to_string(issue.updated_at.map(|d| d.and_utc())),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

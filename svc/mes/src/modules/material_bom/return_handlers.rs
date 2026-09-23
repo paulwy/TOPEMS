@@ -51,7 +51,7 @@ pub async fn create_material_return(
         }
     };
 
-    let order_no_flat = order_no.flatten();
+    let order_no_flat = order_no;
     let order_no_arg = order_no_flat.as_deref();
     let return_result = sqlx::query!(
         r#"
@@ -127,8 +127,8 @@ pub async fn create_material_return(
         operator_id: return_record.operator_id.map(|u| u.to_string()),
         return_time: opt_datetime_to_string(return_record.return_time.map(|d| d.and_utc())),
         notes: return_record.notes,
-        created_at: datetime_to_string(Some(return_record.created_at.and_utc())),
-        updated_at: datetime_to_string(Some(return_record.updated_at.and_utc())),
+        created_at: datetime_to_string(return_record.created_at.map(|d| d.and_utc())),
+        updated_at: datetime_to_string(return_record.updated_at.map(|d| d.and_utc())),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -338,8 +338,8 @@ pub async fn get_material_return(
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": opt_datetime_to_string(return_record.return_time.map(|d| d.and_utc())),
         "notes": return_record.notes,
-        "created_at": datetime_to_string(Some(return_record.created_at.and_utc())),
-        "updated_at": datetime_to_string(Some(return_record.updated_at.and_utc())),
+        "created_at": datetime_to_string(return_record.created_at.map(|d| d.and_utc())),
+        "updated_at": datetime_to_string(return_record.updated_at.map(|d| d.and_utc())),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "return_id": i.return_id.to_string(),
@@ -414,8 +414,8 @@ pub async fn update_material_return(
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": opt_datetime_to_string(return_record.return_time.map(|d| d.and_utc())),
         "notes": return_record.notes,
-        "created_at": datetime_to_string(Some(return_record.created_at.and_utc())),
-        "updated_at": datetime_to_string(Some(return_record.updated_at.and_utc())),
+        "created_at": datetime_to_string(return_record.created_at.map(|d| d.and_utc())),
+        "updated_at": datetime_to_string(return_record.updated_at.map(|d| d.and_utc())),
     });
 
     Json(ApiResponse::success(return_json, "物料退库单更新成功"))

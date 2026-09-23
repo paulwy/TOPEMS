@@ -154,7 +154,7 @@ pub async fn get_dashboard(
     .await;
 
     let today_output_val = match today_output {
-        Ok(r) => r.today_output.unwrap_or_default(),
+        Ok(r) => r.today_output.unwrap_or_default() as f64,
         Err(e) => {
             tracing::error!("Failed to fetch today output: {}", e);
             0.0
@@ -247,12 +247,12 @@ pub async fn get_dashboard(
                 };
                 OrderProgressResponse {
                     order_id: r.id.to_string(),
-                    order_number: r.order_no.unwrap_or_default(),
+                    order_number: r.order_no,
                     product_name: r.product_name,
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                 }
             })
             .collect(),
@@ -506,12 +506,12 @@ pub async fn get_order_progress(
             };
             OrderProgressResponse {
                 order_id: r.id.to_string(),
-                order_number: r.order_no.unwrap_or_default(),
+                order_number: r.order_no,
                 product_name: r.product_name,
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,
-                status: r.status.unwrap_or_default(),
+                status: r.status,
             }
         })
         .collect();

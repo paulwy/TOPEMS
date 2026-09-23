@@ -790,20 +790,20 @@ pub async fn list_maintenances(
         .into_iter()
         .map(|r| MaintenanceRecord {
             id: r.id,
-            equipment_id: r.equipment_id.unwrap_or_default(),
-            equipment_name: r.equipment_name,
-            equipment_no: r.equipment_no,
+            equipment_id: r.equipment_id,
+            equipment_name: Some(r.equipment_name),
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: r.description,
-            maintainer: r.maintainer.unwrap_or_default(),
-            start_time: r.start_time.and_utc(),
-            end_time: r.end_time.map(|d| d.and_utc()),
+            description: Some(r.description),
+            maintainer: r.maintainer,
+            start_time: r.start_time,
+            end_time: r.end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status.unwrap_or_default(),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.and_utc(),
-            updated_at: r.updated_at.and_utc(),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -876,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time.naive_utc(),
-        end_time.map(|d| d.naive_utc()),
+        start_time,
+        end_time,
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -928,20 +928,20 @@ pub async fn create_maintenance(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: id,
-            equipment_id: equipment_id.unwrap_or_default(),
-            equipment_name: equipment_name.unwrap_or_default(),
-            equipment_no: equipment_no.unwrap_or_default(),
+            equipment_id: equipment_id,
+            equipment_name: Some(equipment_name.unwrap_or_default()),
+            equipment_no: Some(equipment_no.unwrap_or_default()),
             maintenance_type: maintenance_type,
-            description: description,
-            maintainer: maintainer.unwrap_or_default(),
-            start_time: start_time.and_utc(),
-            end_time: end_time.map(|d| d.and_utc()),
+            description: Some(description),
+            maintainer: maintainer,
+            start_time: start_time,
+            end_time: end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status.unwrap_or_default(),
+            status: status,
             remarks: result.remarks,
-            created_at: created_at.and_utc(),
-            updated_at: updated_at.and_utc(),
+            created_at: created_at,
+            updated_at: updated_at,
         },
         "维护记录创建成功",
     ))
@@ -988,7 +988,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1035,20 +1035,20 @@ pub async fn update_maintenance_status(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: id,
-            equipment_id: equipment_id.unwrap_or_default(),
-            equipment_name: equipment_name.unwrap_or_default(),
-            equipment_no: equipment_no.unwrap_or_default(),
+            equipment_id: equipment_id,
+            equipment_name: Some(equipment_name.unwrap_or_default()),
+            equipment_no: Some(equipment_no.unwrap_or_default()),
             maintenance_type: maintenance_type,
-            description,
-            maintainer: maintainer.unwrap_or_default(),
-            start_time: start_time.and_utc(),
-            end_time: end_time.map(|d| d.and_utc()),
+            description: Some(description),
+            maintainer: maintainer,
+            start_time: start_time,
+            end_time: end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status.unwrap_or_default(),
+            status: status,
             remarks: result.remarks,
-            created_at: created_at.and_utc(),
-            updated_at: updated_at.and_utc(),
+            created_at: created_at,
+            updated_at: updated_at,
         },
         "维护状态更新成功",
     ))
@@ -1174,11 +1174,11 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
+                    equipment_id: r.equipment_id.to_string(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                    inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
+                    inspector: r.inspector,
+                    inspection_date: r.inspection_date,
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1194,10 +1194,10 @@ pub async fn list_inspections(
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r.items.map(|v| serde_json::Value::String(v)),
+                    items: r.items,
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 })
                 .collect();
 
@@ -1304,11 +1304,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
+                equipment_id: r.equipment_id.to_string(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
-                inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
+                inspector: r.inspector,
+                inspection_date: r.inspection_date,
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1324,10 +1324,10 @@ pub async fn create_inspection(
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r.items.map(|v| serde_json::Value::String(v)),
+                items: r.items,
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
             },
             "创建点检记录成功",
         )),
