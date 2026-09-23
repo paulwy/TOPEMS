@@ -541,6 +541,7 @@ D
 - [x] 链路实测（经 8099 + token）：iam 登录 ✓；pm/tasks、mes/work-orders、crm/customers、erp/materials、scm/purchase-orders|suppliers、qms/apqp/projects|risks 全部 200；无 token 401 拦截正常；qms 真实路径为 /apqp/* 等（inspections 等为猜错路径）
 - [x] 前端仍指向 VITE_API_BASE_URL=localhost:8000（不消费 8099）；聚合 server 为演示/备用入口
 
+D
 ---
 
 ## 2026-09-23 P2 决策任务落地
@@ -560,3 +561,4 @@ D
   - [x] P2-4：数据迁移（lims.samples → qa_lab_samples）✅（已完成）
   - [x] P2-5：删除 lims.samples 表 ✅（已完成，表不存在）
   - [x] P2-6：验证 lims 列表 API ✅（API 返回 401 未授权，正常工作）
+
