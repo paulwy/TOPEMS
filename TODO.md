@@ -383,3 +383,48 @@
 - 但那个版本也有 349 个错误（在线编译）
 - 需要先统一辅助函数签名，然后再推送
 - 推送前需要和 TRAE 协调，避免再次冲突
+
+---
+
+## 2026-09-23 MES 编译错误系统性修复（363 个错误）
+
+### 问题背景
+- 数据库 schema 是 timestamptz，sqlx 返回 DateTime<Utc>
+- 但代码中有些地方期望 NaiveDateTime
+- 这导致大量类型不匹配错误（297 个 E0308）
+
+### 错误分布
+- work_order.rs: 98 个
+- material_requirement.rs: 48 个
+- production_order.rs: 47 个
+- process_route.rs: 45 个
+- work_report.rs: 40 个
+
+### 错误类型
+- E0308: mismatched types（297 个）
+- E0599: Option<Uuid> doesn't implement Display（20 个）
+- E0599: no method named unwrap_or_default found for String（11 个）
+- E0599: no method named to_rfc3339 found for NaiveDateTime（10 个）
+- E0605: non-primitive cast: BigDecimal as f64（7 个）
+
+### 统一原则（对齐 CRM 模块）
+- 数据库 schema：timestamptz
+- 代码 struct：DateTime<Utc>
+- 辅助函数：直接用 .to_rfc3339()，不需要辅助函数
+
+### 修复计划
+- [ ] P0-1：统一所有辅助函数签名为 DateTime<Utc>
+  - 修改 9 个文件中的 datetime_to_string 函数定义
+  - 修改 2 个文件中的 opt_datetime_to_string 函数定义
+- [ ] P0-2：修改调用点，把 NaiveDateTime 转换为 DateTime<Utc>
+  - 在需要的地方加 .and_utc() 或 .map(|d| d.and_utc())
+- [ ] P0-3：修复其他类型错误
+  - 去掉对 String 的 unwrap_or_default() 调用
+  - 对 Option<Uuid> 用 .map(|id| id.to_string())
+  - 修复 BigDecimal as f64 类型转换
+- [ ] P0-4：重新生成 .sqlx 缓存
+- [ ] P0-5：验证编译通过
+
+### 已修复
+- [x] process_flow.rs 的 tenant_id 问题（work_stations 表没有 tenant_id 列）
+- [x] production_order.rs 的类型推断问题（$1 用在两个不同类型的字段上）
