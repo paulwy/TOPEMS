@@ -50,18 +50,18 @@ const PLAN_STORAGE_KEY = 'current_tenant_plan';
  * - 其他/未设置 → basic（默认）
  */
 function mapBackendPlanToTier(plan: string | null | undefined): PlanTier {
-  if (!plan) return PlanTier.Basic;
+  if (!plan) return PlanTier.BASIC;
   switch (plan.toLowerCase()) {
     case 'free':
-      return PlanTier.Free;
+      return PlanTier.FREE;
     case 'basic':
-      return PlanTier.Basic;
+      return PlanTier.BASIC;
     case 'pro':
     case 'enterprise':
     case 'advanced':
-      return PlanTier.Advanced;
+      return PlanTier.ADVANCED;
     default:
-      return PlanTier.Basic;
+      return PlanTier.BASIC;
   }
 }
 
@@ -182,9 +182,9 @@ export function useTier(): UseTierReturn {
     availableModules,
     unavailableModules,
     getModuleMinTier,
-    isAdvanced: tier === PlanTier.Advanced,
-    isBasicOrAbove: tier !== PlanTier.Free,
-    isFree: tier === PlanTier.Free,
+    isAdvanced: tier === PlanTier.ADVANCED,
+    isBasicOrAbove: tier !== PlanTier.FREE,
+    isFree: tier === PlanTier.FREE,
   };
 }
 

@@ -686,6 +686,14 @@ D
 ## 下一步任务规划（2026-09-24）
 
 ### 🔥 P0 - 紧急重要（本周完成）
+- [x] **P0-5 架构蓝图运行时验收（第一轮，2026-09-24）**
+  - [x] 私有化单进程：唯一 topems-server 进程（PID 61449）承载全模块 ✅
+  - [x] 事件总线 Redis Stream 活跃：25+ 事件流（HealthCheck 123 / CacheInvalidated 44 / QmsQualityIssueCreated 29 等）✅
+  - [x] 消费者组 ACK：portal-bff-group pending=0（已投递消息全 ACK）✅
+  - [x] DLQ 为空（0 死信）✅
+  - [ ] 发现项 A：/health=degraded 根因——当前进程未注入 MONOLITH_SERVICE_URL，IAM 探活仍走 .env 的 IAM_SERVICE_URL=:8000（独立端口无服务）；修复=按 scripts/run_monolith.sh 重启（注入 MONOLITH_SERVICE_URL + 30 个 SERVICE_URL 指向 :8099），待执行
+  - [ ] 发现项 B：AI embedding 依赖 Ollama:11434 未运行（外部依赖，文档索引失败，与 staging 部署验证同类）
+  - [ ] 待验证：Copilot 响应 <1s / 工具成功率 >99%（需 LLM 环境）/ tier 权限自动关联（需构造多 tier token）/ 前端 <2s（P0-4）
 - [ ] **P0-1 前端 typecheck + lint** ← 当前任务
   - 确保前端代码质量
   - 修复所有 typecheck 错误

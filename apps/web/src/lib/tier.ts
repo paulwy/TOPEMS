@@ -14,16 +14,16 @@ import i18n from '@/i18n';
 
 /** 订阅层级 */
 export enum PlanTier {
-  Free = 'free',
-  Basic = 'basic',
-  Advanced = 'advanced',
+  FREE = 'free',
+  BASIC = 'basic',
+  ADVANCED = 'advanced',
 }
 
 /** 层级排序值（用于比较） */
 export const TIER_LEVEL: Record<PlanTier, number> = {
-  [PlanTier.Free]: 0,
-  [PlanTier.Basic]: 1,
-  [PlanTier.Advanced]: 2,
+  [PlanTier.FREE]: 0,
+  [PlanTier.BASIC]: 1,
+  [PlanTier.ADVANCED]: 2,
 };
 
 /** 模块功能定义 */
@@ -52,7 +52,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'iam',
     name: i18n.t('components.tier.free.iam.name'),
     description: i18n.t('components.tier.free.iam.description'),
-    minTier: PlanTier.Free,
+    minTier: PlanTier.FREE,
     features: [
       i18n.t('components.tier.free.iam.features.0'),
       i18n.t('components.tier.free.iam.features.1'),
@@ -64,7 +64,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'tenant',
     name: i18n.t('components.tier.free.tenant.name'),
     description: i18n.t('components.tier.free.tenant.description'),
-    minTier: PlanTier.Free,
+    minTier: PlanTier.FREE,
     features: [
       i18n.t('components.tier.free.tenant.features.0'),
       i18n.t('components.tier.free.tenant.features.1'),
@@ -75,7 +75,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'master-data',
     name: i18n.t('components.tier.free.master-data.name'),
     description: i18n.t('components.tier.free.master-data.description'),
-    minTier: PlanTier.Free,
+    minTier: PlanTier.FREE,
     features: [
       i18n.t('components.tier.free.master-data.features.0'),
       i18n.t('components.tier.free.master-data.features.1'),
@@ -86,7 +86,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'ticket',
     name: i18n.t('components.tier.free.ticket.name'),
     description: i18n.t('components.tier.free.ticket.description'),
-    minTier: PlanTier.Free,
+    minTier: PlanTier.FREE,
     features: [
       i18n.t('components.tier.free.ticket.features.0'),
       i18n.t('components.tier.free.ticket.features.1'),
@@ -97,7 +97,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'communication',
     name: i18n.t('components.tier.free.communication.name'),
     description: i18n.t('components.tier.free.communication.description'),
-    minTier: PlanTier.Free,
+    minTier: PlanTier.FREE,
     features: [
       i18n.t('components.tier.free.communication.features.0'),
       i18n.t('components.tier.free.communication.features.1'),
@@ -109,7 +109,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'mes',
     name: i18n.t('components.tier.basic.mes.name'),
     description: i18n.t('components.tier.basic.mes.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.mes.features.0'),
       i18n.t('components.tier.basic.mes.features.1'),
@@ -122,7 +122,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'wms',
     name: i18n.t('components.tier.basic.wms.name'),
     description: i18n.t('components.tier.basic.wms.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.wms.features.0'),
       i18n.t('components.tier.basic.wms.features.1'),
@@ -134,7 +134,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'qms',
     name: i18n.t('components.tier.basic.qms.name'),
     description: i18n.t('components.tier.basic.qms.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.qms.features.0'),
       i18n.t('components.tier.basic.qms.features.1'),
@@ -146,7 +146,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'scm',
     name: i18n.t('components.tier.basic.scm.name'),
     description: i18n.t('components.tier.basic.scm.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.scm.features.0'),
       i18n.t('components.tier.basic.scm.features.1'),
@@ -157,7 +157,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'srm',
     name: i18n.t('components.tier.basic.srm.name'),
     description: i18n.t('components.tier.basic.srm.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.srm.features.0'),
       i18n.t('components.tier.basic.srm.features.1'),
@@ -168,7 +168,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'crm',
     name: i18n.t('components.tier.basic.crm.name'),
     description: i18n.t('components.tier.basic.crm.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.crm.features.0'),
       i18n.t('components.tier.basic.crm.features.1'),
@@ -179,7 +179,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'finance',
     name: i18n.t('components.tier.basic.finance.name'),
     description: i18n.t('components.tier.basic.finance.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.finance.features.0'),
       i18n.t('components.tier.basic.finance.features.1'),
@@ -190,7 +190,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'hrm',
     name: i18n.t('components.tier.basic.hrm.name'),
     description: i18n.t('components.tier.basic.hrm.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.hrm.features.0'),
       i18n.t('components.tier.basic.hrm.features.1'),
@@ -201,7 +201,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'analytics',
     name: i18n.t('components.tier.basic.analytics.name'),
     description: i18n.t('components.tier.basic.analytics.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [
       i18n.t('components.tier.basic.analytics.features.0'),
       i18n.t('components.tier.basic.analytics.features.1'),
@@ -212,14 +212,14 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'erp',
     name: i18n.t('components.tier.basic.erp.name'),
     description: i18n.t('components.tier.basic.erp.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [i18n.t('components.tier.basic.erp.features.0')],
   },
   {
     module: 'ehs',
     name: i18n.t('components.tier.basic.ehs.name'),
     description: i18n.t('components.tier.basic.ehs.description'),
-    minTier: PlanTier.Basic,
+    minTier: PlanTier.BASIC,
     features: [i18n.t('components.tier.basic.ehs.features.0')],
   },
 
@@ -228,7 +228,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'ai',
     name: i18n.t('components.tier.advanced.ai.name'),
     description: i18n.t('components.tier.advanced.ai.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.ai.features.0'),
       i18n.t('components.tier.advanced.ai.features.1'),
@@ -240,7 +240,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'lims',
     name: i18n.t('components.tier.advanced.lims.name'),
     description: i18n.t('components.tier.advanced.lims.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.lims.features.0'),
       i18n.t('components.tier.advanced.lims.features.1'),
@@ -252,7 +252,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'pdm',
     name: i18n.t('components.tier.advanced.pdm.name'),
     description: i18n.t('components.tier.advanced.pdm.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.pdm.features.0'),
       i18n.t('components.tier.advanced.pdm.features.1'),
@@ -263,7 +263,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'rd',
     name: i18n.t('components.tier.advanced.rd.name'),
     description: i18n.t('components.tier.advanced.rd.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.rd.features.0'),
       i18n.t('components.tier.advanced.rd.features.1'),
@@ -273,7 +273,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'pm',
     name: i18n.t('components.tier.advanced.pm.name'),
     description: i18n.t('components.tier.advanced.pm.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.pm.features.0'),
       i18n.t('components.tier.advanced.pm.features.1'),
@@ -284,7 +284,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'tms',
     name: i18n.t('components.tier.advanced.tms.name'),
     description: i18n.t('components.tier.advanced.tms.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.tms.features.0'),
       i18n.t('components.tier.advanced.tms.features.1'),
@@ -294,7 +294,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'gis',
     name: i18n.t('components.tier.advanced.gis.name'),
     description: i18n.t('components.tier.advanced.gis.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.gis.features.0'),
       i18n.t('components.tier.advanced.gis.features.1'),
@@ -304,7 +304,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'monitor',
     name: i18n.t('components.tier.advanced.monitor.name'),
     description: i18n.t('components.tier.advanced.monitor.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.monitor.features.0'),
       i18n.t('components.tier.advanced.monitor.features.1'),
@@ -314,7 +314,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'integration',
     name: i18n.t('components.tier.advanced.integration.name'),
     description: i18n.t('components.tier.advanced.integration.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.integration.features.0'),
       i18n.t('components.tier.advanced.integration.features.1'),
@@ -324,7 +324,7 @@ export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
     module: 'search',
     name: i18n.t('components.tier.advanced.search.name'),
     description: i18n.t('components.tier.advanced.search.description'),
-    minTier: PlanTier.Advanced,
+    minTier: PlanTier.ADVANCED,
     features: [
       i18n.t('components.tier.advanced.search.features.0'),
       i18n.t('components.tier.advanced.search.features.1'),
@@ -341,16 +341,16 @@ const MODULE_MAP: Map<string, ModuleFeature> = new Map(
  * 从字符串解析层级
  */
 export function parsePlanTier(s: string | null | undefined): PlanTier {
-  if (!s) return PlanTier.Basic;
+  if (!s) return PlanTier.BASIC;
   switch (s.toLowerCase()) {
     case 'free':
-      return PlanTier.Free;
+      return PlanTier.FREE;
     case 'basic':
-      return PlanTier.Basic;
+      return PlanTier.BASIC;
     case 'advanced':
-      return PlanTier.Advanced;
+      return PlanTier.ADVANCED;
     default:
-      return PlanTier.Basic;
+      return PlanTier.BASIC;
   }
 }
 
@@ -426,9 +426,9 @@ export function filterModulesByTier<T extends { module?: string; path?: string }
  */
 export function getTierStats(): Record<PlanTier, number> {
   const stats: Record<PlanTier, number> = {
-    [PlanTier.Free]: 0,
-    [PlanTier.Basic]: 0,
-    [PlanTier.Advanced]: 0,
+    [PlanTier.FREE]: 0,
+    [PlanTier.BASIC]: 0,
+    [PlanTier.ADVANCED]: 0,
   };
   for (const m of TIER_FEATURE_MATRIX) {
     stats[m.minTier]++;
