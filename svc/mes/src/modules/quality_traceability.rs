@@ -226,7 +226,7 @@ pub async fn forward_traceability(
         code: order.order_no.clone().unwrap_or_default(),
         quantity: order.completed_quantity.map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
-        batch_no: Some(format!("BATCH{}", order.order_no.to_string())),
+        batch_no: Some(format!("BATCH{}", order.order_no.unwrap_or_default())),
         status: order.status.clone(),
         timestamp: order
             .actual_end_date
