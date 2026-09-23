@@ -669,10 +669,11 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -688,7 +689,8 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);

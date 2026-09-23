@@ -1247,7 +1247,8 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 5, 20)
             .unwrap()
             .and_hms_opt(8, 30, 15)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.year(), 2024);
         assert_eq!(utc.month(), 5);
@@ -1271,7 +1272,8 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 1, 2)
             .unwrap()
             .and_hms_opt(3, 4, 5)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
@@ -1288,7 +1290,8 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 6, 15)
             .unwrap()
             .and_hms_opt(12, 0, 0)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));

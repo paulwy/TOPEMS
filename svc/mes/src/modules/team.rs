@@ -732,10 +732,11 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -751,7 +752,8 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
