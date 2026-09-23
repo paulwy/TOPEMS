@@ -567,7 +567,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 45, 0)
             .unwrap();
-        let utc = naive_to_utc(Some(dt));
+        let utc = naive_to_utc(Some(dt.and_utc()));
         assert_eq!(utc.naive_utc().date(), dt.date());
         assert_eq!(utc.naive_utc().time(), dt.time());
     }
@@ -586,7 +586,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(23, 59, 59)
             .unwrap();
-        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
         assert_eq!(r.day(), 28);

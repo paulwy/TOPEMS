@@ -34,7 +34,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 45, 0)
             .unwrap();
-        let utc = naive_to_utc(Some(dt));
+        let utc = naive_to_utc(Some(dt.and_utc()));
         assert_eq!(utc.naive_utc().date(), dt.date());
         assert_eq!(utc.naive_utc().time(), dt.time());
     }
@@ -53,7 +53,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(23, 59, 59)
             .unwrap();
-        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
         assert_eq!(r.day(), 28);
@@ -72,14 +72,14 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.and_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
         let s = datetime_to_string(None);
-        assert!(s.contains('T'));
+        assert!(s.is_empty());
     }
 
     #[test]
@@ -88,7 +88,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(12, 0, 0)
             .unwrap();
-        let r = opt_datetime_to_string(Some(dt));
+        let r = opt_datetime_to_string(Some(dt.and_utc()));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
@@ -128,7 +128,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(23, 59, 59)
             .unwrap();
-        let utc = naive_to_utc(Some(dt));
+        let utc = naive_to_utc(Some(dt.and_utc()));
         assert_eq!(utc.naive_utc().date(), dt.date());
     }
 
@@ -138,7 +138,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let r = opt_naive_to_utc(Some(dt)).unwrap();
+        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.hour(), 0);
     }

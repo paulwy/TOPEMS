@@ -1248,7 +1248,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(8, 30, 15)
             .unwrap();
-        let utc = naive_to_utc(Some(dt));
+        let utc = naive_to_utc(Some(dt.and_utc()));
         assert_eq!(utc.year(), 2024);
         assert_eq!(utc.month(), 5);
         assert_eq!(utc.day(), 20);
@@ -1272,19 +1272,14 @@ mod tests {
             .unwrap()
             .and_hms_opt(3, 4, 5)
             .unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.and_utc()));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
     #[test]
-    fn datetime_to_string_none_is_valid_rfc3339() {
+    fn datetime_to_string_none_returns_empty() {
         let s = datetime_to_string(None);
-        assert!(s.contains('T'), "got {}", s);
-        assert!(
-            s.contains("2024") || s.contains("2025") || s.contains("2026"),
-            "got {}",
-            s
-        );
+        assert!(s.is_empty(), "got {}", s);
     }
 
     // ---- opt_datetime_to_string ----
@@ -1294,7 +1289,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(12, 0, 0)
             .unwrap();
-        let r = opt_datetime_to_string(Some(dt));
+        let r = opt_datetime_to_string(Some(dt.and_utc()));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
