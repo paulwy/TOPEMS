@@ -14,6 +14,7 @@
 | 2 | `svc/mes/.sqlx` 离线缓存残留（prepare 中断产生，类型与真库不符） | 离线编译报 167 类错误，误导会话按错误类型改写代码 | `mes_guard.sh` 编译前强制 `rm .sqlx` |
 | 3 | 并发会话基于旧缓存/旧分支认知改写代码（把 `Vec<String>` 改回 `Vec<serde_json::Value>`、在非 Option 字段上加 `unwrap_or_default`） | 修复被反复回退，编译回归 | CI `mes-online-check` 在线编译强制 0 error |
 | 4 | 结构变更（迁移/建表）后无自动化验证 | 漂移悄然累积，直到下次编译才暴露 | 快照同步 + CI 门禁 |
+| 5 | **代码模式错误**：在 `DateTime<Utc>` 上调用不存在的 `.and_utc()`（chrono 0.4.45 仅 `NaiveDateTime` 有此方法）、在非 Option 类型上调 `.unwrap_or_default()`、目标 Option 字段直接赋裸值（缺 `Some` 包装） | 在线实测 474 错；会话声称"1→0"但每次提交只修少量错误（8→5→1→0），初始错误总量远超其计数（离线假象延续） | 在线编译守卫 + 按报错行精确修复（详见 §3.6） |
 
 **核心原则：一切以“连接真实 PostgreSQL 的在线解析”为准，禁止以离线缓存、旧分支假设为准。**
 
@@ -79,6 +80,9 @@ git add fixtures/mes_compile_schema.sql
 2. `git status` 确认是否有并发会话正在改 mes 文件（若 TRAE/其他会话活跃，先协调，勿对抗）。
 3. 检查 5432 是否出现新遮蔽：`scripts/mes_guard.sh --skip-compile`。
 4. 若错误是 `unwrap_or_default on String/Uuid/i32`、`and_utc on timestamptz` 等 → 说明有人按“Option 假设”写了代码，而真库列是 `NOT NULL`/`timestamptz`。以 `information_schema.columns.is_nullable` 为权威修正。
+   - **`and_utc` 处置**：先确认调用对象的类型——`NaiveDateTime::and_utc()` 是 chrono 0.4.31+ 合法 API（保留）；`DateTime<Tz>::and_utc()` 在 chrono **0.4.45（当前最新）中不存在**（编译错误 `method not found in DateTime<Utc>`）——若对象已是 `DateTime<Utc>`，直接删 `.and_utc()`（语义等价）；若要转换时区用 `.with_timezone(&Utc)`。
+   - **`unwrap_or_default` 处置**：该方法只属于 `Option`——对 String/DateTime/i32/Uuid 等非 Option 调用是编译错误，直接删调用（值已存在，等价取值）；不要改字段类型去迁就错误调用。
+   - **E0308 处置**：目标字段 `Option<X>` 而源值是裸 `X` → 包 `Some(...)`（编译器 help 通常直接给出）；反向（目标非 Option、源 `Option<X>`）→ 按业务语义解包。逐处判断，禁止整文件无脑 sed。
 5. 若错误是 `unrecognized configuration parameter app.tenant_id` → 编译库缺 GUC 注册，重跑 `--sync-snapshot`（头部 DO 块会注册）。
 
 ### 3.4 CI 红了怎么办
@@ -113,6 +117,33 @@ scripts/mes_guard.sh                        # 在线 0 error（含遮蔽检查�
 - **运行时查询**（`sqlx::query`）不产生缓存，改动不受 prepare 影响。
 - prepare 后**必须提交根 `.sqlx`**（326 个缓存，含 47 个 mes 新/更新），否则团队离线编译仍用旧缓存、双真相复发。
 - `--prepare` 幂等：重复执行不产生额外 diff（已实测 0 diff）。
+
+### 3.6 2026-09-23 事件复盘：chrono API 误用 + Option 误用（474 错根因）
+
+**事件**：TRAE 连续 5 个提交声称 mes 编译"8→5→1→0 全部修复"，但按在线配方实测仍有 **474 个错误**（E0599×328 + E0308×149）。
+
+**根因三层**（全部为代码模式错误，与数据库漂移无关）：
+
+1. **`DateTime<Utc>::and_utc()` 不存在**（136 处）：chrono **0.4.45 已是 crates.io 最新版**，源码中只有 `NaiveDateTime::and_utc`；`DateTime<Tz>` 上无此方法。TRAE 按"新 chrono"假设书写，所有环境都无法编译。
+2. **非 Option 上调 `.unwrap_or_default()`**（127 处）：TRAE 把字段改成非 Option（String/DateTime/i32/Uuid）后，调用处未同步——`unwrap_or_default` 只属于 `Option`。
+3. **E0308 类型不匹配**（~285 处，其中 149 个为原始计数）：目标结构体字段 `Option<X>` 直接赋裸值 `X`（缺 `Some` 包装），及少量反向（目标非 Option、源 `Option<X>`）。
+
+**为什么"声称 1→0"与实际 474 错矛盾**：TRAE 的修复提交（`8e7bee0ae`/`40778b8ae`/`ecab85a9a`/`7e2f4702f`/`013d02b10`）每次只改 1-2 处（如 work_order.rs 单行），其错误计数（8→5→1→0）只覆盖他遇到的少量错误，而初始错误总量远超其计数——"编译通过"结论建立在离线缓存/局部编译假象上（与"红线六次恢复"同根）。**任何"错误数递减"的提交记录都不能作为编译通过的证据，必须以在线配方实测为准。**
+
+**修复方法**（按"以远端修改为主、保持 TRAE 意图、最小修复"原则）：
+
+| 步骤 | 处理 | 数量 |
+|---|---|---|
+| 1 | 从编译错误清单提取 `.and_utc()` 报错行（`method not found in DateTime<Utc>`）→ 按行删除；**保留** `NaiveDateTime::and_utc()` 合法调用（测试等 101 处） | 136 |
+| 2 | 提取 `unwrap_or_default` 报错行（非 Option）→ 按行删除调用（等价取值） | 127 |
+| 3 | 剩余 E0308 按编译器建议逐处修复：目标 `Option<X>` 赋裸值 → `Some(x)`；反向 → 按语义解包 | ~285 |
+| 4 | 在线配方循环验证 → **0 error** → release build → 重启 mes（health 由 degraded 恢复 healthy） | — |
+
+**教训**：
+- 编译通过的唯一证据是**在线配方**（`rm .sqlx` + `DATABASE_URL` + `SQLX_OFFLINE=false` + `MES_FORCE_ONLINE=1` + `cargo check --lib`）0 error；不接受会话自述的"本地通过/错误归零"。
+- 修改 mes 代码时保持既有类型契约：字段是 `Option` 就用 `Option` 方法（`unwrap_or_default`/`map`），是裸值就直接用，不混用。
+- chrono 时间转换：`DateTime<Utc>` 已是 UTC 直接使用；`NaiveDateTime` → UTC 用 `.and_utc()`；任意时区 → UTC 用 `.with_timezone(&Utc)`。
+- 大规模修复优先按**编译错误行号精确处置**（提取 `--> file:line` 批量处理），避免整文件正则替换破坏合法调用（本次曾误删 101 处 `NaiveDateTime::and_utc` 导致 E0308 反增，回滚后按行重做）。
 
 ---
 
