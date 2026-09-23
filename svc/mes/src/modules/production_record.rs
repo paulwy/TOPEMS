@@ -317,8 +317,8 @@ pub async fn create_record(
         quantity_defective: result.quantity_defective.unwrap_or_default(),
         status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.and_utc(),
+        updated_at: result.updated_at.and_utc(),
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))
