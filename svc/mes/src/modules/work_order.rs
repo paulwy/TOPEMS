@@ -518,7 +518,7 @@ pub async fn create_work_order(
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code,
-                product_name: r.product_name.unwrap_or_default(),
+                product_name: r.product_name,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(Some(r.planned_quantity)),
