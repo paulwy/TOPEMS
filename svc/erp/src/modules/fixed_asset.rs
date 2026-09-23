@@ -31,7 +31,6 @@ pub struct FixedAsset {
     pub useful_life_months: i32,
     pub depreciation_period: String,
     pub department_id: Option<Uuid>,
-    pub department_name: Option<String>,
     pub location: Option<String>,
     pub status: String,
     pub created_at: DateTime<Utc>,
@@ -49,7 +48,6 @@ pub struct CreateFixedAssetRequest {
     pub depreciation_method: String,
     pub useful_life_months: i32,
     pub department_id: Option<Uuid>,
-    pub department_name: Option<String>,
     pub location: Option<String>,
 }
 
@@ -64,7 +62,6 @@ pub struct UpdateFixedAssetRequest {
     pub depreciation_method: Option<String>,
     pub useful_life_months: Option<i32>,
     pub department_id: Option<Uuid>,
-    pub department_name: Option<String>,
     pub location: Option<String>,
     pub status: Option<String>,
 }
@@ -126,7 +123,7 @@ pub async fn list_fixed_assets(
         r#"
         SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                original_value, accumulated_depreciation, net_value, depreciation_method, 
-               useful_life_months, depreciation_period, department_id, department_name, 
+               useful_life_months, depreciation_period, department_id, 
                location, status, created_at, updated_at
         FROM erp.fixed_assets
         WHERE ($1::text IS NULL OR asset_code ILIKE $1 OR asset_name ILIKE $1)
@@ -235,11 +232,11 @@ pub async fn create_fixed_asset(
         INSERT INTO erp.fixed_assets (id, asset_code, asset_name, asset_type, asset_category, 
                purchase_date, original_value, accumulated_depreciation, net_value, 
                depreciation_method, useful_life_months, depreciation_period, 
-               department_id, department_name, location, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+               department_id, location, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
-                  useful_life_months, depreciation_period, department_id, department_name, 
+                  useful_life_months, depreciation_period, department_id, 
                   location, status, created_at, updated_at
         "#
     ))
@@ -256,7 +253,6 @@ pub async fn create_fixed_asset(
     .bind(req.useful_life_months)
     .bind(&depreciation_period)
     .bind(req.department_id)
-    .bind(&req.department_name)
     .bind(&req.location)
     .bind(&status)
     .bind(now)
@@ -343,7 +339,7 @@ pub async fn get_fixed_asset(
         r#"
         SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                original_value, accumulated_depreciation, net_value, depreciation_method, 
-               useful_life_months, depreciation_period, department_id, department_name, 
+               useful_life_months, depreciation_period, department_id, 
                location, status, created_at, updated_at
         FROM erp.fixed_assets WHERE id = $1
         "#
@@ -390,7 +386,7 @@ pub async fn update_fixed_asset(
         "erp",
         "SELECT id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                 original_value, accumulated_depreciation, net_value, depreciation_method, 
-                useful_life_months, depreciation_period, department_id, department_name, 
+                useful_life_months, depreciation_period, department_id, 
                 location, status, created_at, updated_at FROM erp.fixed_assets WHERE id = $1"
     ))
     .bind(id)
@@ -421,7 +417,6 @@ pub async fn update_fixed_asset(
         .useful_life_months
         .unwrap_or(existing.useful_life_months);
     let department_id = req.department_id.or(existing.department_id);
-    let department_name = req.department_name.or(existing.department_name);
     let location = req.location.or(existing.location);
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
@@ -433,12 +428,12 @@ pub async fn update_fixed_asset(
             asset_name = $2, asset_type = $3, asset_category = $4, purchase_date = $5,
             original_value = $6, accumulated_depreciation = $7, net_value = $8,
             depreciation_method = $9, useful_life_months = $10,
-            department_id = $11, department_name = $12, location = $13, status = $14,
-            updated_at = $15
+            department_id = $11, location = $12, status = $13,
+            updated_at = $14
         WHERE id = $1
         RETURNING id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
-                  useful_life_months, depreciation_period, department_id, department_name, 
+                  useful_life_months, depreciation_period, department_id, 
                   location, status, created_at, updated_at
         "#
     ))
@@ -453,7 +448,6 @@ pub async fn update_fixed_asset(
     .bind(&depreciation_method)
     .bind(useful_life_months)
     .bind(department_id)
-    .bind(&department_name)
     .bind(&location)
     .bind(&status)
     .bind(now)
