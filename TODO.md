@@ -208,6 +208,16 @@
 - [x] 收尾：public.core_workflows 影子已清（FK 重建指向 flow + archive 解除，迁移 000009）
 - [x] 残留同名组 B2 收敛：budgets(finance/pm)（2026-09-18：非影子分叉——pm.budgets（项目预算，schema_defense 权威 12 列）与 finance.budgets（部门预算，operational.rs 契约 13 列）是两张合法表；finance 裸查询靠 SEARCH_PATH=finance,public 解析，5432 缺 finance schema 致 500，迁移 000014 建 finance schema+表后双库闭环；pm.budget_items 无权威定义不建；budget.rs 新模块未挂载（dead code）不做列）待确认权威并收敛：announcements(erp:0/public:3)、capacities(mes/public)、contacts(crm/public)（2026-09-18：与 budgets 同法处理）
 
+### P0-3 架构改进蓝图 v1.3 进度核查 ✅（2026-09-24，docs/archive/TOPEMS_Architecture_Improvement_Plan.md §8.6）
+- [x] Phase 1 五项全部闭环：跨 Schema 清零（svc/ 8 处 plugin_* 引用均为注释，真实 SQL 0）/ API 所有权统一（pages/finance @/api/erp=0）/
+      事件总线 Redis Stream（stream_publisher/subscriber + DLQ）/ 模块化单体 27/32 服务嵌入 topems-server / only_own_schema_query! 宏 + CI Gate M
+- [x] MCP 轨超预期：svc/ai/src/dsh/mcp/tools/ 16 业务域工具（原 MVP 仅规划 CRM/ERP/Finance 3 服务）
+- [x] Phase 2 五项全部闭环：DSH Provider 全套（deepseek/dify/ollama/mock/factory/failover/router）+ Agent 编排 /
+      pgvector HNSW（v76）/ 业务工具 16 域 / 前端 Copilot 组件 / dsh/governance + governance_dashboard
+- [x] accounting_subjects 物理迁移确认完成（V321 已迁 finance，erp 空表 08-31 已删）
+- [x] Phase 3 部分：M7 单体已落地（SaaS 拆分待做）/ M8 MF 双架构迁移完成（路由级懒加载 SPA）/ M9 tier_gate+plan_tier 已落地（自动关联率待验证）/ M10-12 行业解决方案未启动
+- [x] 待运行时验收（依赖 staging 部署环境）：事件总线 ACK 率 100% / Copilot <1s / 工具成功率 >99% / 私有化单进程 / tier 关联 100% / 前端 <2s
+
 ---
 
 ## 🧪 2026-09-18 拉取后验证与修复 ✅
