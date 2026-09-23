@@ -570,7 +570,7 @@ async fn run_aps_scheduling(
 
         // 6.9 计算风险等级
         let risk = calculate_risk_level(
-            end_time: end_time.map(|d| d.and_utc()),
+            end_time,
             order.planned_end_date.map(|d| d),
             material_ready,
             selected_station.status == "active",
