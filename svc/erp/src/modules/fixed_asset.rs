@@ -222,7 +222,6 @@ pub async fn create_fixed_asset(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let accumulated_depreciation = 0.0;
-    let net_value = req.original_value;
     let depreciation_period = "".to_string();
     let status = "active".to_string();
 
@@ -230,10 +229,10 @@ pub async fn create_fixed_asset(
         "erp",
         r#"
         INSERT INTO erp.fixed_assets (id, asset_code, asset_name, asset_type, asset_category, 
-               purchase_date, original_value, accumulated_depreciation, net_value, 
+               purchase_date, original_value, accumulated_depreciation, 
                depreciation_method, useful_life_months, depreciation_period, 
                department_id, location, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
                   useful_life_months, depreciation_period, department_id, 
@@ -248,7 +247,6 @@ pub async fn create_fixed_asset(
     .bind(req.purchase_date)
     .bind(req.original_value)
     .bind(accumulated_depreciation)
-    .bind(net_value)
     .bind(&req.depreciation_method)
     .bind(req.useful_life_months)
     .bind(&depreciation_period)
@@ -426,10 +424,10 @@ pub async fn update_fixed_asset(
         r#"
         UPDATE erp.fixed_assets SET
             asset_name = $2, asset_type = $3, asset_category = $4, purchase_date = $5,
-            original_value = $6, accumulated_depreciation = $7, net_value = $8,
-            depreciation_method = $9, useful_life_months = $10,
-            department_id = $11, location = $12, status = $13,
-            updated_at = $14
+            original_value = $6, accumulated_depreciation = $7,
+            depreciation_method = $8, useful_life_months = $9,
+            department_id = $10, location = $11, status = $12,
+            updated_at = $13
         WHERE id = $1
         RETURNING id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
@@ -444,7 +442,6 @@ pub async fn update_fixed_asset(
     .bind(purchase_date)
     .bind(original_value)
     .bind(accumulated_depreciation)
-    .bind(net_value)
     .bind(&depreciation_method)
     .bind(useful_life_months)
     .bind(department_id)
