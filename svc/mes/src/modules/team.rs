@@ -119,7 +119,7 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 pub async fn list_teams(

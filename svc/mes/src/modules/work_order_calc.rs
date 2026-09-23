@@ -194,7 +194,7 @@ pub fn duration_deviation_rate(standard_minutes: f64, actual_minutes: f64) -> f6
 
 /// 将 DateTime<Utc> 视为 UTC 转换为 DateTime<Utc>
 pub fn naive_to_utc(ndt: DateTime<Utc>) -> DateTime<Utc> {
-    ndt.and_utc()
+    ndt
 }
 
 #[cfg(test)]
