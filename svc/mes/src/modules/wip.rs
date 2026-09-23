@@ -432,8 +432,8 @@ pub async fn create_wip(
     };
 
     let wip = WipResponse {
-        id: result.id.unwrap_or_default(),
-        wip_no: result.wip_no.unwrap_or_default(),
+        id: result.id,
+        wip_no: result.wip_no,
         order_id: result.order_id,
         order_no: result.order_no,
         product_id: result.product_id,
@@ -510,8 +510,8 @@ pub async fn get_wip(
     match result {
         Some(r) => {
             let wip = WipResponse {
-                id: r.id.unwrap_or_default(),
-                wip_no: r.wip_no.unwrap_or_default(),
+                id: r.id,
+                wip_no: r.wip_no,
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
@@ -598,8 +598,8 @@ pub async fn update_wip(
     match result {
         Some(r) => {
             let wip = WipResponse {
-                id: r.id.unwrap_or_default(),
-                wip_no: r.wip_no.unwrap_or_default(),
+                id: r.id,
+                wip_no: r.wip_no,
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
@@ -852,9 +852,9 @@ pub async fn transfer_wip(
     };
 
     let response = WipTransferResponse {
-        id: transfer.id.unwrap_or_default(),
-        transfer_no: transfer.transfer_no.unwrap_or_default(),
-        wip_id: transfer.wip_id.unwrap_or_default(),
+        id: transfer.id,
+        transfer_no: transfer.transfer_no,
+        wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
         from_process_name: from_process_name.unwrap_or_default(),
         from_work_station_id: transfer.from_work_station_id,
@@ -932,9 +932,9 @@ pub async fn list_wip_transfers(
     let transfer_list: Vec<WipTransferResponse> = transfers
         .into_iter()
         .map(|r| WipTransferResponse {
-            id: r.id.unwrap_or_default(),
-            transfer_no: r.transfer_no.unwrap_or_default(),
-            wip_id: r.wip_id.unwrap_or_default(),
+            id: r.id,
+            transfer_no: r.transfer_no,
+            wip_id: r.wip_id,
             from_process_id: r.from_process_id,
             from_process_name: r.from_process_name,
             from_work_station_id: r.from_work_station_id,

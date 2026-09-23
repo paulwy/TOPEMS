@@ -305,8 +305,8 @@ pub async fn create_record(
     };
 
     let record = ProductionRecordResponse {
-        id: result.id.unwrap_or_default(),
-        order_id: result.order_id.unwrap_or_default(),
+        id: result.id,
+        order_id: result.order_id,
         process_id: result.process_id,
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
@@ -317,8 +317,8 @@ pub async fn create_record(
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
         status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default(),
-        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))
@@ -359,8 +359,8 @@ pub async fn get_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id.unwrap_or_default(),
-                order_id: r.order_id.unwrap_or_default(),
+                id: r.id,
+                order_id: r.order_id,
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
@@ -371,8 +371,8 @@ pub async fn get_record(
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
@@ -439,8 +439,8 @@ pub async fn update_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id.unwrap_or_default(),
-                order_id: r.order_id.unwrap_or_default(),
+                id: r.id,
+                order_id: r.order_id,
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
@@ -451,8 +451,8 @@ pub async fn update_record(
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
@@ -535,8 +535,8 @@ pub async fn complete_record(
     match result {
         Some(r) => {
             let record = ProductionRecordResponse {
-                id: r.id.unwrap_or_default(),
-                order_id: r.order_id.unwrap_or_default(),
+                id: r.id,
+                order_id: r.order_id,
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
@@ -547,8 +547,8 @@ pub async fn complete_record(
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }

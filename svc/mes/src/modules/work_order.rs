@@ -514,7 +514,7 @@ pub async fn create_work_order(
         Ok(r) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no.unwrap_or_default(),
+                work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 product_code: r.product_code,
@@ -529,7 +529,7 @@ pub async fn create_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
                 created_at: datetime_to_string(r.created_at),

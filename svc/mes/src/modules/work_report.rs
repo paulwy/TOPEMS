@@ -461,7 +461,7 @@ pub async fn get_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
+                report_no: r.report_no,
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
@@ -479,8 +479,8 @@ pub async fn get_work_report(
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
-                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc())),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc())),
             },
             "获取工报成功",
         )),
@@ -659,7 +659,7 @@ pub async fn create_work_report(
             Json(ApiResponse::success(
                 WorkReportResponse {
                     id: r.id.to_string(),
-                    report_no: r.report_no.unwrap_or_default(),
+                    report_no: r.report_no,
                     work_order_id: r.work_order_id.map(|u| u.to_string()),
                     work_order_no: r.work_order_no,
                     order_id: r.order_id.map(|u| u.to_string()),
@@ -677,8 +677,8 @@ pub async fn create_work_report(
                     approved_by: r.approved_by.map(|u| u.to_string()),
                     approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                     approval_remark: r.approval_remark,
-                    created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
-                    updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                    created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc())),
+                    updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc())),
                 },
                 "创建工报成功",
             ))
@@ -805,7 +805,7 @@ pub async fn update_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
+                report_no: r.report_no,
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
@@ -823,8 +823,8 @@ pub async fn update_work_report(
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
-                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc())),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc())),
             },
             "更新工报成功",
         )),
@@ -945,7 +945,7 @@ pub async fn approve_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
+                report_no: r.report_no,
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
@@ -963,8 +963,8 @@ pub async fn approve_work_report(
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
-                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc())),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc())),
             },
             "审批通过成功",
         )),
@@ -1040,7 +1040,7 @@ pub async fn reject_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no.unwrap_or_default(),
+                report_no: r.report_no,
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
@@ -1058,8 +1058,8 @@ pub async fn reject_work_report(
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
                 approval_remark: r.approval_remark,
-                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc()).unwrap_or_default()),
-                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc()).unwrap_or_default()),
+                created_at: datetime_to_string(r.created_at.map(|d| d.naive_utc())),
+                updated_at: datetime_to_string(r.updated_at.map(|d| d.naive_utc())),
             },
             "审批驳回成功",
         )),

@@ -475,8 +475,8 @@ pub async fn create_production_schedule(
     };
 
     let schedule = ProductionScheduleResponse {
-        id: result.id.unwrap_or_default(),
-        schedule_no: result.schedule_no.unwrap_or_default(),
+        id: result.id,
+        schedule_no: result.schedule_no,
         order_id: result.order_id,
         order_no: result.order_no,
         product_id: result.product_id,
@@ -567,8 +567,8 @@ pub async fn get_production_schedule(
     match result {
         Some(r) => {
             let schedule = ProductionScheduleResponse {
-                id: r.id.unwrap_or_default(),
-                schedule_no: r.schedule_no.unwrap_or_default(),
+                id: r.id,
+                schedule_no: r.schedule_no,
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,
@@ -677,8 +677,8 @@ pub async fn update_production_schedule(
     match result {
         Some(r) => {
             let schedule = ProductionScheduleResponse {
-                id: r.id.unwrap_or_default(),
-                schedule_no: r.schedule_no.unwrap_or_default(),
+                id: r.id,
+                schedule_no: r.schedule_no,
                 order_id: r.order_id,
                 order_no: r.order_no,
                 product_id: r.product_id,

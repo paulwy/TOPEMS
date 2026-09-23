@@ -118,7 +118,7 @@ pub async fn create_material_return(
 
     let response = MaterialReturnResponse {
         id: return_record.id.to_string(),
-        return_no: return_record.return_no.unwrap_or_default(),
+        return_no: return_record.return_no,
         order_id: return_record.order_id.map(|u| u.to_string()),
         order_no: return_record.order_no,
         status: return_record

@@ -499,7 +499,7 @@ pub async fn create_oee_record(
     .flatten();
 
     let record = OeeRecordResponse {
-        id: result.id.unwrap_or_default(),
+        id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()).flatten(),
         equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
@@ -578,7 +578,7 @@ pub async fn get_oee_record(
     match result {
         Some(r) => {
             let record = OeeRecordResponse {
-                id: r.id.unwrap_or_default(),
+                id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
                 equipment_code: r.equipment_no,
@@ -735,7 +735,7 @@ pub async fn update_oee_record(
     match result {
         Some(r) => {
             let record = OeeRecordResponse {
-                id: r.id.unwrap_or_default(),
+                id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: None,
                 equipment_code: None,
