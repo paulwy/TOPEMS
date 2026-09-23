@@ -822,7 +822,7 @@ pub async fn update_production_order(
         req.planned_end_date.map(|d| d.naive_utc()),
         req.workshop_id,
         req.notes,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;

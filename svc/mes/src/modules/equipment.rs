@@ -877,7 +877,7 @@ pub async fn create_maintenance(
         req.description,
         req.maintainer,
         start_time.naive_utc(),
-        end_time,
+        end_time.map(|d| d.naive_utc()),
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
