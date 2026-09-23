@@ -721,7 +721,7 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
 
   // TopBar 按钮处理函数
   const handleCommandOpen = () => {
-    console.log('Command palette opened');
+    console.info('Command palette opened');
   };
 
   const handleNotificationsOpen = () => {
