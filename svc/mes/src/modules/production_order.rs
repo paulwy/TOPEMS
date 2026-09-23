@@ -509,8 +509,8 @@ pub async fn create_production_order(
         actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: result.created_at.and_utc(),
-        updated_at: result.updated_at.and_utc(),
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     if let Some(ref publisher) = state.event_publisher {
@@ -673,8 +673,8 @@ pub async fn create_from_erp(
         actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: result.created_at.and_utc(),
-        updated_at: result.updated_at.and_utc(),
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     tracing::info!(
