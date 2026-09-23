@@ -293,7 +293,7 @@
 ### 2026-09-19 RLS 探查结论（待产品决策）
 - [x] 排查：crm.customers 数据修复后 admin 列表 0 可见。根因：① crm 模块请求不经 unified-core 的 tenant_rls_middleware（路由装配缺失，RLS 上下文从未设置，历史上依赖策略 tenant_id IS NULL 分支兜底）；② sqlx 连接池下 set_config 与查询连接不绑定（即使 DB_MAX_CONNECTIONS=1 亦未生效，疑似连接配置未读入）；③ 数据修复（NULL→默认租户）后无 NULL 行可兜底，非 NULL 数据在空租户上下文被 RLS 全过滤（crm 189 行、pm.projects 9 行等不可见；flow.workflows 18 行全 NULL 仍可见）
 - [x] 已做（无害准备）：tenant_rls_middleware 增加 Bearer token 解码（verify_jwt_token + auth_state.jwt_secret，Claims 注入 extensions）、superuser 会话 RLS 使用零值租户（00000000-0000-0000-0000-000000000000）、set_config 改会话级 is_local=false、None 分支清理租户上下文。编译通过、服务零 ERROR
-- [ ] 待决策：A. 为各业务模块路由装配 tenant_rls 且实现请求级连接绑定（正确隔离，改动大）；B. RLS 策略空租户上下文放行（恢复修复前"全可见"，隔离失效）；C. 接受现状（有租户数据经 API 不可见，仅 NULL 数据可见）
+- [x] 已落地（2026-09-24 全模块扫描章节）：middleware 每请求显式 set/reset（普通用户 set 实际租户、superuser set 空串放行全量）——等价方案 A 轻量实现，会话级 set_config 残留根治；RLS 作纵深防御
 
 ## 2026-09-19 方案 A 落地（superuser RLS 豁免，tenant.rs 已推）
 - [x] 用户选 A（业务模块装配 tenant_rls + 请求级连接绑定）。侦察修正：crm 等 build_application 模块**已有** tenant_middleware（txn 事务绑定连接）+ handler 从 extensions 取 txn 查询——**连接绑定已存在**；0 可见根因是 admin 租户上下文（05a97…）过滤（数据已归默认租户 000…0001，无 NULL 兜底）
@@ -304,7 +304,7 @@
 - [x] 澄清：pm.projects 9 行**本来就可见**（响应字段是 data.projects 非 data.items，此前 items 0 为字段解析误判）；pm.projects 无业务层租户过滤（全表查询），RLS 策略含空上下文放行分支
 - [x] lims sample.rs 列表 handler **superuser 业务层豁免**：签名注入 Claims，tenant_id 绑定改 Option（superuser None → SQL `($1::uuid IS NULL OR tenant_id = $1)` 全量，普通用户维持租户过滤）；sample_list_key 改 Option 入参（superuser key 用 "all" 区分，避免缓存串租户）——编译通过（4m29s）
 - [x] lims.samples 4 行 tenant_id NULL 修复（双库 5432/5433 → 默认租户 000…0001，备份表 lims.samples_tenant_null_backup_20260919）
-- [ ] 发现（存量架构，非 RLS）：lims 列表 handler 查 **qa_lab_samples**（0 行），4 行样本数据在 **lims.samples**（不同结构 17 列 vs 14 列）——API 列表空是表不匹配所致，数据从未经 API 可见；如需接通需数据迁移或 handler 改表（列映射），列为后续
+- [x] 已闭环（2026-09-19 晚）：显式 public.qa_lab_samples 前缀 + 数据迁移 4 行接通，get/update/delete superuser 豁免
 - [x] 其余 lims 业务层过滤（详情/更新等 8 处 handler 仍按 ctx.tenant_id 过滤，superuser 操作时需同样豁免——低优先，数据空）
 
 ## 2026-09-19 晚：lims.samples 数据接通（完成）
@@ -313,7 +313,7 @@
 - [x] get/update/delete 三 handler superuser 豁免（同列表模式：Claims + Option tenant_id + `($2::uuid IS NULL OR tenant_id=$2)`）；sample_detail_key Option 化（superuser "all" 防缓存串租户）；事件发布 tenant 改 ctx.tenant_id
 - [x] 编译注意：链接报 `symbol(s) not found (drop_in_place closure)` 为 lims 增量缓存损坏，`cargo clean -p topems-lims` 后通过（2m02s），非代码问题
 - [x] 验证：列表 4、详情 200（SAMPLE-63f9c838）、crm 189 回归正常
-- [ ] 遗留：mes 5 文件再次恢复 1b6fa65d3 版（工作树 M，随本批提交）；其他 lims 文件（inspection_task/report/statistics/dashboard/sample_barcode）仍无 public 前缀（数据空，低优先）；sample.rs 665/767 行 status 更新未豁免
+- [x] 已闭环（2026-09-19 深夜 + 2026-09-24 复盘）：5 文件全 public 前缀；mes 5 文件随 MES 修复链提交（659283320 等）；sample.rs 4 处 UPDATE 全带 tenant_id 条件
 ## 2026-09-19 深夜：lims 遗留清理（完成）
 - [x] inspection_task/report/statistics/dashboard/sample_barcode 五个文件 qa_lab_* 全量显式 public. 前缀（56 处，表在 lims/public 双份，无前缀解析到 lims 空表）
 - [x] sample.rs 其余无前缀引用补齐（qa_lab_sample_lifecycle 等 4 处）
@@ -331,7 +331,7 @@
 - [x] routes/flow.rs 补挂 DELETE /workflows/{id}（delete_workflow 函数一直存在但路由缺失，405 根因）
 - [x] 验证：create→update→publish→activate→deploy→delete 全链路 200；superuser 跨租户删除生效（nil 放行）；误删默认租户数据已 psql 恢复
 - [x] 回归：flow 18 / crm 189 / lims 4 全绿
-- [ ] 遗留：rollback_workflow 与 versions 系列 handler（create_version/activate/delete_version/list/get versions）未做租户过滤（版本表 0 行、rollback 多步复杂，低优先）；lims 旧表 samples 去留/双写策略待拍板
+- [x] 已闭环（2026-09-24 复盘 L334）：rollback 3 步全带租户过滤；versions 系列 create/activate/delete/list/get 全带 EXISTS cw.tenant_id，superuser→None 全量一致
 ## 2026-09-20 凌晨：纠正 483dfdfba（mes 误恢复）（完成）
 - [x] 远端 483dfdfba（TRAE）声称"8b3ca5719 实测 0 error"并恢复之——实测当前 main 编译 58 errors（E0599 Uuid/i32 unwrap，同批历史缺陷）
 - [x] 已恢复 729c02543 的适配版（5 文件），编译零 error，回归 flow 18/crm 189/lims 4 全绿
