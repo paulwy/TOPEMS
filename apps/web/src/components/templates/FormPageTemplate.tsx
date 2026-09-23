@@ -148,6 +148,12 @@ export interface FormSection {
   icon?: React.ReactNode;
   /** 区块标签颜色 */
   color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
+  /**
+   * 自定义区块内容（ReactNode）。
+   * 存在时优先渲染 content（忽略 fields），用于自定义表单/详情区块
+   * （如凭证录入页的动态分录行、复杂联动表单）。
+   */
+  content?: React.ReactNode;
 }
 
 /**
@@ -1189,7 +1195,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         {/* 区块内容 */}
         <Collapse in={isExpanded}>
           <Box sx={{ p: 3 }}>
-            {loading ? (
+            {section.content ? (
+              section.content
+            ) : loading ? (
               <Grid
                 container
                 spacing={2}
