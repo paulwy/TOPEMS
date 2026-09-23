@@ -131,7 +131,7 @@ impl WmsEventHandlers {
         sqlx::query(
             r#"INSERT INTO wms.inbound_orders
                 (id, order_number, warehouse_id, supplier_id,
-                 order_type, status, received_at, created_at, updated_at, tenant_id)
+                 order_type, status, received_date, created_at, updated_at, tenant_id)
             VALUES ($1, $2, $3, $4, 'purchase', 'pending', NULL, $5, $5, $6)
             ON CONFLICT (id) DO NOTHING"#,
         )

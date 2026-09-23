@@ -1643,7 +1643,7 @@ pub async fn get_template(
     let result = sqlx::query(only_own_schema_query!(
         "public",
         r#"
-        SELECT id, name, title, content, notification_type, priority, data, created_at, updated_at
+        SELECT id, name, title_template AS title, content_template AS content, notification_type, priority, data, created_at, updated_at
         FROM core_notification_templates
         WHERE id = $1
         "#
@@ -1718,9 +1718,9 @@ pub async fn create_template(
 
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        INSERT INTO core_notification_templates (id, name, title, content, notification_type, priority, data, created_at)
+        INSERT INTO core_notification_templates (id, name, title_template, content_template, notification_type, priority, data, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-        RETURNING id, name, title, content, notification_type, priority, data, created_at, updated_at
+        RETURNING id, name, title_template AS title, content_template AS content, notification_type, priority, data, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -1786,14 +1786,14 @@ pub async fn update_template(
         only_own_schema_query!("public", r#"
         UPDATE core_notification_templates
         SET name = COALESCE($1, name),
-            title = COALESCE($2, title),
-            content = COALESCE($3, content),
+            title_template = COALESCE($2, title_template),
+            content_template = COALESCE($3, content_template),
             notification_type = COALESCE($4, notification_type),
             priority = COALESCE($5, priority),
             data = COALESCE($6, data),
             updated_at = NOW()
         WHERE id = $7
-        RETURNING id, name, title, content, notification_type, priority, data, created_at, updated_at
+        RETURNING id, name, title_template AS title, content_template AS content, notification_type, priority, data, created_at, updated_at
         "#),
     )
     .bind(&req.name)

@@ -133,7 +133,7 @@ pub async fn handle_ehs_hazard_reported(
     };
 
     let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, title, description, status, priority, created_by, related_issue_id, related_issue_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", "qms")
+        only_own_schema_query!("integration", "INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, title, description, status, priority, created_by, issue_id, related_issue_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", "qms")
     )
     .bind(tenant_id)
     .bind(action_no)
@@ -272,7 +272,7 @@ pub async fn handle_lims_record_completed(
     let _ = sqlx::query(only_own_schema_query!(
         "integration",
         "UPDATE qms.qa_quality_inspections SET 
-            test_result = $1, test_data = $2, conclusion = $3, updated_at = NOW()
+            result = $1, test_data = $2, memo = $3, updated_at = NOW()
          WHERE tenant_id = $4 AND inspection_no = $5",
         "qms"
     ))

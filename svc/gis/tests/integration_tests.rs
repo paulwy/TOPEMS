@@ -226,7 +226,7 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO public.audit_logs (action, resource, resource_id, user_id, status)
+            INSERT INTO public.audit_logs (action, entity_type, entity_id, user_id, status)
             VALUES ($1, $2, $3, $4, $5)
             "#,
         )

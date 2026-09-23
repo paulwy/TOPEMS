@@ -128,7 +128,7 @@ impl DatabaseAuditLogStore {
             .try_get("user_agent")
             .map_err(|e| AuditLogError::StoreError(format!("Failed to get user_agent: {}", e)))?;
         let metadata: serde_json::Value = row
-            .try_get("metadata")
+            .try_get("details")
             .map_err(|e| AuditLogError::StoreError(format!("Failed to get metadata: {}", e)))?;
         let metadata_map: HashMap<String, String> = if metadata.is_object() {
             metadata
@@ -226,7 +226,7 @@ impl AuditLogStore for DatabaseAuditLogStore {
         let result = sqlx::query(
             r#"
             INSERT INTO permission_audit_logs
-                (tenant_id, user_id, action, old_value, new_value, changed_by, changed_at, ip_address, user_agent, metadata)
+                (tenant_id, user_id, action, old_value, new_value, changed_by, changed_at, ip_address, user_agent, details)
             VALUES
                 ($1, $2, $3, $4, $5, $6, $7, $8::inet, $9, $10)
             "#

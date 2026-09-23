@@ -80,12 +80,12 @@ pub async fn list_transfers(
 
     let result = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
+        SELECT id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at
         FROM transfers
         WHERE ($1::text IS NULL OR transfer_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR from_warehouse_id = $3)
-          AND ($4::uuid IS NULL OR to_warehouse_id = $4)
+          AND ($3::uuid IS NULL OR source_warehouse_id = $3)
+          AND ($4::uuid IS NULL OR destination_warehouse_id = $4)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#),
@@ -106,8 +106,8 @@ pub async fn list_transfers(
                 SELECT COUNT(*) FROM transfers
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_number ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR from_warehouse_id = $3)
-                  AND ($4::uuid IS NULL OR to_warehouse_id = $4)
+                  AND ($3::uuid IS NULL OR source_warehouse_id = $3)
+                  AND ($4::uuid IS NULL OR destination_warehouse_id = $4)
                 "#),
             )
             .bind(&search_pattern)
@@ -157,9 +157,9 @@ pub async fn create_transfer(
 
     let result = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO transfers (id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at, tenant_id)
+        INSERT INTO transfers (id, transfer_number, source_warehouse_id, source_location_id, destination_warehouse_id, destination_location_id, status, notes, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
-        RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
+        RETURNING id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -232,7 +232,7 @@ pub async fn get_transfer(
     }
     let result = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
+        SELECT id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at
         FROM transfers WHERE id = $1
         "#),
     )
@@ -270,7 +270,7 @@ pub async fn update_transfer(
 
     let existing = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
+        SELECT id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
         "#),
     )
     .bind(id)
@@ -294,10 +294,10 @@ pub async fn update_transfer(
     let result = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
         UPDATE transfers SET
-            from_warehouse_id = $2, from_location_id = $3, to_warehouse_id = $4, to_location_id = $5, 
-            status = $6, remarks = $7, updated_at = $8
+            source_warehouse_id = $2, source_location_id = $3, destination_warehouse_id = $4, destination_location_id = $5, 
+            status = $6, notes = $7, updated_at = $8
         WHERE id = $1
-        RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
+        RETURNING id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -443,7 +443,7 @@ pub async fn list_transfer_items(
 
     let result = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
+        SELECT id, transfer_id, inventory_item_id, quantity, transfer_status AS status, notes AS remarks, created_at, updated_at
         FROM transfer_items
         WHERE transfer_id = $1
         ORDER BY created_at ASC
@@ -498,9 +498,9 @@ pub async fn create_transfer_item(
 
     let result = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
-        INSERT INTO transfer_items (id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at, tenant_id)
+        INSERT INTO transfer_items (id, transfer_id, inventory_item_id, quantity, transfer_status, notes, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
-        RETURNING id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
+        RETURNING id, transfer_id, inventory_item_id, quantity, transfer_status AS status, notes AS remarks, created_at, updated_at
         "#),
     )
     .bind(item_id)
@@ -571,7 +571,7 @@ pub async fn get_transfer_item(
     }
     let result = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
+        SELECT id, transfer_id, inventory_item_id, quantity, transfer_status AS status, notes AS remarks, created_at, updated_at
         FROM transfer_items WHERE transfer_id = $1 AND id = $2
         "#),
     )
@@ -610,7 +610,7 @@ pub async fn update_transfer_item(
 
     let existing = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at FROM transfer_items WHERE transfer_id = $1 AND id = $2
+        SELECT id, transfer_id, inventory_item_id, quantity, transfer_status AS status, notes AS remarks, created_at, updated_at FROM transfer_items WHERE transfer_id = $1 AND id = $2
         "#),
     )
     .bind(id)
@@ -632,9 +632,9 @@ pub async fn update_transfer_item(
     let result = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
         UPDATE transfer_items SET
-            quantity = $2, status = $3, remarks = $4, updated_at = $5
+            quantity = $2, transfer_status = $3, notes = $4, updated_at = $5
         WHERE transfer_id = $6 AND id = $7
-        RETURNING id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
+        RETURNING id, transfer_id, inventory_item_id, quantity, transfer_status AS status, notes AS remarks, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -782,7 +782,7 @@ pub async fn execute_transfer(
 
     let transfer = sqlx::query_as::<_, Transfer>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
+        SELECT id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at FROM transfers WHERE deleted_at IS NULL AND id = $1
         "#),
     )
     .bind(id)
@@ -801,7 +801,7 @@ pub async fn execute_transfer(
 
     let items = sqlx::query_as::<_, TransferItem>(
         only_own_schema_query!("wms", r#"
-        SELECT id, transfer_id, inventory_item_id, quantity, status, remarks, created_at, updated_at
+        SELECT id, transfer_id, inventory_item_id, quantity, transfer_status AS status, notes AS remarks, created_at, updated_at
         FROM transfer_items WHERE transfer_id = $1
         "#),
     )
@@ -874,7 +874,7 @@ pub async fn execute_transfer(
         UPDATE transfers SET
             status = 'completed', updated_at = $2
         WHERE id = $1
-        RETURNING id, transfer_number, from_warehouse_id, from_location_id, to_warehouse_id, to_location_id, status, remarks, created_at, updated_at
+        RETURNING id, transfer_number, source_warehouse_id AS from_warehouse_id, source_location_id AS from_location_id, destination_warehouse_id AS to_warehouse_id, destination_location_id AS to_location_id, status, notes AS remarks, created_at, updated_at
         "#),
     )
     .bind(id)
