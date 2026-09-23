@@ -121,13 +121,13 @@ fn row_to_response(
     port: Option<i32>,
     username: Option<String>,
     connection_string: Option<String>,
-    last_sync: Option<NaiveDateTime>,
+    last_sync: Option<DateTime<Utc>>,
     data_volume: Option<i64>,
     sync_frequency: Option<String>,
     description: Option<String>,
     is_enabled: Option<bool>,
-    created_at: Option<NaiveDateTime>,
-    updated_at: Option<NaiveDateTime>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
 ) -> DatasourceResponse {
     DatasourceResponse {
         id,
@@ -354,7 +354,7 @@ pub async fn create_datasource(
     info!("Creating datasource: {}", req.name);
 
     let id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let status = req.status.unwrap_or_else(|| "inactive".to_string());
     let is_enabled = req.is_enabled.unwrap_or(true);
 
@@ -509,8 +509,8 @@ pub async fn update_datasource(
 ) -> Json<serde_json::Value> {
     info!("Updating datasource: {}", id);
 
-    let now = Utc::now().naive_utc();
-    let last_sync_naive = req.last_sync.map(|dt| dt.naive_utc());
+    let now = Utc::now();
+    let last_sync_naive = req.last_sync.map(|dt| dt);
 
     let result = sqlx::query!(
         r#"
@@ -758,7 +758,7 @@ pub async fn refresh_datasource(
     info!("Refreshing datasource: {}", id);
 
     let started = std::time::Instant::now();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let row = match sqlx::query!(
         r#"
@@ -818,7 +818,7 @@ pub async fn refresh_datasource(
     }
 
     let duration_ms = started.elapsed().as_millis() as u64;
-    let last_sync_iso = DateTime::<Utc>::from_naive_utc_and_offset(now, Utc).to_rfc3339();
+    let last_sync_iso = now.to_rfc3339();
 
     Json(serde_json::json!({
         "success": true,

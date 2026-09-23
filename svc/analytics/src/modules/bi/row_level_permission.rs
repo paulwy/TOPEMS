@@ -182,8 +182,8 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.and_utc().to_rfc3339(),
-            updated_at: row.updated_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
         })
         .collect();
 
@@ -224,7 +224,7 @@ pub async fn create_permission_rule(
     info!("Creating permission rule: {}", req.name);
 
     let id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -269,8 +269,8 @@ pub async fn create_permission_rule(
                 user_ids: row.user_ids,
                 is_active: row.is_active.unwrap_or(true),
                 created_by: row.created_by,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -339,8 +339,8 @@ pub async fn get_permission_rule(
                 user_ids: row.user_ids,
                 is_active: row.is_active.unwrap_or(true),
                 created_by: row.created_by,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -378,7 +378,7 @@ pub async fn update_permission_rule(
 ) -> Json<serde_json::Value> {
     info!("Updating permission rule: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -422,8 +422,8 @@ pub async fn update_permission_rule(
                 user_ids: row.user_ids,
                 is_active: row.is_active.unwrap_or(true),
                 created_by: row.created_by,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -703,8 +703,8 @@ pub async fn get_user_permissions(
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.and_utc().to_rfc3339(),
-            updated_at: row.updated_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
         })
         .collect();
 

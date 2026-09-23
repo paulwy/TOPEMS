@@ -292,9 +292,9 @@ pub async fn create_sync_record(
     );
 
     let id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let status = req.status.unwrap_or_else(|| "pending".to_string());
-    let started_at = req.started_at.unwrap_or_else(Utc::now).naive_utc();
+    let started_at = req.started_at.unwrap_or_else(Utc::now);
 
     // Verify data source exists
     let ds_exists: Option<Uuid> =
@@ -334,7 +334,7 @@ pub async fn create_sync_record(
     .bind(req.affected_records)
     .bind(req.error_message.as_deref())
     .bind(started_at)
-    .bind(req.completed_at.map(|t| t.naive_utc()))
+    .bind(req.completed_at.map(|t| t))
     .bind(req.duration_ms)
     .bind(now)
     .bind(now)
@@ -371,7 +371,7 @@ pub async fn update_sync_record(
 ) -> Json<serde_json::Value> {
     info!("Updating BI sync record: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query(
         "UPDATE analytics_sync_records SET \
@@ -393,8 +393,8 @@ pub async fn update_sync_record(
     .bind(req.records_count)
     .bind(req.affected_records)
     .bind(req.error_message.as_deref())
-    .bind(req.started_at.map(|t| t.naive_utc()))
-    .bind(req.completed_at.map(|t| t.naive_utc()))
+    .bind(req.started_at.map(|t| t))
+    .bind(req.completed_at.map(|t| t))
     .bind(req.duration_ms)
     .bind(now)
     .bind(id)
@@ -506,7 +506,7 @@ pub async fn retry_sync(
         ));
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let retry_no = format!(
         "RETRY-{}-{}",
         chrono::Utc::now().format("%Y%m%d%H%M%S"),

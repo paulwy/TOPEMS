@@ -171,8 +171,8 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at.and_utc().to_rfc3339(),
-            updated_at: row.updated_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
         })
         .collect();
 
@@ -230,8 +230,8 @@ pub async fn get_widgets_by_dashboard(
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at.and_utc().to_rfc3339(),
-            updated_at: row.updated_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
         })
         .collect();
 
@@ -273,7 +273,7 @@ pub async fn create_widget(
     );
 
     let id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -311,8 +311,8 @@ pub async fn create_widget(
                 datasource_id: row.datasource_id,
                 query_config: row.query_config,
                 cache_ttl_seconds: row.cache_ttl_seconds,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -372,8 +372,8 @@ pub async fn get_widget(
                 datasource_id: row.datasource_id,
                 query_config: row.query_config,
                 cache_ttl_seconds: row.cache_ttl_seconds,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -411,7 +411,7 @@ pub async fn update_widget(
 ) -> Json<serde_json::Value> {
     info!("Updating widget: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -457,8 +457,8 @@ pub async fn update_widget(
                     datasource_id: row.datasource_id,
                     query_config: row.query_config,
                     cache_ttl_seconds: row.cache_ttl_seconds,
-                    created_at: row.created_at.and_utc().to_rfc3339(),
-                    updated_at: row.updated_at.and_utc().to_rfc3339(),
+                    created_at: row.created_at.to_rfc3339(),
+                    updated_at: row.updated_at.to_rfc3339(),
                 }
             }))
         }

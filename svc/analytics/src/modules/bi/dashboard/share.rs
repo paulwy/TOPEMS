@@ -26,11 +26,12 @@ pub async fn create_share_link(
     info!("Creating share link for dashboard: {}", id);
 
     let share_id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let expires_at = req
         .expires_at
-        .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok());
+        .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok())
+        .map(|dt| dt.and_utc());
 
     let result = sqlx::query!(
         r#"
@@ -59,7 +60,7 @@ pub async fn create_share_link(
                 share_url: format!("/dashboard/share/{}", row.id),
                 permission: row.permission,
                 expires_at: row.expires_at.map(|t| t.to_string()),
-                created_at: row.created_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -117,8 +118,8 @@ pub async fn get_shared_dashboard(
                 "layout": row.layout,
                 "owner_id": row.owner_id,
                 "permission": row.permission,
-                "created_at": row.created_at.and_utc().to_rfc3339(),
-                "updated_at": row.updated_at.and_utc().to_rfc3339(),
+                "created_at": row.created_at.to_rfc3339(),
+                "updated_at": row.updated_at.to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -171,7 +172,7 @@ pub async fn list_share_links(
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
             expires_at: row.expires_at.map(|t| t.to_string()),
-            created_at: row.created_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
         })
         .collect();
 

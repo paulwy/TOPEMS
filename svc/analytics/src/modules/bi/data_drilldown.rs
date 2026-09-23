@@ -119,8 +119,8 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
             levels: row.levels.unwrap_or(serde_json::json!([])),
             measures: row.measures.unwrap_or(serde_json::json!([])),
             owner_id: row.owner_id,
-            created_at: row.created_at.and_utc().to_rfc3339(),
-            updated_at: row.updated_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
         })
         .collect();
 
@@ -150,7 +150,7 @@ pub async fn create_drilldown_path(
     info!("Creating drilldown path: {}", req.name);
 
     let id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -185,8 +185,8 @@ pub async fn create_drilldown_path(
                 levels: row.levels.unwrap_or(serde_json::json!([])),
                 measures: row.measures.unwrap_or(serde_json::json!([])),
                 owner_id: row.owner_id,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -239,8 +239,8 @@ pub async fn get_drilldown_path(
                 levels: row.levels.unwrap_or(serde_json::json!([])),
                 measures: row.measures.unwrap_or(serde_json::json!([])),
                 owner_id: row.owner_id,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -265,7 +265,7 @@ pub async fn update_drilldown_path(
 ) -> Json<serde_json::Value> {
     info!("Updating drilldown path: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -300,8 +300,8 @@ pub async fn update_drilldown_path(
                 levels: row.levels.unwrap_or(serde_json::json!([])),
                 measures: row.measures.unwrap_or(serde_json::json!([])),
                 owner_id: row.owner_id,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -407,7 +407,7 @@ pub async fn drill_down(
         ));
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let history_id = Uuid::new_v4();
 
     let _ = sqlx::query!(
@@ -499,7 +499,7 @@ pub async fn roll_up(
     let prev_level = req.current_level - 1;
     let levels = path.levels.unwrap_or(serde_json::json!([]));
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let history_id = Uuid::new_v4();
 
     let _ = sqlx::query!(
@@ -589,7 +589,7 @@ pub async fn get_drilldown_history(
             drill_dimension: row.drill_dimension,
             drill_value: row.drill_value,
             filters: row.filters,
-            created_at: row.created_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
         })
         .collect();
 

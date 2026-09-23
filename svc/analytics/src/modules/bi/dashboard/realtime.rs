@@ -170,7 +170,7 @@ pub async fn refresh_dashboard_data(
 ) -> Json<serde_json::Value> {
     info!("Refreshing dashboard data: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -239,7 +239,7 @@ pub async fn set_auto_refresh(
 ) -> Json<serde_json::Value> {
     info!("Setting auto-refresh for dashboard: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"

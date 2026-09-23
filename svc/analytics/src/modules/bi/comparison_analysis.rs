@@ -201,8 +201,8 @@ pub async fn list_comparisons(
             status: row.status,
             last_run_at: row.last_run_at.map(to_rfc3339),
             created_by: row.created_by,
-            created_at: row.created_at.and_utc().to_rfc3339(),
-            updated_at: row.updated_at.and_utc().to_rfc3339(),
+            created_at: row.created_at.to_rfc3339(),
+            updated_at: row.updated_at.to_rfc3339(),
         })
         .collect();
 
@@ -282,8 +282,8 @@ pub async fn get_comparison(
                 status: row.status,
                 last_run_at: row.last_run_at.map(to_rfc3339),
                 created_by: row.created_by,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -308,7 +308,7 @@ pub async fn create_comparison(
     info!("Creating comparison analysis: {}", req.name);
 
     let id = Uuid::new_v4();
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -351,8 +351,8 @@ pub async fn create_comparison(
                 status: row.status,
                 last_run_at: row.last_run_at.map(to_rfc3339),
                 created_by: row.created_by,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -387,7 +387,7 @@ pub async fn update_comparison(
 
     info!("Updating comparison analysis: {}", id);
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -435,8 +435,8 @@ pub async fn update_comparison(
                 status: row.status,
                 last_run_at: row.last_run_at.map(to_rfc3339),
                 created_by: row.created_by,
-                created_at: row.created_at.and_utc().to_rfc3339(),
-                updated_at: row.updated_at.and_utc().to_rfc3339(),
+                created_at: row.created_at.to_rfc3339(),
+                updated_at: row.updated_at.to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -567,7 +567,7 @@ pub async fn run_comparison(
         SET status = 'running', updated_at = $1
         WHERE id = $2
         "#,
-        Utc::now().naive_utc(),
+        Utc::now(),
         id,
     )
     .execute(&state.pool)
@@ -604,7 +604,7 @@ pub async fn run_comparison(
     let result_id = Uuid::new_v4();
     let completed_at = Utc::now();
     let data_json = serde_json::to_value(&data_points).unwrap_or(serde_json::json!([]));
-    let generated_at = completed_at.naive_utc();
+    let generated_at = completed_at;
 
     let insert_result = sqlx::query!(
         r#"
@@ -630,7 +630,7 @@ pub async fn run_comparison(
             SET status = 'failed', updated_at = $1
             WHERE id = $2
             "#,
-            Utc::now().naive_utc(),
+            Utc::now(),
             id,
         )
         .execute(&state.pool)
@@ -650,7 +650,7 @@ pub async fn run_comparison(
             updated_at = $1
         WHERE id = $2
         "#,
-        completed_at.naive_utc(),
+        completed_at,
         id,
     )
     .execute(&state.pool)
@@ -764,7 +764,7 @@ pub async fn get_comparison_result(
             status: row.status,
             data: data_points,
             summary: row.summary,
-            generated_at: row.generated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+            generated_at: row.generated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
         }
     }))
 }
@@ -773,8 +773,8 @@ pub async fn get_comparison_result(
 // Helpers
 // ============================================================================
 
-fn to_rfc3339(dt: chrono::NaiveDateTime) -> String {
-    DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc).to_rfc3339()
+fn to_rfc3339(dt: chrono::DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn generate_comparison_data(
