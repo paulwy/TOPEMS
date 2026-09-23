@@ -289,7 +289,7 @@ pub async fn create_record(
         req.work_station_id,
         req.operator_id,
         req.start_time,
-        req.quantity_produced.map(|v| v as i32),
+        req.quantity_produced.map(|v| v as f64),
         req.notes,
         now,
     )
@@ -313,9 +313,9 @@ pub async fn create_record(
         operator_id: result.operator_id,
         start_time: result.start_time,
         end_time: result.end_time.map(|d| d),
-        quantity_produced: result.quantity_produced as f64,
+        quantity_produced: result.quantity_produced.unwrap_or_default(),
         quantity_defective: result.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         notes: result.notes,
         created_at: result.created_at,
         updated_at: result.updated_at,
@@ -367,9 +367,9 @@ pub async fn get_record(
                 operator_id: r.operator_id,
                 start_time: r.start_time,
                 end_time: r.end_time.map(|d| d),
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default(),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -420,7 +420,7 @@ pub async fn update_record(
         req.work_station_id,
         req.operator_id,
         req.end_time,
-        req.quantity_produced.map(|v| v as i32),
+        req.quantity_produced.map(|v| v as f64),
         status,
         req.notes,
         now,
@@ -447,9 +447,9 @@ pub async fn update_record(
                 operator_id: r.operator_id,
                 start_time: r.start_time,
                 end_time: r.end_time.map(|d| d),
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default(),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -543,9 +543,9 @@ pub async fn complete_record(
                 operator_id: r.operator_id,
                 start_time: r.start_time,
                 end_time: r.end_time.map(|d| d),
-                quantity_produced: r.quantity_produced as f64,
+                quantity_produced: r.quantity_produced.unwrap_or_default(),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 notes: r.notes,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -566,10 +566,11 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+            .unwrap()
+            .and_utc();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -585,8 +586,9 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap();
-        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
+            .unwrap()
+            .and_utc();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
         assert_eq!(r.day(), 28);

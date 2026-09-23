@@ -467,8 +467,8 @@ pub async fn create_production_order(
         req.product_name,
         req.product_code,
         req.quantity as i32,
-        req.planned_start_date.map(|d| d.naive_utc().date()),
-        req.planned_end_date.map(|d| d.naive_utc().date()),
+        req.planned_start_date,
+        req.planned_end_date,
         req.workshop_id,
         req.notes,
         now,
@@ -493,13 +493,13 @@ pub async fn create_production_order(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_no,
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
-        product_code: result.product_code.unwrap_or_default(),
+        product_code: result.product_code,
         quantity: result.quantity.unwrap_or_default(),
         completed_quantity: result.completed_quantity.unwrap_or_default(),
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         source: result.source.unwrap_or_else(|| "manual".to_string()),
         source_order_id: result.source_order_id,
         source_order_number: result.source_order_number,
@@ -630,8 +630,8 @@ pub async fn create_from_erp(
         req.erp_order.quantity as i32,
         req.erp_order.order_id,
         req.erp_order.order_number,
-        planned_start.naive_utc().date(),
-        planned_end.naive_utc().date(),
+        planned_start,
+        planned_end,
         req.workshop_id,
         req.notes,
         now,
@@ -655,13 +655,13 @@ pub async fn create_from_erp(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_no,
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
-        product_code: result.product_code.unwrap_or_default(),
+        product_code: result.product_code,
         quantity: result.quantity.unwrap_or_default(),
         completed_quantity: result.completed_quantity.unwrap_or_default(),
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         source: result
             .source
             .unwrap_or_else(|| "erp_sales_order".to_string()),
@@ -739,13 +739,13 @@ pub async fn get_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -817,9 +817,9 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.map(|q| q as i32),
-        req.planned_start_date.map(|d| d.naive_utc().date()),
-        req.planned_end_date.map(|d| d.naive_utc().date()),
+        req.quantity.map(|q| q.to_string().parse::<BigDecimal>().unwrap_or_default()),
+        req.planned_start_date,
+        req.planned_end_date,
         req.workshop_id,
         req.notes,
         Utc::now(),
@@ -839,13 +839,13 @@ pub async fn update_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -963,7 +963,7 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc().date(),
+        now,
         now,
     )
     .fetch_optional(&state.pool)
@@ -981,13 +981,13 @@ pub async fn start_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -1053,7 +1053,7 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc().date(),
+        now,
         now,
     )
     .fetch_optional(&state.pool)
@@ -1071,13 +1071,13 @@ pub async fn complete_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -1158,13 +1158,13 @@ pub async fn cancel_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,
@@ -1245,13 +1245,13 @@ pub async fn release_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 source: r.source.unwrap_or_else(|| "manual".to_string()),
                 source_order_id: r.source_order_id,
                 source_order_number: r.source_order_number,

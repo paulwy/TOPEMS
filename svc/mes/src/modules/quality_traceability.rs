@@ -160,14 +160,14 @@ pub async fn forward_traceability(
         id: order_node_id.clone(),
         node_type: "order".to_string(),
         name: order.product_name.clone(),
-        code: order.order_no.clone(),
+        code: order.order_no.clone().unwrap_or_default(),
         quantity: Some(order.quantity.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
         batch_no: None,
-        status: Some(order.status.clone()),
+        status: Some(order.status.clone().unwrap_or_default()),
         timestamp: order
             .actual_start_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+            .map(|d| d),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -197,12 +197,12 @@ pub async fn forward_traceability(
         nodes.push(TraceNode {
             id: record_node_id.clone(),
             node_type: "process".to_string(),
-            name: process_name,
+            name: process_name.unwrap_or_default(),
             code: process_no,
-            quantity: Some(record.quantity_produced as f64),
+            quantity: Some(record.quantity_produced.unwrap_or_default()),
             unit: Some("件".to_string()),
             batch_no: None,
-            status: Some(record.status.clone()),
+            status: Some(record.status.clone().unwrap_or_default()),
             timestamp: Some(record.start_time),
             operator: None,
             description: Some("生产工序记录".to_string()),
@@ -212,7 +212,7 @@ pub async fn forward_traceability(
             from_id: prev_node_id.clone(),
             to_id: record_node_id.clone(),
             link_type: "production".to_string(),
-            quantity: Some(record.quantity_produced as f64),
+            quantity: Some(record.quantity_produced.unwrap_or_default()),
         });
 
         prev_node_id = record_node_id.clone();
@@ -223,14 +223,14 @@ pub async fn forward_traceability(
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
         name: format!("{} 成品", order.product_name.clone()),
-        code: order.order_no.clone(),
+        code: order.order_no.clone().unwrap_or_default(),
         quantity: order.completed_quantity.clone().map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
-        batch_no: Some(format!("BATCH{}", order.order_no)),
-        status: Some(order.status.clone()),
+        batch_no: Some(format!("BATCH{}", order.order_no.unwrap_or_default())),
+        status: Some(order.status.clone().unwrap_or_default()),
         timestamp: order
             .actual_end_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+            .map(|d| d),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -327,8 +327,7 @@ pub async fn backward_traceability(
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default())
-            .map(|d| d.and_utc()),
+            .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
         operator: None,
         description: Some("成品批次".to_string()),
     });
@@ -670,10 +669,11 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+            .unwrap()
+            .and_utc();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -689,8 +689,9 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap();
-        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
+            .unwrap()
+            .and_utc();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
         assert_eq!(r.day(), 28);

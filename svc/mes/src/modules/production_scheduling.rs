@@ -428,7 +428,7 @@ pub async fn create_production_schedule(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.as_deref();
+    let order_no_arg = order_no_flat.and_then(|x| x);
     let result = sqlx::query!(
         r#"
         INSERT INTO production_schedules (
@@ -456,12 +456,12 @@ pub async fn create_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time.map(|d| d.naive_utc()),
-        req.planned_end_time.map(|d| d.naive_utc()),
+        req.planned_start_time,
+        req.planned_end_time,
         req.priority.unwrap_or(0),
         req.sequence.unwrap_or(0),
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -489,16 +489,16 @@ pub async fn create_production_schedule(
         equipment_name: None,
         process_id: result.process_id,
         process_name: None,
-        planned_start_time: result.planned_start_time.map(|d| d.and_utc()),
-        planned_end_time: result.planned_end_time.map(|d| d.and_utc()),
-        actual_start_time: result.actual_start_time.map(|d| d.and_utc()),
-        actual_end_time: result.actual_end_time.map(|d| d.and_utc()),
+        planned_start_time: result.planned_start_time.map(|d| d),
+        planned_end_time: result.planned_end_time.map(|d| d),
+        actual_start_time: result.actual_start_time.map(|d| d),
+        actual_end_time: result.actual_end_time.map(|d| d),
         status: result.status.unwrap_or_else(|| "pending".to_string()),
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -576,21 +576,21 @@ pub async fn get_production_schedule(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
-                work_station_name: Some(r.work_station_name),
+                work_station_name: Some(r.work_station_name.unwrap_or_default()),
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
-                equipment_name: Some(r.equipment_name),
+                equipment_name: Some(r.equipment_name.unwrap_or_default()),
                 process_id: r.process_id,
-                process_name: Some(r.process_name),
-                planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
-                planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
-                actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
-                actual_end_time: r.actual_end_time.map(|d| d.and_utc()),
+                process_name: Some(r.process_name.unwrap_or_default()),
+                planned_start_time: r.planned_start_time.map(|d| d),
+                planned_end_time: r.planned_end_time.map(|d| d),
+                actual_start_time: r.actual_start_time.map(|d| d),
+                actual_end_time: r.actual_end_time.map(|d| d),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -655,13 +655,13 @@ pub async fn update_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time.map(|d| d.naive_utc()),
-        req.planned_end_time.map(|d| d.naive_utc()),
+        req.planned_start_time,
+        req.planned_end_time,
         req.priority,
         req.sequence,
         req.status,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -691,16 +691,16 @@ pub async fn update_production_schedule(
                 equipment_name: None,
                 process_id: r.process_id,
                 process_name: None,
-                planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
-                planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
-                actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
-                actual_end_time: r.actual_end_time.map(|d| d.and_utc()),
+                planned_start_time: r.planned_start_time.map(|d| d),
+                planned_end_time: r.planned_end_time.map(|d| d),
+                actual_start_time: r.actual_start_time.map(|d| d),
+                actual_end_time: r.actual_end_time.map(|d| d),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
@@ -791,7 +791,7 @@ pub async fn adjust_schedule(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     for schedule_id in &req.schedule_ids {
         let result = sqlx::query!(
@@ -804,7 +804,7 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-            req.new_start_time.map(|d| d.naive_utc()),
+            req.new_start_time,
             now,
         )
         .execute(&state.pool)
@@ -876,11 +876,11 @@ pub async fn get_gantt_data(
     for s in &schedules {
         let start = s
             .planned_start_time
-            .map(|d| d.and_utc())
+            .map(|d| d)
             .unwrap_or_else(Utc::now);
         let end = s
             .planned_end_time
-            .map(|d| d.and_utc())
+            .map(|d| d)
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
@@ -894,8 +894,8 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone(),
-                name: resource_name.clone(),
+                id: resource_name.clone().unwrap_or_default(),
+                name: resource_name.clone().unwrap_or_default(),
                 category: "workstation".to_string(),
             });
         }
@@ -907,7 +907,7 @@ pub async fn get_gantt_data(
             end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
-            resource: Some(resource_name),
+            resource: Some(resource_name.unwrap_or_default()),
             parent: None,
         });
     }
@@ -929,8 +929,9 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 9, 10)
             .unwrap()
             .and_hms_opt(14, 20, 0)
-            .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
+            .unwrap()
+            .and_utc();
+        let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.year(), 2024);
         assert_eq!(utc.month(), 9);
         assert_eq!(utc.day(), 10);
@@ -952,8 +953,9 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap();
-        let r = opt_naive_to_utc(Some(dt.and_utc())).unwrap();
+            .unwrap()
+            .and_utc();
+        let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
         assert_eq!(r.day(), 28);

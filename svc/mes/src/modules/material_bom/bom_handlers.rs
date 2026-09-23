@@ -187,7 +187,7 @@ pub async fn create_material_bom(
         req.product_code,
         req.version.unwrap_or_else(|| "1.0".to_string()),
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -274,8 +274,8 @@ pub async fn create_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: datetime_to_string(bom.created_at.map(|d| d.and_utc())),
-        updated_at: datetime_to_string(bom.updated_at.map(|d| d.and_utc())),
+        created_at: datetime_to_string(Some(bom.created_at)),
+        updated_at: datetime_to_string(Some(bom.updated_at)),
     };
 
     Json(ApiResponse::success(
@@ -350,8 +350,8 @@ pub async fn get_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: datetime_to_string(bom.created_at.map(|d| d.and_utc())),
-        updated_at: datetime_to_string(bom.updated_at.map(|d| d.and_utc())),
+        created_at: datetime_to_string(Some(bom.created_at)),
+        updated_at: datetime_to_string(Some(bom.updated_at)),
     };
 
     let item_responses: Vec<BomItemResponse> = items
@@ -392,7 +392,7 @@ pub async fn update_material_bom(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,

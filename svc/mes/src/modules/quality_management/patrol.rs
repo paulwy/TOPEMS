@@ -246,14 +246,14 @@ pub async fn get_patrol(
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "获取巡检记录成功",
         )),
@@ -306,17 +306,17 @@ pub async fn create_patrol(
         body.workstation_name,
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.with_timezone(&Utc))
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
                 })
         }),
         body.status.unwrap_or_else(|| "pending".to_string()),
@@ -335,14 +335,14 @@ pub async fn create_patrol(
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "创建巡检记录成功",
         )),
@@ -402,17 +402,17 @@ pub async fn update_patrol(
         body.workstation_name,
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.with_timezone(&Utc))
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
                 })
         }),
         body.status,
@@ -432,14 +432,14 @@ pub async fn update_patrol(
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
+                inspector: r.inspector.unwrap_or_default(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新巡检记录成功",
         )),
@@ -544,7 +544,7 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.to_string(),
+                    patrol_id: r.patrol_id.map(|d| d.to_string()).unwrap_or_default(),
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
@@ -606,7 +606,7 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
+                patrol_id: r.patrol_id.map(|d| d.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
@@ -676,7 +676,7 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
+                patrol_id: r.patrol_id.map(|d| d.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),

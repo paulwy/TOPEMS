@@ -320,16 +320,16 @@ pub async fn get_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -338,8 +338,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "获取物料需求成功",
         )),
@@ -371,17 +371,17 @@ pub async fn create_material_requirement(
     let required_quantity =
         BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
 
-    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
         .ok()
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
                 .ok()
-                .map(|dt| dt.with_timezone(&Utc))
+                .map(|dt| dt.naive_utc())
         })
         .or_else(|| {
             chrono::NaiveDate::parse_from_str(&body.required_date, "%Y-%m-%d")
                 .ok()
-                .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
         });
 
     let result = sqlx::query_unchecked!(
@@ -419,16 +419,16 @@ pub async fn create_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -437,8 +437,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "创建物料需求成功",
         )),
@@ -475,17 +475,17 @@ pub async fn update_material_requirement(
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let required_date = body.required_date.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc))
+                    .map(|dt| dt.naive_utc())
             })
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
             })
     });
 
@@ -522,16 +522,16 @@ pub async fn update_material_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -540,8 +540,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新物料需求成功",
         )),
@@ -675,7 +675,7 @@ pub async fn calculate_requirements(
                     item.specification,
                     Some(item.unit),
                     required_quantity_bd,
-                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc()).ok(),
+                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").map(|dt| dt).ok(),
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),
@@ -689,22 +689,22 @@ pub async fn calculate_requirements(
                         mrp_no: r.mrp_no,
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
-                        product_code: r.product_code,
-                        product_name: r.product_name,
+                        product_code: r.product_code.unwrap_or_default(),
+                        product_name: r.product_name.unwrap_or_default(),
                         material_code: r.material_code,
                         material_name: r.material_name,
                         specification: r.specification,
-                        unit: r.unit,
+                        unit: Some(r.unit),
                         required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                         available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                         shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                        required_date: r.required_date,
+                        required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                        updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                        created_at: r.created_at.to_rfc3339(),
+                        updated_at: r.updated_at.to_rfc3339(),
                     });
                 }
             }
@@ -754,16 +754,16 @@ pub async fn confirm_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -772,8 +772,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "确认物料需求成功",
         )),
@@ -822,16 +822,16 @@ pub async fn release_requirement(
                 mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 material_code: r.material_code,
                 material_name: r.material_name,
                 specification: r.specification,
-                unit: r.unit,
+                unit: Some(r.unit),
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date,
+                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -840,8 +840,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "下发物料需求成功",
         )),
@@ -863,10 +863,11 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+            .unwrap()
+            .and_utc();
+        let utc = naive_to_utc(Some(dt));
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -882,8 +883,9 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
-            .unwrap();
-        let s = datetime_to_string(Some(dt.and_utc()));
+            .unwrap()
+            .and_utc();
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
