@@ -704,9 +704,7 @@ pub async fn add_route_step(
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let estimated_time_minutes = body
-        .estimated_time_minutes
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let estimated_time_minutes = body.estimated_time_minutes;
 
     let result = sqlx::query!(
         r#"
@@ -789,9 +787,7 @@ pub async fn update_route_step(
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let estimated_time_minutes = body
-        .estimated_time_minutes
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let estimated_time_minutes = body.estimated_time_minutes;
 
     let result = sqlx::query!(
         r#"
