@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     routing::get,
     Json, Router,
@@ -9,11 +9,14 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::quality::{
     CreateDefectRequest, CreateQualityCheckRequest, Defect, QualityCheck, UpdateDefectRequest,
     UpdateQualityCheckRequest,
 };
+use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
@@ -104,6 +107,8 @@ async fn get_quality_check(
 async fn create_quality_check(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityCheck>> {
     let id = Uuid::new_v4();
@@ -123,9 +128,9 @@ async fn create_quality_check(
     .bind(req.check_criteria)
     .bind(req.acceptance_standard)
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -245,6 +250,8 @@ async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
 async fn create_defect(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDefectRequest>,
 ) -> Json<ApiResponse<Defect>> {
     let id = Uuid::new_v4();
@@ -265,9 +272,9 @@ async fn create_defect(
     .bind(req.assignee)
     .bind(parse_date_opt(&req.due_date))
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

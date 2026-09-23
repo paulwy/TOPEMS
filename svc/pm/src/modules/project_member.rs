@@ -9,8 +9,10 @@ use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
 
 use crate::models::project_member::{CreateMemberRequest, ProjectMember, UpdateMemberRequest};
+use crate::modules::effective_tenant_id;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -77,8 +79,9 @@ async fn list_members(
 )]
 async fn create_member(
     State(pool): State<PgPool>,
-    Extension(ctx): Extension<TenantContext>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let id = Uuid::new_v4();
@@ -97,7 +100,7 @@ async fn create_member(
         "#
     ))
     .bind(id)
-    .bind(ctx.tenant_id)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(project_id)
     .bind(&req.user_id)
     .bind(&req.role)

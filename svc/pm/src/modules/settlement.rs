@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     routing::{get, post, put},
     Json, Router,
@@ -13,12 +13,15 @@ use topems_shared_event::event::{
     EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
 };
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::settlement::{
     CreateSettlementAdjustmentRequest, CreateSettlementItemRequest, CreateSettlementRequest,
     Settlement, SettlementAdjustment, SettlementItem, UpdateSettlementItemRequest,
     UpdateSettlementRequest,
 };
+use crate::modules::effective_tenant_id;
 
 #[derive(Clone)]
 struct SettlementState {
@@ -108,6 +111,8 @@ async fn get_settlement(
 async fn create_settlement(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSettlementRequest>,
 ) -> Json<ApiResponse<Settlement>> {
     let id = Uuid::new_v4();
@@ -126,9 +131,9 @@ async fn create_settlement(
     .bind(parse_date_opt(&req.settlement_period_end))
     .bind(req.description)
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&state.pool)
     .await;
 

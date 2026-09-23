@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
@@ -8,8 +8,11 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::project_benefit::{CreateBenefitRequest, ProjectBenefit};
+use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
@@ -208,6 +211,8 @@ async fn get_analysis(
 async fn calculate_benefits(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBenefitRequest>,
 ) -> Json<ApiResponse<ProjectBenefit>> {
     let id = Uuid::new_v4();
@@ -292,9 +297,9 @@ async fn calculate_benefits(
     .bind(roi)
     .bind(&req.notes)
     .bind(&req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

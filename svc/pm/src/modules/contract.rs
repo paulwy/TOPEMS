@@ -9,6 +9,8 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::contract::{
     Contract, ContractMilestone, ContractPaymentSchedule, ContractTemplate,
@@ -16,6 +18,7 @@ use crate::models::contract::{
     CreatePaymentScheduleRequest, UpdateContractRequest,
 };
 use crate::services::audit::PmAuditService;
+use crate::modules::effective_tenant_id;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -109,6 +112,8 @@ async fn create_contract(
     State(pool): State<PgPool>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let id = Uuid::new_v4();
@@ -140,9 +145,9 @@ async fn create_contract(
     .bind(parse_date_opt(&req.start_date))
     .bind(parse_date_opt(&req.end_date))
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -887,6 +892,8 @@ async fn get_template(
 
 async fn create_template(
     State(pool): State<PgPool>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractTemplateRequest>,
 ) -> Json<ApiResponse<ContractTemplate>> {
     let id = Uuid::new_v4();
@@ -902,9 +909,9 @@ async fn create_template(
     .bind(req.description)
     .bind(&req.content)
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -1014,6 +1021,8 @@ async fn get_project_contracts(
 async fn create_project_contract(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractRequest>,
 ) -> Json<ApiResponse<Contract>> {
     let id = Uuid::new_v4();
@@ -1041,9 +1050,9 @@ async fn create_project_contract(
     .bind(parse_date_opt(&req.start_date))
     .bind(parse_date_opt(&req.end_date))
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     routing::{get, put},
     Json, Router,
@@ -9,11 +9,14 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::notification::{
     CreateNotificationRequest, CreateNotificationSettingRequest, Notification, NotificationSetting,
     NotificationType,
 };
+use crate::modules::effective_tenant_id;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -55,6 +58,8 @@ async fn get_project_notifications(
 
 async fn create_notification(
     State(pool): State<PgPool>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationRequest>,
 ) -> Json<ApiResponse<Notification>> {
     let id = Uuid::new_v4();
@@ -73,9 +78,9 @@ async fn create_notification(
     .bind(&req.priority)
     .bind(req.metadata)
     .bind(parse_date_opt(&req.due_date))
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

@@ -5,13 +5,15 @@
 //! - `task_progress_for_status`：状态派生进度（done→100 / todo→0）
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::{HeaderMap, StatusCode},
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -19,6 +21,7 @@ use uuid::Uuid;
 use crate::models::task::{
     CreateTaskRequest, Task, TaskListResponse, TaskQuery, UpdateTaskRequest,
 };
+use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
@@ -177,10 +180,12 @@ pub async fn list_tasks_by_project(
 pub async fn create_task(
     State(pool): State<PgPool>,
     headers: HeaderMap,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
 ) -> Json<ApiResponse<Task>> {
     let id = Uuid::new_v4();
-    let tenant_id = Uuid::nil(); // 由上层中间件注入真实租户；独立部署默认 DEV
+    let tenant_id = effective_tenant_id(&ctx, &claims);
     let now = Utc::now();
     let status = req.status.unwrap_or_else(|| "todo".to_string());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());

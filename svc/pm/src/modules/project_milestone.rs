@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::get,
     Json, Router,
 };
@@ -8,10 +8,13 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::project_milestone::{
     CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
 };
+use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
@@ -102,6 +105,8 @@ async fn list_milestones(
 async fn create_milestone(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
     let id = Uuid::new_v4();
@@ -126,9 +131,9 @@ async fn create_milestone(
     .bind("pending")
     .bind(req.phase_id)
     .bind(&req.acceptance_criteria)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

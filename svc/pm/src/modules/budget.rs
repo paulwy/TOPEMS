@@ -9,12 +9,15 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::budget::{
     Budget, BudgetItem, CreateBudgetItemRequest, CreateBudgetRequest, UpdateBudgetItemRequest,
     UpdateBudgetRequest,
 };
 use crate::services::audit::PmAuditService;
+use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
@@ -132,6 +135,8 @@ async fn create_budget(
     State(pool): State<PgPool>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetRequest>,
 ) -> Json<ApiResponse<Budget>> {
     let id = Uuid::new_v4();
@@ -152,9 +157,9 @@ async fn create_budget(
     .bind(req.budget_type.clone().unwrap_or_else(|| "operating".to_string()))
     .bind(req.total_amount)
     .bind(req.created_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

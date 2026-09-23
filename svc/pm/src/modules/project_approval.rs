@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     routing::{get, post},
     Json, Router,
 };
@@ -15,8 +15,11 @@ use topems_shared_service_client::service_client::api::workflow_api::{
 };
 use topems_shared_service_client::TypedServiceClient;
 use uuid::Uuid;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::project_approval::{ApprovalRequest, ProjectApproval};
+use crate::modules::effective_tenant_id;
 
 /// 项目审批状态：组合数据库连接池与 Flow 工作流客户端
 #[derive(Clone)]
@@ -102,6 +105,8 @@ async fn get_approval(
 async fn submit_approval(
     State(state): State<ApprovalState>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<ProjectApproval>> {
     let id = Uuid::new_v4();
@@ -174,9 +179,9 @@ async fn submit_approval(
     .bind(approval_steps)
     .bind(req.comment)
     .bind(&req.approver_id)
+    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(now)
-    .bind(Uuid::nil())
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&state.pool)
     .await;
 
