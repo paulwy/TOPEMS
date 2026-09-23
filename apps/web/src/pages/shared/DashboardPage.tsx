@@ -127,7 +127,7 @@ const DashboardPage: React.FC = () => {
       try {
         const result = await getDashboard();
         return result;
-      } catch (e) {
+      } catch (_e) {
         // API 不可用时返回 null，使用默认数据
         return null;
       }

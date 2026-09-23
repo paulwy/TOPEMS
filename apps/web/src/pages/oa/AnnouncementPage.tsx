@@ -180,7 +180,7 @@ const AnnouncementPage: React.FC = () => {
             status: a.status,
           }));
         }
-      } catch (e) {
+      } catch (_e) {
         // API 不可用时使用 mock 数据
       }
       return mockAnnouncements;

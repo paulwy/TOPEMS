@@ -103,7 +103,7 @@ const SystemSettingsPage: React.FC = () => {
           }
           return merged;
         }
-      } catch (e) {
+      } catch (_e) {
         // API 不可用时使用默认值
       }
       return defaultSettings;

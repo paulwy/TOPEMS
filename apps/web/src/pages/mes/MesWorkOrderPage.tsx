@@ -248,7 +248,7 @@ const MesWorkOrderPage: React.FC = () => {
             remark: o.remark,
           }));
         }
-      } catch (e) {
+      } catch (_e) {
         // API 不可用时使用 mock 数据
       }
       return mockOrders;

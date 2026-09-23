@@ -226,7 +226,7 @@ const WorkflowApprovalsPage: React.FC = () => {
         if (response.success && response.data) {
           return response.data.items || [];
         }
-      } catch (e) {
+      } catch (_e) {
         // API 不可用时使用 mock 数据
       }
       return mockTasks;
@@ -241,7 +241,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       setDetailDrawerOpen(false);
       setSelectedTask(null);
     },
-    onError: (err: Error) => {
+    onError: (_err: Error) => {
       // Mock 模式下直接更新本地状态
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('workflow.approval_timeline.k5'));
@@ -261,7 +261,7 @@ const WorkflowApprovalsPage: React.FC = () => {
       setDetailDrawerOpen(false);
       setSelectedTask(null);
     },
-    onError: (err: Error) => {
+    onError: (_err: Error) => {
       // Mock 模式下直接更新本地状态
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       pushToast('success', t('workflow.workflow_approvals_page.k19'));
