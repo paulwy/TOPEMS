@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -246,12 +247,12 @@ pub async fn list_inspections(
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -306,15 +307,15 @@ pub async fn get_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
-                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
+                product_code: r.product_code.to_string(),
+                product_name: r.product_name.to_string(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
+                inspection_type: r.inspection_type.to_string(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -424,15 +425,15 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
-                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
+                product_code: r.product_code.to_string(),
+                product_name: r.product_name.to_string(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
+                inspection_type: r.inspection_type.to_string(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
@@ -532,15 +533,15 @@ pub async fn update_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 inspection_no: r.inspection_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code.map(|v| v.to_string()).unwrap_or_default(),
-                product_name: r.product_name.map(|v| v.to_string()).unwrap_or_default(),
+                product_code: r.product_code.to_string(),
+                product_name: r.product_name.to_string(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
-                inspection_type: r.inspection_type.map(|v| v.to_string()).unwrap_or_default(),
+                inspection_type: r.inspection_type.to_string(),
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),

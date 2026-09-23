@@ -389,12 +389,12 @@ pub async fn list_oee_records(
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -500,7 +500,7 @@ pub async fn create_oee_record(
 
     let record = OeeRecordResponse {
         id: result.id.unwrap_or_default(),
-        equipment_id: result.equipment_id.unwrap_or_default(),
+        equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()).flatten(),
         equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
         record_date: opt_naive_date_to_utc(result.record_date).unwrap_or_else(Utc::now),
@@ -579,7 +579,7 @@ pub async fn get_oee_record(
         Some(r) => {
             let record = OeeRecordResponse {
                 id: r.id.unwrap_or_default(),
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
                 equipment_code: r.equipment_no,
                 record_date: opt_naive_date_to_utc(r.record_date).unwrap_or_else(Utc::now),
@@ -736,7 +736,7 @@ pub async fn update_oee_record(
         Some(r) => {
             let record = OeeRecordResponse {
                 id: r.id.unwrap_or_default(),
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_id: r.equipment_id,
                 equipment_name: None,
                 equipment_code: None,
                 record_date: opt_naive_date_to_utc(r.record_date).unwrap_or_else(Utc::now),
@@ -970,7 +970,7 @@ pub async fn get_oee_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| OeeEquipmentStat {
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name.unwrap_or_default(),
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
@@ -1075,7 +1075,7 @@ pub async fn get_equipment_efficiency_analysis(
             };
 
             EquipmentEfficiencyAnalysis {
-                equipment_id: r.equipment_id.unwrap_or_default(),
+                equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name.unwrap_or_default(),
                 equipment_no: r.equipment_no.unwrap_or_default(),
                 oee: oee_val,

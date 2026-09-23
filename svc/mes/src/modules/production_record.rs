@@ -210,12 +210,12 @@ pub async fn list_records(
             equipment_id: r.try_get::<Option<Uuid>, _>("equipment_id").ok().flatten(),
             operator_id: r.try_get::<Option<Uuid>, _>("operator_id").ok().flatten(),
             start_time: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("start_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
                     .flatten(),
             ),
             end_time: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("end_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("end_time")
                     .ok()
                     .flatten(),
             ),
@@ -236,12 +236,12 @@ pub async fn list_records(
                 .unwrap_or_else(|| "in_progress".to_string()),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -311,7 +311,7 @@ pub async fn create_record(
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: result.start_time.unwrap_or_default(),
+        start_time: result.start_time,
         end_time: result.end_time,
         quantity_produced: result.quantity_produced.unwrap_or_default() as f64,
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
@@ -365,7 +365,7 @@ pub async fn get_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: r.start_time,
                 end_time: r.end_time,
                 quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
@@ -445,7 +445,7 @@ pub async fn update_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: r.start_time,
                 end_time: r.end_time,
                 quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
@@ -541,7 +541,7 @@ pub async fn complete_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: r.start_time,
                 end_time: r.end_time,
                 quantity_produced: r.quantity_produced.unwrap_or_default() as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),

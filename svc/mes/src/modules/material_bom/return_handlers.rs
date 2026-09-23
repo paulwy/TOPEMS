@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use sqlx::types::BigDecimal;
@@ -116,7 +117,7 @@ pub async fn create_material_return(
     }
 
     let response = MaterialReturnResponse {
-        id: return_record.id.map(|v| v.to_string()).unwrap_or_default(),
+        id: return_record.id.to_string(),
         return_no: return_record.return_no.unwrap_or_default(),
         order_id: return_record.order_id.map(|u| u.to_string()),
         order_no: return_record.order_no,
@@ -246,18 +247,18 @@ pub async fn list_material_returns(
                 .flatten()
                 .map(|u| u.to_string()),
             return_time: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("return_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("return_time")
                     .ok()
                     .flatten(),
             ),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -329,7 +330,7 @@ pub async fn get_material_return(
     };
 
     let return_json = serde_json::json!({
-        "id": return_record.id.map(|v| v.to_string()).unwrap_or_default(),
+        "id": return_record.id.to_string(),
         "return_no": return_record.return_no,
         "order_id": return_record.order_id.map(|u| u.to_string()),
         "order_no": return_record.order_no,
@@ -341,8 +342,8 @@ pub async fn get_material_return(
         "created_at": datetime_to_string(return_record.created_at),
         "updated_at": datetime_to_string(return_record.updated_at),
         "items": items.iter().map(|i| serde_json::json!({
-            "id": i.id.map(|v| v.to_string()).unwrap_or_default(),
-            "return_id": i.return_id.map(|v| v.to_string()).unwrap_or_default(),
+            "id": i.id.to_string(),
+            "return_id": i.return_id.to_string(),
             "material_id": i.material_id.map(|u| u.to_string()),
             "material_code": i.material_code,
             "material_name": i.material_name,
@@ -405,7 +406,7 @@ pub async fn update_material_return(
     };
 
     let return_json = serde_json::json!({
-        "id": return_record.id.map(|v| v.to_string()).unwrap_or_default(),
+        "id": return_record.id.to_string(),
         "return_no": return_record.return_no,
         "order_id": return_record.order_id.map(|u| u.to_string()),
         "order_no": return_record.order_no,

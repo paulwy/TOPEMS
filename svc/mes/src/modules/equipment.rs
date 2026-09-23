@@ -127,8 +127,8 @@ fn naive_date_to_string(d: Option<chrono::NaiveDate>) -> Option<String> {
     d.map(|date| date.format("%Y-%m-%d").to_string())
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
@@ -174,12 +174,12 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
         ),
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
         created_at: datetime_to_string(
-            r.try_get::<Option<NaiveDateTime>, _>("created_at")
+            r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten(),
         ),
         updated_at: datetime_to_string(
-            r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+            r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten(),
         ),
@@ -790,13 +790,13 @@ pub async fn list_maintenances(
         .into_iter()
         .map(|r| MaintenanceRecord {
             id: r.id.unwrap_or_default(),
-            equipment_id: r.equipment_id.unwrap_or_default(),
+            equipment_id: r.equipment_id,
             equipment_name: r.equipment_name,
             equipment_no: r.equipment_no,
-            maintenance_type: r.maintenance_type.unwrap_or_default(),
+            maintenance_type: r.maintenance_type,
             description: r.description,
             maintainer: r.maintainer.unwrap_or_default(),
-            start_time: r.start_time.unwrap_or_default(),
+            start_time: r.start_time,
             end_time: r.end_time,
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
@@ -931,7 +931,7 @@ pub async fn create_maintenance(
             equipment_id: equipment_id.unwrap_or_default(),
             equipment_name: equipment_name.unwrap_or_default(),
             equipment_no: equipment_no.unwrap_or_default(),
-            maintenance_type: maintenance_type.unwrap_or_default(),
+            maintenance_type: maintenance_type,
             description: description,
             maintainer: maintainer.unwrap_or_default(),
             start_time: start_time.unwrap_or_default(),
@@ -1038,7 +1038,7 @@ pub async fn update_maintenance_status(
             equipment_id: equipment_id.unwrap_or_default(),
             equipment_name: equipment_name.unwrap_or_default(),
             equipment_no: equipment_no.unwrap_or_default(),
-            maintenance_type: maintenance_type.unwrap_or_default(),
+            maintenance_type: maintenance_type,
             description,
             maintainer: maintainer.unwrap_or_default(),
             start_time: start_time.unwrap_or_default(),
@@ -1173,7 +1173,7 @@ pub async fn list_inspections(
             let inspections: Vec<InspectionResponse> = rows
                 .into_iter()
                 .map(|r| InspectionResponse {
-                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: r.id.to_string(),
                     equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
@@ -1303,7 +1303,7 @@ pub async fn create_inspection(
     match result {
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 equipment_id: r.equipment_id.map(|v| v.to_string()).unwrap_or_default(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),

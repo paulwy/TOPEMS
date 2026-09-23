@@ -172,8 +172,8 @@ fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -297,12 +297,12 @@ pub async fn list_process_flows(
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -613,7 +613,7 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence.unwrap_or_default(),
@@ -746,7 +746,7 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
@@ -872,7 +872,7 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
@@ -1011,7 +1011,7 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence.unwrap_or_default(),

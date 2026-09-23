@@ -131,8 +131,8 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -272,12 +272,12 @@ pub async fn list_process_routes(
             total_estimated_time_minutes: None,
             process_count: None,
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -369,7 +369,7 @@ pub async fn get_process_route(
 
             Json(ApiResponse::success(
                 ProcessRouteResponse {
-                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
                     name: r.name.unwrap_or_default(),
                     description: r.description,
@@ -441,7 +441,7 @@ pub async fn create_process_route(
 
             Json(ApiResponse::success(
                 ProcessRouteResponse {
-                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
                     name: r.name.unwrap_or_default(),
                     description: r.description,
@@ -526,7 +526,7 @@ pub async fn update_process_route(
 
             Json(ApiResponse::success(
                 ProcessRouteResponse {
-                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
                     name: r.name.unwrap_or_default(),
                     description: r.description,
@@ -648,9 +648,9 @@ pub async fn get_route_steps(
             let step_responses: Vec<ProcessRouteStepResponse> = steps
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
-                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
-                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: s.id.to_string(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence.unwrap_or_default(),
@@ -744,9 +744,9 @@ pub async fn add_route_step(
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
-                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
-                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: s.id.to_string(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
@@ -829,9 +829,9 @@ pub async fn update_route_step(
 
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
-                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
-                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: s.id.to_string(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence.unwrap_or_default(),
@@ -970,9 +970,9 @@ pub async fn reorder_route_steps(
             let step_responses: Vec<ProcessRouteStepResponse> = steps
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
-                    id: s.id.map(|v| v.to_string()).unwrap_or_default(),
-                    route_id: s.route_id.map(|v| v.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: s.id.to_string(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence.unwrap_or_default(),

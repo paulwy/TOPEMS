@@ -155,7 +155,7 @@ pub async fn forward_traceability(
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    let order_node_id = format!("order_{}", order.id.map(|v| v.to_string()).unwrap_or_default());
+    let order_node_id = format!("order_{}", order.id.to_string());
     nodes.push(TraceNode {
         id: order_node_id.clone(),
         node_type: "order".to_string(),
@@ -191,7 +191,7 @@ pub async fn forward_traceability(
 
     let mut prev_node_id = order_node_id.clone();
     for record in &records {
-        let record_node_id = format!("record_{}", record.id.map(|v| v.to_string()).unwrap_or_default());
+        let record_node_id = format!("record_{}", record.id.to_string());
         let process_name = record.process_name.clone();
         let process_no = record.process_code.clone().unwrap_or_default();
         nodes.push(TraceNode {
@@ -218,7 +218,7 @@ pub async fn forward_traceability(
         prev_node_id = record_node_id.clone();
     }
 
-    let finished_node_id = format!("finished_{}", order.id.map(|v| v.to_string()).unwrap_or_default());
+    let finished_node_id = format!("finished_{}", order.id.to_string());
     nodes.push(TraceNode {
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
@@ -226,7 +226,7 @@ pub async fn forward_traceability(
         code: order.order_no.clone().unwrap_or_default(),
         quantity: order.completed_quantity.map(|v| v as f64),
         unit: Some("件".to_string()),
-        batch_no: Some(format!("BATCH{}", order.order_no.map(|v| v.to_string()).unwrap_or_default())),
+        batch_no: Some(format!("BATCH{}", order.order_no.to_string())),
         status: order.status.clone(),
         timestamp: order
             .actual_end_date
@@ -315,7 +315,7 @@ pub async fn backward_traceability(
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    let product_node_id = format!("product_{}", batch.id.map(|v| v.to_string()).unwrap_or_default());
+    let product_node_id = format!("product_{}", batch.id.to_string());
     nodes.push(TraceNode {
         id: product_node_id.clone(),
         node_type: "finished_product".to_string(),
@@ -627,7 +627,7 @@ pub async fn list_quality_records(
                 .unwrap_or_else(|| "pending".to_string()),
             inspector: r.try_get::<Option<String>, _>("inspector").ok().flatten(),
             inspection_time: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("inspection_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
                     .ok()
                     .flatten(),
             ),
@@ -637,12 +637,12 @@ pub async fn list_quality_records(
                 .flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use sqlx::types::BigDecimal;
@@ -122,12 +123,12 @@ pub async fn list_material_boms(
                 .unwrap_or_else(|| "draft".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -239,8 +240,8 @@ pub async fn create_material_bom(
         match item_result {
             Ok(i) => {
                 item_responses.push(BomItemResponse {
-                    id: i.id.map(|v| v.to_string()).unwrap_or_default(),
-                    bom_id: i.bom_id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: i.id.to_string(),
+                    bom_id: i.bom_id.to_string(),
                     material_id: i.material_id.map(|u| u.to_string()),
                     material_code: i.material_code.unwrap_or_default(),
                     material_name: i.material_name.unwrap_or_default(),
@@ -266,7 +267,7 @@ pub async fn create_material_bom(
     }
 
     let bom_response = MaterialBomResponse {
-        id: bom.id.map(|v| v.to_string()).unwrap_or_default(),
+        id: bom.id.to_string(),
         bom_no: bom.bom_no.unwrap_or_default(),
         product_id: bom.product_id.map(|u| u.to_string()),
         product_name: bom.product_name.unwrap_or_default(),
@@ -342,7 +343,7 @@ pub async fn get_material_bom(
     };
 
     let bom_response = MaterialBomResponse {
-        id: bom.id.map(|v| v.to_string()).unwrap_or_default(),
+        id: bom.id.to_string(),
         bom_no: bom.bom_no.unwrap_or_default(),
         product_id: bom.product_id.map(|u| u.to_string()),
         product_name: bom.product_name.unwrap_or_default(),
@@ -357,8 +358,8 @@ pub async fn get_material_bom(
     let item_responses: Vec<BomItemResponse> = items
         .into_iter()
         .map(|i| BomItemResponse {
-            id: i.id.map(|v| v.to_string()).unwrap_or_default(),
-            bom_id: i.bom_id.map(|v| v.to_string()).unwrap_or_default(),
+            id: i.id.to_string(),
+            bom_id: i.bom_id.to_string(),
             material_id: i.material_id.map(|u| u.to_string()),
             material_code: i.material_code.unwrap_or_default(),
             material_name: i.material_name.unwrap_or_default(),

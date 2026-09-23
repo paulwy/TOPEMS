@@ -118,8 +118,8 @@ fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
         .unwrap_or_else(Utc::now)
 }
 
-fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 pub async fn list_teams(
@@ -246,12 +246,12 @@ pub async fn list_teams(
                 .unwrap_or_else(|| "active".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -586,7 +586,7 @@ pub async fn get_team_members(
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
             team_id: r.team_id.to_string(),
-            employee_id: r.employee_id.map(|v| v.to_string()).unwrap_or_default(),
+            employee_id: r.employee_id.to_string(),
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
@@ -660,7 +660,7 @@ pub async fn add_team_member(
     let member = TeamMemberResponse {
         id: result.id.to_string(),
         team_id: result.team_id.to_string(),
-        employee_id: result.employee_id.map(|v| v.to_string()).unwrap_or_default(),
+        employee_id: result.employee_id.to_string(),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,

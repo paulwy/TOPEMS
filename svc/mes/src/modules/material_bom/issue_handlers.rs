@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use sqlx::types::BigDecimal;
@@ -121,7 +122,7 @@ pub async fn create_material_issue(
     }
 
     let response = MaterialIssueResponse {
-        id: issue.id.map(|v| v.to_string()).unwrap_or_default(),
+        id: issue.id.to_string(),
         issue_no: issue.issue_no.unwrap_or_default(),
         order_id: issue.order_id.map(|u| u.to_string()),
         order_no: issue.order_no,
@@ -255,18 +256,18 @@ pub async fn list_material_issues(
                 .flatten()
                 .map(|u| u.to_string()),
             issue_time: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("issue_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("issue_time")
                     .ok()
                     .flatten(),
             ),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -338,7 +339,7 @@ pub async fn get_material_issue(
     };
 
     let issue_json = serde_json::json!({
-        "id": issue.id.map(|v| v.to_string()).unwrap_or_default(),
+        "id": issue.id.to_string(),
         "issue_no": issue.issue_no,
         "order_id": issue.order_id.map(|u| u.to_string()),
         "order_no": issue.order_no,
@@ -351,8 +352,8 @@ pub async fn get_material_issue(
         "created_at": datetime_to_string(issue.created_at),
         "updated_at": datetime_to_string(issue.updated_at),
         "items": items.iter().map(|i| serde_json::json!({
-            "id": i.id.map(|v| v.to_string()).unwrap_or_default(),
-            "issue_id": i.issue_id.map(|v| v.to_string()).unwrap_or_default(),
+            "id": i.id.to_string(),
+            "issue_id": i.issue_id.to_string(),
             "material_id": i.material_id.map(|u| u.to_string()),
             "material_code": i.material_code,
             "material_name": i.material_name,
@@ -415,7 +416,7 @@ pub async fn update_material_issue(
     };
 
     let issue_json = serde_json::json!({
-        "id": issue.id.map(|v| v.to_string()).unwrap_or_default(),
+        "id": issue.id.to_string(),
         "issue_no": issue.issue_no,
         "order_id": issue.order_id.map(|u| u.to_string()),
         "order_no": issue.order_no,

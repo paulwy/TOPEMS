@@ -82,8 +82,8 @@ fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string<T: Into<Option<NaiveDateTime>>>(dt: T) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {

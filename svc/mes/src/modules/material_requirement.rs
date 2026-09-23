@@ -110,8 +110,8 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -258,12 +258,12 @@ pub async fn list_material_requirements(
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -316,7 +316,7 @@ pub async fn get_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -415,7 +415,7 @@ pub async fn create_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -518,7 +518,7 @@ pub async fn update_material_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -685,7 +685,7 @@ pub async fn calculate_requirements(
 
                 if let Ok(r) = insert_result {
                     requirements.push(MaterialRequirementResponse {
-                        id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                        id: r.id.to_string(),
                         mrp_no: r.mrp_no.unwrap_or_default(),
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
@@ -750,7 +750,7 @@ pub async fn confirm_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
@@ -818,7 +818,7 @@ pub async fn release_requirement(
     match result {
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 mrp_no: r.mrp_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,

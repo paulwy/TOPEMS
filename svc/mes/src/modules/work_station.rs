@@ -102,8 +102,8 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
         .unwrap_or_else(Utc::now)
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
 fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse {
@@ -160,12 +160,12 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
         },
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
         created_at: datetime_to_string(
-            r.try_get::<Option<NaiveDateTime>, _>("created_at")
+            r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten(),
         ),
         updated_at: datetime_to_string(
-            r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+            r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten(),
         ),

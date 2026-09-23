@@ -120,11 +120,11 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    naive_to_utc(dt).to_rfc3339()
+fn datetime_to_string(dt: DateTime<Utc>) -> String {
+    dt.to_rfc3339()
 }
 
-fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
     dt.map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
 }
 
@@ -297,22 +297,22 @@ pub async fn list_work_orders(
                     .flatten(),
             ),
             plan_start_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("plan_start_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
                     .ok()
                     .flatten(),
             ),
             plan_end_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("plan_end_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
                     .ok()
                     .flatten(),
             ),
             actual_start_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
                     .ok()
                     .flatten(),
             ),
             actual_end_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
                     .ok()
                     .flatten(),
             ),
@@ -330,12 +330,12 @@ pub async fn list_work_orders(
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -513,7 +513,7 @@ pub async fn create_work_order(
     match result {
         Ok(r) => Json(ApiResponse::success(
             WorkOrderResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,

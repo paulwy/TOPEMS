@@ -1,3 +1,4 @@
+use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -183,12 +184,12 @@ pub async fn list_patrols(
             findings: r.try_get::<Option<String>, _>("findings").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -241,12 +242,12 @@ pub async fn get_patrol(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector.map(|v| v.to_string()).unwrap_or_default(),
+                inspector: r.inspector.to_string(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
@@ -330,12 +331,12 @@ pub async fn create_patrol(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector.map(|v| v.to_string()).unwrap_or_default(),
+                inspector: r.inspector.to_string(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
@@ -427,12 +428,12 @@ pub async fn update_patrol(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
                 patrol_no: r.patrol_no.unwrap_or_default(),
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector.map(|v| v.to_string()).unwrap_or_default(),
+                inspector: r.inspector.to_string(),
                 patrol_time: r.patrol_time.map(|d| d.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
@@ -543,8 +544,8 @@ pub async fn list_patrol_items(
             let items: Vec<PatrolItemResponse> = rows
                 .into_iter()
                 .map(|r| PatrolItemResponse {
-                    id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                    patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                    id: r.id.to_string(),
+                    patrol_id: r.patrol_id.to_string(),
                     item_name: r.item_name.unwrap_or_default(),
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
@@ -605,8 +606,8 @@ pub async fn add_patrol_item(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
+                patrol_id: r.patrol_id.to_string(),
                 item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
@@ -675,8 +676,8 @@ pub async fn update_patrol_item(
     match result {
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
-                id: r.id.map(|v| v.to_string()).unwrap_or_default(),
-                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                id: r.id.to_string(),
+                patrol_id: r.patrol_id.to_string(),
                 item_name: r.item_name.unwrap_or_default(),
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
