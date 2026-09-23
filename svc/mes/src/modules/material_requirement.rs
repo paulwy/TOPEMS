@@ -329,7 +329,7 @@ pub async fn get_material_requirement(
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                required_date: r.required_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -338,8 +338,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.and_utc().to_rfc3339(),
+                updated_at: r.updated_at.and_utc().to_rfc3339(),
             },
             "获取物料需求成功",
         )),
@@ -428,7 +428,7 @@ pub async fn create_material_requirement(
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                required_date: r.required_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -437,8 +437,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.and_utc().to_rfc3339(),
+                updated_at: r.updated_at.and_utc().to_rfc3339(),
             },
             "创建物料需求成功",
         )),
@@ -531,7 +531,7 @@ pub async fn update_material_requirement(
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                required_date: r.required_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -540,8 +540,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.and_utc().to_rfc3339(),
+                updated_at: r.updated_at.and_utc().to_rfc3339(),
             },
             "更新物料需求成功",
         )),
@@ -698,13 +698,13 @@ pub async fn calculate_requirements(
                         required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                         available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                         shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                        required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                        required_date: r.required_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.to_rfc3339(),
-                        updated_at: r.updated_at.to_rfc3339(),
+                        created_at: r.created_at.and_utc().to_rfc3339(),
+                        updated_at: r.updated_at.and_utc().to_rfc3339(),
                     });
                 }
             }
@@ -763,7 +763,7 @@ pub async fn confirm_requirement(
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                required_date: r.required_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -772,8 +772,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.and_utc().to_rfc3339(),
+                updated_at: r.updated_at.and_utc().to_rfc3339(),
             },
             "确认物料需求成功",
         )),
@@ -831,7 +831,7 @@ pub async fn release_requirement(
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
                 available_quantity: opt_big_decimal_to_f64(r.available_quantity),
                 shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
-                required_date: r.required_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                required_date: r.required_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 priority: r.priority,
                 status: r
                     .status
@@ -840,8 +840,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.and_utc().to_rfc3339(),
+                updated_at: r.updated_at.and_utc().to_rfc3339(),
             },
             "下发物料需求成功",
         )),

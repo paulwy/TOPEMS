@@ -45,7 +45,7 @@ pub struct CreateBankAccountRequest {
     pub bank_name: String,
     pub account_number: String,
     pub account_name: String,
-    pub bank_code: Option<String>,
+    pub branch_name: Option<String>,
     pub currency: Option<String>,
     pub balance: Option<f64>,
     pub is_default: Option<bool>,
@@ -57,7 +57,7 @@ pub struct UpdateBankAccountRequest {
     pub bank_name: Option<String>,
     pub account_number: Option<String>,
     pub account_name: Option<String>,
-    pub bank_code: Option<String>,
+    pub branch_name: Option<String>,
     pub currency: Option<String>,
     pub balance: Option<f64>,
     pub is_default: Option<bool>,
@@ -77,7 +77,7 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "bank_name": row.get::<String, _>("bank_name"),
         "account_number": row.get::<String, _>("account_number"),
         "account_name": row.get::<String, _>("account_name"),
-        "bank_code": row.get::<Option<String>, _>("bank_code"),
+        "branch_name": row.get::<Option<String>, _>("branch_name"),
         "currency": row.get::<Option<String>, _>("currency"),
         "balance": row.get::<Option<f64>, _>("balance"),
         "is_default": row.get::<bool, _>("is_default"),
@@ -126,7 +126,7 @@ pub async fn list_bank_accounts(
     };
 
     let rows = match sqlx::query(only_own_schema_query!("erp",
-        "SELECT id, bank_name, account_number, account_name, bank_code, currency, balance, is_default, status, created_at, updated_at \
+        "SELECT id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at \
          FROM erp.bank_accounts \
          WHERE ($1::text IS NULL OR status = $1) \
            AND ($2::text IS NULL OR bank_name ILIKE '%' || $2 || '%' \
@@ -166,7 +166,7 @@ pub async fn get_bank_account(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let row = match sqlx::query(only_own_schema_query!("erp",
-        "SELECT id, bank_name, account_number, account_name, bank_code, currency, balance, is_default, status, created_at, updated_at \
+        "SELECT id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at \
          FROM erp.bank_accounts WHERE id = $1"))
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -208,13 +208,13 @@ pub async fn create_bank_account(
 
     let row = match sqlx::query(only_own_schema_query!("erp",
         "INSERT INTO erp.bank_accounts \
-         (bank_name, account_number, account_name, bank_code, currency, balance, is_default, status) \
+         (bank_name, account_number, account_name, branch_name, currency, balance, is_default, status) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) \
-         RETURNING id, bank_name, account_number, account_name, bank_code, currency, balance, is_default, status, created_at, updated_at"))
+         RETURNING id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at"))
         .bind(&req.bank_name)
         .bind(&req.account_number)
         .bind(&req.account_name)
-        .bind(&req.bank_code)
+        .bind(&req.branch_name)
         .bind(&currency)
         .bind(balance)
         .bind(is_default)
@@ -252,19 +252,19 @@ pub async fn update_bank_account(
          bank_name = COALESCE($2, bank_name), \
          account_number = COALESCE($3, account_number), \
          account_name = COALESCE($4, account_name), \
-         bank_code = COALESCE($5, bank_code), \
+         branch_name = COALESCE($5, branch_name), \
          currency = COALESCE($6, currency), \
          balance = COALESCE($7, balance), \
          is_default = COALESCE($8, is_default), \
          status = COALESCE($9, status), \
          updated_at = NOW() \
          WHERE id = $1 \
-         RETURNING id, bank_name, account_number, account_name, bank_code, currency, balance, is_default, status, created_at, updated_at"))
+         RETURNING id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at"))
         .bind(id)
         .bind(&req.bank_name)
         .bind(&req.account_number)
         .bind(&req.account_name)
-        .bind(&req.bank_code)
+        .bind(&req.branch_name)
         .bind(&req.currency)
         .bind(req.balance)
         .bind(req.is_default)

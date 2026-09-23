@@ -9,7 +9,7 @@ export interface BankAccount {
   bank_name: string;
   account_number: string;
   account_name: string;
-  bank_code?: string;
+  branch_name?: string;
   currency?: string;
   balance?: number;
   is_default: boolean;

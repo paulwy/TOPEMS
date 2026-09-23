@@ -213,7 +213,8 @@
     "file_upload_retry": "重试",
     "file_upload_remove": "移除",
     "file_upload_preview": "预览",
-    "file_upload_download": "下载"
+    "file_upload_download": "下载",
+    "unit_wan": "万"
   },
   "components": {
     "command_palette": {

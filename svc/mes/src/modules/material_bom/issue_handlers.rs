@@ -71,7 +71,7 @@ pub async fn create_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&mut *tx)
     .await;
@@ -129,10 +129,10 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: opt_datetime_to_string(issue.issue_time.map(|d| d)),
+        issue_time: opt_datetime_to_string(issue.issue_time.map(|d| d.and_utc())),
         notes: issue.notes,
-        created_at: datetime_to_string(Some(issue.created_at)),
-        updated_at: datetime_to_string(Some(issue.updated_at)),
+        created_at: datetime_to_string(Some(issue.created_at.and_utc())),
+        updated_at: datetime_to_string(Some(issue.updated_at.and_utc())),
     };
 
     Json(ApiResponse::success(response, "物料领用单创建成功"))
@@ -346,10 +346,10 @@ pub async fn get_material_issue(
         "status": issue.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": issue.warehouse_id.map(|u| u.to_string()),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
-        "issue_time": opt_datetime_to_string(issue.issue_time.map(|d| d)),
+        "issue_time": opt_datetime_to_string(issue.issue_time.map(|d| d.and_utc())),
         "notes": issue.notes,
-        "created_at": datetime_to_string(Some(issue.created_at)),
-        "updated_at": datetime_to_string(Some(issue.updated_at)),
+        "created_at": datetime_to_string(Some(issue.created_at.and_utc())),
+        "updated_at": datetime_to_string(Some(issue.updated_at.and_utc())),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -400,7 +400,7 @@ pub async fn update_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -423,10 +423,10 @@ pub async fn update_material_issue(
         "status": issue.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": issue.warehouse_id.map(|u| u.to_string()),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
-        "issue_time": opt_datetime_to_string(issue.issue_time.map(|d| d)),
+        "issue_time": opt_datetime_to_string(issue.issue_time.map(|d| d.and_utc())),
         "notes": issue.notes,
-        "created_at": datetime_to_string(Some(issue.created_at)),
-        "updated_at": datetime_to_string(Some(issue.updated_at)),
+        "created_at": datetime_to_string(Some(issue.created_at.and_utc())),
+        "updated_at": datetime_to_string(Some(issue.updated_at.and_utc())),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { salesOrderApi } from '@/api/erp/core/salesOrder';
 import { BarChart3, TrendingUp, PieChart, Table2, RefreshCw, Download, Layers } from 'lucide-react';
 import {
   Box,
@@ -28,112 +30,6 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 
 const ct = designTokens.colors;
-
-const mockSalesData = [
-  {
-    month: i18n.t('bi.months.jan'),
-    [i18n.t('bi.data_analysis_page.k32')]: 125000,
-    [i18n.t('bi.data_analysis_page.k33')]: 450,
-    [i18n.t('bi.data_analysis_page.k34')]: 180,
-  },
-  {
-    month: i18n.t('bi.months.feb'),
-    [i18n.t('bi.data_analysis_page.k32')]: 138000,
-    [i18n.t('bi.data_analysis_page.k33')]: 480,
-    [i18n.t('bi.data_analysis_page.k34')]: 195,
-  },
-  {
-    month: i18n.t('bi.months.mar'),
-    [i18n.t('bi.data_analysis_page.k32')]: 152000,
-    [i18n.t('bi.data_analysis_page.k33')]: 520,
-    [i18n.t('bi.data_analysis_page.k34')]: 210,
-  },
-  {
-    month: i18n.t('bi.months.apr'),
-    [i18n.t('bi.data_analysis_page.k32')]: 145000,
-    [i18n.t('bi.data_analysis_page.k33')]: 500,
-    [i18n.t('bi.data_analysis_page.k34')]: 205,
-  },
-  {
-    month: i18n.t('bi.months.may'),
-    [i18n.t('bi.data_analysis_page.k32')]: 168000,
-    [i18n.t('bi.data_analysis_page.k33')]: 560,
-    [i18n.t('bi.data_analysis_page.k34')]: 230,
-  },
-  {
-    month: i18n.t('bi.months.jun'),
-    [i18n.t('bi.data_analysis_page.k32')]: 185000,
-    [i18n.t('bi.data_analysis_page.k33')]: 620,
-    [i18n.t('bi.data_analysis_page.k34')]: 250,
-  },
-];
-
-const mockRegionData = [
-  {
-    region: i18n.t('bi.data_analysis_page.k0'),
-    [i18n.t('bi.data_analysis_page.k32')]: 420000,
-    [i18n.t('bi.data_analysis_page.k35')]: 35,
-  },
-  {
-    region: i18n.t('bi.data_analysis_page.k1'),
-    [i18n.t('bi.data_analysis_page.k32')]: 320000,
-    [i18n.t('bi.data_analysis_page.k35')]: 27,
-  },
-  {
-    region: i18n.t('bi.data_analysis_page.k2'),
-    [i18n.t('bi.data_analysis_page.k32')]: 240000,
-    [i18n.t('bi.data_analysis_page.k35')]: 20,
-  },
-  {
-    region: i18n.t('bi.data_analysis_page.k3'),
-    [i18n.t('bi.data_analysis_page.k32')]: 120000,
-    [i18n.t('bi.data_analysis_page.k35')]: 10,
-  },
-  {
-    region: i18n.t('bi.data_analysis_page.k4'),
-    [i18n.t('bi.data_analysis_page.k32')]: 96000,
-    [i18n.t('bi.data_analysis_page.k35')]: 8,
-  },
-];
-
-const mockPivotData = [
-  {
-    category: i18n.t('bi.data_analysis_page.k5'),
-    [i18n.t('bi.months.jan')]: 45000,
-    [i18n.t('bi.months.feb')]: 52000,
-    [i18n.t('bi.months.mar')]: 58000,
-    [i18n.t('bi.months.apr')]: 55000,
-    [i18n.t('bi.months.may')]: 62000,
-    [i18n.t('bi.months.jun')]: 68000,
-  },
-  {
-    category: i18n.t('bi.data_analysis_page.k6'),
-    [i18n.t('bi.months.jan')]: 32000,
-    [i18n.t('bi.months.feb')]: 35000,
-    [i18n.t('bi.months.mar')]: 38000,
-    [i18n.t('bi.months.apr')]: 36000,
-    [i18n.t('bi.months.may')]: 42000,
-    [i18n.t('bi.months.jun')]: 48000,
-  },
-  {
-    category: i18n.t('bi.data_analysis_page.k7'),
-    [i18n.t('bi.months.jan')]: 28000,
-    [i18n.t('bi.months.feb')]: 30000,
-    [i18n.t('bi.months.mar')]: 32000,
-    [i18n.t('bi.months.apr')]: 31000,
-    [i18n.t('bi.months.may')]: 35000,
-    [i18n.t('bi.months.jun')]: 38000,
-  },
-  {
-    category: i18n.t('bi.data_analysis_page.k8'),
-    [i18n.t('bi.months.jan')]: 20000,
-    [i18n.t('bi.months.feb')]: 21000,
-    [i18n.t('bi.months.mar')]: 24000,
-    [i18n.t('bi.months.apr')]: 23000,
-    [i18n.t('bi.months.may')]: 29000,
-    [i18n.t('bi.months.jun')]: 31000,
-  },
-];
 
 const filters: FilterConfig[] = [
   {
@@ -180,6 +76,85 @@ const filters: FilterConfig[] = [
 
 const DataAnalysisPage = () => {
   const { t } = useTranslation();
+
+  const salesLabel = t('bi.data_analysis_page.k32');
+  const countLabel = t('bi.data_analysis_page.k33');
+  const avgLabel = t('bi.data_analysis_page.k34');
+  const shareLabel = t('bi.data_analysis_page.k35');
+
+  const { data: ordersData, isLoading: salesLoading } = useQuery({
+    queryKey: ['erp', 'sales-orders', 'analysis'],
+    queryFn: async () => {
+      const res = await salesOrderApi.list({ page: 1, pageSize: 100 });
+      return (res.data?.orders || []) as Array<{
+        order_date?: string;
+        customer_name?: string;
+        total_amount?: number;
+        status?: string;
+      }>;
+    },
+  });
+
+  const salesTrend = useMemo(() => {
+    const byMonth: Record<string, { amount: number; count: number }> = {};
+    (ordersData || []).forEach((o) => {
+      const m = (o.order_date || '').slice(0, 7);
+      if (!m) return;
+      byMonth[m] = byMonth[m] || { amount: 0, count: 0 };
+      byMonth[m].amount += Number(o.total_amount) || 0;
+      byMonth[m].count += 1;
+    });
+    return Object.keys(byMonth)
+      .sort()
+      .map((m) => {
+        const row: Record<string, number | string> = { month: m };
+        row[salesLabel] = Math.round(byMonth[m].amount);
+        row[countLabel] = byMonth[m].count;
+        row[avgLabel] = byMonth[m].count ? Math.round(byMonth[m].amount / byMonth[m].count) : 0;
+        return row;
+      });
+  }, [ordersData, salesLabel, countLabel, avgLabel]);
+
+  const customerDist = useMemo(() => {
+    const byCust: Record<string, { amount: number; count: number }> = {};
+    (ordersData || []).forEach((o) => {
+      const c = o.customer_name || t('common.unknown');
+      byCust[c] = byCust[c] || { amount: 0, count: 0 };
+      byCust[c].amount += Number(o.total_amount) || 0;
+      byCust[c].count += 1;
+    });
+    const rows = Object.keys(byCust).map((c) => {
+      const row: Record<string, number | string> = { region: c };
+      row[salesLabel] = Math.round(byCust[c].amount);
+      row[shareLabel] = 0;
+      return row;
+    });
+    const total = rows.reduce((s, r) => s + (Number(r[salesLabel]) || 0), 0);
+    return rows.map((r) => ({
+      ...r,
+      [shareLabel]: total ? Math.round(((Number(r[salesLabel]) || 0) / total) * 100) : 0,
+    }));
+  }, [ordersData, salesLabel, shareLabel, t]);
+
+  const statusPivot = useMemo(() => {
+    const statuses: string[] = [];
+    const byStatusMonth: Record<string, Record<string, number>> = {};
+    (ordersData || []).forEach((o) => {
+      const st = o.status || 'unknown';
+      const m = (o.order_date || '').slice(0, 7);
+      if (!statuses.includes(st)) statuses.push(st);
+      byStatusMonth[st] = byStatusMonth[st] || {};
+      byStatusMonth[st][m] = (byStatusMonth[st][m] || 0) + (Number(o.total_amount) || 0);
+    });
+    const months = Array.from(
+      new Set((ordersData || []).map((o) => (o.order_date || '').slice(0, 7)))
+    ).sort();
+    return {
+      months,
+      rows: statuses.map((st) => ({ category: st, ...byStatusMonth[st] })),
+    };
+  }, [ordersData]);
+
   const [activeTab, setActiveTab] = useState(0);
   const [chartType, setChartType] = useState<'bar' | 'line' | 'area' | 'pie'>('bar');
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>({
@@ -299,7 +274,7 @@ const DataAnalysisPage = () => {
           {chartType === 'pie' ? (
             <ChartComponent
               type='pie'
-              data={mockRegionData}
+              data={customerDist}
               xKey='region'
               yKeys={[t('bi.data_analysis_page.k32')]}
               chartHeight={400}
@@ -310,7 +285,7 @@ const DataAnalysisPage = () => {
           ) : (
             <ChartComponent
               type={chartType}
-              data={mockSalesData}
+              data={salesTrend}
               xKey='month'
               yKeys={[
                 t('bi.data_analysis_page.k32'),
@@ -346,7 +321,7 @@ const DataAnalysisPage = () => {
               </Typography>
               <ChartComponent
                 type='bar'
-                data={mockRegionData}
+                data={customerDist}
                 xKey='region'
                 yKeys={[t('bi.data_analysis_page.k32')]}
                 chartHeight={300}
@@ -466,14 +441,7 @@ const DataAnalysisPage = () => {
                   <TableCell sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}>
                     {t('bi.data_analysis_page.k20')}
                   </TableCell>
-                  {[
-                    t('bi.months.jan'),
-                    t('bi.months.feb'),
-                    t('bi.months.mar'),
-                    t('bi.months.apr'),
-                    t('bi.months.may'),
-                    t('bi.months.jun'),
-                  ].map((month) => (
+                  {statusPivot.months.map((month) => (
                     <TableCell
                       key={month}
                       align='right'
@@ -485,7 +453,7 @@ const DataAnalysisPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {mockPivotData.map((row) => (
+                {statusPivot.rows.map((row) => (
                   <TableRow
                     key={row.category}
                     hover

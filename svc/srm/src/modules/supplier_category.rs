@@ -93,7 +93,11 @@ pub async fn list_categories(
         only_own_schema_query!("srm", r#"
         SELECT id, tenant_id, category_no,
                CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
-               description, parent_id, level, is_active, created_by, created_at, updated_at
+               description, parent_id, level, is_active, created_by, created_at, updated_at,
+               (SELECT COUNT(*) FROM srm.suppliers s
+                 WHERE s.category = CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END
+                   AND s.deleted_at IS NULL
+                   AND ($1::uuid IS NULL OR s.tenant_id = $1)) AS supplier_count
         FROM srm.supplier_categories
         WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)

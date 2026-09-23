@@ -128,8 +128,8 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
             config: row.config,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.to_rfc3339(),
-            updated_at: row.updated_at.to_rfc3339(),
+            created_at: row.created_at.and_utc().to_rfc3339(),
+            updated_at: row.updated_at.and_utc().to_rfc3339(),
         })
         .collect();
 
@@ -186,8 +186,8 @@ pub async fn create_report(
         req.config,
         req.owner_id,
         req.is_public.unwrap_or(false),
-        now,
-        now,
+        now.naive_utc(),
+        now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -207,8 +207,8 @@ pub async fn create_report(
                 config: row.config,
                 owner_id: row.owner_id,
                 is_public: row.is_public.unwrap_or(false),
-                created_at: row.created_at.to_rfc3339(),
-                updated_at: row.updated_at.to_rfc3339(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -268,8 +268,8 @@ pub async fn get_report(
                 config: row.config,
                 owner_id: row.owner_id,
                 is_public: row.is_public.unwrap_or(false),
-                created_at: row.created_at.to_rfc3339(),
-                updated_at: row.updated_at.to_rfc3339(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -330,7 +330,7 @@ pub async fn update_report(
         req.filters,
         req.config,
         req.is_public,
-        now,
+        now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -350,8 +350,8 @@ pub async fn update_report(
                 config: row.config,
                 owner_id: row.owner_id,
                 is_public: row.is_public.unwrap_or(false),
-                created_at: row.created_at.to_rfc3339(),
-                updated_at: row.updated_at.to_rfc3339(),
+                created_at: row.created_at.and_utc().to_rfc3339(),
+                updated_at: row.updated_at.and_utc().to_rfc3339(),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(

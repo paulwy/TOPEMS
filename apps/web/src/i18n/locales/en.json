@@ -213,7 +213,8 @@
     "file_upload_retry": "Retry",
     "file_upload_remove": "Remove",
     "file_upload_preview": "Preview",
-    "file_upload_download": "Download"
+    "file_upload_download": "Download",
+    "unit_wan": "K"
   },
   "components": {
     "command_palette": {

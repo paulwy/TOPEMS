@@ -87,9 +87,9 @@ const formatDateTime = (value?: string) => {
   return value;
 };
 
-const formatAmount = (value: number) => {
+const formatAmount = (value: number, t: (key: string) => string) => {
   if (value >= 10000) {
-    return `¥${(value / 10000).toFixed(1)}万`;
+    return `¥${(value / 10000).toFixed(1)}${t('common.unit_wan')}`;
   }
   return `¥${value.toLocaleString('zh-CN')}`;
 };
@@ -461,7 +461,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'var(--font-semibold)' }}>
-            {formatAmount(row.total_order_amount)}
+            {formatAmount(row.total_order_amount, t)}
           </span>
         ),
       },
@@ -639,7 +639,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
             />
             <StatTile
               label={t('crm.customer_list_page.stat_total_order_amount')}
-              value={formatAmount(stats.totalAmount)}
+              value={formatAmount(stats.totalAmount, t)}
               icon={DollarSign}
               accent='amber'
             />
@@ -768,7 +768,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
                     {t('crm.customer_list_page.col_total_order_amount')}
                   </div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
-                    {formatAmount(selectedCustomer.total_order_amount)}
+                    {formatAmount(selectedCustomer.total_order_amount, t)}
                   </div>
                 </div>
                 <div>

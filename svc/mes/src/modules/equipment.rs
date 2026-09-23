@@ -796,14 +796,14 @@ pub async fn list_maintenances(
             maintenance_type: r.maintenance_type,
             description: Some(r.description.unwrap_or_default()),
             maintainer: r.maintainer.unwrap_or_default(),
-            start_time: r.start_time,
-            end_time: r.end_time.map(|d| d),
+            start_time: r.start_time.and_utc(),
+            end_time: r.end_time.map(|d| d.and_utc()),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
             status: r.status.unwrap_or_default(),
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.and_utc(),
+            updated_at: r.updated_at.and_utc(),
         })
         .collect();
 
@@ -876,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time,
-        end_time,
+        start_time.naive_utc(),
+        end_time.map(|d| d.naive_utc()),
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -934,14 +934,14 @@ pub async fn create_maintenance(
             maintenance_type: maintenance_type,
             description: Some(description.unwrap_or_default()),
             maintainer: maintainer.unwrap_or_default(),
-            start_time: start_time,
-            end_time: end_time.map(|d| d),
+            start_time: start_time.and_utc(),
+            end_time: end_time.map(|d| d.and_utc()),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at: created_at.and_utc(),
+            updated_at: updated_at.and_utc(),
         },
         "维护记录创建成功",
     ))
@@ -988,7 +988,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1041,14 +1041,14 @@ pub async fn update_maintenance_status(
             maintenance_type: maintenance_type,
             description: Some(description.unwrap_or_default()),
             maintainer: maintainer.unwrap_or_default(),
-            start_time: start_time,
-            end_time: end_time.map(|d| d),
+            start_time: start_time.and_utc(),
+            end_time: end_time.map(|d| d.and_utc()),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at: created_at.and_utc(),
+            updated_at: updated_at.and_utc(),
         },
         "维护状态更新成功",
     ))
@@ -1178,7 +1178,7 @@ pub async fn list_inspections(
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                     inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    inspection_date: r.inspection_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1197,7 +1197,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s)),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.to_rfc3339(),
+                    created_at: r.created_at.and_utc().to_rfc3339(),
                 })
                 .collect();
 
@@ -1308,7 +1308,7 @@ pub async fn create_inspection(
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                 inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                inspection_date: r.inspection_date.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1327,7 +1327,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s)),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.to_rfc3339(),
+                created_at: r.created_at.and_utc().to_rfc3339(),
             },
             "创建点检记录成功",
         )),

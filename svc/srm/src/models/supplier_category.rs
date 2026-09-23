@@ -13,6 +13,7 @@ pub struct SupplierCategory {
     pub parent_id: Option<Uuid>,
     pub level: i32,
     pub is_active: bool,
+    pub supplier_count: i64,
     pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

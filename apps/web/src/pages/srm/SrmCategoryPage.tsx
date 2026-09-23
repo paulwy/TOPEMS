@@ -2,6 +2,8 @@ import React from 'react';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { categorySchema } from '@/schemas/srm';
+import { supplierCategoryApi } from '@/api/srm';
+import type { SupplierCategory as ApiSupplierCategory } from '@/api/srm/supplierCategory';
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { FolderTree } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
@@ -21,145 +23,60 @@ interface SupplierCategory {
   updated_at: string;
 }
 
-const mockCategories: SupplierCategory[] = [
-  {
-    id: '1',
-    code: 'CAT-001',
-    name: i18n.t('pages.srm_category_page.k0'),
-    description: i18n.t('pages.srm_category_page.k1'),
-    supplier_count: 28,
-    level: 1,
-    status: 'active',
-    created_at: '2025-01-15',
-    updated_at: '2025-06-01',
-  },
-  {
-    id: '2',
-    code: 'CAT-002',
-    name: i18n.t('pages.srm_category_page.k2'),
-    description: i18n.t('pages.srm_category_page.k3'),
-    supplier_count: 45,
-    level: 1,
-    status: 'active',
-    created_at: '2025-01-15',
-    updated_at: '2025-06-01',
-  },
-  {
-    id: '3',
-    code: 'CAT-003',
-    name: i18n.t('pages.srm_category_page.k4'),
-    description: i18n.t('pages.srm_category_page.k5'),
-    supplier_count: 12,
-    level: 1,
-    status: 'active',
-    created_at: '2025-02-10',
-    updated_at: '2025-05-20',
-  },
-  {
-    id: '4',
-    code: 'CAT-004',
-    name: i18n.t('pages.srm_category_page.k6'),
-    description: i18n.t('pages.srm_category_page.k7'),
-    supplier_count: 8,
-    level: 1,
-    status: 'active',
-    created_at: '2025-02-20',
-    updated_at: '2025-06-01',
-  },
-  {
-    id: '5',
-    code: 'CAT-005',
-    name: i18n.t('pages.srm_category_page.k8'),
-    description: i18n.t('pages.srm_category_page.k9'),
-    supplier_count: 15,
-    level: 2,
-    status: 'active',
-    created_at: '2025-03-01',
-    updated_at: '2025-05-30',
-  },
-  {
-    id: '6',
-    code: 'CAT-006',
-    name: i18n.t('pages.srm_category_page.k10'),
-    description: i18n.t('pages.srm_category_page.k11'),
-    supplier_count: 32,
-    level: 2,
-    status: 'active',
-    created_at: '2025-03-10',
-    updated_at: '2025-06-01',
-  },
-  {
-    id: '7',
-    code: 'CAT-007',
-    name: i18n.t('pages.srm_category_page.k12'),
-    description: i18n.t('pages.srm_category_page.k13'),
-    supplier_count: 6,
-    level: 1,
-    status: 'inactive',
-    created_at: '2025-04-01',
-    updated_at: '2025-05-15',
-  },
-  {
-    id: '8',
-    code: 'CAT-008',
-    name: i18n.t('pages.srm_category_page.k14'),
-    description: i18n.t('pages.srm_category_page.k15'),
-    supplier_count: 4,
-    level: 2,
-    status: 'active',
-    created_at: '2025-04-15',
-    updated_at: '2025-06-01',
-  },
-];
-
-let categoryStore = [...mockCategories];
+const toPageModel = (c: ApiSupplierCategory & { supplier_count?: number }): SupplierCategory => ({
+  id: c.id,
+  code: (c as { category_no?: string }).category_no || c.code || '',
+  name: c.name,
+  description: c.description || '',
+  supplier_count: Number(c.supplier_count ?? 0),
+  level: c.level ?? 1,
+  status: c.is_active ? 'active' : 'inactive',
+  created_at: c.created_at,
+  updated_at: c.updated_at,
+});
 
 const categoryApiAdapter: CrudApiAdapter = {
   list: async (params) => {
-    const search = params?.search?.toLowerCase() || '';
+    const search = params?.search || '';
     const page = params?.page || 0;
     const pageSize = params?.pageSize || 10;
-
-    let filtered = categoryStore;
-    if (search) {
-      filtered = filtered.filter(
-        (c) => c.name.toLowerCase().includes(search) || c.code.toLowerCase().includes(search)
-      );
-    }
-
-    const total = filtered.length;
-    const data = filtered.slice(page * pageSize, (page + 1) * pageSize);
-
-    return { data: data as unknown as Record<string, unknown>[], total };
+    const res = await supplierCategoryApi.listCategories({
+      page: page + 1,
+      page_size: pageSize,
+      search,
+    });
+    const items = res.data?.items || [];
+    return {
+      data: items.map(toPageModel) as unknown as Record<string, unknown>[],
+      total: res.data?.total ?? items.length,
+    };
   },
   create: async (data) => {
-    const newCategory: SupplierCategory = {
-      id: Date.now().toString(),
-      code: (data.code as string) || '',
+    const res = await supplierCategoryApi.createCategory({
+      category_no: (data.code as string) || '',
       name: (data.name as string) || '',
-      description: (data.description as string) || '',
-      supplier_count: 0,
-      level: (data.level as number) || 1,
-      status: (data.status as string) || 'active',
-      created_at: new Date().toISOString().split('T')[0],
-      updated_at: new Date().toISOString().split('T')[0],
-    };
-    categoryStore = [newCategory, ...categoryStore];
-    return newCategory as unknown as Record<string, unknown>;
+      description: (data.description as string) || undefined,
+      level: Number(data.level ?? 1),
+      is_active: (data.status as string) !== 'inactive',
+    } as unknown as Parameters<typeof supplierCategoryApi.createCategory>[0]);
+    return toPageModel(
+      res.data as unknown as ApiSupplierCategory & { supplier_count?: number }
+    ) as unknown as Record<string, unknown>;
   },
   update: async (id, data) => {
-    const idx = categoryStore.findIndex((c) => c.id === id);
-    if (idx === -1) throw new Error(i18n.t('pages.srm_category_page.k16'));
-    const updated = {
-      ...categoryStore[idx],
-      ...data,
-      updated_at: new Date().toISOString().split('T')[0],
-    };
-    categoryStore[idx] = updated;
-    return updated as unknown as Record<string, unknown>;
+    const res = await supplierCategoryApi.updateCategory(id, {
+      category_no: (data.code as string) || undefined,
+      name: (data.name as string) || undefined,
+      description: (data.description as string) || undefined,
+      level: data.level !== undefined ? Number(data.level) : undefined,
+      is_active: data.status !== undefined ? (data.status as string) !== 'inactive' : undefined,
+    } as unknown as Parameters<typeof supplierCategoryApi.updateCategory>[1]);
+    return toPageModel(
+      res.data as unknown as ApiSupplierCategory & { supplier_count?: number }
+    ) as unknown as Record<string, unknown>;
   },
   delete: async (id) => {
-    categoryStore = categoryStore.filter((c) => c.id !== id);
+    await supplierCategoryApi.deleteCategory(id);
   },
 };
 

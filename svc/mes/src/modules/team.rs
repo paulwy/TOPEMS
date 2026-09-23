@@ -396,7 +396,7 @@ pub async fn create_team(
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now,
+                now.naive_utc(),
             )
             .execute(&state.pool)
             .await;
@@ -590,7 +590,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| d.to_rfc3339()),
+            join_date: r.join_date.map(|d| d.and_utc().to_rfc3339()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -632,7 +632,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -666,7 +666,7 @@ pub async fn add_team_member(
         position: result.position,
         join_date: result
             .join_date
-            .map(|d| d.to_rfc3339()),
+            .map(|d| d.and_utc().to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
