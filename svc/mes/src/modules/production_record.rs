@@ -314,7 +314,7 @@ pub async fn create_record(
         start_time: result.start_time.and_utc(),
         end_time: result.end_time.map(|d| d.and_utc()),
         quantity_produced: result.quantity_produced.unwrap_or_default(),
-        quantity_defective: result.quantity_defective.unwrap_or_default(),
+        quantity_defective: result.quantity_defective.map(|v| v as f64).unwrap_or_default(),
         status: result.status.unwrap_or_default(),
         notes: result.notes,
         created_at: result.created_at.and_utc(),
