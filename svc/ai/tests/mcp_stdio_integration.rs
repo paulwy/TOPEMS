@@ -446,7 +446,7 @@ fn test_multiple_requests_in_sequence() {
 /// 模拟外部 Agent（Cursor/Claude Desktop）通过 MCP stdio 协议连接并调用业务工具。
 ///
 /// 验证外部 Agent 对接能力：initialize → initialized → 连续调用 3 个业务工具
-/// （crm.list_customers / erp.list_orders / finance.list_transactions）。
+/// （crm.list_customers / erp.list_orders / finance.list_receivables）。
 /// 业务工具走真实 HTTP 调用（未启动服务时自动降级 mock），协议层始终可对接。
 #[test]
 fn test_external_agent_calls_business_tools() {
@@ -476,9 +476,9 @@ fn test_external_agent_calls_business_tools() {
     // 3. 连续调用 3 个业务工具（外部 Agent 对接验收）
     let calls = [
         ("crm.list_customers", json!({"page": 1, "page_size": 3})),
-        ("erp.list_orders", json!({"page": 1, "page_size": 3})),
+        ("erp.list_sales_orders", json!({"page": 1, "page_size": 3})),
         (
-            "finance.list_transactions",
+            "finance.list_receivables",
             json!({"page": 1, "page_size": 3}),
         ),
     ];
