@@ -38,7 +38,7 @@ async fn get_project_notifications(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
     let notifications = sqlx::query_as::<_, Notification>(
-        only_own_schema_query!("pm", "id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("pm", "id, project_id, recipient AS user_id, notification_type, title, content AS message, status, priority, metadata, due_date, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -66,8 +66,9 @@ async fn create_notification(
     let now = Utc::now();
 
     let notification = sqlx::query_as::<_, Notification>(
-        only_own_schema_query!("pm", "INSERT INTO pm.notifications (id, project_id, user_id, notification_type, title, message, status, priority, metadata, due_date, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11, $12) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.notifications (id, project_id, recipient, notification_type, title, content, status, priority, metadata, due_date, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, $11, $12)
+        RETURNING id, project_id, recipient AS user_id, notification_type, title, content AS message, status, priority, metadata, due_date, created_at, updated_at")
     )
     .bind(id)
     .bind(req.project_id)
