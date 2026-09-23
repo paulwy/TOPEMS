@@ -82,7 +82,7 @@ const DataAnalysisPage = () => {
   const avgLabel = t('bi.data_analysis_page.k34');
   const shareLabel = t('bi.data_analysis_page.k35');
 
-  const { data: ordersData, isLoading: salesLoading } = useQuery({
+  const { data: ordersData } = useQuery({
     queryKey: ['erp', 'sales-orders', 'analysis'],
     queryFn: async () => {
       const res = await salesOrderApi.list({ page: 1, pageSize: 100 });

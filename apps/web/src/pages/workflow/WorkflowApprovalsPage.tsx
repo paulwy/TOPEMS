@@ -28,7 +28,6 @@ import {
 } from '@/components/redesign';
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { approvalTaskApi } from '@/api/workflow/approval';
-import i18n from '@/i18n';
 import { localizedName } from '@/utils/i18n';
 import { useTranslation } from 'react-i18next';
 
