@@ -137,9 +137,9 @@ mod tests {
             contract_type: "purchase".to_string(),
             supplier_id: "SUP-001".to_string(),
             supplier_name: Some("Acme".to_string()),
-            sign_date: Some("2026-01-01".to_string()),
-            effective_date: Some("2026-01-15".to_string()),
-            expiry_date: Some("2027-01-14".to_string()),
+            sign_date: Some(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
+            effective_date: Some(NaiveDate::from_ymd_opt(2026, 1, 15).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2027, 1, 14).unwrap()),
             total_amount: Some(500000.0),
             currency: Some("CNY".to_string()),
             payment_terms: Some("net30".to_string()),
@@ -237,7 +237,7 @@ mod tests {
             quantity: 100.0,
             unit_price: Some(12.5),
             amount: Some(1250.0),
-            delivery_date: Some("2026-03-01".to_string()),
+            delivery_date: Some(NaiveDate::from_ymd_opt(2026, 3, 1).unwrap()),
             remarks: None,
             created_at: fixed_dt(),
         };
@@ -351,7 +351,7 @@ mod tests {
             unit: Some("unit".to_string()),
             quantity: 10.0,
             unit_price: Some(5.0),
-            delivery_date: Some("2026-06-01".to_string()),
+            delivery_date: Some(NaiveDate::from_ymd_opt(2026, 6, 1).unwrap()),
             remarks: Some("r".to_string()),
         };
         roundtrip(&item);

@@ -350,6 +350,7 @@ mod tests {
     #[test]
     fn create_price_comparison_request_serde_roundtrip() {
         let req = CreatePriceComparisonRequest {
+            inquiry_id: None,
             recommended_supplier_id: fixed_uuid(),
             recommended_quote_id: fixed_uuid(),
             quality_score: Some(90.0),
@@ -373,6 +374,7 @@ mod tests {
     #[test]
     fn create_price_comparison_request_serde_empty_scores() {
         let req = CreatePriceComparisonRequest {
+            inquiry_id: None,
             recommended_supplier_id: fixed_uuid(),
             recommended_quote_id: fixed_uuid(),
             quality_score: None,

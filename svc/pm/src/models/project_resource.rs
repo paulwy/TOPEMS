@@ -199,7 +199,7 @@ mod tests {
     #[test]
     fn test_update_resource_request_with_values() {
         let r = UpdateResourceRequest {
-            resource_type: "human".to_string(),
+            resource_type: Some("human".to_string()),
             start_date: Some(now()),
             end_date: Some(now()),
             allocation_percent: Some(100),
