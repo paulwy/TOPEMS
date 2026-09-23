@@ -298,6 +298,10 @@ impl FinanceService {
         .fetch_all(&self.db_pool)
         .await?;
 
+        // 事务包裹：过账全链路（ledger 写入 + aux_balances upsert + 状态更新）原子化，
+        // 中途失败整体回滚，杜绝部分写入导致的重复过账（幂等靠状态原子门保证）
+        let mut tx = self.db_pool.begin().await?;
+
         for line in &lines {
             let balance = self
                 .calculate_account_balance(tenant_id, line.account_id)
@@ -325,7 +329,7 @@ impl FinanceService {
             .bind(line.credit)
             .bind(new_balance)
             .bind(line.aux_id)
-            .execute(&self.db_pool)
+            .execute(&mut *tx)
             .await?;
 
             // 辅助核算余额：凭证行带 aux 时同步 upsert aux_balances（按 租户+科目+aux+期间 累加）
@@ -345,21 +349,28 @@ impl FinanceService {
                 .bind(voucher.period.clone())
                 .bind(line.debit)
                 .bind(line.credit)
-                .execute(&self.db_pool)
+                .execute(&mut *tx)
                 .await?;
             }
         }
 
+        // 幂等状态原子门：仅 approved 状态可过账。并发/重试时状态已变 → UPDATE 0 行 → 回滚拒绝
         let updated_voucher = sqlx::query_as(
             only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'posted', posted_by = $3, updated_at = CURRENT_TIMESTAMP
-             WHERE tenant_id = $1 AND id = $2
+             WHERE tenant_id = $1 AND id = $2 AND status = 'approved'
              RETURNING *"),
         )
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(posted_by)
-        .fetch_one(&self.db_pool)
+        .fetch_optional(&mut *tx)
         .await?;
+
+        let updated_voucher = updated_voucher.ok_or_else(|| {
+            TopemsError::ValidationFailed("凭证状态不允许过账：可能已过账或状态已被其他操作修改".to_string())
+        })?;
+
+        tx.commit().await?;
 
         Ok(updated_voucher)
     }
