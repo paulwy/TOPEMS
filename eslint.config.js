@@ -26,7 +26,8 @@ export default ts.config(
   {
     languageOptions: {
       parserOptions: {
-        project: null,
+        projectService: false,
+        project: false,
       },
     },
   },

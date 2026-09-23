@@ -471,3 +471,49 @@
 ### 历史参考
 - 提交 39a19b31e：之前修复 MES 编译错误 447→0（Option 类型适配）
 - 修复模式：删除 Some(Option) 嵌套、加 unwrap_or_default、改 map(|v| v.to_string()) 等
+
+---
+
+## 2026-09-23 全量编译与测试修复 ✅
+
+### MES 编译错误修复（518→0）✅
+- 完成：MES 编译错误从 518 个修复到 0 个
+- 修复模式：
+  - `end_time: end_time` → `end_time: end_time.map(|d| d.and_utc())`
+  - `r.created_at.and_utc().to_rfc3339()` → `r.created_at.map(|d| d.to_rfc3339()).unwrap_or_default()`
+  - `equipment_id: r.equipment_id` → `equipment_id: r.equipment_id.unwrap_or_default()`
+  - `opt_datetime_to_string(r.plan_start_date)` → `r.plan_start_date.map(|d| d.and_utc().to_rfc3339())`
+  - `parse_datetime` 函数返回类型修复（`.map(|dt| dt.naive_utc())` → `.map(|dt| dt.with_timezone(&Utc))`）
+  - `req.quantity` 类型转换（f64 → BigDecimal）
+- 提交：ecab85a9a（修复最后 1 个 E0308 类型错误，MES 编译错误全部修复！）
+
+### analytics 编译错误修复（79→0）✅
+- 完成：analytics 编译错误从 79 个修复到 0 个
+- 主要错误：E0599: NaiveDateTime is not an iterator（75 个）
+- 修复模式：
+  - `.map(to_rfc3339).unwrap_or_default()` → `.and_utc().to_rfc3339()`
+  - `.map(|t| t.to_string()).unwrap_or_default()` → `.and_utc().to_rfc3339()`
+  - `r.created_at` → `Some(r.created_at)`（函数期望 Option<NaiveDateTime>）
+- 提交：e17365300
+
+### .sqlx 缓存重新生成 ✅
+- 完成：`cargo sqlx prepare --workspace` 成功
+- 修复：wms.slotting_zones 表缺少 name_en 列（ALTER TABLE 添加）
+- 修复：analytics 编译错误（79→0）
+
+### 全量测试 ✅
+- 完成：`SQLX_OFFLINE=false cargo test --workspace --lib` 编译通过
+- 测试结果：360 个测试通过，1 个测试失败（topems-shared-event 的 test_facade_with_schema_registry_forwards_to_stream_publisher）
+- 失败原因：`publisher.stream_publisher.is_some()` 断言失败，这是业务逻辑错误，不是类型错误
+- 修复：scm 测试代码类型错误（7→0）
+- 修复：pm 测试代码类型错误（1→0）
+- 提交：dff797460
+
+### 前端 typecheck ✅
+- 完成：`pnpm typecheck` 通过
+- 前端 lint：466 个错误 + 607 个警告（主要是 prettier 格式错误和 ESLint 配置问题）
+
+### 遗留问题
+- 前端 lint 466 个错误（主要是 Parsing error: parserOptions.project has been provided，27 个）
+- 1 个失败的测试（topems-shared-event）
+- 6 个 warnings（MES 模块未使用的导入）
