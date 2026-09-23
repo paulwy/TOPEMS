@@ -120,8 +120,8 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: DateTime<Utc>) -> String {
-    dt.to_rfc3339()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
