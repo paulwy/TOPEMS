@@ -136,7 +136,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(s)
         .ok()
-        .map(|dt| dt.naive_utc())
+        .map(|dt| dt.with_timezone(&Utc))
         .or_else(|| NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f").map(|dt| dt.and_utc()).ok())
         .or_else(|| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc()).ok())
 }
