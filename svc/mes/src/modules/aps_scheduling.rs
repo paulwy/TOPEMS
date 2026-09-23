@@ -14,7 +14,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Duration, DateTime<Utc>, TimeZone, Utc};
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -570,7 +570,7 @@ async fn run_aps_scheduling(
 
         // 6.9 计算风险等级
         let risk = calculate_risk_level(
-            end_time: end_time.,
+            end_time: end_time,
             order.planned_end_date.map(|d| d),
             material_ready,
             selected_station.status == "active",
