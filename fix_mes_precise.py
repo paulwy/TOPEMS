@@ -176,7 +176,7 @@ def fix_errors(errors):
     return fixes_applied
 
 def main():
-    log_file = '/tmp/mes_check_v460.log'
+    log_file = '/tmp/mes_check_v461.log'
     
     print(f"解析 {log_file}...")
     errors = parse_cargo_check(log_file)
