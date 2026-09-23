@@ -349,3 +349,37 @@
 - 验证：全量 build 通过（EXIT 0）；服务重启（8099）回归 flow 18 / crm 189 / lims 4 全绿
 - 已提交推送：39a19b31e（18 文件，+191/-183）
 - 遗留：worktree 有 finance.json 未提交改动（lefthook i18n-quality hook 自动生成的翻译修正，127 处占位符→具体语义），未提交待用户确认；wms/labor 报错为级联已随修复消失无需改
+
+---
+
+## 2026-09-23 MES 编译错误修复（349 个错误）
+
+### 问题背景
+- 远端 TRAE 提交 ab1162f8a 把 MES 源码恢复到 2a4a74940 版本（与 .sqlx 缓存匹配）
+- 但该版本在线编译仍有 349 个错误（离线编译 584 个错误）
+- 主要错误类型：E0308 mismatched types（283 个）
+
+### 根因分析
+- 不同文件中的辅助函数签名不一致：
+  - `datetime_to_string`：有的文件期望 `Option<NaiveDateTime>`，有的文件期望 `DateTime<Utc>`
+  - `opt_datetime_to_string`：有的文件期望 `Option<NaiveDateTime>`，有的文件期望 `Option<DateTime<Utc>>`
+- 这导致大量类型不匹配错误
+
+### 修复计划
+- [ ] P0-1：统一所有 MES 文件中的辅助函数签名（datetime_to_string/opt_datetime_to_string）
+  - 标准签名（对齐 CRM 模块）：`fn datetime_to_string(dt: DateTime<Utc>) -> String`
+  - 批量修改所有 MES 文件中的辅助函数定义和调用
+- [ ] P0-2：统一所有 MES 文件中的 SQL 查询 schema 指定（加 mes. 前缀）
+  - 对齐 CRM 模块的做法：`INSERT INTO crm.customers` → `INSERT INTO mes.production_orders`
+- [ ] P0-3：重新生成 .sqlx 缓存
+  - 用 SQLX_OFFLINE=false cargo check -p topems-mes 重新生成缓存
+  - 提交新的 .sqlx 缓存
+- [ ] P0-4：验证编译通过
+  - SQLX_OFFLINE=true cargo check -p topems-mes 0 error
+  - SQLX_OFFLINE=false cargo check -p topems-mes 0 error
+
+### 关于远端
+- 远端有 TRAE 的提交，把代码恢复到了 2a4a74940 版本
+- 但那个版本也有 349 个错误（在线编译）
+- 需要先统一辅助函数签名，然后再推送
+- 推送前需要和 TRAE 协调，避免再次冲突
