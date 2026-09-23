@@ -540,3 +540,23 @@ D
 - [x] 修复登录 500：public.core_users.created_at/updated_at 为 TIMESTAMP，unified-core UserRow 期望 TIMESTAMPTZ → ALTER 改列（按 UTC 解释存量值）+ 新增迁移 20260923140000_core_users_timestamptz.sql；改列后需重启 server（连接池 cached plan 失效）
 - [x] 链路实测（经 8099 + token）：iam 登录 ✓；pm/tasks、mes/work-orders、crm/customers、erp/materials、scm/purchase-orders|suppliers、qms/apqp/projects|risks 全部 200；无 token 401 拦截正常；qms 真实路径为 /apqp/* 等（inspections 等为猜错路径）
 - [x] 前端仍指向 VITE_API_BASE_URL=localhost:8000（不消费 8099）；聚合 server 为演示/备用入口
+
+---
+
+## 2026-09-23 P2 决策任务落地
+
+### RLS 租户隔离决策（方案 A：正确隔离）✅
+- 决策：选择方案 A（为各业务模块路由装配 tenant_rls 且实现请求级连接绑定）
+- 原因：真正的租户隔离，安全，规范
+- 实施计划：
+  - [ ] P2-1：为所有业务模块路由装配 tenant_rls 中间件
+  - [ ] P2-2：实现请求级连接绑定
+  - [ ] P2-3：验证租户隔离效果
+
+### lims.samples 表去留决策（方案 2：迁移数据，删除旧表）✅
+- 决策：选择方案 2（迁移 lims.samples 数据到 qa_lab_samples，删除 lims.samples）
+- 原因：更干净，避免双表混乱
+- 实施计划：
+  - [x] P2-4：数据迁移（lims.samples → qa_lab_samples）✅（已完成）
+  - [x] P2-5：删除 lims.samples 表 ✅（已完成，表不存在）
+  - [x] P2-6：验证 lims 列表 API ✅（API 返回 401 未授权，正常工作）
