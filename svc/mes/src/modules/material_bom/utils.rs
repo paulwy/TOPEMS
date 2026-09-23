@@ -10,12 +10,12 @@ pub(crate) fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc
     dt.map(|d| Utc.from_utc_datetime(&d))
 }
 
-pub(crate) fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.and_then(|d| Utc.from_utc_datetime(&d).to_rfc3339()).unwrap_or_default()
+pub(crate) fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-pub(crate) fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
-    opt_naive_to_utc(dt).map(|d| d.to_rfc3339())
+pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
+    dt.map(|d| d.to_rfc3339())
 }
 
 pub(crate) fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
