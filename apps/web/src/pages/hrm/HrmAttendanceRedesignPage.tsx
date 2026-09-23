@@ -86,11 +86,6 @@ const statusConfig: Record<
   holiday: { label: i18n.t('hrm.attendance_redesign_page.k21'), variant: 'cyan' },
 };
 
-const formatDateTime = (value?: string) => {
-  if (!value) return '-';
-  return value;
-};
-
 const HrmAttendanceRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();

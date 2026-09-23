@@ -77,11 +77,6 @@ const mapApiSalesOrders = (apiOrders: ApiSalesOrder[]): SalesOrder[] => {
 
 // Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockSalesOrders
 
-const formatDateTime = (value?: string) => {
-  if (!value) return '-';
-  return value;
-};
-
 const formatAmount = (value: number) => {
   if (value >= 10000) {
     return `¥${(value / 10000).toFixed(1)}万`;
