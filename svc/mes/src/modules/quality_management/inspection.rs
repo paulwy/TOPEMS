@@ -1,6 +1,6 @@
 use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime<Utc>, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -247,12 +247,12 @@ pub async fn list_inspections(
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -402,7 +402,7 @@ pub async fn create_inspection(
         BigDecimal::from_str("0").unwrap_or_default(),
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
@@ -509,7 +509,7 @@ pub async fn update_inspection(
         unqualified_quantity,
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)

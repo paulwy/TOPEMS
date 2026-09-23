@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -133,19 +133,19 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn parse_datetime(s: &str) -> Option<NaiveDateTime> {
+fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(s)
         .ok()
         .map(|dt| dt.naive_utc())
-        .or_else(|| NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f").ok())
-        .or_else(|| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok())
+        .or_else(|| DateTime<Utc>::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f").ok())
+        .or_else(|| DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok())
 }
 
 fn parse_opt_uuid(s: &Option<String>) -> Option<Uuid> {
     s.as_ref().and_then(|id| Uuid::parse_str(id).ok())
 }
 
-fn parse_opt_datetime(s: &Option<String>) -> Option<NaiveDateTime> {
+fn parse_opt_datetime(s: &Option<String>) -> Option<DateTime<Utc>> {
     s.as_ref().and_then(|d| parse_datetime(d))
 }
 
@@ -297,22 +297,22 @@ pub async fn list_work_orders(
                     .flatten(),
             ),
             plan_start_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("plan_start_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
                     .ok()
                     .flatten(),
             ),
             plan_end_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("plan_end_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
                     .ok()
                     .flatten(),
             ),
             actual_start_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
                     .ok()
                     .flatten(),
             ),
             actual_end_date: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
+                r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
                     .ok()
                     .flatten(),
             ),
@@ -330,12 +330,12 @@ pub async fn list_work_orders(
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -1192,7 +1192,7 @@ pub async fn resume_work_order(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Datelike, NaiveDateTime, Timelike};
+    use chrono::{Datelike, DateTime<Utc>, Timelike};
     use std::str::FromStr;
 
     #[test]
@@ -1291,7 +1291,7 @@ mod tests {
 
     #[test]
     fn test_naive_to_utc_some() {
-        let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = DateTime<Utc>::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
         let result = naive_to_utc(naive);
         assert_eq!(result.naive_utc().date().year(), 2024);
     }
@@ -1304,7 +1304,7 @@ mod tests {
 
     #[test]
     fn test_datetime_to_string_returns_nonempty() {
-        let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = DateTime<Utc>::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
         let s = datetime_to_string(naive);
         assert!(!s.is_empty());
         assert!(s.contains("2024"));
@@ -1312,7 +1312,7 @@ mod tests {
 
     #[test]
     fn test_opt_datetime_to_string_some_and_none() {
-        let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = DateTime<Utc>::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
         let some_result = opt_datetime_to_string(naive);
         assert!(some_result.is_some());
         assert!(some_result.unwrap().contains("2024"));

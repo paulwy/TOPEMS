@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -210,12 +210,12 @@ pub async fn list_records(
             equipment_id: r.try_get::<Option<Uuid>, _>("equipment_id").ok().flatten(),
             operator_id: r.try_get::<Option<Uuid>, _>("operator_id").ok().flatten(),
             start_time: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("start_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
                     .flatten(),
             ),
             end_time: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("end_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("end_time")
                     .ok()
                     .flatten(),
             ),
@@ -236,12 +236,12 @@ pub async fn list_records(
                 .unwrap_or_else(|| "in_progress".to_string()),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, NaiveDate, DateTime<Utc>, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -125,7 +125,7 @@ pub struct WorkReportResponse {
 
 // ==================== Helpers ====================
 
-fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
+fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     match dt.into() {
         Some(d) => d,
         None => Utc::now(),
@@ -378,7 +378,7 @@ pub async fn list_work_reports(
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
             approved_at: opt_datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("approved_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
                     .ok()
                     .flatten(),
             ),
@@ -387,12 +387,12 @@ pub async fn list_work_reports(
                 .ok()
                 .flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

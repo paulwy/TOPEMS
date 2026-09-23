@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -347,30 +347,30 @@ pub async fn list_production_orders(
                 .ok()
                 .flatten(),
             planned_start_date: r
-                .try_get::<Option<NaiveDateTime>, _>("planned_start_date")
+                .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
                 .ok()
                 .flatten(),
             planned_end_date: r
-                .try_get::<Option<NaiveDateTime>, _>("planned_end_date")
+                .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
                 .ok()
                 .flatten(),
             actual_start_date: r
-                .try_get::<Option<NaiveDateTime>, _>("actual_start_date")
+                .try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
                 .ok()
                 .flatten(),
             actual_end_date: r
-                .try_get::<Option<NaiveDateTime>, _>("actual_end_date")
+                .try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
                 .ok()
                 .flatten(),
             workshop_id: r.try_get::<Option<Uuid>, _>("workshop_id").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
                 .unwrap_or_else(Utc::now),
             updated_at: r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
                 .unwrap_or_else(Utc::now),

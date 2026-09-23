@@ -905,7 +905,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let wip_no: String = row.get("wip_no");
             let product_name: String = row.get("product_name");
             let order_no: Option<String> = row.get("order_no");
-            let start_time: Option<chrono::NaiveDateTime> = row.get("start_time");
+            let start_time: Option<chrono::DateTime<Utc>> = row.get("start_time");
             let station_name: Option<String> = row.get("station_name");
 
             let hours_stuck = if let Some(st) = start_time {

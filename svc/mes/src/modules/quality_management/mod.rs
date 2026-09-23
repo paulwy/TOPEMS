@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
 
 use crate::AppState;
@@ -75,7 +75,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Helper Functions ====================
 
-fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
+fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     match dt.into() {
         Some(d) => d,
         None => Utc::now(),
@@ -95,11 +95,11 @@ fn big_decimal_to_f64<T: Into<Option<BigDecimal>>>(bd: T) -> f64 {
 }
 
 #[allow(dead_code)]
-fn parse_opt_datetime(s: Option<String>) -> Option<NaiveDateTime> {
-    s.and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok())
+fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
+    s.and_then(|s| DateTime<Utc>::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok())
 }
 
 #[allow(dead_code)]
-fn parse_opt_date(s: Option<String>) -> Option<NaiveDateTime> {
-    s.and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%d").ok())
+fn parse_opt_date(s: Option<String>) -> Option<DateTime<Utc>> {
+    s.and_then(|s| DateTime<Utc>::parse_from_str(&s, "%Y-%m-%d").ok())
 }

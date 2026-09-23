@@ -1,7 +1,7 @@
 use chrono::DateTime;
 use chrono::Utc;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -263,12 +263,12 @@ pub async fn list_standards(
                     .flatten(),
                 description: r.try_get::<Option<String>, _>("description").ok().flatten(),
                 created_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                         .ok()
                         .flatten(),
                 ),
                 updated_at: datetime_to_string(
-                    r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                         .ok()
                         .flatten(),
                 ),
@@ -403,7 +403,7 @@ pub async fn create_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -558,7 +558,7 @@ pub async fn update_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)

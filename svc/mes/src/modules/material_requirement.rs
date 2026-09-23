@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -258,12 +258,12 @@ pub async fn list_material_requirements(
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -371,7 +371,7 @@ pub async fn create_material_requirement(
     let required_quantity =
         BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
 
-    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S")
+    let required_date = DateTime<Utc>::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S")
         .ok()
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
@@ -475,7 +475,7 @@ pub async fn update_material_requirement(
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let required_date = body.required_date.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -675,7 +675,7 @@ pub async fn calculate_requirements(
                     item.specification,
                     Some(item.unit),
                     required_quantity_bd,
-                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").ok(),
+                    DateTime<Utc>::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").ok(),
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),

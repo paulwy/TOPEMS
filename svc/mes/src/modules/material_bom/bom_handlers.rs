@@ -1,6 +1,6 @@
 use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::{NaiveDateTime, Utc};
+use chrono::{DateTime<Utc>, Utc};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared::auth::Claims;
@@ -123,12 +123,12 @@ pub async fn list_material_boms(
                 .unwrap_or_else(|| "draft".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

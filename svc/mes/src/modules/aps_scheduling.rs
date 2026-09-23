@@ -14,7 +14,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Duration, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Duration, DateTime<Utc>, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -293,8 +293,8 @@ struct WorkOrderInfo {
     product_code: String,
     quantity: f64,
     priority: i32,
-    planned_start_date: Option<NaiveDateTime>,
-    planned_end_date: Option<NaiveDateTime>,
+    planned_start_date: Option<DateTime<Utc>>,
+    planned_end_date: Option<DateTime<Utc>>,
     status: String,
     product_id: Option<Uuid>,
 }
@@ -741,11 +741,11 @@ async fn fetch_pending_orders(
                 .flatten()
                 .unwrap_or(0),
             planned_start_date: r
-                .try_get::<Option<NaiveDateTime>, _>("planned_start_date")
+                .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
                 .ok()
                 .flatten(),
             planned_end_date: r
-                .try_get::<Option<NaiveDateTime>, _>("planned_end_date")
+                .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
                 .ok()
                 .flatten(),
             status: r
@@ -1181,7 +1181,7 @@ pub async fn check_schedule_constraints(
         }
 
         let suggested_start = order
-            .try_get::<Option<NaiveDateTime>, _>("planned_start_date")
+            .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
             .ok()
             .flatten()
             .map(|d| Utc.from_utc_datetime(&d));

@@ -6,7 +6,7 @@
 //! - `production_scheduling.rs` — 完成率计算（原内联 `completed / total * 100`）
 //! - `models/work_report.rs` — 报工数量汇总（原缺失）
 
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 
 // ── 完成率 & 进度 ──────────────────────────────────
 
@@ -190,10 +190,10 @@ pub fn duration_deviation_rate(standard_minutes: f64, actual_minutes: f64) -> f6
     ((actual_minutes - standard_minutes) / standard_minutes) * 100.0
 }
 
-// ── NaiveDateTime 辅助 ─────────────────────────────
+// ── DateTime<Utc> 辅助 ─────────────────────────────
 
-/// 将 NaiveDateTime 视为 UTC 转换为 DateTime<Utc>
-pub fn naive_to_utc(ndt: NaiveDateTime) -> DateTime<Utc> {
+/// 将 DateTime<Utc> 视为 UTC 转换为 DateTime<Utc>
+pub fn naive_to_utc(ndt: DateTime<Utc>) -> DateTime<Utc> {
     Utc.from_utc_datetime(&ndt)
 }
 

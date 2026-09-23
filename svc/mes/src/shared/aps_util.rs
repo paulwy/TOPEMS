@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, DateTime<Utc>};
 
 pub fn validate_resource_id(id: &str) -> bool {
     if id.is_empty() || id.len() > 64 {
@@ -12,7 +12,7 @@ pub fn normalize_code(code: &str) -> String {
     topems_shared_core::normalize_code(code)
 }
 
-pub fn calc_duration_minutes(start: NaiveDateTime, end: NaiveDateTime) -> Option<i64> {
+pub fn calc_duration_minutes(start: DateTime<Utc>, end: DateTime<Utc>) -> Option<i64> {
     if end < start {
         return None;
     }

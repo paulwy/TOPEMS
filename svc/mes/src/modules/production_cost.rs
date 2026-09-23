@@ -13,7 +13,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, Duration, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, DateTime<Utc>, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -289,9 +289,9 @@ async fn calculate_work_order_cost_detail_db(
     );
     let actual_qty = completed_qty.max(planned_qty).max(1.0);
 
-    let actual_start: Option<NaiveDateTime> =
+    let actual_start: Option<DateTime<Utc>> =
         work_order.try_get("actual_start_time").ok().flatten();
-    let actual_end: Option<NaiveDateTime> = work_order.try_get("actual_end_time").ok().flatten();
+    let actual_end: Option<DateTime<Utc>> = work_order.try_get("actual_end_time").ok().flatten();
     let duration_hours = if let (Some(start), Some(end)) = (actual_start, actual_end) {
         (end - start).num_seconds() as f64 / 3600.0
     } else {

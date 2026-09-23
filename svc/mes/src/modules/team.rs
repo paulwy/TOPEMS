@@ -6,7 +6,7 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -113,7 +113,7 @@ pub struct ListTeamMembersResponse {
     pub members: Vec<TeamMemberResponse>,
 }
 
-fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
+fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     dt.into().map(|d| Utc.from_utc_datetime(&d))
         .unwrap_or_else(Utc::now)
 }
@@ -246,12 +246,12 @@ pub async fn list_teams(
                 .unwrap_or_else(|| "active".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),

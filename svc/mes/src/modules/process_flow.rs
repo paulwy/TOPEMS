@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -165,7 +165,7 @@ pub struct StepCapacity {
     pub utilization_rate: f64,
 }
 
-fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
+fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     match dt.into() {
         Some(d) => d,
         None => Utc::now(),
@@ -297,12 +297,12 @@ pub async fn list_process_flows(
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
             created_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
             ),
             updated_at: datetime_to_string(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
             ),
@@ -678,7 +678,7 @@ pub async fn add_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -800,7 +800,7 @@ pub async fn update_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
