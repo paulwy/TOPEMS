@@ -10,6 +10,7 @@ import { paymentApi } from './payment';
 import { expenseApprovalApi } from './expenseApproval';
 import { cashFlowApi } from './cashFlow';
 import { voucherTemplateApi } from './voucherTemplate';
+import { auxAccountApi } from './auxAccount';
 import { settlementCenterApi } from './settlementCenter';
 import { expenseApi } from './expense';
 import { budgetApi } from './budget';
@@ -29,6 +30,7 @@ export { expenseApi } from './expense';
 export { budgetApi } from './budget';
 export { taxApi } from './tax';
 export { accountingSubjectApi } from './accountingSubject';
+export { auxAccountApi } from './auxAccount';
 
 // ============================================================================
 // ERP → Finance 类型迁移（B1 阶段）
@@ -39,7 +41,13 @@ export { accountingSubjectApi } from './accountingSubject';
 // types.ts 的 Budget 为展示模型（id/status 必填），页面数据流以 API 模型为准。
 // ============================================================================
 export type { Budget, BudgetItem } from './budget';
-export type { AccountingSubject, FinancialVoucher, VoucherItem, VoucherItemRequest } from './types';
+export type {
+  AccountingSubject,
+  FinancialVoucher,
+  VoucherItem,
+  VoucherItemRequest,
+  AuxAccount,
+} from './types';
 
 export type {
   VoucherEntry,
@@ -74,6 +82,7 @@ export const financeApi = {
   expenseApproval: expenseApprovalApi,
   cashFlow: cashFlowApi,
   voucherTemplate: voucherTemplateApi,
+  auxAccount: auxAccountApi,
   settlementCenter: settlementCenterApi,
   expense: expenseApi,
   budget: budgetApi,

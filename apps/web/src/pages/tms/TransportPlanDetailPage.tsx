@@ -5,7 +5,9 @@
  * 由于暂无独立的运输计划 API，使用 mock 数据展示。
  * 包含 StatusBadge + FSMActionButtons 组件。
  */
+import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Grid,
@@ -18,6 +20,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { shipmentApi } from '@/api/tms';
 import { StatusBadge } from '@/components/tms/StatusBadge';
 import { FSMActionButtons } from '@/components/tms/FSMActionButtons';
 import { DetailPageTemplate } from '@/components/templates';
@@ -37,74 +40,47 @@ interface TransportPlanItem {
   freight: number;
 }
 
-function getMockPlan() {
-  return {
-    plan_no: 'TP-2025-0812',
-    name: i18n.t('pages.transport_plan_detail_page.8_0'),
-    status: 'planning',
-    totalShipments: 12,
-    totalFreight: 86500,
-    startDate: '2025-08-15',
-    endDate: '2025-08-31',
-    items: [
-      {
-        shipment_no: 'SHP-001',
-        origin: i18n.t('tms.transport_plan_detail_page.k3'),
-        destination: i18n.t('tms.transport_plan_detail_page.k2'),
-        vehicle_no: 'V-001',
-        driver_name: i18n.t('tms.transport_plan_detail_page.k1'),
-        route_name: i18n.t('tms.transport_plan_detail_page.k0'),
-        status: 'draft',
-        freight: 3200,
-      },
-      {
-        shipment_no: 'SHP-002',
-        origin: i18n.t('tms.transport_plan_detail_page.k7'),
-        destination: i18n.t('tms.transport_plan_detail_page.k6'),
-        vehicle_no: 'V-003',
-        driver_name: i18n.t('tms.transport_plan_detail_page.k5'),
-        route_name: i18n.t('tms.transport_plan_detail_page.k4'),
-        status: 'pending',
-        freight: 4500,
-      },
-      {
-        shipment_no: 'SHP-003',
-        origin: i18n.t('tms.transport_plan_detail_page.k11'),
-        destination: i18n.t('tms.transport_plan_detail_page.k10'),
-        vehicle_no: 'V-005',
-        driver_name: i18n.t('tms.transport_plan_detail_page.k9'),
-        route_name: i18n.t('tms.transport_plan_detail_page.k8'),
-        status: 'in_transit',
-        freight: 2800,
-      },
-      {
-        shipment_no: 'SHP-004',
-        origin: i18n.t('tms.transport_plan_detail_page.k15'),
-        destination: i18n.t('tms.transport_plan_detail_page.k14'),
-        vehicle_no: 'V-007',
-        driver_name: i18n.t('tms.transport_plan_detail_page.k13'),
-        route_name: i18n.t('tms.transport_plan_detail_page.k12'),
-        status: 'delivered',
-        freight: 2200,
-      },
-      {
-        shipment_no: 'SHP-005',
-        origin: i18n.t('tms.transport_plan_detail_page.k19'),
-        destination: i18n.t('tms.transport_plan_detail_page.k18'),
-        vehicle_no: 'V-002',
-        driver_name: i18n.t('tms.transport_plan_detail_page.k17'),
-        route_name: i18n.t('tms.transport_plan_detail_page.k16'),
-        status: 'cancelled',
-        freight: 5800,
-      },
-    ] as TransportPlanItem[],
-  };
-}
-
 export default function TransportPlanDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation(['tms', 'common']);
-  const plan = getMockPlan();
+  const { data: shipmentRes, isLoading } = useQuery({
+    queryKey: ['tms', 'shipments', 'all'],
+    queryFn: () => shipmentApi.list({ page: 1, pageSize: 100 }),
+  });
+  const plan = useMemo(() => {
+    const raw = shipmentRes?.data?.items ?? [];
+    const items: TransportPlanItem[] = raw.map((shipment) => ({
+      shipment_no: shipment.shipment_no,
+      origin: shipment.origin ?? '\u2014',
+      destination: shipment.destination ?? '\u2014',
+      vehicle_no: shipment.vehicle_id ?? '\u2014',
+      driver_name: shipment.driver_id ?? '\u2014',
+      route_name: shipment.route_id ?? '\u2014',
+      status: shipment.status ?? 'draft',
+      freight: shipment.freight_amount ?? 0,
+    }));
+    const departures = raw
+      .map((s) => s.planned_departure)
+      .filter((v): v is string => Boolean(v))
+      .sort();
+    const arrivals = raw
+      .map((s) => s.planned_arrival)
+      .filter((v): v is string => Boolean(v))
+      .sort();
+    const hasActive = raw.some((s) => s.status === 'in_transit');
+    const allDone =
+      raw.length > 0 && raw.every((s) => s.status === 'delivered' || s.status === 'cancelled');
+    return {
+      plan_no: id ? `TP-AGG-${id.slice(0, 8)}` : 'TP-AGG',
+      name: t('tms.transport_plan_detail_page.8_0'),
+      status: allDone ? 'closed' : hasActive ? 'active' : 'planning',
+      totalShipments: items.length,
+      totalFreight: items.reduce((acc, it) => acc + it.freight, 0),
+      startDate: departures[0]?.slice(0, 10) ?? '\u2014',
+      endDate: arrivals[arrivals.length - 1]?.slice(0, 10) ?? '\u2014',
+      items,
+    };
+  }, [shipmentRes, id, t]);
 
   const handleAction = (targetStatus: string, requiresApproval: boolean) => {
     void targetStatus;
@@ -236,7 +212,7 @@ export default function TransportPlanDetailPage() {
 
   return (
     <DetailPageTemplate
-      title={plan.name}
+      title={isLoading ? t('tms.transport_plan_detail_page.loading') : plan.name}
       subtitle={`${plan.plan_no}${id ? ` | ID: ${id}` : ''}`}
       backHref={TMS_PATHS.dashboard}
       headerContent={headerContent}

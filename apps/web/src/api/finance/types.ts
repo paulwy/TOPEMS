@@ -108,4 +108,20 @@ export interface VoucherItemRequest {
   department_id?: string;
   project_id?: string;
   contract_id?: string;
+  /** 辅助核算类型：customer/supplier/project/department/employee */
+  aux_type?: string;
+  /** 辅助核算对象 id（aux_accounts.id） */
+  aux_id?: string;
+}
+
+export interface AuxAccount {
+  id: string;
+  tenant_id?: string;
+  aux_type: string;
+  code: string;
+  name?: string;
+  name_en?: string;
+  parent_id?: string | null;
+  level?: number;
+  is_enabled?: boolean;
 }

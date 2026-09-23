@@ -1,5 +1,6 @@
 import { designTokens } from '@topems/tokens';
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -26,6 +27,13 @@ import {
 import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter, RowAction } from '@/components/templates/CrudPage';
+import {
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  bulkDeleteNotifications,
+} from '@/api/notification';
 import { useNotificationStore } from '../../store';
 import { getMobileNotificationSchema } from '@/schemas/mobile';
 
@@ -41,85 +49,37 @@ interface Notification {
   read: boolean;
   created_at: string;
 }
-function getMockNotifications(): Notification[] {
-  return [
-    {
-      id: 'notif-001',
-      title: i18n.t('mobile.mobile_notification_page.k0'),
-      content: i18n.t('mobile.mobile_notification_page.k1'),
-      type: 'approval',
-      priority: 'high',
-      read: false,
-      created_at: i18n.t('pages.mobile_notification_page.10_0'),
-    },
-    {
-      id: 'notif-002',
-      title: i18n.t('mobile.mobile_notification_page.k2'),
-      content: i18n.t('pages.mobile_notification_page.k1'),
-      type: 'task',
-      priority: 'medium',
-      read: false,
-      created_at: i18n.t('pages.mobile_notification_page.30_2'),
-    },
-    {
-      id: 'notif-003',
-      title: i18n.t('mobile.mobile_notification_page.k3'),
-      content: i18n.t('pages.mobile_notification_page.k3'),
-      type: 'system',
-      priority: 'high',
-      read: true,
-      created_at: i18n.t('pages.mobile_notification_page.1_4'),
-    },
-    {
-      id: 'notif-004',
-      title: i18n.t('mobile.mobile_notification_page.k4'),
-      content: i18n.t('mobile.mobile_notification_page.k5'),
-      type: 'message',
-      priority: 'low',
-      read: true,
-      created_at: i18n.t('pages.mobile_notification_page.2_5'),
-    },
-    {
-      id: 'notif-005',
-      title: i18n.t('mobile.mobile_notification_page.k6'),
-      content: i18n.t('mobile.mobile_notification_page.3_7'),
-      type: 'approval',
-      priority: 'medium',
-      read: true,
-      created_at: i18n.t('pages.mobile_notification_page.3_6'),
-    },
-    {
-      id: 'notif-006',
-      title: i18n.t('mobile.mobile_notification_page.k8'),
-      content: i18n.t('pages.mobile_notification_page.k7'),
-      type: 'system',
-      priority: 'low',
-      read: true,
-      created_at: i18n.t('pages.mobile_notification_page.1_8'),
-    },
-    {
-      id: 'notif-007',
-      title: i18n.t('mobile.mobile_notification_page.k9'),
-      content: i18n.t('pages.mobile_notification_page.k9'),
-      type: 'task',
-      priority: 'medium',
-      read: true,
-      created_at: i18n.t('pages.mobile_notification_page.1_10'),
-    },
-    {
-      id: 'notif-008',
-      title: i18n.t('mobile.mobile_notification_page.k10'),
-      content: i18n.t('pages.mobile_notification_page.k11'),
-      type: 'system',
-      priority: 'high',
-      read: false,
-      created_at: i18n.t('mobile.mobile_notification_page.k11'),
-    },
-  ];
-}
 export const MobileNotificationPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [notifications, setNotifications] = useState<Notification[]>(() => getMockNotifications());
+  const queryClient = useQueryClient();
+  const { data: notifRes } = useQuery({
+    queryKey: ['mobile-notifications'],
+    queryFn: () => getNotifications(1, 50),
+  });
+  const invalidateNotifications = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['mobile-notifications'] });
+  }, [queryClient]);
+  const notifications = useMemo<Notification[]>(
+    () =>
+      (notifRes?.data?.notifications ?? []).map((n) => ({
+        id: n.id,
+        title: n.title,
+        content: n.content,
+        type: (n.notification_type === 'warning'
+          ? 'approval'
+          : n.notification_type === 'error'
+            ? 'task'
+            : 'system') as NotificationType,
+        priority: (n.priority >= 2
+          ? 'high'
+          : n.priority === 1
+            ? 'medium'
+            : 'low') as NotificationPriority,
+        read: n.is_read,
+        created_at: n.created_at,
+      })),
+    [notifRes]
+  );
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
@@ -158,9 +118,10 @@ export const MobileNotificationPage: React.FC = () => {
     [notifications, unreadCount]
   );
   const handleMarkAsRead = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const notification = notifications.find((n) => n.id === id);
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+      await markAsRead(id);
+      invalidateNotifications();
       if (notification) {
         addNotification({
           title: i18n.t('mobile.mobile_notification_page.k20'),
@@ -169,20 +130,22 @@ export const MobileNotificationPage: React.FC = () => {
         });
       }
     },
-    [notifications, addNotification]
+    [notifications, addNotification, invalidateNotifications]
   );
-  const handleMarkAllAsRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleMarkAllAsRead = useCallback(async () => {
+    await markAllAsRead();
+    invalidateNotifications();
     addNotification({
       title: i18n.t('mobile.mobile_notification_page.k21'),
       message: i18n.t('mobile.mobile_notification_page.k22'),
       type: 'success',
     });
-  }, [addNotification]);
+  }, [addNotification, invalidateNotifications]);
   const handleDelete = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const notification = notifications.find((n) => n.id === id);
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      await deleteNotification(id);
+      invalidateNotifications();
       if (notification) {
         addNotification({
           title: i18n.t('mobile.mobile_notification_page.k23'),
@@ -191,16 +154,17 @@ export const MobileNotificationPage: React.FC = () => {
         });
       }
     },
-    [notifications, addNotification]
+    [notifications, addNotification, invalidateNotifications]
   );
-  const handleClearAll = useCallback(() => {
-    setNotifications([]);
+  const handleClearAll = useCallback(async () => {
+    await bulkDeleteNotifications(notifications.map((n) => n.id));
+    invalidateNotifications();
     addNotification({
       title: i18n.t('mobile.mobile_notification_page.k24'),
       message: i18n.t('mobile.mobile_notification_page.k25'),
       type: 'success',
     });
-  }, [addNotification]);
+  }, [notifications, addNotification, invalidateNotifications]);
   const apiAdapter = useMemo<CrudApiAdapter<Notification>>(
     () => ({
       list: async (params) => {
@@ -226,13 +190,11 @@ export const MobileNotificationPage: React.FC = () => {
           ...data,
           id: `notif-${Date.now()}`,
           read: false,
-          created_at: i18n.t('mobile.mobile_notification_page.k26'),
+          created_at: new Date().toISOString(),
         } as Notification;
-        setNotifications((prev) => [newNotif, ...prev]);
         return newNotif;
       },
       update: async (id, data) => {
-        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, ...data } : n)));
         return { id, ...data } as Notification;
       },
       delete: async (id) => {

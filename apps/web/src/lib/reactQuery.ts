@@ -550,6 +550,7 @@ export const QUERY_KEYS = {
     PERIODS: ['finance', 'periods'],
     COUNTERPARTIES: ['finance', 'counterparties'],
     VOUCHER_TEMPLATES: ['finance', 'voucher-templates'],
+    AUX_ACCOUNTS: ['finance', 'aux-accounts'],
   },
   CONSOLIDATION: {
     SCOPES: ['consolidation', 'scopes'],

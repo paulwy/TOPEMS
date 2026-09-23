@@ -28,7 +28,8 @@ import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { voucherApi } from '@/api/finance/voucher';
 import { accountingSubjectApi } from '@/api/finance/accountingSubject';
-import type { AccountingSubject, VoucherItemRequest, CreateVoucherRequest } from '@/api/finance';
+import { auxAccountApi } from '@/api/finance/auxAccount';
+import type { AccountingSubject, VoucherItemRequest, AuxAccount } from '@/api/finance';
 import { localizedName } from '@/utils/i18n';
 import { useNotificationStore } from '@/store';
 
@@ -67,6 +68,31 @@ const VoucherCreatePage: React.FC = () => {
 
   const subjects = subjectsQuery.data || [];
 
+  // 辅助核算类型选项（对应后端 aux_type 枚举）
+  const auxTypes: { value: string; label: string }[] = [
+    { value: 'customer', label: t('finance.voucher_create_page.aux_customer') },
+    { value: 'supplier', label: t('finance.voucher_create_page.aux_supplier') },
+    { value: 'project', label: t('finance.voucher_create_page.aux_project') },
+    { value: 'department', label: t('finance.voucher_create_page.aux_department') },
+    { value: 'employee', label: t('finance.voucher_create_page.aux_employee') },
+  ];
+
+  const auxAccountsQuery = useQuery<AuxAccount[]>({
+    queryKey: QUERY_KEYS.FINANCE.AUX_ACCOUNTS,
+    queryFn: async () => {
+      const result = await auxAccountApi.list();
+      if (result.success && result.data) {
+        const d = result.data as { items?: AuxAccount[]; data?: AuxAccount[] } | AuxAccount[];
+        if (Array.isArray(d)) return d;
+        return d.items || d.data || [];
+      }
+      return [];
+    },
+    staleTime: CACHE_DURATIONS.MEDIUM,
+  });
+
+  const auxAccounts = auxAccountsQuery.data || [];
+
   const addVoucherItem = useCallback(() => {
     setVoucherItems((prev) => {
       const newItem: VoucherItemRequest = {
@@ -76,6 +102,8 @@ const VoucherCreatePage: React.FC = () => {
         summary: '',
         debit_amount: 0,
         credit_amount: 0,
+        aux_type: '',
+        aux_id: '',
       };
       return [...prev, newItem];
     });
@@ -122,6 +150,9 @@ const VoucherCreatePage: React.FC = () => {
         subject_code: String(value),
         subject_name: subject?.name || '',
       };
+    } else if (field === 'aux_type') {
+      // 切换核算类型时清空已选对象，防止类型不匹配
+      items[index] = { ...items[index], aux_type: String(value), aux_id: '' };
     } else {
       items[index] = { ...items[index], [field]: value };
     }
@@ -187,15 +218,7 @@ const VoucherCreatePage: React.FC = () => {
   };
 
   const createMutation = useMutation({
-    mutationFn: async (data: {
-      voucher_number: string;
-      voucher_date: string;
-      period: string;
-      attachment_count: number;
-      summary: string;
-      items: VoucherItemRequest[];
-      [key: string]: unknown;
-    }) => {
+    mutationFn: async (data: Record<string, unknown>) => {
       const result = await voucherApi.create(data);
       if (!result.success) {
         throw new Error(result.message || t('finance.voucher_create_page.create'));
@@ -229,10 +252,19 @@ const VoucherCreatePage: React.FC = () => {
     setSubmitting(true);
     createMutation.mutate(
       {
-        ...formData,
-        items: voucherItems.filter(
-          (item) => item.subject_code && (item.debit_amount > 0 || item.credit_amount > 0)
-        ),
+        voucher_date: formData.voucher_date,
+        voucher_type: 'general',
+        description: formData.summary,
+        lines: voucherItems
+          .filter((item) => item.subject_code && (item.debit_amount > 0 || item.credit_amount > 0))
+          .map((item) => ({
+            account_code: item.subject_code,
+            description: item.summary,
+            debit: item.debit_amount,
+            credit: item.credit_amount,
+            ...(item.aux_type ? { aux_type: item.aux_type } : {}),
+            ...(item.aux_id ? { aux_id: item.aux_id } : {}),
+          })),
       },
       {
         onSettled: () => setSubmitting(false),
@@ -386,6 +418,12 @@ const VoucherCreatePage: React.FC = () => {
                 <TableCell sx={{ fontWeight: 600 }}>
                   {t('finance.voucher_create_page.k2')}
                 </TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 140 }}>
+                  {t('finance.voucher_create_page.aux_type')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, width: 180 }}>
+                  {t('finance.voucher_create_page.aux_object')}
+                </TableCell>
                 <TableCell sx={{ fontWeight: 600, width: 180, textAlign: 'right' }}>
                   {t('finance.voucher_create_page.e4')}
                 </TableCell>
@@ -431,6 +469,45 @@ const VoucherCreatePage: React.FC = () => {
                       placeholder={t('finance.voucher_create_page.text_5b1bed')}
                       value={item.summary}
                       onChange={(e) => updateVoucherItem(index, 'summary', e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Autocomplete
+                      size='small'
+                      options={auxTypes}
+                      getOptionLabel={(option) => option.label}
+                      value={auxTypes.find((a) => a.value === item.aux_type) || null}
+                      onChange={(_, newValue) => {
+                        updateVoucherItem(index, 'aux_type', newValue?.value || '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder={t('finance.voucher_create_page.aux_type_placeholder')}
+                          size='small'
+                        />
+                      )}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Autocomplete
+                      size='small'
+                      options={auxAccounts.filter((a) => a.aux_type === item.aux_type)}
+                      getOptionLabel={(option) =>
+                        `${option.code} - ${localizedName(option.name, option.name_en)}`
+                      }
+                      value={auxAccounts.find((a) => a.id === item.aux_id) || null}
+                      onChange={(_, newValue) => {
+                        updateVoucherItem(index, 'aux_id', newValue?.id || '');
+                      }}
+                      disabled={!item.aux_type}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          placeholder={t('finance.voucher_create_page.aux_object_placeholder')}
+                          size='small'
+                        />
+                      )}
                     />
                   </TableCell>
                   <TableCell>

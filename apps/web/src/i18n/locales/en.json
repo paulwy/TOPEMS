@@ -3860,7 +3860,28 @@
       "text_5b1bed": "Entry Summary",
       "info": "Basic Information",
       "text_5f3e09": "Voucher Detail",
-      "save": "Save Voucher"
+      "save": "Save Voucher",
+      "aux_type": "Aux. Accounting",
+      "aux_type_placeholder": "Type",
+      "aux_object": "Aux. Object",
+      "aux_object_placeholder": "Select object",
+      "aux_customer": "Customer",
+      "aux_supplier": "Supplier",
+      "aux_project": "Project",
+      "aux_department": "Department",
+      "aux_employee": "Employee",
+      "k0": "No.",
+      "k1": "Account",
+      "k2": "Summary",
+      "k3": "Actions",
+      "k4": "Delete",
+      "e3": "Add Line",
+      "e4": "Debit Amount",
+      "e5": "Credit Amount",
+      "k5": "Balanced",
+      "m1": "Total Debit",
+      "e1": "Debit total {v1}, Credit total {v2}, difference",
+      "e2": "Balanced, total {v1}"
     },
     "budget_management_page": {
       "fail": "Failed to load data",
@@ -6563,5 +6584,28 @@
   "srm.status_cancelled": "Cancelled",
   "srm.status_processing": "Processing",
   "srm.status_draft": "Draft",
-  "srm.status_expired": "Expired"
+  "srm.status_expired": "Expired",
+  "tms": {
+    "transport_plan_detail_page": {
+      "8_0": "Transport Plan",
+      "loading": "Loading…",
+      "k21": "Basic Info",
+      "k22": "Shipments",
+      "k23": "Plan No.",
+      "k24": "Plan Name",
+      "k25": "Status",
+      "k26": "Shipments",
+      "k27": "Total Freight",
+      "k28": "Start Date",
+      "k29": "End Date",
+      "k31": "Shipment No.",
+      "k32": "Origin",
+      "k33": "Destination",
+      "k34": "Vehicle",
+      "k35": "Driver",
+      "k36": "Route",
+      "k37": "Status",
+      "k38": "Freight"
+    }
+  }
 }
