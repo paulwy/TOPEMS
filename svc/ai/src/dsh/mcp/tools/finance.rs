@@ -44,6 +44,7 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
                     .property("amount", SchemaBuilder::number().description("金额").minimum(0.0))
                     .required(&["subject_code", "direction", "amount"])
                     ))
+                .property("language", SchemaBuilder::string().description("语言偏好，zh 或 en，默认 zh"))
                 .required(&["voucher_date", "summary", "entries"])
                 .build(),
             "finance:write",
@@ -66,7 +67,9 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
 
                 let payload = json!({ "voucher_date": voucher_date, "summary": summary, "entries": entries });
 
-                let result = match finance_client(jwt_secret)?.create_voucher(&payload).await {
+                let language = params["language"].as_str().unwrap_or("zh").to_string();
+
+                let result = match finance_client(jwt_secret)?.create_voucher(&payload, Some(language.as_str())).await {
                     Ok(voucher) => json!({ "success": true, "voucher": voucher, "source": "real_api" }),
                     Err(e) => {
                         tracing::warn!("Finance create_voucher API 调用失败（降级 mock）: {}", e);

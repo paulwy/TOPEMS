@@ -85,6 +85,17 @@ impl GenericServiceClient {
         self.base_client.post(path, body).await
     }
 
+    pub async fn post_with_headers<T: serde::de::DeserializeOwned, B: serde::Serialize>(
+        &self,
+        path: &str,
+        body: &B,
+        extra_headers: &[(&str, &str)],
+    ) -> ServiceClientResult<T> {
+        self.base_client
+            .post_with_headers(path, body, extra_headers)
+            .await
+    }
+
     pub async fn put<T: serde::de::DeserializeOwned, B: serde::Serialize>(
         &self,
         path: &str,

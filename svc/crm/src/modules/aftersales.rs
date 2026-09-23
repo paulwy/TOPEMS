@@ -19,6 +19,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
 use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 
@@ -1035,11 +1036,12 @@ async fn complete_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let locale = Locale::from_headers(&headers).as_sql();
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -1199,7 +1201,7 @@ async fn complete_return(
             }
 
             // 财务对账：退换货完成时同步到 erp.fin_reconciliations
-            if let Err(e) = sync_return_to_finance(&state, txn, return_record.id, tenant_id).await {
+            if let Err(e) = sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await {
                 tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
             }
 
@@ -1465,6 +1467,7 @@ pub async fn sync_return_to_finance(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     return_id: Uuid,
     tenant_id: Uuid,
+    locale: &str,
 ) -> Result<Uuid, Box<dyn std::error::Error + Send + Sync>> {
     let return_record: Return = sqlx::query_as::<_, Return>(
         r#"
@@ -1543,7 +1546,7 @@ pub async fn sync_return_to_finance(
             }
         ]
     });
-    match erp_client.create_voucher(&voucher_payload).await {
+    match erp_client.create_voucher(&voucher_payload, Some(locale)).await {
         Ok(_) => {
             tracing::debug!(
                 "退换货 {} 已生成退款凭证（voucher_no={}）",
@@ -2209,11 +2212,12 @@ async fn confirm_return(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: HeaderMap,
+    headers: HeaderMap,
     Json(req): Json<ReturnActionRequest>,
 ) -> Json<ApiResponse<Return>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let locale = Locale::from_headers(&headers).as_sql();
     match check_permission(&state.db, &claims, &ModulePermission::ReturnWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -2337,7 +2341,7 @@ async fn confirm_return(
                     });
                 }
                 if let Err(e) =
-                    sync_return_to_finance(&state, txn, return_record.id, tenant_id).await
+                    sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
                 {
                     tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
                 }

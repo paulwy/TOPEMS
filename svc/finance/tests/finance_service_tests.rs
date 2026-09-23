@@ -183,7 +183,7 @@ async fn test_voucher_lifecycle() {
     };
 
     let voucher = service
-        .create_voucher(tenant_id, req, "test_user")
+        .create_voucher(tenant_id, req, "test_user", "zh")
         .await
         .expect("Failed to create voucher");
     assert_eq!(voucher.status, VoucherStatus::Draft);

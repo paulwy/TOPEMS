@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Json, Multipart, Path, Query, State},
+    http::HeaderMap,
     response::IntoResponse,
 };
 use chrono::Utc;
@@ -20,6 +21,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -695,11 +697,13 @@ pub struct GenerateFromSourceRequest {
 pub async fn generate_from_source(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<GenerateFromSourceRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
 
     let template = match service
         .get_voucher_template(tenant_id, req.template_id)
@@ -759,7 +763,7 @@ pub async fn generate_from_source(
         };
 
         match service
-            .create_voucher(tenant_id, create_req, &created_by)
+            .create_voucher(tenant_id, create_req, &created_by, locale)
             .await
         {
             Ok(voucher) => voucher_ids.push(voucher.id),
@@ -930,11 +934,13 @@ pub async fn auto_generate(
 pub async fn regenerate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Path(original_voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // 获取原始凭证
     let original = match service.get_voucher(tenant_id, original_voucher_id).await {
@@ -965,7 +971,7 @@ pub async fn regenerate(
     };
 
     let reversal_voucher = match service
-        .create_voucher(tenant_id, reversal_req, &created_by)
+        .create_voucher(tenant_id, reversal_req, &created_by, locale)
         .await
     {
         Ok(v) => v,
@@ -995,7 +1001,7 @@ pub async fn regenerate(
     };
 
     match service
-        .create_voucher(tenant_id, new_req, &created_by)
+        .create_voucher(tenant_id, new_req, &created_by, locale)
         .await
     {
         Ok(new_voucher) => Json(ApiResponse::success(

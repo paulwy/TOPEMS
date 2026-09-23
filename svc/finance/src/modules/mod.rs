@@ -292,12 +292,17 @@ pub async fn list_accounts(
 pub async fn create_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateVoucherRequest>,
 ) -> Json<ApiResponse<VoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let created_by = claims.username.clone();
-    match service.create_voucher(tenant_id, req, &created_by).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service
+        .create_voucher(tenant_id, req, &created_by, locale)
+        .await
+    {
         Ok(voucher) => Json(ApiResponse::success(voucher, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

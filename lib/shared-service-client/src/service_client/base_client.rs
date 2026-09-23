@@ -84,6 +84,23 @@ impl BaseServiceClient {
         self.execute_request(request).await
     }
 
+    /// POST with body，附加 per-request 额外 header（如 accept-language），
+    /// 不污染共享客户端的持久化 custom_headers。
+    pub async fn post_with_headers<T: DeserializeOwned, B: Serialize>(
+        &self,
+        path: &str,
+        body: &B,
+        extra_headers: &[(&str, &str)],
+    ) -> ServiceClientResult<T> {
+        let url = self.build_url(path);
+        let mut request = self.client.post(&url).json(body);
+        request = self.apply_headers(request);
+        for &(key, value) in extra_headers {
+            request = request.header(key, value);
+        }
+        self.execute_request(request).await
+    }
+
     pub async fn post_without_body<T: DeserializeOwned>(
         &self,
         path: &str,

@@ -232,6 +232,16 @@ impl<T: ServiceApi> TypedServiceClient<T> {
         self.inner.post(path, body).await
     }
 
+    /// POST 请求 with body 及 per-request 额外 header（如 accept-language）。
+    pub async fn post_with_headers<R: DeserializeOwned, B: Serialize>(
+        &self,
+        path: &str,
+        body: &B,
+        extra_headers: &[(&str, &str)],
+    ) -> ServiceClientResult<R> {
+        self.inner.post_with_headers(path, body, extra_headers).await
+    }
+
     /// POST 请求 without body，反序列化为 `R`。
     pub async fn post_without_body<R: DeserializeOwned>(
         &self,

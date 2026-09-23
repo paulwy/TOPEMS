@@ -34,6 +34,7 @@ impl FinanceService {
         tenant_id: Uuid,
         req: CreateVoucherRequest,
         created_by: &str,
+        locale: &str,
     ) -> Result<VoucherResponse, TopemsError> {
         let period = format!(
             "{:04}{:02}",
@@ -74,7 +75,7 @@ impl FinanceService {
         let mut lines = Vec::new();
         for (i, line) in req.lines.iter().enumerate() {
             let account = self
-                .get_account_by_code(tenant_id, &line.account_code, "zh")
+                .get_account_by_code(tenant_id, &line.account_code, locale)
                 .await?;
 
             let voucher_line = sqlx::query_as(

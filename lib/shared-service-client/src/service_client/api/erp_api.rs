@@ -59,8 +59,19 @@ impl TypedServiceClient<ErpApi> {
     pub async fn create_voucher(
         &self,
         data: &serde_json::Value,
+        accept_language: Option<&str>,
     ) -> ServiceClientResult<serde_json::Value> {
-        self.post(&self.build_path("/vouchers"), data).await
+        match accept_language {
+            Some(lang) => {
+                self.post_with_headers(
+                    &self.build_path("/vouchers"),
+                    data,
+                    &[("accept-language", lang)],
+                )
+                .await
+            }
+            None => self.post(&self.build_path("/vouchers"), data).await,
+        }
     }
 
     /// 获取库存汇总
