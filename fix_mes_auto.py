@@ -100,6 +100,22 @@ def fix_errors(errors):
             if 'Utc.from_utc_datetime(&d)' in line and 'DateTime<Utc>' in error['context']:
                 line = line.replace('Utc.from_utc_datetime(&d).to_rfc3339()', 'd.to_rfc3339()')
             
+            # 错误模式 7: expected DateTime<Utc>, found NaiveDateTime
+            if 'expected `DateTime<Utc>`, found `NaiveDateTime`' in error['context']:
+                # 需要在 NaiveDateTime 后加 .and_utc()
+                # 但这需要知道具体是哪个变量
+                pass
+            
+            # 错误模式 8: expected Option<DateTime<Utc>>, found Option<NaiveDateTime>
+            if 'expected `Option<DateTime<Utc>>`, found `Option<NaiveDateTime>`' in error['context']:
+                # 需要在 Option<NaiveDateTime> 后加 .map(|d| d.and_utc())
+                pass
+            
+            # 错误模式 9: expected Uuid, found Option<Uuid>
+            if 'expected `Uuid`, found `Option<Uuid>`' in error['context']:
+                # 需要在 Option<Uuid> 后加 .unwrap_or_default()
+                pass
+            
             if line != original_line:
                 lines[line_num] = line
                 fixes_applied += 1

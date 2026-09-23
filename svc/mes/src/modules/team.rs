@@ -590,7 +590,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| dUtc.from_utc_datetime(&d).to_rfc3339()),
+            join_date: r.join_date.map(|d| dd.to_rfc3339()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -666,7 +666,7 @@ pub async fn add_team_member(
         position: result.position,
         join_date: result
             .join_date
-            .map(|d| dUtc.from_utc_datetime(&d).to_rfc3339()),
+            .map(|d| dd.to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
