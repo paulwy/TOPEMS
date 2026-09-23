@@ -348,7 +348,7 @@ pub async fn get_material_return(
             "material_code": i.material_code,
             "material_name": i.material_name,
             "unit": i.unit,
-            "quantity": big_decimal_to_f64(i.quantity.clone()),
+            "quantity": big_decimal_to_f64(Some(i.quantity.clone())),
             "reason": i.reason,
             "batch_no": i.batch_no,
             "notes": i.notes,
