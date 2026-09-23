@@ -311,13 +311,13 @@ pub async fn create_record(
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: result.start_time,
+        start_time: result.start_time.and_utc(),
         end_time: result.end_time,
         quantity_produced: result.quantity_produced.unwrap_or_default() as f64,
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
         status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at,
+        created_at: result.created_at.and_utc(),
         updated_at: result.updated_at,
     };
 
