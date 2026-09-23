@@ -497,8 +497,8 @@ pub async fn create_production_schedule(
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: naive_to_utc(Some(result.created_at)),
+        updated_at: naive_to_utc(Some(result.updated_at)),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -589,8 +589,8 @@ pub async fn get_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -699,8 +699,8 @@ pub async fn update_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }

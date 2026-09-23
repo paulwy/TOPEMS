@@ -450,8 +450,8 @@ pub async fn create_wip(
         last_transfer_time: opt_naive_to_utc(result.last_transfer_time),
         operator: result.operator,
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: naive_to_utc(Some(result.created_at)),
+        updated_at: naive_to_utc(Some(result.updated_at)),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -528,8 +528,8 @@ pub async fn get_wip(
                 last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -616,8 +616,8 @@ pub async fn update_wip(
                 last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -864,7 +864,7 @@ pub async fn transfer_wip(
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: to_workstation_name.unwrap_or_default(),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
-        transfer_time: naive_to_utc(transfer.transfer_time),
+        transfer_time: naive_to_utc(Some(transfer.transfer_time)),
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
@@ -944,7 +944,7 @@ pub async fn list_wip_transfers(
             to_work_station_id: r.to_work_station_id,
             to_work_station_name: r.to_work_station_name,
             quantity: big_decimal_to_f64(Some(r.quantity)),
-            transfer_time: naive_to_utc(r.transfer_time),
+            transfer_time: naive_to_utc(Some(r.transfer_time)),
             operator: r.operator,
             transfer_type: r
                 .transfer_type

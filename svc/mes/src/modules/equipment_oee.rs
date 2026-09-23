@@ -518,8 +518,8 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
+        created_at: naive_to_utc(Some(result.created_at)),
+        updated_at: naive_to_utc(Some(result.updated_at)),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -597,8 +597,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -754,8 +754,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
+                created_at: naive_to_utc(Some(r.created_at)),
+                updated_at: naive_to_utc(Some(r.updated_at)),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
