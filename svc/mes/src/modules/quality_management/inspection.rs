@@ -310,7 +310,7 @@ pub async fn get_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
