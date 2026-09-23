@@ -317,7 +317,7 @@ pub async fn get_material_requirement(
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
-                mrp_no: r.mrp_no.unwrap_or_default(),
+                mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code,
@@ -416,7 +416,7 @@ pub async fn create_material_requirement(
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
-                mrp_no: r.mrp_no.unwrap_or_default(),
+                mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code,
@@ -519,7 +519,7 @@ pub async fn update_material_requirement(
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
-                mrp_no: r.mrp_no.unwrap_or_default(),
+                mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code,
@@ -686,7 +686,7 @@ pub async fn calculate_requirements(
                 if let Ok(r) = insert_result {
                     requirements.push(MaterialRequirementResponse {
                         id: r.id.to_string(),
-                        mrp_no: r.mrp_no.unwrap_or_default(),
+                        mrp_no: r.mrp_no,
                         order_id: r.order_id.map(|u| u.to_string()),
                         order_number: r.order_number,
                         product_code: r.product_code,
@@ -751,7 +751,7 @@ pub async fn confirm_requirement(
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
-                mrp_no: r.mrp_no.unwrap_or_default(),
+                mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code,
@@ -819,7 +819,7 @@ pub async fn release_requirement(
         Ok(r) => Json(ApiResponse::success(
             MaterialRequirementResponse {
                 id: r.id.to_string(),
-                mrp_no: r.mrp_no.unwrap_or_default(),
+                mrp_no: r.mrp_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
                 product_code: r.product_code,
