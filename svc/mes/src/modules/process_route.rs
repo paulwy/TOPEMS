@@ -658,7 +658,7 @@ pub async fn get_route_steps(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: s.work_station_name,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 })
                 .collect();
 
@@ -754,7 +754,7 @@ pub async fn add_route_step(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 },
                 "添加工艺路线步骤成功",
             ))
@@ -839,7 +839,7 @@ pub async fn update_route_step(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 },
                 "更新工艺路线步骤成功",
             ))
@@ -980,7 +980,7 @@ pub async fn reorder_route_steps(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: s.work_station_name,
                     description: s.description,
-                    created_at: s.created_at.to_rfc3339(),
+                    created_at: Utc.from_utc_datetime(&s.created_at).to_rfc3339(),
                 })
                 .collect();
 
