@@ -154,7 +154,7 @@ pub async fn get_dashboard(
     .await;
 
     let today_output_val = match today_output {
-        Ok(r) => r.today_output.to_string().parse::<f64>().unwrap_or_default(),
+        Ok(r) => r.today_output.unwrap_or_default(),
         Err(e) => {
             tracing::error!("Failed to fetch today output: {}", e);
             0.0
@@ -238,8 +238,8 @@ pub async fn get_dashboard(
         Ok(rows) => rows
             .into_iter()
             .map(|r| {
-                let planned = r.quantity.to_string().parse::<f64>().unwrap_or_default();
-                let completed = r.completed_quantity.to_string().parse::<f64>().unwrap_or_default();
+                let planned = r.quantity.unwrap_or_default();
+                let completed = r.completed_quantity.unwrap_or_default();
                 let progress = if planned > 0.0 {
                     (completed / planned) * 100.0
                 } else {
@@ -497,8 +497,8 @@ pub async fn get_order_progress(
     let list: Vec<OrderProgressResponse> = orders
         .into_iter()
         .map(|r| {
-            let planned = r.quantity.to_string().parse::<f64>().unwrap_or_default();
-            let completed = r.completed_quantity.to_string().parse::<f64>().unwrap_or_default();
+            let planned = r.quantity.unwrap_or_default();
+            let completed = r.completed_quantity.unwrap_or_default();
             let progress = if planned > 0.0 {
                 (completed / planned) * 100.0
             } else {
