@@ -472,6 +472,7 @@
 - 提交 39a19b31e：之前修复 MES 编译错误 447→0（Option 类型适配）
 - 修复模式：删除 Some(Option) 嵌套、加 unwrap_or_default、改 map(|v| v.to_string()) 等
 
+D
 ---
 
 ## 2026-09-23 全量编译与测试修复 ✅
@@ -517,3 +518,5 @@
 - 前端 lint 466 个错误（主要是 Parsing error: parserOptions.project has been provided，27 个）
 - 1 个失败的测试（topems-shared-event）
 - 6 个 warnings（MES 模块未使用的导入）
+
+### 本地全量验证（我方补充，2026-09-23）
