@@ -1,4 +1,4 @@
-use chrono::DateTime;
+use chrono::{DateTime, NaiveDateTime};
 use chrono::Utc;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
@@ -402,7 +402,7 @@ pub async fn create_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -412,7 +412,7 @@ pub async fn create_standard(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.date().and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let standard_result = sqlx::query_unchecked!(
@@ -557,7 +557,7 @@ pub async fn update_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -567,7 +567,7 @@ pub async fn update_standard(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.date().and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let standard_result = sqlx::query_unchecked!(

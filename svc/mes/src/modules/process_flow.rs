@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -678,7 +678,7 @@ pub async fn add_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -688,7 +688,7 @@ pub async fn add_flow_step(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.date().and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -800,7 +800,7 @@ pub async fn update_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -810,7 +810,7 @@ pub async fn update_flow_step(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.date().and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {

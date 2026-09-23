@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -137,8 +137,8 @@ fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(s)
         .ok()
         .map(|dt| dt.naive_utc())
-        .or_else(|| DateTime<Utc>::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f").ok())
-        .or_else(|| DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S").ok())
+        .or_else(|| NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f").map(|dt| dt.and_utc()).ok())
+        .or_else(|| NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc()).ok())
 }
 
 fn parse_opt_uuid(s: &Option<String>) -> Option<Uuid> {
@@ -1291,7 +1291,7 @@ mod tests {
 
     #[test]
     fn test_naive_to_utc_some() {
-        let naive = DateTime<Utc>::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc()).ok();
         let result = naive_to_utc(naive);
         assert_eq!(result.naive_utc().date().year(), 2024);
     }
@@ -1304,7 +1304,7 @@ mod tests {
 
     #[test]
     fn test_datetime_to_string_returns_nonempty() {
-        let naive = DateTime<Utc>::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc()).ok();
         let s = datetime_to_string(naive);
         assert!(!s.is_empty());
         assert!(s.contains("2024"));
@@ -1312,7 +1312,7 @@ mod tests {
 
     #[test]
     fn test_opt_datetime_to_string_some_and_none() {
-        let naive = DateTime<Utc>::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc()).ok();
         let some_result = opt_datetime_to_string(naive);
         assert!(some_result.is_some());
         assert!(some_result.unwrap().contains("2024"));
