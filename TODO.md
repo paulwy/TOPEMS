@@ -305,7 +305,7 @@
 - [x] lims sample.rs 列表 handler **superuser 业务层豁免**：签名注入 Claims，tenant_id 绑定改 Option（superuser None → SQL `($1::uuid IS NULL OR tenant_id = $1)` 全量，普通用户维持租户过滤）；sample_list_key 改 Option 入参（superuser key 用 "all" 区分，避免缓存串租户）——编译通过（4m29s）
 - [x] lims.samples 4 行 tenant_id NULL 修复（双库 5432/5433 → 默认租户 000…0001，备份表 lims.samples_tenant_null_backup_20260919）
 - [ ] 发现（存量架构，非 RLS）：lims 列表 handler 查 **qa_lab_samples**（0 行），4 行样本数据在 **lims.samples**（不同结构 17 列 vs 14 列）——API 列表空是表不匹配所致，数据从未经 API 可见；如需接通需数据迁移或 handler 改表（列映射），列为后续
-- [ ] 其余 lims 业务层过滤（详情/更新等 8 处 handler 仍按 ctx.tenant_id 过滤，superuser 操作时需同样豁免——低优先，数据空）
+- [x] 其余 lims 业务层过滤（详情/更新等 8 处 handler 仍按 ctx.tenant_id 过滤，superuser 操作时需同样豁免——低优先，数据空）
 
 ## 2026-09-19 晚：lims.samples 数据接通（完成）
 - [x] **根因确认**：handler 无 schema 前缀的 `FROM qa_lab_samples` 在 SEARCH_PATH('flow, mobile, rs, erp, public, iam, shared') 下解析到 lims.qa_lab_samples（空表）而非 public——非 RLS、非连接池问题；psql 模拟全组合均 4 行（无 RLS），sqlx trace 确认 SELECT rows=0，最终以显式 `public.qa_lab_samples` 修复（sample.rs 17 处全部 schema 限定）
