@@ -180,7 +180,7 @@ pub async fn login(
           COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
                     JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
                     JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
-          (u.created_at AT TIME ZONE 'UTC') AS created_at
+          u.created_at AS created_at
         FROM public.core_users u
         WHERE (u.username = $1 OR u.email = $1) AND u.deleted_at IS NULL
         "#,
@@ -956,7 +956,7 @@ pub async fn forgot_password(
           COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
                     JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
                     JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
-          (u.created_at AT TIME ZONE 'UTC') AS created_at
+          u.created_at AS created_at
         FROM public.core_users u
         WHERE u.email = $1 AND u.status = 'active' AND u.deleted_at IS NULL
         "#,
