@@ -1194,7 +1194,7 @@ pub async fn list_inspections(
                     } else {
                         r.status.unwrap_or_default()
                     },
-                    items: r.items,
+                    items: r.items.map(|v| serde_json::Value::String(v)),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
                     created_at: r.created_at.and_utc().to_rfc3339(),
@@ -1324,7 +1324,7 @@ pub async fn create_inspection(
                 } else {
                     r.status.unwrap_or_default()
                 },
-                items: r.items,
+                items: r.items.map(|v| serde_json::Value::String(v)),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: r.created_at.and_utc().to_rfc3339(),
