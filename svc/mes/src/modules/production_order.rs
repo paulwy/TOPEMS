@@ -499,7 +499,7 @@ pub async fn create_production_order(
         product_code: result.product_code,
         quantity: result.quantity.unwrap_or_default(),
         completed_quantity: result.completed_quantity.unwrap_or_default(),
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         source: result.source.unwrap_or_else(|| "manual".to_string()),
         source_order_id: result.source_order_id,
         source_order_number: result.source_order_number,
@@ -661,7 +661,7 @@ pub async fn create_from_erp(
         product_code: result.product_code,
         quantity: result.quantity.unwrap_or_default(),
         completed_quantity: result.completed_quantity.unwrap_or_default(),
-        status: result.status,
+        status: result.status.unwrap_or_default(),
         source: result
             .source
             .unwrap_or_else(|| "erp_sales_order".to_string()),
