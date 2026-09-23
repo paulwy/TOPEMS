@@ -4,20 +4,23 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// 项目费用行（DB row / 响应体）。
+/// 列对齐 pm.project_expenses 真库：expense_type/amount/currency/expense_date/description/
+/// status/approver/approved_date/created_by + 补列(phase_id/budget_item_id/resource_id/
+/// expense_ref_id/approval_workflow_id/attachment_ids)。
+/// 代码侧改名：incurred_date->expense_date, paid_date->approved_date, approved_by->approver；
+/// category/subcategory/reported_date 表无独立列，已删除（类型由 expense_type 承载）。
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ProjectExpense {
     pub id: Uuid,
     pub project_id: Uuid,
     pub phase_id: Option<Uuid>,
     pub expense_type: String,
-    pub category: Option<String>,
-    pub subcategory: Option<String>,
     pub description: Option<String>,
     pub amount: f64,
     pub currency: Option<String>,
-    pub incurred_date: NaiveDate,
-    pub reported_date: Option<NaiveDate>,
-    pub paid_date: Option<NaiveDate>,
+    pub expense_date: DateTime<Utc>,
+    pub approved_date: Option<DateTime<Utc>>,
     pub budget_item_id: Option<Uuid>,
     pub resource_id: Option<Uuid>,
     pub expense_ref_id: Option<String>,
@@ -25,7 +28,7 @@ pub struct ProjectExpense {
     pub approval_workflow_id: Option<Uuid>,
     pub attachment_ids: Option<Vec<Uuid>>,
     pub created_by: Option<String>,
-    pub approved_by: Option<String>,
+    pub approver: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -34,12 +37,10 @@ pub struct ProjectExpense {
 pub struct CreateExpenseRequest {
     pub phase_id: Option<Uuid>,
     pub expense_type: String,
-    pub category: Option<String>,
-    pub subcategory: Option<String>,
     pub description: Option<String>,
     pub amount: f64,
     pub currency: Option<String>,
-    pub incurred_date: NaiveDate,
+    pub expense_date: NaiveDate,
     pub budget_item_id: Option<Uuid>,
     pub resource_id: Option<Uuid>,
     pub expense_ref_id: Option<String>,
@@ -51,13 +52,11 @@ pub struct CreateExpenseRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateExpenseRequest {
     pub expense_type: Option<String>,
-    pub category: Option<String>,
-    pub subcategory: Option<String>,
     pub description: Option<String>,
     pub amount: Option<f64>,
-    pub paid_date: Option<NaiveDate>,
+    pub approved_date: Option<NaiveDate>,
     pub status: Option<String>,
-    pub approved_by: Option<String>,
+    pub approver: Option<String>,
 }
 
 #[cfg(test)]
@@ -84,14 +83,11 @@ mod tests {
             project_id: uid(),
             phase_id: Some(uid()),
             expense_type: "material".to_string(),
-            category: Some("raw".to_string()),
-            subcategory: Some("steel".to_string()),
             description: Some("钢材采购".to_string()),
             amount: 50_000.0,
             currency: Some("CNY".to_string()),
-            incurred_date: sample_date(),
-            reported_date: Some(sample_date()),
-            paid_date: Some(sample_date()),
+            expense_date: now(),
+            approved_date: Some(now()),
             budget_item_id: Some(uid()),
             resource_id: Some(uid()),
             expense_ref_id: Some("EXP-001".to_string()),
@@ -99,7 +95,7 @@ mod tests {
             approval_workflow_id: Some(uid()),
             attachment_ids: Some(vec![uid(), uid()]),
             created_by: Some("u1".to_string()),
-            approved_by: Some("boss".to_string()),
+            approver: Some("boss".to_string()),
             created_at: now(),
             updated_at: now(),
         }
@@ -132,14 +128,11 @@ mod tests {
             project_id: uid(),
             phase_id: None,
             expense_type: "labor".to_string(),
-            category: None,
-            subcategory: None,
             description: None,
             amount: 0.0,
             currency: None,
-            incurred_date: sample_date(),
-            reported_date: None,
-            paid_date: None,
+            expense_date: now(),
+            approved_date: None,
             budget_item_id: None,
             resource_id: None,
             expense_ref_id: None,
@@ -147,7 +140,7 @@ mod tests {
             approval_workflow_id: None,
             attachment_ids: None,
             created_by: None,
-            approved_by: None,
+            approver: None,
             created_at: now(),
             updated_at: now(),
         };
@@ -191,12 +184,10 @@ mod tests {
         let r = CreateExpenseRequest {
             phase_id: Some(uid()),
             expense_type: "equipment".to_string(),
-            category: Some("c".to_string()),
-            subcategory: Some("sc".to_string()),
             description: Some("d".to_string()),
             amount: 12_345.67,
             currency: Some("USD".to_string()),
-            incurred_date: sample_date(),
+            expense_date: sample_date(),
             budget_item_id: Some(uid()),
             resource_id: Some(uid()),
             expense_ref_id: Some("REF".to_string()),
@@ -216,12 +207,10 @@ mod tests {
         let r = CreateExpenseRequest {
             phase_id: None,
             expense_type: "misc".to_string(),
-            category: None,
-            subcategory: None,
             description: None,
             amount: 0.0,
             currency: None,
-            incurred_date: sample_date(),
+            expense_date: sample_date(),
             budget_item_id: None,
             resource_id: None,
             expense_ref_id: None,
@@ -241,13 +230,11 @@ mod tests {
     fn test_update_expense_request_all_none() {
         let r = UpdateExpenseRequest {
             expense_type: None,
-            category: None,
-            subcategory: None,
             description: None,
             amount: None,
-            paid_date: None,
+            approved_date: None,
             status: None,
-            approved_by: None,
+            approver: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateExpenseRequest = serde_json::from_str(&s).unwrap();
@@ -259,27 +246,28 @@ mod tests {
     fn test_update_expense_request_with_values() {
         let r = UpdateExpenseRequest {
             expense_type: Some("travel".to_string()),
-            category: Some("c".to_string()),
-            subcategory: Some("sc".to_string()),
             description: Some("d".to_string()),
             amount: Some(999.99),
-            paid_date: Some(sample_date()),
+            approved_date: Some(sample_date()),
             status: Some("paid".to_string()),
-            approved_by: Some("a".to_string()),
+            approver: Some("a".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateExpenseRequest = serde_json::from_str(&s).unwrap();
         assert_eq!(back.expense_type, r.expense_type);
         assert_eq!(back.amount, r.amount);
-        assert_eq!(back.paid_date, r.paid_date);
+        assert_eq!(back.approved_date, r.approved_date);
     }
 
     #[test]
     fn test_project_expense_naive_date_roundtrip() {
         let mut e = sample_expense();
-        e.incurred_date = NaiveDate::from_ymd_opt(2020, 12, 31).unwrap();
+        e.expense_date = DateTime::<Utc>::from_naive_utc_and_offset(
+            NaiveDate::from_ymd_opt(2020, 12, 31).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+            Utc,
+        );
         let s = serde_json::to_string(&e).unwrap();
         let back: ProjectExpense = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.incurred_date, e.incurred_date);
+        assert_eq!(back.expense_date, e.expense_date);
     }
 }

@@ -3,24 +3,28 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// 决算行（DB row / 响应体）。
+/// 列对齐 pm.settlements 真库：settlement_no/settlement_type/settlement_date/amount/currency/
+/// status/remarks/created_by + 补列(settlement_name/settlement_period_start/
+/// settlement_period_end/approved_at)。
+/// 代码改名：settlement_code->settlement_no, description->remarks, actual_amount->amount；
+/// budget_amount/variance_* 表无列，已删除。
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Settlement {
     pub id: Uuid,
     pub project_id: Uuid,
-    pub settlement_code: Option<String>,
-    pub settlement_name: String,
+    pub settlement_no: Option<String>,
+    pub settlement_name: Option<String>,
     pub settlement_type: String,
     pub status: String,
-    pub budget_amount: Option<f64>,
-    pub actual_amount: Option<f64>,
-    pub variance_amount: Option<f64>,
-    pub variance_percent: Option<f64>,
+    pub settlement_date: DateTime<Utc>,
+    pub amount: f64,
+    pub currency: Option<String>,
+    pub remarks: Option<String>,
     pub settlement_period_start: Option<DateTime<Utc>>,
     pub settlement_period_end: Option<DateTime<Utc>>,
-    pub description: Option<String>,
-    pub created_by: Option<String>,
-    pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
+    pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -125,20 +129,18 @@ mod tests {
         Settlement {
             id: uid(),
             project_id: uid(),
-            settlement_code: Some("STL-001".to_string()),
-            settlement_name: "月度结算".to_string(),
+            settlement_no: Some("STL-001".to_string()),
+            settlement_name: Some("月度结算".to_string()),
             settlement_type: "monthly".to_string(),
             status: "draft".to_string(),
-            budget_amount: Some(100_000.0),
-            actual_amount: Some(95_000.0),
-            variance_amount: Some(-5_000.0),
-            variance_percent: Some(-5.0),
+            settlement_date: now(),
+            amount: 95_000.0,
+            currency: Some("CNY".to_string()),
+            remarks: Some("d".to_string()),
             settlement_period_start: Some(now()),
             settlement_period_end: Some(now()),
-            description: Some("d".to_string()),
-            created_by: Some("admin".to_string()),
-            approved_by: Some("manager".to_string()),
             approved_at: Some(now()),
+            created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
         }
@@ -153,9 +155,7 @@ mod tests {
         assert_eq!(back.settlement_name, s.settlement_name);
         assert_eq!(back.settlement_type, s.settlement_type);
         assert_eq!(back.status, s.status);
-        assert_eq!(back.budget_amount, s.budget_amount);
-        assert_eq!(back.actual_amount, s.actual_amount);
-        assert_eq!(back.variance_percent, s.variance_percent);
+        assert_eq!(back.amount, s.amount);
     }
 
     #[test]
@@ -163,28 +163,25 @@ mod tests {
         let s = Settlement {
             id: uid(),
             project_id: uid(),
-            settlement_code: None,
-            settlement_name: "n".to_string(),
+            settlement_no: None,
+            settlement_name: None,
             settlement_type: "final".to_string(),
             status: "draft".to_string(),
-            budget_amount: None,
-            actual_amount: None,
-            variance_amount: None,
-            variance_percent: None,
+            settlement_date: now(),
+            amount: 0.0,
+            currency: None,
+            remarks: None,
             settlement_period_start: None,
             settlement_period_end: None,
-            description: None,
-            created_by: None,
-            approved_by: None,
             approved_at: None,
+            created_by: None,
             created_at: now(),
             updated_at: now(),
         };
         let ser = serde_json::to_string(&s).unwrap();
         let back: Settlement = serde_json::from_str(&ser).unwrap();
-        assert!(back.settlement_code.is_none());
-        assert!(back.budget_amount.is_none());
-        assert!(back.approved_by.is_none());
+        assert!(back.settlement_no.is_none());
+        assert!(back.approved_at.is_none());
     }
 
     #[test]
@@ -194,17 +191,6 @@ mod tests {
         let ser = serde_json::to_string(&s).unwrap();
         let back: Settlement = serde_json::from_str(&ser).unwrap();
         assert_eq!(back.status, "approved");
-    }
-
-    #[test]
-    fn test_settlement_negative_variance_roundtrip() {
-        let mut s = sample_settlement();
-        s.variance_amount = Some(-15_000.0);
-        s.variance_percent = Some(-15.0);
-        let ser = serde_json::to_string(&s).unwrap();
-        let back: Settlement = serde_json::from_str(&ser).unwrap();
-        assert_eq!(back.variance_amount, Some(-15_000.0));
-        assert_eq!(back.variance_percent, Some(-15.0));
     }
 
     // ---- CreateSettlementRequest ----
@@ -377,7 +363,7 @@ mod tests {
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateSettlementItemRequest = serde_json::from_str(&s).unwrap();
-        assert!(back.item_code.is_none());
+        assert!(back.item_name == "n");
         assert!(back.category.is_none());
     }
 
@@ -394,7 +380,7 @@ mod tests {
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateSettlementItemRequest = serde_json::from_str(&s).unwrap();
         assert!(back.item_name.is_none());
-        assert!(back.actual_amount.is_none());
+        assert!(back.description.is_none());
     }
 
     #[test]

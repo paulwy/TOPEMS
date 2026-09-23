@@ -44,6 +44,9 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+/// 列对齐 pm.project_resources 真库（含补列）：resource_type/resource_name/quantity/cost/
+/// status + resource_service/start_date/end_date/allocation_percent/created_by。
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["pm:resource:read"])),
@@ -63,7 +66,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        only_own_schema_query!("pm", "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
+        only_own_schema_query!("pm", "id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -102,35 +105,37 @@ async fn add_resource(
 ) -> Json<ApiResponse<ProjectResource>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = effective_tenant_id(&ctx, &claims);
 
+    // 列对齐真库：actual_cost->cost, actual_hours->quantity, resource_id->resource_name；
+    // role 与 resource_type 语义重叠，INSERT 不再单列 role。
     let result = sqlx::query_as::<_, ProjectResource>(only_own_schema_query!(
         "pm",
         r#"
         INSERT INTO pm.project_resources (
-            id, project_id, resource_type, resource_id, resource_service,
-            role, start_date, end_date, allocation_percent, actual_hours,
-            actual_cost, status, created_by, created_at, updated_at, tenant_id
+            id, project_id, resource_type, resource_name, resource_service,
+            quantity, cost, status, created_by, start_date, end_date,
+            allocation_percent, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
         "#
     ))
     .bind(id)
     .bind(project_id)
     .bind(&req.resource_type)
-    .bind(req.resource_id)
+    .bind(&req.resource_name)
     .bind(&req.resource_service)
-    .bind(&req.role)
-    .bind(req.start_date)
-    .bind(req.end_date)
-    .bind(req.allocation_percent.unwrap_or(100))
-    .bind(0)
+    .bind(0.0)
     .bind(0.0)
     .bind("active")
     .bind(&req.created_by)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(req.start_date)
+    .bind(req.end_date)
+    .bind(req.allocation_percent.unwrap_or(100))
     .bind(now)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 
@@ -164,7 +169,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        only_own_schema_query!("pm", "id, project_id, resource_type, resource_id, resource_service, role, start_date, end_date, allocation_percent, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -205,28 +210,29 @@ async fn update_resource(
 ) -> Json<ApiResponse<ProjectResource>> {
     let now = Utc::now();
 
+    // role->resource_type, actual_hours->quantity, actual_cost->cost。
     let result = sqlx::query_as::<_, ProjectResource>(only_own_schema_query!(
         "pm",
         r#"
         UPDATE pm.project_resources
-        SET role = COALESCE($1, role),
+        SET resource_type = COALESCE($1, resource_type),
             start_date = COALESCE($2, start_date),
             end_date = COALESCE($3, end_date),
             allocation_percent = COALESCE($4, allocation_percent),
-            actual_hours = COALESCE($5, actual_hours),
-            actual_cost = COALESCE($6, actual_cost),
+            quantity = COALESCE($5, quantity),
+            cost = COALESCE($6, cost),
             status = COALESCE($7, status),
             updated_at = $8
         WHERE project_id = $9 AND id = $10
         RETURNING *
         "#
     ))
-    .bind(&req.role)
+    .bind(&req.resource_type)
     .bind(req.start_date)
     .bind(req.end_date)
     .bind(req.allocation_percent)
-    .bind(req.actual_hours)
-    .bind(req.actual_cost)
+    .bind(req.quantity)
+    .bind(req.cost)
     .bind(&req.status)
     .bind(now)
     .bind(project_id)

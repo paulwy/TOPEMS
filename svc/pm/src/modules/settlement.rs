@@ -59,12 +59,16 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
         .with_state(state)
 }
 
+/// 列对齐 pm.settlements 真库（含补列）：settlement_no/settlement_type/settlement_date/amount/
+/// currency/status/remarks/created_by + settlement_name/settlement_period_start/
+/// settlement_period_end/approved_at。
+
 async fn get_project_settlements(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Settlement>>> {
     let settlements = sqlx::query_as::<_, Settlement>(
-        only_own_schema_query!("pm", "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_period_end DESC"),
+        only_own_schema_query!("pm", "id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&state.pool)
@@ -87,7 +91,7 @@ async fn get_settlement(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
     let settlement =
-        sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "id, project_id, settlement_code, settlement_name, settlement_type, status, budget_amount, actual_amount, variance_amount, variance_reason, settlement_date, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
+        sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
             .bind(id)
             .fetch_one(&state.pool)
             .await;
@@ -117,23 +121,30 @@ async fn create_settlement(
 ) -> Json<ApiResponse<Settlement>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = effective_tenant_id(&ctx, &claims);
 
+    // 列对齐真库：settlement_code->settlement_no, description->remarks, actual_amount->amount；
+    // 补 NOT NULL：settlement_date=now, amount=0, currency='CNY'。
     let settlement = sqlx::query_as::<_, Settlement>(
-        only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_code, settlement_name, settlement_type, status, settlement_period_start, settlement_period_end, description, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $12) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.settlements (id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
-    .bind(req.settlement_code)
+    .bind(&req.settlement_code)
     .bind(&req.settlement_name)
     .bind(&req.settlement_type)
+    .bind(now)
+    .bind(0.0)
+    .bind("CNY")
+    .bind(&req.description)
     .bind(parse_date_opt(&req.settlement_period_start))
     .bind(parse_date_opt(&req.settlement_period_end))
-    .bind(req.description)
-    .bind(req.created_by)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(None::<chrono::DateTime<Utc>>)
+    .bind(&req.created_by)
     .bind(now)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -144,12 +155,12 @@ async fn create_settlement(
                     id,
                     tenant_id: Uuid::nil(),
                     project_id,
-                    settlement_no: s.settlement_code.clone().unwrap_or_else(|| "".to_string()),
+                    settlement_no: s.settlement_no.clone().unwrap_or_else(|| "".to_string()),
                     settlement_type: s.settlement_type.clone(),
                     status: s.status.clone(),
-                    amount: s.actual_amount,
+                    amount: Some(s.amount),
                     settlement_date: s.settlement_period_start,
-                    remarks: s.description.clone(),
+                    remarks: s.remarks.clone(),
                     created_by: s.created_by.clone(),
                     created_at: now,
                 };
@@ -177,13 +188,14 @@ async fn update_settlement(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateSettlementRequest>,
 ) -> Json<ApiResponse<Settlement>> {
+    // actual_amount->amount, description->remarks。
     let settlement = sqlx::query_as::<_, Settlement>(only_own_schema_query!(
         "pm",
         "UPDATE pm.settlements SET
             settlement_name = COALESCE($1, settlement_name),
             status = COALESCE($2, status),
-            actual_amount = COALESCE($3, actual_amount),
-            description = COALESCE($4, description),
+            amount = COALESCE($3, amount),
+            remarks = COALESCE($4, remarks),
             updated_at = $5
         WHERE id = $6 RETURNING *"
     ))
@@ -266,7 +278,7 @@ async fn get_settlement_items(
     Path(settlement_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<SettlementItem>>> {
     let items = sqlx::query_as::<_, SettlementItem>(
-        only_own_schema_query!("pm", "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_reason, description, created_at FROM pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name"),
+        only_own_schema_query!("pm", "SELECT id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at FROM pm.settlement_items WHERE settlement_id = $1 ORDER BY category, item_name"),
     )
     .bind(settlement_id)
     .fetch_all(&state.pool)
@@ -492,11 +504,11 @@ mod tests {
 
     #[test]
     fn test_parse_date_opt_valid() {
-        let s = Some("2024-09-01T14:00:00Z".to_string());
+        let s = Some("2026-09-01T14:00:00Z".to_string());
         let r = parse_date_opt(&s);
         assert!(r.is_some());
         let dt = r.unwrap();
-        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.year(), 2026);
         assert_eq!(dt.month(), 9);
     }
 

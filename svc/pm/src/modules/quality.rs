@@ -55,12 +55,16 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+/// 列对齐 pm.quality_checks 真库（含补列）：check_name/check_type/check_date/checker/result/
+/// issues/status + phase_id/milestone_id/acceptance_standard/result_details/nonconformities/
+/// corrective_actions/follow_up_date。
+
 async fn get_project_quality_checks(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<QualityCheck>>> {
     let checks = sqlx::query_as::<_, QualityCheck>(
-        only_own_schema_query!("pm", "id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("pm", "id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -83,7 +87,7 @@ async fn get_quality_check(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
     let check =
-        sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, check_date, checked_by, result, notes, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
+        sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -113,24 +117,27 @@ async fn create_quality_check(
 ) -> Json<ApiResponse<QualityCheck>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = effective_tenant_id(&ctx, &claims);
 
+    // 列对齐真库：check_criteria->issues, checked_by->checker, created_by->checker；
+    // check_code 与 check_name 语义重叠已删。补 NOT NULL：check_date=now, result='pending'。
     let check = sqlx::query_as::<_, QualityCheck>(
-        only_own_schema_query!("pm", "INSERT INTO pm.quality_checks (id, project_id, check_code, check_name, check_type, phase_id, milestone_id, check_criteria, acceptance_standard, status, created_by, created_at, updated_at, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.quality_checks (id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'pending', $9, $10, $11, $12, $13) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
-    .bind(req.check_code)
     .bind(&req.check_name)
     .bind(req.check_type)
     .bind(req.phase_id)
     .bind(req.milestone_id)
     .bind(req.check_criteria)
     .bind(req.acceptance_standard)
-    .bind(req.created_by)
-    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(req.created_by.clone().unwrap_or_else(|| "system".to_string()))
+    .bind(now)
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 
@@ -151,16 +158,17 @@ async fn update_quality_check(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityCheck>> {
+    // check_criteria->issues, checked_by->checker。
     let check = sqlx::query_as::<_, QualityCheck>(only_own_schema_query!(
         "pm",
         "UPDATE pm.quality_checks SET
             check_name = COALESCE($1, check_name),
             check_type = COALESCE($2, check_type),
-            check_criteria = COALESCE($3, check_criteria),
+            issues = COALESCE($3, issues),
             acceptance_standard = COALESCE($4, acceptance_standard),
             status = COALESCE($5, status),
             check_date = COALESCE($6, check_date),
-            checked_by = COALESCE($7, checked_by),
+            checker = COALESCE($7, checker),
             result_details = COALESCE($8, result_details),
             nonconformities = COALESCE($9, nonconformities),
             corrective_actions = COALESCE($10, corrective_actions),
@@ -238,7 +246,7 @@ async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<Ap
             "缺陷不存在",
         )),
         Err(e) => {
-            tracing::error!("获取缺陷失败: {}", e);
+            tracing::error!("获取缺陷详情失败: {}", e);
             Json(ApiResponse::error(
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
                 "获取缺陷失败",
@@ -274,7 +282,6 @@ async fn create_defect(
     .bind(req.created_by)
     .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

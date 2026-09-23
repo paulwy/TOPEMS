@@ -39,6 +39,10 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+/// 列对齐 pm.project_expenses 真库（含补列）：expense_type/amount/currency/expense_date/
+/// description/status/approver/approved_date/created_by + phase_id/budget_item_id/resource_id/
+/// expense_ref_id/approval_workflow_id/attachment_ids。
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["pm:read"])),
@@ -58,7 +62,7 @@ async fn list_expenses(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectExpense>>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY incurred_date DESC"),
+        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY expense_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -97,17 +101,19 @@ async fn add_expense(
 ) -> Json<ApiResponse<ProjectExpense>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = effective_tenant_id(&ctx, &claims);
 
+    // 列对齐真库：incurred_date->expense_date, paid_date->approved_date, approved_by->approver；
+    // category/subcategory/reported_date 表无列，已删除。
     let result = sqlx::query_as::<_, ProjectExpense>(
         only_own_schema_query!("pm", r#"
         INSERT INTO pm.project_expenses (
-            id, project_id, phase_id, expense_type, category,
-            subcategory, description, amount, currency, incurred_date,
-            reported_date, paid_date, budget_item_id, resource_id,
-            expense_ref_id, status, approval_workflow_id, attachment_ids,
+            id, project_id, phase_id, expense_type, description,
+            amount, currency, expense_date, approved_date, budget_item_id,
+            resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids,
             created_by, created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING *
         "#),
     )
@@ -115,13 +121,10 @@ async fn add_expense(
     .bind(project_id)
     .bind(req.phase_id)
     .bind(&req.expense_type)
-    .bind(&req.category)
-    .bind(&req.subcategory)
     .bind(&req.description)
     .bind(req.amount)
     .bind(&req.currency)
-    .bind(req.incurred_date)
-    .bind(now.date_naive())
+    .bind(req.expense_date)
     .bind(None::<chrono::NaiveDate>)
     .bind(req.budget_item_id)
     .bind(req.resource_id)
@@ -130,9 +133,9 @@ async fn add_expense(
     .bind(req.approval_workflow_id)
     .bind(&req.attachment_ids)
     .bind(&req.created_by)
-    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(now)
+    .bind(tenant_id)
     .fetch_one(&pool)
     .await;
 
@@ -166,7 +169,7 @@ async fn get_expense(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectExpense>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, category, subcategory, description, amount, currency, incurred_date, budget_ref_id, status, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -207,31 +210,28 @@ async fn update_expense(
 ) -> Json<ApiResponse<ProjectExpense>> {
     let now = Utc::now();
 
+    // paid_date->approved_date, approved_by->approver; category/subcategory 表无列已删。
     let result = sqlx::query_as::<_, ProjectExpense>(only_own_schema_query!(
         "pm",
         r#"
         UPDATE pm.project_expenses
         SET expense_type = COALESCE($1, expense_type),
-            category = COALESCE($2, category),
-            subcategory = COALESCE($3, subcategory),
-            description = COALESCE($4, description),
-            amount = COALESCE($5, amount),
-            paid_date = COALESCE($6, paid_date),
-            status = COALESCE($7, status),
-            approved_by = COALESCE($8, approved_by),
-            updated_at = $9
-        WHERE project_id = $10 AND id = $11
+            description = COALESCE($2, description),
+            amount = COALESCE($3, amount),
+            approved_date = COALESCE($4, approved_date),
+            status = COALESCE($5, status),
+            approver = COALESCE($6, approver),
+            updated_at = $7
+        WHERE project_id = $8 AND id = $9
         RETURNING *
         "#
     ))
     .bind(&req.expense_type)
-    .bind(&req.category)
-    .bind(&req.subcategory)
     .bind(&req.description)
     .bind(req.amount)
-    .bind(req.paid_date)
+    .bind(req.approved_date)
     .bind(&req.status)
-    .bind(&req.approved_by)
+    .bind(&req.approver)
     .bind(now)
     .bind(project_id)
     .bind(id)
@@ -320,7 +320,7 @@ mod tests {
 
     #[test]
     fn test_approve_exact_threshold() {
-        assert!(should_approve_expense(100.0, 100.0, 200.0));
+        assert!(should_approve_expense(100.0, 100.0, 100.0));
     }
 
     #[test]
@@ -335,6 +335,6 @@ mod tests {
 
     #[test]
     fn test_approve_small_amount() {
-        assert!(should_approve_expense(0.01, 100.0, 200.0));
+        assert!(should_approve_expense(0.01, 100.0, 100.0));
     }
 }

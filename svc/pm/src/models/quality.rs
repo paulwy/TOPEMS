@@ -3,32 +3,36 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+/// 质量检查行（DB row / 响应体）。
+/// 列对齐 pm.quality_checks 真库：check_name/check_type/check_date/checker/result/issues/status
+/// + 补列(phase_id/milestone_id/acceptance_standard/result_details/nonconformities/
+/// corrective_actions/follow_up_date)。
+/// 代码改名：check_criteria->issues, checked_by->checker, created_by->checker；
+/// check_code 与 check_name 语义重叠，已删除。
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct QualityCheck {
     pub id: Uuid,
     pub project_id: Uuid,
-    pub check_code: Option<String>,
     pub check_name: String,
     pub check_type: Option<String>,
     pub phase_id: Option<Uuid>,
     pub milestone_id: Option<Uuid>,
-    pub check_criteria: Option<String>,
+    pub issues: Option<String>,
     pub acceptance_standard: Option<String>,
+    pub result: String,
     pub status: String,
     pub check_date: Option<DateTime<Utc>>,
-    pub checked_by: Option<String>,
+    pub checker: Option<String>,
     pub result_details: Option<serde_json::Value>,
     pub nonconformities: Option<serde_json::Value>,
     pub corrective_actions: Option<serde_json::Value>,
     pub follow_up_date: Option<DateTime<Utc>>,
-    pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateQualityCheckRequest {
-    pub check_code: Option<String>,
     pub check_name: String,
     pub check_type: Option<String>,
     pub phase_id: Option<Uuid>,
@@ -116,21 +120,20 @@ mod tests {
         QualityCheck {
             id: uid(),
             project_id: uid(),
-            check_code: Some("QC-001".to_string()),
             check_name: "初验".to_string(),
             check_type: Some("acceptance".to_string()),
             phase_id: Some(uid()),
             milestone_id: Some(uid()),
-            check_criteria: Some("符合规范".to_string()),
+            issues: Some("符合规范".to_string()),
             acceptance_standard: Some("合格率100%".to_string()),
+            result: "passed".to_string(),
             status: "passed".to_string(),
             check_date: Some(now()),
-            checked_by: Some("checker".to_string()),
+            checker: Some("checker".to_string()),
             result_details: Some(serde_json::json!({"score": 95})),
             nonconformities: Some(serde_json::json!([{"item": "x"}])),
             corrective_actions: Some(serde_json::json!([{"action": "fix"}])),
             follow_up_date: Some(now()),
-            created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
         }
@@ -161,27 +164,26 @@ mod tests {
         let q = QualityCheck {
             id: uid(),
             project_id: uid(),
-            check_code: None,
             check_name: "n".to_string(),
             check_type: None,
             phase_id: None,
             milestone_id: None,
-            check_criteria: None,
+            issues: None,
             acceptance_standard: None,
+            result: "pending".to_string(),
             status: "pending".to_string(),
             check_date: None,
-            checked_by: None,
+            checker: None,
             result_details: None,
             nonconformities: None,
             corrective_actions: None,
             follow_up_date: None,
-            created_by: None,
             created_at: now(),
             updated_at: now(),
         };
         let s = serde_json::to_string(&q).unwrap();
         let back: QualityCheck = serde_json::from_str(&s).unwrap();
-        assert!(back.check_code.is_none());
+        assert!(back.issues.is_none());
         assert!(back.result_details.is_none());
     }
 
@@ -199,7 +201,6 @@ mod tests {
     #[test]
     fn test_create_quality_check_request_roundtrip() {
         let r = CreateQualityCheckRequest {
-            check_code: Some("NEW-QC-1".to_string()),
             check_name: "新检查".to_string(),
             check_type: Some("process".to_string()),
             phase_id: Some(uid()),
@@ -218,7 +219,6 @@ mod tests {
     #[test]
     fn test_create_quality_check_request_minimal() {
         let r = CreateQualityCheckRequest {
-            check_code: None,
             check_name: "n".to_string(),
             check_type: None,
             phase_id: None,
@@ -229,7 +229,7 @@ mod tests {
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateQualityCheckRequest = serde_json::from_str(&s).unwrap();
-        assert!(back.check_code.is_none());
+        assert!(back.check_criteria.is_none());
     }
 
     // ---- UpdateQualityCheckRequest ----
@@ -420,7 +420,7 @@ mod tests {
             defect_description: Some("d".to_string()),
             severity: Some("major".to_string()),
             priority: Some("high".to_string()),
-            status: Some("in_progress".to_string()),
+            status: Some("closed".to_string()),
             assignee: Some("a".to_string()),
             due_date: Some("2024-12-31T00:00:00Z".to_string()),
             resolution: Some("fixed".to_string()),

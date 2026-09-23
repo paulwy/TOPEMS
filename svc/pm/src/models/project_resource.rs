@@ -4,19 +4,22 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+/// 项目资源行（DB row / 响应体）。
+/// 列对齐 pm.project_resources 真库：resource_type/resource_name/quantity/cost/status
+/// + 补列(resource_service/start_date/end_date/allocation_percent/created_by)。
+/// 代码改名：actual_cost->cost, actual_hours->quantity, role->resource_type, resource_id->resource_name。
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ProjectResource {
     pub id: Uuid,
     pub project_id: Uuid,
     pub resource_type: String,
-    pub resource_id: Uuid,
+    pub resource_name: String,
     pub resource_service: Option<String>,
-    pub role: Option<String>,
+    pub quantity: Option<f64>,
+    pub cost: Option<f64>,
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
     pub allocation_percent: Option<i32>,
-    pub actual_hours: Option<i32>,
-    pub actual_cost: Option<f64>,
     pub status: Option<String>,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -26,9 +29,8 @@ pub struct ProjectResource {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CreateResourceRequest {
     pub resource_type: String,
-    pub resource_id: Uuid,
+    pub resource_name: String,
     pub resource_service: Option<String>,
-    pub role: Option<String>,
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
     pub allocation_percent: Option<i32>,
@@ -37,12 +39,12 @@ pub struct CreateResourceRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct UpdateResourceRequest {
-    pub role: Option<String>,
+    pub resource_type: Option<String>,
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
     pub allocation_percent: Option<i32>,
-    pub actual_hours: Option<i32>,
-    pub actual_cost: Option<f64>,
+    pub quantity: Option<f64>,
+    pub cost: Option<f64>,
     pub status: Option<String>,
 }
 
@@ -65,14 +67,13 @@ mod tests {
             id: uid(),
             project_id: uid(),
             resource_type: "human".to_string(),
-            resource_id: uid(),
+            resource_name: "张三".to_string(),
             resource_service: Some("iam".to_string()),
-            role: Some("engineer".to_string()),
+            quantity: Some(120.0),
+            cost: Some(15_000.0),
             start_date: Some(now()),
             end_date: Some(now()),
             allocation_percent: Some(80),
-            actual_hours: Some(120),
-            actual_cost: Some(15_000.0),
             status: Some("active".to_string()),
             created_by: Some("admin".to_string()),
             created_at: now(),
@@ -88,7 +89,7 @@ mod tests {
         assert_eq!(back.id, r.id);
         assert_eq!(back.resource_type, r.resource_type);
         assert_eq!(back.allocation_percent, r.allocation_percent);
-        assert_eq!(back.actual_cost, r.actual_cost);
+        assert_eq!(back.cost, r.cost);
     }
 
     #[test]
@@ -105,14 +106,13 @@ mod tests {
             id: uid(),
             project_id: uid(),
             resource_type: "equipment".to_string(),
-            resource_id: uid(),
+            resource_name: "塔吊".to_string(),
             resource_service: None,
-            role: None,
+            quantity: None,
+            cost: None,
             start_date: None,
             end_date: None,
             allocation_percent: None,
-            actual_hours: None,
-            actual_cost: None,
             status: None,
             created_by: None,
             created_at: now(),
@@ -120,7 +120,7 @@ mod tests {
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: ProjectResource = serde_json::from_str(&s).unwrap();
-        assert!(back.role.is_none());
+        assert!(back.quantity.is_none());
         assert!(back.allocation_percent.is_none());
     }
 
@@ -148,9 +148,8 @@ mod tests {
     fn test_create_resource_request_roundtrip() {
         let r = CreateResourceRequest {
             resource_type: "human".to_string(),
-            resource_id: uid(),
+            resource_name: "李四".to_string(),
             resource_service: Some("iam".to_string()),
-            role: Some("manager".to_string()),
             start_date: Some(now()),
             end_date: Some(now()),
             allocation_percent: Some(50),
@@ -166,9 +165,8 @@ mod tests {
     fn test_create_resource_request_minimal() {
         let r = CreateResourceRequest {
             resource_type: "tool".to_string(),
-            resource_id: uid(),
+            resource_name: "钻机".to_string(),
             resource_service: None,
-            role: None,
             start_date: None,
             end_date: None,
             allocation_percent: None,
@@ -176,7 +174,7 @@ mod tests {
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateResourceRequest = serde_json::from_str(&s).unwrap();
-        assert!(back.role.is_none());
+        assert!(back.resource_service.is_none());
     }
 
     // ---- UpdateResourceRequest ----
@@ -184,34 +182,34 @@ mod tests {
     #[test]
     fn test_update_resource_request_all_none() {
         let r = UpdateResourceRequest {
-            role: None,
+            resource_type: None,
             start_date: None,
             end_date: None,
             allocation_percent: None,
-            actual_hours: None,
-            actual_cost: None,
+            quantity: None,
+            cost: None,
             status: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateResourceRequest = serde_json::from_str(&s).unwrap();
-        assert!(back.role.is_none());
-        assert!(back.actual_cost.is_none());
+        assert!(back.resource_type.is_none());
+        assert!(back.cost.is_none());
     }
 
     #[test]
     fn test_update_resource_request_with_values() {
         let r = UpdateResourceRequest {
-            role: Some("lead".to_string()),
+            resource_type: "human".to_string(),
             start_date: Some(now()),
             end_date: Some(now()),
             allocation_percent: Some(100),
-            actual_hours: Some(200),
-            actual_cost: Some(25_000.0),
+            quantity: Some(200.0),
+            cost: Some(25_000.0),
             status: Some("completed".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateResourceRequest = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.role, r.role);
+        assert_eq!(back.resource_type, r.resource_type);
         assert_eq!(back.allocation_percent, r.allocation_percent);
     }
 }
