@@ -175,7 +175,7 @@ pub async fn forward_traceability(
     let records = sqlx::query!(
         r#"
         SELECT pr.id, pr.process_id, pr.work_station_id,
-               pr.operator_id, pr.start_time, pr.end_time,
+               pr.operator_id, pr.start_time, pr.end_time.map(|d| d.and_utc()),
                pr.completed_quantity AS quantity_produced, NULL::int AS quantity_defective, pr.status,
                pp.process_name as process_name, pp.process_code
         FROM production_records pr
