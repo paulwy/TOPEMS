@@ -625,7 +625,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.and_utc().to_rfc3339(),
                 })
                 .collect();
 
@@ -758,7 +758,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.and_utc().to_rfc3339(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -884,7 +884,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.and_utc().to_rfc3339(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1023,7 +1023,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: datetime_to_string(s.created_at),
+                    created_at: s.created_at.and_utc().to_rfc3339(),
                 })
                 .collect();
 
