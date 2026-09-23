@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, NaiveDate, TimeZone, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},

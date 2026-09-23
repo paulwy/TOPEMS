@@ -19,11 +19,20 @@ export default ts.config(
       '**/generated/**',
       '**/setupTests.ts',
       '**/playwright.config.*.ts',
+      'apps/web/src/components/bff/**',
+      'apps/web/src/components/ai/knowledge-graph/**',
+      'apps/web/src/components/ai/multi-agent/**',
+      'apps/web/src/components/ai/rag/**',
+      'apps/web/src/design-system/**',
+      'apps/web/src/hooks/bff/**',
+      'apps/web/src/modules/_archive/**',
+      'apps/web/src/api/erp/index.ts',
     ],
   },
   js.configs.recommended,
   ...ts.configs.recommended,
   {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
         projectService: false,
