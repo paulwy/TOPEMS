@@ -363,7 +363,7 @@ pub async fn get_process_flow(
                 version: r.version.map(|v| v.to_string()),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
-                route_name: Some(r.route_name),
+                route_name: Some(r.route_name.unwrap_or_default()),
                 production_line: r.production_line,
                 capacity: opt_big_decimal_to_f64(r.capacity),
                 unit: r.unit,
@@ -618,7 +618,7 @@ pub async fn get_flow_steps(
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
@@ -1016,7 +1016,7 @@ pub async fn reorder_flow_steps(
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
@@ -1138,13 +1138,13 @@ pub async fn analyze_capacity(
         if step_utilization > max_utilization {
             max_utilization = step_utilization;
             bottleneck = Some(BottleneckStep {
-                step_name: step.process_name.clone(),
+                step_name: step.process_name.clone().unwrap_or_default(),
                 utilization_rate: step_utilization,
             });
         }
 
         by_step.push(StepCapacity {
-            step_name: step.process_name.clone(),
+            step_name: step.process_name.clone().unwrap_or_default(),
             capacity: step_capacity,
             utilization_rate: step_utilization,
         });
