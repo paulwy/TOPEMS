@@ -582,3 +582,11 @@ D
 - [x] 存量数据 0 NULL 行（approvals/records/versions/workflows 均无未绑定行）
 - [x] 编译 0 错误；iam 重启冒烟通过
 - [x] 收尾：flow 模块 6 张 public 表（workflows/versions/instances/tasks/approvals/approval_records）全部租户列 + FORCE RLS + 标准策略，写操作创建即绑定——租户隔离完整闭环
+
+## 2026-09-24 遗留复盘（历史项核查全部闭环）
+- [x] L334：rollback_workflow 核查——3 步全部带租户过滤（目标版本 EXISTS cw.tenant_id / UPDATE workflows WHERE tenant_id / UPDATE versions EXISTS cw.tenant_id）✅
+- [x] L334：versions 系列核查——create（wf_ok 校验 + INSERT 已绑定）/activate/delete/list/get 全部带 EXISTS cw.tenant_id 过滤，superuser→None 全量一致 ✅
+- [x] L307：lims 表匹配——qa_lab_samples 4 行数据已迁移，dashboard/inspection_task/integration/sample 全部 public.qa_lab_samples + 租户过滤 ✅
+- [x] L316：mes 5 文件已随 MES 修复链提交（659283320 等）；lims 文件全 public 前缀；sample.rs 4 处 UPDATE（419/496/700/807）全部带 tenant_id 条件 ✅
+- [x] L369-469：MES 三段 P0 修复链已闭环（本地全量 0 错误，mes 453 测试通过）✅
+- [x] 剩余唯一外部依赖：staging 生产部署验证（需环境）、AI embedding 外部 API 400（外部服务限制）
