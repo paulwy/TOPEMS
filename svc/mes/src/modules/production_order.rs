@@ -493,7 +493,7 @@ pub async fn create_production_order(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_no,
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code,
@@ -655,7 +655,7 @@ pub async fn create_from_erp(
 
     let order = ProductionOrderResponse {
         id: result.id,
-        order_no: result.order_no,
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code,

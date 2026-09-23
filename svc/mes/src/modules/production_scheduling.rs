@@ -478,7 +478,7 @@ pub async fn create_production_schedule(
         id: result.id,
         schedule_no: result.schedule_no,
         order_id: result.order_id,
-        order_no: result.order_no,
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code,

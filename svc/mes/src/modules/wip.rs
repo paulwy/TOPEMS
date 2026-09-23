@@ -435,7 +435,7 @@ pub async fn create_wip(
         id: result.id,
         wip_no: result.wip_no,
         order_id: result.order_id,
-        order_no: result.order_no,
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code,
