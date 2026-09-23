@@ -590,3 +590,22 @@ D
 - [x] L316：mes 5 文件已随 MES 修复链提交（659283320 等）；lims 文件全 public 前缀；sample.rs 4 处 UPDATE（419/496/700/807）全部带 tenant_id 条件 ✅
 - [x] L369-469：MES 三段 P0 修复链已闭环（本地全量 0 错误，mes 453 测试通过）✅
 - [x] 剩余唯一外部依赖：staging 生产部署验证（需环境）、AI embedding 外部 API 400（外部服务限制）
+
+## 2026-09-24 flow 租户隔离 API 层端到端实测闭环（ac1e081ec 已推送）
+
+### 实测结论（用非 superuser B=0002 越权 0001 数据）
+- **越权读取/写入全被拒**：B GET/publish/rollback/del version/cancel/suspend/resume/approve/reject/start/claim/unclaim/approve task 全 404（code=404）
+- **B batch approve 显式失败**（failed_count=1，"任务不存在或不在当前租户范围内"）
+- **S（0001 superuser）同端点全 200**（对照正常）
+- 教训：TOPEMS HTTP 恒 200 + body code 表达错误——只看 HTTP 码会误判（此前 B"200 取消成功"实为 body 500/404）
+
+### 本轮修复
+- [x] flow instance.rs 7 处 + task.rs 6 处状态 UPDATE RETURNING 补 tenant_id 列（此前 superuser 也 500 "no column tenant_id"）
+- [x] flow instance 6+retry、task 9 个写 handler 补显式租户条件（SQL 层主防线：`($N::uuid IS NULL OR tenant_id=$N)`）
+- [x] task.rs 9 个 handler RETURNING 补 tenant_id + batch 计数检查 rows_affected（0 行不再误报成功）
+- [x] middleware tenant_rls：superuser 跳过 set_config（修复零值租户误拦 superuser 全量；S claim 此前 404/500 → 200）
+
+### 架构级发现（中期专项，未修复）
+- **RLS 连接级 set_config 在连接池下不稳定**：middleware 用独立连接 `execute(pool)` 设 app.tenant_id，handler 查询再取连接——会话级 GUC 不跨连接共享，行为随机（有时放行、有时零值误拦）
+- **当前防线**：SQL 层显式租户条件（已铺 flow；其他模块需全量扫描纯 RLS 依赖的写操作）
+- **中期方案**：① 全模块写 SQL 补显式租户条件（与 flow 同型）；② 或 middleware 请求级连接绑定（`pool.acquire()` + extension 传连接，改动面大）
