@@ -62,7 +62,6 @@ export const AdaptiveLayout: React.FC<AdaptiveLayoutProps> = ({
   fullWidth = false,
   forceV3 = false,
 }) => {
-  const { isMobile } = useResponsive();
   const { user } = useAuthStore();
 
   // 判断是否启用 V3

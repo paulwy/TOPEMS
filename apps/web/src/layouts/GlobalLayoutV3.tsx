@@ -668,34 +668,6 @@ const footerItems: NavItem[] = [
 ];
 
 // 路径到导航项 ID 的映射
-const pathToNavId: Record<string, string> = {
-  '/dashboard': 'dashboard',
-  '/core/dashboard': 'dashboard',
-  '/mes': 'mes',
-  '/core/mes': 'mes',
-  '/erp': 'erp',
-  '/core/erp': 'erp',
-  '/scm': 'scm',
-  '/core/scm': 'scm',
-  '/crm': 'crm',
-  '/core/crm': 'crm',
-  '/qms': 'qms',
-  '/core/qms': 'qms',
-  '/wms': 'wms',
-  '/core/wms': 'wms',
-  '/bi': 'bi',
-  '/core/bi': 'bi',
-  '/gis': 'gis',
-  '/core/gis': 'gis',
-  '/doc': 'doc',
-  '/core/doc': 'doc',
-  '/im': 'im',
-  '/core/im': 'im',
-  '/settings': 'settings',
-  '/core/settings': 'settings',
-  '/profile': 'profile',
-  '/core/profile': 'profile',
-};
 
 export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWidth = false }) => {
   const location = useLocation();
