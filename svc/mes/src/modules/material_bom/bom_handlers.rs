@@ -1,6 +1,5 @@
-use chrono::DateTime;
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::{DateTime<Utc>, Utc};
+use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared::auth::Claims;
