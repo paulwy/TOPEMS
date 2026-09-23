@@ -35,8 +35,17 @@ pub fn create_routes() -> Router<ApiState> {
 
 const EMPLOYEE_CACHE_TTL: u64 = 3600;
 
-fn employee_cache_key(tenant_id: &Uuid, id: &Uuid) -> String {
-    format!("hrm:employee:get:{}:{}", tenant_id, id)
+// locale 编入 key，避免中英文用户串缓存（Employee.name 走 CASE WHEN 双语切换）
+fn employee_cache_key(tenant_id: &Uuid, id: &Uuid, locale: &str) -> String {
+    format!("hrm:employee:get:{}:{}:locale:{}", tenant_id, id, locale)
+}
+
+/// 失效时需同时清掉 zh/en 两个 locale 变体（精确 remove 不支持通配）。
+fn employee_cache_keys_all_locales(tenant_id: &Uuid, id: &Uuid) -> [String; 2] {
+    [
+        employee_cache_key(tenant_id, id, "zh"),
+        employee_cache_key(tenant_id, id, "en"),
+    ]
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -159,7 +168,8 @@ pub async fn get_employee(
 
     // 从 claims 和 headers 中获取 tenant_id，用于多租户缓存隔离
     let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
-    let cache_key = employee_cache_key(&tenant_id, &id);
+    let locale = Locale::from_headers(&headers).as_sql();
+    let cache_key = employee_cache_key(&tenant_id, &id, locale);
 
     if let Some(cached) = state.employee_cache.get(&cache_key).await {
         record_cache_hit("hrm", "employee", "get");
@@ -352,7 +362,7 @@ pub async fn create_employee(
             let _ = state
                 .cache
                 .set(
-                    &employee_cache_key(&tenant_id, &employee.id),
+                    &employee_cache_key(&tenant_id, &employee.id, Locale::from_headers(&headers).as_sql()),
                     &serde_json::to_string(employee).unwrap_or_default(),
                     Some(EMPLOYEE_CACHE_TTL),
                 )
@@ -488,10 +498,9 @@ pub async fn update_employee(
     let result = service.update_employee(&id, req, &mut *txn).await;
 
     if result.code == 200 {
-        state
-            .employee_cache
-            .remove(&employee_cache_key(&tenant_id, &id))
-            .await;
+        for k in employee_cache_keys_all_locales(&tenant_id, &id) {
+            state.employee_cache.remove(&k).await;
+        }
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
@@ -513,7 +522,7 @@ pub async fn update_employee(
         let _ = state
             .cache
             .set(
-                &employee_cache_key(&tenant_id, &id),
+                &employee_cache_key(&tenant_id, &id, Locale::from_headers(&headers).as_sql()),
                 &result
                     .data
                     .as_ref()
@@ -618,14 +627,12 @@ pub async fn delete_employee(
     let result = service.delete_employee(&id, &mut *txn).await;
 
     if result.code == 200 {
-        state
-            .employee_cache
-            .remove(&employee_cache_key(&tenant_id, &id))
-            .await;
-        let _ = state
-            .cache
-            .delete(&employee_cache_key(&tenant_id, &id))
-            .await;
+        for k in employee_cache_keys_all_locales(&tenant_id, &id) {
+            state.employee_cache.remove(&k).await;
+        }
+        for k in employee_cache_keys_all_locales(&tenant_id, &id) {
+            let _ = state.cache.delete(&k).await;
+        }
 
         // 发布缓存失效事件，通知其他服务失效相关缓存
         if let Some(ref publisher) = state.event_publisher {
@@ -809,18 +816,18 @@ mod tests {
     fn test_employee_cache_key_format() {
         let id = Uuid::new_v4();
         let tenant_id = Uuid::new_v4();
-        let key = employee_cache_key(&tenant_id, &id);
-        assert_eq!(key, format!("hrm:employee:get:{}:{}", tenant_id, id));
+        let key = employee_cache_key(&tenant_id, &id, "zh");
+        assert_eq!(key, format!("hrm:employee:get:{}:{}:locale:zh", tenant_id, id));
     }
 
     #[test]
     fn test_employee_cache_key_nil_uuid() {
         let id = Uuid::nil();
         let tenant_id = Uuid::new_v4();
-        let key = employee_cache_key(&tenant_id, &id);
+        let key = employee_cache_key(&tenant_id, &id, "zh");
         assert_eq!(
             key,
-            format!("hrm:employee:get:{}:{}", tenant_id, Uuid::nil())
+            format!("hrm:employee:get:{}:{}:locale:zh", tenant_id, Uuid::nil())
         );
     }
 
@@ -830,8 +837,8 @@ mod tests {
         let id2 = Uuid::new_v4();
         let tenant_id = Uuid::new_v4();
         assert_ne!(
-            employee_cache_key(&tenant_id, &id1),
-            employee_cache_key(&tenant_id, &id2)
+            employee_cache_key(&tenant_id, &id1, "zh"),
+            employee_cache_key(&tenant_id, &id2, "zh")
         );
     }
 
@@ -839,7 +846,7 @@ mod tests {
     fn test_employee_cache_key_prefix() {
         let id = Uuid::new_v4();
         let tenant_id = Uuid::new_v4();
-        let key = employee_cache_key(&tenant_id, &id);
+        let key = employee_cache_key(&tenant_id, &id, "zh");
         assert!(key.starts_with("hrm:employee:get:"));
     }
 
@@ -848,8 +855,8 @@ mod tests {
         let id = Uuid::new_v4();
         let tenant_a = Uuid::new_v4();
         let tenant_b = Uuid::new_v4();
-        let key1 = employee_cache_key(&tenant_a, &id);
-        let key2 = employee_cache_key(&tenant_b, &id);
+        let key1 = employee_cache_key(&tenant_a, &id, "zh");
+        let key2 = employee_cache_key(&tenant_b, &id, "zh");
         assert_ne!(
             key1, key2,
             "different tenants should have different cache keys"
