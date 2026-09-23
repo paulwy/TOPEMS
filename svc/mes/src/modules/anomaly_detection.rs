@@ -647,7 +647,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let next_maint: Option<chrono::NaiveDate> = row.get("next_maintenance_date");
 
             let days_overdue = if let Some(nm) = next_maint {
-                Utc::now().naive_utc().signed_duration_since(nm).num_days()
+                Utc::now().naive_utc().signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap()).num_days()
             } else {
                 90
             };
@@ -909,7 +909,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let station_name: Option<String> = row.get("station_name");
 
             let hours_stuck = if let Some(st) = start_time {
-                Utc::now().naive_utc().signed_duration_since(st).num_hours()
+                Utc::now().naive_utc().signed_duration_since(st.naive_utc()).num_hours()
             } else {
                 0
             };
