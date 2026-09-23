@@ -38,6 +38,7 @@ pub use topems_shared_bootstrap::*;
 pub use topems_shared_core::config;
 pub use topems_shared_core::error;
 pub use topems_shared_core::health;
+pub use topems_shared_core::locale;
 pub use topems_shared_core::logging;
 pub use topems_shared_core::response;
 pub use topems_shared_core::response::{ApiResponse, ErrorPayload, FieldError, ListResponse};

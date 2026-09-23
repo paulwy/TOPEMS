@@ -562,3 +562,14 @@ D
   - [x] P2-5：删除 lims.samples 表 ✅（已完成，表不存在）
   - [x] P2-6：验证 lims 列表 API ✅（API 返回 401 未授权，正常工作）
 
+
+## 2026-09-23 flow 模块租户绑定（完成，与 pm 同型治理）
+- [x] 探查：flow 服务（unified-core 内嵌）SQL 无 schema 前缀 → 实际落 public 表；flow schema 表（tenant_id+RLS）为影子表未被使用
+- [x] 代码绑定（3 处 INSERT + imports）：instance.rs create_instance、approval.rs create_approval（instance + task 两处）→ 写操作带 tenant_id（claims 取租户，默认 0001）
+- [x] DB 加固（迁移 20260923150000_flow_public_tenant_rls.sql 固化）：
+  - public.core_workflow_instances/tasks 补 tenant_id + deleted_at 列
+  - 4 表 9 时间列 TIMESTAMP → TIMESTAMPTZ（DateTime<Utc> 解码兼容）
+  - 统一 RLS 策略（pm 同款：nil/空/零值放行 + 租户匹配）；ENABLE + FORCE RLS（owner 也受约束）
+- [x] 验证：SQL 三会话隔离 ✓（租户 0001 见 2、0002 见 0、superuser 零值见 2）；API 建 workflow/instance 返回 tenant_id=0001 ✓；列表 200（0 行 = 用户维度可见性过滤正确行为，admin 未参与实例）
+- [x] 编译：unified-core 全量 0 错误；iam 重启冒烟通过
+- [x] 遗留：flow 其余 UPDATE/DELETE 写操作（13+）租户绑定未逐一核查（UPDATE 走 RLS 行可见性约束，创建即绑定后天然正确；存量 NULL 行 0 条无碍）

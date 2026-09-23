@@ -104,14 +104,17 @@ pub async fn list_carriers(
     };
     let tenant_key = tenant_id.map_or("all".to_string(), |t| t.to_string());
 
-    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}:locale）
+    // locale 编入 key，避免中英文用户串缓存（name 走 CASE WHEN 双语切换）
+    let locale = Locale::from_headers(&headers).as_sql();
     let cache_key = format!(
-        "tms:carrier:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
+        "tms:carrier:list:{}:page:{}:pagesize:{}:search:{}:status:{}:locale:{}",
         tenant_key,
         page,
         page_size,
         params.search.clone().unwrap_or_else(|| "none".to_string()),
-        params.status.clone().unwrap_or_else(|| "all".to_string())
+        params.status.clone().unwrap_or_else(|| "all".to_string()),
+        locale
     );
 
     // 检查缓存（在获取事务锁之前，避免不必要的锁等待）
@@ -151,7 +154,7 @@ pub async fn list_carriers(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(Locale::from_headers(&headers).as_sql())
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 

@@ -1,6 +1,6 @@
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
@@ -10,6 +10,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::api_error;
 
 use super::models::{TaskActionRequest, Workflow, WorkflowInstance, WorkflowTask};
@@ -1026,8 +1027,10 @@ pub async fn get_approval(
 )]
 pub async fn create_approval(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ApprovalTask>> {
+    let create_tenant: Uuid = claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow_id_str = match payload.get("workflow_id") {
         Some(v) => v.as_str().unwrap_or_default(),
         None => return Json(api_error(400, "缺少workflow_id参数")),
@@ -1053,13 +1056,14 @@ pub async fn create_approval(
     };
 
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        r#"INSERT INTO core_workflow_instances (workflow_id, title, initiator_id, status)
-           VALUES ($1, $2, $3, 'running')
-           RETURNING id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at"#,
+        r#"INSERT INTO core_workflow_instances (workflow_id, title, initiator_id, status, tenant_id)
+           VALUES ($1, $2, $3, 'running', $4)
+           RETURNING id, workflow_id, title, initiator_id, status, started_at, completed_at, created_at, updated_at, tenant_id"#,
     )
     .bind(workflow_id)
     .bind(title)
     .bind(initiator_id)
+    .bind(create_tenant)
     .fetch_one(&state.pool)
     .await
     {
@@ -1081,12 +1085,13 @@ pub async fn create_approval(
     };
 
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        r#"INSERT INTO core_workflow_tasks (instance_id, node_id, assignee_id, status)
-           VALUES ($1, 'start', $2, 'pending')
-           RETURNING id, instance_id, node_id, assignee_id, status, comment, created_at, completed_at"#,
+        r#"INSERT INTO core_workflow_tasks (instance_id, node_id, assignee_id, status, tenant_id)
+           VALUES ($1, 'start', $2, 'pending', $3)
+           RETURNING id, instance_id, node_id, assignee_id, status, comment, created_at, completed_at, tenant_id"#,
     )
     .bind(instance.id)
     .bind(assignee_id)
+    .bind(create_tenant)
     .fetch_one(&state.pool)
     .await
     {
