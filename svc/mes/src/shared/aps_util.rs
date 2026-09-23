@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, DateTime<Utc>};
+use chrono::{NaiveDate, DateTime, Utc};
 
 pub fn validate_resource_id(id: &str) -> bool {
     if id.is_empty() || id.len() > 64 {

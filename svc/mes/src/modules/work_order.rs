@@ -1192,7 +1192,7 @@ pub async fn resume_work_order(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Datelike, DateTime<Utc>, Timelike};
+    use chrono::{Datelike, DateTime, Timelike, Utc};
     use std::str::FromStr;
 
     #[test]
