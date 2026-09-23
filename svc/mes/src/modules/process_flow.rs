@@ -683,12 +683,12 @@ pub async fn add_flow_step(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                    .map(|dt| dt.with_timezone(&Utc))
             })
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -805,12 +805,12 @@ pub async fn update_flow_step(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                    .map(|dt| dt.with_timezone(&Utc))
             })
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {

@@ -311,12 +311,12 @@ pub async fn create_patrol(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                        .map(|dt| dt.with_timezone(&Utc))
                 })
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
                 })
         }),
         body.status.unwrap_or_else(|| "pending".to_string()),
@@ -407,12 +407,12 @@ pub async fn update_patrol(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                        .map(|dt| dt.with_timezone(&Utc))
                 })
                 .or_else(|| {
                     chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
                 })
         }),
         body.status,

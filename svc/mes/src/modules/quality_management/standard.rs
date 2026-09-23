@@ -412,7 +412,7 @@ pub async fn create_standard(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
             })
     });
     let standard_result = sqlx::query_unchecked!(
@@ -567,7 +567,7 @@ pub async fn update_standard(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
             })
     });
     let standard_result = sqlx::query_unchecked!(
