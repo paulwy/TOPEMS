@@ -321,8 +321,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(Some(r.created_at.and_utc())),
-                updated_at: datetime_to_string(Some(r.updated_at.and_utc())),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -504,8 +504,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: datetime_to_string(Some(r.created_at.and_utc())),
-                updated_at: datetime_to_string(Some(r.updated_at.and_utc())),
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
