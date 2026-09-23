@@ -884,7 +884,7 @@ pub async fn get_gantt_data(
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
-        let completed = big_decimal_to_f64(Some(s.completed_quantity.clone()));
+        let completed = big_decimal_to_f64(s.completed_quantity.clone());
         let progress = if total > 0.0 {
             (completed / total) * 100.0
         } else {
