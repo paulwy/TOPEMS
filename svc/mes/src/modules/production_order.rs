@@ -817,7 +817,7 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.map(|v| v as i32),
+        req.quantity,
         req.planned_start_date.map(|d| d.naive_utc()),
         req.planned_end_date.map(|d| d.naive_utc()),
         req.workshop_id,
