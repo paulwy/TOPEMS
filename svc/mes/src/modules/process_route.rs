@@ -378,8 +378,8 @@ pub async fn get_process_route(
                     estimated_time_minutes: None,
                     total_estimated_time_minutes,
                     process_count,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "获取工艺路线成功",
             ))
@@ -450,8 +450,8 @@ pub async fn create_process_route(
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "创建工艺路线成功",
             ))
@@ -535,8 +535,8 @@ pub async fn update_process_route(
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "更新工艺路线成功",
             ))
