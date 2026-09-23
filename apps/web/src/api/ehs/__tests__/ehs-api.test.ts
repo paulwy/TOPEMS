@@ -328,7 +328,9 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await riskApi.listRisks({ page: 1, pagesize: 10, risklevel: 'high' });
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/hazards?page=1&page_size=10&risk_level=high');
+      expect(apiClient.ehs.get).toHaveBeenCalledWith(
+        '/hazards?page=1&page_size=10&risk_level=high'
+      );
     });
 
     it('getRisk should call GET /hazards/:id', async () => {
