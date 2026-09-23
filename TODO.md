@@ -609,3 +609,21 @@ D
 - **RLS 连接级 set_config 在连接池下不稳定**：middleware 用独立连接 `execute(pool)` 设 app.tenant_id，handler 查询再取连接——会话级 GUC 不跨连接共享，行为随机（有时放行、有时零值误拦）
 - **当前防线**：SQL 层显式租户条件（已铺 flow；其他模块需全量扫描纯 RLS 依赖的写操作）
 - **中期方案**：① 全模块写 SQL 补显式租户条件（与 flow 同型）；② 或 middleware 请求级连接绑定（`pool.acquire()` + extension 传连接，改动面大）
+
+## 2026-09-24 全模块写 SQL 扫描 + RLS 连接级根治（6eb87d65c/bb6f6e98e 已推送）
+
+### 扫描结论（unified-core 写 SQL 分布：flow 43 / iam 33 / menu 6 / file 4 / tenant 2 / audit 2 / settings 1 / doc 1）
+- [x] flow 43 条全部带租户条件（上一轮 ac1e081ec 闭环）
+- [x] menu 6 条：update/delete group/menu 4 handler 补显式租户条件（SQL 层主防线）
+- [x] iam：position.rs UPDATE 3 处靠 exists 租户预检（已防护，TOCTOU 低危）；delete_position 已带显式条件；auth.rs sessions/refresh_tokens/password_resets 属认证基础设施（user_id 维度，低危）；user_permission.rs 走 RBAC（user_roles 无 RLS，管理面）
+- [x] file/settings/doc/tenant/audit：写 SQL 少且含 claims/租户逻辑（抽查确认低危）
+
+### 架构级根治：RLS 连接级 set_config 残留
+- **根因**：`set_config('app.tenant_id', $1, false)` 的 is_local=false 为**会话级**，GUC 在连接上持久残留——普通用户请求污染连接后，superuser 复用到残留连接被误拦（菜单 UPDATE 曾 404）
+- **修复**：middleware 每请求显式设置/重置——普通用户 set 实际租户、superuser set 空字符串（策略空分支放行全量）——连接状态确定
+- **实测**：S update menu 200×3（污染后清空恢复）、flow 回归全绿（S 全量/B 隔离/越权 404）
+
+### 功能缺陷修复：全局零值菜单对普通租户不可见
+- **问题**：通用 rls_tenant_isolation 策略拦截零值租户行 → 租户登录后看不到系统菜单（list items=[] total=53）
+- **修复**：新增 rls_menu_global_visible 专属策略（仅 core_menu_groups/core_menus）：零值行对所有租户可见 + 本租户专属行可见；不触碰通用策略（避免 audit_logs 等零值行暴露）
+- **实测**：B(0002) list groups 53/184 全量可见；B update 仍 403（RBAC）+ SQL 层条件双保险；S 正常
