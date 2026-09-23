@@ -550,7 +550,7 @@ async fn run_aps_scheduling(
 
         // 6.6 检查延期
         if let Some(desired_end) = order.planned_end_date {
-            if end_time > &desired_end {
+            if end_time > desired_end {
                 tardy_count += 1;
             }
         }

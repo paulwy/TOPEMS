@@ -376,7 +376,7 @@ pub async fn create_material_requirement(
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
                 .ok()
-                .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                .map(|dt| dt.with_timezone(&Utc))
         })
         .or_else(|| {
             chrono::NaiveDate::parse_from_str(&body.required_date, "%Y-%m-%d")
