@@ -11,7 +11,7 @@ pub(crate) fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc
 }
 
 pub(crate) fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.and_then(|d| d.to_rfc3339()).unwrap_or_default()
+    dt.and_then(|d| Utc.from_utc_datetime(&d).to_rfc3339()).unwrap_or_default()
 }
 
 pub(crate) fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
