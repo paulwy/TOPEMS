@@ -26,6 +26,7 @@ import {
   ToastContainer,
   Toggle,
 } from '@/components/redesign';
+import type { Toast } from '@/components/redesign';
 import type { LucideIcon } from 'lucide-react';
 import {
   getNotifications,

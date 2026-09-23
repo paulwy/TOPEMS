@@ -2,6 +2,7 @@ import React from 'react';
 import { ModuleGate } from './PermissionGate';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { SmartLayout } from '../layouts/SmartLayout';
+import { AdaptiveLayout } from '../layouts/AdaptiveLayout';
 import type { RouteConfig } from '../routes';
 
 interface ProtectedRouteWrapperProps {

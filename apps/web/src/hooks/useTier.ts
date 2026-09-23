@@ -20,6 +20,7 @@
  */
 
 import { useCallback, useMemo, useState, useEffect } from 'react';
+import type { ModuleFeature } from '@/lib/tier';
 import {
   PlanTier,
   isModuleAvailable,

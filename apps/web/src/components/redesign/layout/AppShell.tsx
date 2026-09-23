@@ -153,15 +153,23 @@ export const AppShell: React.FC<AppShellProps> = ({
                   >
                     {index > 0 && <span aria-hidden='true'>/</span>}
                     {crumb.onClick ? (
-                      <a
-                        onClick={(e) => {
-                          e.preventDefault();
-                          crumb.onClick?.();
+                      <button
+                        type='button'
+                        onClick={() => crumb.onClick?.()}
+                        style={{
+                          color: 'inherit',
+                          textDecoration: 'none',
+                          cursor: 'pointer',
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          margin: 0,
+                          font: 'inherit',
+                          fontSize: 'inherit',
                         }}
-                        style={{ color: 'inherit', textDecoration: 'none', cursor: 'pointer' }}
                       >
                         {crumb.label}
-                      </a>
+                      </button>
                     ) : (
                       <span style={{ color: 'var(--text-secondary)' }}>{crumb.label}</span>
                     )}

@@ -164,6 +164,7 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         }}
         onClick={onClick}
         role={onClick ? 'button' : undefined}
+
         tabIndex={onClick ? 0 : undefined}
         onKeyDown={
           onClick
