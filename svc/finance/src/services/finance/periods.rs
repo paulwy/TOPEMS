@@ -297,31 +297,33 @@ impl FinanceService {
 
         let income_rows = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT a.id, a.code, a.name, COALESCE(SUM(l.credit - l.debit), 0) as balance
+            "SELECT a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END AS name, COALESCE(SUM(l.credit - l.debit), 0) as balance
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
              WHERE a.tenant_id = $1 AND a.account_type = 'income'
-             GROUP BY a.id, a.code, a.name
+             GROUP BY a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
              HAVING COALESCE(SUM(l.credit - l.debit), 0) > 0"
         ))
         .bind(tenant_id)
         .bind(AccountType::Income)
         .bind(&period_pattern)
+        .bind(locale)
         .fetch_all(&self.db_pool)
         .await?;
 
         let expense_rows = sqlx::query(only_own_schema_query!(
             "finance",
-            "SELECT a.id, a.code, a.name, COALESCE(SUM(l.debit - l.credit), 0) as balance
+            "SELECT a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END AS name, COALESCE(SUM(l.debit - l.credit), 0) as balance
              FROM finance.core_finance_accounts a
              LEFT JOIN finance.core_finance_ledger l ON a.id = l.account_id AND l.period LIKE $3
              WHERE a.tenant_id = $1 AND a.account_type = 'expense'
-             GROUP BY a.id, a.code, a.name
+             GROUP BY a.id, a.code, CASE WHEN $4='en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
              HAVING COALESCE(SUM(l.debit - l.credit), 0) > 0"
         ))
         .bind(tenant_id)
         .bind(AccountType::Expense)
         .bind(&period_pattern)
+        .bind(locale)
         .fetch_all(&self.db_pool)
         .await?;
 
