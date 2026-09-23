@@ -316,7 +316,7 @@ describe('StatusTimeline', () => {
         id: '1',
         title: '自定义颜色',
         status: 'completed',
-        // eslint-disable-next-line topems-design/no-hardcoded-colors
+
         color: '#ff0000',
       },
     ];
@@ -330,7 +330,7 @@ describe('StatusTimeline', () => {
         id: '1',
         title: '圆点颜色',
         status: 'completed',
-        // eslint-disable-next-line topems-design/no-hardcoded-colors
+
         dotColor: '#00ff00',
       },
     ];

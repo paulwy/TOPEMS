@@ -276,7 +276,7 @@ const CrmRfmPage: React.FC = () => {
         loading: recordsQuery.isLoading,
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [segments, records, segmentsQuery.isLoading, recordsQuery.isLoading, t]
   );
 

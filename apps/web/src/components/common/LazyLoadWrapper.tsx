@@ -3,7 +3,7 @@ import { SkeletonScreen } from './SkeletonScreen';
 import type { ComponentType, LazyExoticComponent } from 'react';
 
 interface LazyLoadWrapperProps {
-  lazyComponent: LazyExoticComponent<ComponentType<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- React.lazy 约束
+  lazyComponent: LazyExoticComponent<ComponentType<any>>;
   skeletonVariant?: 'dashboard' | 'list' | 'form' | 'detail';
 }
 

@@ -20,7 +20,6 @@ const logError = (message: string, ...args: unknown[]) => {
   console.error(message, ...args);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- React.lazy 约束需 ComponentType<any>
 export function lazyWithRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
   moduleName?: string
@@ -51,7 +50,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
 }
 
 export const createSafeLazy = () => {
-  return <T extends ComponentType<any>>( // eslint-disable-line @typescript-eslint/no-explicit-any -- 同上
+  return <T extends ComponentType<any>>(
     factory: () => Promise<{ default: T }>,
     moduleName?: string
   ): LazyExoticComponent<T> => {
@@ -70,7 +69,7 @@ export const createSafeLazy = () => {
 
 export interface RouteConfig {
   path: string;
-  element: ReactElement | LazyExoticComponent<ComponentType<any>>; // eslint-disable-line @typescript-eslint/no-explicit-any -- 同上
+  element: ReactElement | LazyExoticComponent<ComponentType<any>>;
   requiredPermissions?: string[];
   module?: string;
   action?: 'read' | 'write' | 'update' | 'delete' | 'admin';

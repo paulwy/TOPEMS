@@ -130,13 +130,12 @@ const alarms = [
 ];
 
 const buckets = [
-  // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
   { status: 'running', label: '运行中', count: 5, color: '#22c55e' },
-  // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
+
   { status: 'maintenance', label: '维护中', count: 2, color: '#f59e0b' },
-  // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
+
   { status: 'fault', label: '故障', count: 1, color: '#ef4444' },
-  // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
+
   { status: 'idle', label: '空闲', count: 3, color: '#3b82f6' },
 ];
 

@@ -65,7 +65,6 @@ export function useAnalyticsData<TData>({
     if (immediate) {
       load();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return { data, loading, error, reload: load };

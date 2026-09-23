@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 
-type EventHandler<T = any> = (data: T) => void; // eslint-disable-line @typescript-eslint/no-explicit-any -- 事件负载多类型，泛型默认 any 为事件总线惯例
+type EventHandler<T = any> = (data: T) => void;
 
 interface EventListeners {
   [eventName: string]: Set<EventHandler>;

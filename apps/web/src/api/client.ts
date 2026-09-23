@@ -47,7 +47,6 @@ export interface PaginationParams {
   search?: string;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any -- axios generic defaults require `any` for caller-side type inference */
 type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {
   defaults: { baseURL?: string };
   get<T = any, R = ApiResponse<T>, D = any>(
@@ -74,7 +73,6 @@ type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' |
     config?: AxiosRequestConfig<D>
   ): Promise<R>;
 };
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 interface TimeoutError {
   code?: string;

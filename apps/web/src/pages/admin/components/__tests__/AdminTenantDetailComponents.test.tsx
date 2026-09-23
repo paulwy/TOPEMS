@@ -177,9 +177,8 @@ const tenant: Tenant = {
     max_storage_gb: 500,
     max_api_requests_per_day: 10000,
     branding: {
-      // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
       primary_color: '#1976d2',
-      // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
+
       secondary_color: '#9c27b0',
       custom_domain: 'portal.topems.example',
     },

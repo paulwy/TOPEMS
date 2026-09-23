@@ -128,7 +128,7 @@ const features: FeatureCardData[] = [
     title: 'Smart Q&A',
     description: 'Answer production questions',
     icon: <TestIcon />,
-    // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
+
     color: '#1976d2',
     stats: [
       { label: 'Accuracy', value: '92%' },
@@ -144,7 +144,7 @@ const features: FeatureCardData[] = [
     title: 'Code Assistant',
     description: 'Generate and explain code',
     icon: <TestIcon />,
-    // eslint-disable-next-line topems-design/no-hardcoded-colors -- 测试断言具体色值，不适用 design tokens
+
     color: '#2e7d32',
     stats: [{ label: 'Languages', value: '20+' }],
     action: {

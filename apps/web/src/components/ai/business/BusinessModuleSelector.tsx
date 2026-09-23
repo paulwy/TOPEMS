@@ -87,7 +87,7 @@ const BUSINESS_MODULES: BusinessModuleItem[] = [
     nameKey: 'ai.business_module_selector.general.name',
     descKey: 'ai.business_module_selector.general.description',
     icon: <LayoutGrid size={24} />,
-    colorKey: 'grey', // eslint-disable-line topems-design/no-hardcoded-colors -- palette 键名非颜色字面量
+    colorKey: 'grey',
   },
 ];
 

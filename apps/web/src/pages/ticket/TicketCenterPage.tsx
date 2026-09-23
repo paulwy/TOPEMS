@@ -487,7 +487,6 @@ const TicketCenterPage: React.FC = () => {
         ))}
       </Box>
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statsData, t]);
 
   const customRowActions: RowAction[] = useMemo(

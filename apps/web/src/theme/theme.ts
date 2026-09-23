@@ -1,4 +1,3 @@
-/* eslint-disable topems-design/no-hardcoded-colors -- theme.ts defines the color tokens */
 import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
 import { enUS, zhCN } from '@mui/material/locale';

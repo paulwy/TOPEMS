@@ -1091,7 +1091,7 @@ const GisContent: React.FC = () => {
                         name: sl.name,
                         position: [sl.latitude, sl.longitude],
                         type: 'storage',
-                        // eslint-disable-next-line topems-design/no-hardcoded-colors -- 地图 marker 渲染色，不适用 MUI design tokens
+
                         color: 'blue',
                       })),
                     ]}

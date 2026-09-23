@@ -54,14 +54,13 @@ export enum FrameworkType {
 
 /** 统一属性格式 */
 export interface UnifiedProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 跨框架桥接属性多类型，索引签名 any 为设计约定
   [key: string]: any;
 }
 
 /** 统一事件格式 */
 export interface UnifiedEvents {
   /** 事件名 -> 回调函数 */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 跨框架事件负载多类型，设计约定
+
   [eventName: string]: (...args: any[]) => void;
 }
 

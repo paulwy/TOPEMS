@@ -19,7 +19,7 @@ export interface BarChartProps extends BaseChartProps {
   barRadius?: number | [number, number, number, number];
   animate?: boolean;
   cellColors?: string[];
-  tooltipFormatter?: (...args: any[]) => any; // eslint-disable-line @typescript-eslint/no-explicit-any -- 与 BarChart 具体签名透传返回类型不兼容
+  tooltipFormatter?: (...args: any[]) => any;
 }
 
 export interface LineChartProps extends BaseChartProps {

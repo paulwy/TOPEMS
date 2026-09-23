@@ -31,7 +31,6 @@ const NotFoundPage: React.FC = () => {
     } else {
       setNsReady(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

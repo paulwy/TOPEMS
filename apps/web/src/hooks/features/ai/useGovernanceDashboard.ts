@@ -150,7 +150,7 @@ export function useGovernanceDashboard(
   // 初始加载
   useEffect(() => {
     loadDashboard();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     ...state,

@@ -19,7 +19,6 @@ export type PageTemplateType =
 
 export type LayoutType = 'default' | 'full' | 'mobile' | 'none';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- RouteConfig 泛型 P 与具体 Props 逆变不兼容，any 为设计性
 export interface RouteConfig<P = any> {
   path: string;
   element: ReactElement | LazyExoticComponent<ComponentType<P>>;
@@ -30,7 +29,6 @@ export interface RouteConfig<P = any> {
 
 type ModuleTier = 'basic' | 'advanced';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 同上：路由配置泛型逆变
 export interface RouteConfigV2<P = any> {
   path: string;
   element: ReactElement | LazyExoticComponent<ComponentType<P>>;

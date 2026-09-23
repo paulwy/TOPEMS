@@ -215,7 +215,6 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
     if (selectedNode) {
       setConfigDraft(JSON.stringify(selectedNode.config ?? {}, null, 2));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeId]);
 
   useEffect(() => {
