@@ -22,14 +22,12 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   PlanTier,
-  parsePlanTier,
   isModuleAvailable,
   isPathAvailable,
   filterModulesByTier,
   getModulesForTier,
   getModulesNotForTier,
   getModuleMinTier,
-  type ModuleFeature,
 } from '@/lib/tier';
 
 export { PlanTier };

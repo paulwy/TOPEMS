@@ -4,7 +4,6 @@ import {
   Search,
   RefreshCw,
   Eye,
-  Edit2,
   Package,
   Boxes,
   AlertTriangle,
@@ -17,14 +16,12 @@ import {
   Button,
   Card,
   Drawer,
-  EmptyState,
   Input,
   ListPageTemplate,
   Pagination,
   Select,
   StatTile,
   Tabs,
-  Tag,
 } from '@/components/redesign';
 import type { DataTableColumn } from '@/components/redesign';
 import { useTranslation } from 'react-i18next';

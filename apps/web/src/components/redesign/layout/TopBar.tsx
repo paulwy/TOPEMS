@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Bell,
-  Menu,
   PanelLeftClose,
   PanelLeftOpen,
   Search,

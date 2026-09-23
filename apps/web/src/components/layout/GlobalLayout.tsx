@@ -7,11 +7,7 @@ import { usePermission } from '../../hooks/usePermission';
 import { useResponsive } from '../../hooks/useResponsive';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
-import {
-  useUIStore,
-  useSetUnreadNotificationCount,
-  useUnreadNotificationCount,
-} from '@/store';
+import { useUIStore, useSetUnreadNotificationCount, useUnreadNotificationCount } from '@/store';
 import i18n from '@/i18n';
 import { getUnreadCount } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ShoppingCart,
   Plus,
   Search,
   RefreshCw,
@@ -11,8 +10,6 @@ import {
   Eye,
   Edit2,
   Trash2,
-  User,
-  Calendar,
   DollarSign,
   Truck,
   FileText,
@@ -23,7 +20,6 @@ import {
   Button,
   Card,
   Drawer,
-  EmptyState,
   FileUpload,
   Input,
   ListPageTemplate,

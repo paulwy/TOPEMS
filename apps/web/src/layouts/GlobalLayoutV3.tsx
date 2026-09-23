@@ -5,7 +5,6 @@ import type { NavItem } from '../components/redesign/layout/SideRail';
 import {
   AlertTriangle,
   BarChart3,
-  Bell,
   BookOpen,
   Box,
   Boxes,
