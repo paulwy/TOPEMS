@@ -321,7 +321,7 @@ pub async fn backward_traceability(
         node_type: "finished_product".to_string(),
         name: batch.product_name.clone().unwrap_or_default(),
         code: batch.product_code.clone().unwrap_or_default(),
-        quantity: Some(big_decimal_to_f64(batch.quantity)),
+        quantity: Some(big_decimal_to_f64(Some(batch.quantity))),
         unit: batch.unit.clone(),
         batch_no: Some(batch.batch_no.clone()),
         status: Some(batch.status.clone().unwrap_or_default()),

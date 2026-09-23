@@ -439,7 +439,7 @@ pub async fn create_wip(
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code,
-        quantity: big_decimal_to_f64(result.quantity),
+        quantity: big_decimal_to_f64(Some(result.quantity)),
         current_process_id: result.current_process_id,
         current_process_name: None,
         current_work_station_id: result.current_work_station_id,
@@ -517,7 +517,7 @@ pub async fn get_wip(
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
-                quantity: big_decimal_to_f64(r.quantity),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
                 current_process_name: r.process_name,
                 current_work_station_id: r.current_work_station_id,
@@ -605,7 +605,7 @@ pub async fn update_wip(
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
-                quantity: big_decimal_to_f64(r.quantity),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
                 current_process_name: None,
                 current_work_station_id: r.current_work_station_id,
@@ -727,7 +727,7 @@ pub async fn transfer_wip(
         }
     };
 
-    let current_qty = big_decimal_to_f64(wip.quantity);
+    let current_qty = big_decimal_to_f64(Some(wip.quantity));
     if req.quantity > current_qty {
         let _ = tx.rollback().await;
         return Json(ApiResponse::error(400, "转移数量不能大于当前WIP数量"));
@@ -863,7 +863,7 @@ pub async fn transfer_wip(
         to_process_name: to_process_name.unwrap_or_default(),
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: to_workstation_name.unwrap_or_default(),
-        quantity: big_decimal_to_f64(transfer.quantity),
+        quantity: big_decimal_to_f64(Some(transfer.quantity)),
         transfer_time: naive_to_utc(transfer.transfer_time),
         operator: transfer.operator,
         transfer_type: transfer
@@ -943,7 +943,7 @@ pub async fn list_wip_transfers(
             to_process_name: r.to_process_name,
             to_work_station_id: r.to_work_station_id,
             to_work_station_name: r.to_work_station_name,
-            quantity: big_decimal_to_f64(r.quantity),
+            quantity: big_decimal_to_f64(Some(r.quantity)),
             transfer_time: naive_to_utc(r.transfer_time),
             operator: r.operator,
             transfer_type: r

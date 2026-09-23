@@ -144,6 +144,15 @@ def fix_errors(errors):
                     var_name = var_match.group(2)
                     line = line.replace(f'{var_name}: {var_name},', f'{var_name}: {var_name}.unwrap_or_default(),')
             
+            # 错误模式 8: expected Option<BigDecimal>, found BigDecimal
+            # 修复方法: 在 BigDecimal 前加 Some(...)
+            elif expected == 'Option<BigDecimal>' and found == 'BigDecimal':
+                var_match = re.search(r'big_decimal_to_f64\((\w+)\.(\w+)\)', line)
+                if var_match:
+                    var_name = var_match.group(2)
+                    obj_name = var_match.group(1)
+                    line = line.replace(f'big_decimal_to_f64({obj_name}.{var_name})', f'big_decimal_to_f64(Some({obj_name}.{var_name}))')
+            
             if line != original_line:
                 lines[line_num] = line
                 fixes_applied += 1
@@ -154,7 +163,7 @@ def fix_errors(errors):
     return fixes_applied
 
 def main():
-    log_file = '/tmp/mes_check_v457.log'
+    log_file = '/tmp/mes_check_v458.log'
     
     print(f"解析 {log_file}...")
     errors = parse_cargo_check(log_file)
