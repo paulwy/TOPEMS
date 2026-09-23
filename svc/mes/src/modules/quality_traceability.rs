@@ -327,7 +327,7 @@ pub async fn backward_traceability(
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date
-            .map(|d| d.date().and_hms_opt(0, 0, 0).unwrap_or_default())
+            .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default())
             .map(|d| d),
         operator: None,
         description: Some("成品批次".to_string()),
