@@ -456,7 +456,7 @@ pub async fn create_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time.,
+        req.planned_start_time,
         req.planned_end_time.,
         req.priority.unwrap_or(0),
         req.sequence.unwrap_or(0),
