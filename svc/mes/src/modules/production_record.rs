@@ -317,7 +317,7 @@ pub async fn create_record(
         quantity_defective: result.quantity_defective.unwrap_or_default() as f64,
         status: result.status.unwrap_or_default(),
         notes: result.notes,
-        created_at: result.created_at.and_utc(),
+        created_at: result.created_at,
         updated_at: result.updated_at,
     };
 
