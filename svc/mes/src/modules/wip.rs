@@ -450,8 +450,8 @@ pub async fn create_wip(
         last_transfer_time: result.last_transfer_time.map(|d| d.and_utc()),
         operator: result.operator,
         notes: result.notes,
-        created_at: naive_to_utc(Some(result.created_at)),
-        updated_at: naive_to_utc(Some(result.updated_at)),
+        created_at: result.created_at.and_utc(),
+        updated_at: result.updated_at.and_utc(),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -864,7 +864,7 @@ pub async fn transfer_wip(
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: to_workstation_name.unwrap_or_default(),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
-        transfer_time: naive_to_utc(Some(transfer.transfer_time)),
+        transfer_time: transfer.transfer_time.and_utc(),
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
