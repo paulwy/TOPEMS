@@ -127,8 +127,11 @@ def fix_errors(errors):
             # 错误模式 5: expected NaiveDateTime, found DateTime<Utc>
             # 修复方法: 在 DateTime<Utc> 后加 .naive_utc()
             elif expected == 'NaiveDateTime' and found == 'DateTime<Utc>':
-                # 需要在 DateTime<Utc> 后加 .naive_utc()
-                pass
+                # 模式: 单独的变量名（函数参数）
+                var_match = re.match(r'^\s*(\w+),\s*$', line)
+                if var_match:
+                    var_name = var_match.group(1)
+                    line = line.replace(f'{var_name},', f'{var_name}.naive_utc(),')
             
             # 错误模式 6: expected Option<NaiveDateTime>, found Option<DateTime<Utc>>
             # 修复方法: 在 Option<DateTime<Utc>> 后加 .map(|d| d.naive_utc())
@@ -163,7 +166,7 @@ def fix_errors(errors):
     return fixes_applied
 
 def main():
-    log_file = '/tmp/mes_check_v458.log'
+    log_file = '/tmp/mes_check_v459.log'
     
     print(f"解析 {log_file}...")
     errors = parse_cargo_check(log_file)

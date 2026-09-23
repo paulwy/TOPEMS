@@ -291,7 +291,7 @@ pub async fn create_record(
         req.start_time,
         req.quantity_produced.map(|v| v as i32),
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -423,7 +423,7 @@ pub async fn update_record(
         req.quantity_produced.map(|v| v as i32),
         status,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -519,7 +519,7 @@ pub async fn complete_record(
             created_at, updated_at
         "#,
         id,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;

@@ -876,13 +876,13 @@ pub async fn create_maintenance(
         req.maintenance_type,
         req.description,
         req.maintainer,
-        start_time,
+        start_time.naive_utc(),
         end_time,
         f64_to_big_decimal(req.cost),
         req.result,
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -988,7 +988,7 @@ pub async fn update_maintenance_status(
         id,
         req.status,
         req.result,
-        now,
+        now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
