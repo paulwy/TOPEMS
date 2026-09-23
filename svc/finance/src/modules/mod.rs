@@ -464,13 +464,15 @@ async fn update_voucher(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(voucher_id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateVoucherRequest>,
 ) -> Json<ApiResponse<VoucherResponse>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
     let updated_by = claims.username.clone();
+    let locale = Locale::from_headers(&headers).as_sql();
     match service
-        .update_voucher(tenant_id, voucher_id, req, &updated_by)
+        .update_voucher(tenant_id, voucher_id, req, &updated_by, locale)
         .await
     {
         Ok(voucher) => Json(ApiResponse::success(voucher, "更新成功")),

@@ -638,6 +638,7 @@ impl FinanceService {
         voucher_id: Uuid,
         req: UpdateVoucherRequest,
         _updated_by: &str,
+        locale: &str,
     ) -> Result<VoucherResponse, TopemsError> {
         let existing: Voucher =
             sqlx::query_as(only_own_schema_query!("finance", "SELECT id, tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by, approved_by, posted_by, created_at, updated_at FROM finance.core_finance_vouchers WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"))
@@ -691,7 +692,7 @@ impl FinanceService {
             let mut new_lines = Vec::new();
             for (i, line) in lines.iter().enumerate() {
                 let account = self
-                    .get_account_by_code(tenant_id, &line.account_code, "zh")
+                    .get_account_by_code(tenant_id, &line.account_code, locale)
                     .await?;
 
                 let voucher_line = sqlx::query_as(
