@@ -97,8 +97,8 @@ pub struct ListWorkStationsResponse {
     pub pagesize: i32,
 }
 
-fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
+fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
+    dt
         .unwrap_or_else(Utc::now)
 }
 

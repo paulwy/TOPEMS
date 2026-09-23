@@ -77,7 +77,7 @@ pub fn create_routes() -> Router<AppState> {
 
 fn naive_to_utc<T: Into<Option<NaiveDateTime>>>(dt: T) -> DateTime<Utc> {
     match dt.into() {
-        Some(d) => Utc.from_utc_datetime(&d),
+        Some(d) => d,
         None => Utc::now(),
     }
 }

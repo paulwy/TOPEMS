@@ -343,14 +343,14 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 }
 
 #[allow(dead_code)]
-fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
+fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
+    dt
         .unwrap_or_else(Utc::now)
 }
 
 #[allow(dead_code)]
-fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
+fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
+    dt
 }
 
 /// 计算加工时间（简化模型：基础时间 + 数量系数）

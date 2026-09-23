@@ -124,9 +124,9 @@ pub struct ProcessRouteStepResponse {
     pub created_at: String,
 }
 
-fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
+fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     match dt {
-        Some(d) => Utc.from_utc_datetime(&d),
+        Some(d) => d,
         None => Utc::now(),
     }
 }

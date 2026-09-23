@@ -1,13 +1,13 @@
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use sqlx::types::BigDecimal;
 
-pub(crate) fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
+pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
+    dt
         .unwrap_or_else(Utc::now)
 }
 
-pub(crate) fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
+pub(crate) fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
+    dt
 }
 
 pub(crate) fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
