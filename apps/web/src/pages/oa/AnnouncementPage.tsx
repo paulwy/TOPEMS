@@ -59,12 +59,6 @@ const statusConfig: Record<
   archived: { label: i18n.t('oa.announcement_page.k17'), variant: 'default' },
 };
 
-const priorityConfig = {
-  high: { label: i18n.t('oa.announcement_page.k18'), variant: 'error' as const },
-  normal: { label: i18n.t('oa.announcement_page.k19'), variant: 'default' as const },
-  low: { label: i18n.t('oa.announcement_page.k20'), variant: 'default' as const },
-};
-
 const AnnouncementPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();

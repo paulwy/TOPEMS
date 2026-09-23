@@ -94,8 +94,6 @@ export default function FreightCostPage() {
   const totalFreight = monthlyData.reduce((s, d) => s + d.totalFreight, 0);
   const totalShipments = monthlyData.reduce((s, d) => s + d.shipmentCount, 0);
   const avgFreight = totalShipments > 0 ? Math.round(totalFreight / totalShipments) : 0;
-  const totalCost = costData.reduce((s, c) => s + c.amount, 0);
-  const largestCost = [...costData].sort((a, b) => b.amount - a.amount)[0];
 
   const statCards: StatCard[] = [
     {
