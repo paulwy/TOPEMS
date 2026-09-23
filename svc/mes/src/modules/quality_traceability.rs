@@ -323,7 +323,7 @@ pub async fn backward_traceability(
         code: batch.product_code.clone().unwrap_or_default(),
         quantity: Some(big_decimal_to_f64(batch.quantity)),
         unit: batch.unit.clone(),
-        batch_no: batch.batch_no.clone(),
+        batch_no: Some(batch.batch_no.clone()),
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date

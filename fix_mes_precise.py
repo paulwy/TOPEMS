@@ -97,10 +97,17 @@ def fix_errors(errors):
             # 错误模式 2: expected Option<String>, found String
             # 修复方法: 在 String 前加 Some(...)
             elif expected == 'Option<String>' and found == 'String':
-                var_match = re.search(r'(\w+):\s*r\.(\w+)', line)
+                # 模式 1: r.xxx,
+                var_match = re.search(r'(\w+):\s*r\.(\w+),', line)
                 if var_match:
                     var_name = var_match.group(2)
                     line = line.replace(f'r.{var_name},', f'Some(r.{var_name}),')
+                
+                # 模式 2: batch.xxx.clone(),
+                var_match2 = re.search(r'(\w+):\s*batch\.(\w+)\.clone\(\),', line)
+                if var_match2:
+                    var_name = var_match2.group(2)
+                    line = line.replace(f'batch.{var_name}.clone(),', f'Some(batch.{var_name}.clone()),')
             
             # 错误模式 3: expected DateTime<Utc>, found NaiveDateTime
             # 修复方法: 在 NaiveDateTime 后加 .and_utc()
@@ -147,7 +154,7 @@ def fix_errors(errors):
     return fixes_applied
 
 def main():
-    log_file = '/tmp/mes_check_v456.log'
+    log_file = '/tmp/mes_check_v457.log'
     
     print(f"解析 {log_file}...")
     errors = parse_cargo_check(log_file)
