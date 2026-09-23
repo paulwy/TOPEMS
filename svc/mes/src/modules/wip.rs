@@ -528,8 +528,8 @@ pub async fn get_wip(
                 last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(Some(r.created_at)),
-                updated_at: naive_to_utc(Some(r.updated_at)),
+                created_at: r.created_at.and_utc(),
+                updated_at: r.updated_at.and_utc(),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -616,8 +616,8 @@ pub async fn update_wip(
                 last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: naive_to_utc(Some(r.created_at)),
-                updated_at: naive_to_utc(Some(r.updated_at)),
+                created_at: r.created_at.and_utc(),
+                updated_at: r.updated_at.and_utc(),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
