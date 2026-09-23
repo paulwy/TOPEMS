@@ -927,7 +927,8 @@ mod tests {
         let dt = chrono::NaiveDate::from_ymd_opt(2024, 6, 15)
             .unwrap()
             .and_hms_opt(8, 30, 0)
-            .unwrap();
+            .unwrap()
+            .and_utc();
         assert_eq!(to_rfc3339(dt), "2024-06-15T08:30:00+00:00");
     }
 }
