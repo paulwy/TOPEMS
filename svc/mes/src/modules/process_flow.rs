@@ -688,7 +688,7 @@ pub async fn add_flow_step(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.date().and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -810,7 +810,7 @@ pub async fn update_flow_step(
             .or_else(|| {
                 chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
                     .ok()
-                    .and_then(|d| d.date().and_hms_opt(0, 0, 0))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
