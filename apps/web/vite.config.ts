@@ -184,7 +184,7 @@ const SERVICES: ServiceConfig[] = [
   // V68.1: plugin-registry 独立服务（端口 8096）
   // 插件注册/市场/安装/升级 API，路径前缀 /api/plugin
   // 旧路径 /api/core/plugin/* 通过下方兼容代理重写为 /api/plugin/* 转发到 8096
-  { name: 'plugin-registry', port: BACKEND_PORTS['plugin-registry'], apiPrefix: '/api/plugin' },
+  { name: 'plugin-registry', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/plugin' },
 ];
 
 // ============================================================================
