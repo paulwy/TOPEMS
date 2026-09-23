@@ -418,6 +418,7 @@ impl TicketSlaService {
         &self,
         tenant_id: Uuid,
         req: CreateSlaPolicyRequest,
+        locale: &str,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let policy_id = Uuid::new_v4();
         let now = Utc::now();
@@ -470,7 +471,7 @@ impl TicketSlaService {
         .execute(&self.pool)
         .await?;
 
-        self.get_policy(Some(tenant_id), policy_id, "zh").await
+        self.get_policy(Some(tenant_id), policy_id, locale).await
     }
 
     pub async fn get_policy(
@@ -531,6 +532,7 @@ impl TicketSlaService {
         tenant_id: Uuid,
         policy_id: Uuid,
         req: UpdateSlaPolicyRequest,
+        locale: &str,
     ) -> Result<TicketSlaPolicy, sqlx::Error> {
         let now = Utc::now();
 
@@ -586,7 +588,7 @@ impl TicketSlaService {
         .execute(&self.pool)
         .await?;
 
-        self.get_policy(Some(tenant_id), policy_id, "zh").await
+        self.get_policy(Some(tenant_id), policy_id, locale).await
     }
 
     pub async fn delete_policy(

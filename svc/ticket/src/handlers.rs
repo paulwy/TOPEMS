@@ -948,13 +948,15 @@ pub async fn get_sla_stats_handler(
 pub async fn create_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateSlaPolicyRequest>,
 ) -> Json<ApiResponse<TicketSlaPolicy>> {
     let service = TicketSlaService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.create_policy(tenant_id, req).await {
+    match service.create_policy(tenant_id, req, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略创建成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("创建SLA策略失败", e))),
     }
@@ -1016,13 +1018,15 @@ pub async fn update_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<UpdateSlaPolicyRequest>,
 ) -> Json<ApiResponse<TicketSlaPolicy>> {
     let service = TicketSlaService::new(pool);
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
+    let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.update_policy(tenant_id, id, req).await {
+    match service.update_policy(tenant_id, id, req, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略更新成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新SLA策略失败", e))),
     }

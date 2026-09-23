@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Path, Query, State},
+    http::HeaderMap,
     routing::{get, post},
     Json, Router,
 };
@@ -17,6 +18,7 @@ use crate::models::price_comparison::{
 };
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 // =============================================================================
@@ -668,6 +670,7 @@ pub async fn list_quotes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -679,6 +682,7 @@ pub async fn list_quotes(
         Err(e) => return e,
     }
     let tenant_bind = tenant_bind_value(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -692,7 +696,7 @@ pub async fn list_quotes(
         SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount::float8, 
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks, 
                q.created_at, q.updated_at,
-               s.name as supplier_name
+               CASE WHEN $6='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
         FROM scm.supplier_quotes q
         LEFT JOIN scm.suppliers s ON q.supplier_id = s.id
         WHERE ($1::text IS NULL OR q.quote_no ILIKE $1 OR s.name ILIKE $1)
@@ -708,6 +712,7 @@ pub async fn list_quotes(
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 
@@ -806,6 +811,7 @@ pub async fn get_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -817,13 +823,14 @@ pub async fn get_quote(
         Err(e) => return e,
     }
     let tenant_bind = tenant_bind_value(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, QuoteListRecord>(only_own_schema_query!(
         "scm",
         r#"
         SELECT q.id, q.inquiry_id, q.supplier_id, q.quote_no, q.quote_date, q.total_amount::float8,
                q.currency, q.delivery_days, q.valid_until, q.payment_terms, q.status, q.remarks,
                q.created_at, q.updated_at,
-               s.name as supplier_name
+               CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
         FROM scm.supplier_quotes q
         LEFT JOIN scm.suppliers s ON q.supplier_id = s.id
         WHERE q.id = $1 AND q.deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $2)
@@ -831,6 +838,7 @@ pub async fn get_quote(
     ))
     .bind(id)
     .bind(tenant_bind)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -966,6 +974,7 @@ pub async fn list_comparisons(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -977,6 +986,7 @@ pub async fn list_comparisons(
         Err(e) => return e,
     }
     let tenant_bind = tenant_bind_value(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -988,7 +998,7 @@ pub async fn list_comparisons(
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
                c.recommended_quote_id, c.total_score::float8, c.quality_score::float8, c.price_score::float8,
                c.delivery_score::float8, c.service_score::float8, c.remarks, c.created_by, c.created_at, c.updated_at,
-               s.name as recommended_supplier_name,
+               CASE WHEN $5='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as recommended_supplier_name,
                i.title as inquiry_title
         FROM scm.price_comparisons c
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
@@ -1003,6 +1013,7 @@ pub async fn list_comparisons(
     .bind(page_size)
     .bind(offset)
     .bind(tenant_bind)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 
@@ -1142,6 +1153,7 @@ pub async fn get_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -1153,12 +1165,13 @@ pub async fn get_comparison(
         Err(e) => return e,
     }
     let tenant_bind = tenant_bind_value(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     let result = sqlx::query_as::<_, ComparisonListRecord>(
         only_own_schema_query!("scm", r#"
         SELECT c.id, c.inquiry_id, c.comparison_no, c.compared_at, c.recommended_supplier_id,
                c.recommended_quote_id, c.total_score::float8, c.quality_score::float8, c.price_score::float8,
                c.delivery_score::float8, c.service_score::float8, c.remarks, c.created_by, c.created_at, c.updated_at,
-               s.name as recommended_supplier_name,
+               CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as recommended_supplier_name,
                i.title as inquiry_title
         FROM scm.price_comparisons c
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
@@ -1168,6 +1181,7 @@ pub async fn get_comparison(
     )
     .bind(id)
     .bind(tenant_bind)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1178,7 +1192,7 @@ pub async fn get_comparison(
                 r#"
                 SELECT ci.id, ci.supplier_id, ci.quote_id, ci.quality_score::float8, ci.price_score::float8,
                        ci.delivery_score::float8, ci.service_score::float8, ci.total_score::float8, ci.rank, ci.remarks,
-                       s.name as supplier_name
+                       CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
                 FROM scm.price_comparison_items ci
                 LEFT JOIN scm.suppliers s ON ci.supplier_id = s.id
                 WHERE ci.comparison_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR ci.tenant_id = $2)
@@ -1187,6 +1201,7 @@ pub async fn get_comparison(
             ))
             .bind(id)
             .bind(tenant_bind)
+            .bind(locale)
             .fetch_all(&mut **txn)
             .await
             .unwrap_or_default();

@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Query, State},
+    http::HeaderMap,
     routing::get,
     Json, Router,
 };
@@ -11,6 +12,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -362,6 +364,7 @@ pub async fn supplier_performance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
+    headers: HeaderMap,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -379,6 +382,7 @@ pub async fn supplier_performance(
         Err(e) => return e,
     }
     let tenant_bind = tenant_bind_value(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     let start_date = params.start_date.unwrap_or_else(|| {
         let now = chrono::Utc::now();
         let start = now - chrono::Duration::days(90);
@@ -393,7 +397,7 @@ pub async fn supplier_performance(
         r#"
         SELECT 
             s.id,
-            s.name,
+            CASE WHEN $4='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END AS name,
             s.code,
             s.category,
             COUNT(po.id) as total_orders,
@@ -441,7 +445,7 @@ pub async fn supplier_performance(
         ) se ON s.id = se.supplier_id
         WHERE s.status = 'active'
           AND ($3 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $3)
-        GROUP BY s.id, s.name, s.code, s.category, se.total_score, s.level
+        GROUP BY s.id, s.code, s.category, se.total_score, s.level, CASE WHEN $4='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY overall_score DESC
         LIMIT 10
         "#
@@ -449,6 +453,7 @@ pub async fn supplier_performance(
     .bind(&start_date)
     .bind(&end_date)
     .bind(tenant_bind)
+    .bind(locale)
     .fetch_all(&mut **txn)
     .await;
 

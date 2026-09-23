@@ -1,5 +1,6 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, http::HeaderMap, Json};
 use sqlx::{types::Uuid, Postgres, QueryBuilder, Row};
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{
@@ -9,18 +10,25 @@ use super::models::{
 pub async fn list_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<InstrumentDataQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InstrumentData>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let mut query_builder = QueryBuilder::<Postgres>::new(
         r#"
         SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
                d.raw_data, d.parsed_data, d.status, d.quality_score,
                d.error_msg, d.collected_at::TEXT, d.parsed_at::TEXT,
                d.created_by, d.created_at::TEXT, d.updated_at::TEXT,
-               i.instrument_no, i.name as instrument_name
+               i.instrument_no, CASE WHEN
+        "#,
+    );
+    query_builder.push_bind(locale);
+    query_builder.push(
+        r#" = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name
         FROM qa_lims_instrument_data d
         LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
         WHERE 1=1
@@ -88,25 +96,28 @@ pub async fn list_instrument_data(
 pub async fn get_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<InstrumentData>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的数据ID")),
     };
 
+    let locale = Locale::from_headers(&headers).as_sql();
     let row = sqlx::query(
         r#"
         SELECT d.id, d.data_no, d.instrument_id, d.batch_no, d.protocol,
                d.raw_data, d.parsed_data, d.status, d.quality_score,
                d.error_msg, d.collected_at::TEXT, d.parsed_at::TEXT,
                d.created_by, d.created_at::TEXT, d.updated_at::TEXT,
-               i.instrument_no, i.name as instrument_name
+               i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END AS instrument_name
         FROM qa_lims_instrument_data d
         LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
         WHERE d.id = $1
         "#,
     )
     .bind(id)
+    .bind(locale)
     .fetch_optional(&state.pool)
     .await;
 

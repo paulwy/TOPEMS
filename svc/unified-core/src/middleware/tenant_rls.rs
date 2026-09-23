@@ -214,30 +214,28 @@ pub async fn tenant_rls_middleware(
 
     match tenant_id {
         Some(tenant_id) => {
-            // superuser 会话使用零值租户（RLS 策略放行全量），业务侧 TenantId 仍保留实际租户
+            // superuser：不设置 GUC（连接保持空 → 策略空分支放行全量），避免零值误拦；
+            // 普通用户：设置实际租户（SQL 层显式租户条件是主防线，RLS 作纵深防御）
             let is_superuser = req
                 .extensions()
                 .get::<Claims>()
                 .map(|c| c.is_superuser)
                 .unwrap_or(false);
-            let rls_tenant = if is_superuser {
-                "00000000-0000-0000-0000-000000000000".to_string()
-            } else {
-                tenant_id.clone()
-            };
-            if let Err(e) = set_rls_policy(&state.pool, &rls_tenant).await {
-                tracing::error!("Failed to set RLS policy: {}", e);
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    [(header::CONTENT_TYPE, "application/json")],
-                    r#"{"success":false,"message":"内部服务器错误：无法设置租户上下文","code":500}"#,
-                )
-                    .into_response();
+            if !is_superuser {
+                if let Err(e) = set_rls_policy(&state.pool, &tenant_id).await {
+                    tracing::error!("Failed to set RLS policy: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"内部服务器错误：无法设置租户上下文","code":500}"#,
+                    )
+                        .into_response();
+                }
             }
 
             req.extensions_mut().insert(TenantId(tenant_id.clone()));
 
-            tracing::debug!("RLS policy set for tenant: {} (rls: {})", tenant_id, rls_tenant);
+            tracing::debug!("RLS policy set for tenant: {} (rls: {})", tenant_id, tenant_id);
 
             next.run(req).await
         }

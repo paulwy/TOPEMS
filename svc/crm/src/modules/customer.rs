@@ -1177,7 +1177,7 @@ async fn get_customer_finance(
     >,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
-    _headers: axum::http::HeaderMap,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<CustomerFinanceInfo>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -1190,6 +1190,7 @@ async fn get_customer_finance(
     } else {
         claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
+    let locale = Locale::from_headers(&headers).as_sql();
 
     // 超管豁免：tenant_opt 为 None 时 $2::uuid IS NULL 恒真，跨租户可见；非超管按自身租户过滤
     let row = sqlx::query_as::<_, CustomerFinanceRow>(
@@ -1200,7 +1201,7 @@ async fn get_customer_finance(
                cf.avg_collection_days, cf.total_sales, cf.total_received,
                cf.last_transaction_date, cf.payment_terms, cf.risklevel, cf.status,
                cf.bank_name, cf.bank_account, cf.account_name, cf.tax_number,
-               COALESCE(c.name, cf.customer_name) AS resolved_name
+               COALESCE(CASE WHEN $3 = 'en' THEN COALESCE(c.name_en, c.name) ELSE c.name END, cf.customer_name) AS resolved_name
         FROM crm.customer_finance cf
         LEFT JOIN crm.customers c ON c.id = cf.customer_id
         WHERE cf.customer_id = $1 AND ($2::uuid IS NULL OR cf.tenant_id = $2)
@@ -1208,6 +1209,7 @@ async fn get_customer_finance(
     )
     .bind(id)
     .bind(tenant_opt)
+    .bind(locale)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -1241,10 +1243,11 @@ async fn get_customer_finance(
         Ok(None) => {
             // 无财务记录：返回默认财务信息（前端依赖默认展示，不 404）
             let name = sqlx::query_scalar::<_, String>(
-                "SELECT name FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
+                "SELECT CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END FROM crm.customers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
             )
             .bind(id)
             .bind(tenant_opt)
+            .bind(locale)
             .fetch_optional(&mut **txn)
             .await;
             let customer_name = match name {

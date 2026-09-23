@@ -297,14 +297,17 @@ pub async fn create_instance(
 )]
 pub async fn start_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'running', started_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -337,14 +340,17 @@ pub async fn start_instance(
 )]
 pub async fn approve_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'approved', completed_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -377,14 +383,17 @@ pub async fn approve_instance(
 )]
 pub async fn reject_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'rejected', completed_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -417,14 +426,17 @@ pub async fn reject_instance(
 )]
 pub async fn cancel_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'cancelled', completed_at = NOW(), updated_at = NOW() 
-         WHERE id = $1 
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -457,14 +469,17 @@ pub async fn cancel_instance(
 )]
 pub async fn resume_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'running', completed_at = NULL, updated_at = NOW() 
-         WHERE id = $1 
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -497,14 +512,17 @@ pub async fn resume_instance(
 )]
 pub async fn suspend_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'suspended', updated_at = NOW() 
-         WHERE id = $1 
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -663,9 +681,11 @@ pub struct RetryInstanceRequest {
 )]
 pub async fn retry_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<RetryInstanceRequest>>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let node_id = payload.and_then(|p| p.node_id);
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances
@@ -673,11 +693,12 @@ pub async fn retry_instance(
              current_node_id = COALESCE($2, current_node_id),
              completed_at = NULL,
              updated_at = NOW()
-         WHERE id = $1
-         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at",
+         WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)
+         RETURNING id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at, tenant_id",
     )
     .bind(id)
     .bind(node_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

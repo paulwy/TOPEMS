@@ -1,6 +1,6 @@
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::Deserialize;
@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 use super::models::{
@@ -199,12 +200,15 @@ pub async fn get_task(
 )]
 pub async fn claim_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowTask>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE core_workflow_tasks SET status = 'claimed', claimed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at",
+        "UPDATE core_workflow_tasks SET status = 'claimed', claimed_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -237,12 +241,15 @@ pub async fn claim_task(
 )]
 pub async fn unclaim_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowTask>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE core_workflow_tasks SET status = 'pending', claimed_at = NULL WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at",
+        "UPDATE core_workflow_tasks SET status = 'pending', claimed_at = NULL WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -276,14 +283,17 @@ pub async fn unclaim_task(
 )]
 pub async fn approve_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at",
+        "UPDATE core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -317,14 +327,17 @@ pub async fn approve_task(
 )]
 pub async fn reject_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE core_workflow_tasks SET status = 'rejected', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at",
+        "UPDATE core_workflow_tasks SET status = 'rejected', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -358,14 +371,17 @@ pub async fn reject_task(
 )]
 pub async fn complete_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at",
+        "UPDATE core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -399,14 +415,17 @@ pub async fn complete_task(
 )]
 pub async fn delegate_task(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "UPDATE core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at",
+        "UPDATE core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
     .bind(id)
     .bind(payload.comment)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -435,23 +454,35 @@ pub async fn delegate_task(
 )]
 pub async fn batch_approve(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> Json<ApiResponse<TaskBatchResult>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
 
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
+                "UPDATE core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
             )
             .bind(task_id)
             .bind(&payload.comment)
+            .bind(tenant_opt)
             .execute(&state.pool)
             .await;
 
             match result {
-                Ok(_) => success_count += 1,
+                Ok(r) => {
+                    if r.rows_affected() > 0 {
+                        success_count += 1;
+                    } else {
+                        failed_tasks.push(TaskFailure {
+                            task_id: task_id_str.clone(),
+                            error: "任务不存在或不在当前租户范围内".to_string(),
+                        });
+                    }
+                }
                 Err(e) => {
                     failed_tasks.push(TaskFailure {
                         task_id: task_id_str.clone(),
@@ -489,23 +520,35 @@ pub async fn batch_approve(
 )]
 pub async fn batch_complete(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> Json<ApiResponse<TaskBatchResult>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
 
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1",
+                "UPDATE core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
             )
             .bind(task_id)
             .bind(&payload.comment)
+            .bind(tenant_opt)
             .execute(&state.pool)
             .await;
 
             match result {
-                Ok(_) => success_count += 1,
+                Ok(r) => {
+                    if r.rows_affected() > 0 {
+                        success_count += 1;
+                    } else {
+                        failed_tasks.push(TaskFailure {
+                            task_id: task_id_str.clone(),
+                            error: "任务不存在或不在当前租户范围内".to_string(),
+                        });
+                    }
+                }
                 Err(e) => {
                     failed_tasks.push(TaskFailure {
                         task_id: task_id_str.clone(),
@@ -543,23 +586,35 @@ pub async fn batch_complete(
 )]
 pub async fn batch_delegate(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> Json<ApiResponse<TaskBatchResult>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
 
     for task_id_str in &payload.task_ids {
         if let Ok(task_id) = Uuid::parse_str(task_id_str) {
             let result = sqlx::query(
-                "UPDATE core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1",
+                "UPDATE core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3)",
             )
             .bind(task_id)
             .bind(&payload.comment)
+            .bind(tenant_opt)
             .execute(&state.pool)
             .await;
 
             match result {
-                Ok(_) => success_count += 1,
+                Ok(r) => {
+                    if r.rows_affected() > 0 {
+                        success_count += 1;
+                    } else {
+                        failed_tasks.push(TaskFailure {
+                            task_id: task_id_str.clone(),
+                            error: "任务不存在或不在当前租户范围内".to_string(),
+                        });
+                    }
+                }
                 Err(e) => {
                     failed_tasks.push(TaskFailure {
                         task_id: task_id_str.clone(),

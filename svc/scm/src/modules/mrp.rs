@@ -14,6 +14,7 @@ use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::locale::Locale;
 use topems_shared_core::response::PaginationParams;
 use topems_shared_core::response::{api_error, ApiResponse};
 
@@ -366,6 +367,7 @@ pub async fn compute_mrp(
         Err(e) => return e,
     }
     let tenant_bind = tenant_bind_value(&claims);
+    let locale = Locale::from_headers(&headers).as_sql();
     let request_data = serde_json::to_value(&req).ok();
     let forecast_days = req.forecast_days.unwrap_or(30);
     let safety_factor = req.safety_stock_factor.unwrap_or(1.2);
@@ -460,7 +462,8 @@ pub async fn compute_mrp(
             GROUP BY item_code
         ) i ON m.material_code = i.item_code
         LEFT JOIN (
-            SELECT DISTINCT ON (sp.material_code) sp.id as id, s.name as name,
+            SELECT DISTINCT ON (sp.material_code) sp.id as id,
+                   CASE WHEN $8='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as name,
                    s.lead_time_days as lead_time_days, sp.material_code as material_code
             FROM scm.supplier_products sp
             JOIN scm.suppliers s ON sp.supplier_id = s.id
@@ -483,6 +486,7 @@ pub async fn compute_mrp(
     .bind(forecast_days)
     .bind(include_forecast)
     .bind(tenant_bind)
+    .bind(locale)
     .fetch_all(&mut *tx)
     .await;
 

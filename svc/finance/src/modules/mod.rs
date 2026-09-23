@@ -810,6 +810,7 @@ async fn get_aux_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<AuxBalanceReport>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
@@ -832,7 +833,8 @@ async fn get_aux_balance(
         start_date: params.start_date,
         end_date: params.end_date,
     };
-    match service.get_aux_balance(tenant_id, query).await {
+    let locale = Locale::from_headers(&headers).as_sql();
+    match service.get_aux_balance(tenant_id, query, locale).await {
         Ok(balance) => Json(ApiResponse::success(balance, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

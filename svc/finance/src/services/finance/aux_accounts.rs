@@ -145,6 +145,7 @@ impl FinanceService {
         &self,
         tenant_id: Uuid,
         query: AuxLedgerQuery,
+        locale: &str,
     ) -> Result<Vec<AuxBalanceReport>, TopemsError> {
         let type_str = query.aux_type.to_string();
         let aux_id = query.aux_id;
@@ -160,7 +161,7 @@ impl FinanceService {
                 la.code as aux_code,
                 a.id as account_id,
                 a.code as account_code,
-                a.name as account_name,
+                CASE WHEN $6 = 'en' THEN COALESCE(a.name_en, a.name) ELSE a.name END AS account_name,
                 COALESCE(SUM(l.debit), 0) as total_debit,
                 COALESCE(SUM(l.credit), 0) as total_credit
             FROM finance.core_finance_aux_accounts la
@@ -172,7 +173,7 @@ impl FinanceService {
               AND la.aux_type::text = $2
               AND ($3::uuid IS NULL OR la.id = $3)
               AND ($5::uuid IS NULL OR a.id = $5)
-            GROUP BY la.id, la.name, la.code, a.id, a.code, a.name
+            GROUP BY la.id, la.name, la.code, a.id, a.code, CASE WHEN $6 = 'en' THEN COALESCE(a.name_en, a.name) ELSE a.name END
             ORDER BY la.code, a.code
             "#
         ))
@@ -181,6 +182,7 @@ impl FinanceService {
         .bind(aux_id)
         .bind(period)
         .bind(account_id)
+        .bind(locale)
         .fetch_all(&self.db_pool)
         .await?;
 
