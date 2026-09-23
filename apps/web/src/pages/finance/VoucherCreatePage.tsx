@@ -80,13 +80,20 @@ const VoucherCreatePage: React.FC = () => {
   const auxAccountsQuery = useQuery<AuxAccount[]>({
     queryKey: QUERY_KEYS.FINANCE.AUX_ACCOUNTS,
     queryFn: async () => {
-      const result = await auxAccountApi.list();
-      if (result.success && result.data) {
-        const d = result.data as { items?: AuxAccount[]; data?: AuxAccount[] } | AuxAccount[];
-        if (Array.isArray(d)) return d;
-        return d.items || d.data || [];
+      // 后端 /aux-accounts 要求 aux_type 必填，按 5 种类型并行查询后合并
+      const typeList = ['customer', 'supplier', 'project', 'department', 'employee'];
+      const results = await Promise.all(
+        typeList.map((t) => auxAccountApi.list({ aux_type: t }))
+      );
+      const all: AuxAccount[] = [];
+      for (const r of results) {
+        if (r.success && r.data) {
+          const d = r.data as { items?: AuxAccount[]; data?: AuxAccount[] } | AuxAccount[];
+          if (Array.isArray(d)) all.push(...d);
+          else all.push(...(d.items || d.data || []));
+        }
       }
-      return [];
+      return all;
     },
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
