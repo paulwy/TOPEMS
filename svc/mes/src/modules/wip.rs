@@ -944,7 +944,7 @@ pub async fn list_wip_transfers(
             to_work_station_id: r.to_work_station_id,
             to_work_station_name: r.to_work_station_name,
             quantity: big_decimal_to_f64(Some(r.quantity)),
-            transfer_time: naive_to_utc(Some(r.transfer_time)),
+            transfer_time: r.transfer_time.and_utc(),
             operator: r.operator,
             transfer_type: r
                 .transfer_type
