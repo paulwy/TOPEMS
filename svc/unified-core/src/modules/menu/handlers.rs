@@ -1,11 +1,12 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, api_success};
 
 use super::models::{
@@ -145,9 +146,11 @@ pub async fn create_group(
 
 pub async fn update_group(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMenuGroupRequest>,
 ) -> Json<ApiResponse<MenuGroup>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let sql = format!(
         r#"UPDATE core_menu_groups
            SET name = COALESCE($1, name),
@@ -156,7 +159,7 @@ pub async fn update_group(
                sort_order = COALESCE($4, sort_order),
                status = COALESCE($5, status),
                updated_at = $6
-           WHERE id = $7
+           WHERE id = $7 AND ($8::uuid IS NULL OR tenant_id = $8)
            RETURNING {}"#,
         MENU_GROUP_COLUMNS
     );
@@ -169,6 +172,7 @@ pub async fn update_group(
         .bind(req.status)
         .bind(chrono::Utc::now())
         .bind(id)
+        .bind(tenant_opt)
         .fetch_optional(&state.pool)
         .await
     {
@@ -187,10 +191,13 @@ pub async fn update_group(
 
 pub async fn delete_group(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"UPDATE core_menu_groups SET deleted_at = NOW() WHERE id = $1"#)
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let result = sqlx::query(r#"UPDATE core_menu_groups SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
         .bind(id)
+        .bind(tenant_opt)
         .execute(&state.pool)
         .await;
 
@@ -344,9 +351,11 @@ pub async fn create_menu(
 
 pub async fn update_menu(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMenuRequest>,
 ) -> Json<ApiResponse<Menu>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
     let sql = format!(
         r#"UPDATE core_menus
            SET group_id = COALESCE($1, group_id),
@@ -359,7 +368,7 @@ pub async fn update_menu(
                permissions = COALESCE($8, permissions),
                status = COALESCE($9, status),
                updated_at = $10
-           WHERE id = $11
+           WHERE id = $11 AND ($12::uuid IS NULL OR tenant_id = $12)
            RETURNING {}"#,
         MENU_COLUMNS
     );
@@ -376,6 +385,7 @@ pub async fn update_menu(
         .bind(req.status)
         .bind(chrono::Utc::now())
         .bind(id)
+        .bind(tenant_opt)
         .fetch_optional(&state.pool)
         .await
     {
@@ -394,10 +404,13 @@ pub async fn update_menu(
 
 pub async fn delete_menu(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"UPDATE core_menus SET deleted_at = NOW() WHERE id = $1"#)
+    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let result = sqlx::query(r#"UPDATE core_menus SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
         .bind(id)
+        .bind(tenant_opt)
         .execute(&state.pool)
         .await;
 

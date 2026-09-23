@@ -221,16 +221,18 @@ pub async fn tenant_rls_middleware(
                 .get::<Claims>()
                 .map(|c| c.is_superuser)
                 .unwrap_or(false);
-            if !is_superuser {
-                if let Err(e) = set_rls_policy(&state.pool, &tenant_id).await {
-                    tracing::error!("Failed to set RLS policy: {}", e);
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"内部服务器错误：无法设置租户上下文","code":500}"#,
-                    )
-                        .into_response();
-                }
+            // set_config 的 is_local=false 为会话级：GUC 在连接上持久残留，
+            // 连接复用会污染后续请求。因此每个请求都必须显式设置/重置：
+            // 普通用户 set 实际租户；superuser set 空字符串（策略空分支放行全量）。
+            let rls_tenant = if is_superuser { "" } else { tenant_id.as_str() };
+            if let Err(e) = set_rls_policy(&state.pool, rls_tenant).await {
+                tracing::error!("Failed to set RLS policy: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    r#"{"success":false,"message":"内部服务器错误：无法设置租户上下文","code":500}"#,
+                )
+                    .into_response();
             }
 
             req.extensions_mut().insert(TenantId(tenant_id.clone()));
