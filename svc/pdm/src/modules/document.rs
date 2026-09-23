@@ -142,7 +142,7 @@ pub async fn list_documents(
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -162,7 +162,7 @@ pub async fn list_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                 "#,
@@ -220,7 +220,7 @@ pub async fn search_documents(
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
           AND ($3::text IS NULL OR document_type = $3)
           AND ($4::text IS NULL OR status = $4)
@@ -246,7 +246,7 @@ pub async fn search_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE (1::uuid IS NULL OR tenant_id = $1)
+                WHERE ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
                   AND ($3::text IS NULL OR document_type = $3)
                   AND ($4::text IS NULL OR status = $4)
@@ -382,7 +382,7 @@ pub async fn get_document(
         r#"
         SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_documents WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -791,7 +791,7 @@ pub async fn get_document_approval_history(
         SELECT id, workflow_id, workflow_name, current_step, status, 
                assignees, history, created_by, created_at, updated_at
         FROM pdm_workflow_instances 
-        WHERE target_type = 'document' AND target_id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        WHERE target_type = 'document' AND target_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         ORDER BY created_at DESC
         "#,
     )
@@ -864,8 +864,8 @@ pub async fn list_pending_documents(
                i.current_step, i.assignees
         FROM pdm_documents d
         LEFT JOIN pdm_workflow_instances i 
-            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND (1::uuid IS NULL OR i.tenant_id = $1)
-        WHERE d.status = 'pending_approval' AND (1::uuid IS NULL OR d.tenant_id = $1)
+            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND ($1::uuid IS NULL OR i.tenant_id = $1)
+        WHERE d.status = 'pending_approval' AND ($1::uuid IS NULL OR d.tenant_id = $1)
         ORDER BY d.updated_at DESC
         "#,
     )

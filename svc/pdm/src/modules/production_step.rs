@@ -88,7 +88,7 @@ pub async fn list_steps(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         FROM pdm_production_steps
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::uuid IS NULL OR process_id = $2)
         ORDER BY process_id, step_no
         LIMIT $3 OFFSET $4
@@ -106,7 +106,7 @@ pub async fn list_steps(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_steps
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::uuid IS NULL OR process_id = $2)
                 "#,
             )
@@ -217,7 +217,7 @@ pub async fn get_step(
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
         SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
-        FROM pdm_production_steps WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_production_steps WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

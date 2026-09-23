@@ -89,7 +89,7 @@ pub async fn list_statistics(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
         FROM pdm_production_batches
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         GROUP BY product_id, product_name
         ORDER BY batch_count DESC
         LIMIT $2 OFFSET $3
@@ -107,7 +107,7 @@ pub async fn list_statistics(
                 r#"
                 SELECT COUNT(*) FROM (
                     SELECT 1 FROM pdm_production_batches
-                    WHERE (1::uuid IS NULL OR tenant_id = $1)
+                    WHERE ($1::uuid IS NULL OR tenant_id = $1)
                     GROUP BY product_id, product_name
                 ) AS grouped
                 "#,
@@ -168,17 +168,17 @@ pub async fn get_statistics_summary(
     )>(
         r#"
         SELECT
-            (SELECT COUNT(*) FROM pdm_production_processes WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_processes,
-            (SELECT COUNT(*) FROM pdm_production_processes WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'active') AS active_processes,
-            (SELECT COUNT(*) FROM pdm_production_formulas WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_formulas,
-            (SELECT COUNT(*) FROM pdm_production_formulas WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'active') AS active_formulas,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status IN ('planning', 'pending')) AS planning_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status IN ('in_progress', 'processing')) AS in_progress_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'completed') AS completed_batches,
-            (SELECT COUNT(*) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1) AND status = 'cancelled') AS cancelled_batches,
-            (SELECT COUNT(*) FROM pdm_production_steps WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_steps,
-            (SELECT COALESCE(SUM(quantity), 0) FROM pdm_production_batches WHERE (1::uuid IS NULL OR tenant_id = $1)) AS total_output_quantity
+            (SELECT COUNT(*) FROM pdm_production_processes WHERE ($1::uuid IS NULL OR tenant_id = $1)) AS total_processes,
+            (SELECT COUNT(*) FROM pdm_production_processes WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active') AS active_processes,
+            (SELECT COUNT(*) FROM pdm_production_formulas WHERE ($1::uuid IS NULL OR tenant_id = $1)) AS total_formulas,
+            (SELECT COUNT(*) FROM pdm_production_formulas WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'active') AS active_formulas,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE ($1::uuid IS NULL OR tenant_id = $1)) AS total_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('planning', 'pending')) AS planning_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status IN ('in_progress', 'processing')) AS in_progress_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'completed') AS completed_batches,
+            (SELECT COUNT(*) FROM pdm_production_batches WHERE ($1::uuid IS NULL OR tenant_id = $1) AND status = 'cancelled') AS cancelled_batches,
+            (SELECT COUNT(*) FROM pdm_production_steps WHERE ($1::uuid IS NULL OR tenant_id = $1)) AS total_steps,
+            (SELECT COALESCE(SUM(quantity), 0) FROM pdm_production_batches WHERE ($1::uuid IS NULL OR tenant_id = $1)) AS total_output_quantity
         "#,
     )
     .bind(tenant_id)
@@ -257,7 +257,7 @@ pub async fn get_statistics(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
         FROM pdm_production_batches
-        WHERE product_id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        WHERE product_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         GROUP BY product_id, product_name
         "#,
     )
@@ -274,7 +274,7 @@ pub async fn get_statistics(
                 r#"
                 SELECT status, COUNT(*) AS count, SUM(quantity) AS quantity
                 FROM pdm_production_batches
-                WHERE product_id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+                WHERE product_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
                 GROUP BY status
                 "#,
             )

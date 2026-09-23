@@ -42,7 +42,7 @@ pub async fn get_settings(
     };
 
     let result = sqlx::query(
-        "SELECT key, value FROM pdm.module_settings WHERE (1::uuid IS NULL OR tenant_id = $1) AND category = $2",
+        "SELECT key, value FROM pdm.module_settings WHERE ($1::uuid IS NULL OR tenant_id = $1) AND category = $2",
     )
     .bind(tenant_id)
     .bind(&category)

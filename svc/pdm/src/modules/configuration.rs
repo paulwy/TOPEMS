@@ -95,7 +95,7 @@ pub async fn list_configurations(
         SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
         FROM pdm_configurations
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
@@ -117,7 +117,7 @@ pub async fn list_configurations(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_configurations
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
@@ -249,7 +249,7 @@ pub async fn get_configuration(
         r#"
         SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
-        FROM pdm_configurations WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_configurations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

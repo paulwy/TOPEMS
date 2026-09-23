@@ -116,7 +116,7 @@ pub async fn list_workflows(
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
         FROM pdm_workflows
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
     )
@@ -236,7 +236,7 @@ pub async fn get_workflow(
         r#"
         SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
-        FROM pdm_workflows WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_workflows WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -489,7 +489,7 @@ pub async fn list_workflow_instances(
                current_step, status, assignees, history, created_by,
                created_at, updated_at
         FROM pdm_workflow_instances
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         "#,
     )
@@ -540,7 +540,7 @@ pub async fn get_workflow_instance(
         SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
-        FROM pdm_workflow_instances WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_workflow_instances WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

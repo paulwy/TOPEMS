@@ -413,7 +413,7 @@ pub async fn list_versions(
         r#"
         SELECT {VERSION_COLUMNS}
         FROM pdm_document_versions
-        WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1) AND document_id = $2
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND document_id = $2
         ORDER BY created_at DESC
         "#
     ))
@@ -501,7 +501,7 @@ pub async fn get_version(
         r#"
         SELECT {VERSION_COLUMNS}
         FROM pdm_document_versions
-        WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
         "#
     ))
     .bind(tenant_id)
@@ -794,7 +794,7 @@ pub async fn download_version(
         r#"
         SELECT file_url, file_type, encode(file_content, 'base64') AS file_content_base64
         FROM pdm_document_versions
-        WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND document_id = $2 AND id = $3
         "#,
     )
     .bind(tenant_id)
@@ -829,7 +829,7 @@ pub async fn download_version(
 
 async fn get_document_type(state: &AppState, tenant_id: Uuid, document_id: Uuid) -> Option<String> {
     sqlx::query_scalar::<_, Option<String>>(
-        "SELECT document_type FROM pdm_documents WHERE (1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND deleted_at IS NULL",
+        "SELECT document_type FROM pdm_documents WHERE ($1::uuid IS NULL OR tenant_id = $1) AND id = $2 AND deleted_at IS NULL",
     )
     .bind(tenant_id)
     .bind(document_id)

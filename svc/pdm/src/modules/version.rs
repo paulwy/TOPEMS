@@ -94,7 +94,7 @@ pub async fn list_versions(
         SELECT id, tenant_id, version_no, target_type, target_id, target_name, version_label,
                description, status, created_by, created_at, updated_at
         FROM pdm_versions
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR version_no ILIKE $2 OR target_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR target_type = $4)
@@ -118,7 +118,7 @@ pub async fn list_versions(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_versions
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR version_no ILIKE $2 OR target_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR target_type = $4)
@@ -240,7 +240,7 @@ pub async fn get_version(
         r#"
         SELECT id, tenant_id, version_no, target_type, target_id, target_name, version_label,
                description, status, created_by, created_at, updated_at
-        FROM pdm_versions WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_versions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

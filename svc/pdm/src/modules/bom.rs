@@ -602,7 +602,7 @@ pub async fn list_bom_versions(
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
         FROM pdm_boms
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR bom_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
@@ -650,7 +650,7 @@ pub async fn get_bom_version(
         SELECT id, tenant_id, bom_no, product_name AS name, product_id, product_name,
                product_code, version, status, description, created_at, updated_at
         FROM pdm_boms
-        WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
@@ -927,7 +927,7 @@ pub async fn list_bom_items(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::uuid IS NULL OR bom_id = $2)
         ORDER BY sequence ASC, material_code ASC
         "#,
@@ -974,7 +974,7 @@ pub async fn get_bom_item(
                material_code AS part_number, material_name AS part_name,
                specification, unit, quantity, loss_rate, sequence AS level, notes AS remarks
         FROM pdm_bom_items
-        WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

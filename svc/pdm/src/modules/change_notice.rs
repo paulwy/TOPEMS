@@ -116,7 +116,7 @@ pub async fn list_change_notices(
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
         FROM pdm_change_notices
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::text IS NULL OR change_type = $4)
@@ -140,7 +140,7 @@ pub async fn list_change_notices(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_change_notices
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::text IS NULL OR change_type = $4)
@@ -283,7 +283,7 @@ pub async fn get_change_notice(
         SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_change_notices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)

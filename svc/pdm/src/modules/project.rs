@@ -202,7 +202,7 @@ pub async fn list_projects(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
-        WHERE p.deleted_at IS NULL AND (1::uuid IS NULL OR p.tenant_id = $1)
+        WHERE p.deleted_at IS NULL AND ($1::uuid IS NULL OR p.tenant_id = $1)
           AND ($2::text IS NULL OR p.project_no ILIKE $2 OR p.name ILIKE $2 OR p.description ILIKE $2)
           AND ($3::text IS NULL OR p.status = $3)
           AND ($4::text IS NULL OR p.phase = $4)
@@ -304,7 +304,7 @@ pub async fn get_project(
         r#"
         SELECT {PROJECT_COLUMNS}
         FROM pdm_projects p
-        WHERE p.deleted_at IS NULL AND p.id = $1 AND (2::uuid IS NULL OR p.tenant_id = $2)
+        WHERE p.deleted_at IS NULL AND p.id = $1 AND ($2::uuid IS NULL OR p.tenant_id = $2)
         "#
     ))
     .bind(id)
@@ -510,7 +510,7 @@ pub async fn list_members(
         r#"
         SELECT id, tenant_id, project_id, user_id, user_name, user_email, role, joined_at, updated_at
         FROM pdm_project_members
-        WHERE (1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
         ORDER BY joined_at DESC
         "#,
     )
@@ -676,7 +676,7 @@ pub async fn list_phases(
         SELECT id, tenant_id, project_id, phase, name, description, start_date, end_date,
                status, deliverables, created_at, updated_at
         FROM pdm_project_phases
-        WHERE (1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND project_id = $2
         ORDER BY created_at ASC
         "#,
     )

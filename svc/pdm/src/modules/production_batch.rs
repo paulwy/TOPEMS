@@ -98,7 +98,7 @@ pub async fn list_batches(
         SELECT id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                start_date, end_date, status, notes, created_at, updated_at
         FROM pdm_production_batches
-        WHERE (1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR batch_no ILIKE $2 OR product_name ILIKE $2)
           AND ($3::text IS NULL OR status = $3)
           AND ($4::uuid IS NULL OR product_id = $4)
@@ -120,7 +120,7 @@ pub async fn list_batches(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_batches
-                WHERE deleted_at IS NULL AND (1::uuid IS NULL OR tenant_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
                   AND ($2::text IS NULL OR batch_no ILIKE $2 OR product_name ILIKE $2)
                   AND ($3::text IS NULL OR status = $3)
                   AND ($4::uuid IS NULL OR product_id = $4)
@@ -240,7 +240,7 @@ pub async fn get_batch(
         r#"
         SELECT id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                start_date, end_date, status, notes, created_at, updated_at
-        FROM pdm_production_batches WHERE id = $1 AND (2::uuid IS NULL OR tenant_id = $2)
+        FROM pdm_production_batches WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
         "#,
     )
     .bind(id)
