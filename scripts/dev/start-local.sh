@@ -198,18 +198,37 @@ install_deps() {
 # 步骤 4：启动后端
 # =================================================
 start_backend() {
-  info "启动后端 (unified-core, 端口 8000)..."
+  local mode="${1:-standalone}"
 
-  if check_port 8000; then
-    success "unified-core (8000) 已在运行"
-    return 0
-  fi
+  if [ "$mode" = "monolith" ]; then
+    info "启动后端 (模块化单体, 端口 8099)..."
 
-  if [ -x "$SCRIPT_DIR/../topems.sh" ]; then
-    "$SCRIPT_DIR/../topems.sh" start iam
-    success "后端启动完成"
+    if check_port 8099; then
+      success "topems-server (8099) 已在运行"
+      return 0
+    fi
+
+    if [ -x "$PROJECT_ROOT/scripts/run_monolith.sh" ]; then
+      "$PROJECT_ROOT/scripts/run_monolith.sh" &
+      success "模块化单体后端启动完成 (PID: $!)"
+      info "等待服务启动 (约 3 分钟)..."
+    else
+      warn "未找到 scripts/run_monolith.sh，跳过后端启动"
+    fi
   else
-    warn "未找到 scripts/topems.sh，跳过后端启动"
+    info "启动后端 (unified-core, 端口 8000)..."
+
+    if check_port 8000; then
+      success "unified-core (8000) 已在运行"
+      return 0
+    fi
+
+    if [ -x "$SCRIPT_DIR/../topems.sh" ]; then
+      "$SCRIPT_DIR/../topems.sh" start iam
+      success "后端启动完成"
+    else
+      warn "未找到 scripts/topems.sh，跳过后端启动"
+    fi
   fi
 }
 
@@ -254,27 +273,25 @@ clean_frontend_cache() {
 # 步骤 6：启动前端
 # =================================================
 start_frontend() {
-  info "启动前端 (topems-core 3001 + topems-portal 3000)..."
+  local mode="${1:-standalone}"
+
+  info "启动前端 (topems-portal 3000)..."
 
   # 自动检测并清理损坏的 Vite 缓存
   clean_frontend_cache
   
-  # Core 模块
-  if check_port 3001; then
-    success "topems-core (3001) 已在运行"
-  else
-    info "启动 topems-core (3001)..."
-    (cd "$PROJECT_ROOT" && nohup pnpm dev:core > "$PROJECT_ROOT/logs/core.log" 2>&1 &) || warn "无法启动 topems-core"
-    sleep 2
-  fi
-
   # Web 主应用
   if check_port 3000; then
     success "topems-portal (3000) 已在运行"
   else
     mkdir -p "$PROJECT_ROOT/logs"
     info "启动 topems-portal (3000)..."
-    (cd "$PROJECT_ROOT" && nohup pnpm dev:web > "$PROJECT_ROOT/logs/web.log" 2>&1 &) || warn "无法启动 topems-portal"
+    if [ "$mode" = "monolith" ]; then
+      info "  模块化单体模式: VITE_MONOLITH=1"
+      (cd "$PROJECT_ROOT" && nohup VITE_MONOLITH=1 pnpm dev:web > "$PROJECT_ROOT/logs/web.log" 2>&1 &) || warn "无法启动 topems-portal"
+    else
+      (cd "$PROJECT_ROOT" && nohup pnpm dev:web > "$PROJECT_ROOT/logs/web.log" 2>&1 &) || warn "无法启动 topems-portal"
+    fi
     sleep 2
   fi
 
@@ -391,13 +408,13 @@ case "$cmd" in
   status)
     show_status
     ;;
-  all|"")
+  monolith|"")
     check_env
     install_deps
     start_db
-    start_backend
-    sleep 2
-    start_frontend
+    start_backend "monolith"
+    sleep 30  # 等待模块化单体服务启动
+    start_frontend "monolith"
     sleep 3
     show_status
     ;;
