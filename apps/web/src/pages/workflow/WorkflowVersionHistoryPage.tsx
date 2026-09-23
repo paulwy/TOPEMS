@@ -13,6 +13,7 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { GitBranch, Plus, User, RotateCcw, Trash2, Loader2, Calendar, Play } from 'lucide-react';
@@ -438,7 +439,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     <>
       <ListPageTemplate<WorkflowVersion>
         title={i18n.t('workflow.workflow_version_history_page.k25')}
-        subtitle={workflow?.name}
+        subtitle={localizedName(workflow?.name, workflow?.name_en)}
         backButton={{ href: '/flow/definitions' }}
         columns={columns}
         data={versions}

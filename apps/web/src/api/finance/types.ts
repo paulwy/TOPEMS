@@ -31,6 +31,7 @@ export interface AccountingSubject {
   id: string;
   code: string;
   name: string;
+  name_en?: string | null;
   category?: string | null;
   level: number;
   parent_code?: string | null;

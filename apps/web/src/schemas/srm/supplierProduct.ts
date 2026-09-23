@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 export const supplierProductSchema: EntitySchema = {
   entity: 'supplier_product',
@@ -29,6 +30,8 @@ export const supplierProductSchema: EntitySchema = {
       sortable: true,
       listWidth: 160,
       validation: [{ type: 'maxLength', value: 200 }],
+      renderCell: (row, _index) =>
+        localizedName(row.name as string | null, row.name_en as string | null) || '-',
     },
     {
       name: 'supplier',
@@ -36,6 +39,10 @@ export const supplierProductSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 140,
+      renderCell: (row, _index) => {
+        const zh = (row.supplier_name ?? row.supplier) as string | null | undefined;
+        return localizedName(zh, row.supplier_name_en as string | null) || '-';
+      },
     },
     {
       name: 'category',

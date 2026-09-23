@@ -34,6 +34,7 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { customerApi } from '@/api/crm/customer';
 import type { Customer as ApiCustomer } from '@/api/crm/types';
+import { localizedName } from '@/utils/i18n';
 
 import '@/theme/redesign-tokens.css';
 import '@/theme/redesign-global.css';
@@ -44,6 +45,7 @@ interface Customer {
   id: string;
   customer_no: string;
   customer_name: string;
+  customer_name_en?: string | null;
   industry: string;
   level: 'A' | 'B' | 'C' | 'D';
   status: 'active' | 'inactive' | 'potential';
@@ -63,6 +65,7 @@ const mapApiCustomers = (apiCustomers: ApiCustomer[]): Customer[] => {
     id: c.id,
     customer_no: c.code || `CUS${String(index + 1).padStart(3, '0')}`,
     customer_name: c.name,
+    customer_name_en: c.name_en,
     industry: c.industry || '-',
     level: (c.rating as Customer['level']) || 'C',
     status: (c.status as Customer['status']) || 'potential',
@@ -421,7 +424,9 @@ const CrmCustomerRedesignPage: React.FC = () => {
         header: t('crm.customer_list_page.col_customer_name'),
         render: (row) => (
           <div>
-            <div style={{ fontWeight: 500 }}>{row.customer_name}</div>
+            <div style={{ fontWeight: 500 }}>
+              {localizedName(row.customer_name, row.customer_name_en)}
+            </div>
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
               {row.industry}
             </div>
@@ -697,7 +702,10 @@ const CrmCustomerRedesignPage: React.FC = () => {
                       marginTop: 'var(--space-1)',
                     }}
                   >
-                    {selectedCustomer.customer_name}
+                    {localizedName(
+                      selectedCustomer.customer_name,
+                      selectedCustomer.customer_name_en
+                    )}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
                     {selectedCustomer.industry}
@@ -969,7 +977,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
       >
         <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
           {t('crm.customer_list_page.delete_confirm_message', {
-            name: deleteTarget?.customer_name,
+            name: localizedName(deleteTarget?.customer_name, deleteTarget?.customer_name_en),
           })}
         </p>
       </Modal>

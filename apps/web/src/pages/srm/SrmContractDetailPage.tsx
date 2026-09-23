@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 const statusLabels: Record<string, string> = {
   pending: i18n.t('pages.srm_contract_detail_page.k4'),
@@ -156,7 +157,10 @@ const SrmContractDetailPage: React.FC = () => {
             <Box sx={{ mt: 0.5 }}>
               <Chip
                 icon={<Building2 sx={{ width: 14, height: 14 }} />}
-                label={contract.supplier_name || i18n.t('pages.srm_contract_detail_page.k16')}
+                label={
+                  localizedName(contract.supplier_name, contract.supplier_name_en) ||
+                  i18n.t('pages.srm_contract_detail_page.k16')
+                }
                 size='small'
               />
             </Box>

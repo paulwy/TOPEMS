@@ -17,10 +17,12 @@ import { workflowDefinitionApi } from '@/api/workflow';
 import { workflowDefinitionSchema } from '@/schemas/workflow';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 // ============ 类型定义 ============
 interface WorkflowDefinition {
   id: string;
   name: string;
+  name_en?: string | null;
   code: string;
   category: string;
   version: string;
@@ -36,6 +38,7 @@ interface WorkflowDefinition {
 type FlowWorkflowRow = {
   id: string;
   name: string;
+  name_en?: string | null;
   description?: string | null;
   status?: string;
   version?: number;
@@ -51,6 +54,7 @@ function toDefinition(w: FlowWorkflowRow): WorkflowDefinition {
   return {
     id: w.id,
     name: w.name,
+    name_en: w.name_en ?? null,
     code: String(w.code ?? ''),
     category: 'approval',
     version: `v${String(w.version ?? 1)}`,
@@ -114,7 +118,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
         addNotification({
           type: 'success',
           title: i18n.t('workflow.workflow_definitions_page.k14'),
-          message: `${i18n.t('pages.workflow_definitions_page.k0')}${row.name}${i18n.t('pages.workflow_definitions_page.k1')}`,
+          message: `${i18n.t('pages.workflow_definitions_page.k0')}${localizedName(row.name as string | null | undefined, row.name_en as string | null | undefined)}${i18n.t('pages.workflow_definitions_page.k1')}`,
         });
       } catch (err) {
         addNotification({

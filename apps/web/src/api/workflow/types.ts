@@ -83,6 +83,7 @@ interface WorkflowData {
 export interface Workflow {
   id: string;
   name: string;
+  name_en?: string | null;
   description?: string;
   definition: WorkflowDefinition;
   isactive: boolean;
@@ -118,6 +119,7 @@ export interface WorkflowInstance {
   id: string;
   workflow_id?: string;
   workflow_name?: string;
+  workflow_name_en?: string | null;
   name?: string;
   status: 'pending' | 'running' | 'completed' | 'rejected' | 'suspended' | 'terminated' | string;
   currentnode?: string;

@@ -4,6 +4,7 @@ import { Typography, Box } from '@mui/material';
 import { Plus, X } from 'lucide-react';
 import { ActionButton, FormField, FormSelect, Dialog, CurrencyField } from '@/components/common';
 import type { VoucherItemRequest, AccountingSubject } from '@/api/finance';
+import { localizedName } from '@/utils/i18n';
 
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -229,7 +230,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   }
                   options={subjects.map((s) => ({
                     value: s.code,
-                    label: `${s.code} - ${s.name}`,
+                    label: `${s.code} - ${localizedName(s.name, s.name_en)}`,
                   }))}
                 />
                 <FormField

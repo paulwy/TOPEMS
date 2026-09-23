@@ -18,6 +18,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import {
   Package,
   FileText,
@@ -345,7 +346,9 @@ const SupplierPortalPage: React.FC = () => {
 
   return (
     <StatsPageTemplate
-      title={supplier?.name || i18n.t('pages.supplier_portal_page.k19')}
+      title={
+        localizedName(supplier?.name, supplier?.name_en) || i18n.t('pages.supplier_portal_page.k19')
+      }
       subtitle={`${i18n.t('pages.supplier_portal_page.k0')}: ${supplier?.supplier_no || 'SUP-001'}`}
       showSearch={false}
       showTimeRange={false}
@@ -367,7 +370,7 @@ const SupplierPortalPage: React.FC = () => {
                   fontSize: designTokens.typography.fontSize.scale['1.5rem'],
                 }}
               >
-                {supplier?.name?.charAt(0) || 'S'}
+                {localizedName(supplier?.name, supplier?.name_en).charAt(0) || 'S'}
               </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>

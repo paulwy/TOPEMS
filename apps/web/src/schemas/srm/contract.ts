@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 export const contractSchema: EntitySchema = {
   entity: 'supplier_contract',
@@ -38,8 +39,11 @@ export const contractSchema: EntitySchema = {
       type: 'text',
       required: true,
       listWidth: 150,
-      renderCell: (row: Record<string, unknown>) => {
-        const name = row.supplier_name as string | undefined;
+      renderCell: (row, _index) => {
+        const name = localizedName(
+          row.supplier_name as string | null,
+          row.supplier_name_en as string | null
+        );
         const id = row.supplier_id as string | undefined;
         return React.createElement('span', {}, name || id || '-');
       },

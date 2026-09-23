@@ -10,6 +10,7 @@ import {
   Button,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { NodeData, EdgeData } from '@/components/workflow/WorkflowDesigner';
@@ -207,7 +208,7 @@ const WorkflowDesignerPage: React.FC = () => {
     }
   };
   const title = workflow
-    ? `${i18n.t('pages.workflow_designer_page.k3')}${workflow.name}`
+    ? `${i18n.t('pages.workflow_designer_page.k3')}${localizedName(workflow.name, workflow.name_en)}`
     : i18n.t('workflow.workflow_designer_page.k12');
 
   return (

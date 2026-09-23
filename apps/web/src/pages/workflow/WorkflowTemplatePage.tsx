@@ -10,6 +10,7 @@ import { workflowDefinitionApi } from '@/api/workflow';
 import type { Workflow } from '@/api/workflow';
 import { workflowTemplateSchema, renderTemplateTypeBadge } from '@/schemas/workflow';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 // ============ 列定义（覆盖 Schema 自动生成的列，加入审计字段） ============
 const customColumns: ColumnDef[] = [
   {
@@ -20,7 +21,10 @@ const customColumns: ColumnDef[] = [
       React.createElement(
         Typography,
         { variant: 'body2', sx: { fontWeight: 500 } },
-        String(row.name || '')
+        localizedName(
+          row.name as string | null | undefined,
+          row.name_en as string | null | undefined
+        )
       ),
   },
   {
@@ -58,6 +62,7 @@ const customColumns: ColumnDef[] = [
 interface FlowTemplateRecord {
   id: string;
   name: string;
+  name_en?: string | null;
   type: string;
   scope: string;
   usageCount: number;
@@ -68,6 +73,7 @@ function toRecord(w: Workflow): FlowTemplateRecord {
   return {
     id: w.id,
     name: w.name,
+    name_en: w.name_en ?? null,
     type: String(w.data?.type || 'approval'),
     scope: String(w.data?.scope || i18n.t('workflow.workflow_template_page.k6')),
     usageCount: Number(w.data?.usageCount || 0),
@@ -152,7 +158,7 @@ const WorkflowTemplatePage: React.FC = () => {
           addNotification({
             type: 'success',
             title: i18n.t('workflow.workflow_template_page.k12'),
-            message: `${i18n.t('pages.workflow_template_page.k1')}${workflow.name}」`,
+            message: `${i18n.t('pages.workflow_template_page.k1')}${localizedName(workflow.name, workflow.name_en)}」`,
           });
         } else if (response.success === false) {
           throw new Error(response.message || i18n.t('workflow.workflow_template_page.k13'));

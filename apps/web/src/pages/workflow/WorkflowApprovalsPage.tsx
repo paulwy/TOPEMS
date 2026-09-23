@@ -32,6 +32,7 @@ import {
 import type { DataTableColumn, Toast } from '@/components/redesign';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import { useTranslation } from 'react-i18next';
 
 import '@/theme/redesign-tokens.css';
@@ -45,6 +46,7 @@ interface ApprovalTask {
   id: string;
   title: string;
   workflowName: string;
+  workflowNameEn?: string | null;
   workflowType: string;
   initiator: string;
   receivedAt: string;
@@ -344,7 +346,7 @@ const WorkflowApprovalsPage: React.FC = () => {
             {row.title}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            {row.workflowName} · {row.nodeName}
+            {localizedName(row.workflowName, row.workflowNameEn)} · {row.nodeName}
           </div>
         </div>
       ),
@@ -579,7 +581,7 @@ const WorkflowApprovalsPage: React.FC = () => {
                 />
                 <InfoItem
                   label={t('workflow.approvals_page.label_workflow_name')}
-                  value={selectedTask.workflowName}
+                  value={localizedName(selectedTask.workflowName, selectedTask.workflowNameEn)}
                 />
                 <InfoItem
                   label={t('workflow.approvals_page.label_workflow_type')}

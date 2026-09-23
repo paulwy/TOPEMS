@@ -29,6 +29,7 @@ import { PageContainer } from '@/components/common';
 import { voucherApi } from '@/api/finance/voucher';
 import { accountingSubjectApi } from '@/api/finance/accountingSubject';
 import type { AccountingSubject, VoucherItemRequest, CreateVoucherRequest } from '@/api/finance';
+import { localizedName } from '@/utils/i18n';
 import { useNotificationStore } from '@/store';
 
 import { useTranslation } from 'react-i18next';
@@ -408,7 +409,9 @@ const VoucherCreatePage: React.FC = () => {
                     <Autocomplete
                       size='small'
                       options={subjects}
-                      getOptionLabel={(option) => `${option.code} - ${option.name}`}
+                      getOptionLabel={(option) =>
+                        `${option.code} - ${localizedName(option.name, option.name_en)}`
+                      }
                       value={subjects.find((s) => s.code === item.subject_code) || null}
                       onChange={(_, newValue) => {
                         updateVoucherItem(index, 'subject_code', newValue?.code || '');

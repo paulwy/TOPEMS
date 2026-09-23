@@ -17,8 +17,10 @@ export interface SupplierProduct {
   id: string;
   supplier_id: string;
   supplier_name?: string;
+  supplier_name_en?: string | null;
   sku: string;
   name: string;
+  name_en?: string | null;
   category?: string;
   specification?: string;
   unit?: string;

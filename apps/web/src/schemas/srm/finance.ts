@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 export const financeSchema: EntitySchema = {
   entity: 'srmFinance',
@@ -39,6 +40,9 @@ export const financeSchema: EntitySchema = {
       label: i18n.t('srm.finance.k5'),
       type: 'text',
       listWidth: 150,
+      renderCell: (row, _index) =>
+        localizedName(row.supplier_name as string | null, row.supplier_name_en as string | null) ||
+        '-',
     },
     {
       name: 'amount',

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -27,6 +28,7 @@ import { useNotificationStore } from '@/store';
 interface BiddingSupplier {
   id: string;
   supplier_name: string;
+  supplier_name_en?: string | null;
   bid_amount?: number;
   delivery_time?: string;
   contact_person?: string;
@@ -275,7 +277,13 @@ const BiddingPage: React.FC = () => {
           <Box sx={{ fontSize: 12, color: 'text.secondary' }}>
             {i18n.t('pages.bidding_page.k21')}
           </Box>
-          <Box sx={{ fontWeight: 600 }}>{bidding.winner_supplier_name || '-'}</Box>
+          <Box sx={{ fontWeight: 600 }}>
+            {localizedName(
+              bidding.winner_supplier_name,
+              (bidding as unknown as Record<string, unknown>).winner_supplier_name_en as
+                string | null | undefined
+            ) || '-'}
+          </Box>
         </Box>
       </Box>
       {bidding.description && (
@@ -341,7 +349,9 @@ const BiddingPage: React.FC = () => {
               ) : (
                 biddingSuppliers.map((supplier) => (
                   <TableRow key={supplier.id}>
-                    <TableCell sx={{ fontWeight: 500 }}>{supplier.supplier_name}</TableCell>
+                    <TableCell sx={{ fontWeight: 500 }}>
+                      {localizedName(supplier.supplier_name, supplier.supplier_name_en)}
+                    </TableCell>
                     <TableCell align='right'>
                       ¥{supplier.bid_amount?.toLocaleString() || '-'}
                     </TableCell>
@@ -366,7 +376,12 @@ const BiddingPage: React.FC = () => {
                         <Button
                           size='small'
                           color='success'
-                          onClick={() => handleAward(supplier.id, supplier.supplier_name)}
+                          onClick={() =>
+                            handleAward(
+                              supplier.id,
+                              localizedName(supplier.supplier_name, supplier.supplier_name_en)
+                            )
+                          }
                           startIcon={<Check size={12} />}
                         >
                           {i18n.t('pages.bidding_page.k1')}

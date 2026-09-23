@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import { TrendingUp, Send, Check, XCircle } from 'lucide-react';
 import CrudPage, { type RowAction } from '@/components/templates/CrudPage';
 import { createCrudPageAdapter } from '@/schema/crudPageAdapter';
@@ -327,7 +328,13 @@ const InquiryQuotationPage: React.FC = () => {
                 quotations.map((quotation) => (
                   <TableRow key={quotation.id}>
                     <TableCell sx={{ fontWeight: 500 }}>{quotation.quotation_no}</TableCell>
-                    <TableCell>{quotation.supplier_name}</TableCell>
+                    <TableCell>
+                      {localizedName(
+                        quotation.supplier_name,
+                        (quotation as unknown as Record<string, unknown>).supplier_name_en as
+                          string | null | undefined
+                      ) || '-'}
+                    </TableCell>
                     <TableCell>¥{quotation.total_amount?.toLocaleString() || '-'}</TableCell>
                     <TableCell>{quotation.delivery_time || '-'}</TableCell>
                     <TableCell>

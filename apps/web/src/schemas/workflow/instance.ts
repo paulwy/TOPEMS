@@ -4,6 +4,7 @@ import { Chip, Box, Typography, Avatar } from '@mui/material';
 import { PlaySquare, GitBranch, Clock } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 const STATUS_CONFIG: Record<
   string,
@@ -80,7 +81,10 @@ export const workflowInstanceSchema: EntitySchema = {
             React.createElement(
               Typography,
               { variant: 'body2', sx: { fontWeight: 600 } },
-              (row.workflow_name || row.name || '-') as string
+              localizedName(
+                (row.workflow_name ?? row.name) as string | null | undefined,
+                row.workflow_name_en as string | null | undefined
+              ) || '-'
             ),
             React.createElement(
               Typography,

@@ -3,6 +3,7 @@ import type { PaginationParams } from '../client';
 export interface Customer {
   id: string;
   name: string;
+  name_en?: string | null;
   code?: string;
   industry?: string;
   companysize?: string;

@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 export const accountingSubjectSchema: EntitySchema = {
   entity: 'finance_accounting_subject',
@@ -29,6 +30,11 @@ export const accountingSubjectSchema: EntitySchema = {
       required: true,
       sortable: true,
       listWidth: 160,
+      renderCell: (row, _index) =>
+        localizedName(
+          row.name as string | null | undefined,
+          row.name_en as string | null | undefined
+        ),
       validation: [{ type: 'maxLength', value: 200 }],
     },
     {

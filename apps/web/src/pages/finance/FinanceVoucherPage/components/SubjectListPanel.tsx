@@ -3,6 +3,7 @@ import { Typography, Box } from '@mui/material';
 import { StatusBadge, StatCardGroup } from '@/components';
 import type { StatCardGroupProps } from '@/components/common';
 import type { AccountingSubject } from '@/api/finance';
+import { localizedName } from '@/utils/i18n';
 
 import { useTranslation } from 'react-i18next';
 
@@ -83,7 +84,7 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
               variant='h6'
               sx={{ fontWeight: 600, color: 'text.primary' }}
             >
-              {subject.name}
+              {localizedName(subject.name, subject.name_en)}
             </Typography>
             <Box
               sx={{

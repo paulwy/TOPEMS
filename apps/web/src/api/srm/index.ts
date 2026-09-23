@@ -44,6 +44,7 @@ export interface Supplier {
   id: string;
   supplier_no: string;
   name: string;
+  name_en?: string | null;
   legal_name?: string;
   category: string;
   status: string;
@@ -136,6 +137,7 @@ export interface SupplierContract {
   contractNo: string;
   supplier_id: string;
   supplier_name?: string;
+  supplier_name_en?: string | null;
   title: string;
   contract_type: string;
   total_amount?: number;
@@ -834,7 +836,7 @@ export const srmApi = {
   getBidComparison: bidPriceApi.getBidComparison,
 };
 
-export { bidPriceApi };
+export { bidPriceApi, supplierCategoryApi };
 
 export type {
   SupplierCategory,

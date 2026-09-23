@@ -1,6 +1,7 @@
 import React from 'react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 const statusConfig: Record<
   string,
@@ -165,6 +166,11 @@ export const biddingSchema: EntitySchema = {
       readonly: true,
       hideInForm: true,
       listWidth: 140,
+      renderCell: (row, _index) =>
+        localizedName(
+          row.winner_supplier_name as string | null,
+          row.winner_supplier_name_en as string | null
+        ) || '-',
     },
     {
       name: 'description',

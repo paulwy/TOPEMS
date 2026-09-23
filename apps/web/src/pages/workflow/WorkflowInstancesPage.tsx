@@ -11,6 +11,7 @@ import {
   Timer,
 } from 'lucide-react';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNotificationStore } from '../../store';
@@ -84,7 +85,7 @@ export const WorkflowInstancesPage: React.FC = () => {
       const instance = row as unknown as WorkflowInstance;
       openConfirm({
         title: i18n.t('workflow.workflow_instances_page.k0'),
-        message: `${i18n.t('pages.workflow_instances_page.k0')}${instance.workflow_name || instance.name || ''}${i18n.t('pages.workflow_instances_page.k1')}`,
+        message: `${i18n.t('pages.workflow_instances_page.k0')}${localizedName(instance.workflow_name ?? instance.name, instance.workflow_name_en)}${i18n.t('pages.workflow_instances_page.k1')}`,
         onConfirm: async () => {
           try {
             await instanceApi.suspendInstance(instance.id);
@@ -115,7 +116,7 @@ export const WorkflowInstancesPage: React.FC = () => {
       const instance = row as unknown as WorkflowInstance;
       openConfirm({
         title: i18n.t('workflow.workflow_instances_page.k5'),
-        message: `${i18n.t('pages.workflow_instances_page.k2')}${instance.workflow_name || instance.name || ''}${i18n.t('pages.workflow_instances_page.k3')}`,
+        message: `${i18n.t('pages.workflow_instances_page.k2')}${localizedName(instance.workflow_name ?? instance.name, instance.workflow_name_en)}${i18n.t('pages.workflow_instances_page.k3')}`,
         danger: true,
         onConfirm: async () => {
           try {

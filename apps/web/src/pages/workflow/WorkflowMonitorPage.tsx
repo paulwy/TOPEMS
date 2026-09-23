@@ -14,6 +14,7 @@ import { monitorApi } from '@/api/workflow/monitor';
 import { workflowMonitorSchema } from '@/schemas/workflow';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 type ExceptionType = 'timeout' | 'error' | 'stuck';
 interface WorkflowException {
@@ -29,6 +30,7 @@ interface WorkflowException {
 interface MonitorInstance {
   id: string;
   workflow_name?: string;
+  workflow_name_en?: string | null;
   current_node_name?: string;
   current_node_id?: string;
   started_at: string;
@@ -44,7 +46,9 @@ const buildExceptionList = (
     result.push({
       id: instance.id,
       instanceId: instance.id,
-      workflowName: instance.workflow_name || i18n.t('workflow.workflow_monitor_page.k0'),
+      workflowName: instance.workflow_name
+        ? localizedName(instance.workflow_name, instance.workflow_name_en ?? null)
+        : i18n.t('workflow.workflow_monitor_page.k0'),
       currentNode:
         instance.current_node_name ||
         instance.current_node_id ||
@@ -59,7 +63,9 @@ const buildExceptionList = (
     result.push({
       id: instance.id,
       instanceId: instance.id,
-      workflowName: instance.workflow_name || i18n.t('workflow.workflow_monitor_page.k3'),
+      workflowName: instance.workflow_name
+        ? localizedName(instance.workflow_name, instance.workflow_name_en ?? null)
+        : i18n.t('workflow.workflow_monitor_page.k3'),
       currentNode:
         instance.current_node_name ||
         instance.current_node_id ||

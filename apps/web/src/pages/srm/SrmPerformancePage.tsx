@@ -11,6 +11,7 @@ import { designTokens } from '@/theme/tokens';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 const ct = designTokens.colors;
 
@@ -34,6 +35,7 @@ interface PerformanceSummary {
   avg_overall_score?: number;
   top_supplier?: {
     name: string;
+    name_en?: string | null;
     avg_score: number;
   };
 }
@@ -330,7 +332,7 @@ const PerformanceStats: React.FC = () => {
                   variant='h6'
                   sx={{ fontWeight: 'bold' }}
                 >
-                  {summary.top_supplier.name}
+                  {localizedName(summary.top_supplier.name, summary.top_supplier.name_en)}
                   <Chip
                     sx={{ ml: 2 }}
                     label={`${summary.top_supplier.avg_score.toFixed(1)}${i18n.t('pages.srm_performance_page.k1')}`}

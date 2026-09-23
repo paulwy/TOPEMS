@@ -11,3 +11,22 @@ export function tpl(key: string, vars: Record<string, unknown> = {}): string {
     translation
   );
 }
+
+/**
+ * 根据当前 locale 返回后端数据的双语名称。
+ * - en 且 name_en 有值 → name_en
+ * - 其他情况（zh、或 name_en 为 null/空）→ name（中文 fallback）
+ * 用于消费后端已补 name_en 列的实体（supplier / customer / aux_account / workflow 等）。
+ * 数据值不抽 i18n 键，这是运行时数据选择，不是界面文案。
+ */
+export function localizedName(
+  name: string | null | undefined,
+  nameEn?: string | null,
+  locale?: string
+): string {
+  const lng = locale ?? i18n.language ?? 'zh';
+  if (lng.startsWith('en') && nameEn && nameEn.trim()) {
+    return nameEn;
+  }
+  return name ?? '';
+}

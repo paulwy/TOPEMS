@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 const riskColors: Record<string, string> = {
   low: 'success',
@@ -56,7 +57,7 @@ const SrmSupplierDetailPage: React.FC = () => {
           color={designTokens.colors.background.paper}
         />
       ),
-      title: supplier?.name,
+      title: localizedName(supplier?.name, supplier?.name_en),
       subtitle: supplier?.supplier_no,
       tags: [
         supplier?.status === 'active'
@@ -265,7 +266,9 @@ const SrmSupplierDetailPage: React.FC = () => {
         title=''
         subtitle=''
         detailItemName={
-          supplier?.name || supplier?.id || i18n.t('pages.srm_supplier_detail_page.k27')
+          localizedName(supplier?.name, supplier?.name_en) ||
+          supplier?.id ||
+          i18n.t('pages.srm_supplier_detail_page.k27')
         }
         backHref={SRM_PATHS.supplier}
         loading={loading}

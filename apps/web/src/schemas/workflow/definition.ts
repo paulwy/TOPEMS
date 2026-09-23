@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 // ============ 流程类型 ============
 
@@ -60,6 +61,11 @@ export const workflowDefinitionSchema: EntitySchema = {
       sortable: true,
       placeholder: i18n.t('shared.definition.k11'),
       validation: [{ type: 'maxLength', value: 128 }],
+      renderCell: (row: Record<string, unknown>, _index: number) =>
+        localizedName(
+          row.name as string | null | undefined,
+          row.name_en as string | null | undefined
+        ),
     },
     {
       name: 'code',

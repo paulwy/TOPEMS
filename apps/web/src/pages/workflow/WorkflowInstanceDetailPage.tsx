@@ -13,6 +13,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 import { useParams } from 'react-router-dom';
 import type { WorkflowInstance, Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
@@ -485,7 +486,10 @@ const FlowInstanceDetailPage: React.FC = () => {
         title={i18n.t('workflow.workflow_instance_detail_page.k16')}
         subtitle={details?.instance.id}
         detailItemName={
-          details?.instance?.name ||
+          localizedName(
+            details?.instance?.workflow_name ?? details?.instance?.name,
+            details?.instance?.workflow_name_en
+          ) ||
           details?.instance?.id ||
           i18n.t('workflow.workflow_instance_detail_page.k17')
         }

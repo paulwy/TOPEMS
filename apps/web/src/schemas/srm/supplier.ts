@@ -1,5 +1,6 @@
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
+import { localizedName } from '@/utils/i18n';
 
 export const supplierSchema: EntitySchema = {
   entity: 'supplier',
@@ -35,6 +36,8 @@ export const supplierSchema: EntitySchema = {
       sortable: true,
       listWidth: 160,
       validation: [{ type: 'maxLength', value: 200 }],
+      renderCell: (row, _index) =>
+        localizedName(row.name as string | null, row.name_en as string | null) || '-',
     },
     {
       name: 'legal_name',
