@@ -627,3 +627,8 @@ D
 - **问题**：通用 rls_tenant_isolation 策略拦截零值租户行 → 租户登录后看不到系统菜单（list items=[] total=53）
 - **修复**：新增 rls_menu_global_visible 专属策略（仅 core_menu_groups/core_menus）：零值行对所有租户可见 + 本租户专属行可见；不触碰通用策略（避免 audit_logs 等零值行暴露）
 - **实测**：B(0002) list groups 53/184 全量可见；B update 仍 403（RBAC）+ SQL 层条件双保险；S 正常
+
+## 2026-09-24 测试数据清理（完成）
+- [x] 本地 DB 清除 RLS 实测遗留：test_tenant_b_user/test_pm_user 两账号（sessions/refresh_tokens 级联）、0002 租户（RLS测试租户0002）、tenant_users/user_roles 绑定、workflow_tasks 2 条（11111111-2222-3333-4444-555555555555 / 22222222-3333-4444-5555-666666666666）、workflow_versions 1.1（eead40d8-e629-4d24-9b34-a2aab306e007）
+- [x] 验证：B 登录 401（账号已删）、S 登录正常回归；删除前快照备份 /tmp/topems_testdata_cleanup_20260924_052302.sql
+- [x] 纯本地 DB 变更，未入迁移
