@@ -17,10 +17,16 @@ use crate::models::{
         crate::handlers::update_ticket_handler,
         crate::handlers::delete_ticket_handler,
         crate::handlers::get_stats_handler,
+        crate::handlers::get_ticket_sla_handler,
+        crate::handlers::get_sla_stats_handler,
         crate::handlers::add_comment_handler,
         crate::handlers::list_comments_handler,
+        crate::handlers::list_activities_handler,
         crate::handlers::create_sla_policy_handler,
         crate::handlers::list_sla_policies_handler,
+        crate::handlers::get_sla_policy_handler,
+        crate::handlers::update_sla_policy_handler,
+        crate::handlers::delete_sla_policy_handler,
     ),
     components(
         schemas(
@@ -49,6 +55,7 @@ use crate::models::{
     ),
     tags(
         (name = "tickets", description = "工单管理 API"),
+        (name = "sla", description = "SLA 管理 API"),
         (name = "sla", description = "SLA 策略与统计 API"),
     ),
     info(

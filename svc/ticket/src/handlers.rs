@@ -833,6 +833,16 @@ pub async fn list_comments_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/tickets/{id}/activities",
+    responses(
+        (status = 200, description = "List ticket activities", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tickets"
+)]
 pub async fn list_activities_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -874,6 +884,16 @@ pub async fn get_stats_handler(
 
 // ==================== SLA Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:sla:read"])),
+    path = "/tickets/{id}/sla",
+    responses(
+        (status = 200, description = "Get ticket SLA", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sla"
+)]
 pub async fn get_ticket_sla_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -929,6 +949,16 @@ pub async fn trigger_sla_escalation_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:sla:read"])),
+    path = "/tickets/sla-stats",
+    responses(
+        (status = 200, description = "Get SLA stats", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sla"
+)]
 pub async fn get_sla_stats_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1018,6 +1048,16 @@ pub async fn list_sla_policies_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:sla:read"])),
+    path = "/sla-policies/{id}",
+    responses(
+        (status = 200, description = "Get SLA policy", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sla"
+)]
 pub async fn get_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1044,6 +1084,16 @@ pub async fn get_sla_policy_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:sla:write"])),
+    path = "/sla-policies/{id}",
+    responses(
+        (status = 200, description = "Update SLA policy", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sla"
+)]
 pub async fn update_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1065,6 +1115,16 @@ pub async fn update_sla_policy_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:sla:write"])),
+    path = "/sla-policies/{id}",
+    responses(
+        (status = 200, description = "Delete SLA policy", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sla"
+)]
 pub async fn delete_sla_policy_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
