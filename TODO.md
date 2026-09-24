@@ -799,3 +799,11 @@ D
 - [ ] **P4-3 API 文档全量化**（2026-09-24 部分完成：openapi.json 8→13→20→31 端点——实测确认并新增 /api/erp/sales-orders、/api/finance/receivables、/api/finance/vouchers、/api/finance/ledger、/api/pm/projects（带分页参数实测 200，ApiResponse 引用 schema，服务端重编译后验证生效）；现有注解分布：pm 46 + lims 2，其余模块空白（第二批：ehs/qms/scm/tms/pdm/lims/hrm 7 域，均带分页实测 200）（第三批：bi/portal/ticket/gis/rd/srm/mobile/search/monitor/integration/communication 11 域，均实测 200；覆盖 27 域 31 端点）；**注解驱动基建完成**：server 新增 openapi-gen 生成器（utoipa 4.2.3），合并静态 base + pm/lims ApiDoc → docs/api/openapi.json 61 端点（31 base + 30 注解增量），服务端验证生效；后续各域补 #[utoipa::path] 后重跑生成器即自动纳入；**路径规范化完成**：生成器按域映射补 /api/<域> 前缀（merge_doc 加 domain 参数 + 重建模式丢弃相对路径旧 key）——文档 664 端点全带 /api/ 前缀，服务端验证生效（finance 289/erp 150/pm 25 + finance-v5x 版本化子域）；**全域批量接入完成**：生成器接入 21 域 ApiDoc（qms/scm/wms/hrm/mes/tms/ticket/rd/srm/gis/portal/analytics(bi)/ehs/pdm/monitor/search/communication/integration/master-data/ai/plugin-registry）——文档 664→1296 端点全 /api/ 前缀，服务端验证生效（finance 289/erp 150/ehs 111/ai 83/bi 75/wms 71/pdm 63/mes 44/monitor 44 等约 30 域）（全 44 域接入：补充 mobile services/openapi::MobileApiDoc + unified-core lib ApiDoc（IamApiDoc 112 端点）——1408 端点全 /api/ 前缀，服务端验证生效）；**master-data 核**：/api/master-data/{rules,checks,domains} 实测均 404——monolith 未挂载 master-data 业务路由（文档已含注解 80 端点，待 master-data 路由接入时再核）；**剩余**：aps/iot/oa/cs 无独立 crate + 个别域注解补全（分轮推进）
   - 31 模块全量 utoipa 注解（当前仅 8 个核心端点）
   - 预计时间：4-8 小时
+
+## P4-3 注解补全推进（2026-09-25）
+- [x] **qms quality_issue**：补 get/update/delete 3 个 #[utoipa::path]（完整式：body 引用 ApiResponse<QualityIssue>/UpdateIssueRequest，security qms:read/write），openapi.rs 聚合 +3 引用；编译通过
+- [x] **scm purchase_contract**：补 list/create/get 3 个（简化式：security scm:read/write，tag SCM/purchase-contract），聚合 + tag 已加；编译通过（commit 8ddd756e3）
+- [x] **srm inquiry**：补 list/get/create 3 个（security srm:inquiry:read/write，tag SRM/inquiry），聚合 + tag 已加；编译通过（commit f66fb0980）
+- [x] **gis marker**：补 list/get/create 3 个（security gis:marker:read/write，tag marker），聚合 + tag 已加；编译通过（commit aedd874d0）
+- [ ] **阻塞**：openapi-gen 重生成被并行会话 MES 编译错误阻塞（当前 76 个 E0308 类型错，修复中）+ .sqlx 离线缓存缺失（22 crate 被清理，prepare 需 cargo check 全 workspace 被 mes 阻塞）——docs/api/openapi.json 待更新（1408 → +12 端点），服务端重编译重启待做
+- [ ] 剩余：portal 733/ticket 43/communication 78 等域注解（分轮推进）
