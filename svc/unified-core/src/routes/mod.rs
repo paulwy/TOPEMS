@@ -217,7 +217,9 @@ pub fn create_routes(
 
     let base_router = if embed_mode {
         // 嵌入模式：仅 core 业务路由（public 冲突路由与 wms/mes/scm 由 server 统一提供）
-        Router::new().merge(core_router)
+        Router::new()
+            .merge(core_router)
+            .merge(openapi::openapi_routes())
     } else {
         Router::new()
             .merge(public_routes)
