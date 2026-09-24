@@ -334,6 +334,10 @@ use crate::modules::*;
         // === Financial-Reports ===
         crate::modules::financial_reports::export_consolidated_report,
         crate::modules::financial_reports::export_report,
+        crate::modules::financial_reports::get_business_overview,
+        crate::modules::financial_reports::get_cash_flow_analysis,
+        crate::modules::financial_reports::get_aging_analysis,
+        crate::modules::financial_reports::get_profit_analysis,
 
         // === settlement_center RC4b: 18 recovered (module visibility fixed) ===
         crate::modules::settlement_center::handlers::list_reconciliations,

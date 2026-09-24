@@ -198,6 +198,10 @@ fn _detailed_health() {}
         workflow::list_workflow_instances,
         workflow::get_workflow_instance,
         workflow::advance_workflow
+        // === settings ===
+        settings::get_settings,
+        settings::update_settings,
+
     ),
 )]
 pub struct ApiDoc;

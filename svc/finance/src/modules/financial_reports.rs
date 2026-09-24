@@ -2415,6 +2415,13 @@ pub async fn get_department_summary(
 }
 
 /// 账龄分析报表：应收/应付账款账龄分布
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:report:read"])),
+    path = "/reports/aging-analysis",
+    responses((status = 200, description = "Get aging analysis")),
+    tag = "Finance"
+)]
 pub async fn get_aging_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
@@ -2507,6 +2514,13 @@ pub async fn get_voucher_statistics(
 }
 
 /// 现金流分析报表：按现金类科目汇总现金流
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:report:read"])),
+    path = "/reports/cash-flow-analysis",
+    responses((status = 200, description = "Get cash flow analysis")),
+    tag = "Finance"
+)]
 pub async fn get_cash_flow_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
@@ -2600,6 +2614,13 @@ pub async fn get_expense_analysis(
 }
 
 /// 利润分析报表：收入、成本、费用、利润
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:report:read"])),
+    path = "/reports/profit-analysis",
+    responses((status = 200, description = "Get profit analysis")),
+    tag = "Finance"
+)]
 pub async fn get_profit_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,

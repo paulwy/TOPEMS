@@ -29,6 +29,13 @@ pub struct UpdateSettingsRequest {
     pub settings: HashMap<String, String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pdm:settings:read"])),
+    path = "/api/pdm/settings",
+    responses((status = 200, description = "Get PDM settings")),
+    tag = "pdm"
+)]
 pub async fn get_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -78,6 +85,13 @@ pub async fn get_settings(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pdm:settings:write"])),
+    path = "/api/pdm/settings",
+    responses((status = 200, description = "Update PDM settings")),
+    tag = "pdm"
+)]
 pub async fn update_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
