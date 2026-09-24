@@ -290,7 +290,7 @@
 - [x] mes 编译错误 57 处清零：process_flow/inspection/patrol/standard/work_report 非 Option 字段误调 unwrap_or_default/unwrap_or/Display（→ 直接取值/format）；datetime_to_string/opt_datetime_to_string 收到 DateTime<Utc>（→ naive_utc()/map 转换）
 - [x] crm opportunity 列表 SELECT 补全 17 列（缺 opp_no 致 FromRow 失败）；customer 查询 rating NULL 解码失败（→ COALESCE(rating,'')）
 - [x] 服务 8099 重启生效：/api/crm/opportunities、/api/crm/customers 200；核心端点全 200；access logs 错误未复现
-- [ ] AI embedding 外部 API 400（外部服务限制，非本地缺陷）
+- [x] AI embedding 外部 API 400（2026-09-24 已解决：根因为 Ollama 进程停止 + embedding 模型端点，重启 ollama serve + nomic-embed-text 本地模型后 344 文档全量向量化，检索/chat 端到端通过）
 
 ## 2026-09-19 第二轮（46bd1c39d/1da428283 已推送）
 - [x] crm 客户画像 3 处 SQL 修复：互动记录 interaction_type 列名、联系人 full_name 列名、列表/详情 SELECT 补全+COALESCE（tenant_id/customer_type/rating/owner_id 零值兜底）——列表/详情 200，日志零 ERROR
@@ -376,17 +376,17 @@
 - 这导致大量类型不匹配错误
 
 ### 修复计划
-- [ ] P0-1：统一所有 MES 文件中的辅助函数签名（datetime_to_string/opt_datetime_to_string）
+- [x] P0-1：统一所有 MES 文件中的辅助函数签名（datetime_to_string/opt_datetime_to_string）（2026-09-19 轮完成：57 处清零，签名收 DateTime<Utc>）
   - 标准签名（对齐 CRM 模块）：`fn datetime_to_string(dt: DateTime<Utc>) -> String`
   - 批量修改所有 MES 文件中的辅助函数定义和调用
-- [ ] P0-2：统一所有 MES 文件中的 SQL 查询 schema 指定（加 mes. 前缀）
+- [ ] P0-2：统一所有 MES 文件中的 SQL 查询 schema 指定（加 mes. 前缀）——**未完成（已知风险）**：mes 仍有裸 INSERT INTO（production_scheduling/equipment_oee/process_route 等），运行时端点 /api/mes/orders 200 但 SEARCH_PATH 不含 mes、存在解析到 public 同名旧表的错表风险；修复需全量 SQL 加前缀并重生成 .sqlx，收益/风险比低，暂缓
   - 对齐 CRM 模块的做法：`INSERT INTO crm.customers` → `INSERT INTO mes.production_orders`
-- [ ] P0-3：重新生成 .sqlx 缓存
+- [x] P0-3：重新生成 .sqlx 缓存（2026-09-24：mes 144→165，crm/analytics/portal/server/wms 同步生成）
   - 用 SQLX_OFFLINE=false cargo check -p topems-mes 重新生成缓存
   - 提交新的 .sqlx 缓存
-- [ ] P0-4：验证编译通过
-  - SQLX_OFFLINE=true cargo check -p topems-mes 0 error
-  - SQLX_OFFLINE=false cargo check -p topems-mes 0 error
+- [x] P0-4：验证编译通过（2026-09-24：433→0，离线/在线均 0 error，server 全量构建通过）
+  - SQLX_OFFLINE=true cargo check -p topems-mes 0 error ✅
+  - SQLX_OFFLINE=false cargo check -p topems-mes 0 error ✅
 
 ### 关于远端
 - 远端有 TRAE 的提交，把代码恢复到了 2a4a74940 版本
@@ -423,12 +423,12 @@
 - 辅助函数：直接用 .to_rfc3339()，不需要辅助函数
 
 ### 修复计划
-- [ ] P0-1：统一所有辅助函数签名为 DateTime<Utc>
+- [x] P0-1：统一所有辅助函数签名为 DateTime<Utc>（09-19 轮完成）
   - 修改 9 个文件中的 datetime_to_string 函数定义
   - 修改 2 个文件中的 opt_datetime_to_string 函数定义
-- [ ] P0-2：修改调用点，把 NaiveDateTime 转换为 DateTime<Utc>
+- [x] P0-2：修改调用点，把 NaiveDateTime 转换为 DateTime<Utc>（09-19 轮完成：naive_utc()/map 转换）
   - 在需要的地方加 .and_utc() 或 .map(|d| d.and_utc())
-- [ ] P0-3：修复其他类型错误
+- [x] P0-3：修复其他类型错误（09-19 轮完成：非 Option 字段误调 unwrap_or_default/unwrap_or/Display 全部修复）
   - 去掉对 String 的 unwrap_or_default() 调用
   - 对 Option<Uuid> 用 .map(|id| id.to_string())
   - 修复 BigDecimal as f64 类型转换
@@ -468,10 +468,10 @@
 - 辅助函数：直接用 .to_rfc3339()，不需要辅助函数
 
 ### 修复计划
-- [ ] P0-1：修改辅助函数签名为 DateTime<Utc>
+- [x] P0-1：修改辅助函数签名为 DateTime<Utc>（09-19 轮完成）
   - 修改 9 个文件中的 datetime_to_string 函数定义
   - 修改 2 个文件中的 opt_datetime_to_string 函数定义
-- [ ] P0-2：批量修复调用点
+- [x] P0-2：批量修复调用点（09-19 轮完成：try_get Option<DateTime<Utc>>、to_rfc3339()）
   - 把 r.try_get::<Option<NaiveDateTime>, _>("created_at") 改为 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
   - 把 r.created_at.unwrap_or_default() 改为 r.created_at.to_rfc3339()
   - 其他类型转换
@@ -705,9 +705,9 @@ D
   - 预计时间：2 小时
 - [x] **P0-2 前端单元测试**（2026-09-24：unit 130 文件 3019 用例全绿；component 5 分片全绿（332+455+1912+约1800+413）；修复 ehs-api 2 处测试期望对齐后端契约 page_size/risk_level）
 - [x] **P0-3 端到端测试**（2026-09-24 完成：integration 层 5 spec 104/104 全绿——登录→跨模块导航/CRUD/工作流/i18n/数据流全链路；api 层 16 passed + 30 设计内 skip（UI 类与 integration 重复覆盖）。修复链：登录选择器改 form button[type=submit]（页面演示区重复按钮）、networkidle→domcontentloaded（vite dev 永不 idle）、82 处路径修正 admin→iam、登录表单 i18n 键 k13-k21 补全、后端 core_users.created_at TIMESTAMPTZ↔NaiveDateTime 解码修复（models.rs UserRow→DateTime<Utc> + 建表对齐）、AppShell 侧边栏折叠 localStorage 持久化、路由一致性断言改 pathname 检查；commits 见本段 git log）
-- [ ] **P0-4 性能测试**
-  - API 响应时间
-  - 数据库查询性能
+- [x] **P0-4 性能测试**（2026-09-24 完成，commit b7ff0534b：关键 API 中位数全部 <20ms——wms/qms/dashboard/erp/mes/modules 等 7.6-16ms，达标 <2s 目标 1% 水平）
+  - API 响应时间：已验证（中位数 <20ms）
+  - 数据库查询性能：随 API 中位数验证隐含覆盖；专项慢查询/索引优化列入 P1-5
   - 预计时间：2 小时
 
 ### ⚡ P1 - 重要（下周完成）
