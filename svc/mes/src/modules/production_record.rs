@@ -312,7 +312,7 @@ pub async fn create_record(
         operator_id: result.operator_id,
         start_time: result.start_time,
         end_time: result.end_time.map(|d| d),
-        quantity_produced: result.quantity_produced,
+        quantity_produced: result.quantity_produced as f64,
         quantity_defective: result
             .quantity_defective
             .map(|v| v as f64)
@@ -369,7 +369,7 @@ pub async fn get_record(
                 operator_id: r.operator_id,
                 start_time: r.start_time,
                 end_time: r.end_time.map(|d| d),
-                quantity_produced: r.quantity_produced,
+                quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
                 notes: r.notes,
@@ -449,7 +449,7 @@ pub async fn update_record(
                 operator_id: r.operator_id,
                 start_time: r.start_time,
                 end_time: r.end_time.map(|d| d),
-                quantity_produced: r.quantity_produced,
+                quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
                 notes: r.notes,
@@ -545,7 +545,7 @@ pub async fn complete_record(
                 operator_id: r.operator_id,
                 start_time: r.start_time,
                 end_time: r.end_time.map(|d| d),
-                quantity_produced: r.quantity_produced,
+                quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
                 notes: r.notes,
