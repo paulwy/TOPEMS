@@ -286,7 +286,7 @@ pub async fn list_oee_records(
             oee.planned_production_time, oee.actual_run_time, oee.downtime,
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
-            oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
+            oee.shift, oee.operator, oee.notes, oee.created_at.unwrap_or_default(), oee.updated_at.unwrap_or_default(),
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
@@ -516,7 +516,7 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: Some(result.created_at),        updated_at: result.updated_at,
+        created_at: Some(result.created_at.unwrap_or_default()),        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -553,7 +553,7 @@ pub async fn get_oee_record(
             oee.planned_production_time, oee.actual_run_time, oee.downtime,
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
-            oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
+            oee.shift, oee.operator, oee.notes, oee.created_at.unwrap_or_default(), oee.updated_at.unwrap_or_default(),
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
@@ -594,8 +594,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -751,8 +751,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }

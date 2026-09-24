@@ -870,7 +870,7 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
             planned_end_time = EXCLUDED.planned_end_time,
             work_station_id = EXCLUDED.work_station_id,
             equipment_id = EXCLUDED.equipment_id,
-            updated_at = EXCLUDED.updated_at
+            updated_at = EXCLUDED.updated_at.unwrap_or_default()
         "#,
     )
     .bind(format!(

@@ -245,14 +245,14 @@ pub async fn list_wips(
             w.product_id, w.product_name, w.product_code,
             w.quantity, w.current_process_id, w.current_work_station_id,
             w.status, w.batch_no, w.start_time, w.last_transfer_time,
-            w.operator, w.notes, w.created_at, w.updated_at,
+            w.operator, w.notes, w.created_at.unwrap_or_default(), w.updated_at.unwrap_or_default(),
             pp.process_name as process_name,
             ws.station_name as work_station_name
         FROM wips w
         LEFT JOIN production_processes pp ON w.current_process_id = pp.id
         LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
         {}
-        ORDER BY w.created_at DESC
+        ORDER BY w.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -449,8 +449,8 @@ pub async fn create_wip(
         last_transfer_time: result.last_transfer_time.map(|d| d),
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -485,7 +485,7 @@ pub async fn get_wip(
             w.product_id, w.product_name, w.product_code,
             w.quantity, w.current_process_id, w.current_work_station_id,
             w.status, w.batch_no, w.start_time, w.last_transfer_time,
-            w.operator, w.notes, w.created_at, w.updated_at,
+            w.operator, w.notes, w.created_at.unwrap_or_default(), w.updated_at.unwrap_or_default(),
             pp.process_name as process_name,
             ws.station_name as work_station_name
         FROM wips w
@@ -527,8 +527,8 @@ pub async fn get_wip(
                 last_transfer_time: r.last_transfer_time.map(|d| d),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -615,8 +615,8 @@ pub async fn update_wip(
                 last_transfer_time: r.last_transfer_time.map(|d| d),
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }

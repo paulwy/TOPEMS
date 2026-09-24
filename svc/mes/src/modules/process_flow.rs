@@ -240,12 +240,12 @@ pub async fn list_process_flows(
         SELECT 
             pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
-            pf.created_at, pf.updated_at,
+            pf.created_at.unwrap_or_default(), pf.updated_at.unwrap_or_default(),
             pr.route_name as route_name
         FROM process_flows pf
         LEFT JOIN process_routes pr ON pf.route_id = pr.id
         {}
-        ORDER BY pf.created_at DESC
+        ORDER BY pf.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -342,7 +342,7 @@ pub async fn get_process_flow(
         SELECT 
             pf.id, pf.code, pf.name, pf.description, pf.version, pf.status,
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
-            pf.created_at, pf.updated_at,
+            pf.created_at.unwrap_or_default(), pf.updated_at.unwrap_or_default(),
             pr.route_name as route_name
         FROM process_flows pf
         LEFT JOIN process_routes pr ON pf.route_id = pr.id
@@ -594,7 +594,7 @@ pub async fn get_flow_steps(
             pfs.id, pfs.flow_id, pfs.process_id, pfs.sequence,
             pfs.work_station_id, pfs.equipment_ids,
             pfs.standard_time, pfs.wait_time, pfs.transfer_time,
-            pfs.quality_check_required, pfs.description, pfs.created_at,
+            pfs.quality_check_required, pfs.description, pfs.created_at.unwrap_or_default(),
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
         FROM process_flow_steps pfs
@@ -1012,7 +1012,7 @@ pub async fn reorder_flow_steps(
             pfs.id, pfs.flow_id, pfs.process_id, pfs.sequence,
             pfs.work_station_id, pfs.equipment_ids,
             pfs.standard_time, pfs.wait_time, pfs.transfer_time,
-            pfs.quality_check_required, pfs.description, pfs.created_at,
+            pfs.quality_check_required, pfs.description, pfs.created_at.unwrap_or_default(),
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
         FROM process_flow_steps pfs

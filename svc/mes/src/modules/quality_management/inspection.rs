@@ -156,10 +156,10 @@ pub async fn list_inspections(
             qi.inspection_type, qi.quantity, qi.qualified_quantity,
             qi.unqualified_quantity, qi.qualification_rate,
             qi.inspector, qi.inspection_time, qi.status, qi.result, qi.memo,
-            qi.created_at, qi.updated_at
+            qi.created_at.unwrap_or_default(), qi.updated_at.unwrap_or_default()
         FROM quality_inspections qi
         {}
-        ORDER BY qi.created_at DESC
+        ORDER BY qi.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -294,7 +294,7 @@ pub async fn get_inspection(
             qi.inspection_type, qi.quantity, qi.qualified_quantity,
             qi.unqualified_quantity, qi.qualification_rate,
             qi.inspector, qi.inspection_time, qi.status, qi.result, qi.memo,
-            qi.created_at, qi.updated_at
+            qi.created_at.unwrap_or_default(), qi.updated_at.unwrap_or_default()
         FROM quality_inspections qi
         WHERE qi.id = $1
         "#,

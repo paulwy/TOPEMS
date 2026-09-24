@@ -763,11 +763,11 @@ pub async fn list_maintenances(
             m.id, m.equipment_id, e.equipment_name as equipment_name, e.equipment_code as equipment_no,
             m.maintenance_type, m.description, m.maintainer,
             m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,
-            m.created_at, m.updated_at
+            m.created_at.unwrap_or_default(), m.updated_at.unwrap_or_default()
         FROM equipment_maintenance_records m
         LEFT JOIN equipment e ON m.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR m.equipment_id = $1)
-        ORDER BY m.created_at DESC
+        ORDER BY m.created_at.unwrap_or_default() DESC
         LIMIT $2 OFFSET $3
         "#,
         params.equipment_id,
@@ -801,8 +801,8 @@ pub async fn list_maintenances(
             result: r.result,
             status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_default(),
+            updated_at: r.updated_at.unwrap_or_default(),
         })
         .collect();
 
@@ -1150,10 +1150,10 @@ pub async fn list_inspections(
             ei.inspector, ei.inspection_date, ei.location,
             ei.temperature, ei.vibration, ei.noiselevel,
             ei.status, ei.items, ei.abnormalities, ei.remarks,
-            ei.created_at
+            ei.created_at.unwrap_or_default()
         FROM equipment_inspections ei
         WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)
-        ORDER BY ei.created_at DESC
+        ORDER BY ei.created_at.unwrap_or_default() DESC
         LIMIT $2 OFFSET $3
         "#,
         equipment_uuid,

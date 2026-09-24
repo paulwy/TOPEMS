@@ -233,7 +233,7 @@ pub async fn list_work_stations(
         SELECT 
             ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
-            ws.description, ws.created_at, ws.updated_at,
+            ws.description, ws.created_at.unwrap_or_default(), ws.updated_at.unwrap_or_default(),
             e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
@@ -241,7 +241,7 @@ pub async fn list_work_stations(
         LEFT JOIN equipment e ON ws.equipment_id = e.id
         LEFT JOIN production_processes pp ON ws.process_id = pp.id
         {}
-        ORDER BY ws.created_at DESC
+        ORDER BY ws.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -366,7 +366,7 @@ pub async fn get_work_station(
         SELECT 
             ws.id, ws.station_no, ws.station_name, ws.workshop_id, ws.location,
             ws.status, ws.capacity, ws.equipment_id, ws.process_id,
-            ws.description, ws.created_at, ws.updated_at,
+            ws.description, ws.created_at.unwrap_or_default(), ws.updated_at.unwrap_or_default(),
             e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name

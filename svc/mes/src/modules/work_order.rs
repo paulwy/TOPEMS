@@ -246,10 +246,10 @@ pub async fn list_work_orders(
             wo.actual_start_date, wo.actual_end_date,
             wo.team_id, wo.operator,
             wo.status, wo.priority, wo.remark,
-            wo.created_at, wo.updated_at
+            wo.created_at.unwrap_or_default(), wo.updated_at.unwrap_or_default()
         FROM mes.work_orders wo
         {}
-        ORDER BY wo.created_at DESC
+        ORDER BY wo.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,

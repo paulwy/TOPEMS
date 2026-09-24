@@ -293,10 +293,10 @@ pub async fn list_work_reports(
             wr.reporter_name, wr.report_date, wr.shift,
             wr.output_quantity, wr.defect_quantity, wr.labor_hours, wr.remark,
             wr.status, wr.approved_by, wr.approved_at, wr.approval_remark,
-            wr.created_at, wr.updated_at
+            wr.created_at.unwrap_or_default(), wr.updated_at.unwrap_or_default()
         FROM work_reports wr
         {}
-        ORDER BY wr.created_at DESC
+        ORDER BY wr.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -448,7 +448,7 @@ pub async fn get_work_report(
             wr.reporter_name, wr.report_date, wr.shift,
             wr.output_quantity, wr.defect_quantity, wr.labor_hours, wr.remark,
             wr.status, wr.approved_by, wr.approved_at, wr.approval_remark,
-            wr.created_at, wr.updated_at
+            wr.created_at.unwrap_or_default(), wr.updated_at.unwrap_or_default()
         FROM work_reports wr
         WHERE wr.id = $1
         "#,

@@ -229,10 +229,10 @@ pub async fn list_process_routes(
         r#"
         SELECT 
             pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
-            pr.created_at, pr.updated_at
+            pr.created_at.unwrap_or_default(), pr.updated_at.unwrap_or_default()
         FROM process_routes pr
         {}
-        ORDER BY pr.created_at DESC
+        ORDER BY pr.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -330,7 +330,7 @@ pub async fn get_process_route(
         r#"
         SELECT 
             pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
-            pr.created_at, pr.updated_at
+            pr.created_at.unwrap_or_default(), pr.updated_at.unwrap_or_default()
         FROM process_routes pr
         WHERE pr.id = $1
         "#,
@@ -629,7 +629,7 @@ pub async fn get_route_steps(
         SELECT 
             prs.id, prs.route_id, prs.process_id, prs.sequence,
             prs.estimated_time_minutes, pp.work_station_id,
-            NULL::text AS description, prs.created_at,
+            NULL::text AS description, prs.created_at.unwrap_or_default(),
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
         FROM process_route_steps prs
@@ -957,7 +957,7 @@ pub async fn reorder_route_steps(
         SELECT 
             prs.id, prs.route_id, prs.process_id, prs.sequence,
             prs.estimated_time_minutes, pp.work_station_id,
-            NULL::text AS description, prs.created_at,
+            NULL::text AS description, prs.created_at.unwrap_or_default(),
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
         FROM process_route_steps prs

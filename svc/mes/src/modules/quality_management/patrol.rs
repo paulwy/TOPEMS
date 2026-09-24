@@ -123,10 +123,10 @@ pub async fn list_patrols(
             qp.id, qp.patrol_no, qp.production_line, qp.workstation_id,
             qp.workstation_name, qp.inspector, qp.patrol_time,
             qp.status, qp.result, qp.findings, qp.memo,
-            qp.created_at, qp.updated_at
+            qp.created_at.unwrap_or_default(), qp.updated_at.unwrap_or_default()
         FROM quality_patrols qp
         {}
-        ORDER BY qp.created_at DESC
+        ORDER BY qp.created_at.unwrap_or_default() DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -226,7 +226,7 @@ pub async fn get_patrol(
             qp.id, qp.patrol_no, qp.production_line, qp.workstation_id,
             qp.workstation_name, qp.inspector, qp.patrol_time,
             qp.status, qp.result, qp.findings, qp.memo,
-            qp.created_at, qp.updated_at
+            qp.created_at.unwrap_or_default(), qp.updated_at.unwrap_or_default()
         FROM quality_patrols qp
         WHERE qp.id = $1
         "#,
@@ -530,7 +530,7 @@ pub async fn list_patrol_items(
             qpi.actual_value, qpi.status, qpi.remark
         FROM quality_patrol_items qpi
         WHERE qpi.patrol_id = $1
-        ORDER BY qpi.created_at ASC
+        ORDER BY qpi.created_at.unwrap_or_default() ASC
         "#,
         patrol_uuid,
     )

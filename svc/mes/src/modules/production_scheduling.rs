@@ -255,7 +255,7 @@ pub async fn list_production_schedules(
             ps.process_id, ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
-            ps.created_at, ps.updated_at,
+            ps.created_at.unwrap_or_default(), ps.updated_at.unwrap_or_default(),
             ws.station_name as work_station_name,
             e.equipment_name as equipment_name,
             pp.process_name as process_name
@@ -496,7 +496,7 @@ pub async fn create_production_schedule(
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: Some(result.created_at),        updated_at: result.updated_at,
+        created_at: Some(result.created_at.unwrap_or_default()),        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -539,7 +539,7 @@ pub async fn get_production_schedule(
             ps.process_id, ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
-            ps.created_at, ps.updated_at,
+            ps.created_at.unwrap_or_default(), ps.updated_at.unwrap_or_default(),
             ws.station_name as work_station_name,
             e.equipment_name as equipment_name,
             pp.process_name as process_name
@@ -587,8 +587,8 @@ pub async fn get_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -697,8 +697,8 @@ pub async fn update_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
