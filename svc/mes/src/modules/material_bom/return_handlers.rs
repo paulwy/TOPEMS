@@ -52,7 +52,7 @@ pub async fn create_material_return(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.and_then(|x| x);
+    let order_no_arg = order_no_flat.and_then(|x| Some(x));
     let return_result = sqlx::query!(
         r#"
         INSERT INTO material_returns (
