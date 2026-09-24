@@ -20,12 +20,12 @@ type TestFixtures = {
 const test = base.extend<TestFixtures>({
   authenticatedPage: async ({ page }, use) => {
     await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const usernameInput = page.getByPlaceholder('请输入用户名');
     const passwordInput = page.getByPlaceholder('请输入密码');
-    const loginButton = page.getByRole('button', { name: '登录' });
+    const loginButton = page.locator('form button[type="submit"]').first();
 
     await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
     await usernameInput.fill('admin');
@@ -33,7 +33,7 @@ const test = base.extend<TestFixtures>({
     await loginButton.click();
 
     await page.waitForURL('**/dashboard', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     await use(page);
@@ -42,7 +42,7 @@ const test = base.extend<TestFixtures>({
 
 async function verifyPageLoads(page: Page, path: string) {
   await page.goto(`${BASE_URL}${path}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(500);
 
   const layout = page.locator(
@@ -70,23 +70,23 @@ test.describe('跨模块导航测试', () => {
 
   test.describe('Admin 模块往返导航', () => {
     test('从仪表盘导航到 Admin 用户管理', async ({ authenticatedPage: page }) => {
-      await verifyPageLoads(page, '/admin/user');
+      await verifyPageLoads(page, '/iam/user');
       await expect(page).toHaveURL(/admin\/user/);
     });
 
     test('从用户管理返回仪表盘', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await expect(page).toHaveURL(/dashboard/);
     });
 
     test('Admin 子页面之间跳转', async ({ authenticatedPage: page }) => {
-      await verifyPageLoads(page, '/admin/user');
-      await verifyPageLoads(page, '/admin/role');
-      await verifyPageLoads(page, '/admin/permission');
+      await verifyPageLoads(page, '/iam/user');
+      await verifyPageLoads(page, '/iam/role');
+      await verifyPageLoads(page, '/iam/permission');
     });
   });
 
@@ -110,7 +110,7 @@ test.describe('跨模块导航测试', () => {
 
     test('通过侧边栏链接连续切换模块', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       const navLinks = page.locator(
         'aside a, nav a, [class*="sidebar"] a, [class*="Sidebar"] a'
@@ -121,7 +121,7 @@ test.describe('跨模块导航测试', () => {
         const hrmLink = navLinks.filter({ hasText: /人力资源|HRM/i }).first();
         if (await hrmLink.isVisible().catch(() => false)) {
           await hrmLink.click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
           await page.waitForTimeout(500);
           const urlAfterHrm = page.url();
           expect(urlAfterHrm.length).toBeGreaterThan(0);
@@ -133,14 +133,14 @@ test.describe('跨模块导航测试', () => {
   test.describe('浏览器历史导航', () => {
     test('浏览器后退按钮应返回上一页', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       const userUrl = page.url();
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       expect(page.url()).not.toBe(userUrl);
@@ -148,17 +148,17 @@ test.describe('跨模块导航测试', () => {
 
     test('浏览器前进按钮应前进到下一页', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.goto(`${BASE_URL}/admin/role`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       const roleUrl = page.url();
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.goForward();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       expect(page.url()).toBe(roleUrl);
@@ -166,22 +166,22 @@ test.describe('跨模块导航测试', () => {
 
     test('多步历史导航保持一致', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       const dashboardUrl = page.url();
 
       await page.goto(`${BASE_URL}/hrm/employees`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.goto(`${BASE_URL}/wms`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(300);
       expect(page.url()).toContain('/hrm');
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(300);
       expect(page.url()).toBe(dashboardUrl);
     });
@@ -212,7 +212,7 @@ test.describe('跨模块导航测试', () => {
   test.describe('404 与无效路由处理', () => {
     test('无效路由应显示 404 提示', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/this-route-does-not-exist-12345`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
       const notFoundIndicator = page.locator(
@@ -229,7 +229,7 @@ test.describe('跨模块导航测试', () => {
 
     test('无效模块路径应被妥善处理', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/nonexistent-module-xyz/sub-page`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
       await expect(page.locator('body')).toBeVisible();
@@ -237,7 +237,7 @@ test.describe('跨模块导航测试', () => {
 
     test('无效 ID 参数不应导致页面崩溃', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/admin/user/invalid-id-999999`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
       await expect(page.locator('body')).toBeVisible();

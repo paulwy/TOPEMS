@@ -241,6 +241,17 @@
     },
     "pagination": {
       "per_page": "per page"
+    },
+    "login_form_v2": {
+      "k13": "Enter username",
+      "k16": "Enter email",
+      "k18": "Enter password",
+      "k14": "Username",
+      "k15": "Email",
+      "k17": "Password",
+      "k19": "Log In",
+      "k20": "Remember me",
+      "k21": "Forgot password?"
     }
   },
   "auth": {

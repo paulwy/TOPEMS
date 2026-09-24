@@ -19,12 +19,12 @@ type TestFixtures = {
 const test = base.extend<TestFixtures>({
   authenticatedPage: async ({ page }, use) => {
     await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const usernameInput = page.getByPlaceholder('请输入用户名');
-    const passwordInput = page.getByPlaceholder('请输入用户密码');
-    const loginButton = page.getByRole('button', { name: '登录' });
+    const passwordInput = page.getByPlaceholder('请输入密码');
+    const loginButton = page.locator('form button[type="submit"]').first();
 
     await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
     await usernameInput.fill('admin');
@@ -32,7 +32,7 @@ const test = base.extend<TestFixtures>({
     await loginButton.click();
 
     await page.waitForURL('**/dashboard', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     await use(page);
@@ -41,7 +41,7 @@ const test = base.extend<TestFixtures>({
 
 async function verifyPageLoads(page: Page, path: string) {
   await page.goto(`${BASE_URL}${path}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(500);
 
   const layout = page.locator(
@@ -63,7 +63,7 @@ test.describe.serial('跨模块工作流测试', () => {
       await expect(page).toHaveURL(/hrm/);
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await expect(page).toHaveURL(/dashboard/);
     });
@@ -74,18 +74,18 @@ test.describe.serial('跨模块工作流测试', () => {
       await expect(page).toHaveURL(/finance/);
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await expect(page).toHaveURL(/dashboard/);
     });
 
     test('从仪表盘进入 Admin 用户管理后返回仪表盘', async ({ authenticatedPage: page }) => {
       await verifyPageLoads(page, '/dashboard');
-      await verifyPageLoads(page, '/admin/user');
+      await verifyPageLoads(page, '/iam/user');
       await expect(page).toHaveURL(/admin\/user/);
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await expect(page).toHaveURL(/dashboard/);
     });
@@ -125,7 +125,7 @@ test.describe.serial('跨模块工作流测试', () => {
   test.describe('错误边界：无效路由处理', () => {
     test('访问不存在的页面应被妥善处理而非崩溃', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/this-route-does-not-exist-98765`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
       await expect(page.locator('body')).toBeVisible();
@@ -141,7 +141,7 @@ test.describe.serial('跨模块工作流测试', () => {
 
     test('访问不存在的模块路径不应导致白屏', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/nonexistent-module-xyz/sub-page`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
       await expect(page.locator('body')).toBeVisible();
@@ -149,7 +149,7 @@ test.describe.serial('跨模块工作流测试', () => {
 
     test('错误发生后应能正常导航回有效页面', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/nonexistent-module-xyz`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       await verifyPageLoads(page, '/dashboard');
@@ -160,10 +160,10 @@ test.describe.serial('跨模块工作流测试', () => {
   test.describe('会话持久化：刷新后保持登录', () => {
     test('刷新仪表盘后应保持登录状态', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       // 刷新后不应被重定向回登录页
@@ -173,10 +173,10 @@ test.describe.serial('跨模块工作流测试', () => {
 
     test('刷新模块页面后应保持登录状态', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/hrm/employees`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       await expect(page).not.toHaveURL(/login/);
@@ -185,11 +185,11 @@ test.describe.serial('跨模块工作流测试', () => {
 
     test('多次刷新后会话仍应保持', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       for (let i = 0; i < 3; i++) {
         await page.reload();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(300);
       }
 
@@ -201,7 +201,7 @@ test.describe.serial('跨模块工作流测试', () => {
   test.describe('全局搜索功能', () => {
     test('全局搜索入口应可见或可访问', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const searchEntry = page.locator(
@@ -220,7 +220,7 @@ test.describe.serial('跨模块工作流测试', () => {
 
     test('触发搜索后应能返回结果或无结果提示', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const searchInput = page.locator(
@@ -254,7 +254,7 @@ test.describe.serial('跨模块工作流测试', () => {
 
     test('搜索结果应可能来自多个模块', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const searchInput = page.locator(

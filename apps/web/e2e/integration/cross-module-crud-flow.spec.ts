@@ -20,12 +20,12 @@ type TestFixtures = {
 const test = base.extend<TestFixtures>({
   authenticatedPage: async ({ page }, use) => {
     await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const usernameInput = page.getByPlaceholder('请输入用户名');
     const passwordInput = page.getByPlaceholder('请输入密码');
-    const loginButton = page.getByRole('button', { name: '登录' });
+    const loginButton = page.locator('form button[type="submit"]').first();
 
     await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
     await usernameInput.fill('admin');
@@ -33,7 +33,7 @@ const test = base.extend<TestFixtures>({
     await loginButton.click();
 
     await page.waitForURL('**/dashboard', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     await use(page);
@@ -42,7 +42,7 @@ const test = base.extend<TestFixtures>({
 
 async function waitForPageReady(page: Page, path: string) {
   await page.goto(`${BASE_URL}${path}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(800);
 
   const layout = page.locator(
@@ -172,7 +172,7 @@ test.describe('跨模块 CRUD 流程测试', () => {
         );
         if (await searchButton.first().isVisible().catch(() => false)) {
           await searchButton.first().click();
-          await page.waitForLoadState('networkidle');
+          await page.waitForLoadState('domcontentloaded');
         }
 
         await expect(page.locator('body')).toBeVisible();
@@ -335,13 +335,13 @@ test.describe('跨模块 CRUD 流程测试', () => {
       );
       if (await alertRuleLink.first().isVisible().catch(() => false)) {
         await alertRuleLink.first().click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(500);
         await expect(page.locator('body')).toBeVisible();
       } else {
         // 直接尝试访问告警规则 URL
         await page.goto(`${BASE_URL}/monitor/alert-rules`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(500);
         await expect(page.locator('body')).toBeVisible();
       }
@@ -349,7 +349,7 @@ test.describe('跨模块 CRUD 流程测试', () => {
 
     test('告警规则新建表单应可用', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/monitor/alert-rules`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const createButton = page.locator(
@@ -386,7 +386,7 @@ test.describe('跨模块 CRUD 流程测试', () => {
       const refreshButton = page.getByRole('button', { name: /刷新|Refresh/i });
       if (await refreshButton.isVisible().catch(() => false)) {
         await refreshButton.click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(500);
         await expect(page.locator('body')).toBeVisible();
       }

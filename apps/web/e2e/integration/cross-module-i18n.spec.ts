@@ -23,12 +23,12 @@ type TestFixtures = {
 const test = base.extend<TestFixtures>({
   authenticatedPage: async ({ page }, use) => {
     await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const usernameInput = page.getByPlaceholder('请输入用户名');
     const passwordInput = page.getByPlaceholder('请输入密码');
-    const loginButton = page.getByRole('button', { name: '登录' });
+    const loginButton = page.locator('form button[type="submit"]').first();
 
     await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
     await usernameInput.fill('admin');
@@ -36,7 +36,7 @@ const test = base.extend<TestFixtures>({
     await loginButton.click();
 
     await page.waitForURL('**/dashboard', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     await use(page);
@@ -52,7 +52,7 @@ async function setLanguage(page: Page, lang: 'zh' | 'en') {
     localStorage.setItem('language', language);
   }, lang);
   await page.goto(`${BASE_URL}/dashboard`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(800);
 }
 
@@ -72,7 +72,7 @@ async function switchLanguageViaSelector(page: Page, langName: '中文' | 'Engli
     const langMenuItem = page.getByRole('menuitem', { name: new RegExp(langName) });
     if (await langMenuItem.isVisible({ timeout: 2000 }).catch(() => false)) {
       await langMenuItem.click();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       return true;
     }
@@ -130,7 +130,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
 
     test('通过语言选择器菜单切换语言', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const switched = await switchLanguageViaSelector(page, 'English');
@@ -187,7 +187,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
   test.describe('主模块页面无缺失翻译 key', () => {
     const modulePages = [
       { name: '仪表盘', path: '/dashboard' },
-      { name: 'Admin 用户管理', path: '/admin/user' },
+      { name: 'Admin 用户管理', path: '/iam/user' },
       { name: 'Admin 数据字典', path: '/admin/dictionary' },
       { name: 'HRM 员工管理', path: '/hrm/employees' },
       { name: '监控页', path: '/monitor' },
@@ -200,7 +200,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
       }) => {
         await setLanguage(page, 'zh');
         await page.goto(`${BASE_URL}${mod.path}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(800);
         await assertNoRawI18nKeys(page);
       });
@@ -211,7 +211,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     }) => {
       await setLanguage(page, 'en');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(800);
       await assertNoRawI18nKeys(page);
     });
@@ -221,7 +221,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     }) => {
       await setLanguage(page, 'en');
       await page.goto(`${BASE_URL}/hrm/employees`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(800);
       await assertNoRawI18nKeys(page);
     });
@@ -229,7 +229,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('英文环境下监控页不应显示原始 i18n key', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'en');
       await page.goto(`${BASE_URL}/monitor`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(800);
       await assertNoRawI18nKeys(page);
     });
@@ -239,7 +239,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('中文环境下 Admin 用户管理应显示中文按钮', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'zh');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(800);
 
       // 查找常见操作按钮
@@ -262,7 +262,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('英文环境下 Admin 用户管理按钮应变化', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'zh');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       const zhButtons = await page
         .locator('button:has-text("新建"), button:has-text("新增"), button:has-text("搜索")')
@@ -270,7 +270,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
 
       await setLanguage(page, 'en');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       // 英文环境下应出现英文操作按钮
@@ -294,7 +294,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('中文环境下表单字段应显示中文标签', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'zh');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const labels = page.locator('label, [class*="label" i]');
@@ -308,13 +308,13 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('英文环境下表单字段标签应变化', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'zh');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       const zhLabels = await page.locator('label').allInnerTexts();
 
       await setLanguage(page, 'en');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       const enLabels = await page.locator('label').allInnerTexts();
 
@@ -341,7 +341,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('刷新页面后语言偏好应保持', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'en');
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const storedLang = await page.evaluate(() => localStorage.getItem('language'));
@@ -351,7 +351,7 @@ test.describe('跨模块国际化 (i18n) 测试', () => {
     test('切换语言并导航到其他模块后偏好应保持', async ({ authenticatedPage: page }) => {
       await setLanguage(page, 'en');
       await page.goto(`${BASE_URL}/admin/user`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       const storedLang = await page.evaluate(() => localStorage.getItem('language'));

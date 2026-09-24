@@ -24,12 +24,12 @@ type TestFixtures = {
 const test = base.extend<TestFixtures>({
   authenticatedPage: async ({ page }, use) => {
     await page.goto(`${BASE_URL}/login`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     const usernameInput = page.getByPlaceholder('请输入用户名');
-    const passwordInput = page.getByPlaceholder('请输入用户密码');
-    const loginButton = page.getByRole('button', { name: '登录' });
+    const passwordInput = page.getByPlaceholder('请输入密码');
+    const loginButton = page.locator('form button[type="submit"]').first();
 
     await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
     await usernameInput.fill('admin');
@@ -37,7 +37,7 @@ const test = base.extend<TestFixtures>({
     await loginButton.click();
 
     await page.waitForURL('**/dashboard', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(500);
 
     await use(page);
@@ -46,7 +46,7 @@ const test = base.extend<TestFixtures>({
 
 async function verifyPageLoads(page: Page, path: string) {
   await page.goto(`${BASE_URL}${path}`);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(500);
 
   const layout = page.locator(
@@ -63,7 +63,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
       await verifyPageLoads(page, '/finance');
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await expect(page).toHaveURL(/hrm/);
     });
@@ -74,12 +74,12 @@ test.describe.serial('跨模块数据流与状态管理', () => {
       await verifyPageLoads(page, '/scm');
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await expect(page).toHaveURL(/wms/);
 
       await page.goForward();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
       await expect(page).toHaveURL(/scm/);
     });
@@ -91,17 +91,17 @@ test.describe.serial('跨模块数据流与状态管理', () => {
       await verifyPageLoads(page, '/wms');
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(300);
       await expect(page).toHaveURL(/finance/);
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(300);
       await expect(page).toHaveURL(/hrm/);
 
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(300);
       await expect(page).toHaveURL(/dashboard/);
     });
@@ -109,17 +109,17 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
   test.describe('深层链接：直接访问模块子页面', () => {
     const deepLinks = [
-      { path: '/admin/user', pattern: /admin\/user/ },
+      { path: '/iam/user', pattern: /admin\/user/ },
       { path: '/hrm/employees', pattern: /hrm\/employees/ },
       { path: '/monitor/dashboard', pattern: /monitor/ },
-      { path: '/system/audit-log', pattern: /system|audit/i },
+      { path: '/admin/audit-log', pattern: /system|audit/i },
       { path: '/plugin/marketplace', pattern: /plugin/ },
     ];
 
     for (const link of deepLinks) {
       test(`直接访问 ${link.path} 应正确加载页面`, async ({ authenticatedPage: page }) => {
         await page.goto(`${BASE_URL}${link.path}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(1000);
 
         await expect(page.locator('body')).toBeVisible();
@@ -196,7 +196,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
     });
 
     test('用户头像/菜单在模块切换后应保持可访问', async ({ authenticatedPage: page }) => {
-      const modules = ['/dashboard', '/finance', '/admin/user'];
+      const modules = ['/dashboard', '/finance', '/iam/user'];
 
       for (const mod of modules) {
         await verifyPageLoads(page, mod);
@@ -229,7 +229,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
       for (const mod of modules) {
         const startTime = Date.now();
         await page.goto(`${BASE_URL}${mod}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         const loadTime = Date.now() - startTime;
 
         // Each module should load within 15 seconds
@@ -248,7 +248,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
       }
 
       // Wait for things to settle
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
       await expect(page.locator('body')).toBeVisible();
@@ -259,7 +259,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
   test.describe('跨模块错误恢复', () => {
     test('模块内API错误不应影响其他模块', async ({ authenticatedPage: page }) => {
       // Visit a module that might have API errors
-      await verifyPageLoads(page, '/admin/user');
+      await verifyPageLoads(page, '/iam/user');
       await page.waitForTimeout(500);
 
       // Navigate to another module - should still work
@@ -274,7 +274,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
       // Navigate away even if the page hasn't fully loaded
       await page.goto(`${BASE_URL}/dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       await expect(page).toHaveURL(/dashboard/);
@@ -292,7 +292,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
       // Reload should work
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       await expect(page).not.toHaveURL(/login/);
@@ -308,12 +308,12 @@ test.describe.serial('跨模块数据流与状态管理', () => {
         '/finance',
         '/wms',
         '/scm',
-        '/admin/user',
+        '/iam/user',
       ];
 
       for (const path of modulePaths) {
         await page.goto(`${BASE_URL}${path}`);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await page.waitForTimeout(300);
 
         const currentUrl = page.url();
@@ -325,7 +325,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
     test('模块路径末尾斜杠应正确处理', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/dashboard/`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       await expect(page.locator('body')).toBeVisible();
@@ -334,7 +334,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
     test('URL大小写应正确处理', async ({ authenticatedPage: page }) => {
       await page.goto(`${BASE_URL}/Dashboard`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(500);
 
       // Should either redirect to lowercase or show 404, but not crash
@@ -344,7 +344,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
   test.describe('跨模块可访问性', () => {
     test('所有模块页面应包含主内容区域', async ({ authenticatedPage: page }) => {
-      const modules = ['/dashboard', '/hrm/employees', '/finance', '/admin/user'];
+      const modules = ['/dashboard', '/hrm/employees', '/finance', '/iam/user'];
 
       for (const mod of modules) {
         await verifyPageLoads(page, mod);
@@ -390,7 +390,7 @@ test.describe.serial('跨模块数据流与状态管理', () => {
 
   test.describe('跨模块数据一致性', () => {
     test('用户信息在模块切换后应保持一致', async ({ authenticatedPage: page }) => {
-      const modules = ['/dashboard', '/hrm/employees', '/finance', '/admin/user'];
+      const modules = ['/dashboard', '/hrm/employees', '/finance', '/iam/user'];
 
       let initialUserInfo = '';
       for (const mod of modules) {
