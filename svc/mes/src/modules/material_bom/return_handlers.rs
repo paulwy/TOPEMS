@@ -125,7 +125,7 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d),
+        return_time: return_record.return_time,
         notes: return_record.notes,
         created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     };

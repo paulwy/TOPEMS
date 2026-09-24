@@ -79,7 +79,7 @@ pub struct MaterialIssueResponse {
     pub status: String,
     pub warehouse_id: Option<String>,
     pub operator_id: Option<String>,
-    pub issue_time: Option<String>,
+    pub issue_time: Option<DateTime<Utc>>,
     pub notes: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

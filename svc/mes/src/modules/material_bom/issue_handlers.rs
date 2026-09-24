@@ -129,7 +129,7 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: issue.issue_time.map(|d| d),
+        issue_time: issue.issue_time,
         notes: issue.notes,
         created_at: (Some(issue.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(issue.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
