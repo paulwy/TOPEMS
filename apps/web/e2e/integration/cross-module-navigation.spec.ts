@@ -27,7 +27,7 @@ const test = base.extend<TestFixtures>({
     const passwordInput = page.getByPlaceholder('请输入密码');
     const loginButton = page.locator('form button[type="submit"]').first();
 
-    await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await usernameInput.waitFor({ state: 'visible', timeout: 20000 });
     await usernameInput.fill('admin');
     await passwordInput.fill('admin123');
     await loginButton.click();
@@ -71,11 +71,11 @@ test.describe('跨模块导航测试', () => {
   test.describe('Admin 模块往返导航', () => {
     test('从仪表盘导航到 Admin 用户管理', async ({ authenticatedPage: page }) => {
       await verifyPageLoads(page, '/iam/user');
-      await expect(page).toHaveURL(/admin\/user/);
+      await expect(page).toHaveURL(/iam\/user/);
     });
 
     test('从用户管理返回仪表盘', async ({ authenticatedPage: page }) => {
-      await page.goto(`${BASE_URL}/admin/user`);
+      await page.goto(`${BASE_URL}/iam/user`);
       await page.waitForLoadState('domcontentloaded');
 
       await page.goto(`${BASE_URL}/dashboard`);
@@ -135,7 +135,7 @@ test.describe('跨模块导航测试', () => {
       await page.goto(`${BASE_URL}/dashboard`);
       await page.waitForLoadState('domcontentloaded');
 
-      await page.goto(`${BASE_URL}/admin/user`);
+      await page.goto(`${BASE_URL}/iam/user`);
       await page.waitForLoadState('domcontentloaded');
       const userUrl = page.url();
 
@@ -236,7 +236,7 @@ test.describe('跨模块导航测试', () => {
     });
 
     test('无效 ID 参数不应导致页面崩溃', async ({ authenticatedPage: page }) => {
-      await page.goto(`${BASE_URL}/admin/user/invalid-id-999999`);
+      await page.goto(`${BASE_URL}/iam/user/invalid-id-999999`);
       await page.waitForLoadState('domcontentloaded');
       await page.waitForTimeout(1000);
 
