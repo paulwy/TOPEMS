@@ -88,8 +88,8 @@ pub struct ProcessFlowResponse {
     pub production_line: Option<String>,
     pub capacity: Option<f64>,
     pub unit: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -138,7 +138,7 @@ pub struct ProcessFlowStepResponse {
     pub transfer_time: Option<String>,
     pub quality_check_required: Option<bool>,
     pub description: Option<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -369,8 +369,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
-                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "获取工艺流程成功",
         )),
@@ -438,8 +438,8 @@ pub async fn create_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
-                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "创建工艺流程成功",
         )),
@@ -522,8 +522,8 @@ pub async fn update_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
-                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "更新工艺流程成功",
         )),
@@ -633,7 +633,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: s.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -773,7 +773,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: s.created_at.unwrap_or_default(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -906,7 +906,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: s.created_at.unwrap_or_default(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1051,7 +1051,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: s.created_at.unwrap_or_default(),
                 })
                 .collect();
 

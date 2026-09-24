@@ -98,8 +98,8 @@ pub struct EquipmentResponse {
     pub last_maintenance_date: Option<String>,
     pub next_maintenance_date: Option<String>,
     pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -1195,7 +1195,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: r.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -1328,7 +1328,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
             },
             "创建点检记录成功",
         )),

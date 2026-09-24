@@ -85,8 +85,8 @@ pub struct WorkStationResponse {
     pub process_id: Option<String>,
     pub process_name: Option<String>,
     pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -84,8 +84,8 @@ pub struct TeamResponse {
     pub member_count: i32,
     pub status: String,
     pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -320,8 +320,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
-                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -426,8 +426,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: datetime_to_string(result.created_at),
-        updated_at: datetime_to_string(result.updated_at),
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -503,8 +503,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
-                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }

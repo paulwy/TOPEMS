@@ -107,8 +107,8 @@ pub struct WorkOrderResponse {
     pub status: String,
     pub priority: Option<String>,
     pub remark: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 // ==================== Helper Functions ====================
@@ -544,8 +544,8 @@ pub async fn create_work_order(
                 status: r.status,
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
-                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "创建工单成功",
         )),

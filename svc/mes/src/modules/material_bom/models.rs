@@ -35,8 +35,8 @@ pub struct MaterialBomResponse {
     pub version: String,
     pub status: String,
     pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -80,8 +80,8 @@ pub struct MaterialIssueResponse {
     pub operator_id: Option<String>,
     pub issue_time: Option<String>,
     pub notes: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -117,8 +117,8 @@ pub struct MaterialReturnResponse {
     pub operator_id: Option<String>,
     pub return_time: Option<String>,
     pub notes: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize)]
