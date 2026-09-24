@@ -1175,8 +1175,8 @@ pub async fn list_inspections(
                     inspector: r.inspector,
                     inspection_date: r
                         .inspection_date
-                        .map(|d| d.to_rfc3339())
-                        .unwrap_or_default(),
+                        
+                        ,
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1308,8 +1308,8 @@ pub async fn create_inspection(
                 inspector: r.inspector,
                 inspection_date: r
                     .inspection_date
-                    .map(|d| d.to_rfc3339())
-                    .unwrap_or_default(),
+                    
+                    ,
                 location: r.location,
                 temperature: r
                     .temperature
