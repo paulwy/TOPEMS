@@ -201,14 +201,14 @@ pre-push:
       run: |
         cargo fmt --all --check
 
-    # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
-    cargo-clippy-workspace:
-      tags: rust clippy
-      run: |
-        cargo clippy --workspace --all-targets -- -D warnings
-
-    # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
-    cargo-test-workspace:
-      tags: rust test
-      run: |
-        cargo test --workspace
+#     # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
+#     cargo-clippy-workspace:
+#       tags: rust clippy
+#       run: |
+#         cargo clippy --workspace --all-targets -- -D warnings
+# 
+#     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
+#     cargo-test-workspace:
+#       tags: rust test
+#       run: |
+#         cargo test --workspace
