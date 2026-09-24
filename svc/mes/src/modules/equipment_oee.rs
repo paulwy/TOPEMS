@@ -329,58 +329,58 @@ pub async fn list_oee_records(
             record_date: opt_naive_date_to_utc(
                 r.try_get::<Option<NaiveDate>, _>("record_date")
                     .ok()
-                    .flatten(),
+                    .flatten()
             )
             .unwrap_or_else(Utc::now),
             planned_production_time: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("planned_production_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             run_time: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("actual_run_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             downtime: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("downtime")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             ideal_cycle_time: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("ideal_cycle_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             total_count: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("actual_output")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             good_count: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("good_output")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             reject_count: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defective_output")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             availability: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("availability")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ) * 100.0,
             performance: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("performance")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ) * 100.0,
             quality: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quality_rate")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ) * 100.0,
             oee: big_decimal_to_f64(r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten())
                 * 100.0,
@@ -390,12 +390,12 @@ pub async fn list_oee_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
         })
         .collect();
@@ -915,12 +915,12 @@ pub async fn get_oee_statistics(
                     availability: big_decimal_to_f64(
                         r.try_get::<Option<BigDecimal>, _>("availability")
                             .ok()
-                            .flatten(),
+                            .flatten()
                     ) * 100.0,
                     performance: big_decimal_to_f64(
                         r.try_get::<Option<BigDecimal>, _>("performance")
                             .ok()
-                            .flatten(),
+                            .flatten()
                     ) * 100.0,
                     quality: big_decimal_to_f64(
                         r.try_get::<Option<BigDecimal>, _>("quality").ok().flatten(),

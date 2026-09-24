@@ -316,15 +316,15 @@ pub async fn get_dashboard(
                 current_order: r
                     .try_get::<Option<String>, _>("current_order")
                     .ok()
-                    .flatten(),
+                    .flatten()
                 current_product: r
                     .try_get::<Option<String>, _>("current_product")
                     .ok()
-                    .flatten(),
+                    .flatten()
                 output_today: opt_big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("output_today")
                         .ok()
-                        .flatten(),
+                        .flatten()
                 ),
                 operator: r
                     .try_get::<Option<Uuid>, _>("operator")
@@ -369,12 +369,12 @@ pub async fn get_dashboard(
                 let total = big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("total_quantity")
                         .ok()
-                        .flatten(),
+                        .flatten()
                 );
                 let good = big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("good_quantity")
                         .ok()
-                        .flatten(),
+                        .flatten()
                 );
                 let pass_rate = if total > 0.0 {
                     (good / total) * 100.0
@@ -612,7 +612,7 @@ pub async fn get_workstation_status(
             output_today: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_today")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             operator: r
                 .try_get::<Option<Uuid>, _>("operator")
@@ -682,12 +682,12 @@ pub async fn get_quality_trend(
             let total = big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("total_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             );
             let good = big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("good_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             );
             let pass_rate = if total > 0.0 {
                 (good / total) * 100.0

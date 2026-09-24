@@ -732,7 +732,7 @@ async fn fetch_pending_orders(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             priority: r
                 .try_get::<Option<i32>, _>("priority")
@@ -822,7 +822,7 @@ async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, Equipm
                 maintenance_next_date: r
                     .try_get::<Option<chrono::NaiveDate>, _>("next_maintenance_date")
                     .ok()
-                    .flatten(),
+                    .flatten()
             },
         );
     }
@@ -1079,7 +1079,7 @@ pub async fn check_schedule_constraints(
                     let bom_quantity = big_decimal_to_f64(
                         item.try_get::<Option<BigDecimal>, _>("quantity")
                             .ok()
-                            .flatten(),
+                            .flatten()
                     );
                     let required = bom_quantity * quantity;
 

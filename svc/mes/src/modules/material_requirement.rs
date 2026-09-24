@@ -236,17 +236,17 @@ pub async fn list_material_requirements(
             required_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("required_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             available_quantity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("available_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             shortfall_quantity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("shortfall_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             required_date: r.try_get::<String, _>("required_date").unwrap_or_default(),
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
@@ -260,12 +260,12 @@ pub async fn list_material_requirements(
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
             updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
         })
         .collect();

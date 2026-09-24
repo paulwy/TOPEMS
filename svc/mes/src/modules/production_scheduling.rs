@@ -299,7 +299,7 @@ pub async fn list_production_schedules(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             work_station_id: r
                 .try_get::<Option<Uuid>, _>("work_station_id")
@@ -322,22 +322,22 @@ pub async fn list_production_schedules(
             planned_start_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("planned_start_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             planned_end_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("planned_end_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             actual_start_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_start_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             actual_end_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_end_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             status: r
                 .try_get::<Option<String>, _>("status")
@@ -358,12 +358,12 @@ pub async fn list_production_schedules(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
         })
         .collect();

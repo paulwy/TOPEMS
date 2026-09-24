@@ -256,18 +256,18 @@ pub async fn list_material_issues(
             issue_time: 
                 r.try_get::<Option<DateTime<Utc>>, _>("issue_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ,
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
             updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
         })
         .collect();

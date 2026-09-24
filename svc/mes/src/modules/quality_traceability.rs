@@ -613,17 +613,17 @@ pub async fn list_quality_records(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             qualified_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("qualified_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             defective_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defective_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             quality_status: r
                 .try_get::<Option<String>, _>("quality_status")
@@ -634,7 +634,7 @@ pub async fn list_quality_records(
             inspection_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             defect_reason: r
                 .try_get::<Option<String>, _>("defect_reason")
@@ -644,12 +644,12 @@ pub async fn list_quality_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
         })
         .collect();

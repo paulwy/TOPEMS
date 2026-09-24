@@ -358,17 +358,17 @@ pub async fn list_work_reports(
             output_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             defect_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defect_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             labor_hours: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("labor_hours")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             status: r
@@ -380,7 +380,7 @@ pub async fn list_work_reports(
             approved_at: 
                 r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ,
             approval_remark: r
                 .try_get::<Option<String>, _>("approval_remark")
@@ -389,12 +389,12 @@ pub async fn list_work_reports(
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
             updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
         })
         .collect();

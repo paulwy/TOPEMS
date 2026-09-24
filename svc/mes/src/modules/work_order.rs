@@ -297,32 +297,32 @@ pub async fn list_work_orders(
             planned_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("planned_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             completed_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("completed_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             plan_start_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ,
             plan_end_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ,
             actual_start_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ,
             actual_end_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ,
             team_id: r
                 .try_get::<Option<Uuid>, _>("team_id")
@@ -340,12 +340,12 @@ pub async fn list_work_orders(
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
             updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
         })
         .collect();

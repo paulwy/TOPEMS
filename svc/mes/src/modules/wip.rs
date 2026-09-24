@@ -287,7 +287,7 @@ pub async fn list_wips(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             current_process_id: r
                 .try_get::<Option<Uuid>, _>("current_process_id")
@@ -314,24 +314,24 @@ pub async fn list_wips(
             start_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             last_transfer_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("last_transfer_time")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
         })
         .collect();

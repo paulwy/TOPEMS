@@ -322,7 +322,7 @@ async fn calculate_work_order_cost_detail_db(
             let bom_qty = big_decimal_to_f64(
                 item.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             );
             let unit: String = item.try_get("unit").unwrap_or_default();
 
@@ -609,7 +609,7 @@ pub async fn get_period_cost_report(
             let completed_qty = big_decimal_to_f64(
                 row.try_get::<Option<BigDecimal>, _>("completed_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             );
             let ws_id: Option<Uuid> = row.try_get("work_station_id").ok().flatten();
 

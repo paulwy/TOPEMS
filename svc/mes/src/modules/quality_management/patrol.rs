@@ -182,12 +182,12 @@ pub async fn list_patrols(
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
             updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ).unwrap_or_default(),
         })
         .collect();
