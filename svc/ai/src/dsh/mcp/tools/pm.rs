@@ -32,7 +32,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. pm.list_projects
     registry
-        .register(
+        .register_with_permission(
             "pm.list_projects",
             "查询PM项目列表，支持分页、状态筛选和负责人筛选。返回项目的基本信息列表，包括项目编号、名称、类型、状态、负责人、开始/结束日期、进度等。",
             SchemaBuilder::object()
@@ -72,7 +72,8 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配项目编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "pm:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -121,7 +122,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. pm.get_project
     registry
-        .register(
+        .register_with_permission(
             "pm.get_project",
             "获取PM项目详情，按项目ID查询。返回项目的完整信息，包括基本信息、范围、里程碑、任务统计、团队成员、风险、文档等。",
             SchemaBuilder::object()
@@ -130,7 +131,8 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("项目ID"),
                 )
                 .required(&["project_id"])
-                .build(),
+                .build(),            "pm:read",
+
             |params| {
                 let project_id = params["project_id"].as_str().unwrap_or("");
 
@@ -155,7 +157,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. pm.list_tasks
     registry
-        .register(
+        .register_with_permission(
             "pm.list_tasks",
             "查询PM任务列表，支持分页、项目筛选、状态筛选和负责人筛选。返回任务的基本信息列表，包括任务编号、名称、项目、状态、优先级、负责人、开始/结束日期、进度等。",
             SchemaBuilder::object()
@@ -195,7 +197,8 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("负责人筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "pm:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -254,7 +257,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. pm.create_project
     registry
-        .register(
+        .register_with_permission(
             "pm.create_project",
             "创建PM项目。需要提供项目名称、类型、负责人和开始日期，返回新创建的项目ID和项目编号。",
             SchemaBuilder::object()
@@ -291,7 +294,8 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                         .minimum(0.0),
                 )
                 .required(&["name", "project_type", "manager", "start_date"])
-                .build(),
+                .build(),            "pm:write",
+
             |params| {
                 let name = params["name"].as_str().unwrap_or("");
                 let project_type = params["project_type"].as_str().unwrap_or("");

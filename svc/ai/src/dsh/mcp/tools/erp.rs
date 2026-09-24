@@ -33,7 +33,7 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
 
     // 1. erp.list_sales_orders
     registry
-        .register_async(
+        .register_async_with_permission(
             "erp.list_sales_orders",
             "查询销售订单列表，支持分页、状态筛选和客户筛选。返回订单编号、客户、金额、状态等。",
             SchemaBuilder::object()
@@ -42,7 +42,8 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 .property("status", SchemaBuilder::string().description("订单状态筛选").enum_values(&["pending", "confirmed", "shipped", "completed", "cancelled"]))
                 .property("customer_id", SchemaBuilder::string().description("客户ID筛选"))
                 .required(&["page"])
-                .build(),
+                .build(),            "erp:read",
+
             move |params| async move {
                 let page = params["page"].as_u64().unwrap_or(1) as i32;
                 let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
@@ -74,10 +75,11 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
 
     // 2. erp.get_inventory_summary
     registry
-        .register_async(
+        .register_async_with_permission(
             "erp.get_inventory_summary",
             "获取库存汇总信息，包括总SKU数、总库存数量、库存总价值、低库存预警数等。",
-            SchemaBuilder::object().build(),
+            SchemaBuilder::object().build(),            "erp:read",
+
             move |_params| async move {
                 let result = match erp_client(jwt_secret)?.get_inventory_summary().await {
                     Ok(summary) => json!({ "summary": summary, "source": "real_api" }),
@@ -93,7 +95,7 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
 
     // 3. erp.create_purchase_order
     registry
-        .register_async(
+        .register_async_with_permission(
             "erp.create_purchase_order",
             "创建采购订单。需提供供应商ID和采购明细（物料ID、数量、单价）。",
             SchemaBuilder::object()
@@ -125,7 +127,8 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 )
                 .property("remark", SchemaBuilder::string().description("备注"))
                 .required(&["supplier_id", "items"])
-                .build(),
+                .build(),            "erp:write",
+
             move |params| async move {
                 let supplier_id = params["supplier_id"]
                     .as_str()
@@ -194,13 +197,14 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
 
     // 4. erp.get_sales_order_detail
     registry
-        .register_async(
+        .register_async_with_permission(
             "erp.get_sales_order_detail",
             "根据订单ID获取销售订单完整详情，包括客户信息、商品明细、金额、收货地址、物流信息等。",
             SchemaBuilder::object()
                 .property("order_id", SchemaBuilder::string().description("销售订单ID（如 ORD-00000001）"))
                 .required(&["order_id"])
-                .build(),
+                .build(),            "erp:read",
+
             move |params| async move {
                 let order_id = params["order_id"].as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("order_id 不能为空".to_string()))?.to_string();

@@ -32,7 +32,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. aps.list_schedules
     registry
-        .register(
+        .register_with_permission(
             "aps.list_schedules",
             "查询APS排程列表，支持分页、类型筛选和状态筛选。返回排程的基本信息列表，包括排程编号、类型、订单、资源、开始/结束时间、状态、优先级等。",
             SchemaBuilder::object()
@@ -80,7 +80,8 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("结束日期筛选（YYYY-MM-DD）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "aps:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -128,7 +129,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. aps.get_schedule
     registry
-        .register(
+        .register_with_permission(
             "aps.get_schedule",
             "获取APS排程详情，按排程ID查询。返回排程的完整信息，包括基本信息、订单信息、资源信息、工序序列、时间计划、物料需求、约束条件等。",
             SchemaBuilder::object()
@@ -137,7 +138,8 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("排程ID"),
                 )
                 .required(&["schedule_id"])
-                .build(),
+                .build(),            "aps:read",
+
             |params| {
                 let schedule_id = params["schedule_id"].as_str().unwrap_or("");
 
@@ -162,7 +164,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. aps.list_resources
     registry
-        .register(
+        .register_with_permission(
             "aps.list_resources",
             "查询APS资源列表，支持分页、类型筛选和状态筛选。返回资源的基本信息列表，包括资源编号、名称、类型、状态、产能、效率、所属车间、当前负载等。",
             SchemaBuilder::object()
@@ -202,7 +204,8 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配资源编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "aps:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -249,7 +252,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. aps.create_schedule
     registry
-        .register(
+        .register_with_permission(
             "aps.create_schedule",
             "创建APS排程。需要提供排程类型、订单ID、资源ID和开始时间，返回新创建的排程ID和排程编号。",
             SchemaBuilder::object()
@@ -295,7 +298,8 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("备注"),
                 )
                 .required(&["schedule_type", "order_id", "resource_id", "start_time"])
-                .build(),
+                .build(),            "aps:write",
+
             |params| {
                 let schedule_type = params["schedule_type"].as_str().unwrap_or("");
                 let order_id = params["order_id"].as_str().unwrap_or("");

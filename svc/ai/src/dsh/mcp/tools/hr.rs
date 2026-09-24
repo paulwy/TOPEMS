@@ -32,7 +32,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. hr.list_employees
     registry
-        .register(
+        .register_with_permission(
             "hr.list_employees",
             "查询员工列表，支持分页、部门筛选和状态筛选。返回员工的基本信息列表，包括工号、姓名、部门、职位、入职日期、状态等。",
             SchemaBuilder::object()
@@ -66,7 +66,8 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配姓名、工号）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "hr:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -117,7 +118,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. hr.get_employee
     registry
-        .register(
+        .register_with_permission(
             "hr.get_employee",
             "获取员工详情，按员工ID查询。返回员工的完整信息，包括基本信息、联系方式、教育背景、工作经历、薪资信息等。",
             SchemaBuilder::object()
@@ -126,7 +127,8 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("员工ID"),
                 )
                 .required(&["employee_id"])
-                .build(),
+                .build(),            "hr:read",
+
             |params| {
                 let employee_id = params["employee_id"].as_str().unwrap_or("");
 
@@ -157,7 +159,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. hr.create_employee
     registry
-        .register(
+        .register_with_permission(
             "hr.create_employee",
             "创建新员工。需要提供姓名、工号、部门、职位等基本信息，返回新创建的员工ID和工号。",
             SchemaBuilder::object()
@@ -175,7 +177,8 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("入职日期（YYYY-MM-DD）"),
                 )
                 .required(&["name", "department", "position"])
-                .build(),
+                .build(),            "hr:write",
+
             |params| {
                 let name = params["name"].as_str().unwrap_or("");
                 let department = params["department"].as_str().unwrap_or("");
@@ -255,7 +258,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. hr.update_employee
     registry
-        .register(
+        .register_with_permission(
             "hr.update_employee",
             "更新员工信息。按员工ID更新，支持部分字段更新（只更新提供的字段），返回更新后的员工信息。",
             SchemaBuilder::object()
@@ -290,7 +293,8 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::number().description("薪资（元/月）").minimum(0.0),
                 )
                 .required(&["employee_id"])
-                .build(),
+                .build(),            "hr:write",
+
             |params| {
                 let employee_id = params["employee_id"].as_str().unwrap_or("");
 

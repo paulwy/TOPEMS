@@ -32,7 +32,7 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. wms.list_inventory
     registry
-        .register(
+        .register_with_permission(
             "wms.list_inventory",
             "查询WMS库存列表，支持分页、仓库筛选和物料搜索。返回库存的基本信息列表，包括物料编码、名称、仓库、库位、数量、单位、状态等。",
             SchemaBuilder::object()
@@ -66,7 +66,8 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
                         .enum_values(&["normal", "low_stock", "overstock", "frozen"]),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "wms:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -109,7 +110,7 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. wms.get_inventory
     registry
-        .register(
+        .register_with_permission(
             "wms.get_inventory",
             "获取WMS库存详情，按物料ID和仓库ID查询。返回库存的完整信息，包括物料信息、仓库信息、库位、数量、批次、有效期、出入库记录等。",
             SchemaBuilder::object()
@@ -122,7 +123,8 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("仓库ID"),
                 )
                 .required(&["material_id", "warehouse_id"])
-                .build(),
+                .build(),            "wms:read",
+
             |params| {
                 let material_id = params["material_id"].as_str().unwrap_or("");
                 let warehouse_id = params["warehouse_id"].as_str().unwrap_or("");
@@ -154,7 +156,7 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. wms.list_warehouses
     registry
-        .register(
+        .register_with_permission(
             "wms.list_warehouses",
             "查询WMS仓库列表，支持分页和状态筛选。返回仓库的基本信息列表，包括仓库编码、名称、类型、地址、负责人、容量、状态等。",
             SchemaBuilder::object()
@@ -186,7 +188,8 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
                         .enum_values(&["raw_material", "finished_goods", "wip", "return", "hazardous"]),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "wms:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -227,7 +230,7 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. wms.create_transfer
     registry
-        .register(
+        .register_with_permission(
             "wms.create_transfer",
             "创建WMS库存调拨单。需要提供源仓库、目标仓库、物料编码和调拨数量，返回新创建的调拨单ID和调拨单号。",
             SchemaBuilder::object()
@@ -256,7 +259,8 @@ pub async fn register_wms_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("操作人"),
                 )
                 .required(&["from_warehouse_id", "to_warehouse_id", "material_id", "quantity"])
-                .build(),
+                .build(),            "wms:write",
+
             |params| {
                 let from_warehouse_id = params["from_warehouse_id"].as_str().unwrap_or("");
                 let to_warehouse_id = params["to_warehouse_id"].as_str().unwrap_or("");

@@ -31,7 +31,7 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. oa.list_approval_requests
     registry
-        .register(
+        .register_with_permission(
             "oa.list_approval_requests",
             "查询OA审批单列表，支持分页、类型筛选和状态筛选。返回审批单的基本信息列表，包括审批单编号、标题、类型、状态、申请人、申请时间、金额、当前审批人等。",
             SchemaBuilder::object()
@@ -75,7 +75,8 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配审批单编号、标题）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "oa:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -108,7 +109,7 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. oa.get_approval_request
     registry
-        .register(
+        .register_with_permission(
             "oa.get_approval_request",
             "获取OA审批单详情，按审批单ID查询。返回审批单的完整信息，包括基本信息、申请人信息、审批流程、审批记录、附件、关联单据等。",
             SchemaBuilder::object()
@@ -117,7 +118,8 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("审批单ID"),
                 )
                 .required(&["request_id"])
-                .build(),
+                .build(),            "oa:read",
+
             |params| {
                 let request_id = params["request_id"].as_str().unwrap_or("");
 
@@ -137,7 +139,7 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. oa.list_employees
     registry
-        .register(
+        .register_with_permission(
             "oa.list_employees",
             "查询OA员工列表，支持分页、部门筛选和状态筛选。返回员工的基本信息列表，包括员工编号、姓名、部门、职位、状态、入职时间、联系方式等。",
             SchemaBuilder::object()
@@ -175,7 +177,8 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配员工编号、姓名）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "oa:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -207,7 +210,7 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. oa.create_approval_request
     registry
-        .register(
+        .register_with_permission(
             "oa.create_approval_request",
             "创建OA审批单。需要提供审批类型、标题、申请人和审批人，返回新创建的审批单ID和审批单编号。",
             SchemaBuilder::object()
@@ -250,7 +253,8 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("备注"),
                 )
                 .required(&["approval_type", "title", "applicant", "approver"])
-                .build(),
+                .build(),            "oa:write",
+
             |params| {
                 let approval_type = params["approval_type"].as_str().unwrap_or("");
                 let title = params["title"].as_str().unwrap_or("");

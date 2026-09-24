@@ -32,7 +32,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. qms.list_inspections
     registry
-        .register(
+        .register_with_permission(
             "qms.list_inspections",
             "查询QMS检验单列表，支持分页、类型筛选和状态筛选。返回检验单的基本信息列表，包括检验单号、类型、物料、数量、检验员、状态、检验结果等。",
             SchemaBuilder::object()
@@ -70,7 +70,8 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                         .enum_values(&["pass", "fail", "conditional"]),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "qms:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -112,7 +113,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. qms.get_inspection
     registry
-        .register(
+        .register_with_permission(
             "qms.get_inspection",
             "获取QMS检验单详情，按检验单ID查询。返回检验单的完整信息，包括基本信息、物料信息、检验项目、检验结果、不合格项、检验员、审核信息等。",
             SchemaBuilder::object()
@@ -121,7 +122,8 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("检验单ID"),
                 )
                 .required(&["inspection_id"])
-                .build(),
+                .build(),            "qms:read",
+
             |params| {
                 let inspection_id = params["inspection_id"].as_str().unwrap_or("");
 
@@ -144,7 +146,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. qms.list_nonconformances
     registry
-        .register(
+        .register_with_permission(
             "qms.list_nonconformances",
             "查询QMS不合格品列表，支持分页、严重程度筛选和状态筛选。返回不合格品的基本信息列表，包括不合格单号、类型、物料、数量、严重程度、状态、处理方式等。",
             SchemaBuilder::object()
@@ -182,7 +184,8 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                         .enum_values(&["rework", "scrap", "use_as_is", "return_to_supplier", "concession"]),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "qms:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -224,7 +227,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. qms.create_inspection
     registry
-        .register(
+        .register_with_permission(
             "qms.create_inspection",
             "创建QMS检验单。需要提供检验类型、物料编码、检验数量和检验员，返回新创建的检验单ID和检验单号。",
             SchemaBuilder::object()
@@ -259,7 +262,8 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("备注"),
                 )
                 .required(&["inspection_type", "material_id", "quantity"])
-                .build(),
+                .build(),            "qms:write",
+
             |params| {
                 let inspection_type = params["inspection_type"].as_str().unwrap_or("");
                 let material_id = params["material_id"].as_str().unwrap_or("");

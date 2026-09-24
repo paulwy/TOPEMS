@@ -31,7 +31,7 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. cs.list_tickets
     registry
-        .register(
+        .register_with_permission(
             "cs.list_tickets",
             "查询CS工单列表，支持分页、状态筛选和优先级筛选。返回工单的基本信息列表，包括工单编号、标题、客户、类型、状态、优先级、负责人、创建时间、更新时间等。",
             SchemaBuilder::object()
@@ -81,7 +81,8 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配工单编号、标题）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "cs:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -115,7 +116,7 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. cs.get_ticket
     registry
-        .register(
+        .register_with_permission(
             "cs.get_ticket",
             "获取CS工单详情，按工单ID查询。返回工单的完整信息，包括基本信息、客户信息、描述、回复记录、附件、时间线、关联工单等。",
             SchemaBuilder::object()
@@ -124,7 +125,8 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("工单ID"),
                 )
                 .required(&["ticket_id"])
-                .build(),
+                .build(),            "cs:read",
+
             |params| {
                 let ticket_id = params["ticket_id"].as_str().unwrap_or("");
 
@@ -144,7 +146,7 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. cs.list_customers
     registry
-        .register(
+        .register_with_permission(
             "cs.list_customers",
             "查询CS客户列表，支持分页、等级筛选和状态筛选。返回客户的基本信息列表，包括客户编号、名称、联系人、等级、状态、工单统计、最近联系时间等。",
             SchemaBuilder::object()
@@ -184,7 +186,8 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配客户编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "cs:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -216,7 +219,7 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. cs.create_ticket
     registry
-        .register(
+        .register_with_permission(
             "cs.create_ticket",
             "创建CS工单。需要提供工单标题、客户ID、类型和优先级，返回新创建的工单ID和工单编号。",
             SchemaBuilder::object()
@@ -248,7 +251,8 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                         .enum_values(&["phone", "email", "web", "wechat", "api"]),
                 )
                 .required(&["title", "customer_id", "ticket_type"])
-                .build(),
+                .build(),            "cs:write",
+
             |params| {
                 let title = params["title"].as_str().unwrap_or("");
                 let customer_id = params["customer_id"].as_str().unwrap_or("");

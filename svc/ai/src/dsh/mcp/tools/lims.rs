@@ -32,7 +32,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. lims.list_samples
     registry
-        .register(
+        .register_with_permission(
             "lims.list_samples",
             "查询LIMS样品列表，支持分页、状态筛选和类型筛选。返回样品的基本信息列表，包括样品编号、名称、类型、来源、状态、送检人、接收日期、检测项目数等。",
             SchemaBuilder::object()
@@ -72,7 +72,8 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配样品编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "lims:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -113,7 +114,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. lims.get_sample
     registry
-        .register(
+        .register_with_permission(
             "lims.get_sample",
             "获取LIMS样品详情，按样品ID查询。返回样品的完整信息，包括基本信息、来源信息、检测项目、检测结果、审核信息、附件等。",
             SchemaBuilder::object()
@@ -122,7 +123,8 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("样品ID"),
                 )
                 .required(&["sample_id"])
-                .build(),
+                .build(),            "lims:read",
+
             |params| {
                 let sample_id = params["sample_id"].as_str().unwrap_or("");
 
@@ -147,7 +149,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. lims.list_tests
     registry
-        .register(
+        .register_with_permission(
             "lims.list_tests",
             "查询LIMS检测项目列表，支持分页、样品筛选和状态筛选。返回检测项目的基本信息列表，包括检测编号、名称、样品、方法、状态、检测人、结果、单位等。",
             SchemaBuilder::object()
@@ -185,7 +187,8 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("检测人筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "lims:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -224,7 +227,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. lims.create_sample
     registry
-        .register(
+        .register_with_permission(
             "lims.create_sample",
             "创建LIMS样品。需要提供样品名称、类型、来源和送检人，返回新创建的样品ID和样品编号。",
             SchemaBuilder::object()
@@ -263,7 +266,8 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                         .items(SchemaBuilder::string()),
                 )
                 .required(&["name", "sample_type", "source", "submitter"])
-                .build(),
+                .build(),            "lims:write",
+
             |params| {
                 let name = params["name"].as_str().unwrap_or("");
                 let sample_type = params["sample_type"].as_str().unwrap_or("");

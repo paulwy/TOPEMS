@@ -32,7 +32,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. ehs.list_incidents
     registry
-        .register(
+        .register_with_permission(
             "ehs.list_incidents",
             "查询EHS安全事件列表，支持分页、等级筛选和状态筛选。返回安全事件的基本信息列表，包括事件编号、标题、类型、等级、状态、发生时间、地点等。",
             SchemaBuilder::object()
@@ -68,7 +68,8 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("事件类型筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "ehs:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -108,7 +109,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. ehs.get_incident
     registry
-        .register(
+        .register_with_permission(
             "ehs.get_incident",
             "获取EHS安全事件详情，按事件ID查询。返回事件的完整信息，包括基本信息、事件描述、调查过程、整改措施、责任人、附件等。",
             SchemaBuilder::object()
@@ -117,7 +118,8 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("事件ID"),
                 )
                 .required(&["incident_id"])
-                .build(),
+                .build(),            "ehs:read",
+
             |params| {
                 let incident_id = params["incident_id"].as_str().unwrap_or("");
 
@@ -142,7 +144,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. ehs.list_hazards
     registry
-        .register(
+        .register_with_permission(
             "ehs.list_hazards",
             "查询EHS安全隐患列表，支持分页、等级筛选和状态筛选。返回隐患的基本信息列表，包括隐患编号、描述、位置、等级、状态、发现人、发现时间等。",
             SchemaBuilder::object()
@@ -178,7 +180,8 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("位置筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "ehs:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -217,7 +220,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. ehs.create_incident
     registry
-        .register(
+        .register_with_permission(
             "ehs.create_incident",
             "创建EHS安全事件。需要提供标题、类型、等级、发生时间、地点和描述，返回新创建的事件ID和事件编号。",
             SchemaBuilder::object()
@@ -254,7 +257,8 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("报告人"),
                 )
                 .required(&["title", "incident_type", "level", "occurred_at", "location"])
-                .build(),
+                .build(),            "ehs:write",
+
             |params| {
                 let title = params["title"].as_str().unwrap_or("");
                 let incident_type = params["incident_type"].as_str().unwrap_or("");

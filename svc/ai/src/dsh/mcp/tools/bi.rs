@@ -31,7 +31,7 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. bi.list_dashboards
     registry
-        .register(
+        .register_with_permission(
             "bi.list_dashboards",
             "查询BI仪表盘列表，支持分页、分类筛选和负责人筛选。返回仪表盘的基本信息列表，包括仪表盘编号、名称、分类、状态、负责人、创建时间、组件数、访问量等。",
             SchemaBuilder::object()
@@ -71,7 +71,8 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配仪表盘编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "bi:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -103,7 +104,7 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. bi.get_dashboard
     registry
-        .register(
+        .register_with_permission(
             "bi.get_dashboard",
             "获取BI仪表盘详情，按仪表盘ID查询。返回仪表盘的完整信息，包括基本信息、组件列表、筛选条件、数据源、权限设置等。",
             SchemaBuilder::object()
@@ -112,7 +113,8 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("仪表盘ID"),
                 )
                 .required(&["dashboard_id"])
-                .build(),
+                .build(),            "bi:read",
+
             |params| {
                 let dashboard_id = params["dashboard_id"].as_str().unwrap_or("");
 
@@ -132,7 +134,7 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. bi.list_reports
     registry
-        .register(
+        .register_with_permission(
             "bi.list_reports",
             "查询BI报表列表，支持分页、类型筛选和状态筛选。返回报表的基本信息列表，包括报表编号、名称、类型、状态、负责人、创建时间、调度周期、最近运行时间等。",
             SchemaBuilder::object()
@@ -174,7 +176,8 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("负责人筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "bi:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -206,7 +209,7 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. bi.get_metric_data
     registry
-        .register(
+        .register_with_permission(
             "bi.get_metric_data",
             "获取BI指标数据，按指标ID、时间范围和维度查询。返回指标的时间序列数据，包括时间点、数值、同比、环比等。",
             SchemaBuilder::object()
@@ -238,7 +241,8 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::boolean().description("是否包含同比环比数据").default(json!(true)),
                 )
                 .required(&["metric_id", "start_date", "end_date"])
-                .build(),
+                .build(),            "bi:read",
+
             |params| {
                 let metric_id = params["metric_id"].as_str().unwrap_or("");
                 let start_date = params["start_date"].as_str().unwrap_or("");

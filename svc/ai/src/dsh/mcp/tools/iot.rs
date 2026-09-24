@@ -31,7 +31,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. iot.list_devices
     registry
-        .register(
+        .register_with_permission(
             "iot.list_devices",
             "查询IoT设备列表，支持分页、类型筛选和状态筛选。返回设备的基本信息列表，包括设备编号、名称、类型、状态、位置、最后在线时间、信号强度等。",
             SchemaBuilder::object()
@@ -71,7 +71,8 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配设备编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "iot:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -103,7 +104,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. iot.get_device
     registry
-        .register(
+        .register_with_permission(
             "iot.get_device",
             "获取IoT设备详情，按设备ID查询。返回设备的完整信息，包括基本信息、配置、实时状态、传感器数据、通信信息、维护记录等。",
             SchemaBuilder::object()
@@ -112,7 +113,8 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("设备ID"),
                 )
                 .required(&["device_id"])
-                .build(),
+                .build(),            "iot:read",
+
             |params| {
                 let device_id = params["device_id"].as_str().unwrap_or("");
 
@@ -132,7 +134,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. iot.list_device_data
     registry
-        .register(
+        .register_with_permission(
             "iot.list_device_data",
             "查询IoT设备数据，支持分页、设备筛选和时间范围筛选。返回设备的历史数据列表，包括时间戳、数据类型、数值、单位、质量标记等。",
             SchemaBuilder::object()
@@ -168,7 +170,8 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("结束时间（YYYY-MM-DD HH:mm:ss）"),
                 )
                 .required(&["page", "device_id"])
-                .build(),
+                .build(),            "iot:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(100);
@@ -203,7 +206,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. iot.send_command
     registry
-        .register(
+        .register_with_permission(
             "iot.send_command",
             "向IoT设备发送命令。需要提供设备ID、命令类型和参数，返回命令执行结果和命令ID。",
             SchemaBuilder::object()
@@ -230,7 +233,8 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("操作人"),
                 )
                 .required(&["device_id", "command"])
-                .build(),
+                .build(),            "iot:write",
+
             |params| {
                 let device_id = params["device_id"].as_str().unwrap_or("");
                 let command = params["command"].as_str().unwrap_or("");

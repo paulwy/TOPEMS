@@ -32,7 +32,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. scm.list_suppliers
     registry
-        .register(
+        .register_with_permission(
             "scm.list_suppliers",
             "查询SCM供应商列表，支持分页、等级筛选和状态筛选。返回供应商的基本信息列表，包括供应商编号、名称、联系人、等级、状态、行业、评分、合作年限等。",
             SchemaBuilder::object()
@@ -72,7 +72,8 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配供应商编号、名称）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "scm:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -116,7 +117,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. scm.get_supplier
     registry
-        .register(
+        .register_with_permission(
             "scm.get_supplier",
             "获取SCM供应商详情，按供应商ID查询。返回供应商的完整信息，包括基本信息、联系人、银行账户、资质证书、评分、物料供应、采购历史、合同信息等。",
             SchemaBuilder::object()
@@ -125,7 +126,8 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("供应商ID"),
                 )
                 .required(&["supplier_id"])
-                .build(),
+                .build(),            "scm:read",
+
             |params| {
                 let supplier_id = params["supplier_id"].as_str().unwrap_or("");
 
@@ -153,7 +155,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. scm.list_purchase_orders
     registry
-        .register(
+        .register_with_permission(
             "scm.list_purchase_orders",
             "查询SCM采购订单列表，支持分页、状态筛选和供应商筛选。返回采购订单的基本信息列表，包括订单编号、供应商、状态、总金额、创建时间、预计交货时间等。",
             SchemaBuilder::object()
@@ -195,7 +197,8 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("搜索关键词（匹配订单编号）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "scm:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -238,7 +241,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. scm.create_purchase_order
     registry
-        .register(
+        .register_with_permission(
             "scm.create_purchase_order",
             "创建SCM采购订单。需要提供供应商ID和物料明细，返回新创建的采购订单ID和订单编号。",
             SchemaBuilder::object()
@@ -276,7 +279,8 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("创建人"),
                 )
                 .required(&["supplier_id", "items"])
-                .build(),
+                .build(),            "scm:write",
+
             |params| {
                 let supplier_id = params["supplier_id"].as_str().unwrap_or("");
                 let items = params["items"].as_array();

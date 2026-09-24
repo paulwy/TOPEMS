@@ -960,14 +960,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_unrestricted_tool_not_blocked() {
-        // 无权限用户调用无权限要求的工具（finance.list_receivables）不受影响
+        // 有权限用户调用已声明权限的工具不受影响（finance.list_receivables 要求 finance:read，
+        // 角色 finance 前缀匹配通过；P2-4 细粒度权限声明后业务工具均有 required_permission）
         let server = setup_finance_permission_server().await;
         init_server(&server).await;
         server
             .set_user(Some(AuthenticatedUser::new(
                 "crm_user",
                 "tenant1",
-                vec!["crm".to_string()],
+                vec!["crm".to_string(), "finance".to_string()],
             )))
             .await;
         let resp = server

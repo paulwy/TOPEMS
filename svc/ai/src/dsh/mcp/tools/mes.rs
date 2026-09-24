@@ -32,7 +32,7 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 1. mes.list_production_orders
     registry
-        .register(
+        .register_with_permission(
             "mes.list_production_orders",
             "查询MES生产订单列表，支持分页和状态筛选。返回生产订单的基本信息列表，包括订单号、产品、数量、计划开始/结束时间、状态、进度等。",
             SchemaBuilder::object()
@@ -62,7 +62,8 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("车间筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "mes:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -108,7 +109,7 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 2. mes.get_production_order
     registry
-        .register(
+        .register_with_permission(
             "mes.get_production_order",
             "获取MES生产订单详情，按订单ID查询。返回订单的完整信息，包括产品明细、BOM、工艺路线、生产进度、质量检验、物料消耗等。",
             SchemaBuilder::object()
@@ -117,7 +118,8 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("生产订单ID"),
                 )
                 .required(&["order_id"])
-                .build(),
+                .build(),            "mes:read",
+
             |params| {
                 let order_id = params["order_id"].as_str().unwrap_or("");
 
@@ -142,7 +144,7 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 3. mes.list_work_orders
     registry
-        .register(
+        .register_with_permission(
             "mes.list_work_orders",
             "查询MES工单列表，支持分页和工序/设备筛选。返回工单的基本信息列表，包括工单号、工序、设备、操作员、开始/结束时间、状态、合格/不合格数量等。",
             SchemaBuilder::object()
@@ -172,7 +174,8 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("工序筛选"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "mes:read",
+
             |params| {
                 let page = params["page"].as_u64().unwrap_or(1);
                 let page_size = params["page_size"].as_u64().unwrap_or(20);
@@ -218,7 +221,7 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
 
     // 4. mes.get_oee_dashboard
     registry
-        .register(
+        .register_with_permission(
             "mes.get_oee_dashboard",
             "获取MES OEE（设备综合效率）仪表盘数据。支持时间范围和车间筛选，返回OEE三大指标（可用率、性能率、质量率）及综合OEE，以及设备排名、趋势分析等。",
             SchemaBuilder::object()
@@ -239,7 +242,8 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("设备ID筛选（可选）"),
                 )
                 .required(&["from", "to"])
-                .build(),
+                .build(),            "mes:read",
+
             |params| {
                 let from = params["from"].as_str().unwrap_or("");
                 let to = params["to"].as_str().unwrap_or("");

@@ -99,12 +99,13 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
 
     // 2. finance.get_account_balance
     registry
-        .register_async(
+        .register_async_with_permission(
             "finance.get_account_balance",
             "查询科目余额。可指定科目编码查询单个科目，不传则返回全部科目余额汇总。",
             SchemaBuilder::object()
                 .property("subject_code", SchemaBuilder::string().description("科目编码（可选，如 1001 库存现金）"))
-                .build(),
+                .build(),            "finance:read",
+
             move |params| async move {
                 let subject_code = params["subject_code"].as_str().map(|s| s.to_string());
 
@@ -122,7 +123,7 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
 
     // 3. finance.list_receivables
     registry
-        .register_async(
+        .register_async_with_permission(
             "finance.list_receivables",
             "查询应收款列表，支持分页和状态筛选。返回客户、应收金额、已收金额、账龄等。",
             SchemaBuilder::object()
@@ -130,7 +131,8 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
                 .property("page_size", SchemaBuilder::integer().description("每页条数").minimum(1.0).maximum(100.0).default(json!(20)))
                 .property("status", SchemaBuilder::string().description("状态筛选").enum_values(&["unpaid", "partial", "paid", "overdue"]))
                 .required(&["page"])
-                .build(),
+                .build(),            "finance:read",
+
             move |params| async move {
                 let page = params["page"].as_u64().unwrap_or(1) as i32;
                 let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;

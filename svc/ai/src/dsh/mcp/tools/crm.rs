@@ -33,7 +33,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
 
     // 1. crm.list_customers
     registry
-        .register_async(
+        .register_async_with_permission(
             "crm.list_customers",
             "查询客户列表，支持分页和关键词搜索。返回客户的基本信息列表，包括ID、名称、联系人、电话、邮箱、状态等。",
             SchemaBuilder::object()
@@ -57,7 +57,8 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                     SchemaBuilder::string().description("关键词搜索（名称/联系人/电话）"),
                 )
                 .required(&["page"])
-                .build(),
+                .build(),            "crm:read",
+
             move |params| async move {
                 let page = params["page"].as_u64().unwrap_or(1) as i32;
                 let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
@@ -111,7 +112,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
 
     // 2. crm.get_customer_profile
     registry
-        .register_async(
+        .register_async_with_permission(
             "crm.get_customer_profile",
             "根据客户ID获取客户详细档案，包括基本信息、联系人信息、地址、备注、创建时间等。",
             SchemaBuilder::object()
@@ -120,7 +121,8 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                     SchemaBuilder::string().description("客户ID（如 CUST-0001）"),
                 )
                 .required(&["customer_id"])
-                .build(),
+                .build(),            "crm:read",
+
             move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
@@ -157,7 +159,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
 
     // 3. crm.create_opportunity
     registry
-        .register_async(
+        .register_async_with_permission(
             "crm.create_opportunity",
             "创建新的销售商机。需提供客户ID、商机名称、预计金额和阶段。",
             SchemaBuilder::object()
@@ -177,7 +179,8 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                         .enum_values(&["lead", "qualified", "proposal", "negotiation", "won"]),
                 )
                 .required(&["customer_id", "name", "amount"])
-                .build(),
+                .build(),            "crm:write",
+
             move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
