@@ -288,6 +288,21 @@ fn main() {
             .expect("plugin-registry ApiDoc 序列化失败"),
         "plugins",
     );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_mobile::services::openapi::MobileApiDoc::openapi())
+            .expect("mobile ApiDoc 序列化失败"),
+        "mobile",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_unified_core::ApiDoc::openapi())
+            .expect("unified-core ApiDoc 序列化失败"),
+        "core",
+    );
+
 
     merged["paths"] = Value::Object(merged_paths);
     merged["components"] = Value::Object(merged_components);
