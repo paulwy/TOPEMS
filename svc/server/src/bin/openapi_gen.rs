@@ -2,7 +2,7 @@
 //!
 //! 合并策略：
 //! - 以 docs/api/openapi.json 手工基线（31 端点/27 域）为 base（base 优先，避免注解覆盖手工精选描述）
-//! - 合并各域 crate 的 utoipa ApiDoc（pm: ApiDoc / lims: LimsApiDoc，后续域接入时在此追加）
+//! - 合并各域 crate 的 utoipa ApiDoc（pm / lims / crm / erp / finance，后续域接入时在此追加）
 //! - 输出写回 docs/api/openapi.json（registry.rs include_str! 编译期内嵌，改后需重编译重启生效）
 //!
 //! 用法：cargo run -p topems-server --bin openapi-gen
@@ -80,6 +80,24 @@ fn main() {
         &mut merged_components,
         &serde_json::to_value(topems_lims::openapi::LimsApiDoc::openapi())
             .expect("lims ApiDoc 序列化失败"),
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_crm::modules::openapi::CrmApiDoc::openapi())
+            .expect("crm ApiDoc 序列化失败"),
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_erp::modules::openapi::ErpApiDoc::openapi())
+            .expect("erp ApiDoc 序列化失败"),
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_finance::openapi::ApiDoc::openapi())
+            .expect("finance ApiDoc 序列化失败"),
     );
 
     merged["paths"] = Value::Object(merged_paths);
