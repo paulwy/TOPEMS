@@ -66,6 +66,11 @@ use utoipa::OpenApi;
         crate::modules::recruitment::list_job_openings,
         crate::modules::performance::list_reviews,
         crate::modules::payroll::list_payroll_runs,
+        crate::modules::reports::employee_summary,
+        crate::modules::reports::department_summary,
+        crate::modules::reports::attendance_summary,
+        crate::modules::setup::get_init_progress,
+        crate::modules::setup::setup_company_info,
     ),
     components(
         schemas(
@@ -117,6 +122,8 @@ use utoipa::OpenApi;
         (name = "positions", description = "职位管理接口"),
         (name = "contracts", description = "合同管理接口"),
         (name = "attendance", description = "考勤管理接口"),
+        (name = "reports", description = "报表分析接口"),
+        (name = "setup", description = "初始化配置接口"),
         (name = "leave", description = "请假管理接口"),
         (name = "payroll", description = "薪资管理接口"),
         (name = "performance", description = "绩效管理接口"),
