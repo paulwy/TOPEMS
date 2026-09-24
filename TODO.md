@@ -809,3 +809,5 @@ D
 - [ ] 剩余：portal 733/ticket 43/communication 78 等域注解（分轮推进）
 - [x] **portal**：两批 14 个注解（announcements get/update/delete + notifications mark-read/mark-all + todos complete/delete + dashboard cache/quick-access + navigation pinned + monitoring services/metrics/alerts），聚合 + Monitoring tag；编译通过（commit e1e1aea7a / 待查）
 - [ ] portal 剩余：ai_ops 49/deployment_manager 52/deep_federation 42/gateway_* 等大模块（分轮）
+- [x] **portal 第三批**：9 个注解（search_suggestions + aggregation business-stats/unified-todos + dashboard add/remove quick-access + monitoring acknowledge + navigation remove-pinned + plugin health + quick-action execute），聚合 + Plugins tag；编译通过（已提交）
+- [ ] portal 累计 33 注解（10→33）；ai_ops 等大模块 handler 未挂载路由（跳过）
