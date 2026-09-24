@@ -7,7 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Warehouse {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub name: String,
     pub code: Option<String>,
     pub address: Option<String>,
@@ -47,7 +47,7 @@ mod tests {
     fn sample_warehouse() -> Warehouse {
         Warehouse {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             name: "Main WH".into(),
             code: Some("WH-001".into()),
             address: Some("123 St".into()),
