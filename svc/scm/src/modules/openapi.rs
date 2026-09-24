@@ -110,6 +110,10 @@ pub struct SupplierDeliveryAppointment {
         crate::modules::purchase_order::delete_order,
         crate::modules::purchase_order::approve_order,
         crate::modules::purchase_order::reject_order,
+        // Purchase Contracts
+        crate::modules::purchase_contract::list_contracts,
+        crate::modules::purchase_contract::create_contract,
+        crate::modules::purchase_contract::get_contract,
     ),
     components(
         schemas(
@@ -124,6 +128,7 @@ pub struct SupplierDeliveryAppointment {
     tags(
         (name = "supplier", description = "供应商管理 API"),
         (name = "purchase_order", description = "采购订单 API"),
+        (name = "purchase_contract", description = "采购合同 API"),
         (name = "supplier_evaluation", description = "供应商评价 API"),
         (name = "supplier_delivery_appointment", description = "供应商送货预约 API"),
         (name = "audit", description = "审计日志 API"),

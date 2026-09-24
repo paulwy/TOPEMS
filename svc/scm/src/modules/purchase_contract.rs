@@ -38,6 +38,15 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/purchase-contracts/{id}/renew", post(renew_contract))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:read"])),
+    path = "/scm/purchase-contracts",
+    responses(
+        (status = 200, description = "list_contracts OK")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn list_contracts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -93,6 +102,15 @@ pub async fn list_contracts(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:write"])),
+    path = "/scm/purchase-contracts",
+    responses(
+        (status = 200, description = "create_contract OK")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -180,6 +198,15 @@ pub async fn create_contract(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:read"])),
+    path = "/scm/purchase-contracts/{id}",
+    responses(
+        (status = 200, description = "get_contract OK")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn get_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
