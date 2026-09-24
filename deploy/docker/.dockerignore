@@ -1,0 +1,17 @@
+# TOPEMS 容器构建上下文排除（P2-1）
+# 构建阶段只 COPY 源码清单目录；以下大目录/产物/敏感文件排除
+target/
+node_modules/
+.git/
+.venv/
+venv/
+*.log
+dist/
+build/
+data/
+backup/
+*.sql.gz
+docs/
+scripts/
+.env
+.env.*

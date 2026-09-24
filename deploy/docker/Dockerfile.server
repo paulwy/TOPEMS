@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1
+# TOPEMS 模块化单体镜像（P2-1 Docker 部署优化）
+# 多阶段构建：rust 构建阶段 → 精简运行时阶段（镜像仅含二进制 + 迁移脚本）
+# 注：Cargo.lock 被仓库 gitignore，构建依赖解析版本由约束决定（与本地一致风险已在 TODO 标注）
+
+# ---------- 阶段 1：构建 ----------
+FROM rust:1.95-slim AS builder
+WORKDIR /build
+
+# 先复制 manifests 以利用依赖层缓存（无 Cargo.lock，跳过锁定）
+COPY Cargo.toml ./
+COPY lib/ ./lib/
+COPY svc/ ./svc/
+COPY apps/ ./apps/
+COPY database/ ./database/
+COPY config/ ./config/
+
+# 编译模块化单体二进制（release，stripped 由运行时处理）
+RUN cargo build --release -p topems-server --bin topems-server
+
+# ---------- 阶段 2：运行时 ----------
+FROM debian:bookworm-slim AS runtime
+
+# 运行时最小依赖：ca-certificates（HTTPS/Redis/TLS）+ curl（健康检查）
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 二进制 + 声明式迁移
+COPY --from=builder /build/target/release/topems-server /usr/local/bin/topems-server
+COPY database/migrations/ /opt/topems/database/migrations/
+
+# 非 root 运行
+RUN useradd -r -s /usr/sbin/nologin topems \
+    && mkdir -p /var/log/topems \
+    && chown -R topems:topems /var/log/topems
+
+USER topems
+
+EXPOSE 8099
+
+# 环境变量由运行时注入（docker-compose / 编排平台）；monolith 模式标志
+ENV TOPEMS_MONOLITH=1
+
+# 健康检查：monolith HTTP 健康端点
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fsS http://localhost:8099/api/server/health >/dev/null || exit 1
+
+ENTRYPOINT ["/usr/local/bin/topems-server"]
