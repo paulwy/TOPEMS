@@ -817,3 +817,7 @@ D
 - [x] **wms**：补 5 个注解（labor efficiency/productivity + discrepancy detail + picking lists + cycle-count configs）+ 聚合；编译通过（已提交）
 - [x] **hrm**：补 5 个注解（reports 3 + setup 2）+ 聚合 + reports/setup tags；编译通过（已提交）
 - [ ] 累计：3+3+3+3+23+6+9+5+5 = 60 个新注解（文档待并入，1408 → 1468）
+- [x] **pdm**：补 settings 2 个注解（get/update）+ 注册 settings 模块 + 聚合；编译通过（已提交）
+- [x] **finance**：补 3 个注解（cash-flow/aging/profit analysis）+ business-overview 补聚合；编译通过（已提交）
+- [x] **analytics**：核查已全覆盖（54 handler/54 注解，无缺口）
+- [ ] 累计：60 + 5 = 65 个新注解（文档待并入，1408 → 1473）
