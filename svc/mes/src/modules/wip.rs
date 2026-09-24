@@ -855,7 +855,7 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: from_process_name.unwrap_or_default(),
+        from_process_name: Some(from_process_name.unwrap_or_default()),
         from_work_station_id: transfer.from_work_station_id,
         from_work_station_name: Some(
             from_workstation_name
@@ -863,7 +863,7 @@ pub async fn transfer_wip(
                 ,
         ),
         to_process_id: transfer.to_process_id,
-        to_process_name: to_process_name.unwrap_or_default(),
+        to_process_name: Some(to_process_name.unwrap_or_default()),
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: to_workstation_name.unwrap_or_default(),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
