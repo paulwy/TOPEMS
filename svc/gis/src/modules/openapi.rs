@@ -252,6 +252,9 @@ pub struct OfflineDataDownload {
         crate::modules::location::create_location,
         crate::modules::device::list_devices,
         crate::modules::device::get_device,
+        crate::modules::marker::list_map_markers,
+        crate::modules::marker::get_map_marker,
+        crate::modules::marker::create_map_marker,
         // === Device locations supplement (RC4a) ===
     ),
     components(
@@ -288,6 +291,7 @@ pub struct OfflineDataDownload {
         (name = "analysis", description = "空间分析 API"),
         (name = "device", description = "设备管理 API"),
         (name = "track", description = "轨迹管理 API"),
+        (name = "marker", description = "地图标记 API"),
         (name = "evidence", description = "取证管理 API"),
         (name = "sync", description = "离线同步 API"),
     ),

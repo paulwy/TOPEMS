@@ -27,6 +27,15 @@ pub struct CreateMapMarker {
     pub z_index: Option<i32>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:marker:read"])),
+    path = "/map-markers",
+    responses(
+        (status = 200, description = "list_map_markers OK")
+    ),
+    tag = "marker"
+)]
 pub async fn list_map_markers(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -55,6 +64,15 @@ pub async fn list_map_markers(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:marker:write"])),
+    path = "/map-markers",
+    responses(
+        (status = 200, description = "create_map_marker OK")
+    ),
+    tag = "marker"
+)]
 pub async fn create_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -94,6 +112,15 @@ pub async fn create_map_marker(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:marker:read"])),
+    path = "/map-markers/{id}",
+    responses(
+        (status = 200, description = "get_map_marker OK")
+    ),
+    tag = "marker"
+)]
 pub async fn get_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
