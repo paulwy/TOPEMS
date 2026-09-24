@@ -69,14 +69,14 @@ interface DocumentSearchParams {
   date_from?: string;
   date_to?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }
 
 export interface DocumentSearchResult {
   documents: PdmDocument[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export const documentApi = {

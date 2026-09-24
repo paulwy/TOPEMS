@@ -265,7 +265,7 @@ pub async fn list_permission_changes(
         end_date: query.end_time.clone(),
         search: None,
         page: query.page,
-        pagesize: query.page_size,
+        page_size: query.page_size,
     };
     let Json(result) =
         super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
@@ -280,7 +280,7 @@ pub async fn list_permission_changes(
                 "items": items,
                 "total": paginated.total,
                 "page": paginated.page,
-                "page_size": paginated.pagesize,
+                "page_size": paginated.page_size,
             })))
         }
         None => Json(api_error(result.code, &result.message)),
@@ -350,7 +350,7 @@ pub async fn get_permission_change_stats(
         end_date: None,
         search: None,
         page: None,
-        pagesize: None,
+        page_size: None,
     };
     let Json(result) =
         super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;
@@ -429,7 +429,7 @@ pub async fn list_access_logs(
         end_date: query.end_time.clone(),
         search: None,
         page: query.page,
-        pagesize: query.page_size,
+        page_size: query.page_size,
     };
     let Json(result) =
         super::audit_query::query_audit_logs(State(state), Query(audit_params)).await;
@@ -444,7 +444,7 @@ pub async fn list_access_logs(
                 "items": items,
                 "total": paginated.total,
                 "page": paginated.page,
-                "page_size": paginated.pagesize,
+                "page_size": paginated.page_size,
             })))
         }
         None => Json(api_error(result.code, &result.message)),
@@ -514,7 +514,7 @@ pub async fn get_access_log_stats(
         end_date: None,
         search: None,
         page: None,
-        pagesize: None,
+        page_size: None,
     };
     let Json(result) =
         super::audit_query::get_audit_log_stats(State(state), Query(audit_params)).await;

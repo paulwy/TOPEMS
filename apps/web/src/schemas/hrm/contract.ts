@@ -7,7 +7,7 @@ import i18n from '@/i18n';
 
 async function loadEmployeeOptions(): Promise<{ value: string; label: string }[]> {
   try {
-    const response = await employeeApi.list({ page: 1, pagesize: 100 });
+    const response = await employeeApi.list({ page: 1, page_size: 100 });
     if (response.code === 0 && response.data) {
       const items = response.data.items || [];
       return items.map((e: Employee) => ({ value: e.id, label: e.name }));

@@ -39,7 +39,7 @@ const EnvironmentPage: React.FC = () => {
   const { data: monitorsData } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_ENVIRONMENT_MONITORS_STATS_BASE,
     queryFn: async () => {
-      const response = await ehsApi.listEnvironmentMonitors({ pagesize: 100 });
+      const response = await ehsApi.listEnvironmentMonitors({ page_size: 100 });
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data)

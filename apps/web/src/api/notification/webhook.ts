@@ -104,7 +104,7 @@ export interface WebhookEventListResponse {
   events: WebhookEvent[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export const webhookApi = {
@@ -137,7 +137,7 @@ export const webhookApi = {
 
   getWebhookEvents: async (
     id: string,
-    params?: { page?: number; pagesize?: number; event_type?: WebhookEventType }
+    params?: { page?: number; page_size?: number; event_type?: WebhookEventType }
   ): Promise<ApiResponse<WebhookEventListResponse>> => {
     return apiClient.notification.get(`/notification/webhooks/${id}/events`, {
       params,

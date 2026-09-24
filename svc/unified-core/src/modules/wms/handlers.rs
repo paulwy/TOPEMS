@@ -12,8 +12,8 @@ use super::service::*;
 #[derive(Debug, Deserialize)]
 pub struct PaginationQuery {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
     pub page_size: Option<i64>,
+    
 }
 
 impl PaginationQuery {
@@ -22,7 +22,9 @@ impl PaginationQuery {
     }
 
     pub fn page_size(&self) -> i64 {
-        self.pagesize.or(self.page_size).unwrap_or(10)
+        self.page_size
+            .or(self.page_size)
+            .unwrap_or(10)
     }
 }
 
@@ -39,7 +41,9 @@ pub async fn list_inbound_orders(
 }
 
 /// 获取入库订单详情
-pub async fn get_inbound_order(Path(id): Path<String>) -> Json<ApiResponse<InboundOrder>> {
+pub async fn get_inbound_order(
+    Path(id): Path<String>,
+) -> Json<ApiResponse<InboundOrder>> {
     match InboundOrderService::get_by_id(&id) {
         Some(order) => Json(ApiResponse {
             success: true,
@@ -110,7 +114,7 @@ pub async fn dashboard_stats() -> Json<ApiResponse<serde_json::Value>> {
 }
 
 // 导入静态访问器
-use super::service::{inbound_orders, inventory_items, outbound_orders, transfer_orders};
+use super::service::{inbound_orders, outbound_orders, inventory_items, transfer_orders};
 
 /// WMS Analytics - 仪表盘汇总
 pub async fn analytics_dashboard_summary() -> Json<serde_json::Value> {

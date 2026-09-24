@@ -288,7 +288,7 @@ interface ScoreLevelDefinitions {
 
 interface PerformanceReportParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   category?: string;
   status?: string;
@@ -644,7 +644,7 @@ export const srmApi = {
       performances: SupplierPerformance[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > => {
     const query = new URLSearchParams(params as Record<string, string>).toString();

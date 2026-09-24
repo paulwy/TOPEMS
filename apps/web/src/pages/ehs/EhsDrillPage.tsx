@@ -80,7 +80,7 @@ function extractListData(response: unknown): DrillRecord[] {
 const EhsDrillPage: React.FC = () => {
   const { data: drillsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_DRILLS_STATS_BASE,
-    queryFn: async () => ehsApi.listDrills({ pagesize: 500 }),
+    queryFn: async () => ehsApi.listDrills({ page_size: 500 }),
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });

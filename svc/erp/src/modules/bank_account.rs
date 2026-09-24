@@ -35,7 +35,7 @@ pub fn create_routes() -> Router<ApiState> {
 #[derive(Debug, Deserialize)]
 pub struct ListBankAccountsQuery {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
     pub status: Option<String>,
     pub keyword: Option<String>,
 }
@@ -98,8 +98,8 @@ pub async fn list_bank_accounts(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let offset = (page - 1) * pagesize;
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
 
     // 静态 SQL + $N::text IS NULL OR 模式（schema 边界宏要求字符串字面量）
     let status = params.status.clone();
@@ -135,7 +135,7 @@ pub async fn list_bank_accounts(
          ORDER BY created_at DESC LIMIT $3 OFFSET $4"))
         .bind(&status)
         .bind(&keyword)
-        .bind(pagesize)
+        .bind(page_size)
         .bind(offset)
         .fetch_all(&mut **txn)
         .await
@@ -150,7 +150,7 @@ pub async fn list_bank_accounts(
     let items: Vec<serde_json::Value> = rows.iter().map(row_to_json).collect();
 
     Ok(Json(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
+        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取银行账户列表成功",
     )))
 }

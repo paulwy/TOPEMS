@@ -28,7 +28,7 @@ const ledgerApiAdapter: CrudApiAdapter = {
       category: category && category !== 'all' ? category : undefined,
       status: status && status !== 'all' ? status : undefined,
       page: page + 1,
-      pagesize: pageSize,
+      page_size: pageSize,
     });
 
     if (!response.success || !response.data) {
@@ -62,7 +62,7 @@ const LedgerStats: React.FC = () => {
   const { data: accounts = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.FINANCE_LEDGER_STATS_BASE,
     queryFn: async () => {
-      const response = await accountApi.list({ pagesize: 200 });
+      const response = await accountApi.list({ page_size: 200 });
       if (response.success && response.data) {
         return response.data.items || [];
       }

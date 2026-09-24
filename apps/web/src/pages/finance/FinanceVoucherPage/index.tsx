@@ -116,7 +116,7 @@ const FinanceVoucherPage: React.FC = () => {
   const voucherStatsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.FINANCE_VOUCHER_STATS_BASE,
     queryFn: async () => {
-      const res = await voucherApi.list({ pagesize: 999 } as Record<string, unknown>);
+      const res = await voucherApi.list({ page_size: 999 } as Record<string, unknown>);
       if (!res.success || !res.data) {
         throw new Error(res.message || t('finance.finance_voucher_page_index.fail'));
       }
@@ -130,7 +130,7 @@ const FinanceVoucherPage: React.FC = () => {
   const subjectsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.FINANCE_ACCOUNTING_SUBJECT_STATS_BASE,
     queryFn: async () => {
-      const res = await accountingSubjectApi.list({ pagesize: 999 } as Record<string, unknown>);
+      const res = await accountingSubjectApi.list({ page_size: 999 } as Record<string, unknown>);
       if (!res.success || !res.data) {
         throw new Error(res.message || t('finance.finance_voucher_page_index.fail_1'));
       }

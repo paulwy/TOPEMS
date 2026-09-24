@@ -221,7 +221,7 @@ const DictManagementPage: React.FC = () => {
         if (!selectedTypeId) return { data: [], total: 0 };
         const res = await dictItemApi.list(selectedTypeId, {
           page: params?.page,
-          pagesize: params?.pageSize,
+          page_size: params?.pageSize,
           search: params?.search as string,
         });
         if (res.success && res.data) {

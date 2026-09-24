@@ -32,7 +32,7 @@ export const datasetCrudApi: CrudOperations<Dataset> = {
   list: (params?) =>
     listDatasets({
       page: params?.page as number,
-      pageSize: params?.pagesize as number,
+      pageSize: params?.page_size as number,
       ...(params as unknown as Record<string, unknown>),
     }),
   get: getDataset,

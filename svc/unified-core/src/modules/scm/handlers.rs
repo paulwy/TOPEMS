@@ -14,7 +14,7 @@ pub struct ListParams {
     #[serde(default)]
     pub page: Option<u32>,
     #[serde(default)]
-    pub pagesize: Option<u32>,
+    pub page_size: Option<u32>,
 }
 
 /// 获取 MRP 计划列表
@@ -23,7 +23,7 @@ pub async fn list_mrp_plans(
     Query(params): Query<ListParams>,
 ) -> Json<serde_json::Value> {
     let page = params.page.unwrap_or(1);
-    let pagesize = params.pagesize.unwrap_or(10);
+    let page_size = params.page_size.unwrap_or(10);
 
     let plans = vec![
         MrpPlan {
@@ -62,7 +62,7 @@ pub async fn list_mrp_plans(
         "data": plans,
         "total": 3,
         "page": page,
-        "pagesize": pagesize,
+        "page_size": page_size,
     }))
 }
 
@@ -72,7 +72,7 @@ pub async fn list_price_comparisons(
     Query(params): Query<ListParams>,
 ) -> Json<serde_json::Value> {
     let page = params.page.unwrap_or(1);
-    let pagesize = params.pagesize.unwrap_or(10);
+    let page_size = params.page_size.unwrap_or(10);
 
     let comparisons = vec![
         PriceComparison {
@@ -108,7 +108,7 @@ pub async fn list_price_comparisons(
         "data": comparisons,
         "total": 3,
         "page": page,
-        "pagesize": pagesize,
+        "page_size": page_size,
     }))
 }
 

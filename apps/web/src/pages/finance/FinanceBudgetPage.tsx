@@ -24,7 +24,7 @@ const FinanceBudgetStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.BUDGET, 'stats'],
     queryFn: async () => {
-      const response = await budgetApi.list({ page: 0, pagesize: 1000 });
+      const response = await budgetApi.list({ page: 0, page_size: 1000 });
       if (!response.success) throw new Error(t('finance.finance_budget_page.k0'));
       return response.data;
     },

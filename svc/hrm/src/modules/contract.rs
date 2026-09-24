@@ -45,7 +45,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "contracts",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("status" = Option<String>, Query, description = "状态"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID")
     ),
@@ -213,7 +213,7 @@ pub async fn list_expiring_contracts(
 pub struct ExpiringParams {
     pub days: Option<i32>,
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
 }
 
@@ -763,7 +763,7 @@ pub async fn list_renewals(
 #[derive(Debug, Deserialize)]
 pub struct RenewalParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub contract_id: Option<Uuid>,
     pub status: Option<String>,

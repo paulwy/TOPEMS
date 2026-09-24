@@ -103,7 +103,7 @@ const DepreciationPage: React.FC = () => {
 
         const queryParams: Record<string, unknown> = {
           page,
-          pagesize: pageSize,
+          page_size: pageSize,
         };
         if (search) queryParams.search = search;
         if (statusFilter && statusFilter !== 'all') queryParams.status = statusFilter;

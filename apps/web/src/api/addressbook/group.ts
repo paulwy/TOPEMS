@@ -107,7 +107,7 @@ export const addressbookGroupApi = {
     visibility?: 'private' | 'team' | 'organization';
     search?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ContactGroup>>> => {
     return apiClient.erp.get('/addressbook/groups', { params });
   },
@@ -143,7 +143,7 @@ export const addressbookGroupApi = {
     groupId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
       search?: string;
     }
   ): Promise<

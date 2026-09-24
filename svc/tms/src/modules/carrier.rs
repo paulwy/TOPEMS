@@ -104,11 +104,11 @@ pub async fn list_carriers(
     };
     let tenant_key = tenant_id.map_or("all".to_string(), |t| t.to_string());
 
-    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}:locale）
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:page_size:{page_size}:{params}:locale）
     // locale 编入 key，避免中英文用户串缓存（name 走 CASE WHEN 双语切换）
     let locale = Locale::from_headers(&headers).as_sql();
     let cache_key = format!(
-        "tms:carrier:list:{}:page:{}:pagesize:{}:search:{}:status:{}:locale:{}",
+        "tms:carrier:list:{}:page:{}:page_size:{}:search:{}:status:{}:locale:{}",
         tenant_key,
         page,
         page_size,

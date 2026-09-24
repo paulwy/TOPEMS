@@ -285,10 +285,10 @@ describe('SRM Module API Tests', () => {
   describe('srmApi - Performance Reports', () => {
     it('getPerformanceReports should call GET /performance/reports with params', async () => {
       const { srmApi } = await import('..');
-      await srmApi.getPerformanceReports({ page: 1, pagesize: 10, category: 'raw_material' });
+      await srmApi.getPerformanceReports({ page: 1, page_size: 10, category: 'raw_material' });
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.get).toHaveBeenCalledWith(
-        '/performance/reports?page=1&pagesize=10&category=raw_material'
+        '/performance/reports?page=1&page_size=10&category=raw_material'
       );
     });
 
@@ -349,10 +349,10 @@ describe('SRM Module API Tests', () => {
   describe('srmApi - Inquiry & Quotation', () => {
     it('listInquiries should call GET /inquiries with params', async () => {
       const { srmApi } = await import('..');
-      await srmApi.listInquiries({ status: 'published', page: 1, pagesize: 10 });
+      await srmApi.listInquiries({ status: 'published', page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.get).toHaveBeenCalledWith('/inquiries', {
-        params: { status: 'published', page: 1, pagesize: 10 },
+        params: { status: 'published', page: 1, page_size: 10 },
       });
     });
 
@@ -462,10 +462,10 @@ describe('SRM Module API Tests', () => {
   describe('srmApi - Bidding', () => {
     it('listBiddings should call GET /biddings with params', async () => {
       const { srmApi } = await import('..');
-      await srmApi.listBiddings({ status: 'published', page: 1, pagesize: 10 });
+      await srmApi.listBiddings({ status: 'published', page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.get).toHaveBeenCalledWith('/biddings', {
-        params: { status: 'published', page: 1, pagesize: 10 },
+        params: { status: 'published', page: 1, page_size: 10 },
       });
     });
 

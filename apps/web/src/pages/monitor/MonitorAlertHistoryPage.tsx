@@ -218,7 +218,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
   );
   const handleExport = useCallback(async () => {
     try {
-      const response = await monitorApi.listAlerts({ pagesize: 1000 });
+      const response = await monitorApi.listAlerts({ page_size: 1000 });
       const alerts = response.data?.items ?? [];
       const headers = [
         i18n.t('monitor.monitor_alert_history_page.k20'),
@@ -255,7 +255,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const apiAdapter = useMemo<CrudApiAdapter<Alert>>(
     () => ({
       list: async (params) => {
-        const queryParams: AlertQueryParams = { pagesize: 100 };
+        const queryParams: AlertQueryParams = { page_size: 100 };
         if (params?.severity && params.severity !== 'all') {
           queryParams.severity = params.severity as string;
         }

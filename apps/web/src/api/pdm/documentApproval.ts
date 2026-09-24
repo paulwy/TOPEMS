@@ -15,7 +15,7 @@ export interface ApprovalRecord {
 export const documentApprovalApi = {
   listPendingApproval: (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     type?: string;
   }): Promise<
     ApiResponse<Pick<PdmDocument, 'id' | 'document_no' | 'name' | 'type' | 'status' | 'created_at'>>

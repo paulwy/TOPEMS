@@ -40,7 +40,7 @@ const RsMaterialListPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: materialsResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.RD_MATERIALS_STATS_BASE,
-    queryFn: async () => materialApi.listMaterials({ pagesize: 500 }),
+    queryFn: async () => materialApi.listMaterials({ page_size: 500 }),
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });

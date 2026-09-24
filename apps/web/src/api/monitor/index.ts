@@ -73,7 +73,7 @@ export interface Alert {
 
 export interface AlertQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   severity?: string;
   status?: string;
   service_name?: string;
@@ -210,7 +210,7 @@ export const monitorApi = {
   listAlerts: async (params?: AlertQueryParams): Promise<ApiResponse<PaginatedResponse<Alert>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.severity) queryParams.append('severity', params.severity);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.service_name) queryParams.append('service_name', params.service_name);

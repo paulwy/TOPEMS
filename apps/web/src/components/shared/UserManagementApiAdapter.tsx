@@ -35,7 +35,7 @@ function createUserApiAdapter(options: CreateUserApiAdapterOptions): CrudApiAdap
     list: async (params) => {
       const res = await authApi.listUsers({
         page: params?.page ?? 1,
-        pagesize: params?.pageSize ?? 20,
+        page_size: params?.pageSize ?? 20,
         search: params?.search || undefined,
       });
       if (res.success && res.data) {

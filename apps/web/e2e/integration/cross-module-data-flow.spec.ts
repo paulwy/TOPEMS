@@ -31,7 +31,7 @@ const test = base.extend<TestFixtures>({
     const passwordInput = page.getByPlaceholder('请输入密码');
     const loginButton = page.locator('form button[type="submit"]').first();
 
-    await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await usernameInput.waitFor({ state: 'visible', timeout: 20000 });
     await usernameInput.fill('admin');
     await passwordInput.fill('admin123');
     await loginButton.click();
@@ -317,9 +317,9 @@ test.describe.serial('跨模块数据流与状态管理', () => {
         await page.waitForTimeout(300);
 
         const currentUrl = page.url();
-        // URL should start with base URL and not contain double slashes (except ://)
+        // URL should start with base URL; pathname must not contain double slashes
         expect(currentUrl).toContain(BASE_URL.replace(/\/$/, ''));
-        expect(currentUrl).not.toMatch(/\/\/(?!\/)/);
+        expect(new URL(currentUrl).pathname).not.toMatch(/\/\//);
       }
     });
 

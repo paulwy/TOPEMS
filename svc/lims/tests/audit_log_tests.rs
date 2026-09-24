@@ -58,7 +58,7 @@ mod tests {
 
         let response = client
             .get(&format!(
-                "{}/api/lims/audit-logs?page=1&pagesize=20",
+                "{}/api/lims/audit-logs?page=1&page_size=20",
                 base_url
             ))
             .bearer_auth(&token)
@@ -96,7 +96,7 @@ mod tests {
 
         let response = client
             .get(&format!(
-                "{}/api/lims/audit-logs?start_date=invalid-date&page=1&pagesize=20",
+                "{}/api/lims/audit-logs?start_date=invalid-date&page=1&page_size=20",
                 base_url
             ))
             .bearer_auth(&token)
@@ -131,7 +131,7 @@ mod tests {
 
         let response = client
             .get(&format!(
-                "{}/api/lims/audit-logs?end_date=invalid-date&page=1&pagesize=20",
+                "{}/api/lims/audit-logs?end_date=invalid-date&page=1&page_size=20",
                 base_url
             ))
             .bearer_auth(&token)
@@ -165,7 +165,7 @@ mod tests {
         println!("Testing list audit logs with valid date range...");
 
         let response = client
-            .get(&format!("{}/api/lims/audit-logs?start_date=2024-01-01T00:00:00Z&end_date=2025-12-31T23:59:59Z&page=1&pagesize=20", base_url))
+            .get(&format!("{}/api/lims/audit-logs?start_date=2024-01-01T00:00:00Z&end_date=2025-12-31T23:59:59Z&page=1&page_size=20", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -298,7 +298,7 @@ mod tests {
 
         let response = client
             .get(&format!(
-                "{}/api/lims/audit-logs?page=1&pagesize=20",
+                "{}/api/lims/audit-logs?page=1&page_size=20",
                 base_url
             ))
             .send()

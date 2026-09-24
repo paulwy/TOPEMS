@@ -73,7 +73,7 @@ pub(crate) struct UserRow {
     pub full_name: Option<String>,
     pub status: String,
     pub is_superuser: bool,
-    pub created_at: Option<chrono::NaiveDateTime>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]

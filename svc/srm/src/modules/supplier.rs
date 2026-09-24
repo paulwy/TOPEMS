@@ -35,12 +35,7 @@ pub struct ListQueryParams {
     // 导致 Option<i64> 报 "invalid type: string, expected i64"（srm/suppliers 400 根因）。
     // 平铺字段与 topems_shared_db::repository::ListQueryParams 保持同名字段/别名。
     pub page: Option<i64>,
-    #[serde(
-        alias = "pagesize",
-        alias = "pageSize",
-        alias = "size",
-        alias = "limit"
-    )]
+    #[serde(alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
@@ -156,13 +151,11 @@ pub async fn list_suppliers(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
     let offset = params.offset();
@@ -314,13 +307,11 @@ pub async fn create_supplier(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
 
     if req.supplier_no.is_empty() || req.name.is_empty() {
         return Json(ApiResponse::<Supplier>::error(
@@ -526,13 +517,11 @@ pub async fn get_supplier(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
     let cache_key = supplier_cache_key(tenant_id, id, &locale);
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
@@ -609,13 +598,11 @@ pub async fn update_supplier(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
 
     let existing = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000001') AS tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
@@ -802,13 +789,11 @@ pub async fn delete_supplier(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
 
     let existing = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND tenant_id = $2", "srm"),
@@ -900,13 +885,11 @@ pub async fn get_supplier_products(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
 
     let result = sqlx::query_as::<_, SupplierProduct>(
         only_own_schema_query!("srm", r#"
@@ -954,13 +937,11 @@ pub async fn get_supplier_contracts(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
 
     let result = sqlx::query_as::<_, SupplierContract>(
         only_own_schema_query!("srm", r#"
@@ -1008,13 +989,11 @@ pub async fn get_supplier_performance(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let _tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
 
     let supplier_query = sqlx::query_as::<_, Supplier>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
@@ -1211,13 +1190,11 @@ pub async fn start_supplier_approval(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1357,13 +1334,11 @@ pub async fn approve_supplier(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(
@@ -1475,13 +1450,11 @@ pub async fn reject_supplier(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_id = tenant_opt.unwrap_or_else(|| {
+        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+    });
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     let supplier = sqlx::query_as::<_, Supplier>(

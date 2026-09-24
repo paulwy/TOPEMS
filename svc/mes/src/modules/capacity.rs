@@ -52,7 +52,7 @@ pub struct Capacity {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListCapacitiesQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
     work_center_id: Option<Uuid>,
@@ -138,13 +138,13 @@ pub async fn list_capacities(
     Query(params): Query<ListCapacitiesQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
 
-    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:page_size:{page_size}:{params}）
     let cache_key = format!(
-        "mes:capacity:list:{}:page:{}:pagesize:{}:search:{}:status:{}:work_center_id:{}",
+        "mes:capacity:list:{}:page:{}:page_size:{}:search:{}:status:{}:work_center_id:{}",
         tenant_id,
         page,
         page_size,

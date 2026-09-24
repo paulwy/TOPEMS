@@ -34,7 +34,7 @@ pub fn create_routes() -> Router<ApiState> {
 #[derive(Debug, Deserialize)]
 pub struct DepartmentPaginationParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,

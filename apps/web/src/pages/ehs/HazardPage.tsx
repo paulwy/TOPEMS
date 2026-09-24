@@ -17,7 +17,7 @@ const HazardStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.EHS.HAZARDS, 'stats'],
     queryFn: async () => {
-      const response = await ehsApi.listHazards({ page: 0, pagesize: 1000 } as Parameters<
+      const response = await ehsApi.listHazards({ page: 0, page_size: 1000 } as Parameters<
         typeof ehsApi.listHazards
       >[0]);
       if (!response.success) throw new Error(i18n.t('ehs.hazard_page.k0'));

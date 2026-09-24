@@ -106,7 +106,7 @@ interface DrillType {
 
 interface DrillPlanListQuery {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   status?: string;
   drill_type?: string;
   year?: number;
@@ -115,7 +115,7 @@ interface DrillPlanListQuery {
 
 interface DrillRecordListQuery {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   status?: string;
   drill_type?: string;
   plan_id?: string;
@@ -217,7 +217,7 @@ export const emergencyDrillApi = {
   ): Promise<ApiResponse<PaginatedResponse<DrillPlan>>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pagesize !== undefined) qs.set('pagesize', String(params.pagesize));
+    if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     if (params?.status) qs.set('status', params.status);
     if (params?.drill_type) qs.set('drill_type', params.drill_type);
     if (params?.year !== undefined) qs.set('year', String(params.year));
@@ -249,7 +249,7 @@ export const emergencyDrillApi = {
   ): Promise<ApiResponse<PaginatedResponse<DrillRecord>>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pagesize !== undefined) qs.set('pagesize', String(params.pagesize));
+    if (params?.page_size !== undefined) qs.set('page_size', String(params.page_size));
     if (params?.status) qs.set('status', params.status);
     if (params?.drill_type) qs.set('drill_type', params.drill_type);
     if (params?.plan_id) qs.set('plan_id', params.plan_id);

@@ -135,7 +135,7 @@ export const GisFencePage: React.FC = () => {
   } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.GIS_MAP_MARKERS_BASE,
     queryFn: async () => {
-      const res = await gisApi.listMapMarkers({ pagesize: 50 });
+      const res = await gisApi.listMapMarkers({ page_size: 50 });
       if (res.success && res.data) {
         return res.data.items || [];
       }

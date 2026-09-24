@@ -268,7 +268,7 @@ export function ListPageTemplate<
     autoFetch: crud ? (crud.autoFetch ?? true) : false,
     defaultPageSize: crud?.defaultPageSize ?? 10,
     pageParamName: crud?.pageParamName ?? 'page',
-    pageSizeParamName: crud?.pageSizeParamName ?? 'pagesize',
+    pageSizeParamName: crud?.pageSizeParamName ?? 'page_size',
     entityName: crud?.entityName,
   });
   // 内置列表页状态（传入 internalListState 或 crud 时启用）

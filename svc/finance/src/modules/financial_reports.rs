@@ -146,7 +146,7 @@ pub struct ItemVouchersQuery {
     pub account_code: Option<String>,
     pub period: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[utoipa::path(
@@ -174,7 +174,7 @@ pub async fn get_report_item_vouchers(
         _ => return Json(ApiResponse::error(400, "account_code 不能为空")),
     };
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
     let rows = sqlx::query(only_own_schema_query!(
@@ -656,7 +656,7 @@ pub struct EntityListQuery {
     pub parent_id: Option<String>,
     pub include_disabled: Option<bool>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[utoipa::path(
@@ -676,7 +676,7 @@ pub async fn get_consolidation_entities(
     Query(params): Query<EntityListQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let include_disabled = params.include_disabled.unwrap_or(false);
     let now = Utc::now().to_rfc3339();
     let mut items: Vec<serde_json::Value> = Vec::new();
@@ -854,7 +854,7 @@ pub struct ElimListQuery {
     pub consolidation_id: Option<String>,
     pub period: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[utoipa::path(
@@ -874,7 +874,7 @@ pub async fn get_intercompany_elims(
     Query(params): Query<ElimListQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let now = Utc::now().to_rfc3339();
     let items = vec![
         serde_json::json!({
@@ -1065,7 +1065,7 @@ pub struct SubscriptionListQuery {
     pub report_type: Option<String>,
     pub isactive: Option<bool>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[utoipa::path(
@@ -1085,7 +1085,7 @@ pub async fn get_report_subscriptions(
     Query(params): Query<SubscriptionListQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let now = Utc::now().to_rfc3339();
     let mut items: Vec<serde_json::Value> = Vec::new();
     let subs = [
@@ -1320,7 +1320,7 @@ pub async fn send_report_now(
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct SubscriptionHistoryQuery {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[utoipa::path(
@@ -1340,7 +1340,7 @@ pub async fn get_subscription_history(
     Query(params): Query<SubscriptionHistoryQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let now = Utc::now().to_rfc3339();
     let items = vec![
         serde_json::json!({
@@ -1400,7 +1400,7 @@ pub struct HistoryReportQuery {
     pub end_period: String,
     pub currency_code: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 async fn upsert_report(
@@ -1687,7 +1687,7 @@ pub async fn get_balance_sheet_history(
         Some(get_tenant_id_from_claims(&claims))
     };
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     match fetch_history(
         &state.pool,
         tenant_id,
@@ -1822,7 +1822,7 @@ pub async fn get_income_statement_history(
         Some(get_tenant_id_from_claims(&claims))
     };
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     match fetch_history(
         &state.pool,
         tenant_id,
@@ -1960,7 +1960,7 @@ pub async fn get_cash_flow_history(
         Some(get_tenant_id_from_claims(&claims))
     };
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     match fetch_history(
         &state.pool,
         tenant_id,
@@ -2922,12 +2922,12 @@ mod tests {
 
     #[test]
     fn test_item_vouchers_query_deserialize() {
-        let json = r#"{"account_code": "1001", "period": "2024-01", "page": 1, "pagesize": 20}"#;
+        let json = r#"{"account_code": "1001", "period": "2024-01", "page": 1, "page_size": 20}"#;
         let query: ItemVouchersQuery = serde_json::from_str(json).unwrap();
         assert_eq!(query.account_code.as_deref(), Some("1001"));
         assert_eq!(query.period.as_deref(), Some("2024-01"));
         assert_eq!(query.page, Some(1));
-        assert_eq!(query.pagesize, Some(20));
+        assert_eq!(query.page_size, Some(20));
     }
 
     #[test]
@@ -2996,13 +2996,13 @@ mod tests {
 
     #[test]
     fn test_history_report_query_deserialize() {
-        let json = r#"{"org_id": "org1", "start_period": "2024-01", "end_period": "2024-12", "currency_code": "CNY", "page": 1, "pagesize": 20}"#;
+        let json = r#"{"org_id": "org1", "start_period": "2024-01", "end_period": "2024-12", "currency_code": "CNY", "page": 1, "page_size": 20}"#;
         let query: HistoryReportQuery = serde_json::from_str(json).unwrap();
         assert_eq!(query.org_id.as_deref(), Some("org1"));
         assert_eq!(query.start_period, "2024-01");
         assert_eq!(query.end_period, "2024-12");
         assert_eq!(query.currency_code.as_deref(), Some("CNY"));
         assert_eq!(query.page, Some(1));
-        assert_eq!(query.pagesize, Some(20));
+        assert_eq!(query.page_size, Some(20));
     }
 }

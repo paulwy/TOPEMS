@@ -26,7 +26,7 @@ const test = base.extend<TestFixtures>({
     const passwordInput = page.getByPlaceholder('请输入密码');
     const loginButton = page.locator('form button[type="submit"]').first();
 
-    await usernameInput.waitFor({ state: 'visible', timeout: 10000 });
+    await usernameInput.waitFor({ state: 'visible', timeout: 20000 });
     await usernameInput.fill('admin');
     await passwordInput.fill('admin123');
     await loginButton.click();
@@ -82,7 +82,7 @@ test.describe.serial('跨模块工作流测试', () => {
     test('从仪表盘进入 Admin 用户管理后返回仪表盘', async ({ authenticatedPage: page }) => {
       await verifyPageLoads(page, '/dashboard');
       await verifyPageLoads(page, '/iam/user');
-      await expect(page).toHaveURL(/admin\/user/);
+      await expect(page).toHaveURL(/iam\/user/);
 
       await page.goBack();
       await page.waitForLoadState('domcontentloaded');

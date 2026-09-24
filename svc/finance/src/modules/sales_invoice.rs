@@ -117,7 +117,7 @@ pub struct InvoiceListQuery {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
@@ -183,7 +183,7 @@ pub struct CollectionListQuery {
     pub end_date: Option<String>,
     pub payment_method: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
@@ -276,8 +276,8 @@ pub async fn list_sales_invoices(
         Some(get_tenant_id_from_claims(&claims))
     };
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let offset = (page - 1) * pagesize;
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
 
     let where_sql = "($1::uuid IS NULL OR tenant_id = $1)
         AND ($2::uuid IS NULL OR customer_id = $2)
@@ -322,7 +322,7 @@ pub async fn list_sales_invoices(
     .bind(&params.invoice_type)
     .bind(&params.start_date)
     .bind(&params.end_date)
-    .bind(pagesize)
+    .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
     .await
@@ -351,15 +351,15 @@ pub async fn list_sales_invoices(
 
     Json(ApiResponse::success(
         Paginated {
-            total_pages: if pagesize > 0 {
-                (total + pagesize - 1) / pagesize
+            total_pages: if page_size > 0 {
+                (total + page_size - 1) / page_size
             } else {
                 0
             },
-            page_size: pagesize,
-            pageSize: pagesize,
-            totalPages: if pagesize > 0 {
-                (total + pagesize - 1) / pagesize
+            page_size: page_size,
+            pageSize: page_size,
+            totalPages: if page_size > 0 {
+                (total + page_size - 1) / page_size
             } else {
                 0
             },
@@ -688,8 +688,8 @@ pub async fn list_collections(
         Some(get_tenant_id_from_claims(&claims))
     };
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let offset = (page - 1) * pagesize;
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
 
     let where_sql = "($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
         AND ($2::uuid IS NULL OR customer_id = $2)
@@ -734,7 +734,7 @@ pub async fn list_collections(
     .bind(&params.start_date)
     .bind(&params.end_date)
     .bind(&params.payment_method)
-    .bind(pagesize)
+    .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
     .await
@@ -762,15 +762,15 @@ pub async fn list_collections(
 
     Json(ApiResponse::success(
         Paginated {
-            total_pages: if pagesize > 0 {
-                (total + pagesize - 1) / pagesize
+            total_pages: if page_size > 0 {
+                (total + page_size - 1) / page_size
             } else {
                 0
             },
-            page_size: pagesize,
-            pageSize: pagesize,
-            totalPages: if pagesize > 0 {
-                (total + pagesize - 1) / pagesize
+            page_size: page_size,
+            pageSize: page_size,
+            totalPages: if page_size > 0 {
+                (total + page_size - 1) / page_size
             } else {
                 0
             },

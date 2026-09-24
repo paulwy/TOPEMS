@@ -96,7 +96,7 @@ pub struct DocumentSearchRequest {
     pub date_from: Option<String>,
     pub date_to: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -223,7 +223,7 @@ pub async fn search_documents(
         )
     };
     let page = query.page.unwrap_or(1).max(1);
-    let page_size = query.pagesize.unwrap_or(20).min(100);
+    let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let search_pattern = query.keyword.as_ref().map(|s| format!("%{}%", s));
 
@@ -1123,11 +1123,11 @@ mod tests {
     #[test]
     fn test_document_search_request_renamed_type_field() {
         // document_type 通过 #[serde(rename = "type")] 反序列化
-        let json = r#"{"type":"manual","keyword":"abc","pagesize":15}"#;
+        let json = r#"{"type":"manual","keyword":"abc","page_size":15}"#;
         let req: DocumentSearchRequest = serde_json::from_str(json).unwrap();
         assert_eq!(req.document_type, Some("manual".to_string()));
         assert_eq!(req.keyword, Some("abc".to_string()));
-        assert_eq!(req.pagesize, Some(15));
+        assert_eq!(req.page_size, Some(15));
     }
 
     #[test]

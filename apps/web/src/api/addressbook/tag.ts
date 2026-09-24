@@ -61,7 +61,7 @@ export const addressbookTagApi = {
     tag_type?: 'system' | 'custom';
     search?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ContactTag>>> => {
     return apiClient.erp.get('/addressbook/tags', { params });
   },
@@ -86,7 +86,7 @@ export const addressbookTagApi = {
 
   listTagContacts: async (
     tagId: string,
-    params?: { page?: number; pagesize?: number; search?: string }
+    params?: { page?: number; page_size?: number; search?: string }
   ): Promise<
     ApiResponse<PaginatedResponse<{ id: string; name: string; contact_type: string }>>
   > => {

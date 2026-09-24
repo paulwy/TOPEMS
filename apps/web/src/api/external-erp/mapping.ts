@@ -13,7 +13,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/mappings/account`, { params }),
@@ -44,7 +44,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/mappings/customer`, {
@@ -75,7 +75,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/mappings/supplier`, {
@@ -106,7 +106,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/mappings/project`, { params }),
@@ -131,7 +131,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/mappings/department`, {
@@ -162,7 +162,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/mappings/employee`, {

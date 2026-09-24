@@ -256,7 +256,7 @@ export const semanticSearchApi = {
   > {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{
       items: Array<{ id: string; name: string; type: string }>;

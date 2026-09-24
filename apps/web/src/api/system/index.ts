@@ -99,7 +99,7 @@ export const dictTypeApi = {
   ): Promise<ApiResponse<PaginatedResult<DictType>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.category) searchParams.set('category', params.category);
     if (params?.status) searchParams.set('status', params.status);
@@ -137,7 +137,7 @@ export const dictItemApi = {
   ): Promise<ApiResponse<PaginatedResult<DictItem>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
 
     const queryString = searchParams.toString();
@@ -226,7 +226,7 @@ export const dbStructureApi = {
   ): Promise<ApiResponse<PaginatedResult<DbChange>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.table_name) searchParams.set('table_name', params.table_name);
 
     const queryString = searchParams.toString();

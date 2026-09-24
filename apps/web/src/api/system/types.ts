@@ -17,7 +17,7 @@ export interface AuditLog {
 
 export interface AuditLogQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   user_id?: string;
   user_name?: string;
   action?: string;
@@ -32,7 +32,7 @@ export interface PaginatedAuditLogs {
   items: AuditLog[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export interface SystemConfig {

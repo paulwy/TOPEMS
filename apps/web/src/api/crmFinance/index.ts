@@ -95,7 +95,7 @@ export const crmFinanceApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }) => {
     const response = await apiClient.finance.get<PaginatedResponse<SalesInvoice>>(
       '/sales-invoices',
@@ -164,7 +164,7 @@ export const crmFinanceApi = {
     end_date?: string;
     payment_method?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }) => {
     const response = await apiClient.finance.get<PaginatedResponse<CollectionRecord>>(
       '/sales-collections',
@@ -230,7 +230,7 @@ export const crmFinanceApi = {
     customer_id?: string;
     min_overdue_days?: number;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }) => {
     const response = await apiClient.finance.get('/reports/overdue-receivables', {
       params,

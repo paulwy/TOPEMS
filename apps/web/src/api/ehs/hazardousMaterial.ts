@@ -29,7 +29,7 @@ export const hazardousMaterialApi = {
   ): Promise<ApiResponse<PaginatedResponse<HazardousMaterial>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.category) queryParams.append('category', params.category);
     if (params?.hazard_class) queryParams.append('hazard_class', params.hazard_class);
@@ -100,7 +100,7 @@ export const hazardousMaterialApi = {
   ): Promise<ApiResponse<PaginatedResponse<HazardousMaterialInventory>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.material_id) queryParams.append('material_id', params.material_id);
     if (params?.warehouse) queryParams.append('warehouse', params.warehouse);
@@ -142,7 +142,7 @@ export const hazardousMaterialApi = {
   ): Promise<ApiResponse<PaginatedResponse<HazardousMaterialMovement>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.material_id) queryParams.append('material_id', params.material_id);
     if (params?.movement_type) queryParams.append('movement_type', params.movement_type);
@@ -184,7 +184,7 @@ export const hazardousMaterialApi = {
   listMSDS: async (params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<MSDS>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
 
     return apiClient.ehs.get<PaginatedResponse<MSDS>>(

@@ -36,7 +36,7 @@ export const WorkflowInstancesPage: React.FC = () => {
       const pageSize = params?.pageSize ?? 10;
       const response = await instanceApi.list({
         page,
-        pagesize: pageSize,
+        page_size: pageSize,
         ...(params?.search ? { search: params.search as string } : {}),
         ...(typeof params?.status === 'string' && params.status !== 'all'
           ? { status: params.status }

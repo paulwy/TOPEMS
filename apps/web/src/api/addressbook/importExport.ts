@@ -151,7 +151,7 @@ export const addressbookImportExportApi = {
     status?: ImportStatus;
     import_type?: ImportType;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ImportTask>>> => {
     return apiClient.erp.get('/addressbook/import/tasks', { params });
   },
@@ -177,7 +177,7 @@ export const addressbookImportExportApi = {
   listExportTasks: async (params?: {
     status?: 'pending' | 'processing' | 'completed' | 'failed';
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ExportTask>>> => {
     return apiClient.erp.get('/addressbook/export/tasks', { params });
   },
@@ -236,7 +236,7 @@ export const addressbookImportExportApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ActivityLog>>> => {
     return apiClient.erp.get('/addressbook/activity', { params });
   },

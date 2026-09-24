@@ -114,7 +114,7 @@ export const fileScanApi = {
 
   listFileScanHistory: async (
     fileId: string,
-    params?: { page?: number; pagesize?: number }
+    params?: { page?: number; page_size?: number }
   ): Promise<ApiResponse<PaginatedResponse<ScanResult>>> => {
     return apiClient.file.get(`/scan/${fileId}/history`, { params });
   },
@@ -156,7 +156,7 @@ export const fileScanApi = {
   listQuarantine: async (params?: {
     status?: QuarantineItem['status'];
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<QuarantineItem>>> => {
     return apiClient.file.get('/scan/quarantine', { params });
   },

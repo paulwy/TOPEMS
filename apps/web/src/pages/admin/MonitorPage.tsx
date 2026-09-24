@@ -43,7 +43,7 @@ const MonitorPage: React.FC = () => {
   const alertsQuery = useQuery<Alert[]>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_MONITOR_ALERTS_BASE,
     queryFn: async () => {
-      const res = await monitorApi.listAlerts({ pagesize: 20 });
+      const res = await monitorApi.listAlerts({ page_size: 20 });
       return res.success && res.data ? res.data.items : [];
     },
     refetchInterval: 30000,

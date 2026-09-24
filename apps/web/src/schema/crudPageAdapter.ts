@@ -53,7 +53,7 @@ function asResponse<T>(raw: unknown): ApiResponseLike<T> {
  * 根据原始 API 客户端直接创建 CrudPage 可用的适配器
  *
  * 处理了：
- * - `pagesize → pageSize` 归一化
+ * - `page_size → pageSize` 归一化
  * - 列表响应 `items / materials / data` 多种字段名
  * - 失败响应抛出 Error（而不是静默吞掉）
  *
@@ -74,7 +74,7 @@ export function createCrudPageAdapter<T, TCreate = Partial<T>, TUpdate = Partial
     const normalizedParams: Record<string, unknown> = { ...(params || {}) };
 
     if (params?.pageSize !== undefined) {
-      const key = config.pageSizeParam || 'pagesize';
+      const key = config.pageSizeParam || 'page_size';
       normalizedParams[key] = params.pageSize;
       delete normalizedParams.pageSize;
     }

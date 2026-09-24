@@ -37,7 +37,7 @@ export interface BudgetItem {
 export const budgetApi = {
   list: (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     status?: string;
     period?: string;
     department_id?: string;

@@ -28,7 +28,7 @@ const AccountManagementPage: React.FC = () => {
         const isDetailFilter = (params?.is_detail as string) || undefined;
         const queryParams: Record<string, unknown> = {
           page,
-          pagesize: pageSize,
+          page_size: pageSize,
         };
         if (search) queryParams.keyword = search;
         if (typeFilter && typeFilter !== 'all') queryParams.category = typeFilter;

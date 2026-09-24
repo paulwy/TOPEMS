@@ -53,14 +53,14 @@ pub struct LeaveApplication {
 pub struct AttendanceQueryParams {
     pub month: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct LeaveQueryParams {
     pub status: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -162,7 +162,7 @@ pub async fn list_attendance_records(
     };
 
     let page = params.page.unwrap_or(1) as i32;
-    let page_size = params.pagesize.unwrap_or(20) as i32;
+    let page_size = params.page_size.unwrap_or(20) as i32;
 
     match client
         .list_attendance_records(&user_id, params.month.as_deref(), page, page_size)
@@ -275,7 +275,7 @@ pub async fn list_leave_applications(
     };
 
     let page = params.page.unwrap_or(1) as i32;
-    let page_size = params.pagesize.unwrap_or(20) as i32;
+    let page_size = params.page_size.unwrap_or(20) as i32;
 
     match client
         .list_leave_applications(&user_id, params.status.as_deref(), page, page_size)

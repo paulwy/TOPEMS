@@ -117,7 +117,7 @@ const MobileTaskListPage: React.FC = () => {
     queryFn: async ({ pageParam = 1 }) => {
       const response = await mobileApi.listMobileTasks({
         page: pageParam,
-        pagesize: pageSize,
+        page_size: pageSize,
       });
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;

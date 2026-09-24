@@ -126,22 +126,22 @@ describe('api/request paginatedRequest', () => {
     items: T[],
     total: number,
     page: number,
-    pagesize: number
-  ): ApiResponse<{ items: T[]; total: number; page: number; pagesize: number }> =>
+    page_size: number
+  ): ApiResponse<{ items: T[]; total: number; page: number; page_size: number }> =>
     makeResponse({
-      data: { items, total, page, pagesize },
+      data: { items, total, page, page_size },
     });
 
-  it('returns {items,total,page,pagesize} on success', async () => {
+  it('returns {items,total,page,page_size} on success', async () => {
     const fn = vi.fn(async () => makePage([{ id: 1 }, { id: 2 }, { id: 3 }], 100, 1, 10));
-    const result = await paginatedRequest<{ id: number }>(fn, { page: 1, pagesize: 10 });
+    const result = await paginatedRequest<{ id: number }>(fn, { page: 1, page_size: 10 });
     expect(result).toEqual({
       items: [{ id: 1 }, { id: 2 }, { id: 3 }],
       total: 100,
       page: 1,
-      pagesize: 10,
+      page_size: 10,
     });
-    expect(fn).toHaveBeenCalledWith({ page: 1, pagesize: 10 });
+    expect(fn).toHaveBeenCalledWith({ page: 1, page_size: 10 });
   });
 
   it('throws error with code and message when response.success=false', async () => {
@@ -150,7 +150,7 @@ describe('api/request paginatedRequest', () => {
         success: false,
         code: 50001,
         message: 'DB Timeout',
-        data: null as unknown as { items: never[]; total: number; page: number; pagesize: number },
+        data: null as unknown as { items: never[]; total: number; page: number; page_size: number },
       })
     );
     await expect(paginatedRequest(fn)).rejects.toThrowError('DB Timeout');
@@ -159,10 +159,10 @@ describe('api/request paginatedRequest', () => {
 
   it('passes extra params through to requestFn', async () => {
     const fn = vi.fn(async () => makePage([], 0, 2, 20));
-    await paginatedRequest(fn, { page: 2, pagesize: 20, search: 'abc', sortBy: 'name' });
+    await paginatedRequest(fn, { page: 2, page_size: 20, search: 'abc', sortBy: 'name' });
     expect(fn).toHaveBeenCalledWith({
       page: 2,
-      pagesize: 20,
+      page_size: 20,
       search: 'abc',
       sortBy: 'name',
     });

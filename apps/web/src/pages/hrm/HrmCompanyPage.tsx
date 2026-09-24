@@ -32,7 +32,7 @@ const HrmCompanyPage: React.FC = () => {
   const { data: departments = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
     queryFn: async () => {
-      const res = await departmentApi.list({ pagesize: 500 });
+      const res = await departmentApi.list({ page_size: 500 });
       if (res.success && res.data) {
         return res.data.items || [];
       }
@@ -44,7 +44,7 @@ const HrmCompanyPage: React.FC = () => {
   const { data: employees = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.HRM_EMPLOYEES_BASE,
     queryFn: async () => {
-      const res = await employeeApi.list({ pagesize: 500 });
+      const res = await employeeApi.list({ page_size: 500 });
       if (res.success && res.data) {
         return res.data.items || [];
       }

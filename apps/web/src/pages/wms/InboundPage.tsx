@@ -40,7 +40,7 @@ const InboundStats: React.FC = () => {
   const { data: orders = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_INBOUND_ORDERS_STATS_BASE,
     queryFn: async () => {
-      const response = await wmsApi.inboundOrders.list({ page: 1, pagesize: 100 });
+      const response = await wmsApi.inboundOrders.list({ page: 1, page_size: 100 });
       if (response.success && response.data) {
         return response.data.items || [];
       }

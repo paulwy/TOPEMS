@@ -49,7 +49,7 @@
 
 export interface ListParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   status?: string;
   order_id?: string;

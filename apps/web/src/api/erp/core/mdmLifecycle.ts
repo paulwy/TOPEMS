@@ -196,8 +196,8 @@ const buildSearchParams = (params?: MdmLifecycleQueryParams): URLSearchParams =>
   if (params?.page !== undefined) sp.set('page', String(params.page));
   const ps =
     (params as unknown as { pageSize?: number } | undefined)?.pageSize ??
-    (params as unknown as { pagesize?: number } | undefined)?.pagesize;
-  if (ps !== undefined) sp.set('pagesize', String(ps));
+    (params as unknown as { page_size?: number } | undefined)?.page_size;
+  if (ps !== undefined) sp.set('page_size', String(ps));
   if (params?.search) sp.set('search', params.search);
   if (params?.domain) sp.set('domain', params.domain);
   if (params?.stage) sp.set('stage', params.stage);

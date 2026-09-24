@@ -26,7 +26,7 @@ export const occupationalHealthApi = {
   ): Promise<ApiResponse<PaginatedResponse<HealthRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.department) queryParams.append('department', params.department);
     if (params?.position) queryParams.append('position', params.position);
@@ -63,7 +63,7 @@ export const occupationalHealthApi = {
   ): Promise<ApiResponse<PaginatedResponse<HealthCheckPlan>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.check_type) queryParams.append('check_type', params.check_type);
     if (params?.category) queryParams.append('category', params.category);
@@ -100,7 +100,7 @@ export const occupationalHealthApi = {
   ): Promise<ApiResponse<PaginatedResponse<HealthCheckRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.employee_id) queryParams.append('employee_id', params.employee_id);
     if (params?.check_type) queryParams.append('check_type', params.check_type);
@@ -139,7 +139,7 @@ export const occupationalHealthApi = {
   ): Promise<ApiResponse<PaginatedResponse<Contraindication>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.employee_id) queryParams.append('employee_id', params.employee_id);
     if (params?.status) queryParams.append('status', params.status);

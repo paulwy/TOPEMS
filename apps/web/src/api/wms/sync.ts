@@ -15,7 +15,7 @@ export const syncRecordApi = {
 
   listItems: async (
     sync_record_id: string,
-    params?: { status?: string; page?: number; pagesize?: number }
+    params?: { status?: string; page?: number; page_size?: number }
   ): Promise<ApiResponse<PaginatedResponse<SyncRecordItem>>> => {
     return apiClient.wms.get(`/sync-records/${sync_record_id}/items`, { params });
   },
@@ -76,7 +76,7 @@ export async function getSyncRecord(id: string): Promise<ApiResponse<SyncRecord>
 
 export async function listSyncRecordItems(
   sync_record_id: string,
-  params?: { status?: string; page?: number; pagesize?: number }
+  params?: { status?: string; page?: number; page_size?: number }
 ): Promise<ApiResponse<PaginatedResponse<SyncRecordItem>>> {
   return syncRecordApi.listItems(sync_record_id, params);
 }

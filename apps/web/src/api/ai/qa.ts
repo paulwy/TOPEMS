@@ -88,12 +88,12 @@ export const qaApi = {
 
   getQAHistory: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     query?: string;
   }): Promise<ApiResponse<{ history: QAHistoryItem[]; total: number }>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.query) searchParams.set('query', params.query);
 
     const queryString = searchParams.toString();

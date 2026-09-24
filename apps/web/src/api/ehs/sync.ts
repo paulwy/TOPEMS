@@ -17,7 +17,7 @@ export const syncApi = {
   ): Promise<ApiResponse<PaginatedResponse<SyncRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.sync_type) queryParams.append('sync_type', params.sync_type);
     if (params?.source_system) queryParams.append('source_system', params.source_system);
@@ -67,7 +67,7 @@ export const syncApi = {
   ): Promise<ApiResponse<PaginatedResponse<SyncRecordDetail>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SyncRecordDetail>>(

@@ -128,7 +128,7 @@ const ReplenishmentPage: React.FC = () => {
       list: async (params) => {
         const response = await wmsApi.smartReplenishment.listOrders({
           page: params?.page ? params.page + 1 : 1,
-          pagesize: params?.pageSize || 10,
+          page_size: params?.pageSize || 10,
           search: params?.search,
           status: params?.status as string | undefined,
           warehouse_id: params?.warehouse_id as string | undefined,
@@ -284,7 +284,7 @@ const ReplenishmentPage: React.FC = () => {
       list: async (params) => {
         const response = await wmsApi.smartReplenishment.listSuggestions({
           page: params?.page ? params.page + 1 : 1,
-          pagesize: params?.pageSize || 10,
+          page_size: params?.pageSize || 10,
           search: params?.search,
           status:
             (params?.status as string | undefined) === 'all'

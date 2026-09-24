@@ -89,7 +89,7 @@ const FavoritesPage: React.FC = () => {
     queryKey: [QUERY_KEYS.SEARCH.GLOBAL, searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return [];
-      const response = await searchApi.search(searchQuery, { page: 1, pagesize: 20 });
+      const response = await searchApi.search(searchQuery, { page: 1, page_size: 20 });
       if (response.success && response.data) {
         return response.data.results;
       }

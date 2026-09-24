@@ -51,7 +51,7 @@ fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
 #[derive(Debug, Deserialize)]
 pub struct ListBugsQuery {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
     pub severity: Option<String>,
@@ -96,8 +96,8 @@ async fn list_typed(
     params: &ListBugsQuery,
 ) -> Result<(i64, Vec<sqlx::postgres::PgRow>), sqlx::Error> {
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let offset = (page - 1) * pagesize;
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
 
     // 仅内部生成 SQL；表名/列名来自本模块常量，非外部输入
     let search_sql = format!(
@@ -126,7 +126,7 @@ async fn list_typed(
     let rows = sqlx::query(&list_sql)
         .bind(&params.status)
         .bind(&params.search)
-        .bind(pagesize)
+        .bind(page_size)
         .bind(offset)
         .fetch_all(&mut *db)
         .await?;
@@ -145,7 +145,7 @@ pub async fn list_bugs(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) = match list_typed(&mut *txn, "bugs", "bug_no,bug_title", &params).await {
         Ok(v) => v,
         Err(e) => {
@@ -155,7 +155,7 @@ pub async fn list_bugs(
     };
     let items: Vec<serde_json::Value> = rows.iter().map(bug_to_json).collect();
     Ok(Json(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
+        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取缺陷列表成功",
     )))
 }
@@ -326,7 +326,7 @@ pub async fn list_builds(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) =
         match list_typed(&mut *txn, "builds", "build_no,branch,commit_hash", &params).await {
             Ok(v) => v,
@@ -337,7 +337,7 @@ pub async fn list_builds(
         };
     let items: Vec<serde_json::Value> = rows.iter().map(build_to_json).collect();
     Ok(Json(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
+        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取构建列表成功",
     )))
 }
@@ -453,7 +453,7 @@ pub async fn list_deploys(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) =
         match list_typed(&mut *txn, "deploys", "deploy_no,app_name,version", &params).await {
             Ok(v) => v,
@@ -464,7 +464,7 @@ pub async fn list_deploys(
         };
     let items: Vec<serde_json::Value> = rows.iter().map(deploy_to_json).collect();
     Ok(Json(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
+        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取部署列表成功",
     )))
 }
@@ -579,7 +579,7 @@ pub async fn list_tests(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let (total, rows) =
         match list_typed(&mut *txn, "test_cases", "case_no,case_name", &params).await {
             Ok(v) => v,
@@ -590,7 +590,7 @@ pub async fn list_tests(
         };
     let items: Vec<serde_json::Value> = rows.iter().map(test_to_json).collect();
     Ok(Json(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
+        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取测试用例列表成功",
     )))
 }

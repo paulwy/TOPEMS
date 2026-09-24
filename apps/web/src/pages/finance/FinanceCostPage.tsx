@@ -45,7 +45,7 @@ const FinanceCostPage: React.FC = () => {
         const queryParams: Record<string, unknown> = {
           category: 'cost',
           page,
-          pagesize: pageSize,
+          page_size: pageSize,
         };
         if (search) queryParams.keyword = search;
         if (statusFilter && statusFilter !== 'all') queryParams.status = statusFilter;

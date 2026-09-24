@@ -39,9 +39,9 @@ describe('LIMS Module API Tests', () => {
       const { sampleApi } = await import('../sample');
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
-      await sampleApi.listSamples({ page: 1, pagesize: 10 });
+      await sampleApi.listSamples({ page: 1, page_size: 10 });
       expect(apiClient.lims.get).toHaveBeenCalledWith('/samples', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -132,9 +132,9 @@ describe('LIMS Module API Tests', () => {
       const { taskApi } = await import('../inspection');
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
-      await taskApi.listTasks({ page: 1, pagesize: 10, status: 'pending' });
+      await taskApi.listTasks({ page: 1, page_size: 10, status: 'pending' });
       expect(apiClient.lims.get).toHaveBeenCalledWith('/tasks', {
-        params: { page: 1, pagesize: 10, status: 'pending' },
+        params: { page: 1, page_size: 10, status: 'pending' },
       });
     });
 
@@ -206,9 +206,9 @@ describe('LIMS Module API Tests', () => {
       const { instrumentApi } = await import('../instrument');
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
-      await instrumentApi.listInstruments({ page: 1, pagesize: 10 });
+      await instrumentApi.listInstruments({ page: 1, page_size: 10 });
       expect(apiClient.lims.get).toHaveBeenCalledWith('/instruments', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -268,9 +268,9 @@ describe('LIMS Module API Tests', () => {
       const { reagentApi } = await import('../reagent');
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
-      await reagentApi.listReagents({ page: 1, pagesize: 10 });
+      await reagentApi.listReagents({ page: 1, page_size: 10 });
       expect(apiClient.lims.get).toHaveBeenCalledWith('/reagents', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -331,9 +331,9 @@ describe('LIMS Module API Tests', () => {
       const { testMethodApi } = await import('../testMethod');
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
-      await testMethodApi.listTestMethods({ page: 1, pagesize: 10 });
+      await testMethodApi.listTestMethods({ page: 1, page_size: 10 });
       expect(apiClient.lims.get).toHaveBeenCalledWith('/test-methods', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -399,9 +399,9 @@ describe('LIMS Module API Tests', () => {
       const { recordApi } = await import('../inspection');
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
-      await recordApi.listRecords({ page: 1, pagesize: 10 });
+      await recordApi.listRecords({ page: 1, page_size: 10 });
       expect(apiClient.lims.get).toHaveBeenCalledWith('/records', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 

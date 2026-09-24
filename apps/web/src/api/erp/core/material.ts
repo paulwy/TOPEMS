@@ -13,12 +13,12 @@ export const materialApi = {
       materials: Material[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pageSize) searchParams.set('pagesize', params.pageSize.toString());
+    if (params?.pageSize) searchParams.set('page_size', params.pageSize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
     if (params?.category) searchParams.set('category', params.category);

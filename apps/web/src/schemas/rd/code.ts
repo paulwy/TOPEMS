@@ -175,7 +175,7 @@ export const codeSchema: EntitySchema = {
       field: 'project_id',
       loader: async () => {
         const { rdApi } = await import('@/api/rd');
-        const response = await rdApi.listProjects({ page: 1, pagesize: 100 });
+        const response = await rdApi.listProjects({ page: 1, page_size: 100 });
         if (response.success && response.data) {
           return (response.data.projects || []).map((p) => ({
             value: p.id,

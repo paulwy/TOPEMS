@@ -21,10 +21,10 @@ describe('Workflow Module API Tests', () => {
   describe('workflowDefinitionApi', () => {
     it('listWorkflows should call GET /workflows with params', async () => {
       const { workflowDefinitionApi } = await import('../definition');
-      await workflowDefinitionApi.listWorkflows({ page: 1, pagesize: 10, search: 'Leave' });
+      await workflowDefinitionApi.listWorkflows({ page: 1, page_size: 10, search: 'Leave' });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/workflows', {
-        params: { page: 1, pagesize: 10, search: 'Leave' },
+        params: { page: 1, page_size: 10, search: 'Leave' },
       });
     });
 
@@ -81,10 +81,10 @@ describe('Workflow Module API Tests', () => {
 
     it('getVersions should call GET /workflows/:id/versions with params', async () => {
       const { workflowDefinitionApi } = await import('../definition');
-      await workflowDefinitionApi.getVersions('wf-001', { page: 1, pagesize: 10 });
+      await workflowDefinitionApi.getVersions('wf-001', { page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/workflows/wf-001/versions', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -115,10 +115,10 @@ describe('Workflow Module API Tests', () => {
   describe('instanceApi', () => {
     it('listInstances should call GET /instances with params', async () => {
       const { instanceApi } = await import('../instance');
-      await instanceApi.listInstances({ page: 1, pagesize: 10, status: 'running' });
+      await instanceApi.listInstances({ page: 1, page_size: 10, status: 'running' });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/instances', {
-        params: { page: 1, pagesize: 10, status: 'running' },
+        params: { page: 1, page_size: 10, status: 'running' },
       });
     });
 
@@ -184,10 +184,10 @@ describe('Workflow Module API Tests', () => {
   describe('approvalApi', () => {
     it('listApprovals should call GET /approvals with params', async () => {
       const { approvalApi } = await import('../approval');
-      await approvalApi.listApprovals({ page: 1, pagesize: 10, search: 'Expense' });
+      await approvalApi.listApprovals({ page: 1, page_size: 10, search: 'Expense' });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/approvals', {
-        params: { page: 1, pagesize: 10, search: 'Expense' },
+        params: { page: 1, page_size: 10, search: 'Expense' },
       });
     });
 
@@ -216,10 +216,10 @@ describe('Workflow Module API Tests', () => {
 
     it('getRecords should call GET /records with params', async () => {
       const { approvalApi } = await import('../approval');
-      await approvalApi.getRecords({ page: 1, pagesize: 10 });
+      await approvalApi.getRecords({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/records', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -234,10 +234,10 @@ describe('Workflow Module API Tests', () => {
   describe('approvalTaskApi', () => {
     it('listApprovalTasks should call GET /approval-tasks with params', async () => {
       const { approvalTaskApi } = await import('../approval');
-      await approvalTaskApi.listApprovalTasks({ page: 1, pagesize: 10, status: 'pending' });
+      await approvalTaskApi.listApprovalTasks({ page: 1, page_size: 10, status: 'pending' });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/approval-tasks', {
-        params: { page: 1, pagesize: 10, status: 'pending' },
+        params: { page: 1, page_size: 10, status: 'pending' },
       });
     });
 
@@ -307,10 +307,10 @@ describe('Workflow Module API Tests', () => {
   describe('taskApi', () => {
     it('listTasks should call GET /tasks with params', async () => {
       const { taskApi } = await import('../task');
-      await taskApi.listTasks({ page: 1, pagesize: 10, status: 'pending' });
+      await taskApi.listTasks({ page: 1, page_size: 10, status: 'pending' });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/tasks', {
-        params: { page: 1, pagesize: 10, status: 'pending' },
+        params: { page: 1, page_size: 10, status: 'pending' },
       });
     });
 
@@ -361,28 +361,28 @@ describe('Workflow Module API Tests', () => {
 
     it('myTasks should call GET /tasks/my with params', async () => {
       const { taskApi } = await import('../task');
-      await taskApi.myTasks({ page: 1, pagesize: 10 });
+      await taskApi.myTasks({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/tasks/my', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
     it('myPending should call GET /tasks/my/pending with params', async () => {
       const { taskApi } = await import('../task');
-      await taskApi.myPending({ page: 1, pagesize: 10 });
+      await taskApi.myPending({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/tasks/my/pending', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
     it('myCompleted should call GET /tasks/my/completed with params', async () => {
       const { taskApi } = await import('../task');
-      await taskApi.myCompleted({ page: 1, pagesize: 10 });
+      await taskApi.myCompleted({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/tasks/my/completed', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -406,10 +406,10 @@ describe('Workflow Module API Tests', () => {
   describe('templateApi', () => {
     it('listTemplates should call GET /templates with params', async () => {
       const { templateApi } = await import('../template');
-      await templateApi.listTemplates({ page: 1, pagesize: 10, search: 'Leave' });
+      await templateApi.listTemplates({ page: 1, page_size: 10, search: 'Leave' });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/templates', {
-        params: { page: 1, pagesize: 10, search: 'Leave' },
+        params: { page: 1, page_size: 10, search: 'Leave' },
       });
     });
 
@@ -455,10 +455,10 @@ describe('Workflow Module API Tests', () => {
   describe('monitorApi', () => {
     it('listInstances should call GET /monitor/instances with params', async () => {
       const { monitorApi } = await import('../monitor');
-      await monitorApi.listInstances({ page: 1, pagesize: 10 });
+      await monitorApi.listInstances({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/monitor/instances', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -514,10 +514,10 @@ describe('Workflow Module API Tests', () => {
   describe('delegateApi', () => {
     it('listDelegates should call GET /delegates with params', async () => {
       const { delegateApi } = await import('../delegate');
-      await delegateApi.listDelegates({ page: 1, pagesize: 10 });
+      await delegateApi.listDelegates({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/delegates', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -567,19 +567,19 @@ describe('Workflow Module API Tests', () => {
 
     it('getMyDelegates should call GET /delegates/my with params', async () => {
       const { delegateApi } = await import('../delegate');
-      await delegateApi.getMyDelegates({ page: 1, pagesize: 10 });
+      await delegateApi.getMyDelegates({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/delegates/my', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
     it('getMyAttorneys should call GET /delegates/my/attorneys with params', async () => {
       const { delegateApi } = await import('../delegate');
-      await delegateApi.getMyAttorneys({ page: 1, pagesize: 10 });
+      await delegateApi.getMyAttorneys({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/delegates/my/attorneys', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
   });
@@ -587,10 +587,10 @@ describe('Workflow Module API Tests', () => {
   describe('categoryApi', () => {
     it('listCategories should call GET /categories with params', async () => {
       const { categoryApi } = await import('../category');
-      await categoryApi.listCategories({ page: 1, pagesize: 10 });
+      await categoryApi.listCategories({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/categories', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -633,10 +633,10 @@ describe('Workflow Module API Tests', () => {
 
     it('getCategoryWorkflows should call GET /categories/:id/workflows with params', async () => {
       const { categoryApi } = await import('../category');
-      await categoryApi.getCategoryWorkflows('cat-001', { page: 1, pagesize: 10 });
+      await categoryApi.getCategoryWorkflows('cat-001', { page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.workflow.get).toHaveBeenCalledWith('/categories/cat-001/workflows', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
   });

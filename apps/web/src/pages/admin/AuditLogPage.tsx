@@ -356,7 +356,7 @@ const AuditLogPage: React.FC = () => {
       list: async (params?: Record<string, unknown>) => {
         const queryParams: Record<string, unknown> = {
           page: params?.page ?? 1,
-          pagesize: Math.min(200, Math.max(1, (params?.pageSize as number) ?? 20)),
+          page_size: Math.min(200, Math.max(1, (params?.pageSize as number) ?? 20)),
         };
         if (params?.status && params.status !== 'all') {
           queryParams.status = params.status;

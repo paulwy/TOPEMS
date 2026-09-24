@@ -87,7 +87,7 @@ export const docVersionApi = {
     params?: {
       status?: DocumentStatus;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ): Promise<ApiResponse<PaginatedResponse<DocumentVersion>>> => {
     return apiClient.doc.get(`/documents/${documentId}/versions`, { params });
@@ -175,7 +175,7 @@ export const docVersionApi = {
 
   listMyCheckouts: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<DocumentVersion>>> => {
     return apiClient.doc.get('/documents/my-checkouts', { params });
   },

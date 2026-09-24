@@ -96,7 +96,7 @@ describe('V142 ERP - dbStructureApi', () => {
     expect(mockClient.get).toHaveBeenCalledWith('/db/changes?page=1&table_name=orders');
   });
 
-  it('should support pagesize parameter', async () => {
+  it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: [] });
     await dbStructureApi.listTables();
     expect(mockClient.get).toHaveBeenCalledWith('/db/tables');
@@ -120,7 +120,7 @@ describe('V142 ERP - mdmRefsApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.list({ page: 1, pageSize: 20, domain: 'customer' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/master-data-refs?page=1&pagesize=20&domain=customer'
+      '/master-data-refs?page=1&page_size=20&domain=customer'
     );
   });
 
@@ -202,7 +202,7 @@ describe('V142 ERP - mdmRefsApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.listConflicts({ page: 1, pageSize: 20, status: 'open' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/master-data-refs/conflicts?page=1&pagesize=20&status=open'
+      '/master-data-refs/conflicts?page=1&page_size=20&status=open'
     );
   });
 
@@ -219,14 +219,14 @@ describe('V142 ERP - mdmRefsApi', () => {
   it('should list archived refs', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.listArchived({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/master-data-refs/archived?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith('/master-data-refs/archived?page=1&page_size=20');
   });
 
   it('should list pending destruction', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.listPendingDestruction({ page: 1, pageSize: 20 });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/master-data-refs/pending-destruction?page=1&pagesize=20'
+      '/master-data-refs/pending-destruction?page=1&page_size=20'
     );
   });
 
@@ -272,7 +272,7 @@ describe('V142 ERP - mdmRefsApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.listQualityRules({ page: 1, pageSize: 20 });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/master-data-refs/quality-rules?page=1&pagesize=20'
+      '/master-data-refs/quality-rules?page=1&page_size=20'
     );
   });
 
@@ -315,7 +315,7 @@ describe('V142 ERP - mdmRefsApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.listSyncJobs({ page: 1, pageSize: 20, status: 'pending' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/master-data/sync/jobs?page=1&pagesize=20&status=pending'
+      '/master-data/sync/jobs?page=1&page_size=20&status=pending'
     );
   });
 
@@ -365,7 +365,7 @@ describe('V142 ERP - mdmRefsApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmRefsApi.listQualityTickets({ page: 1, pageSize: 20, status: 'open' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/master-data/quality/tickets?page=1&pagesize=20&status=open'
+      '/master-data/quality/tickets?page=1&page_size=20&status=open'
     );
   });
 
@@ -409,9 +409,9 @@ describe('V142 ERP - mdmRefsApi', () => {
     expect(mockClient.get).toHaveBeenCalledWith('/master-data/quality/loop-stats');
   });
 
-  it('should support pagesize parameter', async () => {
+  it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await mdmRefsApi.list({ page: 1, pagesize: 50 } as any);
-    expect(mockClient.get).toHaveBeenCalledWith('/master-data-refs?page=1&pagesize=50');
+    await mdmRefsApi.list({ page: 1, page_size: 50 } as any);
+    expect(mockClient.get).toHaveBeenCalledWith('/master-data-refs?page=1&page_size=50');
   });
 });

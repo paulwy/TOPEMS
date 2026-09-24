@@ -21,10 +21,10 @@ describe('WMS Module API Tests', () => {
   describe('warehouseApi', () => {
     it('list should call GET /warehouses with params', async () => {
       const { warehouseApi } = await import('../wms/warehouse');
-      await warehouseApi.list({ page: 1, pagesize: 10 });
+      await warehouseApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/warehouses', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -62,10 +62,10 @@ describe('WMS Module API Tests', () => {
   describe('locationApi', () => {
     it('list should call GET /locations with params', async () => {
       const { locationApi } = await import('../wms/location');
-      await locationApi.list({ page: 1, pagesize: 10 });
+      await locationApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/locations', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -112,10 +112,10 @@ describe('WMS Module API Tests', () => {
   describe('inventoryApi', () => {
     it('list should call GET /inventory with params', async () => {
       const { inventoryApi } = await import('../wms/inventory');
-      await inventoryApi.list({ page: 1, pagesize: 10 });
+      await inventoryApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -167,10 +167,10 @@ describe('WMS Module API Tests', () => {
   describe('inventoryAlertsApi', () => {
     it('listRules should call GET /inventory-alerts/rules with params', async () => {
       const { inventoryAlertsApi } = await import('../wms/inventory');
-      await inventoryAlertsApi.listRules({ page: 1, pagesize: 10 });
+      await inventoryAlertsApi.listRules({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/rules', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -206,10 +206,10 @@ describe('WMS Module API Tests', () => {
 
     it('listRecords should call GET /inventory-alerts/records with params', async () => {
       const { inventoryAlertsApi } = await import('../wms/inventory');
-      await inventoryAlertsApi.listRecords({ page: 1, pagesize: 10 });
+      await inventoryAlertsApi.listRecords({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/records', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -282,10 +282,10 @@ describe('WMS Module API Tests', () => {
   describe('inboundOrderApi', () => {
     it('list should call GET /inbound-orders with params', async () => {
       const { inboundOrderApi } = await import('../wms/inbound');
-      await inboundOrderApi.list({ page: 1, pagesize: 10 });
+      await inboundOrderApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/inbound-orders', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -360,10 +360,10 @@ describe('WMS Module API Tests', () => {
   describe('outboundOrderApi', () => {
     it('list should call GET /outbound-orders with params', async () => {
       const { outboundOrderApi } = await import('../wms/outbound');
-      await outboundOrderApi.list({ page: 1, pagesize: 10 });
+      await outboundOrderApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/outbound-orders', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -437,10 +437,10 @@ describe('WMS Module API Tests', () => {
   describe('stockTakeApi', () => {
     it('list should call GET /stock-takes with params', async () => {
       const { stockTakeApi } = await import('../wms/stocktake');
-      await stockTakeApi.list({ page: 1, pagesize: 10 });
+      await stockTakeApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/stock-takes', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -544,10 +544,10 @@ describe('WMS Module API Tests', () => {
   describe('transferApi', () => {
     it('list should call GET /transfers with params', async () => {
       const { transferApi } = await import('../wms/transfer');
-      await transferApi.list({ page: 1, pagesize: 10 });
+      await transferApi.list({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/transfers', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -623,10 +623,10 @@ describe('WMS Module API Tests', () => {
   describe('smartReplenishmentApi', () => {
     it('listSuggestions should call GET /smart-replenishment/suggestions with params', async () => {
       const { smartReplenishmentApi } = await import('../wms/replenishment');
-      await smartReplenishmentApi.listSuggestions({ page: 1, pagesize: 10 });
+      await smartReplenishmentApi.listSuggestions({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/suggestions', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -671,10 +671,10 @@ describe('WMS Module API Tests', () => {
 
     it('listOrders should call GET /smart-replenishment/orders with params', async () => {
       const { smartReplenishmentApi } = await import('../wms/replenishment');
-      await smartReplenishmentApi.listOrders({ page: 1, pagesize: 10 });
+      await smartReplenishmentApi.listOrders({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/orders', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -712,10 +712,10 @@ describe('WMS Module API Tests', () => {
 
     it('listSafetyStock should call GET /smart-replenishment/safety-stock with params', async () => {
       const { smartReplenishmentApi } = await import('../wms/replenishment');
-      await smartReplenishmentApi.listSafetyStock({ page: 1, pagesize: 10 });
+      await smartReplenishmentApi.listSafetyStock({ page: 1, page_size: 10 });
       const { apiClient } = await import('../client');
       expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/safety-stock', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 

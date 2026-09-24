@@ -82,7 +82,7 @@ const TrainingPage: React.FC = () => {
   const { data: recordsData } = useQuery({
     queryKey: QUERY_KEYS.EHS.TRAINING_RECORDS,
     queryFn: async () => {
-      const response = await trainingApi.listTrainingRecords({ pagesize: 100 });
+      const response = await trainingApi.listTrainingRecords({ page_size: 100 });
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];
@@ -97,7 +97,7 @@ const TrainingPage: React.FC = () => {
   const { data: certificatesData } = useQuery({
     queryKey: QUERY_KEYS.EHS.TRAINING_CERTIFICATES,
     queryFn: async () => {
-      const response = await trainingApi.listTrainingCertificates({ pagesize: 100 });
+      const response = await trainingApi.listTrainingCertificates({ page_size: 100 });
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data) ? data : data.data || [];

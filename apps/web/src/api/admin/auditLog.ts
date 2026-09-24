@@ -6,14 +6,14 @@ interface PaginatedAuditLogs {
   items: AuditLog[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export const auditLogApi = {
   listAuditLogs: async (params?: AuditLogQueryParams): Promise<ApiResponse<PaginatedAuditLogs>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.user_id) queryParams.append('user_id', params.user_id);
     if (params?.action) queryParams.append('action', params.action);
     if (params?.resource) queryParams.append('resource', params.resource);

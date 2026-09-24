@@ -46,7 +46,7 @@ export interface DeliveryRecord {
 
 export interface DeliveryListQuery {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   status?: DeliveryStatus;
   channel?: DeliveryChannel;
   user_id?: string;
@@ -60,7 +60,7 @@ export interface DeliveryListResponse {
   deliveries: DeliveryRecord[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export interface DeliveryStats {
@@ -99,7 +99,7 @@ export const deliveryApi = {
 
   getBatchDeliveries: async (
     batchId: string,
-    params?: { page?: number; pagesize?: number }
+    params?: { page?: number; page_size?: number }
   ): Promise<ApiResponse<DeliveryListResponse>> => {
     return apiClient.notification.get(`/notification/deliveries/batch/${batchId}`, {
       params,
@@ -108,7 +108,7 @@ export const deliveryApi = {
 
   getUserDeliveries: async (
     userId: string,
-    params?: { page?: number; pagesize?: number; status?: DeliveryStatus }
+    params?: { page?: number; page_size?: number; status?: DeliveryStatus }
   ): Promise<ApiResponse<DeliveryListResponse>> => {
     return apiClient.notification.get(`/notification/deliveries/by-user/${userId}`, {
       params,
@@ -125,7 +125,7 @@ export const deliveryApi = {
 
   getFailedDeliveries: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     from_date?: string;
     to_date?: string;
   }): Promise<ApiResponse<DeliveryListResponse>> => {
@@ -138,7 +138,7 @@ export const deliveryApi = {
 
   getChannelDeliveries: async (
     channel: DeliveryChannel,
-    params?: { page?: number; pagesize?: number; status?: DeliveryStatus }
+    params?: { page?: number; page_size?: number; status?: DeliveryStatus }
   ): Promise<ApiResponse<DeliveryListResponse>> => {
     return apiClient.notification.get(`/notification/deliveries/by-channel/${channel}`, {
       params,

@@ -54,7 +54,7 @@ pub struct ListReconcileQuery {
     pub period: Option<String>,
     pub keyword: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -144,8 +144,8 @@ pub async fn list_reconcile_orders(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let offset = (page - 1) * pagesize;
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
 
     let keyword = params.keyword.clone();
 
@@ -187,7 +187,7 @@ pub async fn list_reconcile_orders(
         .bind(params.counterparty_id)
         .bind(&params.period)
         .bind(&keyword)
-        .bind(pagesize)
+        .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)
         .await
@@ -201,7 +201,7 @@ pub async fn list_reconcile_orders(
 
     let items: Vec<serde_json::Value> = rows.iter().map(order_to_json).collect();
     Ok(Json(ApiResponse::success(
-        serde_json::json!({ "items": items, "total": total, "page": page, "pagesize": pagesize }),
+        serde_json::json!({ "items": items, "total": total, "page": page, "page_size": page_size }),
         "获取对账订单列表成功",
     )))
 }

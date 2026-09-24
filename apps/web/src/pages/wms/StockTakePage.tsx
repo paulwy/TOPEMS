@@ -47,7 +47,7 @@ const StockTakePage: React.FC = () => {
   const warehousesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_BASE,
     queryFn: async () => {
-      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
       if (response.success && response.data) {
         return response.data.items || [];
       }
@@ -287,7 +287,7 @@ const StockTakePage: React.FC = () => {
 
         const wmsParams: Record<string, unknown> = {
           page,
-          pagesize: pageSize,
+          page_size: pageSize,
         };
         if (search) wmsParams.search = search;
         if (statusFilter && statusFilter !== 'all') wmsParams.status = statusFilter;

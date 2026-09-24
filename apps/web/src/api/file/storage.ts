@@ -139,7 +139,7 @@ export const fileStorageApi = {
 
   listBucketFiles: async (
     bucketId: string,
-    params?: { page?: number; pagesize?: number; prefix?: string }
+    params?: { page?: number; page_size?: number; prefix?: string }
   ): Promise<ApiResponse<PaginatedResponse<Record<string, unknown>>>> => {
     return apiClient.file.get(`/storage/buckets/${bucketId}/files`, { params });
   },

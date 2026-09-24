@@ -59,7 +59,7 @@ pub struct ListProductionOrdersResponse {
     pub orders: Vec<ProductionOrderResponse>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[cfg(test)]

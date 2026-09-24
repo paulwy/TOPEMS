@@ -131,7 +131,7 @@ export const docCollaborationApi = {
 
   listComments: async (
     documentId: string,
-    params?: { resolved?: boolean; page?: number; pagesize?: number }
+    params?: { resolved?: boolean; page?: number; page_size?: number }
   ): Promise<ApiResponse<PaginatedResponse<Comment>>> => {
     return apiClient.doc.get(`/documents/${documentId}/comments`, { params });
   },
@@ -165,7 +165,7 @@ export const docCollaborationApi = {
       start_date?: string;
       end_date?: string;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ): Promise<ApiResponse<PaginatedResponse<ActivityRecord>>> => {
     return apiClient.doc.get(`/documents/${documentId}/activities`, { params });
@@ -190,7 +190,7 @@ export const docCollaborationApi = {
 
   listMyShared: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     shared_by?: string;
   }): Promise<ApiResponse<PaginatedResponse<ShareLink>>> => {
     return apiClient.doc.get('/documents/shared-with-me', { params });

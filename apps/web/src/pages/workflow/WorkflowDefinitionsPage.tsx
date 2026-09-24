@@ -72,7 +72,7 @@ const apiAdapter: CrudApiAdapter<WorkflowDefinition> = {
   list: async (params) => {
     const res = await workflowDefinitionApi.listWorkflows({
       page: params?.page ?? 1,
-      pagesize: params?.pageSize ?? 20,
+      page_size: params?.pageSize ?? 20,
       search: params?.search || undefined,
       status: params?.status && params.status !== 'all' ? String(params.status) : undefined,
     });

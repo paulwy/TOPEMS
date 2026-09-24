@@ -31,7 +31,7 @@ describe('V138 ERP - announcementApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await announcementApi.list({ page: 1, pageSize: 20, status: 'published' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/announcements?page=1&pagesize=20&status=published'
+      '/announcements?page=1&page_size=20&status=published'
     );
   });
 
@@ -90,7 +90,7 @@ describe('V138 ERP - assetApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await assetApi.list({ page: 1, pageSize: 20, status: 'in_use', category: 'equipment' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/assets?page=1&pagesize=20&status=in_use&category=equipment'
+      '/assets?page=1&page_size=20&status=in_use&category=equipment'
     );
   });
 

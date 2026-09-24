@@ -108,7 +108,7 @@ export const systemApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<AuditLog[]>> => {
     return apiClient.core.get('/api/core/system/audit-logs', { params });
   },

@@ -49,7 +49,7 @@ describe('ERP supplierApi', () => {
   it('should call GET /suppliers for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { suppliers: [], total: 0 } });
     await supplierApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/suppliers?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/suppliers?page=1&page_size=10');
   });
 
   it('should call GET /suppliers/:id for get', async () => {
@@ -94,7 +94,7 @@ describe('ERP customerApi', () => {
   it('should call GET /customers for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { customers: [], total: 0 } });
     await customerApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/customers?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/customers?page=1&page_size=10');
   });
 
   it('should call GET /customers/:id for get', async () => {
@@ -139,7 +139,7 @@ describe('ERP materialApi', () => {
   it('should call GET /materials for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { materials: [], total: 0 } });
     await materialApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/materials?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/materials?page=1&page_size=10');
   });
 
   it('should call GET /materials/:id for get', async () => {
@@ -184,7 +184,7 @@ describe('ERP inventoryApi', () => {
   it('should call GET /inventory for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await inventoryApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory?page=1&page_size=10');
   });
 
   it('should call GET /inventory/:id for get', async () => {
@@ -235,7 +235,7 @@ describe('ERP purchaseOrderApi', () => {
   it('should call GET /purchase-orders for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { orders: [], total: 0 } });
     await purchaseOrderApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/purchase-orders?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/purchase-orders?page=1&page_size=10');
   });
 
   it('should call GET /purchase-orders/:id for get', async () => {
@@ -298,7 +298,7 @@ describe('ERP salesOrderApi', () => {
   it('should call GET /sales-orders for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { orders: [], total: 0 } });
     await salesOrderApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/sales-orders?page=1&pagesize=10');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/sales-orders?page=1&page_size=10');
   });
 
   it('should call GET /sales-orders/:id for get', async () => {
@@ -378,7 +378,7 @@ describe('ERP voucherApi', () => {
 
   it('should call GET /vouchers for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await voucherApi.list({ page: 1, pagesize: 10 });
+    await voucherApi.list({ page: 1, page_size: 10 });
     expect(mockApiClient.get).toHaveBeenCalledWith('/vouchers', expect.anything());
   });
 
@@ -819,7 +819,7 @@ describe('ERP documentApi (core)', () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await documentApi.list({ page: 2, pageSize: 10, doc_type: 'contract' });
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      '/documents?page=2&pagesize=10&doc_type=contract'
+      '/documents?page=2&page_size=10&doc_type=contract'
     );
   });
 

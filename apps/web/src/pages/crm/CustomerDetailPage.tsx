@@ -55,11 +55,11 @@ const CustomerDetailPage: React.FC = () => {
   const { data: financeInfo } = useCustomerFinanceInfo(id || '');
   const { data: invoicesData } = useSalesInvoices({
     customer_id: id,
-    pagesize: 10,
+    page_size: 10,
   });
   const { data: collectionsData } = useCollectionRecords({
     customer_id: id,
-    pagesize: 10,
+    page_size: 10,
   });
 
   const customer =

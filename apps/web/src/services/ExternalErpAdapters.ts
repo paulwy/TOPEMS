@@ -241,7 +241,7 @@ class KingdeeAdapter extends BaseAdapter {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
       })
     );
@@ -266,7 +266,7 @@ class KingdeeAdapter extends BaseAdapter {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
       })
     );
@@ -291,7 +291,7 @@ class KingdeeAdapter extends BaseAdapter {
         headers: { Authorization: `Bearer ${this.token}` },
         params: {
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
       })
     );
@@ -320,7 +320,7 @@ class KingdeeAdapter extends BaseAdapter {
           date_begin: params?.start_date,
           date_end: params?.end_date,
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
       })
     );
@@ -465,7 +465,7 @@ class YonyouAdapter extends BaseAdapter {
         '/u8api/account/query',
         {
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
         { headers: { Authorization: this.session } }
       )
@@ -491,7 +491,7 @@ class YonyouAdapter extends BaseAdapter {
         '/u8api/customer/query',
         {
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
         { headers: { Authorization: this.session } }
       )
@@ -517,7 +517,7 @@ class YonyouAdapter extends BaseAdapter {
         '/u8api/supplier/query',
         {
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
         { headers: { Authorization: this.session } }
       )
@@ -547,7 +547,7 @@ class YonyouAdapter extends BaseAdapter {
           date_begin: params?.start_date,
           date_end: params?.end_date,
           page: params?.page || 1,
-          pagesize: params?.pageSize || 100,
+          page_size: params?.pageSize || 100,
         },
         { headers: { Authorization: this.session } }
       )

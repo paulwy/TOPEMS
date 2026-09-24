@@ -102,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM pdm_materials WHERE deleted_at IS NULL),
                     'page', 1,
-                    'pagesize', 20
+                    'page_size', 20
                 ) as data
                 FROM (
                     SELECT m.* FROM pdm_materials m
@@ -117,7 +117,7 @@ async fn main() -> anyhow::Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key =
-                        "pdm:material:list:default:page:1:pagesize:20:search:None:status:None";
+                        "pdm:material:list:default:page:1:page_size:20:search:None:status:None";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[pdm] 物料列表缓存预热完成");
                 }

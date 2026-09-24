@@ -34,7 +34,7 @@ pub struct PermissionChange {
 #[derive(Debug, Deserialize)]
 pub struct PermissionChangeQueryParams {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
     pub user_id: Option<String>,
     pub role_id: Option<String>,
     pub permission_id: Option<String>,
@@ -52,7 +52,7 @@ pub struct PaginatedPermissionChanges {
     pub items: Vec<PermissionChange>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize)]
@@ -127,7 +127,7 @@ pub struct AccessControlLog {
 #[derive(Debug, Deserialize)]
 pub struct AccessControlQueryParams {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
     pub user_id: Option<String>,
     pub resource: Option<String>,
     pub action: Option<String>,
@@ -143,7 +143,7 @@ pub struct PaginatedAccessLogs {
     pub items: Vec<AccessControlLog>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize)]
@@ -260,7 +260,7 @@ mod tests {
         let json = r#"{}"#;
         let params: PermissionChangeQueryParams = serde_json::from_str(json).unwrap();
         assert!(params.page.is_none());
-        assert!(params.pagesize.is_none());
+        assert!(params.page_size.is_none());
         assert!(params.user_id.is_none());
         assert!(params.action.is_none());
         assert!(params.success.is_none());
@@ -271,7 +271,7 @@ mod tests {
     fn test_permission_change_query_params_full() {
         let json = r#"{
             "page": 1,
-            "pagesize": 20,
+            "page_size": 20,
             "user_id": "user-123",
             "role_id": "role-456",
             "action": "create",
@@ -281,7 +281,7 @@ mod tests {
         }"#;
         let params: PermissionChangeQueryParams = serde_json::from_str(json).unwrap();
         assert_eq!(params.page, Some(1));
-        assert_eq!(params.pagesize, Some(20));
+        assert_eq!(params.page_size, Some(20));
         assert_eq!(params.user_id.as_deref(), Some("user-123"));
         assert_eq!(params.action.as_deref(), Some("create"));
         assert_eq!(params.change_type.as_deref(), Some("grant"));
@@ -295,12 +295,12 @@ mod tests {
             items: vec![],
             total: 100,
             page: 1,
-            pagesize: 20,
+            page_size: 20,
         };
         let json = serde_json::to_value(&resp).unwrap();
         assert_eq!(json["total"], 100);
         assert_eq!(json["page"], 1);
-        assert_eq!(json["pagesize"], 20);
+        assert_eq!(json["page_size"], 20);
         assert!(json["items"].is_array());
     }
 

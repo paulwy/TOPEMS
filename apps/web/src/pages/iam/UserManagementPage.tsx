@@ -63,7 +63,7 @@ const UserManagementPage: React.FC = () => {
     queryFn: async () => {
       const response = await authApi.listUsers({
         page: 1,
-        pagesize: 50,
+        page_size: 50,
         search: debouncedSearch || undefined,
       });
       if (!response.success) {

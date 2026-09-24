@@ -42,7 +42,7 @@ interface ArchivedListResponse {
   notifications: ArchivedNotification[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export const configApi = {
@@ -60,7 +60,7 @@ export const configApi = {
 
   listArchived: async (page = 1, pageSize = 20): Promise<ApiResponse<ArchivedListResponse>> => {
     return apiClient.notification.get('/notifications/archived', {
-      params: { page, pagesize: pageSize },
+      params: { page, page_size: pageSize },
     });
   },
 

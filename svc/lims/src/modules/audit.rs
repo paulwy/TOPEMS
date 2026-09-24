@@ -61,7 +61,7 @@ pub struct ListAuditLogsQuery {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 pub fn create_routes() -> Router<AppState> {
@@ -76,7 +76,7 @@ pub async fn list_audit_logs(
     axum::extract::Query(params): axum::extract::Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     if let Some(ref start_date) = params.start_date {

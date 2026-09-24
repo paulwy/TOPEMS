@@ -30,7 +30,7 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
   list: async (params) => {
     const response = await ehsApi.listSafetyIssues({
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
       search: params?.search,
       status: params?.status as string | undefined,
     });
@@ -51,7 +51,7 @@ const safetyIssueAdapter: CrudApiAdapter<SafetyIssue> = {
 const EhsHazardPage: React.FC = () => {
   const { data: issuesResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_SAFETYISSUES_STATS_BASE,
-    queryFn: async () => ehsApi.listSafetyIssues({ pagesize: 500 }),
+    queryFn: async () => ehsApi.listSafetyIssues({ page_size: 500 }),
     staleTime: 5 * 60 * 1000,
   });
 

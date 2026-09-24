@@ -566,7 +566,7 @@ export interface QmsPaginatedResponse<T> {
   actions?: T[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 // QMS Statistics Types

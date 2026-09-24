@@ -2,7 +2,7 @@
  * CrudApiAdapter 工厂 — 自动从 API 对象生成标准化 CRUD 适配器
  *
  * 处理不同后端的数据格式差异：
- * - pagesize → pageSize 参数归一化
+ * - page_size → pageSize 参数归一化
  * - 响应数据提取（items / materials / data 等多种字段名）
  * - 错误处理（检查 response.success）
  */
@@ -45,7 +45,7 @@ export interface CrudApiAdapterConfig {
   /** 分页参数字段名映射 */
   pageSizeParam?: string;
   pageParam?: string;
-  /** 是否将 pagesize 归一化为 pageSize，默认 true */
+  /** 是否将 page_size 归一化为 pageSize，默认 true */
   normalizePageSize?: boolean;
 }
 
@@ -110,7 +110,7 @@ export function normalizeListResponse<T>(
     }
 
     const page = Number(obj.page) || 1;
-    const pageSizeVal = obj.pageSize ?? obj.pagesize;
+    const pageSizeVal = obj.pageSize ?? obj.page_size;
     const pageSize = Number(pageSizeVal) || 10;
 
     return { items, total, page, pageSize };
@@ -121,13 +121,13 @@ export function normalizeListResponse<T>(
 
 /**
  * 归一化分页参数名
- * 将 pageSize 映射为后端期望的参数名（pagesize 或自定义）
+ * 将 pageSize 映射为后端期望的参数名（page_size 或自定义）
  */
 function normalizePaginationParams(
   params: Record<string, unknown>,
   config: CrudApiAdapterConfig
 ): Record<string, unknown> {
-  const { pageSizeParam = 'pagesize', pageParam = 'page', normalizePageSize = true } = config;
+  const { pageSizeParam = 'page_size', pageParam = 'page', normalizePageSize = true } = config;
 
   const result: Record<string, unknown> = { ...params };
 

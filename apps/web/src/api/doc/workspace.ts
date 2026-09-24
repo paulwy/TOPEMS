@@ -167,7 +167,7 @@ export const docWorkspaceApi = {
 
   listTrash: async (
     workspaceId: string,
-    params?: { page?: number; pagesize?: number; type?: string }
+    params?: { page?: number; page_size?: number; type?: string }
   ): Promise<ApiResponse<PaginatedResponse<TrashItem>>> => {
     return apiClient.doc.get(`/workspaces/${workspaceId}/trash`, { params });
   },
@@ -198,7 +198,7 @@ export const docWorkspaceApi = {
       date_to?: string;
       modified_by?: string;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ): Promise<ApiResponse<PaginatedResponse<DocTreeNode>>> => {
     return apiClient.doc.get(`/workspaces/${workspaceId}/search`, { params });

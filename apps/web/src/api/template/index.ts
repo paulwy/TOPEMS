@@ -127,7 +127,7 @@ export const templateApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Template>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.type) searchParams.set('type', params.type);
     if (params?.category) searchParams.set('category', params.category);

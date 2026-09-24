@@ -38,10 +38,10 @@ describe('RS Module API Tests', () => {
   describe('projectApi', () => {
     it('listProjects should call GET /projects with params', async () => {
       const { projectApi } = await import('../project');
-      await projectApi.listProjects({ page: 1, pagesize: 10, search: 'test', status: 'active' });
+      await projectApi.listProjects({ page: 1, page_size: 10, search: 'test', status: 'active' });
       const { apiClient } = await import('../../client');
       expect(apiClient.rd.get).toHaveBeenCalledWith(
-        '/projects?page=1&pagesize=10&search=test&status=active'
+        '/projects?page=1&page_size=10&search=test&status=active'
       );
     });
 
@@ -118,13 +118,13 @@ describe('RS Module API Tests', () => {
       const { experimentApi } = await import('../experiment');
       await experimentApi.listExperiments({
         page: 1,
-        pagesize: 10,
+        page_size: 10,
         search: 'test',
         status: 'active',
       });
       const { apiClient } = await import('../../client');
       expect(apiClient.rd.get).toHaveBeenCalledWith(
-        '/experiments?page=1&pagesize=10&search=test&status=active'
+        '/experiments?page=1&page_size=10&search=test&status=active'
       );
     });
 
@@ -174,24 +174,24 @@ describe('RS Module API Tests', () => {
 
     it('listLabExperiments should call GET /experiments/phase/lab with params', async () => {
       const { experimentApi } = await import('../experiment');
-      await experimentApi.listLabExperiments({ page: 1, pagesize: 10 });
+      await experimentApi.listLabExperiments({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rd.get).toHaveBeenCalledWith('/experiments/phase/lab?page=1&pagesize=10');
+      expect(apiClient.rd.get).toHaveBeenCalledWith('/experiments/phase/lab?page=1&page_size=10');
     });
 
     it('listPilotExperiments should call GET /experiments/phase/pilot with params', async () => {
       const { experimentApi } = await import('../experiment');
-      await experimentApi.listPilotExperiments({ page: 1, pagesize: 10 });
+      await experimentApi.listPilotExperiments({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rd.get).toHaveBeenCalledWith('/experiments/phase/pilot?page=1&pagesize=10');
+      expect(apiClient.rd.get).toHaveBeenCalledWith('/experiments/phase/pilot?page=1&page_size=10');
     });
 
     it('listScaleupExperiments should call GET /experiments/phase/scaleup with params', async () => {
       const { experimentApi } = await import('../experiment');
-      await experimentApi.listScaleupExperiments({ page: 1, pagesize: 10 });
+      await experimentApi.listScaleupExperiments({ page: 1, page_size: 10 });
       const { apiClient } = await import('../../client');
       expect(apiClient.rd.get).toHaveBeenCalledWith(
-        '/experiments/phase/scaleup?page=1&pagesize=10'
+        '/experiments/phase/scaleup?page=1&page_size=10'
       );
     });
 
@@ -300,10 +300,10 @@ describe('RS Module API Tests', () => {
   describe('bugApi', () => {
     it('listBugs should call GET /bugs with params', async () => {
       const { bugApi } = await import('../bug');
-      await bugApi.listBugs({ page: 1, pagesize: 10, severity: 'high', status: 'open' });
+      await bugApi.listBugs({ page: 1, page_size: 10, severity: 'high', status: 'open' });
       const { apiClient } = await import('../../client');
       expect(apiClient.rd.get).toHaveBeenCalledWith(
-        '/bugs?page=1&pagesize=10&severity=high&status=open'
+        '/bugs?page=1&page_size=10&severity=high&status=open'
       );
     });
 
@@ -348,10 +348,10 @@ describe('RS Module API Tests', () => {
   describe('testApi', () => {
     it('listTests should call GET /tests with params', async () => {
       const { testApi } = await import('../test');
-      await testApi.listTests({ page: 1, pagesize: 10, case_type: 'unit', priority: 'high' });
+      await testApi.listTests({ page: 1, page_size: 10, case_type: 'unit', priority: 'high' });
       const { apiClient } = await import('../../client');
       expect(apiClient.rd.get).toHaveBeenCalledWith(
-        '/tests?page=1&pagesize=10&case_type=unit&priority=high'
+        '/tests?page=1&page_size=10&case_type=unit&priority=high'
       );
     });
 
@@ -396,9 +396,9 @@ describe('RS Module API Tests', () => {
   describe('buildApi', () => {
     it('listBuilds should call GET /builds with params', async () => {
       const { buildApi } = await import('../build');
-      await buildApi.listBuilds({ page: 1, pagesize: 10, status: 'success' });
+      await buildApi.listBuilds({ page: 1, page_size: 10, status: 'success' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rd.get).toHaveBeenCalledWith('/builds?page=1&pagesize=10&status=success');
+      expect(apiClient.rd.get).toHaveBeenCalledWith('/builds?page=1&page_size=10&status=success');
     });
 
     it('listBuilds should call GET /builds without params', async () => {

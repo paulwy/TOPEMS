@@ -21,7 +21,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<SalesInvoice>>> => {
     return apiClient.finance.get('/receivables', { params });
   },
@@ -51,7 +51,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<PurchaseInvoice>>> => {
     return apiClient.finance.get('/payables', { params });
   },
@@ -82,7 +82,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<CollectionRecord>>> => {
     return apiClient.finance.get('/ar/collections', { params });
   },
@@ -96,7 +96,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<PaymentRecord>>> => {
     return apiClient.finance.get('/ap/payments', { params });
   },
@@ -178,7 +178,7 @@ export default receivablePayableApi;
 
 interface ReceivablePayableQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   status?: string;
   [key: string]: unknown;
@@ -188,10 +188,10 @@ const buildReceivablePayableParams = (
   params?: ReceivablePayableQueryParams
 ): Record<string, unknown> | undefined => {
   if (!params) return undefined;
-  const { page, pagesize, ...rest } = params;
+  const { page, page_size, ...rest } = params;
   const out: Record<string, unknown> = { ...rest };
   if (page !== undefined) out.page = page;
-  if (pagesize !== undefined) out.pagesize = pagesize;
+  if (page_size !== undefined) out.page_size = page_size;
   return out;
 };
 

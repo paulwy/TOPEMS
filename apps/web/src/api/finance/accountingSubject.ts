@@ -21,7 +21,7 @@ export interface AccountingSubject {
 export interface AccountingSubjectQuery {
   page?: number;
   page_size?: number;
-  pagesize?: number;
+
   search?: string;
   category?: string;
   status?: string;

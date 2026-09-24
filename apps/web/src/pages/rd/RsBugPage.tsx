@@ -15,7 +15,7 @@ const bugApiAdapter: CrudApiAdapter<Bug> = {
   list: async (params) => {
     const queryParams: Record<string, unknown> = {
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
     };
     if (params?.search) queryParams.search = params.search;
     if (params?.severity) queryParams.severity = params.severity;

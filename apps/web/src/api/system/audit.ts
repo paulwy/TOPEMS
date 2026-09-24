@@ -6,7 +6,7 @@ export const systemAuditApi = {
   list: async (params?: AuditLogQueryParams): Promise<ApiResponse<PaginatedAuditLogs>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.user_id) queryParams.append('user_id', params.user_id);
     if (params?.user_name) queryParams.append('user_name', params.user_name);
     if (params?.action) queryParams.append('action', params.action);

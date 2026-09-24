@@ -703,10 +703,7 @@ D
   - 修复所有 lint 错误
   - 预计时间：2 小时
 - [x] **P0-2 前端单元测试**（2026-09-24：unit 130 文件 3019 用例全绿；component 5 分片全绿（332+455+1912+约1800+413）；修复 ehs-api 2 处测试期望对齐后端契约 page_size/risk_level）
-- [ ] **P0-3 端到端测试**
-  - 登录 → 各模块操作 → 登出
-  - 验证完整业务流程
-  - 预计时间：4 小时
+- [x] **P0-3 端到端测试**（2026-09-24 完成：integration 层 5 spec 104/104 全绿——登录→跨模块导航/CRUD/工作流/i18n/数据流全链路；api 层 16 passed + 30 设计内 skip（UI 类与 integration 重复覆盖）。修复链：登录选择器改 form button[type=submit]（页面演示区重复按钮）、networkidle→domcontentloaded（vite dev 永不 idle）、82 处路径修正 admin→iam、登录表单 i18n 键 k13-k21 补全、后端 core_users.created_at TIMESTAMPTZ↔NaiveDateTime 解码修复（models.rs UserRow→DateTime<Utc> + 建表对齐）、AppShell 侧边栏折叠 localStorage 持久化、路由一致性断言改 pathname 检查；commits 见本段 git log）
 - [ ] **P0-4 性能测试**
   - API 响应时间
   - 数据库查询性能

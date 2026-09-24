@@ -203,7 +203,7 @@ export const versioningApi = {
   ): Promise<ApiResponse<{ items: VersionHistoryEntry[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     if (params?.action) qs.set('action', params.action);
     const s = qs.toString();
     return apiClient.master.get<{ items: VersionHistoryEntry[]; total: number }>(
@@ -231,7 +231,7 @@ export const versioningApi = {
     if (params?.from) qs.set('from', params.from);
     if (params?.to) qs.set('to', params.to);
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: AuditLogEntry[]; total: number }>(
       `/mdm-v54/audit/log${s ? `?${s}` : ''}`

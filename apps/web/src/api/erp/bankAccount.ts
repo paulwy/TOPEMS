@@ -26,7 +26,7 @@ interface BankAccountListResponse {
 
 interface PaginationParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   status?: string;
   keyword?: string;
   [key: string]: unknown;
@@ -34,10 +34,10 @@ interface PaginationParams {
 
 export const bankAccountApi = {
   list: (params?: PaginationParams): Promise<ApiResponse<BankAccountListResponse>> => {
-    const { page, pagesize, ...rest } = params || {};
+    const { page, page_size, ...rest } = params || {};
     const searchParams: Record<string, unknown> = { ...rest };
     if (page !== undefined) searchParams.page = page;
-    if (pagesize !== undefined) searchParams.pagesize = pagesize;
+    if (page_size !== undefined) searchParams.page_size = page_size;
     return apiClient.erp.get('/bank-accounts', { params: searchParams });
   },
 

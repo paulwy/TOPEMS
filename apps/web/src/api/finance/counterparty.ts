@@ -33,7 +33,7 @@ export const counterpartyFinanceApi = {
   listCustomersWithFinance: (params?: {
     status?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<
     ApiResponse<PaginatedResult<Customer & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
@@ -45,7 +45,7 @@ export const counterpartyFinanceApi = {
   listSuppliersWithFinance: (params?: {
     status?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<
     ApiResponse<PaginatedResult<Supplier & { finance_info?: CounterpartyFinanceInfo }>>
   > => {

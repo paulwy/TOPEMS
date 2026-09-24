@@ -8,7 +8,12 @@ import type {
 } from './types';
 
 export const connectionApi = {
-  getConnections: (params?: { type?: string; status?: string; page?: number; pagesize?: number }) =>
+  getConnections: (params?: {
+    type?: string;
+    status?: string;
+    page?: number;
+    page_size?: number;
+  }) =>
     apiClient.integration.get('/external-erp/connections', {
       params,
     }),

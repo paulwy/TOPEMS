@@ -37,7 +37,7 @@ const AccountingManagementPage: React.FC = () => {
       list: async (params) => {
         const res = await accountingSubjectApi.list({
           page: params?.page,
-          pagesize: params?.pageSize,
+          page_size: params?.pageSize,
           search: params?.search as string,
           status: params?.status as string,
         });
@@ -75,7 +75,7 @@ const AccountingManagementPage: React.FC = () => {
       list: async (params) => {
         const res = await openingBalanceApi.list({
           page: params?.page,
-          pagesize: params?.pageSize,
+          page_size: params?.pageSize,
           search: params?.search as string,
           period: params?.period as string,
         });

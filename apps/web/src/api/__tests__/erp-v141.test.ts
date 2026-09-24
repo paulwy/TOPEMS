@@ -33,7 +33,7 @@ describe('V141 ERP - leaveRequestApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await leaveRequestApi.list({ page: 1, pageSize: 20, status: 'pending' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/leave-requests?page=1&pagesize=20&status=pending'
+      '/leave-requests?page=1&page_size=20&status=pending'
     );
   });
 
@@ -97,10 +97,10 @@ describe('V141 ERP - leaveRequestApi', () => {
     expect(mockClient.post).toHaveBeenCalledWith('/leave-requests/LR-001/cancel', {});
   });
 
-  it('should support pagesize parameter', async () => {
+  it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await leaveRequestApi.list({ page: 1, pagesize: 50 } as any);
-    expect(mockClient.get).toHaveBeenCalledWith('/leave-requests?page=1&pagesize=50');
+    await leaveRequestApi.list({ page: 1, page_size: 50 } as any);
+    expect(mockClient.get).toHaveBeenCalledWith('/leave-requests?page=1&page_size=50');
   });
 });
 
@@ -123,7 +123,7 @@ describe('V141 ERP - hrProxyApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listEmployees({ page: 1, pageSize: 20, department_id: 'D-001' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/hr/employees?page=1&pagesize=20&department_id=D-001'
+      '/hr/employees?page=1&page_size=20&department_id=D-001'
     );
   });
 
@@ -142,7 +142,7 @@ describe('V141 ERP - hrProxyApi', () => {
   it('should list departments', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listDepartments({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/hr/departments?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith('/hr/departments?page=1&page_size=20');
   });
 
   it('should get department tree', async () => {
@@ -160,7 +160,7 @@ describe('V141 ERP - hrProxyApi', () => {
   it('should list companies', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listCompanies({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/hr/companies?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith('/hr/companies?page=1&page_size=20');
   });
 
   it('should get company', async () => {
@@ -172,7 +172,7 @@ describe('V141 ERP - hrProxyApi', () => {
   it('should list positions', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listPositions({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/hr/positions?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith('/hr/positions?page=1&page_size=20');
   });
 
   it('should get position', async () => {
@@ -184,7 +184,7 @@ describe('V141 ERP - hrProxyApi', () => {
   it('should list payrolls', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listPayrolls({ page: 1, pageSize: 20, period: '2026-08' });
-    expect(mockClient.get).toHaveBeenCalledWith('/hr/payrolls?page=1&pagesize=20&period=2026-08');
+    expect(mockClient.get).toHaveBeenCalledWith('/hr/payrolls?page=1&page_size=20&period=2026-08');
   });
 
   it('should get payroll', async () => {
@@ -197,13 +197,13 @@ describe('V141 ERP - hrProxyApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await hrProxyApi.listAttendances({ page: 1, pageSize: 20, employee_id: 'E-001' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/hr/attendances?page=1&pagesize=20&employee_id=E-001'
+      '/hr/attendances?page=1&page_size=20&employee_id=E-001'
     );
   });
 
-  it('should support pagesize parameter', async () => {
+  it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await hrProxyApi.listEmployees({ page: 1, pagesize: 50 } as any);
-    expect(mockClient.get).toHaveBeenCalledWith('/hr/employees?page=1&pagesize=50');
+    await hrProxyApi.listEmployees({ page: 1, page_size: 50 } as any);
+    expect(mockClient.get).toHaveBeenCalledWith('/hr/employees?page=1&page_size=50');
   });
 });

@@ -28,8 +28,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             status VARCHAR(32) DEFAULT 'active',
             is_superuser BOOLEAN DEFAULT FALSE,
             tenant_id UUID,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
             last_login_at TIMESTAMP,
                 deleted_at TIMESTAMP
         )

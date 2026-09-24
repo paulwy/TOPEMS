@@ -20,7 +20,7 @@ describe('GIS API utils - adaptResponse', () => {
       factory_maps: [{ id: '1', name: 'Test' }],
       total: 1,
       page: 1,
-      pagesize: 10,
+      page_size: 10,
     };
     const result = adaptResponse(response, 'factory_maps');
     expect(result.items).toEqual([{ id: '1', name: 'Test' }]);
@@ -90,8 +90,8 @@ describe('GIS mapApi', () => {
 
   it('should call GET /factory-maps with query params for listFactoryMaps', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { factory_maps: [], total: 0 } });
-    await mapApi.listFactoryMaps({ page: 1, pagesize: 10, search: 'test' });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/factory-maps?page=1&pagesize=10&search=test');
+    await mapApi.listFactoryMaps({ page: 1, page_size: 10, search: 'test' });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/factory-maps?page=1&page_size=10&search=test');
   });
 
   it('should call GET /factory-maps without query params when no params', async () => {
@@ -128,8 +128,8 @@ describe('GIS mapApi', () => {
 
   it('should call GET /map-markers for listMapMarkers', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { map_markers: [], total: 0 } });
-    await mapApi.listMapMarkers({ page: 2, pagesize: 20 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/map-markers?page=2&pagesize=20');
+    await mapApi.listMapMarkers({ page: 2, page_size: 20 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/map-markers?page=2&page_size=20');
   });
 
   it('should call POST /map-markers for createMapMarker', async () => {
@@ -197,9 +197,9 @@ describe('GIS deviceApi', () => {
       success: true,
       data: { device_locations: [], total: 0 },
     });
-    await deviceApi.listDevicePoints({ page: 1, pagesize: 10, status: 'active' });
+    await deviceApi.listDevicePoints({ page: 1, page_size: 10, status: 'active' });
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      '/device-locations?page=1&pagesize=10&status=active'
+      '/device-locations?page=1&page_size=10&status=active'
     );
   });
 

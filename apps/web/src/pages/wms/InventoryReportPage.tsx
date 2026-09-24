@@ -81,7 +81,7 @@ const InventoryReportPage: React.FC = () => {
   const warehousesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_BASE,
     queryFn: async () => {
-      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
       if (response.success && response.data) {
         return response.data.items || [];
       }

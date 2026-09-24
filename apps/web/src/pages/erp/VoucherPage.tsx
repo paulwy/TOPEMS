@@ -32,7 +32,7 @@ function VoucherStats() {
   const { data: stats, isPending } = useQuery<VoucherStatsData>({
     queryKey: QUERY_KEYS.AD_HOC.ERP_VOUCHER_STATS_BASE,
     queryFn: async () => {
-      const response = await voucherApi.list({ page: 1, pagesize: 100 });
+      const response = await voucherApi.list({ page: 1, page_size: 100 });
       if (!response.success) throw new Error(i18n.t('erp.voucher_page.k0'));
       const items = response.data?.items || [];
       return {

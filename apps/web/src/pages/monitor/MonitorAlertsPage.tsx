@@ -266,7 +266,7 @@ export const MonitorAlertsPage: React.FC = () => {
   );
   const handleExport = useCallback(async () => {
     try {
-      const response = await monitorApi.listAlerts({ pagesize: 1000 });
+      const response = await monitorApi.listAlerts({ page_size: 1000 });
       const alerts = response.data?.items ?? [];
       const exportData = alerts.map((alert) => ({
         [i18n.t('pages.monitor_alerts_page.k0')]: alert.title,
@@ -308,7 +308,7 @@ export const MonitorAlertsPage: React.FC = () => {
       list: async (params) => {
         const queryParams: AlertQueryParams = {
           page: params?.page,
-          pagesize: params?.pageSize,
+          page_size: params?.pageSize,
         };
         if (params?.severity && params.severity !== 'all') {
           queryParams.severity = params.severity as string;

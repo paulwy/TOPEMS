@@ -8,8 +8,8 @@ describe('utils/normalizePageParams', () => {
       expect(result).toEqual({ page: 1, page_size: 20 });
     });
 
-    it('converts pagesize (lowercase) to page_size', () => {
-      const result = normalizePageParams({ page: 1, pagesize: 20 });
+    it('converts page_size (lowercase) to page_size', () => {
+      const result = normalizePageParams({ page: 1, page_size: 20 });
       expect(result).toEqual({ page: 1, page_size: 20 });
     });
 

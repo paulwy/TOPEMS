@@ -60,7 +60,7 @@ fn employee_cache_keys_all_locales(tenant_id: &Uuid, id: &Uuid) -> [String; 2] {
 pub struct EmployeePaginationParams {
     #[schema(example = 1)]
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     #[schema(example = 20)]
     pub page_size: Option<i64>,
     #[schema(example = "张三")]

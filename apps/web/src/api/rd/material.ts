@@ -17,7 +17,7 @@ export const materialApi = {
       materials: Material[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > => {
     const queryParams = params

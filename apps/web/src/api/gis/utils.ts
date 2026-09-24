@@ -6,7 +6,7 @@ export function adaptResponse<T>(
 ): PaginatedResponse<T> {
   const items = (response[dataKey] as T[]) || [];
   const total = (response.total as number) || items.length;
-  const pageSize = (response.pageSize as number) || (response.pagesize as number) || items.length;
+  const pageSize = (response.pageSize as number) || (response.page_size as number) || items.length;
   const totalPages = (response.totalPages as number) || (response.total_pages as number) || 1;
   return {
     items,

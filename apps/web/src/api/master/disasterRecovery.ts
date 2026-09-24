@@ -148,7 +148,7 @@ export const disasterRecoveryApi = {
   }): Promise<ApiResponse<{ items: RecoveryPoint[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     if (params?.type) qs.set('type', params.type);
     const s = qs.toString();
     return apiClient.master.get<{ items: RecoveryPoint[]; total: number }>(
@@ -200,7 +200,7 @@ export const disasterRecoveryApi = {
   }): Promise<ApiResponse<{ items: ContinuityPlan[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     if (params?.status) qs.set('status', params.status);
     const s = qs.toString();
     return apiClient.master.get<{ items: ContinuityPlan[]; total: number }>(
@@ -271,7 +271,7 @@ export const disasterRecoveryApi = {
   }): Promise<ApiResponse<{ items: FailoverRecord[]; total: number }>> {
     const qs = new URLSearchParams();
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: FailoverRecord[]; total: number }>(
       `/mdm-v56/dr/failover/history${s ? `?${s}` : ''}`

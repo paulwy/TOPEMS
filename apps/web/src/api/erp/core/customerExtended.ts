@@ -17,7 +17,7 @@ interface CustomerListResponse {
   customers: Customer[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export const customerExtendedApi = {

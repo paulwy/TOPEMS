@@ -67,7 +67,7 @@ fn default_fields() -> serde_json::Value {
 #[derive(Debug, Deserialize)]
 pub struct PromptTemplateListQuery {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
     pub search: Option<String>,
     pub category: Option<String>,
     pub is_favorite: Option<String>,
@@ -78,7 +78,7 @@ pub struct PromptTemplateList {
     pub items: Vec<PromptTemplateOut>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
     pub total_pages: i64,
 }
 
@@ -135,8 +135,8 @@ pub async fn list_prompt_templates(
 ) -> Json<ApiResponse<PromptTemplateList>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let page = params.page.unwrap_or(1).max(1);
-    let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
-    let offset = (page - 1) * pagesize;
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
 
     let search: Option<String> = params.search.clone();
     let category: Option<String> = params.category.clone();
@@ -178,7 +178,7 @@ pub async fn list_prompt_templates(
         .bind(&search)
         .bind(&category)
         .bind(is_fav)
-        .bind(pagesize)
+        .bind(page_size)
         .bind(offset)
         .bind(locale)
         .fetch_all(&state.pool)
@@ -212,9 +212,9 @@ pub async fn list_prompt_templates(
             items,
             total,
             page,
-            pagesize,
-            total_pages: if pagesize > 0 {
-                (total + pagesize - 1) / pagesize
+            page_size,
+            total_pages: if page_size > 0 {
+                (total + page_size - 1) / page_size
             } else {
                 0
             },

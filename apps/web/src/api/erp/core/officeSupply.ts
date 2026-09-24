@@ -43,7 +43,7 @@ interface UpdateOfficeSupplyRequest {
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
   const ps =
     (params as { pageSize?: number } | undefined)?.pageSize ??
-    (params as { pagesize?: number } | undefined)?.pagesize;
+    (params as { page_size?: number } | undefined)?.page_size;
   return ps ? ps.toString() : undefined;
 };
 
@@ -54,7 +54,7 @@ export const officeSupplyApi = {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
-    if (ps) searchParams.set('pagesize', ps);
+    if (ps) searchParams.set('page_size', ps);
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
     if ((params as { category?: string })?.category)

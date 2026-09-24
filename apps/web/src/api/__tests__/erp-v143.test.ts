@@ -35,7 +35,7 @@ describe('V143 ERP - mdmLifecycleApi', () => {
       stage: 'operative',
     });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/mdm-v49/lifecycle/entities?page=1&pagesize=20&domain=customer&stage=operative'
+      '/mdm-v49/lifecycle/entities?page=1&page_size=20&domain=customer&stage=operative'
     );
   });
 
@@ -94,7 +94,7 @@ describe('V143 ERP - mdmLifecycleApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmLifecycleApi.listRetirementPlans({ page: 1, pageSize: 20, status: 'draft' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/mdm-v49/retirement/plans?page=1&pagesize=20&status=draft'
+      '/mdm-v49/retirement/plans?page=1&page_size=20&status=draft'
     );
   });
 
@@ -172,7 +172,7 @@ describe('V143 ERP - mdmLifecycleApi', () => {
   it('should list archive policies', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmLifecycleApi.listArchivePolicies({ page: 1, pageSize: 20 });
-    expect(mockClient.get).toHaveBeenCalledWith('/mdm-v49/archive/policies?page=1&pagesize=20');
+    expect(mockClient.get).toHaveBeenCalledWith('/mdm-v49/archive/policies?page=1&page_size=20');
   });
 
   it('should create archive policy', async () => {
@@ -218,7 +218,7 @@ describe('V143 ERP - mdmLifecycleApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await mdmLifecycleApi.listArchiveRecords({ page: 1, pageSize: 20, policy_id: 'POL-001' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/mdm-v49/archive/records?page=1&pagesize=20&policy_id=POL-001'
+      '/mdm-v49/archive/records?page=1&page_size=20&policy_id=POL-001'
     );
   });
 
@@ -291,10 +291,10 @@ describe('V143 ERP - mdmLifecycleApi', () => {
     expect(mockClient.get).toHaveBeenCalledWith('/mdm-v49/dashboard');
   });
 
-  // ===== pagesize compatibility =====
-  it('should support pagesize parameter', async () => {
+  // ===== page_size compatibility =====
+  it('should support page_size parameter', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await mdmLifecycleApi.listEntities({ page: 1, pagesize: 50 } as any);
-    expect(mockClient.get).toHaveBeenCalledWith('/mdm-v49/lifecycle/entities?page=1&pagesize=50');
+    await mdmLifecycleApi.listEntities({ page: 1, page_size: 50 } as any);
+    expect(mockClient.get).toHaveBeenCalledWith('/mdm-v49/lifecycle/entities?page=1&page_size=50');
   });
 });

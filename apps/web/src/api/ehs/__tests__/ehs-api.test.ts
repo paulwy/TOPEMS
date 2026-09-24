@@ -42,7 +42,7 @@ describe('EHS Module API Tests', () => {
       const { hazardApi } = await import('../hazard');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await hazardApi.listHazards({ page: 1, pagesize: 10, search: 'test', status: 'active' });
+      await hazardApi.listHazards({ page: 1, page_size: 10, search: 'test', status: 'active' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
         '/issues?page=1&page_size=10&search=test&status=active'
       );
@@ -142,9 +142,9 @@ describe('EHS Module API Tests', () => {
       const { inspectionApi } = await import('../inspection');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await inspectionApi.listInspectionPlans({ page: 1, pagesize: 10, search: 'test' });
+      await inspectionApi.listInspectionPlans({ page: 1, page_size: 10, search: 'test' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/checks/plans?page=1&pagesize=10&search=test'
+        '/checks/plans?page=1&page_size=10&search=test'
       );
     });
 
@@ -208,9 +208,9 @@ describe('EHS Module API Tests', () => {
       const { inspectionApi } = await import('../inspection');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await inspectionApi.listInspectionRecords({ page: 1, pagesize: 10, status: 'completed' });
+      await inspectionApi.listInspectionRecords({ page: 1, page_size: 10, status: 'completed' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/checks/records?page=1&pagesize=10&status=completed'
+        '/checks/records?page=1&page_size=10&status=completed'
       );
     });
 
@@ -237,8 +237,8 @@ describe('EHS Module API Tests', () => {
       const { safetyIssueApi } = await import('../safetyIssue');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await safetyIssueApi.listSafetyIssues({ page: 1, pagesize: 10, status: 'open' });
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/issues?page=1&pagesize=10&status=open');
+      await safetyIssueApi.listSafetyIssues({ page: 1, page_size: 10, status: 'open' });
+      expect(apiClient.ehs.get).toHaveBeenCalledWith('/issues?page=1&page_size=10&status=open');
     });
 
     it('getSafetyIssue should call GET /issues/:id', async () => {
@@ -327,7 +327,7 @@ describe('EHS Module API Tests', () => {
       const { riskApi } = await import('../risk');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await riskApi.listRisks({ page: 1, pagesize: 10, risklevel: 'high' });
+      await riskApi.listRisks({ page: 1, page_size: 10, risklevel: 'high' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
         '/hazards?page=1&page_size=10&risk_level=high'
       );
@@ -419,9 +419,9 @@ describe('EHS Module API Tests', () => {
       const { trainingApi } = await import('../training');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await trainingApi.listTrainingPlans({ page: 1, pagesize: 10, status: 'active' });
+      await trainingApi.listTrainingPlans({ page: 1, page_size: 10, status: 'active' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/training/plans?page=1&pagesize=10&status=active'
+        '/training/plans?page=1&page_size=10&status=active'
       );
     });
 
@@ -462,9 +462,9 @@ describe('EHS Module API Tests', () => {
       const { trainingApi } = await import('../training');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await trainingApi.listTrainingRecords({ page: 1, pagesize: 10, employee_id: 'emp-001' });
+      await trainingApi.listTrainingRecords({ page: 1, page_size: 10, employee_id: 'emp-001' });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/training/records?page=1&pagesize=10&employee_id=emp-001'
+        '/training/records?page=1&page_size=10&employee_id=emp-001'
       );
     });
 
@@ -489,9 +489,13 @@ describe('EHS Module API Tests', () => {
       const { trainingApi } = await import('../training');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
-      await trainingApi.listTrainingCertificates({ page: 1, pagesize: 10, employee_id: 'emp-001' });
+      await trainingApi.listTrainingCertificates({
+        page: 1,
+        page_size: 10,
+        employee_id: 'emp-001',
+      });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/training/certificates?page=1&pagesize=10&employee_id=emp-001'
+        '/training/certificates?page=1&page_size=10&employee_id=emp-001'
       );
     });
 

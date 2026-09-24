@@ -29,7 +29,7 @@ describe('V139 ERP - auditApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await auditApi.list({ page: 1, pageSize: 20, action: 'login', user_id: 'U-01' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/audit-logs?page=1&pagesize=20&action=login&user_id=U-01'
+      '/audit-logs?page=1&page_size=20&action=login&user_id=U-01'
     );
   });
 
@@ -55,7 +55,7 @@ describe('V139 ERP - fixedAssetApi', () => {
   it('should list fixed assets', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await fixedAssetApi.list({ page: 1, pageSize: 20, status: 'in_use' });
-    expect(mockClient.get).toHaveBeenCalledWith('/fixed-assets?page=1&pagesize=20&status=in_use');
+    expect(mockClient.get).toHaveBeenCalledWith('/fixed-assets?page=1&page_size=20&status=in_use');
   });
 
   it('should create fixed asset', async () => {
@@ -97,7 +97,7 @@ describe('V139 ERP - officeSupplyApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await officeSupplyApi.list({ page: 1, pageSize: 20, category: 'paper' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/office-supplies?page=1&pagesize=20&category=paper'
+      '/office-supplies?page=1&page_size=20&category=paper'
     );
   });
 
@@ -130,7 +130,7 @@ describe('V139 ERP - vehicleApi', () => {
   it('should list vehicles', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await vehicleApi.list({ page: 1, pageSize: 20, vehicle_type: 'sedan' });
-    expect(mockClient.get).toHaveBeenCalledWith('/vehicles?page=1&pagesize=20&vehicle_type=sedan');
+    expect(mockClient.get).toHaveBeenCalledWith('/vehicles?page=1&page_size=20&vehicle_type=sedan');
   });
 
   it('should create vehicle', async () => {
@@ -144,7 +144,7 @@ describe('V139 ERP - vehicleApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await vehicleApi.listRequests({ page: 1, pageSize: 20, status: 'pending' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/vehicle-requests?page=1&pagesize=20&status=pending'
+      '/vehicle-requests?page=1&page_size=20&status=pending'
     );
   });
 

@@ -17,7 +17,7 @@ import { designTokens } from '@topems/tokens';
  */
 async function loadParentAccounts(): Promise<{ value: string; label: string }[]> {
   try {
-    const response = await accountApi.list({ pagesize: 1000 });
+    const response = await accountApi.list({ page_size: 1000 });
     if (!response.success || !response.data?.items) {
       return [];
     }

@@ -116,7 +116,7 @@ export function useMailPage() {
       try {
         const res = await emailApi.list({
           page: currentPage,
-          pagesize: pageSize,
+          page_size: pageSize,
           search: searchQuery || undefined,
           status: statusFilter || undefined,
           priority: priorityFilter || undefined,
@@ -151,7 +151,7 @@ export function useMailPage() {
       try {
         const res = await templateApi.list({
           page: currentPage,
-          pagesize: pageSize,
+          page_size: pageSize,
           search: searchQuery || undefined,
           category: categoryFilter || undefined,
         });

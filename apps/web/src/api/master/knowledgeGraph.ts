@@ -213,7 +213,7 @@ export const knowledgeGraphApi = {
     if (params?.type) qs.set('type', params.type);
     if (params?.category) qs.set('category', params.category);
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: KGAsset[]; total: number }>(
       `/kg-v53/assets${s ? `?${s}` : ''}`

@@ -40,8 +40,8 @@ pub struct AuditLog {
 #[derive(Debug, Deserialize)]
 pub struct AuditLogQueryParams {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
     pub page_size: Option<i64>,
+    
     pub user_id: Option<String>,
     pub user_name: Option<String>,
     pub action: Option<String>,
@@ -66,7 +66,7 @@ pub async fn list_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AuditLog>>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.or(params.page_size).unwrap_or(20).min(200);
+    let page_size = params.page_size.or(params.page_size).unwrap_or(20).min(200);
     let offset = (page - 1) * page_size;
 
     let user_uuid = params

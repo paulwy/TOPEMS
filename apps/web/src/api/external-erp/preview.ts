@@ -6,7 +6,7 @@ export const previewApi = {
     params?: {
       keyword?: string;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/preview/accounts`, { params }),
@@ -16,7 +16,7 @@ export const previewApi = {
     params?: {
       keyword?: string;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/preview/customers`, {
@@ -28,7 +28,7 @@ export const previewApi = {
     params?: {
       keyword?: string;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/preview/suppliers`, {
@@ -41,7 +41,7 @@ export const previewApi = {
       period_from?: string;
       period_to?: string;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ) =>
     apiClient.integration.get(`/external-erp/connections/${configId}/preview/vouchers`, { params }),

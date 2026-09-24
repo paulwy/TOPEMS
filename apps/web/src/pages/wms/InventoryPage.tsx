@@ -29,7 +29,7 @@ const InventoryStats: React.FC = () => {
   const { data: inventory = [] } = useQuery({
     queryKey: QUERY_KEYS.WMS.INVENTORY,
     queryFn: async () => {
-      const response = await wmsApi.inventory.list({ page: 1, pagesize: 1 });
+      const response = await wmsApi.inventory.list({ page: 1, page_size: 1 });
       if (response.success && response.data) {
         return response.data.items || [];
       }

@@ -52,7 +52,7 @@ export const GisTrackingPage: React.FC = () => {
   } = useQuery<DevicePoint[]>({
     queryKey: QUERY_KEYS.GIS.DEVICE_POINTS,
     queryFn: async () => {
-      const res = await gisApi.listDevicePoints({ pagesize: 100 });
+      const res = await gisApi.listDevicePoints({ page_size: 100 });
       if (res.success && res.data) {
         return res.data.items || [];
       }
@@ -66,7 +66,7 @@ export const GisTrackingPage: React.FC = () => {
     queryKey: QUERY_KEYS.GIS.DEVICE_TRACK(selectedDevice || 'none'),
     queryFn: async () => {
       if (!selectedDevice) return [];
-      const res = await gisApi.getDeviceTrack({ device_id: selectedDevice, pagesize: 100 });
+      const res = await gisApi.getDeviceTrack({ device_id: selectedDevice, page_size: 100 });
       if (res.success && res.data) {
         return res.data.items || [];
       }

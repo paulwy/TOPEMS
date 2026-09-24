@@ -342,7 +342,7 @@ export interface CreateNotificationRequest {
 
 export interface ListParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   status?: string;
   workflow_id?: string;

@@ -156,7 +156,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     queryFn: async () => {
       const response = await instrumentDataApi.listInstrumentData({
         page: dataPage + 1,
-        pagesize: dataRowsPerPage,
+        page_size: dataRowsPerPage,
         search: searchKeyword,
         status: statusFilter,
       });
@@ -180,7 +180,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     queryFn: async () => {
       const response = await collectionTaskApi.listCollectionTasks({
         page: taskPage + 1,
-        pagesize: taskRowsPerPage,
+        page_size: taskRowsPerPage,
         search: searchKeyword,
         status: statusFilter,
       });
@@ -204,7 +204,7 @@ const LimsInstrumentDataPage: React.FC = () => {
     queryFn: async () => {
       const response = await parseRuleApi.listParseRules({
         page: rulePage + 1,
-        pagesize: ruleRowsPerPage,
+        page_size: ruleRowsPerPage,
         search: searchKeyword,
         status: statusFilter,
       });

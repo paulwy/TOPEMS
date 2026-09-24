@@ -24,7 +24,7 @@ export interface Expense {
 export const expenseApi = {
   list: (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     status?: string;
     category?: string;
     department_id?: string;

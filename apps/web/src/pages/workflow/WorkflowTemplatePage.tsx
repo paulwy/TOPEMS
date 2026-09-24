@@ -85,7 +85,7 @@ const apiAdapter: CrudApiAdapter<FlowTemplateRecord> = {
   list: async (params) => {
     const response = await workflowDefinitionApi.list({
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
       ...(params?.search ? { search: params.search } : {}),
     });
     if (response.success && response.data?.items) {

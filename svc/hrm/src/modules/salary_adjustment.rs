@@ -17,7 +17,7 @@ use topems_shared_core::response::{api_error, ApiResponse};
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SalaryAdjustmentPaginationParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
     pub status: Option<String>,
@@ -49,7 +49,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "salary_adjustment",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
         ("status" = Option<String>, Query, description = "状态")
     ),

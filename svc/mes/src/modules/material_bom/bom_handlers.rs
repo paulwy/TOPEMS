@@ -22,8 +22,8 @@ pub async fn list_material_boms(
     }
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10) as i64;
+    let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
@@ -88,7 +88,7 @@ pub async fn list_material_boms(
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(pagesize).bind(offset);
+    fetch_query = fetch_query.bind(page_size).bind(offset);
 
     let boms = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,
@@ -139,7 +139,7 @@ pub async fn list_material_boms(
             boms: boms_list,
             total: total.unwrap_or(0),
             page,
-            pagesize,
+            page_size,
         },
         "获取物料BOM列表成功",
     ))

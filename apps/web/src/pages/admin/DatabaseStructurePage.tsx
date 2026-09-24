@@ -93,7 +93,7 @@ const DatabaseStructurePage: React.FC = () => {
   const dbChangesQuery = useQuery<DbChange[]>({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
     queryFn: async () => {
-      const res = await dbStructureApi.listChanges({ pagesize: 50 });
+      const res = await dbStructureApi.listChanges({ page_size: 50 });
       return res.success && res.data ? res.data.items || [] : [];
     },
     staleTime: 5 * 60 * 1000,

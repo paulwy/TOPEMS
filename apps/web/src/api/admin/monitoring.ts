@@ -31,7 +31,7 @@ export interface Alert {
 
 export interface AlertQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   type?: AlertType;
   severity?: AlertSeverity;
   status?: AlertStatus;
@@ -46,7 +46,7 @@ interface PaginatedAlerts {
   items: Alert[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export interface AlertStats {
@@ -153,7 +153,7 @@ export const monitoringApi = {
   listAlerts: async (params?: AlertQueryParams): Promise<ApiResponse<PaginatedAlerts>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.type) queryParams.append('type', params.type);
     if (params?.severity) queryParams.append('severity', params.severity);
     if (params?.status) queryParams.append('status', params.status);
@@ -223,16 +223,16 @@ export const monitoringApi = {
 
   listAlertRules: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     type?: AlertType;
     enabled?: boolean;
     search?: string;
   }): Promise<
-    ApiResponse<{ items: AlertRule[]; total: number; page: number; pagesize: number }>
+    ApiResponse<{ items: AlertRule[]; total: number; page: number; page_size: number }>
   > => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.type) queryParams.append('type', params.type);
     if (params?.enabled !== undefined) queryParams.append('enabled', params.enabled.toString());
     if (params?.search) queryParams.append('search', params.search);

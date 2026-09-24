@@ -21,7 +21,7 @@ const processRouteAdapter: CrudApiAdapter<ProcessRoute> = {
     const statusValue = params?.status as string | undefined;
     const response = await processRouteApi.list({
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
       search: params?.search,
       status: statusValue && statusValue !== 'all' ? statusValue : undefined,
     });
