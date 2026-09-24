@@ -821,3 +821,7 @@ D
 - [x] **finance**：补 3 个注解（cash-flow/aging/profit analysis）+ business-overview 补聚合；编译通过（已提交）
 - [x] **analytics**：核查已全覆盖（54 handler/54 注解，无缺口）
 - [ ] 累计：60 + 5 = 65 个新注解（文档待并入，1408 → 1473）
+- [x] **erp**：补 settings 2 个（list/get）+ 聚合；编译通过（已提交）
+- [x] **crm**：补 analytics 3（overview/funnel/scoring）+ crm_plugin 2（info/health）+ 聚合；编译通过（已提交）
+- [x] **ai**：核查无缺口（ai_plugin 2/2，auto_register 非路由）
+- [ ] 累计：75 个新注解（文档待并入，1408 → 1483）
