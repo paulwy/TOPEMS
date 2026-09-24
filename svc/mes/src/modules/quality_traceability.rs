@@ -668,17 +668,15 @@ pub async fn list_quality_records(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Datelike, NaiveDate, Timelike};
+        use chrono::TimeZone;
+use chrono::{Datelike, NaiveDate, Timelike};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {
-        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
-            .unwrap()
-            .and_hms_opt(9, 45, 0)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -691,10 +689,7 @@ mod tests {
 
     #[test]
     fn opt_naive_to_utc_some() {
-        let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
-            .unwrap()
-            .and_hms_opt(23, 59, 59)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 2, 28, 23, 59, 59).unwrap();
         let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);

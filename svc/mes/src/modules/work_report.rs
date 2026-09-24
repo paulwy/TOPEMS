@@ -1239,15 +1239,13 @@ pub async fn reject_rework(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Datelike, Timelike};
+        use chrono::TimeZone;
+use chrono::{Datelike, Timelike};
 
     // ---- naive_to_utc ----
     #[test]
     fn naive_to_utc_some_keeps_value() {
-        let dt = NaiveDate::from_ymd_opt(2024, 5, 20)
-            .unwrap()
-            .and_hms_opt(8, 30, 15)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 5, 20, 8, 30, 15).unwrap();
         let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.year(), 2024);
         assert_eq!(utc.month(), 5);
@@ -1268,10 +1266,7 @@ mod tests {
     // ---- datetime_to_string ----
     #[test]
     fn datetime_to_string_some_produces_rfc3339() {
-        let dt = NaiveDate::from_ymd_opt(2024, 1, 2)
-            .unwrap()
-            .and_hms_opt(3, 4, 5)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 1, 2, 3, 4, 5).unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
@@ -1285,10 +1280,7 @@ mod tests {
     // ---- opt_datetime_to_string ----
     #[test]
     fn opt_datetime_to_string_some_returns_some() {
-        let dt = NaiveDate::from_ymd_opt(2024, 6, 15)
-            .unwrap()
-            .and_hms_opt(12, 0, 0)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
         let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));

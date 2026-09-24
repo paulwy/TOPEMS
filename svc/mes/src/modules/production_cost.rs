@@ -872,17 +872,15 @@ pub async fn get_cost_forecast(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
+            use chrono::TimeZone;
+use chrono::NaiveDate;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {
-        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
-            .unwrap()
-            .and_hms_opt(9, 45, 0)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]

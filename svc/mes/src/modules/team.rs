@@ -725,17 +725,15 @@ pub async fn remove_team_member(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
+        use chrono::TimeZone;
+use chrono::NaiveDate;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {
-        let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
-            .unwrap()
-            .and_hms_opt(9, 45, 0)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
     }
 
     #[test]
@@ -748,10 +746,7 @@ mod tests {
 
     #[test]
     fn datetime_to_string_some_rfc3339() {
-        let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap();
+        let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
