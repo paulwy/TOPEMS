@@ -732,8 +732,7 @@ D
   - 预计时间：4 小时
 - [x] **P2-2 CI/CD 配置**（2026-09-24 完成：现有 CI 体系核验 + 补强——ci.yml 已含 fmt/clippy(-D warnings)/cargo test/audit/smoke gates、docker-build.yml matrix 构建+GHCR 推送、deploy-k8s/secret-scan/e2e 齐备；本轮补强：①docker-build matrix 加 monolith（context ./ + Dockerfile.server，P2-1 衔接）②cargo-audit 安装加 --locked（构建确定性））
   - 预计时间：8 小时
-- [ ] **P2-3 监控告警**
-  - Prometheus + Grafana
+- [x] **P2-3 监控告警**（2026-09-24 完成：监控栈核验 + monolith 接入——observability compose 齐备（prometheus v2.51/grafana 10.4/jaeger/loki/alertmanager）；TOPEMS /metrics 端点已存在（axum_prometheus，25 指标族）；告警规则已兼容 monolith（TopemsServiceDown/HighErrorRate job=~"topems-.*"）；Grafana 4 dashboards + datasources provisioning 齐备；本轮补强：prometheus.yml 追加 topems-monolith static job（Consul 发现未覆盖 monolith，:8099 兜底，YAML 校验通过））
   - 预计时间：8 小时
 - [x] **P2-4 安全审计**（2026-09-24 完成：权限/数据加密/secret/依赖四维度——**发现并修复 MCP 匿名工具调用数据泄露**——匿名握手后 tools/list 可枚举全部 64 工具、tools/call 可读取 crm/erp/wms 等业务数据（实测 8 客户/50 订单/20 仓）；根因：MCP 路由未挂认证 + 业务工具未声明 required_permission；修复：①check_tool_permission 匿名保护（无用户上下文仅放行 system.* 安全工具，业务工具一律拒绝——兜底权限声明缺失）②MCP 认证接线（create_mcp_routes 挂 mcp_auth_middleware：Authorization Bearer → verify_jwt_token → set_user；无/无效 token 保持匿名）；验证：匿名拒绝业务工具（-32001）、有效 Bearer 全部工具正常、MCP 测试 218 passed；**HTTP 端点鉴权实测正常**（无/假/过期 token 均 401）；**后续**：业务工具声明 required_permission（细粒度授权）、cargo-audit 依赖 CVE 扫描（未安装）、密码哈希存储审计、.env secret 管理审计）
   - 权限检查：MCP 匿名保护 + Bearer 认证接线完成；HTTP 端点鉴权正常；**工具级细粒度权限声明完成**（61 个业务工具 register_*_with_permission：读工具→<域>:read、写工具→<域>:write；admin/superuser 角色兜底；验证：admin 全通过、limited 用户（roles=[user]）crm/wms 工具拒绝、匿名拒绝——三层授权闭环）
