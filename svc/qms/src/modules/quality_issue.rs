@@ -232,7 +232,7 @@ pub async fn create_issue(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-pub async fn get_issue(pub async fn get_issue(
+pub async fn get_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -286,7 +286,7 @@ pub async fn get_issue(pub async fn get_issue(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-pub async fn update_issue(pub async fn update_issue(
+pub async fn update_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -361,7 +361,7 @@ pub async fn resolve_issue(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-pub async fn delete_issue(pub async fn delete_issue(
+pub async fn delete_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,

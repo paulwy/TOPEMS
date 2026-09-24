@@ -310,7 +310,7 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: if r.work_station_name.as_deref().unwrap_or("").is_empty() {
+                work_station_name: if r.work_station_name.is_empty() {
                     None
                 } else {
                     Some(r.work_station_name)
@@ -659,10 +659,7 @@ pub async fn add_team_member(
     let member = TeamMemberResponse {
         id: result.id.to_string(),
         team_id: result.team_id.to_string(),
-        employee_id: result
-            .employee_id
-            .map(|d| d.to_string())
-            .unwrap_or_default(),
+        employee_id: result.employee_id.to_string(),
         employee_name: result.employee_name,
         employee_code: result.employee_code,
         position: result.position,
