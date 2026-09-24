@@ -921,8 +921,8 @@ pub async fn get_gantt_data(
 #[cfg(test)]
 mod tests {
     use super::*;
-        use chrono::TimeZone;
-use chrono::{Datelike, NaiveDate, Timelike};
+    use chrono::TimeZone;
+    use chrono::{Datelike, NaiveDate, Timelike};
 
     // ---- naive_to_utc ----
     #[test]

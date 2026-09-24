@@ -22,7 +22,13 @@ pub struct ListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
     /// 每页大小，默认 20，最多 100
-    #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
+    #[serde(
+        default,
+        alias = "page_size",
+        alias = "pageSize",
+        alias = "size",
+        alias = "limit"
+    )]
     pub page_size: Option<i64>,
     /// 关键字搜索
     #[serde(default, alias = "q", alias = "keyword")]
@@ -31,7 +37,13 @@ pub struct ListParams {
     #[serde(default, alias = "sort", alias = "sortBy")]
     pub sort_by: Option<String>,
     /// 排序方向：asc / desc
-    #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    #[serde(
+        default,
+        alias = "sortorder",
+        alias = "sortOrder",
+        alias = "sort_dir",
+        alias = "dir"
+    )]
     pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub project_id: Option<Uuid>,
@@ -49,8 +61,6 @@ impl ListParams {
         (self.page_or_default() - 1) * self.page_size_or_default()
     }
 }
-
-
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
@@ -79,7 +89,10 @@ pub async fn list_formulas(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page_or_default();
     let page_size = params.page_size_or_default();
@@ -160,9 +173,13 @@ pub async fn create_formula(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "配方名称不能为空"));
     }
@@ -273,7 +290,10 @@ pub async fn get_formula(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, Formula>(
         r#"
@@ -314,7 +334,10 @@ pub async fn update_formula(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let existing = sqlx::query_as::<_, Formula>(
         r#"
@@ -432,7 +455,10 @@ pub async fn delete_formula(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result =
         sqlx::query("UPDATE rs.formulas SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)")
@@ -500,7 +526,10 @@ pub async fn get_formula_versions(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
@@ -540,9 +569,13 @@ pub async fn create_formula_version(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let version_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -643,7 +676,10 @@ pub async fn approve_formula(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let now = Utc::now();
 

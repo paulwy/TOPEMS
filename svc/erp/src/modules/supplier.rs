@@ -27,28 +27,50 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 pub struct SupplierListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
-        #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
+    #[serde(
+        default,
+        alias = "page_size",
+        alias = "pageSize",
+        alias = "size",
+        alias = "limit"
+    )]
     pub page_size: Option<i64>,
-        #[serde(default, alias = "q", alias = "keyword")]
+    #[serde(default, alias = "q", alias = "keyword")]
     pub search: Option<String>,
-        #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
+    #[serde(default, alias = "sort", alias = "sortBy", alias = "sortby")]
     pub sort_by: Option<String>,
-        #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    #[serde(
+        default,
+        alias = "sortorder",
+        alias = "sortOrder",
+        alias = "sort_dir",
+        alias = "dir"
+    )]
     pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub supplier_type: Option<String>,
 }
 
 impl SupplierListParams {
-    fn page_or_default(&self) -> i64 { self.page.unwrap_or(1).max(1) }
-    fn page_size_or_default(&self) -> i64 { self.page_size.unwrap_or(20).clamp(1, 100) }
-    fn offset(&self) -> i64 { (self.page_or_default() - 1) * self.page_size_or_default() }
-    fn limit(&self) -> i64 { self.page_size_or_default() }
+    fn page_or_default(&self) -> i64 {
+        self.page.unwrap_or(1).max(1)
+    }
+    fn page_size_or_default(&self) -> i64 {
+        self.page_size.unwrap_or(20).clamp(1, 100)
+    }
+    fn offset(&self) -> i64 {
+        (self.page_or_default() - 1) * self.page_size_or_default()
+    }
+    fn limit(&self) -> i64 {
+        self.page_size_or_default()
+    }
     fn normalized_sort_dir(&self) -> String {
-        match self.sort_dir.as_deref() { Some("asc") => "asc".into(), _ => "desc".into() }
+        match self.sort_dir.as_deref() {
+            Some("asc") => "asc".into(),
+            _ => "desc".into(),
+        }
     }
 }
-
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()

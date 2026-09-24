@@ -668,8 +668,8 @@ pub async fn list_quality_records(
 #[cfg(test)]
 mod tests {
     use super::*;
-        use chrono::TimeZone;
-use chrono::{Datelike, NaiveDate, Timelike};
+    use chrono::TimeZone;
+    use chrono::{Datelike, NaiveDate, Timelike};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

@@ -19,7 +19,13 @@ pub struct ListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
     /// 每页大小，默认 20，最多 100
-    #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
+    #[serde(
+        default,
+        alias = "page_size",
+        alias = "pageSize",
+        alias = "size",
+        alias = "limit"
+    )]
     pub page_size: Option<i64>,
     /// 关键字搜索
     #[serde(default, alias = "q", alias = "keyword")]
@@ -28,7 +34,13 @@ pub struct ListParams {
     #[serde(default, alias = "sort", alias = "sortBy")]
     pub sort_by: Option<String>,
     /// 排序方向：asc / desc
-    #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    #[serde(
+        default,
+        alias = "sortorder",
+        alias = "sortOrder",
+        alias = "sort_dir",
+        alias = "dir"
+    )]
     pub sort_dir: Option<String>,
     pub status: Option<String>,
     pub project_id: Option<Uuid>,
@@ -46,8 +58,6 @@ impl ListParams {
         (self.page_or_default() - 1) * self.page_size_or_default()
     }
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Patent {

@@ -41,7 +41,7 @@ pub struct AuditLog {
 pub struct AuditLogQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
-    
+
     pub user_id: Option<String>,
     pub user_name: Option<String>,
     pub action: Option<String>,
