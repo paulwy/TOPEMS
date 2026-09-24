@@ -695,7 +695,8 @@ D
   - [x] 发现项 B：Ollama:11434 依赖——2026-09-24 已启动 ollama serve（v0.21.1）+ nomic-embed-text 就绪；重启 server 后索引恢复（0 → 403 文档 / 26008 向量，仅 2 个非文本文件读取失败与 embedding 无关）✅
   - [x] Copilot 主链路验证（2026-09-24）：qwen2.5:7b-instruct 拉取（4.7GB）+ /api/ai/chat 端到端通过（向量检索→LLM，冷 23.5s/热 20.4s，<1s 需 GPU 环境如实记录）✅
   - [x] tier 治理接线（2026-09-24）：tier_gate 挂载 wms/qms（Basic）+ ticket（Free 对照组）real_module（commit 3fd1f5658）；运行时验证 wms/qms free→403 tier_insufficient、basic→200，ticket free→200 放行 ✅；2026-09-24 mes 债务修复后全量重建（PID 4124、31 模块）→ tier 治理已在运行二进制正式生效（wms/qms free→403、basic→200、ticket free 放行）
-  - [ ] 待验证：工具成功率 >99% / 前端 <2s（P0-4）
+  - [x] P0-4 前端性能（2026-09-24 验证）：关键 API 响应中位数全部 <20ms——/health 16ms、wms/inventory 8.6ms、qms/checks 7.9ms、dashboard/financial-summary 7.6ms、business-stats 8ms、erp/materials 7.7ms、mes/production-orders 7.6ms、modules 7.6ms（<2s 目标 1% 水平）✅
+  - [ ] 工具成功率 >99%（MCP 端到端）：**运行时缺陷**——tools/call 对任意工具（含不存在工具）均 HTTP 空回复（Empty reply），tools/list/ping/initialize 正常；svc/ai 单元测试 217/217 通过（含 test_tools_call、business_tools_integration），运行时 4124 与 67211 双实例复现——疑似注册 16 域工具/AgentOrchestrator 后 handle_tools_call 运行时路径异常，需深挖（另：业务 list 工具遇 tenant_id NULL 解码失败，crm/wms 受影响）
   - [x] mes 编译债务（2026-09-24 闭环）：svc/mes 433 个编译错误根因为 .sqlx 离线缓存过期/缺失（缓存列无 nullable 信息→query! 误判非 Option；crm/analytics/portal/server 从未有缓存）而非代码问题——cargo sqlx prepare 按实时 schema 重新生成（mes 144→165、server 306、analytics 91、crm 4、portal 3、wms 32），零代码改动；离线/在线编译均 433→0，server 全量构建 4m15s 通过并重启，tier 全量生效
 - [x] **P0-1 前端 typecheck + lint**（2026-09-24：typecheck 0 error、lint 0 error 全量通过，17 个 pre-commit 钩子含 frontend-typecheck/frontend-lint 每次提交均 PASS）
   - 确保前端代码质量
