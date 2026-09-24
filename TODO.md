@@ -748,7 +748,7 @@ D
   - 从模块化单体拆分为微服务
 - [ ] **P3-2 容器编排**
   - Kubernetes 部署
-- [ ] **P3-3 多租户优化**
+- [x] **P3-3 多租户优化**（2026-09-24 完成：①隔离评估——tenant_id 列级隔离已覆盖 247 张表（非 schema/库级，符合单库多租户设计）②性能优化——223/247 表 tenant_id 已入索引，补 24 张缺索引表（pdm/quality/production/audit 系）批量建单列索引（to_regclass 幂等 DO 块，验证缺索引 0）③迁移文件 database/migrations/20260924150000_create_tenant_id_indexes.sql（幂等，重跑安全））
   - 数据隔离、性能优化
 - [ ] **P3-4 AI 功能增强**
   - 智能推荐、自动报表

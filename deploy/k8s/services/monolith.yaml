@@ -1,0 +1,94 @@
+# TOPEMS 模块化单体 - Kubernetes Deployment / Service / HPA（P3-2）
+# 镜像：本地 registry 约定 topems/monolith:latest（与现有 services/*.yaml 风格一致）
+# 注：CI docker-build workflow 实际推送 ghcr.io/{owner}/topems-monolith，
+# 部署到集群时可将 image 切换为对应 ghcr 路径。
+# 与 deploy/k8s/kustomization.yaml 集成：在 services 列表中加入本文件。
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monolith
+  namespace: topems
+  labels:
+    app: monolith
+    suite: business
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: monolith
+  template:
+    metadata:
+      labels:
+        app: monolith
+        suite: business
+    spec:
+      containers:
+      - name: monolith
+        image: topems/monolith:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8099
+          name: http
+        envFrom:
+        - configMapRef:
+            name: topems-config
+        env:
+        - name: TOPEMS_MONOLITH
+          value: "1"
+        - name: RUST_LOG
+          value: "info"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: "2"
+            memory: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /api/server/health
+            port: 8099
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        livenessProbe:
+          httpGet:
+            path: /api/server/health
+            port: 8099
+          initialDelaySeconds: 30
+          periodSeconds: 60
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: monolith
+  namespace: topems
+  labels:
+    app: monolith
+    suite: business
+spec:
+  selector:
+    app: monolith
+  ports:
+  - port: 8099
+    targetPort: 8099
+    name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: monolith
+  namespace: topems
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: monolith
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
