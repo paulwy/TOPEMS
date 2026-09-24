@@ -79,6 +79,16 @@ pub async fn get_notifications(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:notification:write"])),
+    path = "/notifications/{id}",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "Mark notification read", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn mark_notification_read(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -97,6 +107,16 @@ pub async fn mark_notification_read(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:notification:write"])),
+    path = "/notifications/mark-all-read",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "Mark all notifications read", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn mark_all_notifications_read(
     State(state): State<AppState>,
     headers: HeaderMap,

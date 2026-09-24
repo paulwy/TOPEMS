@@ -146,6 +146,16 @@ pub async fn get_announcements(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:announcement:read"])),
+    path = "/announcements/{id}",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "Get announcement", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -224,6 +234,16 @@ pub async fn create_announcement(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:announcement:admin"])),
+    path = "/announcements/{id}",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "Update announcement", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn update_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -262,6 +282,16 @@ pub async fn update_announcement(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:announcement:admin"])),
+    path = "/announcements/{id}",
+    tag = "Portal",
+    responses(
+        (status = 200, description = "Delete announcement", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_announcement(
     State(state): State<AppState>,
     Path(id): Path<String>,

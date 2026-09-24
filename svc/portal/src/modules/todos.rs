@@ -370,6 +370,16 @@ pub async fn add_todo(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:todo:write"])),
+    path = "/todos/{id}",
+    tag = "Todo",
+    responses(
+        (status = 200, description = "Complete todo", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn complete_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -387,6 +397,16 @@ pub async fn complete_todo(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:todo:write"])),
+    path = "/todos/{id}",
+    tag = "Todo",
+    responses(
+        (status = 200, description = "Delete todo", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn delete_todo(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
