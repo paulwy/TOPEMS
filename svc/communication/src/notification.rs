@@ -595,6 +595,16 @@ pub async fn get_notifications(
 }
 
 /// 获取当前用户的未读通知数量
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notifications/unread-count",
+    responses(
+        (status = 200, description = "Get unread count", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_unread_count(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

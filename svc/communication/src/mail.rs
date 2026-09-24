@@ -354,6 +354,16 @@ pub async fn send_email(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:email:read"])),
+    path = "/mail/emails/{id}",
+    responses(
+        (status = 200, description = "Get email", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn get_email(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -441,6 +451,16 @@ pub async fn get_email(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:email:write"])),
+    path = "/mail/emails/{id}",
+    responses(
+        (status = 200, description = "Delete email", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn delete_email(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -538,6 +558,16 @@ pub async fn delete_email(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:email:write"])),
+    path = "/mail/emails/{id}/read",
+    responses(
+        (status = 200, description = "Mark email read", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn mark_as_read(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
