@@ -68,6 +68,10 @@ pub struct SupplierProduct {
         crate::modules::supplier::get_supplier,
         crate::modules::supplier::update_supplier,
         crate::modules::supplier::delete_supplier,
+        // Inquiry
+        crate::modules::inquiry::list_inquiries,
+        crate::modules::inquiry::get_inquiry,
+        crate::modules::inquiry::create_inquiry,
     ),
     components(
         schemas(
@@ -80,6 +84,7 @@ pub struct SupplierProduct {
     ),
     tags(
         (name = "supplier", description = "供应商管理 API"),
+        (name = "inquiry", description = "询价单 API"),
         (name = "supplier_category", description = "供应商分类 API"),
         (name = "supplier_evaluation", description = "供应商评价 API"),
         (name = "supplier_contract", description = "供应商合同 API"),

@@ -78,6 +78,15 @@ async fn current_tenant_id(claims: &Claims) -> Option<Uuid> {
         .and_then(|s| Uuid::parse_str(s).ok())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:inquiry:read"])),
+    path = "/inquiries",
+    responses(
+        (status = 200, description = "list_inquiries OK")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn list_inquiries(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
@@ -147,6 +156,15 @@ pub async fn list_inquiries(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:inquiry:read"])),
+    path = "/inquiries/{id}",
+    responses(
+        (status = 200, description = "get_inquiry OK")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn get_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
@@ -179,6 +197,15 @@ pub async fn get_inquiry(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:inquiry:write"])),
+    path = "/inquiries",
+    responses(
+        (status = 200, description = "create_inquiry OK")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn create_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
