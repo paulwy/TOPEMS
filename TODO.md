@@ -807,3 +807,5 @@ D
 - [x] **gis marker**：补 list/get/create 3 个（security gis:marker:read/write，tag marker），聚合 + tag 已加；编译通过（commit aedd874d0）
 - [ ] **阻塞**：openapi-gen 重生成被并行会话 MES 编译错误阻塞（当前 76 个 E0308 类型错，修复中）+ .sqlx 离线缓存缺失（22 crate 被清理，prepare 需 cargo check 全 workspace 被 mes 阻塞）——docs/api/openapi.json 待更新（1408 → +12 端点），服务端重编译重启待做
 - [ ] 剩余：portal 733/ticket 43/communication 78 等域注解（分轮推进）
+- [x] **portal**：两批 14 个注解（announcements get/update/delete + notifications mark-read/mark-all + todos complete/delete + dashboard cache/quick-access + navigation pinned + monitoring services/metrics/alerts），聚合 + Monitoring tag；编译通过（commit e1e1aea7a / 待查）
+- [ ] portal 剩余：ai_ops 49/deployment_manager 52/deep_federation 42/gateway_* 等大模块（分轮）
