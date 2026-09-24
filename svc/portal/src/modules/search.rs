@@ -164,6 +164,16 @@ pub async fn global_search(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:search:read"])),
+    path = "/search/suggestions",
+    tag = "Search",
+    responses(
+        (status = 200, description = "Search suggestions", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn search_suggestions(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

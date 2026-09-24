@@ -152,6 +152,16 @@ pub async fn add_pinned_app(
     AxumJson(ApiResponse::success(app, "应用已固定"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:navigation:write"])),
+    path = "/navigation/pinned/{id}",
+    tag = "Navigation",
+    responses(
+        (status = 200, description = "Remove pinned app", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn remove_pinned_app(
     State(_state): State<AppState>,
     Path(id): Path<String>,

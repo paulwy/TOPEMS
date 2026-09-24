@@ -207,6 +207,16 @@ pub async fn toggle_favorite_action(
     Json(ApiResponse::success(action, "快捷操作收藏状态已更新"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:quick-action:write"])),
+    path = "/quick-actions/{id}/execute",
+    tag = "QuickActions",
+    responses(
+        (status = 200, description = "Execute quick action", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn execute_quick_action(
     State(_state): State<AppState>,
     Path(id): Path<String>,

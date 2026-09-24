@@ -211,6 +211,16 @@ fn parse_alerts(data: Option<Vec<serde_json::Value>>) -> Vec<Alert> {
         .collect()
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:monitoring:write"])),
+    path = "/monitoring/alerts/{id}",
+    tag = "Monitoring",
+    responses(
+        (status = 200, description = "Acknowledge alert", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn acknowledge_alert(
     State(state): State<AppState>,
     Path(id): Path<String>,

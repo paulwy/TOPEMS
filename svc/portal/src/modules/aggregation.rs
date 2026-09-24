@@ -102,6 +102,16 @@ pub struct UnifiedTodosAggregation {
 }
 
 /// 业务统计聚合 API
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:dashboard:read"])),
+    path = "/dashboard/business-stats",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "Get business stats", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_business_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +143,16 @@ pub async fn get_business_stats(
 }
 
 /// 统一待办列表 API
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:todo:read"])),
+    path = "/dashboard/unified-todos",
+    tag = "Todo",
+    responses(
+        (status = 200, description = "Get unified todos", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_unified_todos(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

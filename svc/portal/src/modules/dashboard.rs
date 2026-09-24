@@ -319,12 +319,32 @@ pub async fn get_quick_access(
     Json(ApiResponse::success(access_list, "快捷访问列表获取成功"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:dashboard:write"])),
+    path = "/dashboard/quick-access",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "Add quick access", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_quick_access(
     Json(access): Json<crate::models::QuickAccess>,
 ) -> Json<ApiResponse<crate::models::QuickAccess>> {
     Json(ApiResponse::success(access, "快捷访问添加成功"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:dashboard:write"])),
+    path = "/dashboard/quick-access/{id}",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "Remove quick access", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn remove_quick_access(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {

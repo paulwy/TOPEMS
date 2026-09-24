@@ -70,6 +70,16 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:plugin:read"])),
+    path = "/api/plugins/health",
+    tag = "Plugins",
+    responses(
+        (status = 200, description = "Plugin health check", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn plugin_health_check() -> Json<ServiceHealth> {
     Json(topems_shared_core::health::build_health_response(
         "topems-portal",
