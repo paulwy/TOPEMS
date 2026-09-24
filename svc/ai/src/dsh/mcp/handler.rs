@@ -411,4 +411,93 @@ mod tests {
         // 向不存在的会话发送消息应返回 false
         assert!(!manager.send(&session_id, msg).await);
     }
+
+    #[tokio::test]
+    async fn test_full_runtime_tools_call_repro() {
+        // 模拟 routes.rs 完整初始化：系统工具 + 业务工具注册 + AgentOrchestrator
+        let server = Arc::new(McpServer::new("topems-ai-mcp", "0.1.0"));
+        server.register_system_tools().await;
+        crate::dsh::mcp::tools::crm::register_crm_tools(&server, "test-secret").await;
+        let _agent = crate::dsh::agent::AgentOrchestrator::new(server.tool_registry().clone());
+
+        let app = create_mcp_routes(server.clone());
+
+        // 1. initialize
+        let resp = app.clone().oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/mcp")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}"#,
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+        println!("repro initialize status: {}", resp.status());
+
+        // 2. initialized 通知
+        let resp = app.clone().oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/mcp")
+                .header("content-type", "application/json")
+                .body(Body::from(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+        println!("repro notification status: {}", resp.status());
+
+        // 3. tools/call system.ping（无权限要求的系统工具）
+        let resp = app.clone().oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/mcp")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"system.ping","arguments":{}}}"#,
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+        println!("repro tools/call status: {}", resp.status());
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let text = String::from_utf8_lossy(&body).to_string();
+        println!("repro tools/call body: {}", &text[..text.len().min(200)]);
+        assert!(
+            text.contains("pong"),
+            "tools/call system.ping 应返回 pong，实际: {}",
+            text
+        );
+
+        // 4. tools/call 不存在的工具（应返回 JSON-RPC error，非空回复）
+        let resp = app.clone().oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/mcp")
+                .header("content-type", "application/json")
+                .body(Body::from(
+                    r#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"system.nonexist","arguments":{}}}"#,
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+        println!("repro nonexist status: {}", resp.status());
+        let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let text = String::from_utf8_lossy(&body).to_string();
+        println!("repro nonexist body: {}", &text[..text.len().min(200)]);
+        assert!(
+            text.contains("error"),
+            "tools/call 不存在工具应返回 error JSON，实际: {}",
+            text
+        );
+    }
 }
