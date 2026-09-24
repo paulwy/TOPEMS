@@ -9,10 +9,15 @@
 
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use crate::providers::{AccountBalanceProvider, InProcProvider};
-use axum::Router;
-use std::any::TypeId;
+use axum::extract::Request;
+use axum::response::{IntoResponse, Response};
+use axum::http::StatusCode;
+use axum::{Json, Router};
+use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::response::ApiResponse;
+use tower_http::catch_panic::CatchPanicLayer;
 
 /// 模块注册表
 pub struct ModuleRegistry {
@@ -114,6 +119,8 @@ impl ModuleRegistry {
             router = router.merge(module_routes);
         }
         router
+            .fallback(not_found_handler)
+            .layer(CatchPanicLayer::custom(handle_panic))
     }
 
     /// 聚合所有模块健康检查
@@ -124,6 +131,7 @@ impl ModuleRegistry {
         }
         results
     }
+
 
     /// 模块总数
     pub fn len(&self) -> usize {
@@ -159,3 +167,20 @@ impl Default for ModuleRegistry {
         Self::new()
     }
 }
+/// 全局 404：未匹配任何模块路由时返回统一 ApiResponse JSON（而非 axum 默认裸文本）
+async fn not_found_handler(_req: Request) -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        Json(ApiResponse::<()>::error(404, "接口不存在，请检查路径")),
+    )
+}
+
+/// 全局 500：模块 handler panic 时返回统一 ApiResponse JSON
+fn handle_panic(_payload: Box<dyn Any + Send + 'static>) -> Response {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        Json(ApiResponse::<()>::error(500, "服务器内部错误，请稍后重试")),
+    )
+        .into_response()
+}
+

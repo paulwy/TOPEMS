@@ -715,8 +715,9 @@ D
 - [ ] **P1-2 API 文档完善**
   - 自动生成 OpenAPI 文档
   - 预计时间：4 小时
-- [ ] **P1-3 错误处理优化**
-  - 统一错误格式、友好提示
+- [x] **P1-3 错误处理优化**（2026-09-24：全局 404 fallback + 500 catch_panic 接入统一 ApiResponse JSON——registry.rs merge_routes 加 not_found_handler（404 统一 JSON"接口不存在，请检查路径"）+ handle_panic（CatchPanicLayer::custom，500 统一 JSON"服务器内部错误"）；tower-http 0.6 启用 catch-panic feature；业务错误 ApiResponse::error 已普遍使用（lib/shared-core response.rs）；验证：两个未匹配路径返回统一 404 JSON、health/customers 200 无回归）
+  - 统一错误格式：404/500 全局统一 ApiResponse JSON ✅
+  - 友好提示：中文明文提示 ✅
   - 预计时间：4 小时
 - [x] **P1-4 日志优化**（2026-09-24：main.rs 接线 shared-core init_logging——LOG_FORMAT=text/json/file 三格式（含滚动文件）、RUST_LOG 级别控制（默认 topems-server=info+端口排查 directives）、JSON 结构化含 timestamp/level/trace_id/fields 已实测验证；此前 main.rs 仅裸 fmt() 未接线已有能力）
   - 结构化日志：JSON/File/Text 三格式（LOG_FORMAT env 切换）✅
