@@ -12,6 +12,7 @@ use crate::providers::{AccountBalanceProvider, InProcProvider};
 use axum::extract::Request;
 use axum::response::{IntoResponse, Response};
 use axum::http::StatusCode;
+use axum::response::Html;
 use axum::{Json, Router};
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
@@ -119,6 +120,8 @@ impl ModuleRegistry {
             router = router.merge(module_routes);
         }
         router
+            .route("/api/openapi.json", axum::routing::get(openapi_json_handler))
+            .route("/api/docs", axum::routing::get(docs_handler))
             .fallback(not_found_handler)
             .layer(CatchPanicLayer::custom(handle_panic))
     }
@@ -182,5 +185,23 @@ fn handle_panic(_payload: Box<dyn Any + Send + 'static>) -> Response {
         Json(ApiResponse::<()>::error(500, "服务器内部错误，请稍后重试")),
     )
         .into_response()
+}
+
+/// OpenAPI 3.0 文档（docs/api/openapi.json，编译期内嵌）
+async fn openapi_json_handler() -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        [(axum::http::header::CONTENT_TYPE, "application/json; charset=utf-8")],
+        include_str!("../../../docs/api/openapi.json"),
+    )
+}
+
+/// Swagger UI 文档页（docs/api/index.html，编译期内嵌）
+async fn docs_handler() -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        [(axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        include_str!("../../../docs/api/index.html"),
+    )
 }
 

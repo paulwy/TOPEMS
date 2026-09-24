@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS API 文档</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css">
+<style>body{margin:0} #top-banner{background:#1f2937;color:#fff;padding:10px 24px;font-size:14px;display:flex;justify-content:space-between;align-items:center} #top-banner b{font-size:16px}</style>
+</head>
+<body>
+<div id="top-banner"><b>TOPEMS 模块化单体 API 文档</b><span>核心端点（2026-09-24）· 全量端点见各模块源码</span></div>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+<script>
+window.onload = function() {
+  SwaggerUIBundle({
+    url: '/api/openapi.json',
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    persistAuthorization: true
+  });
+};
+</script>
+</body>
+</html>
