@@ -168,6 +168,8 @@ async fn test_voucher_lifecycle() {
                 credit: Decimal::from(0),
                 project_id: None,
                 department_id: None,
+                aux_type: None,
+                aux_id: None,
             },
             VoucherLineRequest {
                 account_code: "5001".to_string(),
@@ -176,6 +178,8 @@ async fn test_voucher_lifecycle() {
                 credit: Decimal::from(1000),
                 project_id: None,
                 department_id: None,
+                aux_type: None,
+                aux_id: None,
             },
         ],
         description: Some("销售收款".to_string()),
