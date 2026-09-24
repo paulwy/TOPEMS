@@ -178,12 +178,12 @@ pub async fn list_teams(
         SELECT 
             t.id, t.team_code, t.team_name, t.team_type, t.work_station_id,
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
-            t.created_at.unwrap_or_default(), t.updated_at.unwrap_or_default(),
+            t.created_at, t.updated_at,
             COALESCE(ws.station_name, '') as work_station_name
         FROM teams t
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
         {}
-        ORDER BY t.created_at.unwrap_or_default() DESC
+        ORDER BY t.created_at DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -283,7 +283,7 @@ pub async fn get_team(
         SELECT 
             t.id, t.team_code, t.team_name, t.team_type, t.work_station_id,
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
-            t.created_at.unwrap_or_default(), t.updated_at.unwrap_or_default(),
+            t.created_at, t.updated_at,
             ws.station_name as work_station_name
         FROM teams t
         LEFT JOIN work_stations ws ON t.work_station_id = ws.id
@@ -426,8 +426,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: datetime_to_string(result.created_at.unwrap_or_default()),
-        updated_at: datetime_to_string(result.updated_at.unwrap_or_default()),
+        created_at: datetime_to_string(result.created_at),
+        updated_at: datetime_to_string(result.updated_at),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))

@@ -115,7 +115,7 @@ async fn main() -> anyhow::Result<()> {
                 FROM (
                     SELECT pr.* FROM process_routes pr
                     WHERE pr.deleted_at IS NULL
-                    ORDER BY pr.created_at.unwrap_or_default() DESC
+                    ORDER BY pr.created_at DESC
                     LIMIT 10 OFFSET 0
                 ) t
                 "#,

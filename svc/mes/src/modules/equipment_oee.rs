@@ -286,7 +286,7 @@ pub async fn list_oee_records(
             oee.planned_production_time, oee.actual_run_time, oee.downtime,
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
-            oee.shift, oee.operator, oee.notes, oee.created_at.unwrap_or_default(), oee.updated_at.unwrap_or_default(),
+            oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
@@ -553,7 +553,7 @@ pub async fn get_oee_record(
             oee.planned_production_time, oee.actual_run_time, oee.downtime,
             oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
-            oee.shift, oee.operator, oee.notes, oee.created_at.unwrap_or_default(), oee.updated_at.unwrap_or_default(),
+            oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
