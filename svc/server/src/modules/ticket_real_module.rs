@@ -14,6 +14,8 @@ use std::sync::Arc;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_event::event::EventPublisher;
+use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
+use topems_unified_core::modules::subscription::PlanTier;
 use topems_ticket::feedback_compat;
 use topems_ticket::handlers;
 use topems_ticket::ticket_ext;
@@ -59,14 +61,21 @@ impl TicketRealModule {
             .await
             .map_err(|e| anyhow::anyhow!("初始化 SLA 表失败: {e}"))?;
 
-        // 3. 业务路由（权限中间件 + 开发验证模拟认证）
+        // 3. 业务路由（权限中间件 + tier 治理 + 开发验证模拟认证）
+        let tier_gate_config = Arc::new(TierGateConfig::new("ticket", PlanTier::Free));
         let protected_routes = handlers::ticket_routes()
             .merge(feedback_compat::feedback_compat_routes())
             .merge(ticket_ext::ticket_ext_routes())
             .layer(axum::middleware::from_fn(require_permission(
                 "ticket:admin",
             )))
-            .with_state(ctx.db.clone());
+            .with_state(ctx.db.clone())
+            // V1.3 tier 治理：ticket 为 Free 层模块（对照组，永不裁剪）
+            .layer(axum::middleware::from_fn_with_state(
+                tier_gate_config.clone(),
+                tier_gate_middleware,
+            ))
+            .with_state(tier_gate_config);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn_with_state(

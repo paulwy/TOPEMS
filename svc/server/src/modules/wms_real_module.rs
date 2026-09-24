@@ -15,6 +15,8 @@ use std::time::Duration;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
+use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
+use topems_unified_core::modules::subscription::PlanTier;
 use topems_wms::modules::{create_routes, ApiState};
 
 /// 真实 WMS 模块：持有数据库连接池 + 完整业务路由 + 缓存
@@ -110,14 +112,21 @@ impl WmsRealModule {
             dict_cache,
         };
 
-        // 4. 业务路由（tenant 中间件 + 权限中间件 + with_state）
+        // 4. 业务路由（tenant 中间件 + 权限中间件 + tier 治理 + with_state）
+        let tier_gate_config = Arc::new(TierGateConfig::new("wms", PlanTier::Basic));
         let protected_routes = create_routes()
             .layer(axum::middleware::from_fn_with_state(
                 ctx.db.clone(),
                 topems_shared_auth::tenant_middleware(),
             ))
             .layer(axum::middleware::from_fn(require_permission("wms:admin")))
-            .with_state(state.clone());
+            .with_state(state.clone())
+            // V1.3 tier 治理：WMS 模块要求 Basic 及以上订阅层级
+            .layer(axum::middleware::from_fn_with_state(
+                tier_gate_config.clone(),
+                tier_gate_middleware,
+            ))
+            .with_state(tier_gate_config);
 
         // 5. 组装路由：api_prefix + 开发验证模拟认证
         let routes = axum::Router::new()

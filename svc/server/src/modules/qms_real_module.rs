@@ -22,6 +22,8 @@ use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi};
+use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
+use topems_unified_core::modules::subscription::PlanTier;
 
 /// 真实 QMS 模块：持有数据库连接池 + 完整业务路由
 pub struct QmsRealModule {
@@ -84,13 +86,20 @@ impl QmsRealModule {
         };
 
         // 5. 构建完整业务路由（应用 api_prefix + 租户事务中间件 + 权限中间件 + 开发验证模拟认证）
+        let tier_gate_config = Arc::new(TierGateConfig::new("qms", PlanTier::Basic));
         let protected_routes = topems_qms::modules::create_routes()
             .layer(axum::middleware::from_fn_with_state(
                 state.pool.clone(),
                 tenant_middleware(),
             ))
             .layer(axum::middleware::from_fn(require_permission("qms:admin")))
-            .with_state(state.clone());
+            .with_state(state.clone())
+            // V1.3 tier 治理：QMS 模块要求 Basic 及以上订阅层级
+            .layer(axum::middleware::from_fn_with_state(
+                tier_gate_config.clone(),
+                tier_gate_middleware,
+            ))
+            .with_state(tier_gate_config);
         let routes = axum::Router::new()
             .nest(config.api_prefix, protected_routes)
             .layer(axum::middleware::from_fn_with_state(
