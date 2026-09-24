@@ -237,14 +237,22 @@ pub fn create_mcp_routes(server: McpServerState, jwt_secret: impl Into<String>) 
 }
 
 /// MCP 认证中间件：从 Authorization 头解析 Bearer JWT 建立用户上下文。
-/// 可选认证——无/无效 token 保持匿名（业务工具由 check_tool_permission 拒绝），
-/// 有效 token 恢复业务工具可用性。
+/// 强制认证——无/无效 Bearer 一律 401 拒绝（含 system.* 工具），有效 token 放行。
+/// （P3 安全强化：MCP 端点不再允许匿名访问）
 async fn mcp_auth_middleware(
     State(state): State<McpAppState>,
     req: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> Response {
-    state.server.apply_auth(req.headers()).await;
+    if !state.server.apply_auth(req.headers()).await {
+        return Response::builder()
+            .status(axum::http::StatusCode::UNAUTHORIZED)
+            .header("content-type", "application/json")
+            .body(axum::body::Body::from(
+                r#"{"jsonrpc":"2.0","error":{"code":-32001,"message":"Authentication required: valid Bearer JWT"},"id":null}"#,
+            ))
+            .unwrap();
+    }
     next.run(req).await
 }
 
@@ -254,6 +262,10 @@ mod tests {
     use axum::body::Body;
     use axum::http::{Request, StatusCode};
     use tower::ServiceExt;
+
+    /// 强制认证模式下测试需携带有效 Bearer。
+    /// test-jwt-secret 签发的长寿命 token（exp=2099，test-only 固定密钥）。
+    const TEST_JWT_ADMIN: &str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ1c2VybmFtZSI6InRlc3QtYWRtaW4iLCJyb2xlIjoiYWRtaW4iLCJyb2xlcyI6WyJhZG1pbiIsInVzZXIiXSwicGVybWlzc2lvbnMiOlsiaWFtOmFkbWluIl0sImlzX3N1cGVydXNlciI6dHJ1ZSwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjAsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInRlbmFudF9pZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSJ9.OrgKY9U6d3yDK5V3-qvybf8ltZJCLuBsQWJMta6i82s";
 
     #[tokio::test]
     async fn test_handle_mcp_request_ping() {
@@ -280,6 +292,7 @@ mod tests {
                     .method("POST")
                     .uri("/mcp")
                     .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                     .body(Body::from(init_request.to_string()))
                     .unwrap(),
             )
@@ -301,6 +314,7 @@ mod tests {
                     .method("POST")
                     .uri("/mcp")
                     .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                     .body(Body::from(notif.to_string()))
                     .unwrap(),
             )
@@ -322,6 +336,7 @@ mod tests {
                     .method("POST")
                     .uri("/mcp")
                     .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                     .body(Body::from(ping.to_string()))
                     .unwrap(),
             )
@@ -342,6 +357,7 @@ mod tests {
                     .method("POST")
                     .uri("/mcp")
                     .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                     .body(Body::from("invalid json"))
                     .unwrap(),
             )
@@ -361,6 +377,7 @@ mod tests {
                 Request::builder()
                     .method("GET")
                     .uri("/mcp/sse")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -396,6 +413,7 @@ mod tests {
                     .method("POST")
                     .uri("/mcp")
                     .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                     .body(Body::from(request.to_string()))
                     .unwrap(),
             )
@@ -447,6 +465,7 @@ mod tests {
                 .method("POST")
                 .uri("/mcp")
                 .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                 .body(Body::from(
                     r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}"#,
                 ))
@@ -462,6 +481,7 @@ mod tests {
                 .method("POST")
                 .uri("/mcp")
                 .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                 .body(Body::from(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#))
                 .unwrap(),
         )
@@ -475,6 +495,7 @@ mod tests {
                 .method("POST")
                 .uri("/mcp")
                 .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                 .body(Body::from(
                     r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"system.ping","arguments":{}}}"#,
                 ))
@@ -500,6 +521,7 @@ mod tests {
                 .method("POST")
                 .uri("/mcp")
                 .header("content-type", "application/json")
+                    .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
                 .body(Body::from(
                     r#"{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"system.nonexist","arguments":{}}}"#,
                 ))

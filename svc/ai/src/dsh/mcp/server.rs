@@ -108,7 +108,9 @@ impl McpServer {
 
     /// 从 HTTP Authorization 头解析 Bearer JWT，建立当前用户上下文。
     /// 无 token / 无效 token → 匿名（None），由 check_tool_permission 拒绝业务工具。
-    pub async fn apply_auth(&self, headers: &axum::http::HeaderMap) {
+    /// 从请求头解析 Bearer JWT 建立用户上下文，返回是否认证成功。
+    /// 强制认证模式下由 HTTP 中间件据此拒绝未认证请求（P3 安全强化）。
+    pub async fn apply_auth(&self, headers: &axum::http::HeaderMap) -> bool {
         let user = headers
             .get(axum::http::header::AUTHORIZATION)
             .and_then(|h| h.to_str().ok())
@@ -120,7 +122,9 @@ impl McpServer {
                 roles: c.roles,
                 username: c.username,
             });
+        let authed = user.is_some();
         *self.user.write().await = user;
+        authed
     }
 
     /// 获取当前用户上下文
