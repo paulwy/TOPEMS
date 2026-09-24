@@ -65,7 +65,7 @@ export interface NotificationTemplateListResponse {
   templates: NotificationTemplate[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export interface TestTemplateRequest {
@@ -106,7 +106,7 @@ export const templateApi = {
     status?: TemplateStatusEnum,
     search?: string
   ): Promise<ApiResponse<NotificationTemplateListResponse>> => {
-    const params: Record<string, unknown> = { page, pagesize: pageSize };
+    const params: Record<string, unknown> = { page, page_size: pageSize };
     if (status) params.status = status;
     if (search) params.search = search;
     return apiClient.notification.get('/notification-templates', { params });
@@ -156,11 +156,11 @@ export const templateApi = {
       versions: TemplateVersion[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > => {
     return apiClient.notification.get(`/notification-templates/${id}/versions`, {
-      params: { page, pagesize: pageSize },
+      params: { page, page_size: pageSize },
     });
   },
 

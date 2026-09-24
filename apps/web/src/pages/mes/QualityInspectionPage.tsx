@@ -16,7 +16,7 @@ const qualityApiAdapter: CrudApiAdapter<QualityInspection> = {
   list: async (params) => {
     const response = await qualityApi.listInspections({
       page: params?.page !== undefined ? params.page - 1 : 0,
-      pagesize: params?.pageSize ?? 10,
+      page_size: params?.pageSize ?? 10,
       search: params?.search as string | undefined,
       status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
     });

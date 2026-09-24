@@ -111,7 +111,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
     queryKey: [hazardousMaterialSchema.entity, 'stats'],
     queryFn: async () => {
       const response = await hazardousMaterialApi.listHazardousMaterials({
-        pagesize: 500,
+        page_size: 500,
       });
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;

@@ -53,7 +53,7 @@ describe('API CRUD Flow Integration', () => {
 
       // 1. List
       apiClient.hrm.get.mockResolvedValue({ success: true, data: [] });
-      await employeeApi.list({ page: 1, pagesize: 10 });
+      await employeeApi.list({ page: 1, page_size: 10 });
       expect(apiClient.hrm.get).toHaveBeenCalledWith(expect.stringContaining('/employees'));
 
       // 2. Get by ID
@@ -269,7 +269,7 @@ describe('API CRUD Flow Integration', () => {
 
       apiClient.erp.get.mockResolvedValue({
         success: true,
-        data: { orders: mockOrders, total: 1, page: 0, pagesize: 10 },
+        data: { orders: mockOrders, total: 1, page: 0, page_size: 10 },
       });
 
       const listResult = await salesOrderApi.list({ page: 0, pageSize: 10 });

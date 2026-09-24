@@ -207,7 +207,7 @@ export const inventorySchema: EntitySchema = {
       field: 'warehouse_id',
       loader: async () => {
         const { wmsApi } = await import('@/api/wms');
-        const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
+        const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
         if (response.success && response.data) {
           return (response.data.items || []).map((w: { id: string; name: string }) => ({
             value: w.id,

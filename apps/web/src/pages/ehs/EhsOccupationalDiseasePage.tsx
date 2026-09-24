@@ -89,7 +89,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
   const { data: casesResp } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.EHS_OCCUPATIONALDISEASES_STATS_BASE,
     queryFn: async () =>
-      ehsApi.occupationalDiseases.listOccupationalDiseaseCases({ pagesize: 500 }),
+      ehsApi.occupationalDiseases.listOccupationalDiseaseCases({ page_size: 500 }),
 
     staleTime: CACHE_DURATIONS.MEDIUM,
   });

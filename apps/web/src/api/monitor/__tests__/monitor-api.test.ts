@@ -51,14 +51,14 @@ describe('Monitor Module API Tests', () => {
       const { monitorApi } = await import('../index');
       await monitorApi.listAlerts({
         page: 1,
-        pagesize: 10,
+        page_size: 10,
         severity: 'critical',
         status: 'active',
         service_name: 'erp',
       });
       const { apiClient } = await import('../../client');
       expect(apiClient.monitor.get).toHaveBeenCalledWith(
-        '/alerts?page=1&pagesize=10&severity=critical&status=active&service_name=erp'
+        '/alerts?page=1&page_size=10&severity=critical&status=active&service_name=erp'
       );
     });
 

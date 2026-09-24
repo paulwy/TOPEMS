@@ -61,7 +61,7 @@ export const useVoucherManagement = () => {
     queryFn: async () => {
       return voucherApi.list({
         page: page + 1,
-        pagesize: rowsPerPage,
+        page_size: rowsPerPage,
         search: searchQuery || undefined,
         status: statusFilter || undefined,
         period: periodFilter || undefined,

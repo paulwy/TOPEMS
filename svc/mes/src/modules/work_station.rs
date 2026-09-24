@@ -41,7 +41,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListWorkStationsQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -94,7 +94,7 @@ pub struct ListWorkStationsResponse {
     pub workstations: Vec<WorkStationResponse>,
     pub total: i64,
     pub page: i32,
-    pub pagesize: i32,
+    pub page_size: i32,
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
@@ -185,8 +185,8 @@ pub async fn list_work_stations(
     }
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10) as i64;
+    let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE ws.deleted_at IS NULL");
@@ -254,7 +254,7 @@ pub async fn list_work_stations(
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(pagesize).bind(offset);
+    fetch_query = fetch_query.bind(page_size).bind(offset);
 
     let workstations = match fetch_query.fetch_all(&state.pool).await {
         Ok(w) => w,
@@ -274,7 +274,7 @@ pub async fn list_work_stations(
             workstations: workstation_list,
             total: total.unwrap_or(0),
             page: page as i32,
-            pagesize: pagesize as i32,
+            page_size: page_size as i32,
         },
         "获取工位列表成功",
     ))

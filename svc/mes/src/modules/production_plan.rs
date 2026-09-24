@@ -52,7 +52,7 @@ pub struct ProductionPlan {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListPlansQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -145,7 +145,7 @@ pub async fn list_plans(
     Query(params): Query<ListPlansQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
     let tenant_id = get_tenant_id(&claims);
 

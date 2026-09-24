@@ -82,7 +82,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
       const params: TrackQueryParams = { device_id: selectedDevice };
       if (timeRange.start) params.start_time = timeRange.start;
       if (timeRange.end) params.end_time = timeRange.end;
-      params.pagesize = MAX_TRACK_POINTS;
+      params.page_size = MAX_TRACK_POINTS;
 
       const response = await gisApi.getDeviceTrack(params);
       if (response.success && response.data) {

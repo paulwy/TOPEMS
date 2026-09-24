@@ -14,7 +14,7 @@ export const assetApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Asset>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
 
@@ -45,7 +45,7 @@ export const fixedAssetApi = {
   ): Promise<ApiResponse<PaginatedResult<FixedAsset>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.department_id) searchParams.set('department_id', params.department_id);
     if (params?.status) searchParams.set('status', params.status);

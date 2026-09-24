@@ -48,7 +48,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListProcessRoutesQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -149,19 +149,19 @@ pub async fn list_process_routes(
     }
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10) as i64;
+    let offset = (page - 1) * page_size;
 
-    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:page_size:{page_size}:{params}）
     let tenant_id = claims
         .tenant_id
         .clone()
         .unwrap_or_else(|| "default".to_string());
     let cache_key = format!(
-        "mes:process_route:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
+        "mes:process_route:list:{}:page:{}:page_size:{}:search:{}:status:{}",
         tenant_id,
         page,
-        pagesize,
+        page_size,
         query.search.clone().unwrap_or_else(|| "none".to_string()),
         query.status.clone().unwrap_or_else(|| "all".to_string())
     );
@@ -244,7 +244,7 @@ pub async fn list_process_routes(
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(pagesize).bind(offset);
+    fetch_query = fetch_query.bind(page_size).bind(offset);
 
     let routes = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,
@@ -287,7 +287,7 @@ pub async fn list_process_routes(
         "routes": routes,
         "total": total.unwrap_or(0),
         "page": page,
-        "page_size": pagesize,
+        "page_size": page_size,
     });
 
     // 写入缓存

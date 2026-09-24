@@ -40,7 +40,7 @@ export const dataSourceCrudApi: CrudOperations<DataSource> = {
   list: (params?) =>
     listDataSources({
       page: params?.page as number,
-      pageSize: params?.pagesize as number,
+      pageSize: params?.page_size as number,
       ...(params as unknown as Record<string, unknown>),
     }),
   get: getDataSource,

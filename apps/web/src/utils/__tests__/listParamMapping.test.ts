@@ -33,7 +33,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
       });
       expect(result).toEqual({
         page: 1,
-        pagesize: 20,
+        page_size: 20,
         keyword: 'alice',
         sortBy: 'name',
         sortOrder: 'desc',
@@ -44,7 +44,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
 
     it('omits search when empty', () => {
       const result = mapListParamsToBackend(baseState);
-      expect(result).toEqual({ page: 1, pagesize: 20 });
+      expect(result).toEqual({ page: 1, page_size: 20 });
       expect(result).not.toHaveProperty('keyword');
     });
 
@@ -59,7 +59,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
         ...baseState,
         filters: { a: 'val', b: null, c: undefined, d: '' },
       });
-      expect(result).toEqual({ page: 1, pagesize: 20, a: 'val' });
+      expect(result).toEqual({ page: 1, page_size: 20, a: 'val' });
     });
   });
 
@@ -77,7 +77,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
       );
       expect(result).toEqual({
         page: 1,
-        pagesize: 20,
+        page_size: 20,
         keyword: 'bob',
         filters: { status: 'pending' },
         sort: { field: 'createdAt', order: 'asc' },
@@ -96,12 +96,12 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
   });
 
   describe('offset style', () => {
-    it('converts page/pagesize to offset/limit', () => {
+    it('converts page/page_size to offset/limit', () => {
       const result = mapListParamsToBackend(
         { ...baseState, page: 3, pageSize: 25 },
         { style: 'offset' }
       );
-      expect(result).toEqual({ offset: 50, pagesize: 25 });
+      expect(result).toEqual({ offset: 50, page_size: 25 });
     });
 
     it('includes sort and filters flat', () => {
@@ -118,7 +118,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
       );
       expect(result).toEqual({
         offset: 10,
-        pagesize: 10,
+        page_size: 10,
         sortBy: 'name',
         sortOrder: 'desc',
         status: 'active',
@@ -130,7 +130,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
         { ...baseState, page: 1, pageSize: 20 },
         { style: 'offset' }
       );
-      expect(result).toEqual({ offset: 0, pagesize: 20 });
+      expect(result).toEqual({ offset: 0, page_size: 20 });
     });
   });
 
@@ -165,7 +165,7 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
       );
       expect(result).toEqual({
         page: 1,
-        pagesize: 20,
+        page_size: 20,
         sortBy: 'full_name',
         sortOrder: 'asc',
         stat: 'active',
@@ -198,14 +198,14 @@ describe('utils/listParamMapping - mapListParamsToBackend', () => {
 describe('utils/listParamMapping - parsePaginationFromResponse', () => {
   it('parses standard response with items', () => {
     const result = parsePaginationFromResponse({
-      data: { items: [{ id: 1 }], total: 100, page: 2, pagesize: 10 },
+      data: { items: [{ id: 1 }], total: 100, page: 2, page_size: 10 },
     });
     expect(result).toEqual({ items: [{ id: 1 }], total: 100, page: 2, pageSize: 10 });
   });
 
   it('parses response with list key', () => {
     const result = parsePaginationFromResponse({
-      data: { list: [{ id: 1 }], total: 50, page: 1, pagesize: 20 },
+      data: { list: [{ id: 1 }], total: 50, page: 1, page_size: 20 },
     });
     expect(result.items).toEqual([{ id: 1 }]);
     expect(result.total).toBe(50);
@@ -477,7 +477,7 @@ describe('utils/listParamMapping - preset configs', () => {
   it('topemsStandardParams has correct defaults', () => {
     expect(topemsStandardParams.style).toBe('standard');
     expect(topemsStandardParams.searchParamName).toBe('keyword');
-    expect(topemsStandardParams.pageSizeParamName).toBe('pagesize');
+    expect(topemsStandardParams.pageSizeParamName).toBe('page_size');
   });
 
   it('nestedFilterParams has correct defaults', () => {

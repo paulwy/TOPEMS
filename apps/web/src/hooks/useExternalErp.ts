@@ -18,7 +18,7 @@ export function useErpConnections(params?: {
   type?: string;
   status?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.EXTERNAL_ERP_CONNECTIONS_BASE, params],

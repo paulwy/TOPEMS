@@ -21,7 +21,15 @@ export const AppShell: React.FC<AppShellProps> = ({
   defaultSidebarExpanded = true,
   ...topBarProps
 }) => {
-  const [sidebarExpanded, setSidebarExpanded] = useState(defaultSidebarExpanded);
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    try {
+      const v = localStorage.getItem('topems.sidebarExpanded');
+      if (v !== null) return v === 'true';
+    } catch {
+      /* ignore */
+    }
+    return defaultSidebarExpanded;
+  });
   const location = useLocation();
   const FALLBACK_SEGMENT_LABELS: Record<string, string> = {
     modules: i18n.t('shared.app_shell_breadcrumb.modules'),
@@ -35,7 +43,15 @@ export const AppShell: React.FC<AppShellProps> = ({
   const navigate = useNavigate();
 
   const handleToggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded);
+    setSidebarExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('topems.sidebarExpanded', String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   };
 
   const sidebarWidth = sidebarExpanded ? '280px' : '72px';

@@ -110,7 +110,7 @@ async fn main() -> anyhow::Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM process_routes WHERE deleted_at IS NULL),
                     'page', 1,
-                    'pagesize', 10
+                    'page_size', 10
                 ) as data
                 FROM (
                     SELECT pr.* FROM process_routes pr
@@ -125,7 +125,7 @@ async fn main() -> anyhow::Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key =
-                        "mes:process_route:list:default:page:1:pagesize:10:search:none:status:all";
+                        "mes:process_route:list:default:page:1:page_size:10:search:none:status:all";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[mes] 工艺路线列表缓存预热完成");
                 }
@@ -144,7 +144,7 @@ async fn main() -> anyhow::Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM capacities),
                     'page', 1,
-                    'pagesize', 10
+                    'page_size', 10
                 ) as data
                 FROM (
                     SELECT c.* FROM capacities c
@@ -157,7 +157,7 @@ async fn main() -> anyhow::Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "mes:capacity:list:default:page:1:pagesize:10:search:none:status:all:work_center_id:none";
+                    let cache_key = "mes:capacity:list:default:page:1:page_size:10:search:none:status:all:work_center_id:none";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[mes] 产能列表缓存预热完成");
                 }

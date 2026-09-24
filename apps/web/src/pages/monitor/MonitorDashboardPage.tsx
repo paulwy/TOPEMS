@@ -335,7 +335,7 @@ export const MonitorDashboardPage: React.FC = () => {
   const alertsQuery = useQuery({
     queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange],
     queryFn: async () => {
-      const res = await monitorApi.listAlerts({ pagesize: 10, status: 'active' });
+      const res = await monitorApi.listAlerts({ page_size: 10, status: 'active' });
       return res.data?.items ?? [];
     },
 

@@ -32,7 +32,7 @@ const HrmDepartmentPage: React.FC = () => {
       if (!selectedDeptId) return [];
       const response = await employeeApi.list({
         department_id: selectedDeptId,
-        pagesize: 100,
+        page_size: 100,
       });
       if (response.success && response.data) {
         return response.data.items || [];
@@ -48,7 +48,7 @@ const HrmDepartmentPage: React.FC = () => {
       list: async (params) => {
         const response = await departmentApi.list({
           page: params?.page ?? 1,
-          pagesize: params?.pageSize ?? 10,
+          page_size: params?.pageSize ?? 10,
           search: params?.search as string | undefined,
         });
         if (response.success && response.data) {

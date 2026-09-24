@@ -50,7 +50,7 @@ export interface AuditLog {
 
 export interface AuditLogQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   user_id?: string;
   action?: string;
   resource?: string;

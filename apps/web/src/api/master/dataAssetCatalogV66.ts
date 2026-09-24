@@ -311,7 +311,7 @@ export const dataAssetCatalogApiV66 = {
     if (params?.has_lineage !== undefined) qs.set('has_lineage', String(params.has_lineage));
     if (params?.has_owner !== undefined) qs.set('has_owner', String(params.has_owner));
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: DataAsset[]; total: number }>(
       `/mdm-v60/metadata${s ? `?${s}` : ''}`
@@ -455,7 +455,7 @@ export const dataAssetCatalogApiV66 = {
     if (params?.category) qs.set('category', params.category);
     if (params?.search) qs.set('q', params.search);
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: AssetTag[]; total: number }>(
       `/mdm-v66/tags${s ? `?${s}` : ''}`
@@ -537,7 +537,7 @@ export const dataAssetCatalogApiV66 = {
     if (params?.domain) qs.set('domain', params.domain);
     if (params?.status) qs.set('status', params.status);
     if (params?.page !== undefined) qs.set('page', String(params.page));
-    if (params?.pageSize !== undefined) qs.set('pagesize', String(params.pageSize));
+    if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
     return apiClient.master.get<{ items: DataMap[]; total: number }>(
       `/mdm-v66/maps${s ? `?${s}` : ''}`
@@ -571,7 +571,7 @@ export const dataAssetCatalogApiV66 = {
     const qs = new URLSearchParams();
     if (data.query) qs.set('q', data.query);
     if (data.page !== undefined) qs.set('page', String(data.page));
-    if (data.pageSize !== undefined) qs.set('pagesize', String(data.pageSize));
+    if (data.pageSize !== undefined) qs.set('page_size', String(data.pageSize));
     const s = qs.toString();
     return apiClient.master.get<AssetSearchResult>(`/mdm-v60/metadata/search${s ? `?${s}` : ''}`);
   },

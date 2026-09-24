@@ -75,9 +75,9 @@ const RsProjectDetailPage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
   const experimentsQuery = useQuery({
-    queryKey: [...QUERY_KEYS.RD.EXPERIMENTS, { projectId: id, pagesize: 100 }],
+    queryKey: [...QUERY_KEYS.RD.EXPERIMENTS, { projectId: id, page_size: 100 }],
     queryFn: async () => {
-      const response = await rdApi.listExperiments({ project_id: id, pagesize: 100 });
+      const response = await rdApi.listExperiments({ project_id: id, page_size: 100 });
       if (!response.success || !response.data) {
         throw new Error(response.message || i18n.t('rd.rs_project_detail_page.k2'));
       }

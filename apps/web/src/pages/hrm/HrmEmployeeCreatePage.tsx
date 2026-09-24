@@ -42,7 +42,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
   const departmentsQuery = useQuery<Department[]>({
     queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
     queryFn: async () => {
-      const res = await departmentApi.list({ pagesize: 100 });
+      const res = await departmentApi.list({ page_size: 100 });
       if (res.code === 200 && res.data) {
         return res.data.items || [];
       }
@@ -55,7 +55,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
   const positionsQuery = useQuery<Position[]>({
     queryKey: QUERY_KEYS.HRM.POSITION,
     queryFn: async () => {
-      const res = await positionApi.list({ pagesize: 100 });
+      const res = await positionApi.list({ page_size: 100 });
       if (res.code === 200 && res.data) {
         return res.data.items || [];
       }

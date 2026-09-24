@@ -100,7 +100,7 @@ describe('CrmCrudPages', () => {
 
     expect(crmApi.contacts.list).toHaveBeenCalledWith({
       page: 2,
-      pagesize: 20,
+      page_size: 20,
       search: '张',
       status: 'active',
     });

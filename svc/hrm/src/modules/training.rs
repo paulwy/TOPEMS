@@ -48,7 +48,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "training",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("plan_id" = Option<Uuid>, Query, description = "计划ID"),
         ("course_id" = Option<Uuid>, Query, description = "课程ID"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
@@ -324,7 +324,7 @@ pub async fn delete_plan(
     tag = "training",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("plan_id" = Option<Uuid>, Query, description = "计划ID"),
         ("course_id" = Option<Uuid>, Query, description = "课程ID"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
@@ -603,7 +603,7 @@ pub async fn delete_course(
     tag = "training",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("plan_id" = Option<Uuid>, Query, description = "计划ID"),
         ("course_id" = Option<Uuid>, Query, description = "课程ID"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
@@ -1057,7 +1057,7 @@ pub async fn get_employee_records(
 #[derive(Debug, Deserialize)]
 pub struct RecordPaginationParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
 }
 

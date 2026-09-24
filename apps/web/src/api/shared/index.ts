@@ -155,7 +155,7 @@ export interface SearchResponse {
   results: SearchResult[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
   aggregations?: Record<string, number>;
 }
 
@@ -165,13 +165,13 @@ export const searchApi = {
     params?: {
       types?: string[];
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ): Promise<ApiResponse<SearchResponse>> {
     const searchParams = new URLSearchParams();
     searchParams.set('q', query);
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.types?.length) searchParams.set('types', params.types.join(','));
     return apiClient.core.get(`/search?${searchParams.toString()}`);
   },

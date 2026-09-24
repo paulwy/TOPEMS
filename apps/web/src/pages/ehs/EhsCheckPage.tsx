@@ -57,7 +57,7 @@ const EhsCheckPage: React.FC = () => {
   const { data: recordsData } = useQuery({
     queryKey: QUERY_KEYS.EHS.INSPECTION_RECORDS,
     queryFn: async () => {
-      const response = await ehsApi.listInspectionRecords({ pagesize: 100 });
+      const response = await ehsApi.listInspectionRecords({ page_size: 100 });
       if (response.success && response.data) {
         const data = response.data as unknown as Record<string, unknown>;
         return Array.isArray(data)

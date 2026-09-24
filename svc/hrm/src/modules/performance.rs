@@ -88,7 +88,7 @@ pub struct UpdatePerformanceGoalRequest {
 #[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct QueryParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
     pub review_period: Option<String>,
@@ -125,7 +125,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "performance",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
         ("review_period" = Option<String>, Query, description = "评核周期"),
         ("status" = Option<String>, Query, description = "状态")

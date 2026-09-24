@@ -68,7 +68,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
     queryFn: async () => {
       const response = await permissionAuditApi.listPermissionChanges({
         page: currentPage,
-        pagesize: PER_PAGE,
+        page_size: PER_PAGE,
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
         ...(filterType !== 'all' ? { change_type: filterType } : {}),
       });
@@ -91,7 +91,7 @@ const PermissionAuditPage: React.FC<PermissionAuditPageProps> = () => {
     queryFn: async () => {
       const response = await permissionAuditApi.listAccessLogs({
         page: currentPage,
-        pagesize: PER_PAGE,
+        page_size: PER_PAGE,
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
         ...(filterType !== 'all' ? { action: filterType } : {}),
       });

@@ -225,7 +225,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
   const { data: records = [] } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.HRM_ATTENDANCE_RECORDS_BASE, selectedDate],
     queryFn: async () => {
-      const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
+      const res = await attendanceApi.list({ date: selectedDate, page_size: 100 });
       if (res.code === 200) {
         return res.data?.items || [];
       }
@@ -321,7 +321,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
   const { data: records = [], isPending } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.HRM_ATTENDANCE_RECORDS_BASE, selectedDate],
     queryFn: async () => {
-      const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
+      const res = await attendanceApi.list({ date: selectedDate, page_size: 100 });
       if (res.code === 200) {
         return res.data?.items || [];
       }
@@ -333,7 +333,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
   const { data: leaves = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.HRM_LEAVE_REQUESTS_BASE,
     queryFn: async () => {
-      const res = await leaveApi.list({ pagesize: 100 });
+      const res = await leaveApi.list({ page_size: 100 });
       if (res.code === 200) {
         return (res.data?.items as LeaveRequest[]) || [];
       }

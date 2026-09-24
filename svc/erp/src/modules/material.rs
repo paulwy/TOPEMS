@@ -18,7 +18,7 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 pub struct MaterialListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
-        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+        #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
     pub page_size: Option<i64>,
         #[serde(default, alias = "q", alias = "keyword")]
     pub search: Option<String>,
@@ -60,7 +60,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "ERP",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页数量"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
         ("search" = Option<String>, Query, description = "搜索关键词"),
         ("status" = Option<String>, Query, description = "状态过滤"),
         ("category" = Option<String>, Query, description = "分类过滤"),

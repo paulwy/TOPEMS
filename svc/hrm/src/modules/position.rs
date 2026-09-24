@@ -69,7 +69,7 @@ pub struct UpdatePositionRequest {
 #[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct QueryParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub department_id: Option<Uuid>,
@@ -94,7 +94,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "positions",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("search" = Option<String>, Query, description = "搜索关键字"),
         ("department_id" = Option<Uuid>, Query, description = "部门ID"),
         ("org_id" = Option<Uuid>, Query, description = "组织ID"),

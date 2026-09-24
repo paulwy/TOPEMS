@@ -147,7 +147,7 @@ export const getDepartmentSchema = (): EntitySchema => {
         field: 'org_id',
         queryKey: QUERY_KEYS.AD_HOC.HRM_COMPANIES_BASE,
         loader: async () => {
-          const res = await companyApi.list({ pagesize: 100 });
+          const res = await companyApi.list({ page_size: 100 });
           if (res.success && res.data) {
             return (res.data.items || []).map((c: { id: string; name: string }) => ({
               value: c.id,
@@ -161,7 +161,7 @@ export const getDepartmentSchema = (): EntitySchema => {
         field: 'parentId',
         queryKey: QUERY_KEYS.AD_HOC.HRM_DEPARTMENTS_BASE,
         loader: async () => {
-          const res = await departmentApi.list({ pagesize: 200 });
+          const res = await departmentApi.list({ page_size: 200 });
           if (res.success && res.data) {
             return (res.data.items || []).map((d: { id: string; name: string }) => ({
               value: d.id,

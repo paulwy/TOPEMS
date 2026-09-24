@@ -60,7 +60,7 @@ pub struct AuditLogQueryParams {
     pub end_date: Option<String>,
     pub search: Option<String>,
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
@@ -68,7 +68,7 @@ pub struct PaginatedAuditLogs {
     pub items: Vec<AuditLogEntry>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize)]
@@ -145,7 +145,7 @@ pub async fn query_audit_logs(
     Query(params): Query<AuditLogQueryParams>,
 ) -> Json<ApiResponse<PaginatedAuditLogs>> {
     let source = resolve_source(params.source.as_deref());
-    let (page, page_size) = clamp_pagination(params.page, params.pagesize);
+    let (page, page_size) = clamp_pagination(params.page, params.page_size);
     let offset = (page - 1) * page_size;
 
     let start_date = parse_datetime(params.start_date.as_deref());
@@ -397,7 +397,7 @@ pub async fn query_audit_logs(
         items,
         total,
         page,
-        pagesize: page_size,
+        page_size: page_size,
     }))
 }
 

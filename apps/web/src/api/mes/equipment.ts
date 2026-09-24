@@ -26,12 +26,12 @@ export const equipmentApi = {
       equipments: Equipment[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
 
@@ -77,7 +77,7 @@ export const mesEquipmentApi = {
   ): Promise<ApiResponse<PaginatedResult<InspectionRecord>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
@@ -93,7 +93,7 @@ export const mesEquipmentApi = {
   ): Promise<ApiResponse<PaginatedResult<MaintenanceRecord>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
@@ -120,12 +120,12 @@ export const equipmentOeeApi = {
       records: OeeRecord[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
     if (params?.start_date) searchParams.set('start_date', params.start_date);
     if (params?.end_date) searchParams.set('end_date', params.end_date);

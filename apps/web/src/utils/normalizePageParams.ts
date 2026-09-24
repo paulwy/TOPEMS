@@ -5,7 +5,7 @@ export function normalizePageParams<T extends Record<string, unknown>>(
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null) continue;
     const key =
-      k === 'pageSize' || k === 'pagesize'
+      k === 'pageSize' || k === 'page_size'
         ? 'page_size'
         : k === 'sortBy'
           ? 'sort_by'
@@ -30,7 +30,7 @@ export function normalizeObjectKeysDeep<T extends Record<string, unknown>>(
       continue;
     }
     const key =
-      k === 'pageSize' || k === 'pagesize'
+      k === 'pageSize' || k === 'page_size'
         ? 'page_size'
         : k === 'sortBy'
           ? 'sort_by'

@@ -202,9 +202,9 @@ describe('Cross-Module Business Flow Integration', () => {
       apiClient.wms.get.mockResolvedValue(mockResponse);
 
       const [hrmResult, crmResult, wmsResult] = await Promise.all([
-        employeeApi.list({ page: 1, pagesize: 10 }),
-        customerApi.list({ page: 1, pagesize: 10 }),
-        inventoryApi.list({ page: 1, pagesize: 10 }),
+        employeeApi.list({ page: 1, page_size: 10 }),
+        customerApi.list({ page: 1, page_size: 10 }),
+        inventoryApi.list({ page: 1, page_size: 10 }),
       ]);
 
       expect(hrmResult.success).toBe(crmResult.success);

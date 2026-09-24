@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM drivers WHERE deleted_at IS NULL),
                     'page', 1,
-                    'pagesize', 10
+                    'page_size', 10
                 ) as data
                 FROM (
                     SELECT d.* FROM drivers d
@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key =
-                        "tms:driver:list:default:page:1:pagesize:10:search:none:status:all";
+                        "tms:driver:list:default:page:1:page_size:10:search:none:status:all";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[tms] 司机列表缓存预热完成");
                 }
@@ -126,7 +126,7 @@ async fn main() -> Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM vehicles WHERE deleted_at IS NULL),
                     'page', 1,
-                    'pagesize', 10
+                    'page_size', 10
                 ) as data
                 FROM (
                     SELECT v.* FROM vehicles v
@@ -141,7 +141,7 @@ async fn main() -> Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key =
-                        "tms:vehicle:list:default:page:1:pagesize:10:search:none:status:all";
+                        "tms:vehicle:list:default:page:1:page_size:10:search:none:status:all";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[tms] 车辆列表缓存预热完成");
                 }
@@ -160,7 +160,7 @@ async fn main() -> Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM carriers WHERE deleted_at IS NULL),
                     'page', 1,
-                    'pagesize', 10
+                    'page_size', 10
                 ) as data
                 FROM (
                     SELECT c.* FROM carriers c
@@ -175,7 +175,7 @@ async fn main() -> Result<()> {
             {
                 Ok(Some(data)) => {
                     let cache_key =
-                        "tms:carrier:list:default:page:1:pagesize:10:search:none:status:all";
+                        "tms:carrier:list:default:page:1:page_size:10:search:none:status:all";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[tms] 承运商列表缓存预热完成");
                 }

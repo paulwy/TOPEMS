@@ -370,7 +370,7 @@ export type { PaginatedResult };
 
 export interface ListParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   [key: string]: string | number | undefined;
 }
 

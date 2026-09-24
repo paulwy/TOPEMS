@@ -75,14 +75,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         destination: 'WH-B',
       } as never);
 
-      expect(apiClient.erp.post).toHaveBeenCalledWith(
-        '/sales-orders',
-        expect.anything()
-      );
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/outbound-orders',
-        expect.anything()
-      );
+      expect(apiClient.erp.post).toHaveBeenCalledWith('/sales-orders', expect.anything());
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/outbound-orders', expect.anything());
       expect(apiClient.tms.post).toHaveBeenCalledWith(
         '/shipments',
         expect.objectContaining({ outbound_order_id: 'out-001' })
@@ -118,9 +112,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         '/wms/outbound-orders/out-001/approval/approve',
         expect.objectContaining({ entityId: 'out-001' })
       );
-      expect(apiClient.tms.post).toHaveBeenCalledWith(
-        '/shipments/ship-001/dispatch'
-      );
+      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-001/dispatch');
       expect(approveResult.data.status).toBe('shipping');
       expect(dispatchResult.data.status).toBe('in_transit');
     });
@@ -148,7 +140,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-001', available_quantity: 80 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
 
@@ -156,12 +148,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       const completeResult = await outboundOrderApi.complete('out-001');
       const invResult = await erpInventoryApi.list();
 
-      expect(apiClient.tms.post).toHaveBeenCalledWith(
-        '/shipments/ship-001/arrive'
-      );
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/outbound-orders/out-001/complete'
-      );
+      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-001/arrive');
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/outbound-orders/out-001/complete');
       expect(apiClient.erp.get).toHaveBeenCalled();
       expect(arriveResult.data.status).toBe('delivered');
       expect(completeResult.data.status).toBe('completed');
@@ -199,14 +187,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         items: [{ material_code: 'MAT-002', quantity: 50 }],
       } as never);
 
-      expect(apiClient.erp.post).toHaveBeenCalledWith(
-        '/purchase-orders',
-        expect.anything()
-      );
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/inbound-orders',
-        expect.anything()
-      );
+      expect(apiClient.erp.post).toHaveBeenCalledWith('/purchase-orders', expect.anything());
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/inbound-orders', expect.anything());
       expect(po.data.id).toBe('po-001');
       expect(inb.data.purchase_order_id).toBe('po-001');
       expect(inb.data.status).toBe('created');
@@ -267,16 +249,14 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-002', available_quantity: 150 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
 
       const completeResult = await inboundOrderApi.complete('inb-001');
       const invResult = await erpInventoryApi.list();
 
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/inbound-orders/inb-001/complete'
-      );
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/inbound-orders/inb-001/complete');
       expect(apiClient.erp.get).toHaveBeenCalled();
       expect(completeResult.data.status).toBe('completed');
       expect(invResult.data.items[0].available_quantity).toBe(150);
@@ -314,10 +294,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         destination: 'WH-B',
       } as never);
 
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/transfers',
-        expect.anything()
-      );
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/transfers', expect.anything());
       expect(apiClient.tms.post).toHaveBeenCalledWith(
         '/shipments',
         expect.objectContaining({ transfer_order_id: 'trf-001' })
@@ -361,9 +338,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
         '/wms/transfer-orders/trf-001/approval/approve',
         expect.objectContaining({ entityId: 'trf-001' })
       );
-      expect(apiClient.tms.post).toHaveBeenCalledWith(
-        '/shipments/ship-002/dispatch'
-      );
+      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-002/dispatch');
       expect(confirmResult.data.status).toBe('confirmed');
       expect(approveResult.data.status).toBe('shipped');
       expect(dispatchResult.data.status).toBe('in_transit');
@@ -394,9 +369,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       ]);
       const completeResult = await transferApi.complete('trf-001');
 
-      expect(apiClient.tms.post).toHaveBeenCalledWith(
-        '/shipments/ship-002/arrive'
-      );
+      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-002/arrive');
       expect(apiClient.wms.post).toHaveBeenCalledWith(
         '/transfers/trf-001/receive',
         expect.anything()
@@ -423,7 +396,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-001', quantity: 30 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
       apiClient.erp.get.mockResolvedValue({
@@ -488,7 +461,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-001', quantity: 100 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
       apiClient.erp.get.mockResolvedValue({
@@ -497,7 +470,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-001', available_quantity: 100 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
 
@@ -506,12 +479,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
       expect(apiClient.wms.get).toHaveBeenCalled();
       expect(apiClient.erp.get).toHaveBeenCalled();
-      expect(wmsResult.data.items[0].material_code).toBe(
-        erpResult.data.items[0].material_code
-      );
-      expect(wmsResult.data.items[0].quantity).toBe(
-        erpResult.data.items[0].available_quantity
-      );
+      expect(wmsResult.data.items[0].material_code).toBe(erpResult.data.items[0].material_code);
+      expect(wmsResult.data.items[0].quantity).toBe(erpResult.data.items[0].available_quantity);
     });
 
     it('should decrement ERP available_quantity after WMS outbound completed', async () => {
@@ -529,16 +498,14 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-001', available_quantity: 80 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
 
       const completeResult = await outboundOrderApi.complete('out-002');
       const invResult = await erpInventoryApi.list();
 
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/outbound-orders/out-002/complete'
-      );
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/outbound-orders/out-002/complete');
       expect(apiClient.erp.get).toHaveBeenCalled();
       expect(completeResult.data.status).toBe('completed');
       expect(invResult.data.items[0].available_quantity).toBe(80);
@@ -560,16 +527,14 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
           items: [{ material_code: 'MAT-002', available_quantity: 150 }],
           total: 1,
           page: 1,
-          pagesize: 10,
+          page_size: 10,
         },
       });
 
       const completeResult = await inboundOrderApi.complete('inb-002');
       const invResult = await erpInventoryApi.list();
 
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/inbound-orders/inb-002/complete'
-      );
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/inbound-orders/inb-002/complete');
       expect(apiClient.erp.get).toHaveBeenCalled();
       expect(completeResult.data.status).toBe('completed');
       expect(invResult.data.items[0].available_quantity).toBe(150);
@@ -606,13 +571,8 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
       }
 
       // 断言：TMS 失败后，WMS outbound 没有调用 approval.approve（仍停留在 packing）
-      expect(apiClient.wms.post).toHaveBeenCalledWith(
-        '/outbound-orders/out-003/pack'
-      );
-      expect(apiClient.tms.post).toHaveBeenCalledWith(
-        '/shipments',
-        expect.anything()
-      );
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/outbound-orders/out-003/pack');
+      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments', expect.anything());
       expect(apiClient.post).not.toHaveBeenCalled();
       expect(packResult.data.status).toBe('packing');
       expect(shipmentFailed).toBe(true);
@@ -682,9 +642,7 @@ describe('WMS + TMS + ERP 三模块联动集成测试', () => {
 
       const result = await tmsApi.dispatchShipment('ship-delivered');
 
-      expect(apiClient.tms.post).toHaveBeenCalledWith(
-        '/shipments/ship-delivered/dispatch'
-      );
+      expect(apiClient.tms.post).toHaveBeenCalledWith('/shipments/ship-delivered/dispatch');
       expect(result.success).toBe(false);
       expect(result.message).toContain('terminal state');
     });

@@ -4,7 +4,7 @@ use sqlx::types::Uuid;
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListMaterialBomsQuery {
     pub page: Option<i32>,
-    pub pagesize: Option<i32>,
+    pub page_size: Option<i32>,
     pub search: Option<String>,
     pub status: Option<String>,
 }
@@ -12,7 +12,7 @@ pub struct ListMaterialBomsQuery {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListMaterialIssuesQuery {
     pub page: Option<i32>,
-    pub pagesize: Option<i32>,
+    pub page_size: Option<i32>,
     pub search: Option<String>,
     pub status: Option<String>,
 }
@@ -20,7 +20,7 @@ pub struct ListMaterialIssuesQuery {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListMaterialReturnsQuery {
     pub page: Option<i32>,
-    pub pagesize: Option<i32>,
+    pub page_size: Option<i32>,
     pub search: Option<String>,
     pub status: Option<String>,
 }
@@ -65,7 +65,7 @@ pub struct ListMaterialBomsResponse {
     pub boms: Vec<MaterialBomResponse>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -89,7 +89,7 @@ pub struct ListMaterialIssuesResponse {
     pub issues: Vec<MaterialIssueResponse>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -126,7 +126,7 @@ pub struct ListMaterialReturnsResponse {
     pub returns: Vec<MaterialReturnResponse>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Clone, Deserialize)]

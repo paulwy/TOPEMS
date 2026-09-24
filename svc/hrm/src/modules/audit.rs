@@ -28,7 +28,7 @@ pub struct ListAuditLogsQuery {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
 }
 
@@ -44,7 +44,7 @@ pub struct ListAuditLogsQuery {
         ("start_date" = Option<String>, Query, description = "开始日期"),
         ("end_date" = Option<String>, Query, description = "结束日期"),
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小")
+        ("page_size" = Option<i64>, Query, description = "每页大小")
     ),
     responses(
         (status = 200, description = "获取审计日志列表成功", body = serde_json::Value),

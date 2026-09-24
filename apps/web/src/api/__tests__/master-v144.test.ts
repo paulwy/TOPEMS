@@ -45,7 +45,7 @@ describe('V144 masterData API bindings', () => {
     it('should list recovery points', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await disasterRecoveryApi.listRecoveryPoints({ page: 1, pageSize: 20 });
-      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v56/recovery/points?page=1&pagesize=20');
+      expect(mockClient.get).toHaveBeenCalledWith('/mdm-v56/recovery/points?page=1&page_size=20');
     });
 
     it('should execute recovery plan', async () => {
@@ -91,7 +91,7 @@ describe('V144 masterData API bindings', () => {
     it('should search assets', async () => {
       mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
       await knowledgeGraphApi.searchAssets({ query: 'report', page: 1, pageSize: 10 });
-      expect(mockClient.get).toHaveBeenCalledWith('/kg-v53/assets?q=report&page=1&pagesize=10');
+      expect(mockClient.get).toHaveBeenCalledWith('/kg-v53/assets?q=report&page=1&page_size=10');
     });
 
     it('should get recommendations', async () => {
@@ -218,7 +218,7 @@ describe('V144 masterData API bindings', () => {
         pageSize: 50,
       });
       expect(mockClient.get).toHaveBeenCalledWith(
-        '/mdm-v54/audit/log?entity_type=customer&entity_id=c-1&page=1&pagesize=50'
+        '/mdm-v54/audit/log?entity_type=customer&entity_id=c-1&page=1&page_size=50'
       );
     });
 

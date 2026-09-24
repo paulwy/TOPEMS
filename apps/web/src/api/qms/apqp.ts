@@ -15,7 +15,7 @@ export const apqpApi = {
   // APQP Projects
   listApqpProjects: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     status?: string;
     product_name?: string;
   }): Promise<ApiResponse<ApqpProject[]>> => {

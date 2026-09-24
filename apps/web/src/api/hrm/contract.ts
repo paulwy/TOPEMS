@@ -30,7 +30,7 @@ export const contractApi = {
   getExpiring: async (params?: {
     days?: number;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<Contract>>> => {
     const queryString = buildQueryString(params);
     return apiClient.hrm.get(`/contracts/expiring${queryString}`);

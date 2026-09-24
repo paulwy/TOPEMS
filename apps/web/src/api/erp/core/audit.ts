@@ -33,7 +33,7 @@ export interface AuditLogQueryParams extends PaginationParams {
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
   const ps =
     (params as { pageSize?: number } | undefined)?.pageSize ??
-    (params as { pagesize?: number } | undefined)?.pagesize;
+    (params as { page_size?: number } | undefined)?.page_size;
   return ps ? ps.toString() : undefined;
 };
 
@@ -42,7 +42,7 @@ export const auditApi = {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
-    if (ps) searchParams.set('pagesize', ps);
+    if (ps) searchParams.set('page_size', ps);
     if (params?.action) searchParams.set('action', params.action);
     if (params?.entity_type) searchParams.set('entity_type', params.entity_type);
     if (params?.user_id) searchParams.set('user_id', params.user_id);

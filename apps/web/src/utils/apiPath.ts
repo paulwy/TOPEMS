@@ -232,7 +232,7 @@ export const API_PATHS = {
   },
   notification: {
     list: (page = 1, pageSize = 20, notificationType?: string) => {
-      let path = `/notifications?page=${page}&pagesize=${pageSize}`;
+      let path = `/notifications?page=${page}&page_size=${pageSize}`;
       if (notificationType) path += `&notification_type=${notificationType}`;
       return buildApiPath({ service: 'notification', path });
     },

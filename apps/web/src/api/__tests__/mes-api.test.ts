@@ -52,8 +52,8 @@ describe('MES productionOrderApi', () => {
 
   it('should call GET /orders with params for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { orders: [], total: 0 } });
-    await productionOrderApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/orders?page=1&pagesize=10');
+    await productionOrderApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/orders?page=1&page_size=10');
   });
 
   it('should call GET /orders without params when no params', async () => {
@@ -125,9 +125,9 @@ describe('MES workOrderApi', () => {
 
   it('should call GET /work-orders with params for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { work_orders: [], total: 0 } });
-    await workOrderApi.list({ page: 1, pagesize: 20, status: 'pending' });
+    await workOrderApi.list({ page: 1, page_size: 20, status: 'pending' });
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      '/work-orders?page=1&pagesize=20&status=pending'
+      '/work-orders?page=1&page_size=20&status=pending'
     );
   });
 
@@ -190,8 +190,8 @@ describe('MES equipmentApi', () => {
 
   it('should call GET /equipment with params for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { equipments: [], total: 0 } });
-    await equipmentApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/equipment?page=1&pagesize=10');
+    await equipmentApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/equipment?page=1&page_size=10');
   });
 
   it('should call GET /equipment/:id for get', async () => {
@@ -230,8 +230,8 @@ describe('MES workStationApi', () => {
 
   it('should call GET /workstations for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { workstations: [], total: 0 } });
-    await workStationApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/workstations?page=1&pagesize=10');
+    await workStationApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/workstations?page=1&page_size=10');
   });
 
   it('should call GET /workstations/:id for get', async () => {
@@ -269,8 +269,8 @@ describe('MES processRouteApi', () => {
 
   it('should call GET /process-routes for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { process_routes: [], total: 0 } });
-    await processRouteApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/process-routes?page=1&pagesize=10');
+    await processRouteApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/process-routes?page=1&page_size=10');
   });
 
   it('should call POST /process-routes for create', async () => {
@@ -290,9 +290,9 @@ describe('MES mesEquipmentApi (equipment inspections & maintenances)', () => {
 
   it('should call GET /inspections with equipment_id filter', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await mesEquipmentApi.listInspections({ page: 1, pagesize: 10, equipment_id: 'eq1' });
+    await mesEquipmentApi.listInspections({ page: 1, page_size: 10, equipment_id: 'eq1' });
     expect(mockApiClient.get).toHaveBeenCalledWith(
-      '/inspections?page=1&pagesize=10&equipment_id=eq1'
+      '/inspections?page=1&page_size=10&equipment_id=eq1'
     );
   });
 

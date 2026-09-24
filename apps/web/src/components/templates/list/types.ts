@@ -626,7 +626,7 @@ export interface ListPageCrudConfig<
       success: boolean;
       code: number;
       message: string;
-      data?: { items: T[]; total: number; page?: number; pagesize?: number };
+      data?: { items: T[]; total: number; page?: number; page_size?: number };
     }>;
     get: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
     create: (
@@ -650,7 +650,7 @@ export interface ListPageCrudConfig<
   defaultPageSize?: number;
   /** 分页参数名，默认 'page' */
   pageParamName?: string;
-  /** 每页条数参数名，默认 'pagesize' */
+  /** 每页条数参数名，默认 'page_size' */
   pageSizeParamName?: string;
   /** 搜索参数名，默认 'keyword' */
   searchParamName?: string;
@@ -676,7 +676,7 @@ export interface ListPageCrudConfig<
   transformParams?: (params: ListPageStateParams) => Record<string, unknown>;
   /**
    * 后端参数风格预设，快速适配常见后端规范
-   * - `'standard'`：page, pagesize, keyword, sortBy, sortOrder, 筛选平铺
+   * - `'standard'`：page, page_size, keyword, sortBy, sortOrder, 筛选平铺
    * - `'nested'`：filters 对象 + sort 对象
    * - `'offset'`：offset + limit 分页
    *

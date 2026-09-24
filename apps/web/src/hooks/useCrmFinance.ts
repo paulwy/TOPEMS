@@ -42,7 +42,7 @@ export function useSalesInvoices(params?: {
   start_date?: string;
   end_date?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_SALES_INVOICES_BASE, params],
@@ -64,7 +64,7 @@ export function useCollectionRecords(params?: {
   end_date?: string;
   payment_method?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_COLLECTION_RECORDS_BASE, params],

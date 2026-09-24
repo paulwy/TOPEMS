@@ -31,9 +31,9 @@ describe('CRM Module API Tests', () => {
 
   describe('customerApi', () => {
     it('list should call GET /customers with params', async () => {
-      await customerApi.list({ page: 1, pagesize: 10, status: 'active' });
+      await customerApi.list({ page: 1, page_size: 10, status: 'active' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/customers', {
-        params: { page: 1, pagesize: 10, status: 'active' },
+        params: { page: 1, page_size: 10, status: 'active' },
       });
     });
 
@@ -86,9 +86,9 @@ describe('CRM Module API Tests', () => {
 
   describe('tagApi', () => {
     it('list should call GET /tags with params', async () => {
-      await tagApi.list({ page: 1, pagesize: 20 });
+      await tagApi.list({ page: 1, page_size: 20 });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/tags', {
-        params: { page: 1, pagesize: 20 },
+        params: { page: 1, page_size: 20 },
       });
     });
 
@@ -122,9 +122,9 @@ describe('CRM Module API Tests', () => {
 
   describe('contactApi', () => {
     it('list should call GET /contacts with params', async () => {
-      await contactApi.list({ page: 1, pagesize: 10, customer_id: 'cust-001' });
+      await contactApi.list({ page: 1, page_size: 10, customer_id: 'cust-001' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/contacts', {
-        params: { page: 1, pagesize: 10, customer_id: 'cust-001' },
+        params: { page: 1, page_size: 10, customer_id: 'cust-001' },
       });
     });
 
@@ -160,9 +160,9 @@ describe('CRM Module API Tests', () => {
 
   describe('opportunityApi', () => {
     it('list should call GET /opportunities with params', async () => {
-      await opportunityApi.list({ page: 1, pagesize: 10, stage: 'proposal' });
+      await opportunityApi.list({ page: 1, page_size: 10, stage: 'proposal' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/opportunities', {
-        params: { page: 1, pagesize: 10, stage: 'proposal' },
+        params: { page: 1, page_size: 10, stage: 'proposal' },
       });
     });
 
@@ -215,9 +215,9 @@ describe('CRM Module API Tests', () => {
 
   describe('interactionApi', () => {
     it('list should call GET /interactions with params', async () => {
-      await interactionApi.list({ page: 1, pagesize: 10, customer_id: 'cust-001' });
+      await interactionApi.list({ page: 1, page_size: 10, customer_id: 'cust-001' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/interactions', {
-        params: { page: 1, pagesize: 10, customer_id: 'cust-001' },
+        params: { page: 1, page_size: 10, customer_id: 'cust-001' },
       });
     });
 
@@ -253,9 +253,9 @@ describe('CRM Module API Tests', () => {
 
   describe('customerScoringApi', () => {
     it('list should call GET /customer-scoring with params', async () => {
-      await customerScoringApi.list({ page: 1, pagesize: 10, scorelevel: 'high' });
+      await customerScoringApi.list({ page: 1, page_size: 10, scorelevel: 'high' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/customer-scoring', {
-        params: { page: 1, pagesize: 10, scorelevel: 'high' },
+        params: { page: 1, page_size: 10, scorelevel: 'high' },
       });
     });
 
@@ -291,9 +291,9 @@ describe('CRM Module API Tests', () => {
 
   describe('salesForecastApi', () => {
     it('list should call GET /sales-forecast with params', async () => {
-      await salesForecastApi.list({ page: 1, pagesize: 10, period_type: 'monthly' });
+      await salesForecastApi.list({ page: 1, page_size: 10, period_type: 'monthly' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/sales-forecast', {
-        params: { page: 1, pagesize: 10, period_type: 'monthly' },
+        params: { page: 1, page_size: 10, period_type: 'monthly' },
       });
     });
 
@@ -328,9 +328,9 @@ describe('CRM Module API Tests', () => {
 
   describe('billingApi', () => {
     it('list should call GET /billing with params', async () => {
-      await billingApi.list({ page: 1, pagesize: 10, status: 'overdue' });
+      await billingApi.list({ page: 1, page_size: 10, status: 'overdue' });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/billing', {
-        params: { page: 1, pagesize: 10, status: 'overdue' },
+        params: { page: 1, page_size: 10, status: 'overdue' },
       });
     });
 
@@ -374,9 +374,9 @@ describe('CRM Module API Tests', () => {
 
   describe('customerSegmentationApi', () => {
     it('list should call GET /segments with params', async () => {
-      await customerSegmentationApi.list({ page: 1, pagesize: 10 });
+      await customerSegmentationApi.list({ page: 1, page_size: 10 });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/segments', {
-        params: { page: 1, pagesize: 10 },
+        params: { page: 1, page_size: 10 },
       });
     });
 
@@ -397,9 +397,9 @@ describe('CRM Module API Tests', () => {
     });
 
     it('getCustomers should call GET /segments/:id/customers with params', async () => {
-      await customerSegmentationApi.getCustomers('seg-001', { page: 1, pagesize: 20 });
+      await customerSegmentationApi.getCustomers('seg-001', { page: 1, page_size: 20 });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/segments/seg-001/customers', {
-        params: { page: 1, pagesize: 20 },
+        params: { page: 1, page_size: 20 },
       });
     });
 
@@ -413,11 +413,11 @@ describe('CRM Module API Tests', () => {
     it('list should call GET /recommendations with params', async () => {
       await customerRecommendationApi.list({
         page: 1,
-        pagesize: 10,
+        page_size: 10,
         recommendation_type: 'product',
       });
       expect(apiClient.crm.get).toHaveBeenCalledWith('/recommendations', {
-        params: { page: 1, pagesize: 10, recommendation_type: 'product' },
+        params: { page: 1, page_size: 10, recommendation_type: 'product' },
       });
     });
 

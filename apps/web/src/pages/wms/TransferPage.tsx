@@ -16,7 +16,7 @@ const TransferStats: React.FC = () => {
   const { data: transfers = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_TRANSFERS_STATS_BASE,
     queryFn: async () => {
-      const response = await wmsApi.transfers.list({ page: 1, pagesize: 100 });
+      const response = await wmsApi.transfers.list({ page: 1, page_size: 100 });
       if (response.success && response.data) {
         return response.data.items || [];
       }
@@ -130,7 +130,7 @@ const TransferDetail: React.FC<{ row: Record<string, unknown> }> = ({ row }) => 
   const { data: warehouses = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.WMS_WAREHOUSES_FOR_DETAIL_BASE,
     queryFn: async () => {
-      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
       return response.success && response.data ? response.data.items || [] : [];
     },
     staleTime: 5 * 60 * 1000,

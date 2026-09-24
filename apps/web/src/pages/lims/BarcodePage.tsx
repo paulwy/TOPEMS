@@ -25,7 +25,7 @@ const BarcodePage: React.FC = () => {
       list: async (params) => {
         const response = await limsApi.listBarcodes({
           page: params?.page !== undefined ? params.page : 0,
-          pagesize: params?.pageSize ?? 10,
+          page_size: params?.pageSize ?? 10,
           search: params?.search as string | undefined,
           status: params?.status && params.status !== 'all' ? (params.status as string) : undefined,
         });

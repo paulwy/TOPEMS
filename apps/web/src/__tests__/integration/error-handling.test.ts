@@ -63,7 +63,7 @@ describe('Error Handling & Boundary Conditions Integration', () => {
         total: 0,
       });
 
-      const result = await employeeApi.list({ page: 1, pagesize: 10 });
+      const result = await employeeApi.list({ page: 1, page_size: 10 });
       expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
       expect(result.total).toBe(0);
@@ -95,7 +95,7 @@ describe('Error Handling & Boundary Conditions Integration', () => {
         total: 0,
       });
 
-      const result = await employeeApi.list({ page: 0, pagesize: 10 });
+      const result = await employeeApi.list({ page: 0, page_size: 10 });
       expect(result.success).toBe(true);
       expect(apiClient.hrm.get).toHaveBeenCalled();
     });
@@ -110,7 +110,7 @@ describe('Error Handling & Boundary Conditions Integration', () => {
         total: 0,
       });
 
-      const result = await employeeApi.list({ page: 1, pagesize: 1000 });
+      const result = await employeeApi.list({ page: 1, page_size: 1000 });
       expect(result.success).toBe(true);
       expect(apiClient.hrm.get).toHaveBeenCalled();
     });
@@ -125,7 +125,7 @@ describe('Error Handling & Boundary Conditions Integration', () => {
         total: 0,
       });
 
-      const result = await employeeApi.list({ page: -1, pagesize: 10 });
+      const result = await employeeApi.list({ page: -1, page_size: 10 });
       expect(result.success).toBe(true);
     });
   });

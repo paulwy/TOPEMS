@@ -27,7 +27,7 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 pub struct SupplierListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
-        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+        #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
     pub page_size: Option<i64>,
         #[serde(default, alias = "q", alias = "keyword")]
     pub search: Option<String>,

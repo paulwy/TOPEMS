@@ -67,7 +67,7 @@ export const reportApi = {
     department_id?: string;
     project_id?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<
     ApiResponse<
       PaginatedResult<{

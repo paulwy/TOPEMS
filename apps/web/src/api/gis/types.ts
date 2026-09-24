@@ -53,7 +53,7 @@ export interface TrackQueryParams {
   start_time?: string;
   end_time?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }
 
 export interface CreateDevicePointRequest {

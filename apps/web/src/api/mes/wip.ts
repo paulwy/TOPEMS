@@ -16,12 +16,12 @@ export const wipApi = {
       wips: Wip[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
 
@@ -54,12 +54,12 @@ export const wipApi = {
       transfers: WipTransfer[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
+    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
     if (params?.wip_id) searchParams.set('wip_id', params.wip_id);
 
     const queryString = searchParams.toString();

@@ -23,7 +23,7 @@ use topems_shared_core::response::{api_error, PaginatedResponse};
 pub struct CustomerListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
-        #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+        #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
     pub page_size: Option<i64>,
         #[serde(default, alias = "q", alias = "keyword")]
     pub search: Option<String>,
@@ -459,7 +459,7 @@ struct CustomerRecentResponse {
     customers: Vec<Customer>,
     total: i64,
     page: i64,
-    pagesize: i64,
+    page_size: i64,
 }
 
 fn customer_select_cols(locale_placeholder: &str) -> String {
@@ -840,7 +840,7 @@ async fn list_recent_customers(
             customers,
             total,
             page: 1,
-            pagesize: limit,
+            page_size: limit,
         },
         "获取最近客户成功",
     ))

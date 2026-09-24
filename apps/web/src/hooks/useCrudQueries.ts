@@ -623,7 +623,7 @@ export interface CrudOperations<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
     success: boolean;
     code: number;
     message: string;
-    data?: { items: T[]; total: number; page?: number; pagesize?: number };
+    data?: { items: T[]; total: number; page?: number; page_size?: number };
   }>;
   get: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
   create: (data: TCreate) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
@@ -675,7 +675,7 @@ export function useCrudOperations<
     autoFetch = true,
     defaultPageSize = 10,
     pageParamName = 'page',
-    pageSizeParamName = 'pagesize',
+    pageSizeParamName = 'page_size',
     entityName,
   } = options;
 

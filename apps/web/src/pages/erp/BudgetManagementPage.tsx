@@ -15,7 +15,7 @@ const budgetAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await budgetApi.list({
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
       search: params?.search,
       status: params?.status && params.status !== 'all' ? params.status : undefined,
     });
@@ -52,7 +52,7 @@ const expenseAdapter = {
   list: async (params?: { page?: number; pageSize?: number; search?: string; status?: string }) => {
     const response = await expenseApi.list({
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
       search: params?.search,
       status: params?.status && params.status !== 'all' ? params.status : undefined,
     });

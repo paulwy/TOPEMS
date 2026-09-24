@@ -51,7 +51,7 @@ interface OpeningBalanceQueryParams extends PaginationParams {
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
   const ps =
     (params as { pageSize?: number } | undefined)?.pageSize ??
-    (params as { pagesize?: number } | undefined)?.pagesize;
+    (params as { page_size?: number } | undefined)?.page_size;
   return ps ? ps.toString() : undefined;
 };
 
@@ -60,7 +60,7 @@ export const openingBalanceApi = {
     const sp = new URLSearchParams();
     if (params?.page) sp.set('page', params.page.toString());
     const ps = resolvePageSize(params);
-    if (ps) sp.set('pagesize', ps);
+    if (ps) sp.set('page_size', ps);
     if (params?.company_id) sp.set('company_id', params.company_id);
     if (params?.period) sp.set('period', params.period);
     if (params?.subject_code) sp.set('subject_code', params.subject_code);

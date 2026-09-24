@@ -11,7 +11,7 @@ vi.mock('@/api/mes', () => ({
     processes: {
       list: vi.fn().mockResolvedValue({
         success: true,
-        data: { processes: [], total: 0, page: 0, pagesize: 10 },
+        data: { processes: [], total: 0, page: 0, page_size: 10 },
       }),
       create: vi.fn(),
       update: vi.fn(),

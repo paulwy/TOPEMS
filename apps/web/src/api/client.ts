@@ -43,7 +43,7 @@ export type ListResponse<T> = {
 export interface PaginationParams {
   page?: number;
   pageSize?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
 }
 
@@ -243,7 +243,7 @@ const buildNotificationGraceFallback = (
   pageSizeParam: unknown
 ): ApiResponse => {
   const page = typeof pageParam === 'number' ? pageParam : Number(pageParam) || 1;
-  const pagesize = typeof pageSizeParam === 'number' ? pageSizeParam : Number(pageSizeParam) || 20;
+  const page_size = typeof pageSizeParam === 'number' ? pageSizeParam : Number(pageSizeParam) || 20;
   // unread-count: number
   if (relativeUrl.startsWith('/notifications/unread-count')) {
     return {
@@ -282,7 +282,7 @@ const buildNotificationGraceFallback = (
       notifications: [],
       total: 0,
       page,
-      pagesize,
+      page_size,
       unread_count: 0,
     },
     message: 'Skipped (no auth token)',
@@ -381,7 +381,7 @@ export const createAxiosClient = ({
         const fallback = buildNotificationGraceFallback(
           url,
           requestConfig.params?.page,
-          requestConfig.params?.pagesize || requestConfig.params?.pageSize
+          requestConfig.params?.page_size || requestConfig.params?.pageSize
         );
         apiLogger.debug(`[Notification Grace] Skip ${url} (no token), returning fallback`);
         // 通过自定义 adapter 直接返回成功响应，绕开真实网络请求和 xhr 错误回调
@@ -537,7 +537,7 @@ export const createAxiosClient = ({
           const fallback = buildNotificationGraceFallback(
             url,
             error.config?.params?.page,
-            error.config?.params?.pagesize || error.config?.params?.pageSize
+            error.config?.params?.page_size || error.config?.params?.pageSize
           );
           apiLogger.debug(
             `[Notification Grace] 401 on ${fullUrl}, returning fallback instead of rejecting`
@@ -923,7 +923,7 @@ export async function safeRequest<T>(
 
 export interface PaginatedRequestParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   [key: string]: unknown;
 }
@@ -934,9 +934,9 @@ export interface PaginatedRequestParams {
 export async function paginatedRequest<T>(
   requestFn: (
     _params: PaginatedRequestParams
-  ) => Promise<ApiResponse<{ items: T[]; total: number; page: number; pagesize: number }>>,
+  ) => Promise<ApiResponse<{ items: T[]; total: number; page: number; page_size: number }>>,
   params: PaginatedRequestParams = {}
-): Promise<{ items: T[]; total: number; page: number; pagesize: number }> {
+): Promise<{ items: T[]; total: number; page: number; page_size: number }> {
   const response = await requestFn(params);
 
   if (!response.success) {
@@ -949,6 +949,6 @@ export async function paginatedRequest<T>(
     items: T[];
     total: number;
     page: number;
-    pagesize: number;
+    page_size: number;
   };
 }

@@ -16,7 +16,7 @@ const ReceivablePayablePage: React.FC = () => {
       list: async (params) => {
         const res = await receivableApi.list({
           page: params?.page,
-          pagesize: params?.pageSize,
+          page_size: params?.pageSize,
           search: params?.search,
           status: params?.status as string,
         });
@@ -50,7 +50,7 @@ const ReceivablePayablePage: React.FC = () => {
       list: async (params) => {
         const res = await payableApi.list({
           page: params?.page,
-          pagesize: params?.pageSize,
+          page_size: params?.pageSize,
           search: params?.search,
           status: params?.status as string,
         });

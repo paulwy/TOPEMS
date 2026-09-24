@@ -347,7 +347,7 @@ export const mobileApi = {
 
   listMobileTasks: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<ListResponse<MobileTask>>> => {
     return apiClient.mobile.get<ListResponse<MobileTask>>('/mobile-tasks', { params });
   },
@@ -364,7 +364,7 @@ export const mobileApi = {
   listAttendanceRecords: async (params?: {
     month?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<ListResponse<AttendanceRecord>>> => {
     return apiClient.mobile.get<ListResponse<AttendanceRecord>>('/attendance/records', {
       params,
@@ -387,7 +387,7 @@ export const mobileApi = {
   listLeaveApplications: async (params?: {
     status?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<ListResponse<LeaveApplication>>> => {
     return apiClient.mobile.get<ListResponse<LeaveApplication>>('/attendance/leaves', {
       params,

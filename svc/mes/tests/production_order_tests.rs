@@ -145,7 +145,7 @@ fn test_create_from_erp_request_optional_fields() {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ProductionOrderQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -154,17 +154,17 @@ struct ProductionOrderQuery {
 fn test_production_order_query_defaults() {
     let query = ProductionOrderQuery {
         page: None,
-        pagesize: None,
+        page_size: None,
         search: None,
         status: None,
     };
 
     let page = query.page.unwrap_or(1);
-    let pagesize = query.pagesize.unwrap_or(10);
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
 
     assert_eq!(page, 1);
-    assert_eq!(pagesize, 10);
+    assert_eq!(page_size, 10);
     assert_eq!(offset, 0);
 }
 
@@ -172,13 +172,13 @@ fn test_production_order_query_defaults() {
 fn test_production_order_query_custom() {
     let query = ProductionOrderQuery {
         page: Some(5),
-        pagesize: Some(20),
+        page_size: Some(20),
         search: Some("PROD-A".to_string()),
         status: Some("in_progress".to_string()),
     };
 
     assert_eq!(query.page.unwrap(), 5);
-    assert_eq!(query.pagesize.unwrap(), 20);
+    assert_eq!(query.page_size.unwrap(), 20);
     assert_eq!(query.search.unwrap(), "PROD-A");
     assert_eq!(query.status.unwrap(), "in_progress");
 }
@@ -187,7 +187,7 @@ fn test_production_order_query_custom() {
 fn test_production_order_query_serialization() {
     let query = ProductionOrderQuery {
         page: Some(3),
-        pagesize: Some(15),
+        page_size: Some(15),
         search: Some("测试搜索".to_string()),
         status: Some("pending".to_string()),
     };
@@ -196,7 +196,7 @@ fn test_production_order_query_serialization() {
     let deserialized: ProductionOrderQuery = serde_json::from_str(&json).unwrap();
 
     assert_eq!(deserialized.page, query.page);
-    assert_eq!(deserialized.pagesize, query.pagesize);
+    assert_eq!(deserialized.page_size, query.page_size);
     assert_eq!(deserialized.search, query.search);
     assert_eq!(deserialized.status, query.status);
 }

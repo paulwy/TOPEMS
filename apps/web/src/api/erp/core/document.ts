@@ -44,7 +44,7 @@ export const documentApi = {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     const ps = resolvePageSize(params);
-    if (ps) searchParams.set('pagesize', ps);
+    if (ps) searchParams.set('page_size', ps);
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
     if ((params as { doc_type?: string })?.doc_type)
@@ -77,6 +77,6 @@ export const documentApi = {
 };
 
 function resolvePageSize(params?: PaginationParams): string | undefined {
-  const v = params?.pageSize ?? params?.pagesize;
+  const v = params?.pageSize ?? params?.page_size;
   return typeof v === 'number' && v > 0 ? v.toString() : undefined;
 }

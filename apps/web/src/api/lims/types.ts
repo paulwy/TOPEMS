@@ -181,7 +181,7 @@ export interface BatchOperationResult {
 
 export interface ListParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   status?: string;
   project_id?: string;
@@ -1141,5 +1141,5 @@ export interface AuditLogQueryParams {
   start_date?: string;
   end_date?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }

@@ -6,7 +6,7 @@ export interface AuxAccountQuery {
   aux_type?: string;
   page?: number;
   page_size?: number;
-  pagesize?: number;
+
   search?: string;
   [key: string]: unknown;
 }

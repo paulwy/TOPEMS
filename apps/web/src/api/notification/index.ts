@@ -133,7 +133,7 @@ interface NotificationListResponse<T = Notification> {
   notifications: T[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
   unread_count: number;
 }
 
@@ -154,7 +154,7 @@ export const getNotifications = async (
   try {
     const params: Record<string, unknown> = {
       page,
-      pagesize: pageSize,
+      page_size: pageSize,
     };
 
     if (notificationType) {
@@ -178,7 +178,7 @@ export const getNotifications = async (
           notifications: [],
           total: 0,
           page,
-          pagesize: pageSize,
+          page_size: pageSize,
           unread_count: 0,
         },
         message: 'Unauthorized',
@@ -251,7 +251,7 @@ export const getArchivedNotifications = async (
 ): Promise<ApiResponse<NotificationListResponse<ArchivedNotification>>> => {
   const params = {
     page,
-    pagesize: pageSize,
+    page_size: pageSize,
   };
   const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>(
     '/notifications/archived',
@@ -295,7 +295,7 @@ interface NotificationTemplateListResponse {
   templates: NotificationTemplate[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export const getTemplates = async (
@@ -306,7 +306,7 @@ export const getTemplates = async (
 ): Promise<ApiResponse<NotificationTemplateListResponse>> => {
   const params: Record<string, unknown> = {
     page,
-    pagesize: pageSize,
+    page_size: pageSize,
   };
   if (status) {
     params.status = status;

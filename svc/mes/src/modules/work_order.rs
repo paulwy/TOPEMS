@@ -44,7 +44,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListWorkOrdersQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -162,7 +162,7 @@ fn parse_opt_big_decimal(v: &Option<f64>) -> Option<BigDecimal> {
     tag = "WorkOrder",
     params(
         ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("page_size" = Option<i32>, Query, description = "每页数量"),
         ("search" = Option<String>, Query, description = "搜索关键词"),
         ("status" = Option<String>, Query, description = "状态过滤"),
     ),
@@ -182,8 +182,8 @@ pub async fn list_work_orders(
     }
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10) as i64;
+    let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::from(" WHERE wo.deleted_at IS NULL");
@@ -253,7 +253,7 @@ pub async fn list_work_orders(
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(pagesize).bind(offset);
+    fetch_query = fetch_query.bind(page_size).bind(offset);
 
     let rows = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,
@@ -347,7 +347,7 @@ pub async fn list_work_orders(
             "work_orders": orders,
             "total": total.unwrap_or(0),
             "page": page,
-            "page_size": pagesize,
+            "page_size": page_size,
         }),
         "获取工单列表成功",
     ))

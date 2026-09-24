@@ -22,10 +22,10 @@ describe('PM Module API Tests', () => {
   describe('projectApi', () => {
     it('list should call GET /projects with params', async () => {
       const { projectApi } = await import('../project');
-      await projectApi.list({ page: 1, pagesize: 10, status: 'active', project_type: 'internal' });
+      await projectApi.list({ page: 1, page_size: 10, status: 'active', project_type: 'internal' });
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.get).toHaveBeenCalledWith(
-        '/projects?project_type=internal&status=active&page=1&pagesize=10'
+        '/projects?project_type=internal&status=active&page=1&page_size=10'
       );
     });
 

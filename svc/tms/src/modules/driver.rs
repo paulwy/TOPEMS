@@ -104,9 +104,9 @@ pub async fn list_drivers(
     };
     let tenant_key = tenant_id.map_or("all".to_string(), |t| t.to_string());
 
-    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:pagesize:{pagesize}:{params}）
+    // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:list:{tenant_id}:page:{page}:page_size:{page_size}:{params}）
     let cache_key = format!(
-        "tms:driver:list:{}:page:{}:pagesize:{}:search:{}:status:{}",
+        "tms:driver:list:{}:page:{}:page_size:{}:search:{}:status:{}",
         tenant_key,
         page,
         page_size,

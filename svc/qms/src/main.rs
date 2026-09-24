@@ -125,7 +125,7 @@ async fn main() -> anyhow::Result<()> {
                     'items', COALESCE(json_agg(t), '[]'::json),
                     'total', (SELECT COUNT(*) FROM quality_standards WHERE deleted_at IS NULL),
                     'page', 1,
-                    'pagesize', 20
+                    'page_size', 20
                 ) as data
                 FROM (
                     SELECT qs.* FROM quality_standards qs
@@ -139,7 +139,7 @@ async fn main() -> anyhow::Result<()> {
             .await
             {
                 Ok(Some(data)) => {
-                    let cache_key = "qms:quality_standard:list:default:page:1:pagesize:20:category:None:status:None:search:None";
+                    let cache_key = "qms:quality_standard:list:default:page:1:page_size:20:category:None:status:None:search:None";
                     cache.set(cache_key.to_string(), data).await;
                     tracing::info!("[qms] 质量标准列表缓存预热完成");
                 }

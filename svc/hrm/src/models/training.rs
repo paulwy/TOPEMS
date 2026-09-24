@@ -131,7 +131,7 @@ pub struct UpdateTrainingRecordRequest {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct TrainingPaginationParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub plan_id: Option<Uuid>,
     pub course_id: Option<Uuid>,

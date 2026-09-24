@@ -29,7 +29,7 @@ describe('V140 ERP - dictApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await dictApi.listTypes({ page: 1, pageSize: 20, category: 'erp', status: 'active' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/system/dict-types?page=1&pagesize=20&category=erp&status=active'
+      '/system/dict-types?page=1&page_size=20&category=erp&status=active'
     );
   });
 
@@ -70,7 +70,7 @@ describe('V140 ERP - dictApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await dictApi.listItems('DT-001', { page: 1, pageSize: 20 });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/system/dict-types/DT-001/items?page=1&pagesize=20'
+      '/system/dict-types/DT-001/items?page=1&page_size=20'
     );
   });
 
@@ -126,10 +126,10 @@ describe('V140 ERP - dictApi', () => {
     expect(mockClient.get).toHaveBeenCalledWith('/system/dict-types/DT-001/items/export');
   });
 
-  it('should support pagesize parameter alias', async () => {
+  it('should support page_size parameter alias', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await dictApi.listTypes({ page: 1, pagesize: 50 } as any);
-    expect(mockClient.get).toHaveBeenCalledWith('/system/dict-types?page=1&pagesize=50');
+    await dictApi.listTypes({ page: 1, page_size: 50 } as any);
+    expect(mockClient.get).toHaveBeenCalledWith('/system/dict-types?page=1&page_size=50');
   });
 });
 
@@ -154,7 +154,7 @@ describe('V140 ERP - openingBalanceApi', () => {
       period: '2026-08',
     });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances?page=1&pagesize=20&company_id=C-001&period=2026-08'
+      '/finance/accounts/opening-balances?page=1&page_size=20&company_id=C-001&period=2026-08'
     );
   });
 
@@ -229,11 +229,11 @@ describe('V140 ERP - openingBalanceApi', () => {
     );
   });
 
-  it('should support pagesize parameter alias', async () => {
+  it('should support page_size parameter alias', async () => {
     mockClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await openingBalanceApi.list({ page: 1, pagesize: 50 } as any);
+    await openingBalanceApi.list({ page: 1, page_size: 50 } as any);
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/finance/accounts/opening-balances?page=1&pagesize=50'
+      '/finance/accounts/opening-balances?page=1&page_size=50'
     );
   });
 });

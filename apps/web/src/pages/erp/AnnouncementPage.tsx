@@ -19,7 +19,7 @@ const AnnouncementStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.ANNOUNCEMENTS, 'stats'],
     queryFn: async () => {
-      const response = await announcementApi.list({ page: 0, pagesize: 1000 });
+      const response = await announcementApi.list({ page: 0, page_size: 1000 });
       if (!response.success) throw new Error(i18n.t('erp.announcement_page.k0'));
       return response.data;
     },

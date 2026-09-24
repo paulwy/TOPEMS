@@ -19,7 +19,7 @@ const projectApiAdapter: CrudApiAdapter<Project> = {
       project_type: (params?.project_type as string) || undefined,
       status: (params?.status as string) || undefined,
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
     });
     if (!response.success || !response.data) {
       throw new Error(response.message || i18n.t('pm.pm_project_list_page.k0'));

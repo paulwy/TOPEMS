@@ -148,7 +148,7 @@ export interface PluginListResponse {
   plugins: Plugin[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
   total_pages: number;
 }
 
@@ -156,7 +156,7 @@ export interface PluginReviewListResponse {
   reviews: PluginReview[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
   total_pages: number;
   average_rating: number;
 }

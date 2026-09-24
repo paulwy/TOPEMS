@@ -35,7 +35,7 @@ pub struct ListQueryParams {
     // 导致 Option<i64> 报 "invalid type: string, expected i64"（srm/suppliers 400 根因）。
     // 平铺字段与 topems_shared_db::repository::ListQueryParams 保持同名字段/别名。
     pub page: Option<i64>,
-    #[serde(alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    #[serde(alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,

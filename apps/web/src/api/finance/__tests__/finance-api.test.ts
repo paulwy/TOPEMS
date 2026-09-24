@@ -34,9 +34,9 @@ describe('Finance Module API Tests', () => {
   describe('accountApi', () => {
     it('list should call GET /accounts with params', async () => {
       const { accountApi } = await import('../account');
-      await accountApi.list({ category: 'asset', page: 1, pagesize: 10 });
+      await accountApi.list({ category: 'asset', page: 1, page_size: 10 });
       expect(mockInstance.get).toHaveBeenCalledWith('/accounts', {
-        params: { category: 'asset', page: 1, pagesize: 10 },
+        params: { category: 'asset', page: 1, page_size: 10 },
       });
     });
 
@@ -100,10 +100,10 @@ describe('Finance Module API Tests', () => {
 
     it('getOpeningBalances should call GET /accounts/opening-balances with params', async () => {
       const { accountApi } = await import('../account');
-      await accountApi.getOpeningBalances({ period: '2024-01', page: 1, pagesize: 10 });
+      await accountApi.getOpeningBalances({ period: '2024-01', page: 1, page_size: 10 });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/accounts/opening-balances', {
-        params: { period: '2024-01', page: 1, pagesize: 10 },
+        params: { period: '2024-01', page: 1, page_size: 10 },
       });
     });
 
@@ -162,11 +162,11 @@ describe('Finance Module API Tests', () => {
       await counterpartyFinanceApi.listCustomersWithFinance({
         status: 'active',
         page: 1,
-        pagesize: 10,
+        page_size: 10,
       });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/counterparty/customers', {
-        params: { status: 'active', page: 1, pagesize: 10 },
+        params: { status: 'active', page: 1, page_size: 10 },
       });
     });
 
@@ -175,11 +175,11 @@ describe('Finance Module API Tests', () => {
       await counterpartyFinanceApi.listSuppliersWithFinance({
         status: 'active',
         page: 1,
-        pagesize: 10,
+        page_size: 10,
       });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/counterparty/suppliers', {
-        params: { status: 'active', page: 1, pagesize: 10 },
+        params: { status: 'active', page: 1, page_size: 10 },
       });
     });
   });
@@ -187,10 +187,10 @@ describe('Finance Module API Tests', () => {
   describe('voucherApi', () => {
     it('list should call GET /vouchers with params', async () => {
       const { voucherApi } = await import('../voucher');
-      await voucherApi.list({ period: '2024-01', page: 1, pagesize: 10 });
+      await voucherApi.list({ period: '2024-01', page: 1, page_size: 10 });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/vouchers', {
-        params: { period: '2024-01', page: 1, pagesize: 10 },
+        params: { period: '2024-01', page: 1, page_size: 10 },
       });
     });
 
@@ -390,11 +390,11 @@ describe('Finance Module API Tests', () => {
       await receivablePayableApi.listSalesInvoices({
         customer_id: 'cust-001',
         page: 1,
-        pagesize: 10,
+        page_size: 10,
       });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/receivables', {
-        params: { customer_id: 'cust-001', page: 1, pagesize: 10 },
+        params: { customer_id: 'cust-001', page: 1, page_size: 10 },
       });
     });
 
@@ -433,11 +433,11 @@ describe('Finance Module API Tests', () => {
       await receivablePayableApi.listPurchaseInvoices({
         supplier_id: 'supp-001',
         page: 1,
-        pagesize: 10,
+        page_size: 10,
       });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/payables', {
-        params: { supplier_id: 'supp-001', page: 1, pagesize: 10 },
+        params: { supplier_id: 'supp-001', page: 1, page_size: 10 },
       });
     });
 
@@ -476,11 +476,11 @@ describe('Finance Module API Tests', () => {
       await receivablePayableApi.listCollections({
         customer_id: 'cust-001',
         page: 1,
-        pagesize: 10,
+        page_size: 10,
       });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/ar/collections', {
-        params: { customer_id: 'cust-001', page: 1, pagesize: 10 },
+        params: { customer_id: 'cust-001', page: 1, page_size: 10 },
       });
     });
 
@@ -494,10 +494,10 @@ describe('Finance Module API Tests', () => {
 
     it('listPayments should call GET /ap/payments with params', async () => {
       const { receivablePayableApi } = await import('../receivablePayable');
-      await receivablePayableApi.listPayments({ supplier_id: 'supp-001', page: 1, pagesize: 10 });
+      await receivablePayableApi.listPayments({ supplier_id: 'supp-001', page: 1, page_size: 10 });
       const instance = mockInstance;
       expect(instance.get).toHaveBeenCalledWith('/ap/payments', {
-        params: { supplier_id: 'supp-001', page: 1, pagesize: 10 },
+        params: { supplier_id: 'supp-001', page: 1, page_size: 10 },
       });
     });
 

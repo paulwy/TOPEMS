@@ -148,7 +148,7 @@ describe('KingdeeAdapter', () => {
       '/api/v1/bd/account',
       expect.objectContaining({
         headers: { Authorization: 'Bearer kd-token' },
-        params: { page: 2, pagesize: 50 },
+        params: { page: 2, page_size: 50 },
       })
     );
   });
@@ -268,7 +268,7 @@ describe('YonyouAdapter', () => {
     expect(result.items).toHaveLength(1);
     expect(mockPost).toHaveBeenCalledWith(
       '/u8api/account/query',
-      expect.objectContaining({ page: 1, pagesize: 20 }),
+      expect.objectContaining({ page: 1, page_size: 20 }),
       expect.any(Object)
     );
   });

@@ -5,7 +5,7 @@ import type { Deploy, CreateDeployRequest } from './types';
 export const deployApi = {
   listDeploys: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     search?: string;
     environment?: string;
     app_name?: string;
@@ -15,7 +15,7 @@ export const deployApi = {
       deploys: Deploy[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > => {
     const queryParams = params

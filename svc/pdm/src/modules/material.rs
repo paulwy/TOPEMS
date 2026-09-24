@@ -21,7 +21,7 @@ fn materials_list_cache_key(
     locale: &str,
 ) -> String {
     format!(
-        "pdm:material:list:{}:page:{}:pagesize:{}:search:{:?}:status:{:?}:locale:{}",
+        "pdm:material:list:{}:page:{}:page_size:{}:search:{:?}:status:{:?}:locale:{}",
         tenant_id.map_or("all".to_string(), |t| t.to_string()),
         page, page_size, search, status, locale
     )

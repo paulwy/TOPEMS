@@ -32,7 +32,7 @@ const HrmEmployeePage: React.FC = () => {
       list: async (params) => {
         const queryParams: EmployeeListParams = {
           page: params?.page ?? 1,
-          pagesize: params?.pageSize ?? 10,
+          page_size: params?.pageSize ?? 10,
         };
         if (params?.search) queryParams.search = params.search as string;
         if (params?.status && params.status !== 'all') queryParams.status = params.status as string;

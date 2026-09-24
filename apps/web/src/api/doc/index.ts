@@ -66,7 +66,7 @@ interface FileListResponse {
   items?: FileMetadata[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 export interface Folder {
@@ -83,7 +83,7 @@ interface ListFoldersData {
   items?: Folder[];
   total: number;
   page: number;
-  pagesize: number;
+  page_size: number;
 }
 
 interface CreateFolderRequest {

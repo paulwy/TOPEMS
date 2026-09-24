@@ -89,7 +89,7 @@ export const templateVersionApi = {
     params?: {
       include_drafts?: boolean;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ): Promise<ApiResponse<PaginatedResponse<TemplateVersion>>> => {
     return apiClient.doc.get(`/templates/${templateId}/versions`, { params });
@@ -170,7 +170,7 @@ export const templateVersionApi = {
 
   getVersionHistory: async (
     templateId: string,
-    params?: { page?: number; pagesize?: number; action?: string }
+    params?: { page?: number; page_size?: number; action?: string }
   ): Promise<ApiResponse<PaginatedResponse<VersionHistoryEntry>>> => {
     return apiClient.doc.get(`/templates/${templateId}/versions/history`, { params });
   },

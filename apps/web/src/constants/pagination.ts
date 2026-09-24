@@ -26,25 +26,25 @@ export const COMPACT_PAGE_SIZE = 10 as const;
 export const LARGE_PAGE_SIZE = 50 as const;
 
 /**
- * 分页参数命名归一化（pageSize ↔ page_size ↔ pagesize 三种历史命名兼容）。
+ * 分页参数命名归一化（pageSize ↔ page_size ↔ page_size 三种历史命名兼容）。
  *
  * 前端三种写法：
  *   - pageSize  (camelCase, 绝大多数业务 API 层)
  *   - page_size (snake_case, help.ts / admin/*.ts / 后端 Rust struct)
- *   - pagesize  (全小写, notification/email 等历史遗留发送 URLSearchParams)
+ *   - page_size  (全小写, notification/email 等历史遗留发送 URLSearchParams)
  * 后端所有服务统一使用 page_size。
  *
  * ⚠️ 最终方向：新增代码统一使用 pageSize（TS API 类型），在 axios Request
  * interceptor 层调用 normalizePaginationParams 自动转成 page_size 发给后端。
  */
 
-export type PageSizeField = 'pageSize' | 'page_size' | 'pagesize';
+export type PageSizeField = 'pageSize' | 'page_size';
 
 export interface PaginationParamsInput {
   page?: number;
   pageSize?: number;
   page_size?: number;
-  pagesize?: number;
+
   search?: string;
   [key: string]: unknown;
 }
@@ -53,17 +53,17 @@ export interface PaginationParamsNormalized {
   page: number;
   pageSize: number;
   page_size: number;
-  pagesize: number;
+
   search?: string;
   [key: string]: unknown;
 }
 
 /**
- * 取三个分页字段中的任意一个有效值，优先顺序 pageSize > page_size > pagesize。
+ * 取三个分页字段中的任意一个有效值，优先顺序 pageSize > page_size > page_size。
  * 返回 undefined 代表三个字段都未提供合法数字。
  */
 export function pickPageSize(input: PaginationParamsInput): number | undefined {
-  for (const k of ['pageSize', 'page_size', 'pagesize'] as const) {
+  for (const k of ['pageSize', 'page_size', 'page_size'] as const) {
     const v = input[k];
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
   }
@@ -75,7 +75,7 @@ export function pickPageSize(input: PaginationParamsInput): number | undefined {
  *
  * 用例：
  *   normalizePaginationParams({ page: 2, pageSize: 50 })
- *   → { page: 2, pageSize: 50, page_size: 50, pagesize: 50 }
+ *   → { page: 2, pageSize: 50, page_size: 50, page_size: 50 }
  */
 export function normalizePaginationParams(
   input: PaginationParamsInput
@@ -90,12 +90,12 @@ export function normalizePaginationParams(
   out.page = page;
   out.pageSize = pageSize;
   out.page_size = pageSize;
-  out.pagesize = pageSize;
+  out.page_size = pageSize;
   return out as PaginationParamsNormalized;
 }
 
 /**
- * 仅转换为后端 Rust 侧接受的 snake_case 格式（丢弃 pageSize / pagesize），
+ * 仅转换为后端 Rust 侧接受的 snake_case 格式（丢弃 pageSize / page_size），
  * 用于发送最终请求之前的清理。
  */
 export function toBackendPagination(input: PaginationParamsInput): {

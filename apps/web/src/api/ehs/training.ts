@@ -22,7 +22,7 @@ export const trainingApi = {
   ): Promise<ApiResponse<PaginatedResponse<TrainingPlan>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.training_type) queryParams.append('training_type', params.training_type);
@@ -59,7 +59,7 @@ export const trainingApi = {
   ): Promise<ApiResponse<PaginatedResponse<TrainingRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.training_type) queryParams.append('training_type', params.training_type);
@@ -97,7 +97,7 @@ export const trainingApi = {
   ): Promise<ApiResponse<PaginatedResponse<TrainingCertificate>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.employee_id) queryParams.append('employee_id', params.employee_id);
     if (params?.status) queryParams.append('status', params.status);

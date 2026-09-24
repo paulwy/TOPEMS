@@ -153,7 +153,7 @@ describe('apiPath utils (V64 无版本前缀统一契约版)', () => {
       const path = API_PATHS.notification.list(1, 20, 'alert');
       expect(path).toContain('notification_type=alert');
       expect(path).toContain('page=1');
-      expect(path).toContain('pagesize=20');
+      expect(path).toContain('page_size=20');
       expect(path.startsWith('/api/notification/notifications')).toBe(true);
       expect(API_PATHS.notification.unreadCount).toBe(
         '/api/notification/notifications/unread-count'

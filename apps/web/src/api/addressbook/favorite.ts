@@ -108,7 +108,7 @@ export const addressbookFavoriteApi = {
   listSharedWithMe: async (params?: {
     contact_type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<SharedContact[]>> => {
     return apiClient.erp.get('/addressbook/shared', { params });
   },

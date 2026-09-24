@@ -73,7 +73,7 @@ export const templateApprovalApi = {
 
   listTemplateApprovals: async (
     templateId: string,
-    params?: { status?: ApprovalStatus; page?: number; pagesize?: number }
+    params?: { status?: ApprovalStatus; page?: number; page_size?: number }
   ): Promise<ApiResponse<PaginatedResponse<ApprovalRequest>>> => {
     return apiClient.doc.get(`/templates/${templateId}/approvals`, { params });
   },
@@ -122,7 +122,7 @@ export const templateApprovalApi = {
     priority?: string;
     request_type?: ApprovalType;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ApprovalRequest>>> => {
     return apiClient.doc.get('/templates/approvals/pending', { params });
   },
@@ -130,7 +130,7 @@ export const templateApprovalApi = {
   listMyPending: async (params?: {
     request_type?: ApprovalType;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ApprovalRequest>>> => {
     return apiClient.doc.get('/templates/approvals/my-pending', { params });
   },
@@ -138,7 +138,7 @@ export const templateApprovalApi = {
   listMySubmitted: async (params?: {
     status?: ApprovalStatus;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ApprovalRequest>>> => {
     return apiClient.doc.get('/templates/approvals/my-submitted', { params });
   },
@@ -149,7 +149,7 @@ export const templateApprovalApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResponse<ApprovalRequest>>> => {
     return apiClient.doc.get('/templates/approvals/my-history', { params });
   },

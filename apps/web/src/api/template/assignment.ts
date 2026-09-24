@@ -104,7 +104,7 @@ export const templateAssignmentApi = {
       scope_type?: AssignmentScope;
       status?: AssignmentStatus;
       page?: number;
-      pagesize?: number;
+      page_size?: number;
     }
   ): Promise<ApiResponse<PaginatedResponse<TemplateAssignment>>> => {
     return apiClient.doc.get(`/templates/${templateId}/assignments`, { params });

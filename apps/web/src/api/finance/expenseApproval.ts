@@ -63,7 +63,7 @@ interface UpdateExpenseApprovalRequest {
 
 interface ExpenseApprovalQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   expense_type?: string;
   status?: string;

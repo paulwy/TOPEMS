@@ -77,7 +77,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         category: selectedCategory,
         search: searchQuery || undefined,
         isactive: true,
-        pagesize: 50,
+        page_size: 50,
       });
       if (response.success && response.data) {
         setTemplates(response.data.items);

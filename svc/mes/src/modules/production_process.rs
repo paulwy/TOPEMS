@@ -34,7 +34,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListProcessesQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -112,7 +112,7 @@ pub struct ListProcessesResponse {
     pub processes: Vec<ProductionProcessResponse>,
     pub total: i64,
     pub page: i64,
-    pub pagesize: i64,
+    pub page_size: i64,
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
@@ -136,8 +136,8 @@ pub async fn list_processes(
     let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10).min(100) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10).min(100) as i64;
+    let offset = (page - 1) * page_size;
 
     let mut params: Vec<String> = Vec::new();
     let mut where_clause = String::from(" WHERE tenant_id = $1");
@@ -199,7 +199,7 @@ pub async fn list_processes(
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(pagesize).bind(offset);
+    fetch_query = fetch_query.bind(page_size).bind(offset);
 
     let processes = match fetch_query.fetch_all(&state.pool).await {
         Ok(p) => p,
@@ -259,7 +259,7 @@ pub async fn list_processes(
             processes: processes_list,
             total: total.unwrap_or(0),
             page,
-            pagesize,
+            page_size,
         },
         "获取生产工序列表成功",
     ))

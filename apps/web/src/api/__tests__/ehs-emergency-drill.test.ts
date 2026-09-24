@@ -25,14 +25,14 @@ describe('EHS Emergency Drill API Tests', () => {
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await emergencyDrillApi.listDrillPlans({
         page: 1,
-        pagesize: 10,
+        page_size: 10,
         status: 'active',
         drill_type: 'fire',
         year: 2026,
         keyword: 'test',
       });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/drills/plans?page=1&pagesize=10&status=active&drill_type=fire&year=2026&q=test'
+        '/drills/plans?page=1&page_size=10&status=active&drill_type=fire&year=2026&q=test'
       );
     });
 
@@ -86,14 +86,14 @@ describe('EHS Emergency Drill API Tests', () => {
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await emergencyDrillApi.listDrillRecords({
         page: 1,
-        pagesize: 10,
+        page_size: 10,
         status: 'completed',
         drill_type: 'fire',
         plan_id: 'plan-001',
         keyword: 'test',
       });
       expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/drills/records?page=1&pagesize=10&status=completed&drill_type=fire&plan_id=plan-001&q=test'
+        '/drills/records?page=1&page_size=10&status=completed&drill_type=fire&plan_id=plan-001&q=test'
       );
     });
 

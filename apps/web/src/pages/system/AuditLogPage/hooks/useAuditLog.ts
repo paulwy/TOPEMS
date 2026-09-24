@@ -58,7 +58,7 @@ export const useAuditLog = () => {
     queryFn: async () => {
       const params = {
         page: page + 1,
-        pagesize: pageSize,
+        page_size: pageSize,
         search: filters.keyword || undefined,
         user_name: filters.operator || undefined,
         action: filters.type || undefined,

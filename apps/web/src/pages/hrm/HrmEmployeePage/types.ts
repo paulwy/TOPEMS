@@ -10,7 +10,7 @@ export interface TreeNode {
 
 export interface EmployeeListParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   department_id?: string;
   status?: string;

@@ -142,7 +142,7 @@ pub async fn get_today_status(
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct AttendancePaginationParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
     pub date: Option<String>,
@@ -154,7 +154,7 @@ pub struct AttendancePaginationParams {
     tag = "attendance",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("employee_id" = Option<Uuid>, Query, description = "员工ID"),
         ("date" = Option<String>, Query, description = "日期"),
     ),

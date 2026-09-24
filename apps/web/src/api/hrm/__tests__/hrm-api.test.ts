@@ -41,9 +41,9 @@ describe('HRM API types - buildQueryString', () => {
   });
 
   it('should build query string with multiple parameters', () => {
-    const result = buildQueryString({ page: 1, pagesize: 10, search: 'test' });
+    const result = buildQueryString({ page: 1, page_size: 10, search: 'test' });
     expect(result).toContain('page=1');
-    expect(result).toContain('pagesize=10');
+    expect(result).toContain('page_size=10');
     expect(result).toContain('search=test');
   });
 
@@ -57,7 +57,7 @@ describe('HRM API types - buildQueryString', () => {
   });
 
   it('should handle numeric values', () => {
-    expect(buildQueryString({ page: 2, pagesize: 20 })).toBe('?page=2&pagesize=20');
+    expect(buildQueryString({ page: 2, page_size: 20 })).toBe('?page=2&page_size=20');
   });
 
   it('should handle special characters in search', () => {
@@ -80,8 +80,8 @@ describe('HRM employeeApi', () => {
 
   it('should call GET /employees with query string for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await employeeApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/employees?page=1&pagesize=10');
+    await employeeApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/employees?page=1&page_size=10');
   });
 
   it('should call GET /employees without query string when no params', async () => {
@@ -221,8 +221,8 @@ describe('HRM departmentApi', () => {
 
   it('should call GET /departments for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await departmentApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/departments?page=1&pagesize=10');
+    await departmentApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/departments?page=1&page_size=10');
   });
 
   it('should call GET /departments/:id for get', async () => {
@@ -266,8 +266,8 @@ describe('HRM attendanceApi', () => {
 
   it('should call GET /attendance for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await attendanceApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/attendance?page=1&pagesize=10');
+    await attendanceApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/attendance?page=1&page_size=10');
   });
 
   it('should call GET /attendance/:id for get', async () => {
@@ -327,8 +327,8 @@ describe('HRM leaveApi', () => {
 
   it('should call GET /leaves for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await leaveApi.list({ page: 1, pagesize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/leaves?page=1&pagesize=10');
+    await leaveApi.list({ page: 1, page_size: 10 });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/leaves?page=1&page_size=10');
   });
 
   it('should call GET /leaves/:id for get', async () => {

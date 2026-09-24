@@ -72,7 +72,7 @@ interface LeaveRequestQueryParams extends PaginationParams {
 const resolvePageSize = (params?: PaginationParams): string | undefined => {
   const ps =
     (params as { pageSize?: number } | undefined)?.pageSize ??
-    (params as { pagesize?: number } | undefined)?.pagesize;
+    (params as { page_size?: number } | undefined)?.page_size;
   return ps ? ps.toString() : undefined;
 };
 
@@ -83,7 +83,7 @@ export const leaveRequestApi = {
     const sp = new URLSearchParams();
     if (params?.page) sp.set('page', params.page.toString());
     const ps = resolvePageSize(params);
-    if (ps) sp.set('pagesize', ps);
+    if (ps) sp.set('page_size', ps);
     if (params?.search) sp.set('search', params.search);
     if (params?.status) sp.set('status', params.status);
     if (params?.leave_type) sp.set('leave_type', params.leave_type);

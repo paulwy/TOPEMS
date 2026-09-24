@@ -113,7 +113,7 @@ export const useDashboardData = () => {
         srmApi.getStatistics(),
         limsApi.getStatistics(),
         rdApi.getStatistics(),
-        ehsApi.listHazards({ page: 1, pagesize: 1000 }),
+        ehsApi.listHazards({ page: 1, page_size: 1000 }),
       ]);
 
       return {

@@ -5,7 +5,7 @@ import type { Build, CreateBuildRequest } from './types';
 export const buildApi = {
   listBuilds: async (params?: {
     page?: number;
-    pagesize?: number;
+    page_size?: number;
     search?: string;
     status?: string;
     build_task?: string;
@@ -14,7 +14,7 @@ export const buildApi = {
       builds: Build[];
       total: number;
       page: number;
-      pagesize: number;
+      page_size: number;
     }>
   > => {
     const queryParams = params

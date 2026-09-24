@@ -12,8 +12,8 @@ use super::service::*;
 #[derive(Debug, Deserialize)]
 pub struct PaginationQuery {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
     pub page_size: Option<i64>,
+    
 }
 
 impl PaginationQuery {
@@ -22,7 +22,7 @@ impl PaginationQuery {
     }
 
     pub fn page_size(&self) -> i64 {
-        self.pagesize
+        self.page_size
             .or(self.page_size)
             .unwrap_or(10)
     }

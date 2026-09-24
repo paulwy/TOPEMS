@@ -30,7 +30,7 @@ export const accountApi = {
           status?: string;
           keyword?: string;
           page?: number;
-          pagesize?: number;
+          page_size?: number;
         }
   ): Promise<TypedPaginatedResponse<Account>> => {
     return apiClient.finance.get('/accounts', {
@@ -98,7 +98,7 @@ export const accountApi = {
     account_ids?: string[];
     company_id?: string;
     page?: number;
-    pagesize?: number;
+    page_size?: number;
   }): Promise<ApiResponse<PaginatedResult<AccountOpeningBalance>>> => {
     return apiClient.finance.get('/accounts/opening-balances', {
       params,

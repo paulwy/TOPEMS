@@ -477,7 +477,7 @@ export interface AuditLogQueryParams {
   start_date?: string;
   end_date?: string;
   page?: number;
-  pagesize?: number;
+  page_size?: number;
 }
 
 export interface RsStatistics {
@@ -543,7 +543,7 @@ export interface UpdateMaterialRequest {
 
 export interface MaterialQueryParams {
   page?: number;
-  pagesize?: number;
+  page_size?: number;
   search?: string;
   category?: string;
   status?: string;

@@ -188,7 +188,7 @@ const DashboardPage: React.FC = () => {
     queryKey: [...QUERY_KEY, 'orders'],
     queryFn: async () => {
       const token = localStorage.getItem('token') || '';
-      const res = await fetch('/api/mes/orders?page=1&pagesize=1000', {
+      const res = await fetch('/api/mes/orders?page=1&page_size=1000', {
         headers: {
           Authorization: `Bearer ${token}`,
           'x-tenant-id': '00000000-0000-0000-0000-000000000001',

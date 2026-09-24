@@ -17,7 +17,7 @@ pub struct ListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
     /// 每页大小，默认 20，最多 100
-    #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    #[serde(default, alias = "page_size", alias = "pageSize", alias = "size", alias = "limit")]
     pub page_size: Option<i64>,
     /// 关键字搜索
     #[serde(default, alias = "q", alias = "keyword")]

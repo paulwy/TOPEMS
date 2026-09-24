@@ -5,9 +5,9 @@
  * 转换为后端期望的参数格式。支持多种后端风格预设。
  *
  * 后端参数风格约定：
- * - standard (默认)：page, pagesize, keyword, sortBy, sortOrder, 筛选字段平铺
- * - nested : 筛选放在 filters 对象里 { page, pagesize, filters: { ... }, sort: { field, order } }
- * - offset : 用 offset/limit 代替 page/pagesize
+ * - standard (默认)：page, page_size, keyword, sortBy, sortOrder, 筛选字段平铺
+ * - nested : 筛选放在 filters 对象里 { page, page_size, filters: { ... }, sort: { field, order } }
+ * - offset : 用 offset/limit 代替 page/page_size
  */
 
 export type BackendParamStyle = 'standard' | 'nested' | 'offset';
@@ -32,7 +32,7 @@ export interface ParamMappingOptions {
   sortOrderParamName?: string;
   /** 分页参数名（当前页），默认 'page' */
   pageParamName?: string;
-  /** 每页条数参数名，默认 'pagesize' */
+  /** 每页条数参数名，默认 'page_size' */
   pageSizeParamName?: string;
   /** 起始偏移参数名（offset 风格），默认 'offset' */
   offsetParamName?: string;
@@ -67,7 +67,7 @@ export function mapListParamsToBackend(
     sortByParamName = 'sortBy',
     sortOrderParamName = 'sortOrder',
     pageParamName = 'page',
-    pageSizeParamName = 'pagesize',
+    pageSizeParamName = 'page_size',
     offsetParamName = 'offset',
     filtersKey = 'filters',
     sortKey = 'sort',
@@ -141,7 +141,7 @@ export function parsePaginationFromResponse(
   const total = (data.total as number) ?? 0;
   const page = (data.page as number) ?? (data.current as number) ?? 1;
   const pageSize =
-    (data.pagesize as number) ?? (data.size as number) ?? (data.pageSize as number) ?? 10;
+    (data.page_size as number) ?? (data.size as number) ?? (data.pageSize as number) ?? 10;
   const items = (data.items ?? data.list ?? data.records ?? data.rows ?? []) as unknown[];
   return { items, total, page, pageSize };
 }
@@ -155,7 +155,7 @@ export const topemsStandardParams: ParamMappingOptions = {
   sortByParamName: 'sortBy',
   sortOrderParamName: 'sortOrder',
   pageParamName: 'page',
-  pageSizeParamName: 'pagesize',
+  pageSizeParamName: 'page_size',
   sortOrderValues: { asc: 'asc', desc: 'desc' },
 };
 

@@ -94,7 +94,7 @@ pub struct PayrollVoucherResponse {
 #[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct QueryParams {
     pub page: Option<i64>,
-    #[serde(alias = "pagesize")]
+    #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub pay_period: Option<String>,
     pub status: Option<String>,
@@ -134,7 +134,7 @@ pub fn create_routes() -> Router<ApiState> {
     tag = "payroll",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页大小"),
+        ("page_size" = Option<i64>, Query, description = "每页大小"),
         ("pay_period" = Option<String>, Query, description = "薪资周期"),
         ("status" = Option<String>, Query, description = "状态"),
         ("payroll_run_id" = Option<Uuid>, Query, description = "薪资发放ID"),

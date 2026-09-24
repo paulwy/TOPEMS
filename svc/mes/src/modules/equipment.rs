@@ -50,7 +50,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListEquipmentQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     search: Option<String>,
     status: Option<String>,
 }
@@ -107,7 +107,7 @@ pub struct ListEquipmentResponse {
     pub equipments: Vec<EquipmentResponse>,
     pub total: i64,
     pub page: i32,
-    pub pagesize: i32,
+    pub page_size: i32,
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
@@ -195,7 +195,7 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
     tag = "Equipment",
     params(
         ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("page_size" = Option<i32>, Query, description = "每页数量"),
         ("search" = Option<String>, Query, description = "搜索关键词"),
         ("status" = Option<String>, Query, description = "状态过滤"),
     ),
@@ -214,8 +214,8 @@ pub async fn list_equipment(
     }
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10) as i64;
+    let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
     let mut where_clause = String::new();
@@ -279,7 +279,7 @@ pub async fn list_equipment(
     for p in &params {
         fetch_query = fetch_query.bind(p.clone());
     }
-    fetch_query = fetch_query.bind(pagesize).bind(offset);
+    fetch_query = fetch_query.bind(page_size).bind(offset);
 
     let equipment = match fetch_query.fetch_all(&state.pool).await {
         Ok(e) => e,
@@ -297,7 +297,7 @@ pub async fn list_equipment(
             equipments: equipment_list,
             total: total.unwrap_or(0),
             page: page as i32,
-            pagesize: pagesize as i32,
+            page_size: page_size as i32,
         },
         "获取设备列表成功",
     ))
@@ -687,7 +687,7 @@ pub async fn get_equipment_statistics(
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListMaintenancesParams {
     pub page: Option<i64>,
-    pub pagesize: Option<i64>,
+    pub page_size: Option<i64>,
     pub equipment_id: Option<Uuid>,
 }
 
@@ -737,7 +737,7 @@ pub struct MaintenanceRecord {
     tag = "Equipment",
     params(
         ("page" = Option<i64>, Query, description = "页码"),
-        ("pagesize" = Option<i64>, Query, description = "每页数量"),
+        ("page_size" = Option<i64>, Query, description = "每页数量"),
         ("equipment_id" = Option<Uuid>, Query, description = "设备ID"),
     ),
     responses(
@@ -755,7 +755,7 @@ pub async fn list_maintenances(
     }
 
     let page = params.page.unwrap_or(1).max(1);
-    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query!(
@@ -1059,7 +1059,7 @@ pub async fn update_maintenance_status(
 #[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct ListInspectionsQuery {
     page: Option<i32>,
-    pagesize: Option<i32>,
+    page_size: Option<i32>,
     equipment_id: Option<String>,
 }
 
@@ -1104,7 +1104,7 @@ pub struct InspectionResponse {
     tag = "Equipment",
     params(
         ("page" = Option<i32>, Query, description = "页码"),
-        ("pagesize" = Option<i32>, Query, description = "每页数量"),
+        ("page_size" = Option<i32>, Query, description = "每页数量"),
         ("equipment_id" = Option<String>, Query, description = "设备ID"),
     ),
     responses(
@@ -1122,8 +1122,8 @@ pub async fn list_inspections(
     }
 
     let page = query.page.unwrap_or(1) as i64;
-    let pagesize = query.pagesize.unwrap_or(10) as i64;
-    let offset = (page - 1) * pagesize;
+    let page_size = query.page_size.unwrap_or(10) as i64;
+    let offset = (page - 1) * page_size;
 
     let equipment_uuid = query
         .equipment_id
@@ -1162,7 +1162,7 @@ pub async fn list_inspections(
         LIMIT $2 OFFSET $3
         "#,
         equipment_uuid,
-        pagesize,
+        page_size,
         offset,
     )
     .fetch_all(&state.pool)
@@ -1206,7 +1206,7 @@ pub async fn list_inspections(
                     "records": inspections,
                     "total": total,
                     "page": page,
-                    "page_size": pagesize,
+                    "page_size": page_size,
                 }),
                 "获取点检记录列表成功",
             ))

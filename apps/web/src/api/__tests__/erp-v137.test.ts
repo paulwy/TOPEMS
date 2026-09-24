@@ -29,7 +29,7 @@ describe('V137 ERP - productionOrderApi', () => {
     mockClient.get.mockResolvedValue({ success: true, data: { orders: [], total: 0 } });
     await productionOrderApi.list({ page: 1, pageSize: 20, status: 'planned' });
     expect(mockClient.get).toHaveBeenCalledWith(
-      '/production-orders?page=1&pagesize=20&status=planned'
+      '/production-orders?page=1&page_size=20&status=planned'
     );
   });
 

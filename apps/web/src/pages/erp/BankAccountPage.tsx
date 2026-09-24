@@ -16,7 +16,7 @@ const BankAccountStats: React.FC = () => {
   const { data } = useQuery({
     queryKey: [QUERY_KEYS.ERP.BANK_ACCOUNTS, 'stats'],
     queryFn: async () => {
-      const response = await bankAccountApi.list({ page: 0, pagesize: 1000 });
+      const response = await bankAccountApi.list({ page: 0, page_size: 1000 });
       if (!response.success) throw new Error(i18n.t('erp.bank_account_page.k0'));
       return response.data;
     },

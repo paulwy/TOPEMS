@@ -78,7 +78,7 @@ const MobileAttendancePage: React.FC = () => {
   const recordsQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_ATTENDANCE_RECORDS_BASE,
     queryFn: async () => {
-      const res = await mobileApi.listAttendanceRecords({ page: 1, pagesize: 20 });
+      const res = await mobileApi.listAttendanceRecords({ page: 1, page_size: 20 });
       return res.data?.items || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -87,7 +87,7 @@ const MobileAttendancePage: React.FC = () => {
   const leavesQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.MOBILE_LEAVE_APPLICATIONS_BASE,
     queryFn: async () => {
-      const res = await mobileApi.listLeaveApplications({ page: 1, pagesize: 20 });
+      const res = await mobileApi.listLeaveApplications({ page: 1, page_size: 20 });
       return res.data?.items || [];
     },
     staleTime: 5 * 60 * 1000,

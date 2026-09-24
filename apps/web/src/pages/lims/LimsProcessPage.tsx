@@ -32,7 +32,7 @@ const processAdapter: CrudApiAdapter<InspectionProcess> = {
   list: async (params) => {
     const response = await limsApi.processes.list({
       page: params?.page,
-      pagesize: params?.pageSize,
+      page_size: params?.pageSize,
       search: params?.search,
       status: params?.status as string | undefined,
     });

@@ -23,7 +23,7 @@ fn standards_list_cache_key(
     search: &Option<String>,
 ) -> String {
     format!(
-        "qms:quality_standard:list:{}:page:{}:pagesize:{}:category:{:?}:status:{:?}:search:{:?}",
+        "qms:quality_standard:list:{}:page:{}:page_size:{}:category:{:?}:status:{:?}:search:{:?}",
         tenant_id, page, page_size, category, status, search
     )
 }
