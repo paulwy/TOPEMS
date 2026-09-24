@@ -444,7 +444,7 @@ async fn update_customer(
     let industry = req.industry.or(existing.industry);
     let rating = req.rating.unwrap_or(existing.rating);
     let region = req.region.or(existing.region);
-    let owner_id = req.owner_id.unwrap_or(existing.owner_id);
+    let owner_id = req.owner_id.or(existing.owner_id);
     let tags = req.tags.unwrap_or(existing.tags);
     let now = Utc::now();
 

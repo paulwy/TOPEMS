@@ -18,7 +18,7 @@ pub struct Customer {
     pub rating: String,
     #[serde(default)]
     pub region: Option<String>,
-    pub owner_id: Uuid,
+    pub owner_id: Option<Uuid>,
     #[serde(default)]
     pub tags: Vec<String>,
     #[serde(default)]
@@ -65,7 +65,7 @@ impl Default for Customer {
             industry: None,
             rating: "C".into(),
             region: None,
-            owner_id: Uuid::nil(),
+            owner_id: None,
             tags: vec![],
             code: None,
             email: None,
@@ -233,7 +233,7 @@ mod tests {
             industry: None,
             rating: "C".into(),
             region: None,
-            owner_id: Uuid::nil(),
+            owner_id: None,
             tags: vec![],
             code: None,
             email: None,
