@@ -76,6 +76,16 @@ fn get_default_menu() -> Vec<NavigationMenu> {
     ]
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:navigation:read"])),
+    path = "/navigation/pinned",
+    tag = "Navigation",
+    responses(
+        (status = 200, description = "Get pinned apps", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_pinned_apps(
     State(state): State<AppState>,
 ) -> AxumJson<ApiResponse<Vec<PinnedApp>>> {
@@ -125,6 +135,16 @@ fn get_default_pinned_apps() -> Vec<PinnedApp> {
     ]
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:navigation:write"])),
+    path = "/navigation/pinned",
+    tag = "Navigation",
+    responses(
+        (status = 200, description = "Add pinned app", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_pinned_app(
     State(_state): State<AppState>,
     Json(app): Json<PinnedApp>,

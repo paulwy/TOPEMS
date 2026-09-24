@@ -128,6 +128,16 @@ async fn fetch_public_stats(state: &AppState) -> PublicDashboardStats {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:dashboard:read"])),
+    path = "/dashboard/cache/stats",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "Get cache stats", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_cache_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<CacheStatsResponse>> {
@@ -279,6 +289,16 @@ async fn fetch_service_counts(state: &AppState) -> (u64, u64) {
     (total, healthy)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:dashboard:read"])),
+    path = "/dashboard/quick-access",
+    tag = "Dashboard",
+    responses(
+        (status = 200, description = "Get quick access", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_quick_access(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<crate::models::QuickAccess>>> {

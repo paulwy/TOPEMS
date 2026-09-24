@@ -31,6 +31,16 @@ fn build_client(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:monitoring:read"])),
+    path = "/monitoring/services",
+    tag = "Monitoring",
+    responses(
+        (status = 200, description = "Get monitoring services", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_monitoring_services(
     State(state): State<AppState>,
     _headers: HeaderMap,
@@ -76,6 +86,16 @@ fn parse_service_status(data: Option<serde_json::Value>) -> Vec<MonitoringServic
         .collect()
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:monitoring:read"])),
+    path = "/monitoring/metrics",
+    tag = "Monitoring",
+    responses(
+        (status = 200, description = "Get monitoring metrics", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_monitoring_metrics(
     State(state): State<AppState>,
     _headers: HeaderMap,
@@ -138,6 +158,16 @@ fn parse_metrics(data: Option<Vec<serde_json::Value>>) -> MonitoringMetrics {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:monitoring:read"])),
+    path = "/monitoring/alerts",
+    tag = "Monitoring",
+    responses(
+        (status = 200, description = "Get monitoring alerts", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_monitoring_alerts(
     State(state): State<AppState>,
     _headers: HeaderMap,
