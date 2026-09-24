@@ -1148,7 +1148,7 @@ pub async fn analyze_capacity(
 
     let effective_capacity = theoretical_capacity * 0.85;
     let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
-         (flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity)
+        (flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity)
             * 100.0
     } else {
         0.0
