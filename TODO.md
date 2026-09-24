@@ -722,8 +722,8 @@ D
   - 结构化日志：JSON/File/Text 三格式（LOG_FORMAT env 切换）✅
   - 日志级别调整：RUST_LOG EnvFilter 支持 ✅
   - 预计时间：2 小时
-- [ ] **P1-5 数据库索引优化**
-  - 慢查询优化
+- [x] **P1-5 数据库索引优化**（2026-09-24：FK 缺失索引批量补建——DO 块建 209 条 + 声明式迁移 database/migrations/20260924110000_create_fk_indexes.sql（1382 条全 FK 列索引，IF NOT EXISTS 幂等已验证）；core_role_permissions 已有 (role_id, permission_id) 唯一索引无需建；表规模 seed 数据量小，索引为预防性（FK join/父表删除加速）；慢查询专项待 staging 真实负载）
+  - 慢查询优化：FK 索引补建完成；pg_stat_statements 未启用（需重启 PG），慢查询专项留 staging
   - 预计时间：4 小时
 
 ### 🎯 P2 - 改进（本月完成）
