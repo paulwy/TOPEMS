@@ -53,6 +53,7 @@ mod tests {
             parent_id: Some(Uuid::new_v4()),
             level: 2,
             is_active: true,
+            supplier_count: 0,
             created_by: Some(Uuid::new_v4()),
             created_at: DateTime::parse_from_rfc3339("2025-01-01T00:00:00Z")
                 .unwrap()
@@ -119,6 +120,7 @@ mod tests {
             "parent_id": null,
             "level": 1,
             "is_active": false,
+            "supplier_count": 0,
             "created_by": null,
             "created_at": "2025-03-01T00:00:00Z",
             "updated_at": "2025-03-02T00:00:00Z"

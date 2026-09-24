@@ -72,6 +72,7 @@ mod tests {
             tenant_id: Uuid::new_v4(),
             supplier_no: "SUP-001".to_string(),
             name: "Acme Corp".to_string(),
+            name_en: None,
             legal_name: Some("Acme Corporation Ltd".to_string()),
             category: "raw_material".to_string(),
             status: "active".to_string(),
