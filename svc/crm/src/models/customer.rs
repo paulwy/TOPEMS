@@ -199,7 +199,7 @@ mod tests {
             industry: Some("制造业".to_string()),
             rating: "A".to_string(),
             region: Some("华东".to_string()),
-            owner_id: Uuid::new_v4(),
+            owner_id: Some(Uuid::new_v4()),
             tags: vec!["vip".to_string(), "manufacturing".to_string()],
             code: Some("C-001".to_string()),
             email: Some("contact@acme.com".to_string()),
