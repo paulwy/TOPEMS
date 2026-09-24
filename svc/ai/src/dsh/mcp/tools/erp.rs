@@ -289,7 +289,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_erp_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_erp_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
         assert!(registry.has_tool("erp.list_sales_orders").await);
@@ -301,7 +301,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_sales_orders_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_erp_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -312,7 +312,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_inventory_summary_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_erp_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -327,7 +327,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_sales_order_detail_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_erp_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -345,7 +345,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_purchase_order_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_erp_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()

@@ -479,7 +479,7 @@ mod tests {
             eprintln!("SKIP: 未设置 HRM_SERVICE_URL");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -498,7 +498,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_hr_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -511,7 +511,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_employees() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         let result = server
@@ -533,7 +533,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_employee() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         let result = server
@@ -555,7 +555,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_employee_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         // 缺少 name
@@ -581,7 +581,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_employee_success() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         let result = server
@@ -613,7 +613,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_employee() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         let result = server
@@ -641,7 +641,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_update_employee_no_fields() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_hr_tools(&server, "test-secret").await;
 
         // 只传 employee_id，不传任何更新字段

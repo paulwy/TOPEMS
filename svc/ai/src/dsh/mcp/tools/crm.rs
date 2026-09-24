@@ -335,7 +335,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_crm_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_crm_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -348,7 +348,7 @@ mod tests {
     #[tokio::test]
     async fn test_list_customers_mock_fallback() {
         // API 不可达时降级 mock，工具不应报错
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_crm_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
 
@@ -364,7 +364,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_customer_profile_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_crm_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
 
@@ -383,7 +383,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_opportunity_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_crm_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
 

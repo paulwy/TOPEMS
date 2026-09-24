@@ -524,7 +524,7 @@ mod tests {
             eprintln!("SKIP: 未设置 SCM_SERVICE_URL");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -543,7 +543,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_scm_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -556,7 +556,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_suppliers() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
         let result = server
@@ -578,7 +578,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_supplier() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
         let result = server
@@ -603,7 +603,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_purchase_orders() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
         let result = server
@@ -626,7 +626,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_purchase_order() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
         let result = server
@@ -660,7 +660,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_purchase_order_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_scm_tools(&server, "test-secret").await;
 
         // 缺少 supplier_id

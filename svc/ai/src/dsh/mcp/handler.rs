@@ -87,14 +87,16 @@ impl SseSessionManager {
 pub struct McpAppState {
     pub server: McpServerState,
     pub sse_manager: SseSessionManager,
+    pub jwt_secret: String,
 }
 
 impl McpAppState {
     /// 创建新的应用状态
-    pub fn new(server: McpServerState) -> Self {
+    pub fn new(server: McpServerState, jwt_secret: impl Into<String>) -> Self {
         Self {
             server,
             sse_manager: SseSessionManager::new(),
+            jwt_secret: jwt_secret.into(),
         }
     }
 }
@@ -221,12 +223,29 @@ pub async fn handle_mcp_sse(
 /// 路由：
 /// - POST /mcp — JSON-RPC 请求端点
 /// - GET /mcp/sse — SSE 连接端点
-pub fn create_mcp_routes(server: McpServerState) -> axum::Router {
-    let state = McpAppState::new(server);
+pub fn create_mcp_routes(server: McpServerState, jwt_secret: impl Into<String>) -> axum::Router {
+    let jwt_secret = jwt_secret.into();
+    let state = McpAppState::new(server, jwt_secret);
     axum::Router::new()
         .route("/mcp", axum::routing::post(handle_mcp_request))
         .route("/mcp/sse", axum::routing::get(handle_mcp_sse))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            mcp_auth_middleware,
+        ))
         .with_state(state)
+}
+
+/// MCP 认证中间件：从 Authorization 头解析 Bearer JWT 建立用户上下文。
+/// 可选认证——无/无效 token 保持匿名（业务工具由 check_tool_permission 拒绝），
+/// 有效 token 恢复业务工具可用性。
+async fn mcp_auth_middleware(
+    State(state): State<McpAppState>,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    state.server.apply_auth(req.headers()).await;
+    next.run(req).await
 }
 
 #[cfg(test)]
@@ -238,7 +257,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_mcp_request_ping() {
-        let server = Arc::new(McpServer::new("test", "1.0.0"));
+        let server = Arc::new(McpServer::new("test", "1.0.0", "test-jwt-secret"));
 
         // initialize first
         let init_request = serde_json::json!({
@@ -252,7 +271,7 @@ mod tests {
             }
         });
 
-        let app = create_mcp_routes(server.clone());
+        let app = create_mcp_routes(server.clone(), "test-jwt-secret");
 
         let response = app
             .clone()
@@ -314,8 +333,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_mcp_request_invalid_json() {
-        let server = Arc::new(McpServer::new("test", "1.0.0"));
-        let app = create_mcp_routes(server);
+        let server = Arc::new(McpServer::new("test", "1.0.0", "test-jwt-secret"));
+        let app = create_mcp_routes(server, "test-jwt-secret");
 
         let response = app
             .oneshot(
@@ -334,8 +353,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_mcp_sse_returns_stream() {
-        let server = Arc::new(McpServer::new("test", "1.0.0"));
-        let app = create_mcp_routes(server);
+        let server = Arc::new(McpServer::new("test", "1.0.0", "test-jwt-secret"));
+        let app = create_mcp_routes(server, "test-jwt-secret");
 
         let response = app
             .oneshot(
@@ -361,8 +380,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_mcp_request_before_init() {
-        let server = Arc::new(McpServer::new("test", "1.0.0"));
-        let app = create_mcp_routes(server);
+        let server = Arc::new(McpServer::new("test", "1.0.0", "test-jwt-secret"));
+        let app = create_mcp_routes(server, "test-jwt-secret");
 
         // tools/list before initialize should return error
         let request = serde_json::json!({
@@ -415,12 +434,12 @@ mod tests {
     #[tokio::test]
     async fn test_full_runtime_tools_call_repro() {
         // 模拟 routes.rs 完整初始化：系统工具 + 业务工具注册 + AgentOrchestrator
-        let server = Arc::new(McpServer::new("topems-ai-mcp", "0.1.0"));
+        let server = Arc::new(McpServer::new("topems-ai-mcp", "0.1.0", "test-jwt-secret"));
         server.register_system_tools().await;
         crate::dsh::mcp::tools::crm::register_crm_tools(&server, "test-secret").await;
         let _agent = crate::dsh::agent::AgentOrchestrator::new(server.tool_registry().clone());
 
-        let app = create_mcp_routes(server.clone());
+        let app = create_mcp_routes(server.clone(), "test-jwt-secret");
 
         // 1. initialize
         let resp = app.clone().oneshot(

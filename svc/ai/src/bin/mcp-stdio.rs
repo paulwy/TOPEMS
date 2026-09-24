@@ -37,7 +37,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("TOPEMS MCP stdio server starting...");
 
     // 1. 创建 McpServer 实例
-    let server = McpServer::new("topems-mcp", env!("CARGO_PKG_VERSION"));
+    let server = McpServer::new(
+        "topems-mcp",
+        env!("CARGO_PKG_VERSION"),
+        std::env::var("JWT_SECRET").unwrap_or_else(|_| "test-jwt-secret".to_string()),
+    );
     tracing::info!(
         "MCP Server created: name={}, version={}",
         "topems-mcp",

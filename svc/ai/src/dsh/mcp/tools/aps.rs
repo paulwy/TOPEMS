@@ -548,7 +548,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_aps_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -561,7 +561,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_schedules() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         let result = server
@@ -583,7 +583,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_schedule() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         let result = server
@@ -608,7 +608,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_resources() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         let result = server
@@ -631,7 +631,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_schedule() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         let result = server
@@ -669,7 +669,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_schedule_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         // 缺少 resource_id
@@ -706,7 +706,7 @@ mod tests {
     async fn test_e2e_aps_real_service() {
         // 模块化单体统一入口为网关 8099（含 dev 模拟认证）
         std::env::set_var("APS_SERVICE_URL", "http://localhost:8099");
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_aps_tools(&server, "test-secret").await;
 
         // list_schedules → 真实 /api/aps/schedules

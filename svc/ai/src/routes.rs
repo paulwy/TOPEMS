@@ -50,8 +50,15 @@ pub fn create_routes(
     // 服务间认证：MCP 业务工具以 ai-service 身份签发 service token 调用下游
     let jwt_secret = app_state.auth_state.jwt_secret.clone();
 
+    // MCP 认证独立 secret（jwt_secret 变量后续被 tokio spawn 捕获 move，MCP 用独立副本）
+    let mcp_jwt_secret = jwt_secret.clone();
+
     // 创建 MCP Server 和 DSH Agent 编排器
-    let mcp_server = Arc::new(McpServer::new("topems-ai-mcp", env!("CARGO_PKG_VERSION")));
+    let mcp_server = Arc::new(McpServer::new(
+        "topems-ai-mcp",
+        env!("CARGO_PKG_VERSION"),
+        mcp_jwt_secret.clone(),
+    ));
 
     // 创建 DSH Agent 编排器（使用 MCP Server 的 ToolRegistry）
     let mut dsh_agent_orchestrator =
@@ -757,7 +764,7 @@ pub fn create_routes(
     // V335: MCP (Model Context Protocol) Server 路由
     // 端点：POST /mcp, GET /mcp/sse
     // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
-    let app = app.merge(create_mcp_routes(mcp_server));
+    let app = app.merge(create_mcp_routes(mcp_server, mcp_jwt_secret.clone()));
 
     app
 }

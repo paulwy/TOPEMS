@@ -588,7 +588,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_pm_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -601,7 +601,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_projects() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         let result = server
@@ -623,7 +623,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_project() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         let result = server
@@ -646,7 +646,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_tasks() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         let result = server
@@ -669,7 +669,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         let result = server
@@ -704,7 +704,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         // 缺少 manager
@@ -742,7 +742,7 @@ mod tests {
     async fn test_e2e_pm_real_service() {
         // 模块化单体统一入口为网关 8099（含 dev 模拟认证）
         std::env::set_var("PM_SERVICE_URL", "http://localhost:8099");
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_pm_tools(&server, "test-secret").await;
 
         let result = server

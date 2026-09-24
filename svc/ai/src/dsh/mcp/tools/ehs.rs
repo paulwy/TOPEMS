@@ -505,7 +505,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_ehs_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_ehs_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -518,7 +518,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_incidents() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_ehs_tools(&server, "test-secret").await;
 
         let result = server
@@ -540,7 +540,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_incident() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_ehs_tools(&server, "test-secret").await;
 
         let result = server
@@ -562,7 +562,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_hazards() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_ehs_tools(&server, "test-secret").await;
 
         let result = server
@@ -585,7 +585,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_incident() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_ehs_tools(&server, "test-secret").await;
 
         let result = server
@@ -619,7 +619,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_incident_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_ehs_tools(&server, "test-secret").await;
 
         // 缺少 title

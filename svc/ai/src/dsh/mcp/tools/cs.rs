@@ -486,7 +486,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_cs_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_cs_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -499,7 +499,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_tickets() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_cs_tools(&server, "test-secret").await;
 
         let result = server
@@ -521,7 +521,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_ticket() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_cs_tools(&server, "test-secret").await;
 
         let result = server
@@ -544,7 +544,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_customers() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_cs_tools(&server, "test-secret").await;
 
         let result = server
@@ -567,7 +567,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_ticket() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_cs_tools(&server, "test-secret").await;
 
         let result = server
@@ -603,7 +603,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_ticket_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_cs_tools(&server, "test-secret").await;
 
         // 缺少 customer_id

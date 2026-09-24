@@ -495,7 +495,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_mes_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_mes_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -508,7 +508,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_production_orders() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_mes_tools(&server, "test-secret").await;
 
         let result = server
@@ -533,7 +533,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_production_order() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_mes_tools(&server, "test-secret").await;
 
         let result = server
@@ -558,7 +558,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_work_orders() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_mes_tools(&server, "test-secret").await;
 
         let result = server
@@ -581,7 +581,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_oee_dashboard() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_mes_tools(&server, "test-secret").await;
 
         let result = server
@@ -606,7 +606,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_oee_dashboard_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_mes_tools(&server, "test-secret").await;
 
         // 缺少 from

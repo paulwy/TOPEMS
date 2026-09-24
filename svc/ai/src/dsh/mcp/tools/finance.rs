@@ -213,7 +213,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_finance_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_finance_tools(&server, "test-secret").await;
         let registry = server.tool_registry();
         assert!(registry.has_tool("finance.create_voucher").await);
@@ -224,7 +224,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_voucher_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_finance_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -245,7 +245,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_voucher_unbalanced_rejected() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_finance_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -266,7 +266,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_account_balance_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_finance_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -281,7 +281,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_receivables_mock_fallback() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_finance_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()

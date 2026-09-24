@@ -103,7 +103,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stdio_initialize_returns_result_fields() {
-        let server = McpServer::new("test-mcp", "1.0.0");
+        let server = McpServer::new("test-mcp", "1.0.0", "test-jwt-secret");
         let input = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}"#;
         let outputs = exchange(&server, input).await;
         assert_eq!(outputs.len(), 1);
@@ -117,7 +117,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stdio_full_session_roundtrip() {
-        let server = McpServer::new("test-mcp", "1.0.0");
+        let server = McpServer::new("test-mcp", "1.0.0", "test-jwt-secret");
         let input = concat!(
             r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"t","version":"1"}}}"#,
             "\n",
@@ -139,7 +139,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stdio_notification_no_response() {
-        let server = McpServer::new("test-mcp", "1.0.0");
+        let server = McpServer::new("test-mcp", "1.0.0", "test-jwt-secret");
         let input = r#"{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}"#;
         let outputs = exchange(&server, input).await;
         assert!(outputs.is_empty());
@@ -147,7 +147,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stdio_invalid_json_returns_parse_error() {
-        let server = McpServer::new("test-mcp", "1.0.0");
+        let server = McpServer::new("test-mcp", "1.0.0", "test-jwt-secret");
         let input = "{not-json}\n";
         let outputs = exchange(&server, input).await;
         assert_eq!(outputs.len(), 1);
@@ -156,7 +156,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stdio_requires_initialize_first() {
-        let server = McpServer::new("test-mcp", "1.0.0");
+        let server = McpServer::new("test-mcp", "1.0.0", "test-jwt-secret");
         let input = r#"{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}"#;
         let outputs = exchange(&server, input).await;
         assert_eq!(outputs.len(), 1);

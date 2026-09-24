@@ -437,7 +437,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_iot_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_iot_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -450,7 +450,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_devices() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_iot_tools(&server, "test-secret").await;
 
         let result = server
@@ -472,7 +472,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_device() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_iot_tools(&server, "test-secret").await;
 
         let result = server
@@ -496,7 +496,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_device_data() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_iot_tools(&server, "test-secret").await;
 
         let result = server
@@ -520,7 +520,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_command() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_iot_tools(&server, "test-secret").await;
 
         let result = server
@@ -551,7 +551,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_send_command_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_iot_tools(&server, "test-secret").await;
 
         // 缺少 command

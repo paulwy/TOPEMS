@@ -737,9 +737,10 @@ D
 - [ ] **P2-3 监控告警**
   - Prometheus + Grafana
   - 预计时间：8 小时
-- [ ] **P2-4 安全审计**
-  - 权限检查、数据加密
-  - 预计时间：8 小时
+- [ ] **P2-4 安全审计**（2026-09-24 部分完成：**发现并修复 MCP 匿名工具调用数据泄露**——匿名握手后 tools/list 可枚举全部 64 工具、tools/call 可读取 crm/erp/wms 等业务数据（实测 8 客户/50 订单/20 仓）；根因：MCP 路由未挂认证 + 业务工具未声明 required_permission；修复：①check_tool_permission 匿名保护（无用户上下文仅放行 system.* 安全工具，业务工具一律拒绝——兜底权限声明缺失）②MCP 认证接线（create_mcp_routes 挂 mcp_auth_middleware：Authorization Bearer → verify_jwt_token → set_user；无/无效 token 保持匿名）；验证：匿名拒绝业务工具（-32001）、有效 Bearer 全部工具正常、MCP 测试 218 passed；**HTTP 端点鉴权实测正常**（无/假/过期 token 均 401）；**后续**：业务工具声明 required_permission（细粒度授权）、cargo-audit 依赖 CVE 扫描（未安装）、密码哈希存储审计、.env secret 管理审计）
+  - 权限检查：MCP 匿名保护 + Bearer 认证接线完成；HTTP 端点鉴权正常；工具级细粒度权限声明留后续
+  - 数据加密：待审计（密码哈希存储、敏感字段加密）
+  - 预计时间：8 小时（部分完成）
 - [ ] **P2-5 性能优化**
   - 缓存、数据库连接池
   - 预计时间：8 小时

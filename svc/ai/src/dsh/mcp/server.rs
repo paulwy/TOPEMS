@@ -43,7 +43,7 @@ pub enum ServerState {
 /// use serde_json::json;
 ///
 /// # async fn example() {
-/// let server = McpServer::new("topems-mcp", "1.0.0");
+/// let server = McpServer::new("topems-mcp", "1.0.0", "<jwt-secret>");
 ///
 /// // 处理 initialize 请求
 /// let request = JsonRpcRequest::new(
@@ -78,11 +78,16 @@ pub struct McpServer {
     security: McpSecurityMiddleware,
     /// 当前用户上下文（权限继承：无权限用户无法调用受限工具）
     user: Arc<RwLock<Option<AuthenticatedUser>>>,
+    jwt_secret: String,
 }
 
 impl McpServer {
     /// 创建新的 MCP Server
-    pub fn new(name: impl Into<String>, version: impl Into<String>) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        version: impl Into<String>,
+        jwt_secret: impl Into<String>,
+    ) -> Self {
         Self {
             name: name.into(),
             version: version.into(),
@@ -92,11 +97,29 @@ impl McpServer {
             protocol_version: McpProtocolVersion::default(),
             security: McpSecurityMiddleware::new(),
             user: Arc::new(RwLock::new(None)),
+            jwt_secret: jwt_secret.into(),
         }
     }
 
     /// 设置当前用户上下文（外部 Agent 对接时注入认证用户；不设置则视为匿名）
     pub async fn set_user(&self, user: Option<AuthenticatedUser>) {
+        *self.user.write().await = user;
+    }
+
+    /// 从 HTTP Authorization 头解析 Bearer JWT，建立当前用户上下文。
+    /// 无 token / 无效 token → 匿名（None），由 check_tool_permission 拒绝业务工具。
+    pub async fn apply_auth(&self, headers: &axum::http::HeaderMap) {
+        let user = headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|h| h.to_str().ok())
+            .and_then(|h| h.strip_prefix("Bearer "))
+            .and_then(|token| topems_shared::auth::verify_jwt_token(token, &self.jwt_secret).ok())
+            .map(|c| AuthenticatedUser {
+                user_id: c.sub,
+                tenant_id: c.tenant_id.clone().unwrap_or_default(),
+                roles: c.roles,
+                username: c.username,
+            });
         *self.user.write().await = user;
     }
 
@@ -107,10 +130,19 @@ impl McpServer {
 
     /// 检查当前用户是否有权限调用指定工具（权限继承）
     ///
+    /// - 匿名会话（无用户上下文）→ 仅放行 system.* 安全工具，业务工具一律拒绝
+    ///   （防止未认证用户通过 MCP 通道枚举/读取业务数据）
     /// - 工具无权限要求 → 放行
     /// - 工具要求权限但无用户上下文 → 拒绝（匿名不可调用受限工具）
     /// - 工具要求权限且用户缺该权限 → 拒绝
     async fn check_tool_permission(&self, tool_name: &str) -> Result<(), ToolExecutionError> {
+        // 匿名保护：无认证会话仅放行 system.* 安全工具（业务工具默认拒绝，兜底权限声明缺失）
+        if self.user.read().await.is_none() && !tool_name.starts_with("system.") {
+            return Err(ToolExecutionError::PermissionDenied(format!(
+                "Anonymous session; tool '{}' requires authentication",
+                tool_name
+            )));
+        }
         let required = self.tools.required_permission(tool_name).await;
         let Some(permission) = required else {
             return Ok(());
@@ -431,7 +463,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_resources_list_protocol() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_resources().await;
         // initialize
         let init_request = JsonRpcRequest::new(
@@ -463,7 +495,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_resources_read_protocol_not_found() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_resources().await;
         // initialize
         let init_request = JsonRpcRequest::new(
@@ -491,7 +523,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_resources_read_protocol_missing_uri() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_resources().await;
         // initialize
         let init_request = JsonRpcRequest::new(
@@ -518,7 +550,7 @@ mod tests {
             eprintln!("SKIP: 未设置 ERP_SERVICE_URL");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_resources().await;
         let init_request = JsonRpcRequest::new(
             "initialize",
@@ -563,7 +595,7 @@ mod tests {
             eprintln!("SKIP: 未设置 CRM_SAMPLE_CUSTOMER_ID");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_resources().await;
         let init_request = JsonRpcRequest::new(
             "initialize",
@@ -603,7 +635,7 @@ mod tests {
             eprintln!("SKIP: 未设置 FINANCE_SAMPLE_VOUCHER_ID");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_resources().await;
         let init_request = JsonRpcRequest::new(
             "initialize",
@@ -633,13 +665,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_server_initial_state() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         assert_eq!(server.state().await, ServerState::Uninitialized);
     }
 
     #[tokio::test]
     async fn test_initialize() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
 
         let request = JsonRpcRequest::new(
             "initialize",
@@ -658,7 +690,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_initialized_notification() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
 
         // initialize
         let init_request = JsonRpcRequest::new(
@@ -681,7 +713,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tools_list_before_init() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
 
         let request = JsonRpcRequest::new("tools/list", json!(1), None);
         let response = server.handle_request(request).await.unwrap();
@@ -692,7 +724,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tools_list_after_init() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_system_tools().await;
 
         // initialize
@@ -723,7 +755,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tools_call() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         server.register_system_tools().await;
 
         // initialize + initialized
@@ -756,7 +788,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_method_not_found() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
 
         // initialize first
         let init_request = JsonRpcRequest::new(
@@ -783,7 +815,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_ping() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
 
         // initialize first
         let init_request = JsonRpcRequest::new(
@@ -809,7 +841,7 @@ mod tests {
     }
     // ===== 权限继承验证（2.3 外部 Agent 对接）=====
     async fn setup_finance_permission_server() -> McpServer {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         crate::dsh::mcp::tools::finance::register_finance_tools(&server, "test-secret").await;
         server
     }

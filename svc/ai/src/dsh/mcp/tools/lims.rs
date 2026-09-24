@@ -537,7 +537,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_lims_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_lims_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -550,7 +550,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_samples() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_lims_tools(&server, "test-secret").await;
 
         let result = server
@@ -572,7 +572,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_sample() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_lims_tools(&server, "test-secret").await;
 
         let result = server
@@ -594,7 +594,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_tests() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_lims_tools(&server, "test-secret").await;
 
         let result = server
@@ -617,7 +617,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_sample() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_lims_tools(&server, "test-secret").await;
 
         let result = server
@@ -654,7 +654,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_sample_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_lims_tools(&server, "test-secret").await;
 
         // 缺少 source

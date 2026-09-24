@@ -44,7 +44,7 @@ mod business_tools_integration_tests {
     /// 综合集成测试：10 个业务工具 + 3 个 Resource 端到端注册与调用
     #[tokio::test]
     async fn test_10_business_tools_and_3_resources_end_to_end() {
-        let server = McpServer::new("integration-test", "1.0.0");
+        let server = McpServer::new("integration-test", "1.0.0", "test-jwt-secret");
 
         // 注册 10 个业务工具
         register_crm_tools(&server, "test-secret").await;

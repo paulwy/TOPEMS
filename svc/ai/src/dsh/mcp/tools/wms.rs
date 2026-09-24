@@ -477,7 +477,7 @@ mod tests {
             eprintln!("SKIP: 未设置 WMS_SERVICE_URL");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -496,7 +496,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_wms_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -509,7 +509,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_inventory() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
 
         let result = server
@@ -531,7 +531,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_inventory() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
 
         let result = server
@@ -555,7 +555,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_warehouses() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
 
         let result = server
@@ -578,7 +578,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_transfer() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
 
         let result = server
@@ -612,7 +612,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_transfer_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_wms_tools(&server, "test-secret").await;
 
         // 源仓库和目标仓库相同

@@ -483,7 +483,7 @@ mod tests {
             eprintln!("SKIP: 未设置 QMS_SERVICE_URL");
             return;
         }
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
         let result = server
             .tool_registry()
@@ -503,7 +503,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_register_qms_tools() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
 
         let registry = server.tool_registry();
@@ -516,7 +516,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_inspections() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
 
         let result = server
@@ -538,7 +538,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_inspection() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
 
         let result = server
@@ -563,7 +563,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_nonconformances() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
 
         let result = server
@@ -586,7 +586,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_inspection() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
 
         let result = server
@@ -620,7 +620,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_inspection_validation() {
-        let server = McpServer::new("test", "1.0.0");
+        let server = McpServer::new("test", "1.0.0", "test-jwt-secret");
         register_qms_tools(&server, "test-secret").await;
 
         // 缺少 material_id
