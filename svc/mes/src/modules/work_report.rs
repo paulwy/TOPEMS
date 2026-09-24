@@ -136,7 +136,7 @@ fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_(dt: Option<DateTime<Utc>>).unwrap_or_default() -> Option<String> {
+fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
     dt.map(|d| d.to_rfc3339())
 }
 
@@ -377,11 +377,11 @@ pub async fn list_work_reports(
                 .flatten()
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
-            approved_at: opt_(
+            approved_at: 
                 r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
+            ,
             approval_remark: r
                 .try_get::<Option<String>, _>("approval_remark")
                 .ok()
@@ -477,7 +477,7 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
+                approved_at: r.approved_at.map(|d| d),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -675,7 +675,7 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
+                    approved_at: r.approved_at.map(|d| d),
                     approval_remark: r.approval_remark,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
@@ -821,7 +821,7 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
+                approved_at: r.approved_at.map(|d| d),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -961,7 +961,7 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
+                approved_at: r.approved_at.map(|d| d),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1056,7 +1056,7 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
+                approved_at: r.approved_at.map(|d| d),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1281,14 +1281,14 @@ mod tests {
     #[test]
     fn opt_datetime_to_string_some_returns_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = opt_(Some(dt)).unwrap_or_default();
+        let r = Some(dt);
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
 
     #[test]
     fn opt_datetime_to_string_none_returns_none() {
-        assert!(opt_(None).unwrap_or_default().is_none());
+        assert!(None.is_none());
     }
 
     // ---- big_decimal_to_f64 ----

@@ -129,7 +129,7 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: opt_(issue.issue_time.map(|d| d)).unwrap_or_default(),
+        issue_time: issue.issue_time.map(|d| d),
         notes: issue.notes,
         created_at: (Some(issue.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(issue.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
@@ -253,11 +253,11 @@ pub async fn list_material_issues(
                 .ok()
                 .flatten()
                 .map(|u| u.to_string()),
-            issue_time: opt_(
+            issue_time: 
                 r.try_get::<Option<DateTime<Utc>>, _>("issue_time")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
+            ,
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
@@ -345,7 +345,7 @@ pub async fn get_material_issue(
         "status": issue.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": issue.warehouse_id.map(|u| u.to_string()),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
-        "issue_time": opt_(issue.issue_time.map(|d| d)).unwrap_or_default(),
+        "issue_time": issue.issue_time.map(|d| d),
         "notes": issue.notes,
         "created_at": (Some(issue.created_at.unwrap_or_default())).unwrap_or_default(),
         "updated_at": (Some(issue.updated_at.unwrap_or_default())).unwrap_or_default(),
@@ -422,7 +422,7 @@ pub async fn update_material_issue(
         "status": issue.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": issue.warehouse_id.map(|u| u.to_string()),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
-        "issue_time": opt_(issue.issue_time.map(|d| d)).unwrap_or_default(),
+        "issue_time": issue.issue_time.map(|d| d),
         "notes": issue.notes,
         "created_at": (Some(issue.created_at.unwrap_or_default())).unwrap_or_default(),
         "updated_at": (Some(issue.updated_at.unwrap_or_default())).unwrap_or_default(),

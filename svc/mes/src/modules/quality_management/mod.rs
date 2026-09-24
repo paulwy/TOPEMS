@@ -82,7 +82,7 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-pub fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
+pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 

@@ -9,11 +9,11 @@ pub(crate) fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc
     dt
 }
 
-pub(crate) fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
+pub(crate) fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-pub(crate) fn opt_(dt: Option<DateTime<Utc>>).unwrap_or_default() -> Option<String> {
+pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
     dt.map(|d| d.to_rfc3339())
 }
 
@@ -75,14 +75,14 @@ mod tests {
     #[test]
     fn opt_datetime_to_string_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = opt_(Some(dt)).unwrap_or_default();
+        let r = Some(dt);
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
 
     #[test]
     fn opt_datetime_to_string_none() {
-        assert!(opt_(None).unwrap_or_default().is_none());
+        assert!(None.is_none());
     }
 
     #[test]

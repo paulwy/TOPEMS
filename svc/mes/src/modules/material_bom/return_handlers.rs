@@ -125,7 +125,7 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: opt_(return_record.return_time.map(|d| d)).unwrap_or_default(),
+        return_time: return_record.return_time.map(|d| d),
         notes: return_record.notes,
         created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
@@ -244,11 +244,11 @@ pub async fn list_material_returns(
                 .ok()
                 .flatten()
                 .map(|u| u.to_string()),
-            return_time: opt_(
+            return_time: 
                 r.try_get::<Option<DateTime<Utc>>, _>("return_time")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
+            ,
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
@@ -335,7 +335,7 @@ pub async fn get_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": opt_(return_record.return_time.map(|d| d)).unwrap_or_default(),
+        "return_time": return_record.return_time.map(|d| d),
         "notes": return_record.notes,
         "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
         "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
@@ -411,7 +411,7 @@ pub async fn update_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": opt_(return_record.return_time.map(|d| d)).unwrap_or_default(),
+        "return_time": return_record.return_time.map(|d| d),
         "notes": return_record.notes,
         "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
         "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),

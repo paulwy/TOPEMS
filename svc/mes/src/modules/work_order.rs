@@ -124,7 +124,7 @@ fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_(dt: Option<DateTime<Utc>>).unwrap_or_default() -> Option<String> {
+fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
     dt.map(|d| d.to_rfc3339())
 }
 
@@ -304,26 +304,26 @@ pub async fn list_work_orders(
                     .ok()
                     .flatten(),
             ),
-            plan_start_date: opt_(
+            plan_start_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
-            plan_end_date: opt_(
+            ,
+            plan_end_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
-            actual_start_date: opt_(
+            ,
+            actual_start_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
-            actual_end_date: opt_(
+            ,
+            actual_end_date: 
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
                     .ok()
                     .flatten(),
-            ).unwrap_or_default(),
+            ,
             team_id: r
                 .try_get::<Option<Uuid>, _>("team_id")
                 .ok()
@@ -424,10 +424,10 @@ pub async fn get_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -535,10 +535,10 @@ pub async fn create_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(Some(r.planned_quantity)),
                 completed_quantity: big_decimal_to_f64(Some(r.completed_quantity)),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status,
@@ -668,10 +668,10 @@ pub async fn update_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -816,10 +816,10 @@ pub async fn start_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -906,10 +906,10 @@ pub async fn complete_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -996,10 +996,10 @@ pub async fn cancel_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -1086,10 +1086,10 @@ pub async fn pause_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -1176,10 +1176,10 @@ pub async fn resume_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_(r.plan_start_date.map(|d| d)).unwrap_or_default(),
-                plan_end_date: opt_(r.plan_end_date.map(|d| d)).unwrap_or_default(),
-                actual_start_date: opt_(r.actual_start_date.map(|d| d)).unwrap_or_default(),
-                actual_end_date: opt_(r.actual_end_date.map(|d| d)).unwrap_or_default(),
+                plan_start_date: r.plan_start_date.map(|d| d),
+                plan_end_date: r.plan_end_date.map(|d| d),
+                actual_start_date: r.actual_start_date.map(|d| d),
+                actual_end_date: r.actual_end_date.map(|d| d),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
@@ -1331,11 +1331,11 @@ mod tests {
         let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S")
             .map(|dt| dt.and_utc())
             .ok();
-        let some_result = opt_(naive).unwrap_or_default();
+        let some_result = naive;
         assert!(some_result.is_some());
         assert!(some_result.unwrap().contains("2024"));
 
-        let none_result = opt_(None).unwrap_or_default();
+        let none_result = None;
         assert!(none_result.is_none());
     }
 }
