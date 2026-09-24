@@ -358,7 +358,7 @@
 - 模式：Some(Option) 删嵌套 63 处；简单路径赋值 unwrap_or_default 184 处；Option<Uuid/String> to_string/format 改 map+unwrap_or_default；naive_utc/to_rfc3339 改 map；query! 参数 flatten().as_deref()+let 绑定；match arms 对齐；按 expected/found 精确修正
 - 验证：全量 build 通过（EXIT 0）；服务重启（8099）回归 flow 18 / crm 189 / lims 4 全绿
 - 已提交推送：39a19b31e（18 文件，+191/-183）
-- 遗留：worktree 有 finance.json 未提交改动（lefthook i18n-quality hook 自动生成的翻译修正，127 处占位符→具体语义），未提交待用户确认；wms/labor 报错为级联已随修复消失无需改
+- 遗留（已澄清 2026-09-24）：finance.json 翻译修正已被并行会话的 i18n commit 入库（9e8a73104 补译 1126 处 / 52b748aab 489 键 / ae1f0af75 占位键清理），worktree 已干净、无待提交改动；当前 zh/en finance.json 的 {{v1}} 为合法 vue-i18n 插值占位符（非残留）；wms/labor 报错为级联已随修复消失无需改
 
 ---
 
