@@ -219,7 +219,20 @@ pub async fn create_issue(
     }
 }
 
-pub async fn get_issue(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/qms/issues/{id}",
+    tag = "quality_issue",
+    params(
+        ("id" = String, Path, description = "问题ID"),
+    ),
+    responses(
+        (status = 200, description = "质量问题详情", body = ApiResponse<QualityIssue>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn get_issue(pub async fn get_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -259,7 +272,21 @@ pub async fn get_issue(
     }
 }
 
-pub async fn update_issue(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:write"])),
+    path = "/api/qms/issues/{id}",
+    tag = "quality_issue",
+    request_body = UpdateIssueRequest,
+    params(
+        ("id" = String, Path, description = "问题ID"),
+    ),
+    responses(
+        (status = 200, description = "质量问题更新成功", body = ApiResponse<QualityIssue>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn update_issue(pub async fn update_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -321,7 +348,20 @@ pub async fn resolve_issue(
     }
 }
 
-pub async fn delete_issue(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:write"])),
+    path = "/api/qms/issues/{id}",
+    tag = "quality_issue",
+    params(
+        ("id" = String, Path, description = "问题ID"),
+    ),
+    responses(
+        (status = 200, description = "质量问题删除成功", body = ApiResponse<bool>),
+        (status = 500, description = "服务器内部错误"),
+    ),
+)]
+pub async fn delete_issue(pub async fn delete_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,

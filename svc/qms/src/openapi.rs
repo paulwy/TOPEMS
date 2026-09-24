@@ -73,6 +73,9 @@ use crate::models::quality_standard::{
         crate::modules::quality_inspection::delete_inspection,
         crate::modules::quality_issue::list_issues,
         crate::modules::quality_issue::create_issue,
+        crate::modules::quality_issue::get_issue,
+        crate::modules::quality_issue::update_issue,
+        crate::modules::quality_issue::delete_issue,
         // quality_cost
         crate::modules::quality_cost::list_quality_costs,
         crate::modules::quality_cost::create_quality_cost,
