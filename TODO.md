@@ -432,8 +432,8 @@
   - 去掉对 String 的 unwrap_or_default() 调用
   - 对 Option<Uuid> 用 .map(|id| id.to_string())
   - 修复 BigDecimal as f64 类型转换
-- [ ] P0-4：重新生成 .sqlx 缓存
-- [ ] P0-5：验证编译通过
+- [x] P0-4：重新生成 .sqlx 缓存（2026-09-24 4f6aa1e26 闭环：cargo sqlx prepare 按实时 schema 重新生成，mes 144→165、server 306、analytics 91、crm 4、portal 3、wms 32）
+- [x] P0-5：验证编译通过（2026-09-24 4f6aa1e26 闭环：433 编译错误→0，全量 server 构建 4m15s 通过）
 
 ### 已修复
 - [x] process_flow.rs 的 tenant_id 问题（work_stations 表没有 tenant_id 列）
@@ -475,8 +475,8 @@
   - 把 r.try_get::<Option<NaiveDateTime>, _>("created_at") 改为 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
   - 把 r.created_at.unwrap_or_default() 改为 r.created_at.to_rfc3339()
   - 其他类型转换
-- [ ] P0-3：重新生成 .sqlx 缓存
-- [ ] P0-4：验证编译通过
+- [x] P0-3：重新生成 .sqlx 缓存（2026-09-24 4f6aa1e26 闭环，同 P0-4 清单）
+- [x] P0-4：验证编译通过（2026-09-24 4f6aa1e26 闭环，433→0）
 
 ### 历史参考
 - 提交 39a19b31e：之前修复 MES 编译错误 447→0（Option 类型适配）
