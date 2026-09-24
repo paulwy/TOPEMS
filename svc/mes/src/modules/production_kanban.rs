@@ -311,16 +311,16 @@ pub async fn get_dashboard(
                 status: r
                     .try_get::<Option<String>, _>("status")
                     .ok()
-                    .flatten(),
+                    .flatten()
                     .unwrap_or_else(|| "active".to_string()),
                 current_order: r
                     .try_get::<Option<String>, _>("current_order")
                     .ok()
-                    .flatten(),
+                    .flatten()
                 current_product: r
                     .try_get::<Option<String>, _>("current_product")
                     .ok()
-                    .flatten(),
+                    .flatten()
                 output_today: opt_big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("output_today")
                         .ok()
@@ -329,7 +329,7 @@ pub async fn get_dashboard(
                 operator: r
                     .try_get::<Option<Uuid>, _>("operator")
                     .ok()
-                    .flatten(),
+                    .flatten()
                     .map(|u| u.to_string()),
             })
             .collect(),
@@ -363,7 +363,7 @@ pub async fn get_dashboard(
                 let date = r
                     .try_get::<Option<NaiveDate>, _>("date")
                     .ok()
-                    .flatten(),
+                    .flatten()
                     .map(|d| d.format("%Y-%m-%d").to_string())
                     .unwrap_or_default();
                 let total = big_decimal_to_f64(
@@ -431,7 +431,7 @@ pub async fn get_dashboard(
                 status: r
                     .try_get::<Option<String>, _>("status")
                     .ok()
-                    .flatten(),
+                    .flatten()
                     .unwrap_or_else(|| "normal".to_string()),
                 oee: opt_big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten()
@@ -612,7 +612,7 @@ pub async fn get_workstation_status(
             output_today: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_today")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             operator: r
                 .try_get::<Option<Uuid>, _>("operator")
@@ -682,12 +682,12 @@ pub async fn get_quality_trend(
             let total = big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("total_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             );
             let good = big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("good_quantity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             );
             let pass_rate = if total > 0.0 {
                 (good / total) * 100.0
