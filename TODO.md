@@ -793,7 +793,7 @@ D
 - [x] **P4-1 磁盘治理预防**（2026-09-24 完成：scripts/clean_target.sh 四模式（--check 统计 / 默认增量清理保留产物 / --full 全清 / --auto 超阈值自动）——膨胀主因 debug+release 增量缓存，实测清理 18.0G→6.4G（省 11.6G）；CI 侧已有 sccache（RUSTC_WRAPPER）不受影响；日常可跑 --check 或 --auto 防复发）
   - target 目录 176.8GiB 膨胀根因（增量缓存爆炸）与预防：清理脚本 + CI 缓存上限
   - 预计时间：1-2 小时
-- [ ] **P4-2 依赖锁定项复查**
+- [x] **P4-2 依赖锁定项复查**（2026-09-24 完成：四条链（lopdf/pdf-extract/amqprs/tokio-rustls 0.23.4）cargo update --dry-run 均 0 更新（锁定）；crates.io API 不可达（网络限制）；依赖树已含新版 tokio-rustls 0.26.4（rustls 0.23 链）——amqprs 1.8.0 为唯一旧 rustls 0.20 持有者（维护不活跃）；结论：维持接受（风险已记录），升级路径=上游更新或替代库迁移（大工程不值））
   - lopdf/pdf-extract/amqprs 上游新版本检查（解除 rustls-0.20/0.23 锁定）
   - 预计时间：30 分钟
 - [ ] **P4-3 API 文档全量化**
