@@ -600,7 +600,7 @@ jobs:
           cache-prefix: "rust-audit-nightly-2026-07-01"
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit
+        run: cargo install cargo-audit --locked
 
       - name: Run cargo audit (security scan)
         run: |

@@ -730,8 +730,7 @@ D
 ### 🎯 P2 - 改进（本月完成）
 - [x] **P2-1 Docker 部署优化**（2026-09-24 完成：交付 deploy/docker/Dockerfile.server 多阶段构建——rust:1.95-slim 构建 → debian-bookworm-slim 运行时，非 root + HEALTHCHECK + ca-certificates，镜像仅含二进制与迁移脚本；.dockerignore 排除 target/.env/产物；docker-compose.monolith.yml 与 services.yml 合并部署 monolith :8099 复用 postgres/redis，ollama 需合并 full.yml——compose 静态验证通过；注：docker daemon 未运行未做镜像构建验证；services.yml 旧微服务为占位镜像可后续清理；compose 部署文件按仓库 gitignore 约定不入 git）
   - 预计时间：4 小时
-- [ ] **P2-2 CI/CD 配置**
-  - 自动测试、自动部署
+- [x] **P2-2 CI/CD 配置**（2026-09-24 完成：现有 CI 体系核验 + 补强——ci.yml 已含 fmt/clippy(-D warnings)/cargo test/audit/smoke gates、docker-build.yml matrix 构建+GHCR 推送、deploy-k8s/secret-scan/e2e 齐备；本轮补强：①docker-build matrix 加 monolith（context ./ + Dockerfile.server，P2-1 衔接）②cargo-audit 安装加 --locked（构建确定性））
   - 预计时间：8 小时
 - [ ] **P2-3 监控告警**
   - Prometheus + Grafana

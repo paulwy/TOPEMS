@@ -29,6 +29,10 @@ jobs:
           - service: unified-core
             context: ./svc/unified-core
             file: ./svc/unified-core/Dockerfile
+          # 模块化单体（P2-1：workspace 根 context + 多阶段 Dockerfile）
+          - service: monolith
+            context: ./
+            file: ./deploy/docker/Dockerfile.server
           # 标准服务：使用统一模板 deploy/docker/Dockerfile.service
           - { service: erp,         binary: topems-erp,         dir: erp,         port: "8010", env_var: ERP_PORT }
           - { service: finance,     binary: topems-finance,     dir: finance,     port: "8011", env_var: FINANCE_PORT }
