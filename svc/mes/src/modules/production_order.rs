@@ -467,11 +467,11 @@ pub async fn create_production_order(
         req.product_name,
         req.product_code,
         req.quantity as i32,
-        req.planned_start_date.map(|d| d.naive_utc()),
-        req.planned_end_date.map(|d| d.naive_utc()),
+        req.planned_start_date,
+        req.planned_end_date,
         req.workshop_id,
         req.notes,
-        now.naive_utc(),
+        now,
         tenant_id,
     )
     .fetch_one(&mut *tx)
@@ -509,8 +509,8 @@ pub async fn create_production_order(
         actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default(),
-        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     if let Some(ref publisher) = state.event_publisher {
@@ -630,11 +630,11 @@ pub async fn create_from_erp(
         req.erp_order.quantity as i32,
         req.erp_order.order_id,
         req.erp_order.order_number,
-                planned_start.naive_utc(),
-                planned_end.naive_utc(),
+        planned_start,
+        planned_end,
         req.workshop_id,
         req.notes,
-        now.naive_utc(),
+        now,
         Uuid::nil(),
     )
     .fetch_one(&mut *tx)
@@ -673,8 +673,8 @@ pub async fn create_from_erp(
         actual_end_date: result.actual_end_date,
         workshop_id: result.workshop_id,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default(),
-        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     tracing::info!(
@@ -755,8 +755,8 @@ pub async fn get_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "获取生产工单成功"))
         }
@@ -818,11 +818,11 @@ pub async fn update_production_order(
         req.product_name,
         req.product_code,
         req.quantity.map(|q| q.to_string().parse::<BigDecimal>().unwrap_or_default()),
-        req.planned_start_date.map(|d| d.naive_utc()),
-        req.planned_end_date.map(|d| d.naive_utc()),
+        req.planned_start_date,
+        req.planned_end_date,
         req.workshop_id,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -855,8 +855,8 @@ pub async fn update_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单更新成功"))
         }
@@ -963,8 +963,8 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -997,8 +997,8 @@ pub async fn start_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单启动成功"))
         }
@@ -1053,8 +1053,8 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1087,8 +1087,8 @@ pub async fn complete_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单完成成功"))
         }
@@ -1141,7 +1141,7 @@ pub async fn cancel_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1174,8 +1174,8 @@ pub async fn cancel_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单取消成功"))
         }
@@ -1228,7 +1228,7 @@ pub async fn release_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -1261,8 +1261,8 @@ pub async fn release_production_order(
                 actual_end_date: r.actual_end_date,
                 workshop_id: r.workshop_id,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(order, "生产工单发布成功"))
         }

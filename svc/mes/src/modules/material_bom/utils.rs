@@ -33,11 +33,10 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
     }
 
     #[test]
@@ -53,8 +52,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);
@@ -73,8 +71,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
@@ -90,8 +87,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 6, 15)
             .unwrap()
             .and_hms_opt(12, 0, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
@@ -131,10 +127,9 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2023, 12, 31)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
+        assert_eq!(utc.naive_utc().date(), dt.date());
     }
 
     #[test]
@@ -142,8 +137,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.hour(), 0);

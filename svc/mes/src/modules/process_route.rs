@@ -377,8 +377,8 @@ pub async fn get_process_route(
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: total_estimated_time_minutes.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     process_count,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "获取工艺路线成功",
             ))
@@ -449,8 +449,8 @@ pub async fn create_process_route(
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "创建工艺路线成功",
             ))
@@ -534,8 +534,8 @@ pub async fn update_process_route(
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "更新工艺路线成功",
             ))
@@ -657,7 +657,7 @@ pub async fn get_route_steps(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -751,7 +751,7 @@ pub async fn add_route_step(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "添加工艺路线步骤成功",
             ))
@@ -834,7 +834,7 @@ pub async fn update_route_step(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "更新工艺路线步骤成功",
             ))
@@ -975,7 +975,7 @@ pub async fn reorder_route_steps(
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -1001,11 +1001,10 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
     }
 
     #[test]
@@ -1021,8 +1020,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
