@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# pre-push hook: 在 push 前自动跑 cargo check，确保代码编译通过
+#
+# 安装方法：
+#   git config core.hooksPath .githooks
+#
+
+set -e
+
+echo "🔍 正在跑 cargo check --workspace ..."
+
+# 设置 SQLX_OFFLINE=false 以便连数据库验证 schema
+export SQLX_OFFLINE=false
+
+# 跑 cargo check
+if cargo check --workspace --all-features --quiet 2>&1; then
+    echo "✅ cargo check 通过，可以 push"
+    exit 0
+else
+    echo "❌ cargo check 失败，push 被阻止"
+    echo "请修复编译错误后再 push！"
+    exit 1
+fi

@@ -185,26 +185,29 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
+    cargo-check-workspace:
+      tags: rust check
+      run: |
+        # pre-push 时代码已提交，直接跑 cargo check，确保编译通过
+        # 避免 DB schema 修改了但代码没修改就 push 到远端
+        export SQLX_OFFLINE=false
+        cargo check --workspace --all-features
+
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
     cargo-fmt-check:
       tags: rust fmt
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
-        [ -z "$STAGED" ] && exit 0
         cargo fmt --all --check
 
     # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
     cargo-clippy-workspace:
       tags: rust clippy
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
-        [ -z "$STAGED" ] && exit 0
         cargo clippy --workspace --all-targets -- -D warnings
 
     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
     cargo-test-workspace:
       tags: rust test
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|toml|lock)$' || true)
-        [ -z "$STAGED" ] && exit 0
         cargo test --workspace
