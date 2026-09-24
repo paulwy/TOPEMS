@@ -248,6 +248,14 @@ pub fn require_tenant_status(
     }
 }
 
+/// 是否需要对结果做租户隔离。
+///
+/// 服务间调用（`is_service_claims`，如 portal 聚合读）默认不做租户过滤，
+/// 以 nil 租户上下文全量访问（配合 DB 层 RLS 的 nil 豁免策略）。
+pub fn is_tenant_scoped(claims: &Claims) -> bool {
+    !crate::service::is_service_claims(claims)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -363,12 +371,4 @@ mod tests {
         let status = send_require_tenant_status(Some(claims)).await;
         assert_eq!(status, StatusCode::OK);
     }
-}
-
-/// 是否需要对结果做租户隔离。
-///
-/// 服务间调用（`is_service_claims`，如 portal 聚合读）默认不做租户过滤，
-/// 以 nil 租户上下文全量访问（配合 DB 层 RLS 的 nil 豁免策略）。
-pub fn is_tenant_scoped(claims: &Claims) -> bool {
-    !crate::service::is_service_claims(claims)
 }
