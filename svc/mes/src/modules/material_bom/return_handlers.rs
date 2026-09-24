@@ -125,9 +125,9 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: opt_datetime_to_string(return_record.return_time.map(|d| d)),
+        return_time: opt_(return_record.return_time.map(|d| d)).unwrap_or_default(),
         notes: return_record.notes,
-        created_at: datetime_to_string(Some(return_record.created_at.unwrap_or_default())),        updated_at: datetime_to_string(Some(return_record.updated_at.unwrap_or_default())),
+        created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -244,22 +244,22 @@ pub async fn list_material_returns(
                 .ok()
                 .flatten()
                 .map(|u| u.to_string()),
-            return_time: opt_datetime_to_string(
+            return_time: opt_(
                 r.try_get::<Option<DateTime<Utc>>, _>("return_time")
                     .ok()
                     .flatten(),
-            ),
+            ).unwrap_or_default(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
-            created_at: datetime_to_string(
+            created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
-            ),
-            updated_at: datetime_to_string(
+            ).unwrap_or_default(),
+            updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
-            ),
+            ).unwrap_or_default(),
         })
         .collect();
 
@@ -335,10 +335,10 @@ pub async fn get_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": opt_datetime_to_string(return_record.return_time.map(|d| d)),
+        "return_time": opt_(return_record.return_time.map(|d| d)).unwrap_or_default(),
         "notes": return_record.notes,
-        "created_at": datetime_to_string(Some(return_record.created_at.unwrap_or_default())),
-        "updated_at": datetime_to_string(Some(return_record.updated_at.unwrap_or_default())),
+        "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
+        "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "return_id": i.return_id.to_string(),
@@ -411,10 +411,10 @@ pub async fn update_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": opt_datetime_to_string(return_record.return_time.map(|d| d)),
+        "return_time": opt_(return_record.return_time.map(|d| d)).unwrap_or_default(),
         "notes": return_record.notes,
-        "created_at": datetime_to_string(Some(return_record.created_at.unwrap_or_default())),
-        "updated_at": datetime_to_string(Some(return_record.updated_at.unwrap_or_default())),
+        "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
+        "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     });
 
     Json(ApiResponse::success(return_json, "物料退库单更新成功"))

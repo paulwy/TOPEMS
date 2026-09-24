@@ -172,7 +172,7 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
@@ -296,16 +296,16 @@ pub async fn list_process_flows(
                     .flatten(),
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-            created_at: datetime_to_string(
+            created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
-            ),
-            updated_at: datetime_to_string(
+            ).unwrap_or_default(),
+            updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
-            ),
+            ).unwrap_or_default(),
         })
         .collect();
 
@@ -1230,13 +1230,13 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let s = datetime_to_string(Some(dt.and_utc()));
+        let s = (Some(dt.and_utc())).unwrap_or_default();
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = datetime_to_string(None);
+        let s = (None).unwrap_or_default();
         assert!(s.is_empty());
     }
 

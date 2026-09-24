@@ -179,16 +179,16 @@ pub async fn list_patrols(
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             findings: r.try_get::<Option<String>, _>("findings").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
-            created_at: datetime_to_string(
+            created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
-            ),
-            updated_at: datetime_to_string(
+            ).unwrap_or_default(),
+            updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
-            ),
+            ).unwrap_or_default(),
         })
         .collect();
 

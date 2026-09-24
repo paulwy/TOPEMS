@@ -132,11 +132,11 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
+fn opt_(dt: Option<DateTime<Utc>>).unwrap_or_default() -> Option<String> {
     dt.map(|d| d.to_rfc3339())
 }
 
@@ -377,25 +377,25 @@ pub async fn list_work_reports(
                 .flatten()
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
-            approved_at: opt_datetime_to_string(
+            approved_at: opt_(
                 r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
                     .ok()
                     .flatten(),
-            ),
+            ).unwrap_or_default(),
             approval_remark: r
                 .try_get::<Option<String>, _>("approval_remark")
                 .ok()
                 .flatten(),
-            created_at: datetime_to_string(
+            created_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten(),
-            ),
-            updated_at: datetime_to_string(
+            ).unwrap_or_default(),
+            updated_at: (
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten(),
-            ),
+            ).unwrap_or_default(),
         })
         .collect();
 
@@ -477,7 +477,7 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
+                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -675,7 +675,7 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
+                    approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
                     approval_remark: r.approval_remark,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
@@ -821,7 +821,7 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
+                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -961,7 +961,7 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
+                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1056,7 +1056,7 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
+                approved_at: opt_(r.approved_at.map(|d| d)).unwrap_or_default(),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1267,13 +1267,13 @@ mod tests {
     #[test]
     fn datetime_to_string_some_produces_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 1, 2, 3, 4, 5).unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = (Some(dt)).unwrap_or_default();
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_returns_empty() {
-        let s = datetime_to_string(None);
+        let s = (None).unwrap_or_default();
         assert!(s.is_empty(), "got {}", s);
     }
 
@@ -1281,14 +1281,14 @@ mod tests {
     #[test]
     fn opt_datetime_to_string_some_returns_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = opt_datetime_to_string(Some(dt));
+        let r = opt_(Some(dt)).unwrap_or_default();
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
 
     #[test]
     fn opt_datetime_to_string_none_returns_none() {
-        assert!(opt_datetime_to_string(None).is_none());
+        assert!(opt_(None).unwrap_or_default().is_none());
     }
 
     // ---- big_decimal_to_f64 ----
