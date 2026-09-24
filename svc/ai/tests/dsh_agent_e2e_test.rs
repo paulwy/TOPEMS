@@ -390,6 +390,7 @@ async fn test_agent_streaming_execution() {
     let timeout = tokio::time::sleep(Duration::from_secs(5));
     tokio::pin!(timeout);
 
+    #[allow(clippy::never_loop)]
     loop {
         tokio::select! {
             _ = &mut timeout => {
