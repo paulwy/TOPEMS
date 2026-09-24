@@ -4,7 +4,7 @@
 #
 # 模块化单体模式下，全部 29 个业务服务以 real_module 方式嵌入 topems-server
 # 统一入口。本脚本固化以下运行环境治理要点：
-#   1. DB_MAX_CONNECTIONS=5：24+ 模块 × 多连接池，默认连接上限会耗尽 PG
+#   1. DB_MAX_CONNECTIONS=8：24+ 模块 × 多连接池，默认连接上限会耗尽 PG
 #      max_connections（已 ALTER SYSTEM 100→300）
 #   2. SEARCH_PATH：嵌入模式连接池 search_path 决定无前缀表引用解析；
 #      mobile 等依赖 search_path 的模块必须包含其 schema
@@ -29,7 +29,7 @@ SERVICES=(CRM ERP FEEDBACK FILE FINANCE HRM IAM AI BI COMMUNICATION EHS GIS
           MONITOR NOTIFICATION QMS SEARCH TICKET WMS WORKFLOW)
 
 build_env() {
-  echo "DB_MAX_CONNECTIONS=5"
+  echo "DB_MAX_CONNECTIONS=8"
   echo "SEARCH_PATH=flow, mobile, rs, erp, public, iam, shared"
   # dashboard 聚合探活开关：portal probe_service_health 读该 env 统一探测 :8099/health
   # （缺失时走硬编码独立端口 → 嵌入模式下全部 healthy=false）

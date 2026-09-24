@@ -739,7 +739,7 @@ D
   - 数据加密：密码存储审计完成（iam.users.password_hash = bcrypt cost 12，无明文；表结构含锁定/MFA/密码策略字段；登录端点代码未找到——认证当前靠 JWT 离线签发，记录为待核项）；.env secret 管理审计完成（.env 已 gitignore 保护、.env.example 全占位符无真实 secret、仓库无硬编码 secret；本地 JWT_SECRET 离线硬编码属开发环境现状，生产建议环境变量注入+轮换）
   - 依赖安全：cargo-audit 0.22.2 安装并扫描（--locked 兼容 rustc 1.95）——11 漏洞处置：①升级 rustls 0.23.41→0.23.43（RUSTSEC-2026-0285 修复）②锁定无法升级并标注风险：lopdf 0.34（high 7.5，pdf-extract 锁定——AI PDF 提取内部文档低暴露）、amqprs→rustls 0.20.9（high，AMQP 内网）、rsa/ring/crossbeam-epoch/h2/idna/protobuf/remove_dir_all/rkyv/dotenv（传递依赖/unsound/yanked——接受，后续随依赖链更新）
   - 预计时间：8 小时（实质完成：权限+加密+secret+依赖四维度均已审计处置；lopdf/rustls-0.20 升级待依赖链更新）
-- [ ] **P2-5 性能优化**
+- [x] **P2-5 性能优化**（2026-09-24 完成：①数据库连接池调优——DB_MAX_CONNECTIONS 5→8（PG max_connections 已 ALTER 100→300，24+ 模块 × 8 = 192 理论上限 < 300，实测连接 70→87 余量充足、重启后 health 200）②缓存架构评估——L1/L2 双层缓存已存在（L1 内存全模块共享，L2 Redis 按场景启用 pdm/tms；monolith 单实例下 L1 已跨请求共享，设计合理无改动）③可观测——/metrics 暴露 25 指标族含 L2 连接状态）
   - 缓存、数据库连接池
   - 预计时间：8 小时
 
