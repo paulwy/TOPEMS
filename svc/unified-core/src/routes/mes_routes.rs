@@ -30,5 +30,8 @@ pub fn mes_routes() -> Router<AppState> {
         // WIP 统计
         .route("/api/mes/wip/statistics", get(wip_statistics))
         // 质量检测
-        .route("/api/mes/quality-inspections", get(list_quality_inspections))
+        .route(
+            "/api/mes/quality-inspections",
+            get(list_quality_inspections),
+        )
 }

@@ -225,11 +225,13 @@ async fn list_returns(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -319,11 +321,13 @@ async fn create_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let now = Utc::now();
     let id = Uuid::new_v4();
     let operator_id = extract_operator_id(&claims);
@@ -437,11 +441,13 @@ async fn get_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -487,11 +493,13 @@ async fn update_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, Return>(
         r#"
@@ -628,11 +636,13 @@ async fn delete_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     // 先查询退换单状态
     let existing = sqlx::query_as::<_, Return>(
@@ -742,11 +752,13 @@ async fn approve_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -842,11 +854,13 @@ async fn reject_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -942,11 +956,13 @@ async fn receive_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1050,11 +1066,13 @@ async fn complete_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1201,7 +1219,9 @@ async fn complete_return(
             }
 
             // 财务对账：退换货完成时同步到 erp.fin_reconciliations
-            if let Err(e) = sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await {
+            if let Err(e) =
+                sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
+            {
                 tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
             }
 
@@ -1240,11 +1260,13 @@ async fn cancel_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -1335,11 +1357,13 @@ async fn list_return_items(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, ReturnItem>(
         r#"
@@ -1390,11 +1414,13 @@ async fn add_return_item(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     // 校验退换单存在
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -1546,7 +1572,10 @@ pub async fn sync_return_to_finance(
             }
         ]
     });
-    match erp_client.create_voucher(&voucher_payload, Some(locale)).await {
+    match erp_client
+        .create_voucher(&voucher_payload, Some(locale))
+        .await
+    {
         Ok(_) => {
             tracing::debug!(
                 "退换货 {} 已生成退款凭证（voucher_no={}）",
@@ -1742,11 +1771,13 @@ async fn get_return_finance_status(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     // 校验退换单存在且属于租户
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -1825,11 +1856,13 @@ async fn get_return_inventory_status(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     // 校验退换单存在且属于租户
     let exists: Option<Uuid> = sqlx::query_scalar(
@@ -1916,11 +1949,13 @@ async fn accept_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2012,11 +2047,13 @@ async fn process_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2114,11 +2151,13 @@ async fn resolve_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 
@@ -2226,11 +2265,13 @@ async fn confirm_return(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let operator_id = extract_operator_id(&claims);
     let now = Utc::now();
 

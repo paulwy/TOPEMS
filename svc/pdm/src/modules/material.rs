@@ -23,7 +23,11 @@ fn materials_list_cache_key(
     format!(
         "pdm:material:list:{}:page:{}:pagesize:{}:search:{:?}:status:{:?}:locale:{}",
         tenant_id.map_or("all".to_string(), |t| t.to_string()),
-        page, page_size, search, status, locale
+        page,
+        page_size,
+        search,
+        status,
+        locale
     )
 }
 
@@ -93,7 +97,13 @@ pub async fn list_materials(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -102,8 +112,14 @@ pub async fn list_materials(
     let locale = Locale::from_headers(&headers).as_sql();
 
     // 构建缓存 Key 并检查缓存
-    let cache_key =
-        materials_list_cache_key(&tenant_id, page, page_size, &query.search, &query.status, locale);
+    let cache_key = materials_list_cache_key(
+        &tenant_id,
+        page,
+        page_size,
+        &query.search,
+        &query.status,
+        locale,
+    );
     if let Some(cached) = state.dict_cache.get(&cache_key).await {
         record_cache_hit("pdm", "material", "list");
         tracing::debug!(
@@ -208,11 +224,13 @@ pub async fn create_material(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.material_no.is_empty() {
         return Json(ApiResponse::error(400, "物料编号不能为空"));
@@ -353,7 +371,13 @@ pub async fn get_material(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let locale = Locale::from_headers(&headers).as_sql();
@@ -403,11 +427,13 @@ pub async fn update_material(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, Material>(
         r#"
@@ -532,11 +558,13 @@ pub async fn delete_material(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result =
         sqlx::query("UPDATE pdm_materials SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -625,13 +653,16 @@ mod tests {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
         let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -647,13 +678,16 @@ mod tests {
             "550e8400-e29b-41d4-a716-446655440010".parse().unwrap(),
         );
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(
             tid,
             Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
@@ -665,13 +699,16 @@ mod tests {
         let claims = make_claims(None);
         let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(tid.get_version(), Some(uuid::Version::Nil));
     }
 
@@ -684,13 +721,16 @@ mod tests {
             "550e8400-e29b-41d4-a716-446655440011".parse().unwrap(),
         );
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(
             tid,
             Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()

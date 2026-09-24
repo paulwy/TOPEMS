@@ -111,7 +111,10 @@ mod tests {
     #[test]
     fn parses_accept_language_en() {
         let mut h = HeaderMap::new();
-        h.insert("accept-language", "en-US,en;q=0.9,zh;q=0.8".parse().unwrap());
+        h.insert(
+            "accept-language",
+            "en-US,en;q=0.9,zh;q=0.8".parse().unwrap(),
+        );
         assert_eq!(Locale::from_headers(&h), Locale::En);
     }
 

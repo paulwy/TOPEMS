@@ -43,9 +43,11 @@ pub async fn list_users(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let total_result = if claims.is_superuser {
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL")
-            .fetch_one(&state.pool)
-            .await
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL",
+        )
+        .fetch_one(&state.pool)
+        .await
     } else {
         sqlx::query_scalar::<_, i64>(
             "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
@@ -733,10 +735,11 @@ pub async fn delete_user(
         );
     }
 
-    let delete_result = sqlx::query("UPDATE public.core_users SET deleted_at = NOW() WHERE id = $1")
-        .bind(user_id)
-        .execute(&state.pool)
-        .await;
+    let delete_result =
+        sqlx::query("UPDATE public.core_users SET deleted_at = NOW() WHERE id = $1")
+            .bind(user_id)
+            .execute(&state.pool)
+            .await;
 
     match delete_result {
         Ok(_) => {

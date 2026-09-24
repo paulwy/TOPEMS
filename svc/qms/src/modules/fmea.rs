@@ -19,10 +19,13 @@ pub async fn list_fmea_analyses(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaQuery>,
 ) -> Json<ApiResponse<Vec<FmeaAnalysis>>> {
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
@@ -93,10 +96,13 @@ pub async fn get_fmea_analysis(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<FmeaAnalysis>> {
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
@@ -181,10 +187,13 @@ pub async fn list_fmea_items(
     headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<FmeaItemQuery>,
 ) -> Json<ApiResponse<Vec<FmeaItem>>> {
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let fmea_id = match query.fmea_id.as_ref() {
@@ -250,10 +259,13 @@ pub async fn get_fmea_item(
     headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<FmeaItem>> {
-        let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
@@ -354,7 +366,10 @@ pub async fn get_fmea_statistics(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {

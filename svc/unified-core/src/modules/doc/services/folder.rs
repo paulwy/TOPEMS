@@ -21,7 +21,11 @@ impl FolderService {
         .await
     }
 
-    pub async fn get_folder(&self, tenant_id: Option<Uuid>, folder_id: Uuid) -> Result<Option<Folder>> {
+    pub async fn get_folder(
+        &self,
+        tenant_id: Option<Uuid>,
+        folder_id: Uuid,
+    ) -> Result<Option<Folder>> {
         sqlx::query_as::<_, Folder>(
             r#"SELECT id, tenant_id, name, description, parent_id, created_by, created_at, updated_at, deleted_at FROM core_doc_folders WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
         )

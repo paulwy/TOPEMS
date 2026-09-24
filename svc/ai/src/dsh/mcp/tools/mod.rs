@@ -143,8 +143,7 @@ impl ToolRegistry {
         F: Fn(Value) -> Fut + Send + Sync + 'static,
         Fut: Future<Output = Result<McpToolResult, ToolExecutionError>> + Send + 'static,
     {
-        let async_handler: AsyncToolHandler =
-            Arc::new(move |args| Box::pin(handler(args)));
+        let async_handler: AsyncToolHandler = Arc::new(move |args| Box::pin(handler(args)));
         // 同步 handler 占位（不会被调用，因为 async_handler 优先）
         let sync_handler: ToolHandler = Arc::new(|_| {
             Err(ToolExecutionError::Execution(

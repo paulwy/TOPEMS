@@ -140,10 +140,10 @@ async fn stream_publish_schema_validation_smoke() {
 #[ignore = "requires Redis"]
 async fn stream_publish_deprecated_version_smoke() {
     use std::sync::Arc;
-    use topems_shared_event::event::EventError;
     use topems_shared_event::event::versioning::{
         EventVersion, EventVersionEntry, EventVersionRegistry,
     };
+    use topems_shared_event::event::EventError;
 
     let event_type = EventType::StockAdjusted;
     let versions = Arc::new(EventVersionRegistry::new());

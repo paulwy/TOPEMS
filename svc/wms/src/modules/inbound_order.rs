@@ -551,11 +551,11 @@ pub async fn update_inbound_order(
                 }
             }
             (
-            Json(ApiResponse::success(order.clone(), "入库订单更新成功")),
-            "success",
-            None,
+                Json(ApiResponse::success(order.clone(), "入库订单更新成功")),
+                "success",
+                None,
             )
-        },
+        }
         Err(e) => {
             tracing::error!("更新入库订单失败: {}", e);
             (
@@ -804,7 +804,13 @@ pub async fn create_inbound_order_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or(Uuid::nil()),
+    )
     .fetch_one(&mut **txn)
     .await;
 
@@ -1092,11 +1098,11 @@ pub async fn confirm_inbound_order(
                 }
             }
             (
-            Json(ApiResponse::success(order.clone(), "入库订单确认成功")),
-            "success",
-            None,
+                Json(ApiResponse::success(order.clone(), "入库订单确认成功")),
+                "success",
+                None,
             )
-        },
+        }
         Err(e) => {
             tracing::error!("确认入库订单失败: {}", e);
             (
@@ -1163,7 +1169,11 @@ pub async fn receive_inbound_order(
     }
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
@@ -1470,11 +1480,11 @@ pub async fn complete_inbound_order(
                 }
             }
             (
-            Json(ApiResponse::success(order.clone(), "入库订单完成")),
-            "success",
-            None,
+                Json(ApiResponse::success(order.clone(), "入库订单完成")),
+                "success",
+                None,
             )
-        },
+        }
         Err(e) => {
             tracing::error!("完成入库订单失败: {}", e);
             (

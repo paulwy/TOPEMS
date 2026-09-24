@@ -97,22 +97,46 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
             "erp.create_purchase_order",
             "创建采购订单。需提供供应商ID和采购明细（物料ID、数量、单价）。",
             SchemaBuilder::object()
-                .property("supplier_id", SchemaBuilder::string().description("供应商ID"))
-                .property("items", SchemaBuilder::array().description("采购明细列表，每项含 material_id/quantity/unit_price").items(SchemaBuilder::object()
-                    .property("material_id", SchemaBuilder::string().description("物料ID"))
-                    .property("quantity", SchemaBuilder::integer().description("数量").minimum(1.0))
-                    .property("unit_price", SchemaBuilder::number().description("单价"))
-                    .required(&["material_id", "quantity", "unit_price"])
-                    ))
-                .property("expected_date", SchemaBuilder::string().description("期望交货日期（YYYY-MM-DD）"))
+                .property(
+                    "supplier_id",
+                    SchemaBuilder::string().description("供应商ID"),
+                )
+                .property(
+                    "items",
+                    SchemaBuilder::array()
+                        .description("采购明细列表，每项含 material_id/quantity/unit_price")
+                        .items(
+                            SchemaBuilder::object()
+                                .property(
+                                    "material_id",
+                                    SchemaBuilder::string().description("物料ID"),
+                                )
+                                .property(
+                                    "quantity",
+                                    SchemaBuilder::integer().description("数量").minimum(1.0),
+                                )
+                                .property("unit_price", SchemaBuilder::number().description("单价"))
+                                .required(&["material_id", "quantity", "unit_price"]),
+                        ),
+                )
+                .property(
+                    "expected_date",
+                    SchemaBuilder::string().description("期望交货日期（YYYY-MM-DD）"),
+                )
                 .property("remark", SchemaBuilder::string().description("备注"))
                 .required(&["supplier_id", "items"])
                 .build(),
             move |params| async move {
-                let supplier_id = params["supplier_id"].as_str()
-                    .ok_or_else(|| ToolExecutionError::Validation("supplier_id 不能为空".to_string()))?.to_string();
-                let items = params["items"].as_array()
-                    .ok_or_else(|| ToolExecutionError::Validation("items 必须是数组".to_string()))?.clone();
+                let supplier_id = params["supplier_id"]
+                    .as_str()
+                    .ok_or_else(|| {
+                        ToolExecutionError::Validation("supplier_id 不能为空".to_string())
+                    })?
+                    .to_string();
+                let items = params["items"]
+                    .as_array()
+                    .ok_or_else(|| ToolExecutionError::Validation("items 必须是数组".to_string()))?
+                    .clone();
                 if items.is_empty() {
                     return Err(ToolExecutionError::Validation("items 不能为空".to_string()));
                 }
@@ -126,13 +150,25 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                     "remark": remark,
                 });
 
-                let result = match erp_client(jwt_secret)?.create_purchase_order(&payload).await {
-                    Ok(order) => json!({ "success": true, "purchase_order": order, "source": "real_api" }),
+                let result = match erp_client(jwt_secret)?
+                    .create_purchase_order(&payload)
+                    .await
+                {
+                    Ok(order) => {
+                        json!({ "success": true, "purchase_order": order, "source": "real_api" })
+                    }
                     Err(e) => {
-                        tracing::warn!("ERP create_purchase_order API 调用失败（降级 mock）: {}", e);
-                        let total: f64 = items.iter().map(|it| {
-                            it["quantity"].as_f64().unwrap_or(0.0) * it["unit_price"].as_f64().unwrap_or(0.0)
-                        }).sum();
+                        tracing::warn!(
+                            "ERP create_purchase_order API 调用失败（降级 mock）: {}",
+                            e
+                        );
+                        let total: f64 = items
+                            .iter()
+                            .map(|it| {
+                                it["quantity"].as_f64().unwrap_or(0.0)
+                                    * it["unit_price"].as_f64().unwrap_or(0.0)
+                            })
+                            .sum();
                         json!({
                             "success": true,
                             "purchase_order": {
@@ -148,7 +184,10 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                         })
                     }
                 };
-                Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None })
+                Ok(McpToolResult {
+                    content: vec![McpContent::text(result.to_string())],
+                    is_error: None,
+                })
             },
         )
         .await;
@@ -264,7 +303,8 @@ mod tests {
     async fn test_list_sales_orders_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_erp_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
+        let result = server
+            .tool_registry()
             .call_tool("erp.list_sales_orders", json!({"page": 1, "page_size": 10}))
             .await;
         assert!(result.is_ok(), "list_sales_orders 应返回 Ok: {:?}", result);
@@ -274,33 +314,54 @@ mod tests {
     async fn test_get_inventory_summary_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_erp_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
+        let result = server
+            .tool_registry()
             .call_tool("erp.get_inventory_summary", json!({}))
             .await;
-        assert!(result.is_ok(), "get_inventory_summary 应返回 Ok: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "get_inventory_summary 应返回 Ok: {:?}",
+            result
+        );
     }
 
     #[tokio::test]
     async fn test_get_sales_order_detail_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_erp_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
-            .call_tool("erp.get_sales_order_detail", json!({"order_id": "ORD-00000001"}))
+        let result = server
+            .tool_registry()
+            .call_tool(
+                "erp.get_sales_order_detail",
+                json!({"order_id": "ORD-00000001"}),
+            )
             .await;
-        assert!(result.is_ok(), "get_sales_order_detail 应返回 Ok: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "get_sales_order_detail 应返回 Ok: {:?}",
+            result
+        );
     }
 
     #[tokio::test]
     async fn test_create_purchase_order_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_erp_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
-            .call_tool("erp.create_purchase_order", json!({
-                "supplier_id": "SUP-001",
-                "items": [{"material_id": "MAT-001", "quantity": 10, "unit_price": 100.0}]
-            }))
+        let result = server
+            .tool_registry()
+            .call_tool(
+                "erp.create_purchase_order",
+                json!({
+                    "supplier_id": "SUP-001",
+                    "items": [{"material_id": "MAT-001", "quantity": 10, "unit_price": 100.0}]
+                }),
+            )
             .await;
-        assert!(result.is_ok(), "create_purchase_order 应返回 Ok: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "create_purchase_order 应返回 Ok: {:?}",
+            result
+        );
     }
 
     #[test]

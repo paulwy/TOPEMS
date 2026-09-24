@@ -1144,11 +1144,13 @@ pub async fn reset_password(
     };
 
     // 更新密码
-    match sqlx::query("UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
-        .bind(&password_hash)
-        .bind(user_id)
-        .execute(&mut *tx)
-        .await
+    match sqlx::query(
+        "UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+    )
+    .bind(&password_hash)
+    .bind(user_id)
+    .execute(&mut *tx)
+    .await
     {
         Ok(_) => {}
         Err(e) => {

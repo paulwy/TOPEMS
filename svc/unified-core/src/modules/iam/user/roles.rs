@@ -485,11 +485,12 @@ pub async fn remove_user_role(
         }
     };
 
-    let result = sqlx::query("DELETE FROM public.core_user_roles WHERE user_id = $1 AND role_id = $2")
-        .bind(user_uuid)
-        .bind(role_uuid)
-        .execute(&state.pool)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM public.core_user_roles WHERE user_id = $1 AND role_id = $2")
+            .bind(user_uuid)
+            .bind(role_uuid)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(r) => {

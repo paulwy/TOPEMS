@@ -5,8 +5,8 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -514,7 +514,10 @@ pub async fn update_method(
         Ok(r) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&Some(ctx.tenant_id), &id.to_string()))
+                .remove(&test_method_cache_key(
+                    &Some(ctx.tenant_id),
+                    &id.to_string(),
+                ))
                 .await;
             Json(ApiResponse::success(
                 TestMethod {
@@ -574,7 +577,10 @@ pub async fn delete_method(
         Ok(_) => {
             state
                 .test_method_cache
-                .remove(&test_method_cache_key(&Some(ctx.tenant_id), &id.to_string()))
+                .remove(&test_method_cache_key(
+                    &Some(ctx.tenant_id),
+                    &id.to_string(),
+                ))
                 .await;
             Json(ApiResponse::success(true, "检测方法删除成功"))
         }

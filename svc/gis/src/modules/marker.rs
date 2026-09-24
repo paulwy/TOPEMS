@@ -34,7 +34,10 @@ pub async fn list_map_markers(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "SELECT id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
@@ -99,7 +102,10 @@ pub async fn get_map_marker(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, MapMarker>(only_own_schema_query!("gis", "SELECT id, tenant_id, marker_type, name, marker_style, position, icon_svg, color, size, popup_content, click_action, action_data, visible, z_index, created_at, updated_at FROM gis.map_markers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
         .bind(id)
@@ -180,7 +186,10 @@ pub async fn delete_map_marker(
                 Json(ApiResponse::error(404, "地图标记未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }
 

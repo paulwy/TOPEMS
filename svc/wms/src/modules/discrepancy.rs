@@ -572,7 +572,11 @@ pub async fn process_stock_take_discrepancies(
     }
 
     let now = Utc::now();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     // 获取盘点单已完成的所有盘点明细
     let items = sqlx::query!(

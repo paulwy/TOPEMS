@@ -146,7 +146,9 @@ pub fn create_routes(
                 //      topems_service_to_service_calls_total / degraded、进程指标等）；
                 //   2) metric_handle.render()（pair() layer registry）——axum HTTP 请求指标。
                 let mut out = String::new();
-                if let Err(e) = prometheus::TextEncoder::new().encode_utf8(&prometheus::gather(), &mut out) {
+                if let Err(e) =
+                    prometheus::TextEncoder::new().encode_utf8(&prometheus::gather(), &mut out)
+                {
                     return format!("Error encoding default metrics: {}", e);
                 }
                 let layer_s = metric_handle.render();

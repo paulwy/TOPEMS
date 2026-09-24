@@ -1479,7 +1479,8 @@ impl TaxPlanner {
             return Ok(0.0);
         }
 
-        let brackets = TaxRateCalculator::get_brackets_impl(pool, Some(tenant_id), "pit", "CN").await?;
+        let brackets =
+            TaxRateCalculator::get_brackets_impl(pool, Some(tenant_id), "pit", "CN").await?;
         let (tax, _) = TaxRateCalculator::apply_progressive_brackets(income, &brackets);
         Ok(tax)
     }
@@ -1586,7 +1587,11 @@ async fn get_tax_forms_handler(
     Query(params): Query<TaxFormsQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxForm>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutoTaxFiler::get_forms(&pool, tenant_id, params.form_type, params.status).await {
         Ok(forms) => Json(ApiResponse::success(forms, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1609,7 +1614,11 @@ async fn get_tax_form_by_id_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TaxFormWithLines>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutoTaxFiler::get_form_by_id(&pool, tenant_id, id).await {
         Ok(form) => Json(ApiResponse::success(form, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1687,7 +1696,11 @@ async fn get_tax_summary_handler(
     Query(params): Query<TaxSummaryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutoTaxFiler::get_tax_summary(&pool, tenant_id, params.year).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1807,7 +1820,11 @@ async fn get_rate_schedule_handler(
     Query(params): Query<RateScheduleQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxRate>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match TaxRateCalculator::get_rate_schedule(
         &pool,
         tenant_id,
@@ -1837,7 +1854,11 @@ async fn lookup_rate_handler(
     Query(params): Query<LookupRateParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let tax_type = params.tax_type.unwrap_or_else(|| "vat".to_string());
     match TaxRateCalculator::lookup_rate(
         &pool,
@@ -1872,7 +1893,11 @@ async fn get_tax_breakdown_handler(
     Query(params): Query<BreakdownParams>,
 ) -> Json<ApiResponse<Vec<TaxBreakdown>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match TaxRateCalculator::get_tax_breakdown(
         &pool,
         tenant_id,
@@ -2002,7 +2027,11 @@ async fn get_suggestions_handler(
     Query(params): Query<SuggestionsQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxSuggestion>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let plan_id = match params.plan_id {
         Some(id) => id,
         None => return Json(ApiResponse::error(400, "plan_id 参数必填")),
@@ -2052,7 +2081,11 @@ async fn list_plans_handler(
     Query(params): Query<PlansQueryParams>,
 ) -> Json<ApiResponse<Vec<TaxPlan>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match TaxPlanner::list_plans(&pool, tenant_id, params.status).await {
         Ok(plans) => Json(ApiResponse::success(plans, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2105,7 +2138,11 @@ async fn get_compliance_handler(
     Query(params): Query<ComplianceQueryParams>,
 ) -> Json<ApiResponse<ComplianceCheckResult>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match TaxPlanner::get_compliance_check(&pool, tenant_id, params.entity).await {
         Ok(result) => Json(ApiResponse::success(result, "合规检查完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

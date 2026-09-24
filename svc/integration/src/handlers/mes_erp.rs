@@ -49,7 +49,10 @@ pub async fn list_mes_erp_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔ERP syncs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch MES↔ERP syncs", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch MES↔ERP syncs",
+                e,
+            )))
         }
     }
 }
@@ -109,7 +112,10 @@ pub async fn create_mes_erp_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to create MES↔ERP sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to create MES↔ERP sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to create MES↔ERP sync",
+                e,
+            )))
         }
     }
 }
@@ -145,7 +151,10 @@ pub async fn get_mes_erp_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch sync",
+                e,
+            )))
         }
     }
 }
@@ -191,7 +200,10 @@ pub async fn sync_mes_erp(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("Failed to update sync", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "Failed to update sync",
+                e,
+            )));
         }
     };
 
@@ -235,7 +247,10 @@ pub async fn sync_erp_order_to_mes(
         Ok(result) => Json(ApiResponse::success(result, "ERP→MES 同步成功")),
         Err(e) => {
             tracing::error!("ERP→MES sync failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("ERP→MES 同步失败", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "ERP→MES 同步失败",
+                e,
+            )))
         }
     }
 }
@@ -274,7 +289,10 @@ pub async fn sync_mes_progress_to_erp(
         Ok(result) => Json(ApiResponse::success(result, "MES→ERP 进度同步成功")),
         Err(e) => {
             tracing::error!("MES→ERP progress sync failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("MES→ERP 进度同步失败", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "MES→ERP 进度同步失败",
+                e,
+            )))
         }
     }
 }
@@ -300,7 +318,10 @@ pub async fn retry_mes_erp_sync(
         Ok(result) => Json(ApiResponse::success(result, "MES↔ERP 同步重试成功")),
         Err(e) => {
             tracing::error!("MES↔ERP sync retry failed: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("MES↔ERP 同步重试失败", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "MES↔ERP 同步重试失败",
+                e,
+            )))
         }
     }
 }
@@ -326,7 +347,10 @@ pub async fn get_mes_erp_sync_logs(
         Ok(logs) => Json(ApiResponse::success(logs, "同步日志获取成功")),
         Err(e) => {
             tracing::error!("Failed to fetch sync logs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("获取同步日志失败", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取同步日志失败",
+                e,
+            )))
         }
     }
 }
@@ -363,7 +387,10 @@ pub async fn list_mes_erp_sync_records(
         Ok(records) => Json(ApiResponse::success(records, "同步记录获取成功")),
         Err(e) => {
             tracing::error!("Failed to fetch sync records: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("获取同步记录失败", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取同步记录失败",
+                e,
+            )))
         }
     }
 }

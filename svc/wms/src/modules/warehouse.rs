@@ -155,7 +155,10 @@ pub async fn list_warehouses(
                 "page_size": page_size
             });
 
-            state.warehouse_cache.set(cache_key, response_data.clone()).await;
+            state
+                .warehouse_cache
+                .set(cache_key, response_data.clone())
+                .await;
 
             Json(ApiResponse::success(response_data, "获取仓库列表成功"))
         }
@@ -307,7 +310,11 @@ pub async fn get_warehouse(
     } else {
         Some(get_tenant_id(&claims, &headers))
     };
-    let cache_key = warehouse_cache_key(&tenant_id, id, Some(Locale::from_headers(&headers).as_sql()));
+    let cache_key = warehouse_cache_key(
+        &tenant_id,
+        id,
+        Some(Locale::from_headers(&headers).as_sql()),
+    );
 
     if let Some(cached) = state.warehouse_cache.get(&cache_key).await {
         tracing::debug!("📋 仓库缓存命中: {}", cache_key);

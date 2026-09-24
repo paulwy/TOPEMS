@@ -373,7 +373,10 @@ async fn main() -> Result<()> {
         use topems_server::modules::search_real_module::SearchRealModule;
         match SearchRealModule::build().await {
             Ok(real_search) => {
-                registry.lock().unwrap().register_boxed(Box::new(real_search));
+                registry
+                    .lock()
+                    .unwrap()
+                    .register_boxed(Box::new(real_search));
                 tracing::info!("✅ 真实 search 服务已注册（search-real，含数据库/全文搜索路由）");
             }
             Err(e) => {
@@ -388,7 +391,10 @@ async fn main() -> Result<()> {
         use topems_server::modules::monitor_real_module::MonitorRealModule;
         match MonitorRealModule::build().await {
             Ok(real_monitor) => {
-                registry.lock().unwrap().register_boxed(Box::new(real_monitor));
+                registry
+                    .lock()
+                    .unwrap()
+                    .register_boxed(Box::new(real_monitor));
                 tracing::info!("✅ 真实 monitor 服务已注册（monitor-real，含数据库/监控告警路由）");
             }
             Err(e) => {
@@ -419,7 +425,9 @@ async fn main() -> Result<()> {
         match IntegrationRealModule::build().await {
             Ok(real_intg) => {
                 registry.lock().unwrap().register_boxed(Box::new(real_intg));
-                tracing::info!("✅ 真实 integration 服务已注册（integration-real，含数据库/系统集成路由）");
+                tracing::info!(
+                    "✅ 真实 integration 服务已注册（integration-real，含数据库/系统集成路由）"
+                );
             }
             Err(e) => {
                 tracing::error!("⚠️ 真实 integration 服务构建失败（降级运行）: {:#}", e);
@@ -433,7 +441,10 @@ async fn main() -> Result<()> {
         use topems_server::modules::mobile_real_module::MobileRealModule;
         match MobileRealModule::build().await {
             Ok(real_mobile) => {
-                registry.lock().unwrap().register_boxed(Box::new(real_mobile));
+                registry
+                    .lock()
+                    .unwrap()
+                    .register_boxed(Box::new(real_mobile));
                 tracing::info!("✅ 真实 mobile 服务已注册（mobile-real，含数据库/移动端路由）");
             }
             Err(e) => {
@@ -450,9 +461,7 @@ async fn main() -> Result<()> {
         match AiRealModule::build().await {
             Ok(real_ai) => {
                 registry.lock().unwrap().register_boxed(Box::new(real_ai));
-                tracing::info!(
-                    "✅ 真实 ai 服务已注册（ai-real，含知识库/QA/Analysis/Agent 路由）"
-                );
+                tracing::info!("✅ 真实 ai 服务已注册（ai-real，含知识库/QA/Analysis/Agent 路由）");
             }
             Err(e) => {
                 tracing::error!("⚠️ 真实 ai 服务构建失败（降级运行）: {:#}", e);

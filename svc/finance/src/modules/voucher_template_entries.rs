@@ -65,7 +65,11 @@ pub async fn list_entries(
 ) -> Json<ApiResponse<Vec<VoucherTemplateLine>>> {
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let tenant_id_opt: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
+    let tenant_id_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
     match service.get_voucher_template(tenant_id, template_id).await {
         Ok(_) => {
             let lines: Vec<VoucherTemplateLine> = sqlx::query_as(
@@ -97,7 +101,11 @@ pub async fn get_entry(
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<VoucherTemplateLine>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let line: Option<VoucherTemplateLine> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT l.id, l.template_id, l.description, l.account_code, l.direction, l.amount_formula, l.sort_order, l.created_at FROM finance_voucher_template_lines l JOIN finance_voucher_templates t ON l.template_id = t.id WHERE ($1::uuid IS NULL OR t.tenant_id = $1) AND l.template_id = $2 AND l.id = $3"),
     )

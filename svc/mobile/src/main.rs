@@ -81,8 +81,14 @@ async fn main() -> Result<()> {
 
     // 6 个服务客户端初始化（统一服务间认证：service token，最小权限 + 短时效）
     let jwt_secret = ctx.auth_state.jwt_secret.clone();
-    let (wms_client, hrm_client, workflow_client, notification_client, mes_api_client, qms_api_client) =
-        crate::shared::build_service_clients(&jwt_secret).await;
+    let (
+        wms_client,
+        hrm_client,
+        workflow_client,
+        notification_client,
+        mes_api_client,
+        qms_api_client,
+    ) = crate::shared::build_service_clients(&jwt_secret).await;
     let app_state = AppState {
         auth_state: ctx.auth_state.clone(),
         pool: ctx.db.clone(),

@@ -135,7 +135,10 @@ pub async fn list_spc_charts(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
@@ -205,7 +208,10 @@ pub async fn get_spc_chart(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
@@ -293,7 +299,10 @@ pub async fn get_spc_data_points(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&query.chart_id) {
@@ -328,7 +337,10 @@ pub async fn add_spc_data_point(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&req.chart_id) {

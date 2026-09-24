@@ -265,11 +265,11 @@ pub async fn create_stock_take(
                 }
             }
             (
-            Json(ApiResponse::success(stock_take.clone(), "盘点创建成功")),
-            "success",
-            None,
+                Json(ApiResponse::success(stock_take.clone(), "盘点创建成功")),
+                "success",
+                None,
             )
-        },
+        }
         Err(e) => {
             tracing::error!("创建盘点失败: {}", e);
             (

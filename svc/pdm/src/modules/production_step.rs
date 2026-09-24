@@ -78,7 +78,13 @@ pub async fn list_steps(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -151,11 +157,13 @@ pub async fn create_step(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "工步名称不能为空"));
@@ -211,7 +219,13 @@ pub async fn get_step(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let result = sqlx::query_as::<_, ProductionStep>(
@@ -257,11 +271,13 @@ pub async fn update_step(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
@@ -321,11 +337,13 @@ pub async fn delete_step(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query(
         "UPDATE pdm_production_steps SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2",

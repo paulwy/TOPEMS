@@ -159,11 +159,7 @@ fn resolve_claims(req: &mut Request<Body>, jwt_secret: &str) -> Option<Claims> {
         return Some(claims.clone());
     }
 
-    let auth = req
-        .headers()
-        .get(header::AUTHORIZATION)?
-        .to_str()
-        .ok()?;
+    let auth = req.headers().get(header::AUTHORIZATION)?.to_str().ok()?;
     let token = auth.strip_prefix("Bearer ")?;
     let claims = verify_jwt_token(token, jwt_secret).ok()?;
     req.extensions_mut().insert(claims.clone());
@@ -237,7 +233,11 @@ pub async fn tenant_rls_middleware(
 
             req.extensions_mut().insert(TenantId(tenant_id.clone()));
 
-            tracing::debug!("RLS policy set for tenant: {} (rls: {})", tenant_id, tenant_id);
+            tracing::debug!(
+                "RLS policy set for tenant: {} (rls: {})",
+                tenant_id,
+                tenant_id
+            );
 
             next.run(req).await
         }

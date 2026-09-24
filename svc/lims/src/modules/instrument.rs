@@ -11,8 +11,8 @@ use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
-use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -138,7 +138,11 @@ pub async fn list_instruments(
                 .bind(locale);
         }
         (Some(st), None) => {
-            query_builder = query_builder.bind(st).bind(page_size).bind(offset).bind(locale);
+            query_builder = query_builder
+                .bind(st)
+                .bind(page_size)
+                .bind(offset)
+                .bind(locale);
         }
         (None, Some(nm)) => {
             query_builder = query_builder

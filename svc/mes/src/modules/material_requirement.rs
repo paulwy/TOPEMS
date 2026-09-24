@@ -371,7 +371,8 @@ pub async fn create_material_requirement(
     let required_quantity =
         BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
 
-    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
+    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S")
+        .map(|dt| dt)
         .ok()
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
@@ -475,7 +476,8 @@ pub async fn update_material_requirement(
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let required_date = body.required_date.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -675,7 +677,9 @@ pub async fn calculate_requirements(
                     item.specification,
                     Some(item.unit),
                     required_quantity_bd,
-                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").map(|dt| dt).ok(),
+                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S")
+                        .map(|dt| dt)
+                        .ok(),
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),

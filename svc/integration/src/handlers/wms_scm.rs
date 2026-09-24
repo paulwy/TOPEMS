@@ -35,7 +35,10 @@ pub async fn list_wms_scm_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch WMS↔SCM syncs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch WMS↔SCM syncs", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch WMS↔SCM syncs",
+                e,
+            )))
         }
     }
 }
@@ -95,7 +98,10 @@ pub async fn create_wms_scm_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to create WMS↔SCM sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to create WMS↔SCM sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to create WMS↔SCM sync",
+                e,
+            )))
         }
     }
 }
@@ -131,7 +137,10 @@ pub async fn get_wms_scm_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch sync",
+                e,
+            )))
         }
     }
 }
@@ -177,7 +186,10 @@ pub async fn sync_wms_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("Failed to update sync", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "Failed to update sync",
+                e,
+            )));
         }
     };
 

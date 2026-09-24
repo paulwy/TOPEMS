@@ -36,7 +36,10 @@ pub async fn list_lims_qms_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch LIMS↔QMS syncs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch LIMS↔QMS syncs", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch LIMS↔QMS syncs",
+                e,
+            )))
         }
     }
 }
@@ -97,7 +100,10 @@ pub async fn create_lims_qms_sync(
         )),
         Err(e) => {
             tracing::error!("Failed to create LIMS↔QMS sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to create LIMS↔QMS sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to create LIMS↔QMS sync",
+                e,
+            )))
         }
     }
 }
@@ -134,7 +140,10 @@ pub async fn get_lims_qms_sync(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch sync",
+                e,
+            )))
         }
     }
 }
@@ -174,7 +183,10 @@ pub async fn sync_lims_qms(
         Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch sync: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("Failed to fetch sync", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch sync",
+                e,
+            )));
         }
     };
 
@@ -201,7 +213,10 @@ pub async fn sync_lims_qms(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
-            return Json(ApiResponse::from(TopemsError::internal("Failed to update sync", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "Failed to update sync",
+                e,
+            )));
         }
     };
 

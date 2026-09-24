@@ -1817,4 +1817,3 @@ fn v48_mask_value(value: &serde_json::Value, strategy: MaskStrategyGql) -> serde
         MaskStrategyGql::Custom => serde_json::Value::String("[custom-mask]".into()),
     }
 }
-

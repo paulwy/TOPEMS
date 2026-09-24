@@ -124,7 +124,9 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
             move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
-                    .ok_or_else(|| ToolExecutionError::Validation("customer_id 不能为空".to_string()))?
+                    .ok_or_else(|| {
+                        ToolExecutionError::Validation("customer_id 不能为空".to_string())
+                    })?
                     .to_string();
 
                 let result = match crm_client(jwt_secret)?.get_customer(&customer_id).await {
@@ -134,11 +136,13 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                         let mock = generate_mock_customers("")
                             .into_iter()
                             .find(|c| c["id"].as_str() == Some(customer_id.as_str()))
-                            .unwrap_or_else(|| json!({
-                                "id": customer_id,
-                                "name": "未知客户",
-                                "status": "unknown"
-                            }));
+                            .unwrap_or_else(|| {
+                                json!({
+                                    "id": customer_id,
+                                    "name": "未知客户",
+                                    "status": "unknown"
+                                })
+                            });
                         json!({ "customer": mock, "source": "mock_fallback" })
                     }
                 };
@@ -161,10 +165,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                     "customer_id",
                     SchemaBuilder::string().description("关联客户ID"),
                 )
-                .property(
-                    "name",
-                    SchemaBuilder::string().description("商机名称"),
-                )
+                .property("name", SchemaBuilder::string().description("商机名称"))
                 .property(
                     "amount",
                     SchemaBuilder::number().description("预计金额（元）"),
@@ -180,15 +181,17 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
             move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
-                    .ok_or_else(|| ToolExecutionError::Validation("customer_id 不能为空".to_string()))?
+                    .ok_or_else(|| {
+                        ToolExecutionError::Validation("customer_id 不能为空".to_string())
+                    })?
                     .to_string();
                 let name = params["name"]
                     .as_str()
                     .ok_or_else(|| ToolExecutionError::Validation("name 不能为空".to_string()))?
                     .to_string();
-                let amount = params["amount"]
-                    .as_f64()
-                    .ok_or_else(|| ToolExecutionError::Validation("amount 必须是数字".to_string()))?;
+                let amount = params["amount"].as_f64().ok_or_else(|| {
+                    ToolExecutionError::Validation("amount 必须是数字".to_string())
+                })?;
                 let stage = params["stage"].as_str().unwrap_or("lead").to_string();
 
                 let payload = json!({
@@ -352,7 +355,11 @@ mod tests {
         let result = registry
             .call_tool("crm.list_customers", json!({"page": 1, "page_size": 20}))
             .await;
-        assert!(result.is_ok(), "list_customers 应返回 Ok（mock 降级）: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "list_customers 应返回 Ok（mock 降级）: {:?}",
+            result
+        );
     }
 
     #[tokio::test]
@@ -367,7 +374,11 @@ mod tests {
                 json!({"customer_id": "CUST-0001"}),
             )
             .await;
-        assert!(result.is_ok(), "get_customer_profile 应返回 Ok: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "get_customer_profile 应返回 Ok: {:?}",
+            result
+        );
     }
 
     #[tokio::test]

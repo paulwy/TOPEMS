@@ -796,4 +796,3 @@ impl From<SubscriptionStats> for SubscriptionStatsGql {
         }
     }
 }
-

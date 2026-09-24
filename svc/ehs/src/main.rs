@@ -164,11 +164,8 @@ async fn main() -> anyhow::Result<()> {
             "ehs:training:",
         );
         cache_invalidation_listener.register_handler(training_handler);
-        let dict_handler = AsyncL2CacheInvalidationHandler::new(
-            "ehs_dict_cache",
-            dict_cache.clone(),
-            "ehs:dict:",
-        );
+        let dict_handler =
+            AsyncL2CacheInvalidationHandler::new("ehs_dict_cache", dict_cache.clone(), "ehs:dict:");
         cache_invalidation_listener.register_handler(dict_handler);
         let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
 

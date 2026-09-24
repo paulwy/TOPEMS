@@ -476,12 +476,13 @@ pub async fn change_my_password(
         }
     };
 
-    let result =
-        sqlx::query("UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
-            .bind(hashed_password)
-            .bind(user_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+    )
+    .bind(hashed_password)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {
@@ -568,12 +569,13 @@ pub async fn update_my_avatar(
         }
     };
 
-    let result =
-        sqlx::query("UPDATE public.core_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2")
-            .bind(&avatar_url)
-            .bind(user_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.core_users SET avatar_url = $1, updated_at = NOW() WHERE id = $2",
+    )
+    .bind(&avatar_url)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {

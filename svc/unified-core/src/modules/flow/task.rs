@@ -203,7 +203,14 @@ pub async fn claim_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowTask>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         "UPDATE core_workflow_tasks SET status = 'claimed', claimed_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
@@ -244,7 +251,14 @@ pub async fn unclaim_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowTask>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         "UPDATE core_workflow_tasks SET status = 'pending', claimed_at = NULL WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
@@ -287,7 +301,14 @@ pub async fn approve_task(
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         "UPDATE core_workflow_tasks SET status = 'approved', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
@@ -331,7 +352,14 @@ pub async fn reject_task(
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         "UPDATE core_workflow_tasks SET status = 'rejected', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
@@ -375,7 +403,14 @@ pub async fn complete_task(
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         "UPDATE core_workflow_tasks SET status = 'completed', comment = COALESCE($2, comment), completed_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
@@ -419,7 +454,14 @@ pub async fn delegate_task(
     Path(id): Path<Uuid>,
     Json(payload): Json<TaskActionRequest>,
 ) -> Json<ApiResponse<WorkflowTask>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let task = match sqlx::query_as::<_, WorkflowTask>(
         "UPDATE core_workflow_tasks SET status = 'delegated', comment = COALESCE($2, comment) WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3) RETURNING id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id",
     )
@@ -457,7 +499,14 @@ pub async fn batch_approve(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> Json<ApiResponse<TaskBatchResult>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
 
@@ -523,7 +572,14 @@ pub async fn batch_complete(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> Json<ApiResponse<TaskBatchResult>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
 
@@ -589,7 +645,14 @@ pub async fn batch_delegate(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<TaskBatchRequest>,
 ) -> Json<ApiResponse<TaskBatchResult>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let mut success_count = 0;
     let mut failed_tasks = Vec::new();
 

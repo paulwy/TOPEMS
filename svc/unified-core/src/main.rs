@@ -724,8 +724,8 @@ async fn main() -> anyhow::Result<()> {
         move || {
             // 合并导出两套 registry：gather()（默认 registry 业务指标）+ layer handle（axum 请求指标）
             let mut out = String::new();
-            if let Ok(()) = prometheus::TextEncoder::new()
-                .encode_utf8(&prometheus::gather(), &mut out)
+            if let Ok(()) =
+                prometheus::TextEncoder::new().encode_utf8(&prometheus::gather(), &mut out)
             {
                 // fallthrough
             }
@@ -740,11 +740,11 @@ async fn main() -> anyhow::Result<()> {
         },
         false,
     )
-        .layer(axum::middleware::from_fn(request_context_middleware))
-        .with_telemetry()
-        .layer(cors)
-        .layer(prometheus_layer)
-        .with_state(state);
+    .layer(axum::middleware::from_fn(request_context_middleware))
+    .with_telemetry()
+    .layer(cors)
+    .layer(prometheus_layer)
+    .with_state(state);
 
     let app = Application {
         router: app,

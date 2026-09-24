@@ -77,7 +77,10 @@ pub struct SyncResult {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/sync-records", get(list_sync_records).post(create_sync_record))
+        .route(
+            "/sync-records",
+            get(list_sync_records).post(create_sync_record),
+        )
         .route("/sync-records/{id}", get(get_sync_record))
         .route("/sync-records/{id}/retry", post(retry_sync_record))
         .route("/sync-records/{id}/details", get(list_sync_details))
@@ -201,11 +204,7 @@ pub async fn create_sync_record(
     Json(req): Json<CreateSyncRecordRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let tenant_id = tenant_bind_value(&claims);
-    let sync_no = format!(
-        "SYNC-{}-{:04}",
-        Utc::now().format("%Y%m%d"),
-        rand_no()
-    );
+    let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
     let started = Utc::now();
 
     let result = sqlx::query_as::<_, SyncRecord>(
@@ -371,11 +370,7 @@ async fn trigger_sync(
 ) -> Json<ApiResponse<SyncResult>> {
     let tenant_id = tenant_bind_value(&claims);
     let now = Utc::now();
-    let sync_no = format!(
-        "SYNC-{}-{:04}",
-        Utc::now().format("%Y%m%d"),
-        rand_no()
-    );
+    let sync_no = format!("SYNC-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
 
     let result = sqlx::query_as::<_, (uuid::Uuid,)>(
         r#"
@@ -420,7 +415,14 @@ pub async fn trigger_wms_sync(
     Extension(claims): Extension<Claims>,
     Path(sync_type): Path<String>,
 ) -> Json<ApiResponse<SyncResult>> {
-    trigger_sync(State(state), Extension(claims), Path(sync_type), "scm", "wms").await
+    trigger_sync(
+        State(state),
+        Extension(claims),
+        Path(sync_type),
+        "scm",
+        "wms",
+    )
+    .await
 }
 
 pub async fn trigger_srm_sync(
@@ -428,7 +430,14 @@ pub async fn trigger_srm_sync(
     Extension(claims): Extension<Claims>,
     Path(sync_type): Path<String>,
 ) -> Json<ApiResponse<SyncResult>> {
-    trigger_sync(State(state), Extension(claims), Path(sync_type), "scm", "srm").await
+    trigger_sync(
+        State(state),
+        Extension(claims),
+        Path(sync_type),
+        "scm",
+        "srm",
+    )
+    .await
 }
 
 fn rand_no() -> u32 {

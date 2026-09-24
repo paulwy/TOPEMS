@@ -593,7 +593,11 @@ pub async fn batch_create_locations(
 
     let mut created_locations = Vec::new();
     let now = Utc::now();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     for item in req {
         let id = Uuid::new_v4();

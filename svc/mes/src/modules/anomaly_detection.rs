@@ -909,7 +909,10 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let station_name: Option<String> = row.get("station_name");
 
             let hours_stuck = if let Some(st) = start_time {
-                Utc::now().naive_utc().signed_duration_since(st.naive_utc()).num_hours()
+                Utc::now()
+                    .naive_utc()
+                    .signed_duration_since(st.naive_utc())
+                    .num_hours()
             } else {
                 0
             };

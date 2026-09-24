@@ -1067,7 +1067,11 @@ pub async fn create_approval(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ApprovalTask>> {
     let locale = Locale::from_headers(&headers).as_sql();
-    let create_tenant: Uuid = claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let create_tenant: Uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow_id_str = match payload.get("workflow_id") {
         Some(v) => v.as_str().unwrap_or_default(),
         None => return Json(api_error(400, "缺少workflow_id参数")),

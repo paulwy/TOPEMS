@@ -31,7 +31,10 @@ pub async fn list_business_locations(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
 
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
@@ -86,7 +89,10 @@ pub async fn list_business_locations(
                 "获取业务位置列表成功",
             ))
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库查询失败",
+            e,
+        ))),
     }
 }
 
@@ -135,7 +141,10 @@ pub async fn get_business_location(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
 
     match sqlx::query_as::<_, BusinessLocation>(
@@ -218,7 +227,10 @@ pub async fn delete_business_location(
                 Json(ApiResponse::error(404, "业务位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }
 
@@ -230,7 +242,10 @@ pub async fn list_business_locations_by_type(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
 
     match sqlx::query_as::<_, BusinessLocation>(

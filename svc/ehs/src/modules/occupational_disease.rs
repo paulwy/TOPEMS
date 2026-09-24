@@ -2,10 +2,10 @@
 
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -336,7 +336,7 @@ pub async fn list_hazard_factors(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardFactor>>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -395,13 +395,23 @@ pub async fn list_hazard_factors(
                 factor_type: r.try_get::<String, _>("factor_type").unwrap_or_default(),
                 category: r.try_get::<Option<String>, _>("category").ok().flatten(),
                 description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-                hazard_level: r.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
-                exposure_limit: r.try_get::<Option<String>, _>("exposure_limit").ok().flatten(),
+                hazard_level: r
+                    .try_get::<Option<String>, _>("hazard_level")
+                    .ok()
+                    .flatten(),
+                exposure_limit: r
+                    .try_get::<Option<String>, _>("exposure_limit")
+                    .ok()
+                    .flatten(),
                 unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
                 sources,
                 affected_positions: positions,
                 affected_count: r.try_get::<Option<i32>, _>("affected_count").ok().flatten(),
-                status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+                status: r
+                    .try_get::<Option<String>, _>("status")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "active".to_string()),
                 remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
                 created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
                 updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
@@ -431,11 +441,13 @@ pub async fn create_hazard_factor(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating hazard factor: {:?}", req);
     Json(ApiResponse::success(
         HazardFactor {
@@ -482,7 +494,7 @@ pub async fn get_hazard_factor(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardFactor>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -540,17 +552,39 @@ pub async fn get_hazard_factor(
         name: row.try_get::<String, _>("name").unwrap_or_default(),
         factor_type: row.try_get::<String, _>("factor_type").unwrap_or_default(),
         category: row.try_get::<Option<String>, _>("category").ok().flatten(),
-        description: row.try_get::<Option<String>, _>("description").ok().flatten(),
-        hazard_level: row.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
-        exposure_limit: row.try_get::<Option<String>, _>("exposure_limit").ok().flatten(),
+        description: row
+            .try_get::<Option<String>, _>("description")
+            .ok()
+            .flatten(),
+        hazard_level: row
+            .try_get::<Option<String>, _>("hazard_level")
+            .ok()
+            .flatten(),
+        exposure_limit: row
+            .try_get::<Option<String>, _>("exposure_limit")
+            .ok()
+            .flatten(),
         unit: row.try_get::<Option<String>, _>("unit").ok().flatten(),
         sources,
         affected_positions: positions,
-        affected_count: row.try_get::<Option<i32>, _>("affected_count").ok().flatten(),
-        status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+        affected_count: row
+            .try_get::<Option<i32>, _>("affected_count")
+            .ok()
+            .flatten(),
+        status: row
+            .try_get::<Option<String>, _>("status")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "active".to_string()),
         remarks: row.try_get::<Option<String>, _>("remarks").ok().flatten(),
-        created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten(),
-        updated_at: row.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+        created_at: row
+            .try_get::<Option<String>, _>("created_at")
+            .ok()
+            .flatten(),
+        updated_at: row
+            .try_get::<Option<String>, _>("updated_at")
+            .ok()
+            .flatten(),
         tenant_id: uuid::Uuid::nil(),
     };
 
@@ -579,11 +613,13 @@ pub async fn update_hazard_factor(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating hazard factor {}: {:?}", id, req);
     Json(ApiResponse::success(
         HazardFactor {
@@ -668,11 +704,13 @@ pub async fn create_detection_record(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating detection record: {:?}", req);
     Json(ApiResponse::success(
         DetectionRecord {
@@ -725,11 +763,13 @@ pub async fn get_detection_record(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting detection record: {}", id);
     Json(ApiResponse::success(
         DetectionRecord {
@@ -816,11 +856,13 @@ pub async fn create_disease_case(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating disease case: {:?}", req);
     Json(ApiResponse::success(
         DiseaseCase {
@@ -875,11 +917,13 @@ pub async fn get_disease_case(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting disease case: {}", id);
     Json(ApiResponse::success(
         DiseaseCase {
@@ -933,11 +977,13 @@ pub async fn update_disease_case(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating disease case {}: {:?}", id, req);
     let status = req.status.clone().unwrap_or_else(|| "active".to_string());
     let closed_at = if status == "closed" {
@@ -1033,11 +1079,13 @@ pub async fn create_protection_measure(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating protection measure: {:?}", req);
     Json(ApiResponse::success(
         ProtectionMeasure {
@@ -1086,11 +1134,13 @@ pub async fn get_protection_measure(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting protection measure: {}", id);
     Json(ApiResponse::success(
         ProtectionMeasure {
@@ -1138,11 +1188,13 @@ pub async fn update_protection_measure(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating protection measure {}: {:?}", id, req);
     Json(ApiResponse::success(
         ProtectionMeasure {
@@ -1235,11 +1287,13 @@ pub async fn create_health_training(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating health training: {:?}", req);
     Json(ApiResponse::success(
         HealthTraining {
@@ -1288,11 +1342,13 @@ pub async fn get_health_training(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting health training: {}", id);
     Json(ApiResponse::success(
         HealthTraining {
@@ -1354,11 +1410,13 @@ pub async fn get_disease_statistics(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting disease statistics");
     Json(ApiResponse::success(
         DiseaseStatistics {

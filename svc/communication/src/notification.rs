@@ -1929,10 +1929,12 @@ pub async fn list_channels(
     let tenant_id: Option<String> = if claims.is_superuser {
         None
     } else {
-        Some(claims
-            .tenant_id
-            .clone()
-            .unwrap_or_else(|| "default".to_string()))
+        Some(
+            claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string()),
+        )
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -2006,10 +2008,12 @@ pub async fn get_channel(
     let tenant_id: Option<String> = if claims.is_superuser {
         None
     } else {
-        Some(claims
-            .tenant_id
-            .clone()
-            .unwrap_or_else(|| "default".to_string()))
+        Some(
+            claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string()),
+        )
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, NotificationChannel>(
@@ -2197,10 +2201,12 @@ pub async fn test_channel(
     let tenant_id: Option<String> = if claims.is_superuser {
         None
     } else {
-        Some(claims
-            .tenant_id
-            .clone()
-            .unwrap_or_else(|| "default".to_string()))
+        Some(
+            claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string()),
+        )
     };
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \

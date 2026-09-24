@@ -40,7 +40,10 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
         // ---- 工作流（静态状态机）----
         .route("/workflows", get(get_workflows))
         .route("/workflows/match", get(get_workflow_for_ticket_type))
-        .route("/workflows/automation-rules", get(list_workflow_automation_rules))
+        .route(
+            "/workflows/automation-rules",
+            get(list_workflow_automation_rules),
+        )
         .route(
             "/workflows/automation-rules/{id}/toggle",
             axum::routing::put(toggle_workflow_automation_rule),
@@ -163,7 +166,11 @@ async fn list_workflow_automation_rules(
     claims: axum::Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<WorkflowRuleView>>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query(
         "SELECT id, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, condition_field, action_type, enabled
@@ -222,10 +229,16 @@ async fn toggle_workflow_automation_rule(
                     "自动化规则不存在".into(),
                 )))
             } else {
-                Json(ApiResponse::success(json!({"id": id, "is_active": req.is_active}), "规则状态已更新"))
+                Json(ApiResponse::success(
+                    json!({"id": id, "is_active": req.is_active}),
+                    "规则状态已更新",
+                ))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新自动化规则失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新自动化规则失败",
+            e,
+        ))),
     }
 }
 
@@ -242,7 +255,11 @@ async fn get_ticket_transitions(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let row = sqlx::query(
         "SELECT status FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
@@ -389,7 +406,11 @@ async fn get_ticket_tags(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let tags: Option<Vec<String>> = match sqlx::query_scalar(
         "SELECT tags FROM ticket.core_tickets WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )
@@ -490,7 +511,11 @@ async fn list_tag_directory(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let rows = sqlx::query(
         "SELECT unnest(tags) AS tag, count(*) AS count \
          FROM ticket.core_tickets WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL \
@@ -528,7 +553,11 @@ async fn get_tag_stub(
     claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let count: i64 = match sqlx::query_scalar(
         "SELECT count(*) FROM ticket.core_tickets \
          WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND $2 = ANY(tags)",
@@ -759,7 +788,11 @@ async fn list_attachments(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_by, created_at \
          FROM ticket.ticket_attachments \
@@ -840,7 +873,11 @@ async fn get_attachment(
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let row = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, file_type, created_at \
          FROM ticket.ticket_attachments \
@@ -1019,7 +1056,11 @@ async fn get_attachment_stats(
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let row = match sqlx::query(
         "SELECT count(*) AS total, COALESCE(sum(file_size), 0) AS total_bytes \
          FROM ticket.ticket_attachments \
@@ -1047,7 +1088,11 @@ async fn get_attachments_by_type(
     claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let rows = match sqlx::query(
         "SELECT id, file_name, mime_type, file_size, created_at \
          FROM ticket.ticket_attachments \
@@ -1087,7 +1132,11 @@ pub async fn download_attachment_handler(
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
 ) -> Result<axum::response::Response, axum::response::Response> {
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_of(&claims)) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_of(&claims))
+    };
     let row = sqlx::query(
         "SELECT file_name, mime_type, file_data FROM ticket.ticket_attachments \
          WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3) AND deleted_at IS NULL",

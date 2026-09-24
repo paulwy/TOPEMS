@@ -1,4 +1,3 @@
-use topems_shared_boundary::only_own_schema_query;
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -9,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{CreateQuotationRequest, Quotation, UpdateQuotationRequest};
@@ -118,9 +118,11 @@ pub async fn create_quotation(
         Err(_) => return Json(ApiResponse::<Quotation>::error(400, "无效的供应商ID")),
     };
 
-    let inquiry = match sqlx::query_scalar::<_, String>(
-        only_own_schema_query!("srm", "SELECT inquiry_no FROM srm.inquiries WHERE id = $1", "srm"),
-    )
+    let inquiry = match sqlx::query_scalar::<_, String>(only_own_schema_query!(
+        "srm",
+        "SELECT inquiry_no FROM srm.inquiries WHERE id = $1",
+        "srm"
+    ))
     .bind(inquiry_id)
     .fetch_optional(&mut **txn)
     .await
@@ -133,9 +135,11 @@ pub async fn create_quotation(
         }
     };
 
-    let supplier_name = match sqlx::query_scalar::<_, Option<String>>(
-        only_own_schema_query!("srm", "SELECT name FROM srm.suppliers WHERE id = $1", "srm"),
-    )
+    let supplier_name = match sqlx::query_scalar::<_, Option<String>>(only_own_schema_query!(
+        "srm",
+        "SELECT name FROM srm.suppliers WHERE id = $1",
+        "srm"
+    ))
     .bind(supplier_id)
     .fetch_optional(&mut **txn)
     .await
@@ -191,12 +195,12 @@ pub async fn create_quotation(
         Ok(quotation) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(quotation, "报价创建成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("创建报价失败: {}", e);
             Json(ApiResponse::<Quotation>::error(500, "报价创建失败"))
@@ -305,10 +309,14 @@ pub async fn delete_quotation(
 ) -> Json<ApiResponse<bool>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1", "srm"))
-        .bind(id)
-        .execute(&mut **txn)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1",
+        "srm"
+    ))
+    .bind(id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "报价删除成功")),

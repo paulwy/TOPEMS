@@ -154,8 +154,7 @@ pub struct GanttResource {
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
@@ -874,10 +873,7 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-        let start = s
-            .planned_start_time
-            .map(|d| d)
-            .unwrap_or_else(Utc::now);
+        let start = s.planned_start_time.map(|d| d).unwrap_or_else(Utc::now);
         let end = s
             .planned_end_time
             .map(|d| d)
@@ -902,7 +898,11 @@ pub async fn get_gantt_data(
 
         tasks.push(GanttTask {
             id: s.id.to_string(),
-            name: format!("{} - {}", s.schedule_no.clone().to_string(), s.product_name.clone().to_string()),
+            name: format!(
+                "{} - {}",
+                s.schedule_no.clone().to_string(),
+                s.product_name.clone().to_string()
+            ),
             start,
             end,
             progress,

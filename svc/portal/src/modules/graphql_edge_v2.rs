@@ -2545,4 +2545,3 @@ pub fn uuid_simple() -> String {
     };
     format!("{:x}{:x}", now, rand)
 }
-

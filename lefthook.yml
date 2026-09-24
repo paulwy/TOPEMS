@@ -191,8 +191,9 @@ pre-push:
       run: |
         # pre-push 时代码已提交，直接跑 cargo check，确保编译通过
         # 避免 DB schema 修改了但代码没修改就 push 到远端
+        # 不用 --all-features，避免开启不需要的 feature 导致数据库连接问题
         export SQLX_OFFLINE=false
-        cargo check --workspace --all-features
+        cargo check --workspace
 
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
     cargo-fmt-check:

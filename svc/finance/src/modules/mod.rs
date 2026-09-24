@@ -1026,7 +1026,10 @@ pub async fn create_payment_handler(
     let supplier_id = req.supplier_id;
     let payment_method = req.payment_method.clone();
     let locale = Locale::from_headers(&headers).as_sql();
-    match service.create_payment(tenant_id, req, &created_by, locale).await {
+    match service
+        .create_payment(tenant_id, req, &created_by, locale)
+        .await
+    {
         Ok(payment) => {
             if let Some(ref publisher) = state.event_publisher {
                 let publisher = publisher.clone();
@@ -1785,7 +1788,11 @@ pub async fn get_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<FinanceDashboardStats>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     let total_vouchers = count_table_with_tenant(&state.pool, "vouchers", tenant_id).await;
     let draft_vouchers =

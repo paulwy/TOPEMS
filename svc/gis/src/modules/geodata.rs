@@ -193,7 +193,10 @@ pub async fn list_geodata(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, GeoData>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
@@ -220,7 +223,10 @@ pub async fn get_geodata(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, name, data_type, format, file_path, geojson_data, feature_count, extent, properties_schema, metadata, status, uploaded_by, created_at, updated_at FROM gis.geodata WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
@@ -399,7 +405,10 @@ pub async fn list_geofeatures(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, GeoFeature>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, geodata_id, feature_type, geometry, properties, centroid, area, length, created_at, updated_at FROM gis.geofeatures WHERE geodata_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),

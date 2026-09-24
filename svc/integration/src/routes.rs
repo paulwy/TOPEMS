@@ -43,11 +43,7 @@ pub fn create_routes_embedded(state: AppState) -> Router {
     create_routes_inner(state, public_routes, false)
 }
 
-fn create_routes_inner(
-    state: AppState,
-    public_routes: Router<()>,
-    with_openapi: bool,
-) -> Router {
+fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi: bool) -> Router {
     let rate_limit_config = RateLimitConfig::new(100, 60)
         .with_by_user_id(false)
         .with_by_ip(true);

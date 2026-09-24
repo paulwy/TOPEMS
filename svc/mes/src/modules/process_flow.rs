@@ -365,7 +365,9 @@ pub async fn get_process_flow(
                 route_id: r.route_id.map(|u| u.to_string()),
                 route_name: Some(r.route_name.unwrap_or_default()),
                 production_line: r.production_line,
-                capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
+                capacity: r
+                    .capacity
+                    .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
                 created_at: r.created_at.to_rfc3339(),
                 updated_at: r.updated_at.to_rfc3339(),
@@ -432,7 +434,9 @@ pub async fn create_process_flow(
                 route_id: r.route_id.map(|u| u.to_string()),
                 route_name: None,
                 production_line: r.production_line,
-                capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
+                capacity: r
+                    .capacity
+                    .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
                 created_at: r.created_at.to_rfc3339(),
                 updated_at: r.updated_at.to_rfc3339(),
@@ -514,7 +518,9 @@ pub async fn update_process_flow(
                 route_id: r.route_id.map(|u| u.to_string()),
                 route_name: None,
                 production_line: r.production_line,
-                capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
+                capacity: r
+                    .capacity
+                    .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
                 created_at: r.created_at.to_rfc3339(),
                 updated_at: r.updated_at.to_rfc3339(),
@@ -615,9 +621,15 @@ pub async fn get_flow_steps(
                     sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name.unwrap_or_default()),
-                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
-                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    equipment_ids: Some(
+                        serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
+                    ),
+                    standard_time: s
+                        .standard_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s
+                        .wait_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
@@ -674,7 +686,8 @@ pub async fn add_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .map(|dt| dt.and_utc())
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -748,9 +761,15 @@ pub async fn add_flow_step(
                     sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
-                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    equipment_ids: Some(
+                        serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
+                    ),
+                    standard_time: s
+                        .standard_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s
+                        .wait_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
@@ -796,7 +815,8 @@ pub async fn update_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt.and_utc())
+        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .map(|dt| dt.and_utc())
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -874,9 +894,15 @@ pub async fn update_flow_step(
                     sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
-                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    equipment_ids: Some(
+                        serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
+                    ),
+                    standard_time: s
+                        .standard_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s
+                        .wait_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
@@ -1013,9 +1039,15 @@ pub async fn reorder_flow_steps(
                     sequence: s.sequence.unwrap_or_default(),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name.unwrap_or_default()),
-                    equipment_ids: Some(serde_json::to_string(&s.equipment_ids).unwrap_or_default()),
-                    standard_time: s.standard_time.map(|d| d.to_string().parse().unwrap_or_default()),
-                    wait_time: s.wait_time.map(|d| d.to_string().parse().unwrap_or_default()),
+                    equipment_ids: Some(
+                        serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
+                    ),
+                    standard_time: s
+                        .standard_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
+                    wait_time: s
+                        .wait_time
+                        .map(|d| d.to_string().parse().unwrap_or_default()),
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
@@ -1097,7 +1129,14 @@ pub async fn analyze_capacity(
 
     let total_time: f64 = steps
         .iter()
-        .map(|s| s.standard_time.clone().unwrap_or(BigDecimal::from(0)).to_string().parse::<f64>().unwrap_or_default())
+        .map(|s| {
+            s.standard_time
+                .clone()
+                .unwrap_or(BigDecimal::from(0))
+                .to_string()
+                .parse::<f64>()
+                .unwrap_or_default()
+        })
         .sum();
 
     let flow_capacity = flow.capacity.clone().unwrap_or(BigDecimal::from(0));
@@ -1109,7 +1148,8 @@ pub async fn analyze_capacity(
 
     let effective_capacity = theoretical_capacity * 0.85;
     let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
-        ((flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity) * 100.0)
+        ((flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity)
+            * 100.0)
     } else {
         0.0
     };

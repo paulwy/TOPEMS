@@ -1697,7 +1697,11 @@ async fn list_audit_rules_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditRuleQueryParams>,
 ) -> Json<ApiResponse<Vec<AuditRule>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutoAuditEngine::list_rules(&state.pool, tenant_id, params.category, params.is_active)
         .await
     {
@@ -1766,7 +1770,11 @@ async fn get_audit_findings_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditFindingQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AutoAuditEngine::get_findings(
@@ -1882,7 +1890,11 @@ async fn get_anomaly_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyAlertQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AnomalyDetector::get_alerts(
@@ -1921,7 +1933,11 @@ async fn get_detection_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DetectionSummary>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AnomalyDetector::get_summary(&state.pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1980,7 +1996,11 @@ async fn get_alerts_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertHistoryQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let page = params.page.unwrap_or(1);
     let page_size = params.page_size.unwrap_or(20);
     match AlertManager::get_history(
@@ -2041,7 +2061,11 @@ async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertConfig>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AlertManager::list_configs(&state.pool, tenant_id).await {
         Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

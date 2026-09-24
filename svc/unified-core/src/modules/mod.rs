@@ -30,9 +30,9 @@ pub mod migration;
 pub mod openapi;
 // V68.1 A2.2: plugin 模块已拆出到独立 svc/plugin-registry/（端口 8096）
 // pub mod plugin;
+pub mod subscription;
 pub mod system_audit;
 pub mod tenant;
-pub mod subscription;
 // WMS: 仓储管理系统
 pub mod wms;
 // MES: 制造执行系统

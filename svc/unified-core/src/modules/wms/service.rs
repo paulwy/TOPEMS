@@ -104,17 +104,15 @@ fn init_inventory_items() -> Mutex<Vec<InventoryItem>> {
 }
 
 fn init_transfer_orders() -> Mutex<Vec<TransferOrder>> {
-    Mutex::new(vec![
-        TransferOrder {
-            id: "1".to_string(),
-            transfer_no: "TR202409001".to_string(),
-            from_warehouse: "主仓库".to_string(),
-            to_warehouse: "分仓1".to_string(),
-            status: "运输中".to_string(),
-            total_quantity: 200,
-            created_at: "2024-09-07T09:00:00Z".to_string(),
-        },
-    ])
+    Mutex::new(vec![TransferOrder {
+        id: "1".to_string(),
+        transfer_no: "TR202409001".to_string(),
+        from_warehouse: "主仓库".to_string(),
+        to_warehouse: "分仓1".to_string(),
+        status: "运输中".to_string(),
+        total_quantity: 200,
+        created_at: "2024-09-07T09:00:00Z".to_string(),
+    }])
 }
 
 // 静态访问器

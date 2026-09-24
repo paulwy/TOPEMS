@@ -2065,7 +2065,11 @@ async fn get_recon_results_handler(
     Query(params): Query<ReconResultQueryParams>,
 ) -> Json<ApiResponse<Vec<ReconciliationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutoReconciler::get_results(&pool, tenant_id, params.status).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2114,7 +2118,11 @@ async fn list_recon_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReconciliationRule>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutoReconciler::list_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2237,7 +2245,11 @@ async fn get_invoice_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InvoiceWithItems>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match InvoiceRecognizer::get_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2260,7 +2272,11 @@ async fn list_invoices_handler(
     Query(params): Query<InvoiceListQueryParams>,
 ) -> Json<ApiResponse<Vec<Invoice>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match InvoiceRecognizer::list_invoices(&pool, tenant_id, params.status).await {
         Ok(invoices) => Json(ApiResponse::success(invoices, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2433,7 +2449,11 @@ async fn get_payment_status_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<PaymentResult>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ElectronicPaymentProcessor::get_payment_status(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -2489,7 +2509,11 @@ pub async fn list_payments_handler(
     Query(params): Query<PaymentListQueryParams>,
 ) -> Json<ApiResponse<Vec<PaymentRequest>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ElectronicPaymentProcessor::list_payments(&pool, tenant_id, params.status).await {
         Ok(payments) => Json(ApiResponse::success(payments, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

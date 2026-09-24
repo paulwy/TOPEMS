@@ -254,7 +254,7 @@ impl EdgeComputeState {
 static EDGE_COMPUTE_STATE: std::sync::OnceLock<Mutex<EdgeComputeState>> =
     std::sync::OnceLock::new();
 
-    pub fn edge_compute_state() -> &'static Mutex<EdgeComputeState> {
+pub fn edge_compute_state() -> &'static Mutex<EdgeComputeState> {
     EDGE_COMPUTE_STATE.get_or_init(|| Mutex::new(EdgeComputeState::new()))
 }
 
@@ -1293,4 +1293,3 @@ impl StreamingResponseManager {
         true
     }
 }
-

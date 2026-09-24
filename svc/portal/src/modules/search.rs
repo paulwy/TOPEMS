@@ -279,7 +279,11 @@ async fn search_hrm_employees(
             .take(10)
             .map(|e| {
                 let title = e.name.clone();
-                let summary = format!("{} | {}", e.email.as_deref().unwrap_or("-"), e.phone.as_deref().unwrap_or("-"));
+                let summary = format!(
+                    "{} | {}",
+                    e.email.as_deref().unwrap_or("-"),
+                    e.phone.as_deref().unwrap_or("-")
+                );
                 SearchResult {
                     id: e.id.to_string(),
                     highlight_title: highlight_text(&title, query),

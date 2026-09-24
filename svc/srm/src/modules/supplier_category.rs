@@ -73,11 +73,13 @@ pub async fn list_categories(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -89,8 +91,9 @@ pub async fn list_categories(
         .clone()
         .and_then(|p| Uuid::parse_str(&p).ok());
 
-    let result = sqlx::query_as::<_, SupplierCategory>(
-        only_own_schema_query!("srm", r#"
+    let result = sqlx::query_as::<_, SupplierCategory>(only_own_schema_query!(
+        "srm",
+        r#"
         SELECT id, tenant_id, category_no,
                CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, parent_id, level, is_active, created_by, created_at, updated_at,
@@ -105,8 +108,9 @@ pub async fn list_categories(
           AND ($4::uuid IS NULL OR parent_id = $4)
         ORDER BY level, category_no
         LIMIT $5 OFFSET $6
-        "#, "srm"),
-    )
+        "#,
+        "srm"
+    ))
     .bind(tenant_opt)
     .bind(&search_pattern)
     .bind(is_active_filter)
@@ -178,11 +182,13 @@ pub async fn create_category(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.category_no.is_empty() || req.name.is_empty() {
         return Json(ApiResponse::<SupplierCategory>::error(
@@ -305,21 +311,25 @@ pub async fn get_category(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query_as::<_, SupplierCategory>(
-        only_own_schema_query!("srm", r#"
+    let result = sqlx::query_as::<_, SupplierCategory>(only_own_schema_query!(
+        "srm",
+        r#"
         SELECT id, tenant_id, category_no,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                description, parent_id, level, is_active, created_by, created_at, updated_at
         FROM srm.supplier_categories WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
-        "#, "srm"),
-    )
+        "#,
+        "srm"
+    ))
     .bind(id)
     .bind(tenant_opt)
     .bind(locale)
@@ -362,11 +372,13 @@ pub async fn update_category(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let existing = sqlx::query_as::<_, SupplierCategory>(
         only_own_schema_query!("srm", "SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM srm.supplier_categories WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)", "srm"),
@@ -505,11 +517,13 @@ pub async fn delete_category(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let child_count = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.supplier_categories WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND parent_id = $2", "srm"),

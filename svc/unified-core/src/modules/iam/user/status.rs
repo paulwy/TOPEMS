@@ -59,11 +59,12 @@ pub async fn disable_user(
         );
     }
 
-    let result =
-        sqlx::query("UPDATE public.core_users SET status = 'inactive', updated_at = NOW() WHERE id = $1")
-            .bind(user_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.core_users SET status = 'inactive', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {
@@ -161,11 +162,12 @@ pub async fn enable_user(
         );
     }
 
-    let result =
-        sqlx::query("UPDATE public.core_users SET status = 'active', updated_at = NOW() WHERE id = $1")
-            .bind(user_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.core_users SET status = 'active', updated_at = NOW() WHERE id = $1",
+    )
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {
@@ -306,12 +308,13 @@ pub async fn change_password(
         );
     }
 
-    let result =
-        sqlx::query("UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
-            .bind(hashed_password)
-            .bind(user_id)
-            .execute(&state.pool)
-            .await;
+    let result = sqlx::query(
+        "UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+    )
+    .bind(hashed_password)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
 
     match result {
         Ok(_) => {

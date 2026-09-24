@@ -270,7 +270,11 @@ pub async fn list_sales_invoices(
     Query(params): Query<InvoiceListQuery>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Paginated<SalesInvoiceOut>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
@@ -373,7 +377,11 @@ pub async fn get_sales_invoice(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SalesInvoiceOut>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match fetch_invoice(&state.pool, tenant_id, id).await {
         Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(404, "发票不存在")),
@@ -674,7 +682,11 @@ pub async fn list_collections(
     Query(params): Query<CollectionListQuery>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Paginated<CollectionOut>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let page = params.page.unwrap_or(1).max(1);
     let pagesize = params.pagesize.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * pagesize;
@@ -776,7 +788,11 @@ pub async fn get_collection(
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<CollectionOut>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match fetch_collection(&state.pool, tenant_id, id).await {
         Ok(Some(c)) => Json(ApiResponse::success(c, "Success")),
         Ok(None) => Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
@@ -967,7 +983,11 @@ pub async fn get_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AgingBucket>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let now = today();
     let rows = match sqlx::query(
         "SELECT id, due_date, total_amount::float8, paid_amount::float8, status
@@ -1014,7 +1034,11 @@ pub async fn get_receivable_summary(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ReceivableSummary>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let now = today();
     // 口径：draft 未开票计入应收总额（前端应收概览口径），cancelled 红冲/取消票剔除；
     // 账龄/逾期报表只统计 issued/overdue 生效应收（见 get_receivable_aging / get_overdue_receivables）
@@ -1063,7 +1087,11 @@ pub async fn get_overdue_receivables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OverdueItem>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let now = today();
     let rows = match sqlx::query(
         "SELECT id, invoice_number, customer_name,
@@ -1124,7 +1152,11 @@ pub async fn export_sales_invoices(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let rows = match sqlx::query(
         "SELECT invoice_number, customer_name,
                 to_char(invoice_date, 'YYYY-MM-DD') AS invoice_date,
@@ -1159,7 +1191,11 @@ pub async fn export_collections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let rows = match sqlx::query(
         "SELECT COALESCE(collection_no, '') AS no, COALESCE(customer_name, '') AS cname,
                 CASE WHEN collection_date IS NULL THEN '' ELSE to_char(collection_date, 'YYYY-MM-DD') END AS d,
@@ -1195,7 +1231,11 @@ pub async fn export_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<String>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let rows = match sqlx::query(
         "SELECT invoice_number, customer_name,
                 CASE WHEN due_date IS NULL THEN NULL ELSE to_char(due_date, 'YYYY-MM-DD') END AS due_date,

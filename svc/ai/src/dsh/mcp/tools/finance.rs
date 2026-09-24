@@ -20,7 +20,9 @@ use super::super::tools::ToolExecutionError;
 /// 构造 Finance TypedServiceClient（统一服务间认证：ai-service 身份签发 service token）
 fn finance_client(jwt_secret: &str) -> Result<TypedServiceClient<FinanceApi>, ToolExecutionError> {
     TypedServiceClient::<FinanceApi>::from_env_default()
-        .and_then(|c| c.with_service_token(jwt_secret, "ai-service", &["finance:read", "finance:write"]))
+        .and_then(|c| {
+            c.with_service_token(jwt_secret, "ai-service", &["finance:read", "finance:write"])
+        })
         .map_err(|e| ToolExecutionError::Execution(format!("Finance 客户端初始化失败: {}", e)))
 }
 
@@ -181,7 +183,13 @@ fn generate_mock_receivables(status_filter: &str) -> Vec<Value> {
         .map(|i| {
             let status = statuses[i % statuses.len()];
             let total = (5000 + i * 1200) as f64;
-            let received = if status == "paid" { total } else if status == "partial" { total * 0.5 } else { 0.0 };
+            let received = if status == "paid" {
+                total
+            } else if status == "partial" {
+                total * 0.5
+            } else {
+                0.0
+            };
             json!({
                 "id": format!("REC-{:06}", i + 1),
                 "customer_id": customers[i % customers.len()],
@@ -218,15 +226,19 @@ mod tests {
     async fn test_create_voucher_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_finance_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
-            .call_tool("finance.create_voucher", json!({
-                "voucher_date": "2026-09-13",
-                "summary": "测试凭证",
-                "entries": [
-                    {"subject_code": "1001", "direction": "debit", "amount": 1000.0},
-                    {"subject_code": "1002", "direction": "credit", "amount": 1000.0}
-                ]
-            }))
+        let result = server
+            .tool_registry()
+            .call_tool(
+                "finance.create_voucher",
+                json!({
+                    "voucher_date": "2026-09-13",
+                    "summary": "测试凭证",
+                    "entries": [
+                        {"subject_code": "1001", "direction": "debit", "amount": 1000.0},
+                        {"subject_code": "1002", "direction": "credit", "amount": 1000.0}
+                    ]
+                }),
+            )
             .await;
         assert!(result.is_ok(), "create_voucher 应返回 Ok: {:?}", result);
     }
@@ -235,15 +247,19 @@ mod tests {
     async fn test_create_voucher_unbalanced_rejected() {
         let server = McpServer::new("test", "1.0.0");
         register_finance_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
-            .call_tool("finance.create_voucher", json!({
-                "voucher_date": "2026-09-13",
-                "summary": "不平衡凭证",
-                "entries": [
-                    {"subject_code": "1001", "direction": "debit", "amount": 1000.0},
-                    {"subject_code": "1002", "direction": "credit", "amount": 500.0}
-                ]
-            }))
+        let result = server
+            .tool_registry()
+            .call_tool(
+                "finance.create_voucher",
+                json!({
+                    "voucher_date": "2026-09-13",
+                    "summary": "不平衡凭证",
+                    "entries": [
+                        {"subject_code": "1001", "direction": "debit", "amount": 1000.0},
+                        {"subject_code": "1002", "direction": "credit", "amount": 500.0}
+                    ]
+                }),
+            )
             .await;
         assert!(result.is_err(), "借贷不平衡应返回 Err");
     }
@@ -252,18 +268,27 @@ mod tests {
     async fn test_get_account_balance_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_finance_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
+        let result = server
+            .tool_registry()
             .call_tool("finance.get_account_balance", json!({}))
             .await;
-        assert!(result.is_ok(), "get_account_balance 应返回 Ok: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "get_account_balance 应返回 Ok: {:?}",
+            result
+        );
     }
 
     #[tokio::test]
     async fn test_list_receivables_mock_fallback() {
         let server = McpServer::new("test", "1.0.0");
         register_finance_tools(&server, "test-secret").await;
-        let result = server.tool_registry()
-            .call_tool("finance.list_receivables", json!({"page": 1, "page_size": 10}))
+        let result = server
+            .tool_registry()
+            .call_tool(
+                "finance.list_receivables",
+                json!({"page": 1, "page_size": 10}),
+            )
             .await;
         assert!(result.is_ok(), "list_receivables 应返回 Ok: {:?}", result);
     }

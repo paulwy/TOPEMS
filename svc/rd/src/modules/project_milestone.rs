@@ -40,9 +40,13 @@ pub async fn create_milestone(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -141,7 +145,10 @@ pub async fn get_project_milestones(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -218,7 +225,10 @@ pub async fn update_milestone(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -340,7 +350,10 @@ pub async fn delete_milestone(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();

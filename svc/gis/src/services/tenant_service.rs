@@ -15,9 +15,8 @@ impl TenantService {
     }
 
     fn effective_tenant(&self) -> Uuid {
-        self.tenant_id.unwrap_or_else(|| {
-            Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-        })
+        self.tenant_id
+            .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap())
     }
 
     pub fn tenant_id(&self) -> Uuid {

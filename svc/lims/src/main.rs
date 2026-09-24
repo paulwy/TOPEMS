@@ -27,9 +27,7 @@ use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
-use topems_shared_core::l2_cache::{
-    AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig,
-};
+use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{CacheInvalidatedPayload, EventSubscriber, EventType};
 

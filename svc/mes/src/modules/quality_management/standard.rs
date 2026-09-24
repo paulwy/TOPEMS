@@ -1,6 +1,6 @@
+use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::DateTime;
 use chrono::Utc;
-use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -212,10 +212,8 @@ pub async fn list_standards(
         if let Ok(value_rows) = values_result {
             for v in value_rows {
                 let sid = v.standard_id;
-                values_map
-                    .entry(sid.unwrap_or_default())
-                    .or_default()
-                    .push(StandardValueResponse {
+                values_map.entry(sid.unwrap_or_default()).or_default().push(
+                    StandardValueResponse {
                         id: v.id.to_string(),
                         standard_id: sid.map(|d| d.to_string()).unwrap_or_default(),
                         item_name: v.item_name,
@@ -224,7 +222,8 @@ pub async fn list_standards(
                         unit: v.unit,
                         inspection_method: v.inspection_method,
                         remark: v.remark,
-                    });
+                    },
+                );
             }
         }
     }
@@ -402,7 +401,8 @@ pub async fn create_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -557,7 +557,8 @@ pub async fn update_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)

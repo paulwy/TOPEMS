@@ -249,7 +249,8 @@ impl StreamEventSubscriber {
                         event_type, message_id, result.errors
                     );
                     // 与处理失败同路径：重试计数 / 超限进 DLQ
-                    self.settle_failed(event, message_id, stream_key, &event_type).await?;
+                    self.settle_failed(event, message_id, stream_key, &event_type)
+                        .await?;
                     return Ok(());
                 }
             }
@@ -310,7 +311,8 @@ impl StreamEventSubscriber {
             self.ack_message(stream_key, message_id).await?;
         } else {
             // 处理失败，检查重试次数
-            self.settle_failed(event, message_id, stream_key, &event_type).await?;
+            self.settle_failed(event, message_id, stream_key, &event_type)
+                .await?;
         }
 
         Ok(())
@@ -977,7 +979,10 @@ mod tests {
         let versions = subscriber.event_versions.as_ref().unwrap();
         assert!(versions.get_latest_version("SalesOrderCreated").is_some());
         assert_eq!(
-            versions.get_latest_version("SalesOrderCreated").unwrap().version,
+            versions
+                .get_latest_version("SalesOrderCreated")
+                .unwrap()
+                .version,
             EventVersion::v1()
         );
     }

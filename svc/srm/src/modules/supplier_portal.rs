@@ -76,11 +76,13 @@ pub async fn get_supplier_portal_stats(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let supplier_exists = sqlx::query_scalar::<_, i64>(
         only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.suppliers WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND status != 'deleted'", "srm"),
@@ -203,11 +205,13 @@ pub async fn get_supplier_portal_orders(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let _tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let _tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("srm", r#"
@@ -249,7 +253,6 @@ pub async fn get_supplier_portal_invoices(
         Ok(_) => {}
         Err(e) => return e,
     }
-
 
     let invoices = vec![
         serde_json::json!({
@@ -299,7 +302,6 @@ pub async fn get_supplier_portal_deliveries(
         Ok(_) => {}
         Err(e) => return e,
     }
-
 
     let deliveries = vec![
         serde_json::json!({
@@ -351,7 +353,6 @@ pub async fn get_supplier_portal_announcements(
         Ok(_) => {}
         Err(e) => return e,
     }
-
 
     let announcements = vec![
         serde_json::json!({

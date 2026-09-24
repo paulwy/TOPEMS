@@ -23,9 +23,11 @@ pub mod inbound_order;
 pub mod inventory;
 pub mod inventory_alert;
 pub mod inventory_movement;
+pub mod labor;
 pub mod location;
 pub mod openapi;
 pub mod outbound_order;
+pub mod picking;
 pub mod serial_number;
 pub mod smart_replenishment;
 pub mod stock_take;
@@ -33,8 +35,6 @@ pub mod transfer_order;
 pub mod warehouse;
 pub mod wave_pick;
 pub mod wms_plugin;
-pub mod picking;
-pub mod labor;
 
 #[derive(Clone)]
 pub struct ApiState {

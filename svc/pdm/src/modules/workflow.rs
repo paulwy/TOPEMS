@@ -108,7 +108,13 @@ pub async fn list_workflows(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
@@ -156,11 +162,13 @@ pub async fn create_workflow(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "工作流名称不能为空"));
@@ -229,7 +237,13 @@ pub async fn get_workflow(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let result = sqlx::query_as::<_, WorkflowDefinition>(
@@ -276,11 +290,13 @@ pub async fn update_workflow(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let name = req.get("name").and_then(|v| v.as_str()).unwrap_or("");
     let description = req.get("description").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("");
@@ -337,11 +353,13 @@ pub async fn delete_workflow(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result =
         sqlx::query("UPDATE pdm_workflows SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -377,11 +395,13 @@ pub async fn start_workflow(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
         "SELECT id, tenant_id, name, steps FROM pdm_workflows WHERE deleted_at IS NULL AND id = $1 AND status = 'active' AND tenant_id = $2",
@@ -436,7 +456,11 @@ pub async fn start_workflow(
     .bind(tenant_id)
     .bind(req.workflow_id)
     .bind(workflow.name)
-    .bind(req.target_type.clone().unwrap_or_else(|| "document".to_string()))
+    .bind(
+        req.target_type
+            .clone()
+            .unwrap_or_else(|| "document".to_string()),
+    )
     .bind(req.target_id.unwrap_or_else(Uuid::nil))
     .bind(&current_step)
     .bind("running")
@@ -447,7 +471,11 @@ pub async fn start_workflow(
         "user": req.created_by.clone().unwrap_or_else(|| "system".to_string()),
         "timestamp": now.to_rfc3339()
     }]))
-    .bind(&req.created_by.clone().unwrap_or_else(|| "system".to_string()))
+    .bind(
+        &req.created_by
+            .clone()
+            .unwrap_or_else(|| "system".to_string()),
+    )
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)
@@ -477,11 +505,13 @@ pub async fn list_workflow_instances(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
@@ -532,7 +562,13 @@ pub async fn get_workflow_instance(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let result = sqlx::query_as::<_, WorkflowInstance>(
@@ -580,11 +616,13 @@ pub async fn advance_workflow(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let action = req
         .get("action")
         .and_then(|v| v.as_str())

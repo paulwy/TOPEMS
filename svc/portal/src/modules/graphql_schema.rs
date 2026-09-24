@@ -46,8 +46,8 @@ pub use crate::modules::graphql_federation_v4::*;
 pub use crate::modules::graphql_gateway_security::*;
 pub use crate::modules::graphql_governance::*;
 pub use crate::modules::graphql_helpers::*;
-pub use crate::modules::graphql_realtime_stream::*;
 pub use crate::modules::graphql_monitoring::*;
+pub use crate::modules::graphql_realtime_stream::*;
 pub use crate::modules::graphql_security::*;
 pub use crate::modules::graphql_semantic_cache::*;
 pub use crate::modules::graphql_subscription_enhanced::*;
@@ -1399,9 +1399,7 @@ impl QueryRoot {
 
         match tokio::time::timeout(
             std::time::Duration::from_secs(5),
-            client
-                .json(&serde_json::json!({ "ids": ids }))
-                .send(),
+            client.json(&serde_json::json!({ "ids": ids })).send(),
         )
         .await
         {
@@ -2815,12 +2813,7 @@ impl MutationRoot {
         let url = format!("{}{}", base_url, path);
         let client = service_request(reqwest::Method::DELETE, &url, FEDERATION_WRITE_PERMS);
 
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(10),
-            client.send(),
-        )
-        .await
-        {
+        match tokio::time::timeout(std::time::Duration::from_secs(10), client.send()).await {
             Ok(Ok(resp)) if resp.status().is_success() => Ok(true),
             Ok(Ok(_)) => Ok(false),
             Ok(Err(_)) => Ok(false),

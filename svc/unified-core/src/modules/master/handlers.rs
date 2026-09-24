@@ -1119,10 +1119,17 @@ pub async fn list_changes_handler(
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<Vec<MasterDataChangeLog>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
     let service = MasterDataService::new(state.pool.clone());
 
-    match service.list_changes(opt_tenant_id, &master_data_id, 50).await {
+    match service
+        .list_changes(opt_tenant_id, &master_data_id, 50)
+        .await
+    {
         Ok(changes) => Json(ApiResponse::success(changes, "查询成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "list_changes_handler",
@@ -1371,7 +1378,11 @@ pub async fn list_pending_approvals_handler(
     Query(params): Query<PendingApprovalQuery>,
 ) -> Json<ApiResponse<Vec<MasterDataApproval>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
     let limit = params.limit.unwrap_or(50).min(200);
     let service = MasterDataService::new(state.pool.clone());
 
@@ -1394,7 +1405,11 @@ pub async fn list_approval_history_handler(
     Path(master_data_id): Path<String>,
 ) -> Json<ApiResponse<Vec<MasterDataApproval>>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let opt_tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(tenant_id) };
+    let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id)
+    };
     let service = MasterDataService::new(state.pool.clone());
 
     match service

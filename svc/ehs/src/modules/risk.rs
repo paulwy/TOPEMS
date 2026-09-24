@@ -1,6 +1,11 @@
 //! Risk handlers
 
-use axum::{extract::{Query, State}, http::HeaderMap, routing::*, Extension, Json, Router};
+use axum::{
+    extract::{Query, State},
+    http::HeaderMap,
+    routing::*,
+    Extension, Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -81,7 +86,7 @@ pub async fn list_risks(
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -91,20 +96,28 @@ pub async fn list_risks(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {{
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    }} else {{
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }};
-    let _rls_tenant = if claims.is_superuser {{
-        uuid::Uuid::nil()
-    }} else {{
-        tenant_id
-    }};
+    let tenant_id = if claims.is_superuser {
+        {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }
+    } else {
+        {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_else(uuid::Uuid::nil)
+        }
+    };
+    let _rls_tenant = if claims.is_superuser {
+        {
+            uuid::Uuid::nil()
+        }
+    } else {
+        {
+            tenant_id
+        }
+    };
 
     let mut params: Vec<String> = vec![tenant_bind];
     let mut where_clause = String::from(" WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL");
@@ -154,12 +167,22 @@ pub async fn list_risks(
             title: r.try_get::<String, _>("title").unwrap_or_default(),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             risk_type: r.try_get::<Option<String>, _>("risk_type").ok().flatten(),
-            hazard_factor: r.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            hazard_factor: r
+                .try_get::<Option<String>, _>("hazard_factor")
+                .ok()
+                .flatten(),
             likelihood: r.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
             severity: r.try_get::<Option<i32>, _>("severity").ok().flatten(),
             risk_level: r.try_get::<Option<String>, _>("risk_level").ok().flatten(),
-            control_measures: r.try_get::<Option<String>, _>("control_measures").ok().flatten(),
-            status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            control_measures: r
+                .try_get::<Option<String>, _>("control_measures")
+                .ok()
+                .flatten(),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "identified".to_string()),
             tenant_id: uuid::Uuid::nil(),
         })
         .collect();
@@ -180,7 +203,7 @@ pub async fn create_risk(
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-        let _tenant_bind: String = if claims.is_superuser {
+    let _tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -190,26 +213,41 @@ pub async fn create_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {{
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    }} else {{
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }};
-    let rls_tenant = if claims.is_superuser {{
-        uuid::Uuid::nil()
-    }} else {{
-        tenant_id
-    }};
+    let tenant_id = if claims.is_superuser {
+        {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }
+    } else {
+        {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_else(uuid::Uuid::nil)
+        }
+    };
+    let rls_tenant = if claims.is_superuser {
+        {
+            uuid::Uuid::nil()
+        }
+    } else {
+        {
+            tenant_id
+        }
+    };
     tracing::debug!("Creating risk: {:?}", req);
 
     let risk_id = uuid::Uuid::new_v4();
-    let risk_no = format!("RSK-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let risk_no = format!(
+        "RSK-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let _now = chrono::Utc::now().to_rfc3339();
-    let title = req.get("title").and_then(|v| v.as_str()).unwrap_or("未命名风险").to_string();
+    let title = req
+        .get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("未命名风险")
+        .to_string();
 
     let mut txn = match state.pool.begin().await {
         Ok(t) => t,
@@ -268,14 +306,30 @@ pub async fn create_risk(
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
             title: row.try_get::<String, _>("title").unwrap_or_default(),
-            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            description: row
+                .try_get::<Option<String>, _>("description")
+                .ok()
+                .flatten(),
             risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
-            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            hazard_factor: row
+                .try_get::<Option<String>, _>("hazard_factor")
+                .ok()
+                .flatten(),
             likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
             severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
-            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
-            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
-            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            risk_level: row
+                .try_get::<Option<String>, _>("risk_level")
+                .ok()
+                .flatten(),
+            control_measures: row
+                .try_get::<Option<String>, _>("control_measures")
+                .ok()
+                .flatten(),
+            status: row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "identified".to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "风险创建成功",
@@ -298,7 +352,7 @@ pub async fn get_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Risk>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -308,20 +362,28 @@ pub async fn get_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {{
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    }} else {{
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }};
-    let _rls_tenant = if claims.is_superuser {{
-        uuid::Uuid::nil()
-    }} else {{
-        tenant_id
-    }};
+    let tenant_id = if claims.is_superuser {
+        {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }
+    } else {
+        {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_else(uuid::Uuid::nil)
+        }
+    };
+    let _rls_tenant = if claims.is_superuser {
+        {
+            uuid::Uuid::nil()
+        }
+    } else {
+        {
+            tenant_id
+        }
+    };
     tracing::debug!("Getting risk: {}", id);
 
     let result = sqlx::query(
@@ -357,14 +419,30 @@ pub async fn get_risk(
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
             title: row.try_get::<String, _>("title").unwrap_or_default(),
-            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            description: row
+                .try_get::<Option<String>, _>("description")
+                .ok()
+                .flatten(),
             risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
-            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            hazard_factor: row
+                .try_get::<Option<String>, _>("hazard_factor")
+                .ok()
+                .flatten(),
             likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
             severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
-            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
-            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
-            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            risk_level: row
+                .try_get::<Option<String>, _>("risk_level")
+                .ok()
+                .flatten(),
+            control_measures: row
+                .try_get::<Option<String>, _>("control_measures")
+                .ok()
+                .flatten(),
+            status: row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "identified".to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "获取风险成功",
@@ -389,7 +467,7 @@ pub async fn update_risk(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -399,20 +477,28 @@ pub async fn update_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {{
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    }} else {{
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }};
-    let rls_tenant = if claims.is_superuser {{
-        uuid::Uuid::nil()
-    }} else {{
-        tenant_id
-    }};
+    let tenant_id = if claims.is_superuser {
+        {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }
+    } else {
+        {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_else(uuid::Uuid::nil)
+        }
+    };
+    let rls_tenant = if claims.is_superuser {
+        {
+            uuid::Uuid::nil()
+        }
+    } else {
+        {
+            tenant_id
+        }
+    };
     tracing::debug!("Updating risk {}: {:?}", id, req);
 
     let mut txn = match state.pool.begin().await {
@@ -484,14 +570,30 @@ pub async fn update_risk(
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
             title: row.try_get::<String, _>("title").unwrap_or_default(),
-            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            description: row
+                .try_get::<Option<String>, _>("description")
+                .ok()
+                .flatten(),
             risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
-            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            hazard_factor: row
+                .try_get::<Option<String>, _>("hazard_factor")
+                .ok()
+                .flatten(),
             likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
             severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
-            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
-            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
-            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            risk_level: row
+                .try_get::<Option<String>, _>("risk_level")
+                .ok()
+                .flatten(),
+            control_measures: row
+                .try_get::<Option<String>, _>("control_measures")
+                .ok()
+                .flatten(),
+            status: row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "identified".to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "风险更新成功",
@@ -516,7 +618,7 @@ pub async fn assess_risk(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -526,20 +628,28 @@ pub async fn assess_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {{
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    }} else {{
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }};
-    let rls_tenant = if claims.is_superuser {{
-        uuid::Uuid::nil()
-    }} else {{
-        tenant_id
-    }};
+    let tenant_id = if claims.is_superuser {
+        {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }
+    } else {
+        {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_else(uuid::Uuid::nil)
+        }
+    };
+    let rls_tenant = if claims.is_superuser {
+        {
+            uuid::Uuid::nil()
+        }
+    } else {
+        {
+            tenant_id
+        }
+    };
     tracing::debug!("Assessing risk {}: {:?}", id, req);
     let assessed_by = claims.username.clone();
 
@@ -608,14 +718,30 @@ pub async fn assess_risk(
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_no: row.try_get::<String, _>("risk_no").unwrap_or_default(),
             title: row.try_get::<String, _>("title").unwrap_or_default(),
-            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
+            description: row
+                .try_get::<Option<String>, _>("description")
+                .ok()
+                .flatten(),
             risk_type: row.try_get::<Option<String>, _>("risk_type").ok().flatten(),
-            hazard_factor: row.try_get::<Option<String>, _>("hazard_factor").ok().flatten(),
+            hazard_factor: row
+                .try_get::<Option<String>, _>("hazard_factor")
+                .ok()
+                .flatten(),
             likelihood: row.try_get::<Option<i32>, _>("likelihood").ok().flatten(),
             severity: row.try_get::<Option<i32>, _>("severity").ok().flatten(),
-            risk_level: row.try_get::<Option<String>, _>("risk_level").ok().flatten(),
-            control_measures: row.try_get::<Option<String>, _>("control_measures").ok().flatten(),
-            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "identified".to_string()),
+            risk_level: row
+                .try_get::<Option<String>, _>("risk_level")
+                .ok()
+                .flatten(),
+            control_measures: row
+                .try_get::<Option<String>, _>("control_measures")
+                .ok()
+                .flatten(),
+            status: row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "identified".to_string()),
             tenant_id: uuid::Uuid::nil(),
         },
         "风险评估成功",
@@ -638,7 +764,7 @@ pub async fn delete_risk(
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -648,20 +774,28 @@ pub async fn delete_risk(
             .unwrap_or_else(uuid::Uuid::nil)
             .to_string()
     };
-    let tenant_id = if claims.is_superuser {{
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    }} else {{
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }};
-    let rls_tenant = if claims.is_superuser {{
-        uuid::Uuid::nil()
-    }} else {{
-        tenant_id
-    }};
+    let tenant_id = if claims.is_superuser {
+        {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        }
+    } else {
+        {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_else(uuid::Uuid::nil)
+        }
+    };
+    let rls_tenant = if claims.is_superuser {
+        {
+            uuid::Uuid::nil()
+        }
+    } else {
+        {
+            tenant_id
+        }
+    };
     tracing::debug!("Deleting risk: {}", id);
 
     let mut txn = match state.pool.begin().await {
@@ -717,7 +851,8 @@ pub async fn delete_risk(
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn list_control_measures(    State(state): State<crate::shared::AppState>,
+pub async fn list_control_measures(
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -776,7 +911,10 @@ pub async fn list_control_measures(    State(state): State<crate::shared::AppSta
             risk_id: r.try_get::<String, _>("risk_id").unwrap_or_default(),
             title: r.try_get::<String, _>("title").unwrap_or_default(),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-            measure_type: r.try_get::<Option<String>, _>("measure_type").ok().flatten(),
+            measure_type: r
+                .try_get::<Option<String>, _>("measure_type")
+                .ok()
+                .flatten(),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -806,7 +944,8 @@ pub async fn list_control_measures(    State(state): State<crate::shared::AppSta
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn create_control_measure(    State(state): State<crate::shared::AppState>,
+pub async fn create_control_measure(
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -841,7 +980,10 @@ pub async fn create_control_measure(    State(state): State<crate::shared::AppSt
         .and_then(|v| v.as_str())
         .unwrap_or("未命名措施")
         .to_string();
-    let measure_no = format!("CM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let measure_no = format!(
+        "CM-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     tracing::debug!("Creating control measure for risk {}: {:?}", id, req);
 
     let mut txn = match state.pool.begin().await {
@@ -920,10 +1062,24 @@ pub async fn create_control_measure(    State(state): State<crate::shared::AppSt
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_id: row.try_get::<String, _>("risk_id").unwrap_or_default(),
             title: row.try_get::<String, _>("title").unwrap_or_default(),
-            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
-            measure_type: row.try_get::<Option<String>, _>("measure_type").ok().flatten(),
-            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
-            created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten().unwrap_or_default(),
+            description: row
+                .try_get::<Option<String>, _>("description")
+                .ok()
+                .flatten(),
+            measure_type: row
+                .try_get::<Option<String>, _>("measure_type")
+                .ok()
+                .flatten(),
+            status: row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "active".to_string()),
+            created_at: row
+                .try_get::<Option<String>, _>("created_at")
+                .ok()
+                .flatten()
+                .unwrap_or_default(),
             tenant_id,
         },
         "控制措施创建成功",
@@ -943,7 +1099,8 @@ pub async fn create_control_measure(    State(state): State<crate::shared::AppSt
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn update_control_measure(    State(state): State<crate::shared::AppState>,
+pub async fn update_control_measure(
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
@@ -1040,10 +1197,24 @@ pub async fn update_control_measure(    State(state): State<crate::shared::AppSt
             id: row.try_get::<String, _>("id").unwrap_or_default(),
             risk_id: row.try_get::<String, _>("risk_id").unwrap_or_default(),
             title: row.try_get::<String, _>("title").unwrap_or_default(),
-            description: row.try_get::<Option<String>, _>("description").ok().flatten(),
-            measure_type: row.try_get::<Option<String>, _>("measure_type").ok().flatten(),
-            status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
-            created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten().unwrap_or_default(),
+            description: row
+                .try_get::<Option<String>, _>("description")
+                .ok()
+                .flatten(),
+            measure_type: row
+                .try_get::<Option<String>, _>("measure_type")
+                .ok()
+                .flatten(),
+            status: row
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "active".to_string()),
+            created_at: row
+                .try_get::<Option<String>, _>("created_at")
+                .ok()
+                .flatten()
+                .unwrap_or_default(),
             tenant_id,
         },
         "控制措施更新成功",
@@ -1062,7 +1233,8 @@ pub async fn update_control_measure(    State(state): State<crate::shared::AppSt
 
     responses((status = 200, description = "OK")),
 )]
-pub async fn delete_control_measure(    State(state): State<crate::shared::AppState>,
+pub async fn delete_control_measure(
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,

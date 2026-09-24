@@ -7,14 +7,14 @@ use axum::{
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{
     EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
 };
 use uuid::Uuid;
-use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::settlement::{
     CreateSettlementAdjustmentRequest, CreateSettlementItemRequest, CreateSettlementRequest,

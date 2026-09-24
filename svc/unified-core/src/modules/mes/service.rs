@@ -1,7 +1,7 @@
 //! MES 业务逻辑 - 内存数据存储
 
-use std::sync::OnceLock;
 use std::sync::Mutex;
+use std::sync::OnceLock;
 
 use super::models::*;
 
@@ -317,9 +317,14 @@ impl MesService {
     }
 
     pub fn get_wip_statistics(&self) -> WipStatistics {
-        let total_wip: i32 = self.work_orders.iter().map(|wo| wo.quantity - wo.completed).sum();
-        
-        let mut status_map: std::collections::HashMap<String, i32> = std::collections::HashMap::new();
+        let total_wip: i32 = self
+            .work_orders
+            .iter()
+            .map(|wo| wo.quantity - wo.completed)
+            .sum();
+
+        let mut status_map: std::collections::HashMap<String, i32> =
+            std::collections::HashMap::new();
         for wo in &self.work_orders {
             *status_map.entry(wo.status.clone()).or_insert(0) += 1;
         }
@@ -346,7 +351,11 @@ impl MesService {
         }
     }
 
-    pub fn list_quality_inspections(&self, page: i32, page_size: i32) -> PaginatedResponse<QualityInspection> {
+    pub fn list_quality_inspections(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> PaginatedResponse<QualityInspection> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.quality_inspections.len());
         let items = if start < self.quality_inspections.len() {
@@ -362,7 +371,11 @@ impl MesService {
         }
     }
 
-    pub fn list_production_orders(&self, page: i32, page_size: i32) -> PaginatedResponse<ProductionOrder> {
+    pub fn list_production_orders(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> PaginatedResponse<ProductionOrder> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.production_orders.len());
         let items = if start < self.production_orders.len() {
@@ -394,7 +407,11 @@ impl MesService {
         }
     }
 
-    pub fn list_production_records(&self, page: i32, page_size: i32) -> PaginatedResponse<ProductionRecord> {
+    pub fn list_production_records(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> PaginatedResponse<ProductionRecord> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.production_records.len());
         let items = if start < self.production_records.len() {
@@ -410,7 +427,11 @@ impl MesService {
         }
     }
 
-    pub fn list_production_schedules(&self, page: i32, page_size: i32) -> PaginatedResponse<ProductionSchedule> {
+    pub fn list_production_schedules(
+        &self,
+        page: i32,
+        page_size: i32,
+    ) -> PaginatedResponse<ProductionSchedule> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.production_schedules.len());
         let items = if start < self.production_schedules.len() {
@@ -427,10 +448,22 @@ impl MesService {
     }
 
     pub fn get_equipment_statistics(&self) -> serde_json::Value {
-        let running = self.equipment.iter().filter(|e| e.status == "running").count();
+        let running = self
+            .equipment
+            .iter()
+            .filter(|e| e.status == "running")
+            .count();
         let idle = self.equipment.iter().filter(|e| e.status == "idle").count();
-        let maintenance = self.equipment.iter().filter(|e| e.status == "maintenance").count();
-        let fault = self.equipment.iter().filter(|e| e.status == "fault").count();
+        let maintenance = self
+            .equipment
+            .iter()
+            .filter(|e| e.status == "maintenance")
+            .count();
+        let fault = self
+            .equipment
+            .iter()
+            .filter(|e| e.status == "fault")
+            .count();
 
         serde_json::json!({
             "total": self.equipment.len(),
@@ -443,14 +476,38 @@ impl MesService {
     }
 
     pub fn get_dashboard_stats(&self) -> serde_json::Value {
-        let equipment_running = self.equipment.iter().filter(|e| e.status == "running").count() as i32;
+        let equipment_running = self
+            .equipment
+            .iter()
+            .filter(|e| e.status == "running")
+            .count() as i32;
         let equipment_idle = self.equipment.iter().filter(|e| e.status == "idle").count() as i32;
-        let equipment_maintenance = self.equipment.iter().filter(|e| e.status == "maintenance").count() as i32;
-        let equipment_fault = self.equipment.iter().filter(|e| e.status == "fault").count() as i32;
+        let equipment_maintenance = self
+            .equipment
+            .iter()
+            .filter(|e| e.status == "maintenance")
+            .count() as i32;
+        let equipment_fault = self
+            .equipment
+            .iter()
+            .filter(|e| e.status == "fault")
+            .count() as i32;
 
-        let orders_in_progress = self.work_orders.iter().filter(|wo| wo.status == "in_progress").count() as i32;
-        let orders_completed = self.work_orders.iter().filter(|wo| wo.status == "completed").count() as i32;
-        let orders_pending = self.work_orders.iter().filter(|wo| wo.status == "pending").count() as i32;
+        let orders_in_progress = self
+            .work_orders
+            .iter()
+            .filter(|wo| wo.status == "in_progress")
+            .count() as i32;
+        let orders_completed = self
+            .work_orders
+            .iter()
+            .filter(|wo| wo.status == "completed")
+            .count() as i32;
+        let orders_pending = self
+            .work_orders
+            .iter()
+            .filter(|wo| wo.status == "pending")
+            .count() as i32;
 
         serde_json::json!({
             "total_equipment": self.equipment.len(),

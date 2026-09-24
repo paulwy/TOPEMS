@@ -557,7 +557,11 @@ impl ControlPoint {
         q.fetch_all(pool).await
     }
 
-    pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        pool: &PgPool,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, name, description, category, risk_level, \
              control_type, frequency, is_active, created_by, created_at, updated_at \
@@ -685,7 +689,11 @@ impl ControlMatrix {
         .await
     }
 
-    pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        pool: &PgPool,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, name, period, controls, total_controls, \
@@ -799,7 +807,11 @@ impl RiskAssessment {
         .await
     }
 
-    pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        pool: &PgPool,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
@@ -846,7 +858,10 @@ impl RiskAssessment {
         q.fetch_all(pool).await
     }
 
-    pub async fn get_summary(pool: &PgPool, tenant_id: Option<Uuid>) -> Result<RiskSummary, sqlx::Error> {
+    pub async fn get_summary(
+        pool: &PgPool,
+        tenant_id: Option<Uuid>,
+    ) -> Result<RiskSummary, sqlx::Error> {
         let assessments = sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, control_point_id, likelihood, impact, risk_score, \
@@ -1055,7 +1070,11 @@ impl ComplianceReportV51 {
         Ok((report, saved_issues))
     }
 
-    pub async fn get(pool: &PgPool, id: Uuid, tenant_id: Option<Uuid>) -> Result<Self, sqlx::Error> {
+    pub async fn get(
+        pool: &PgPool,
+        id: Uuid,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Self, sqlx::Error> {
         sqlx::query_as::<_, Self>(only_own_schema_query!(
             "finance",
             "SELECT id, tenant_id, report_type, period_start, period_end, generated_at, \
@@ -1161,7 +1180,11 @@ async fn list_control_points_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ControlPointQueryParams>,
 ) -> Json<ApiResponse<Vec<ControlPoint>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ControlPoint::list(
         &state.pool,
         tenant_id,
@@ -1191,7 +1214,11 @@ async fn get_control_point_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ControlPoint>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ControlPoint::get(&state.pool, id, tenant_id).await {
         Ok(cp) => Json(ApiResponse::success(cp, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1279,7 +1306,11 @@ async fn get_control_matrix_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ControlMatrix>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ControlMatrix::get(&state.pool, id, tenant_id).await {
         Ok(cm) => Json(ApiResponse::success(cm, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1301,7 +1332,11 @@ async fn list_control_matrices_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ControlMatrixQueryParams>,
 ) -> Json<ApiResponse<Vec<ControlMatrix>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ControlMatrix::list(&state.pool, tenant_id, params.period).await {
         Ok(cms) => Json(ApiResponse::success(cms, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1346,7 +1381,11 @@ async fn get_risk_assessment_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<RiskAssessment>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match RiskAssessment::get(&state.pool, id, tenant_id).await {
         Ok(ra) => Json(ApiResponse::success(ra, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1375,7 +1414,11 @@ async fn list_risk_assessments_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<RiskAssessmentQueryParams>,
 ) -> Json<ApiResponse<Vec<RiskAssessment>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match RiskAssessment::list(
         &state.pool,
         tenant_id,
@@ -1403,7 +1446,11 @@ async fn get_risk_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskSummary>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match RiskAssessment::get_summary(&state.pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1448,7 +1495,11 @@ async fn get_compliance_report_handler(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ComplianceReportV51>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ComplianceReportV51::get(&state.pool, id, tenant_id).await {
         Ok(report) => Json(ApiResponse::success(report, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1477,7 +1528,11 @@ async fn list_compliance_reports_handler(
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceReportQueryParams>,
 ) -> Json<ApiResponse<Vec<ComplianceReportV51>>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match ComplianceReportV51::list(&state.pool, tenant_id, params.report_type).await {
         Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

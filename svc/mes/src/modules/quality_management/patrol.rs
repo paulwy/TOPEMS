@@ -1,10 +1,7 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    types::Uuid,
-    Row,
-};
+use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -306,7 +303,8 @@ pub async fn create_patrol(
         body.workstation_name,
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+                .map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
@@ -402,7 +400,8 @@ pub async fn update_patrol(
         body.workstation_name,
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S").map(|dt| dt)
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+                .map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)

@@ -1342,7 +1342,11 @@ async fn get_templates_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutomatedReportEngine::get_templates(&pool, tenant_id).await {
         Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1390,7 +1394,11 @@ async fn list_reports_handler(
     Query(params): Query<ReportListQueryParams>,
 ) -> Json<ApiResponse<Vec<GeneratedReport>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutomatedReportEngine::list_reports(&pool, tenant_id, params.status).await {
         Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1413,7 +1421,11 @@ async fn get_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutomatedReportEngine::get_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1434,7 +1446,11 @@ async fn download_report_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<GeneratedReport>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AutomatedReportEngine::download_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "下载成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1645,7 +1661,11 @@ async fn get_analysis_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AnalysisResult>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match MultiDimensionalAnalyzer::get_analysis_history(&pool, tenant_id).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1724,7 +1744,11 @@ async fn get_insights_handler(
     Query(params): Query<InsightsQueryParams>,
 ) -> Json<ApiResponse<Vec<Insight>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match PredictiveInsightEngine::get_insights(&pool, tenant_id, params.insight_type).await {
         Ok(insights) => Json(ApiResponse::success(insights, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1769,7 +1793,11 @@ async fn list_models_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ForecastModel>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match PredictiveInsightEngine::list_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

@@ -63,8 +63,11 @@ mod tests {
         assert!(create.is_ok(), "仪器创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "active");
 
-        let read = sqlx::query("SELECT id, name, instrument_type FROM lims.instruments WHERE id = $1")
-            .bind(inst_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, name, instrument_type FROM lims.instruments WHERE id = $1")
+                .bind(inst_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "仪器读取应该成功");
 
         let calibrate = sqlx::query("UPDATE lims.instruments SET status = 'calibration', updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -72,7 +75,11 @@ mod tests {
         assert!(calibrate.is_ok(), "仪器校准状态更新应该成功");
         assert_eq!(calibrate.unwrap().get::<String, _>("status"), "calibration");
 
-        sqlx::query("DELETE FROM lims.instruments WHERE id = $1").bind(inst_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM lims.instruments WHERE id = $1")
+            .bind(inst_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -112,12 +119,23 @@ mod tests {
         assert!(create.is_ok(), "检验记录创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("conclusion"), "合格");
 
-        let read = sqlx::query("SELECT id, result, inspector FROM lims.inspection_records WHERE id = $1")
-            .bind(rec_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, result, inspector FROM lims.inspection_records WHERE id = $1")
+                .bind(rec_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "检验记录读取应该成功");
 
-        sqlx::query("DELETE FROM lims.inspection_records WHERE id = $1").bind(rec_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM lims.inspection_tasks WHERE id = $1").bind(task_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM lims.inspection_records WHERE id = $1")
+            .bind(rec_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM lims.inspection_tasks WHERE id = $1")
+            .bind(task_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -143,14 +161,29 @@ mod tests {
         )
         .bind(cal_id).bind(org_id).bind(inst_id).fetch_one(&pool).await;
         assert!(create.is_ok(), "仪器校准记录创建应该成功");
-        assert_eq!(create.unwrap().get::<String, _>("calibrated_by"), "校准工程师李四");
+        assert_eq!(
+            create.unwrap().get::<String, _>("calibrated_by"),
+            "校准工程师李四"
+        );
 
-        let read = sqlx::query("SELECT id, calibration_date, notes FROM lims.instrument_calibrations WHERE id = $1")
-            .bind(cal_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, calibration_date, notes FROM lims.instrument_calibrations WHERE id = $1",
+        )
+        .bind(cal_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "仪器校准记录读取应该成功");
 
-        sqlx::query("DELETE FROM lims.instrument_calibrations WHERE id = $1").bind(cal_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM lims.instruments WHERE id = $1").bind(inst_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM lims.instrument_calibrations WHERE id = $1")
+            .bind(cal_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM lims.instruments WHERE id = $1")
+            .bind(inst_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -184,8 +217,11 @@ mod tests {
         assert!(create.is_ok(), "检验任务创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "pending");
 
-        let read = sqlx::query("SELECT id, status, inspector FROM lims.inspection_tasks WHERE id = $1")
-            .bind(task_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, status, inspector FROM lims.inspection_tasks WHERE id = $1")
+                .bind(task_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "检验任务读取应该成功");
 
         let start = sqlx::query("UPDATE lims.inspection_tasks SET status = 'in_progress', started_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -198,7 +234,11 @@ mod tests {
         assert!(complete.is_ok(), "检验任务完成应该成功");
         assert_eq!(complete.unwrap().get::<String, _>("status"), "completed");
 
-        sqlx::query("DELETE FROM lims.inspection_tasks WHERE id = $1").bind(task_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM lims.inspection_tasks WHERE id = $1")
+            .bind(task_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -214,7 +254,11 @@ mod tests {
         .fetch_one(&pool)
         .await
         .unwrap();
-        assert!(count >= 10, "lims schema 应该至少有 10 个表，实际有 {}", count);
+        assert!(
+            count >= 10,
+            "lims schema 应该至少有 10 个表，实际有 {}",
+            count
+        );
         eprintln!("lims schema 表数量: {}", count);
     }
 }

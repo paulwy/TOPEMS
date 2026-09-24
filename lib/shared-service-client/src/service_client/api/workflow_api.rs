@@ -120,12 +120,14 @@ impl TypedServiceClient<WorkflowApi> {
 
     /// 获取我的任务统计
     pub async fn get_my_task_stats(&self) -> ServiceClientResult<TaskStats> {
-        self.get_and_unwrap(&self.build_path("/tasks/my/stats")).await
+        self.get_and_unwrap(&self.build_path("/tasks/my/stats"))
+            .await
     }
 
     /// 获取我的任务数量
     pub async fn get_my_task_count(&self) -> ServiceClientResult<i64> {
-        self.get_and_unwrap(&self.build_path("/tasks/my/count")).await
+        self.get_and_unwrap(&self.build_path("/tasks/my/count"))
+            .await
     }
 
     /// 获取任务详情
@@ -138,14 +140,16 @@ impl TypedServiceClient<WorkflowApi> {
     pub async fn approve_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/approve", id);
-        self.post_and_check_success(&self.build_path(&path), &body).await
+        self.post_and_check_success(&self.build_path(&path), &body)
+            .await
     }
 
     /// 审批拒绝
     pub async fn reject_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/reject", id);
-        self.post_and_check_success(&self.build_path(&path), &body).await
+        self.post_and_check_success(&self.build_path(&path), &body)
+            .await
     }
 
     /// 签收任务
@@ -167,7 +171,8 @@ impl TypedServiceClient<WorkflowApi> {
             "reason": reason,
         });
         let path = format!("/tasks/{}/delegate", id);
-        self.post_and_check_success(&self.build_path(&path), &body).await
+        self.post_and_check_success(&self.build_path(&path), &body)
+            .await
     }
 
     /// 获取工作流统计
@@ -182,7 +187,8 @@ impl TypedServiceClient<WorkflowApi> {
         &self,
         request: CreateInstanceRequest,
     ) -> ServiceClientResult<WorkflowInstance> {
-        self.post_and_unwrap(&self.build_path("/instances"), &request).await
+        self.post_and_unwrap(&self.build_path("/instances"), &request)
+            .await
     }
 
     /// 获取流程实例详情

@@ -423,7 +423,11 @@ pub async fn create_budget(
     let now = Utc::now();
     let fiscal_year: i32 = req
         .get("fiscal_year")
-        .and_then(|v| v.as_i64().map(|n| n as i32).or_else(|| v.as_str().and_then(|s| s.parse::<i32>().ok())))
+        .and_then(|v| {
+            v.as_i64()
+                .map(|n| n as i32)
+                .or_else(|| v.as_str().and_then(|s| s.parse::<i32>().ok()))
+        })
         .unwrap_or(0);
     let total_budget: rust_decimal::Decimal = req
         .get("total_budget")

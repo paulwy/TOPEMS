@@ -375,7 +375,8 @@ pub async fn get_process_route(
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
-                    total_estimated_time_minutes: total_estimated_time_minutes.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+                    total_estimated_time_minutes: total_estimated_time_minutes
+                        .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     process_count,
                     created_at: r.created_at.to_rfc3339(),
                     updated_at: r.updated_at.to_rfc3339(),
@@ -653,7 +654,9 @@ pub async fn get_route_steps(
                     process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
-                    estimated_time_minutes: s.estimated_time_minutes.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+                    estimated_time_minutes: s
+                        .estimated_time_minutes
+                        .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
@@ -703,7 +706,9 @@ pub async fn add_route_step(
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let estimated_time_minutes = body.estimated_time_minutes.and_then(|v| v.to_string().parse::<BigDecimal>().ok());
+    let estimated_time_minutes = body
+        .estimated_time_minutes
+        .and_then(|v| v.to_string().parse::<BigDecimal>().ok());
 
     let result = sqlx::query!(
         r#"
@@ -747,7 +752,9 @@ pub async fn add_route_step(
                     process_name: process_name.unwrap_or_default().unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
-                    estimated_time_minutes: s.estimated_time_minutes.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+                    estimated_time_minutes: s
+                        .estimated_time_minutes
+                        .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
@@ -786,7 +793,9 @@ pub async fn update_route_step(
         .work_station_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let estimated_time_minutes = body.estimated_time_minutes.and_then(|v| v.to_string().parse::<BigDecimal>().ok());
+    let estimated_time_minutes = body
+        .estimated_time_minutes
+        .and_then(|v| v.to_string().parse::<BigDecimal>().ok());
 
     let result = sqlx::query!(
         r#"
@@ -830,7 +839,9 @@ pub async fn update_route_step(
                     process_name: process_name.unwrap_or_default().unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
-                    estimated_time_minutes: s.estimated_time_minutes.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+                    estimated_time_minutes: s
+                        .estimated_time_minutes
+                        .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
                     description: s.description,
@@ -971,7 +982,9 @@ pub async fn reorder_route_steps(
                     process_name: s.process_name.unwrap_or_default(),
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
-                    estimated_time_minutes: s.estimated_time_minutes.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+                    estimated_time_minutes: s
+                        .estimated_time_minutes
+                        .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,

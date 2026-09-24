@@ -140,7 +140,10 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
         .route("/projects/{id}/dashboard", get(get_project_dashboard))
         .route("/projects/{id}/gantt", get(get_project_gantt))
         .route("/projects/kanban-board", get(get_kanban_board))
-        .route("/projects/milestones/timeline", get(get_milestones_timeline))
+        .route(
+            "/projects/milestones/timeline",
+            get(get_milestones_timeline),
+        )
         .with_state(state)
 }
 
@@ -1254,10 +1257,9 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
 async fn get_milestones_timeline(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let result = sqlx::query(
-        only_own_schema_query!(
-            "pm",
-            r#"
+    let result = sqlx::query(only_own_schema_query!(
+        "pm",
+        r#"
             SELECT m.id::TEXT AS milestone_id, m.project_id::TEXT AS project_id,
                    p.name AS project_name, p.code AS project_code,
                    m.name AS milestone_name, m.description,
@@ -1267,8 +1269,7 @@ async fn get_milestones_timeline(
             WHERE m.deleted_at IS NULL
             ORDER BY m.due_date NULLS LAST, m.created_at
             "#
-        ),
-    )
+    ))
     .fetch_all(&state.pool)
     .await;
 

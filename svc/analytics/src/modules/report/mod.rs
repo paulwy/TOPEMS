@@ -86,9 +86,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("ALTER TABLE report_templates ALTER COLUMN template_type SET DEFAULT 'custom'")
         .execute(pool)
         .await?;
-    sqlx::query("ALTER TABLE report_templates ALTER COLUMN template_content SET DEFAULT '{}'::jsonb")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "ALTER TABLE report_templates ALTER COLUMN template_content SET DEFAULT '{}'::jsonb",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"

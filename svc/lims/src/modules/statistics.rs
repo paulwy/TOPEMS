@@ -80,12 +80,13 @@ pub async fn get_statistics(
         .and_then(|row| row.try_get::<i64, _>(0).ok())
         .unwrap_or(0);
 
-    let pending_tasks = sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'pending'")
-        .fetch_one(&state.pool)
-        .await
-        .ok()
-        .and_then(|row| row.try_get::<i64, _>(0).ok())
-        .unwrap_or(0);
+    let pending_tasks =
+        sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'pending'")
+            .fetch_one(&state.pool)
+            .await
+            .ok()
+            .and_then(|row| row.try_get::<i64, _>(0).ok())
+            .unwrap_or(0);
 
     let in_progress_tasks =
         sqlx::query("SELECT COUNT(*) FROM public.qa_lab_tasks WHERE status = 'in_progress'")

@@ -155,8 +155,7 @@ pub struct UpdateWipRequest {
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
@@ -858,7 +857,11 @@ pub async fn transfer_wip(
         from_process_id: transfer.from_process_id,
         from_process_name: Some(from_process_name.unwrap_or_default().unwrap_or_default()),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: Some(from_workstation_name.unwrap_or_default().unwrap_or_default()),
+        from_work_station_name: Some(
+            from_workstation_name
+                .unwrap_or_default()
+                .unwrap_or_default(),
+        ),
         to_process_id: transfer.to_process_id,
         to_process_name: Some(to_process_name.unwrap_or_default().unwrap_or_default()),
         to_work_station_id: transfer.to_work_station_id,
@@ -981,7 +984,7 @@ pub async fn get_wip_statistics(
             COALESCE(SUM(quantity), 0) as total_quantity
         FROM wips
         WHERE status = 'in_progress'
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -1008,7 +1011,7 @@ pub async fn get_wip_statistics(
         FROM wips
         GROUP BY status
         ORDER BY status
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await;
@@ -1017,7 +1020,10 @@ pub async fn get_wip_statistics(
         Ok(rows) => rows
             .into_iter()
             .map(|r| WipStatusCount {
-                status: r.try_get::<String, _>("status").ok().unwrap_or_else(|| "unknown".to_string()),
+                status: r
+                    .try_get::<String, _>("status")
+                    .ok()
+                    .unwrap_or_else(|| "unknown".to_string()),
                 count: r.try_get::<i64, _>("count").ok().unwrap_or(0),
                 quantity: big_decimal_to_f64(r.try_get("quantity").ok()),
             })
@@ -1040,7 +1046,7 @@ pub async fn get_wip_statistics(
         WHERE w.status = 'in_progress'
         GROUP BY w.current_process_id, pp.process_name
         ORDER BY quantity DESC
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await;
@@ -1050,7 +1056,10 @@ pub async fn get_wip_statistics(
             .into_iter()
             .map(|r| WipProcessCount {
                 process_id: r.try_get("current_process_id").ok(),
-                process_name: r.try_get::<String, _>("process_name").ok().unwrap_or_default(),
+                process_name: r
+                    .try_get::<String, _>("process_name")
+                    .ok()
+                    .unwrap_or_default(),
                 count: r.try_get::<i64, _>("count").ok().unwrap_or(0),
                 quantity: big_decimal_to_f64(r.try_get("quantity").ok()),
             })

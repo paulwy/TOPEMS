@@ -344,8 +344,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 
 #[allow(dead_code)]
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 #[allow(dead_code)]

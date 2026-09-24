@@ -2,10 +2,10 @@
 
 use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -284,7 +284,7 @@ pub async fn list_materials(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -338,23 +338,52 @@ pub async fn list_materials(
                 material_no: r.try_get::<String, _>("material_no").unwrap_or_default(),
                 name: r.try_get::<String, _>("name").unwrap_or_default(),
                 alias: r.try_get::<Option<String>, _>("alias").ok().flatten(),
-                english_name: r.try_get::<Option<String>, _>("english_name").ok().flatten(),
+                english_name: r
+                    .try_get::<Option<String>, _>("english_name")
+                    .ok()
+                    .flatten(),
                 cas_no: r.try_get::<Option<String>, _>("cas_no").ok().flatten(),
-                category: r.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
-                hazard_level: r.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
+                category: r
+                    .try_get::<Option<String>, _>("category")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_default(),
+                hazard_level: r
+                    .try_get::<Option<String>, _>("hazard_level")
+                    .ok()
+                    .flatten(),
                 hazard_class: hc,
-                specification: r.try_get::<Option<String>, _>("specification").ok().flatten(),
+                specification: r
+                    .try_get::<Option<String>, _>("specification")
+                    .ok()
+                    .flatten(),
                 unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
                 packaging: r.try_get::<Option<String>, _>("packaging").ok().flatten(),
-                storage_condition: r.try_get::<Option<String>, _>("storage_condition").ok().flatten(),
-                storage_location: r.try_get::<Option<String>, _>("storage_location").ok().flatten(),
+                storage_condition: r
+                    .try_get::<Option<String>, _>("storage_condition")
+                    .ok()
+                    .flatten(),
+                storage_location: r
+                    .try_get::<Option<String>, _>("storage_location")
+                    .ok()
+                    .flatten(),
                 max_stock: r.try_get::<Option<f64>, _>("max_stock").ok().flatten(),
                 min_stock: r.try_get::<Option<f64>, _>("min_stock").ok().flatten(),
                 current_stock: r.try_get::<Option<f64>, _>("current_stock").ok().flatten(),
-                safety_data_sheet: r.try_get::<Option<String>, _>("safety_data_sheet").ok().flatten(),
-                emergency_measures: r.try_get::<Option<String>, _>("emergency_measures").ok().flatten(),
+                safety_data_sheet: r
+                    .try_get::<Option<String>, _>("safety_data_sheet")
+                    .ok()
+                    .flatten(),
+                emergency_measures: r
+                    .try_get::<Option<String>, _>("emergency_measures")
+                    .ok()
+                    .flatten(),
                 supplier: r.try_get::<Option<String>, _>("supplier").ok().flatten(),
-                status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+                status: r
+                    .try_get::<Option<String>, _>("status")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| "active".to_string()),
                 remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
                 created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
                 updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
@@ -383,11 +412,13 @@ pub async fn create_material(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating hazardous material: {:?}", req);
     Json(ApiResponse::success(
         HazardousMaterial {
@@ -442,7 +473,7 @@ pub async fn get_material(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -496,31 +527,75 @@ pub async fn get_material(
         material_no: row.try_get::<String, _>("material_no").unwrap_or_default(),
         name: row.try_get::<String, _>("name").unwrap_or_default(),
         alias: row.try_get::<Option<String>, _>("alias").ok().flatten(),
-        english_name: row.try_get::<Option<String>, _>("english_name").ok().flatten(),
+        english_name: row
+            .try_get::<Option<String>, _>("english_name")
+            .ok()
+            .flatten(),
         cas_no: row.try_get::<Option<String>, _>("cas_no").ok().flatten(),
-        category: row.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
-        hazard_level: row.try_get::<Option<String>, _>("hazard_level").ok().flatten(),
+        category: row
+            .try_get::<Option<String>, _>("category")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+        hazard_level: row
+            .try_get::<Option<String>, _>("hazard_level")
+            .ok()
+            .flatten(),
         hazard_class: hc,
-        specification: row.try_get::<Option<String>, _>("specification").ok().flatten(),
+        specification: row
+            .try_get::<Option<String>, _>("specification")
+            .ok()
+            .flatten(),
         unit: row.try_get::<Option<String>, _>("unit").ok().flatten(),
         packaging: row.try_get::<Option<String>, _>("packaging").ok().flatten(),
-        storage_condition: row.try_get::<Option<String>, _>("storage_condition").ok().flatten(),
-        storage_location: row.try_get::<Option<String>, _>("storage_location").ok().flatten(),
+        storage_condition: row
+            .try_get::<Option<String>, _>("storage_condition")
+            .ok()
+            .flatten(),
+        storage_location: row
+            .try_get::<Option<String>, _>("storage_location")
+            .ok()
+            .flatten(),
         max_stock: row.try_get::<Option<f64>, _>("max_stock").ok().flatten(),
         min_stock: row.try_get::<Option<f64>, _>("min_stock").ok().flatten(),
-        current_stock: row.try_get::<Option<f64>, _>("current_stock").ok().flatten(),
-        safety_data_sheet: row.try_get::<Option<String>, _>("safety_data_sheet").ok().flatten(),
-        emergency_measures: row.try_get::<Option<String>, _>("emergency_measures").ok().flatten(),
+        current_stock: row
+            .try_get::<Option<f64>, _>("current_stock")
+            .ok()
+            .flatten(),
+        safety_data_sheet: row
+            .try_get::<Option<String>, _>("safety_data_sheet")
+            .ok()
+            .flatten(),
+        emergency_measures: row
+            .try_get::<Option<String>, _>("emergency_measures")
+            .ok()
+            .flatten(),
         supplier: row.try_get::<Option<String>, _>("supplier").ok().flatten(),
-        status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "active".to_string()),
+        status: row
+            .try_get::<Option<String>, _>("status")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "active".to_string()),
         remarks: row.try_get::<Option<String>, _>("remarks").ok().flatten(),
-        created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten(),
-        updated_at: row.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+        created_at: row
+            .try_get::<Option<String>, _>("created_at")
+            .ok()
+            .flatten(),
+        updated_at: row
+            .try_get::<Option<String>, _>("updated_at")
+            .ok()
+            .flatten(),
         tenant_id: uuid::Uuid::nil(),
     };
 
     Json(ApiResponse::success(
-        MaterialDetail { material, stocks: vec![], msds: None, recent_records: vec![], tenant_id: uuid::Uuid::nil() },
+        MaterialDetail {
+            material,
+            stocks: vec![],
+            msds: None,
+            recent_records: vec![],
+            tenant_id: uuid::Uuid::nil(),
+        },
         "获取危险品详情成功",
     ))
 }
@@ -547,11 +622,13 @@ pub async fn update_material(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating hazardous material {}: {:?}", id, req);
     Json(ApiResponse::success(
         HazardousMaterial {
@@ -667,11 +744,13 @@ pub async fn create_stock_in(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating stock in record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
@@ -718,11 +797,13 @@ pub async fn create_stock_out(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating stock out record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
@@ -772,11 +853,13 @@ pub async fn get_stock_record(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting stock record: {}", id);
     Json(ApiResponse::success(
         StockRecord {
@@ -823,11 +906,13 @@ pub async fn get_material_msds(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting MSDS for material: {}", id);
     Json(ApiResponse::success(
         MsdsData {
@@ -882,11 +967,13 @@ pub async fn update_material_msds(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating MSDS for material {}: {:?}", id, req);
     Json(ApiResponse::success(
         MsdsData {
@@ -932,11 +1019,13 @@ pub async fn get_material_statistics(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Getting material statistics");
     Json(ApiResponse::success(
         MaterialStatistics {

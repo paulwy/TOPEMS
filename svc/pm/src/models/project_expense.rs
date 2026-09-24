@@ -263,7 +263,10 @@ mod tests {
     fn test_project_expense_naive_date_roundtrip() {
         let mut e = sample_expense();
         e.expense_date = DateTime::<Utc>::from_naive_utc_and_offset(
-            NaiveDate::from_ymd_opt(2020, 12, 31).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+            NaiveDate::from_ymd_opt(2020, 12, 31)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
             Utc,
         );
         let s = serde_json::to_string(&e).unwrap();

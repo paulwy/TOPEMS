@@ -50,7 +50,9 @@ impl AppState {
     /// 构造服务客户端：
     /// - 模块化单体模式（`MONOLITH_SERVICE_URL` 已设置）：所有服务客户端指向统一入口（topems-server）
     /// - 独立部署模式：`from_env_default()`（环境变量 → 默认端口）
-    fn build_client<T: topems_shared_service_client::service_client::trait_api::ServiceApi + Default>(
+    fn build_client<
+        T: topems_shared_service_client::service_client::trait_api::ServiceApi + Default,
+    >(
         mono_base: &Option<String>,
     ) -> ServiceClientResult<TypedServiceClient<T>> {
         if let Some(base) = mono_base {

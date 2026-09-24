@@ -103,7 +103,10 @@ pub async fn list_geofences(
             }),
             "获取地理围栏列表成功",
         )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库查询失败",
+            e,
+        ))),
     }
 }
 
@@ -121,7 +124,10 @@ pub async fn get_geofence(
     {
         Ok(geofence) => Json(ApiResponse::success(geofence, "获取地理围栏成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库查询失败",
+            e,
+        ))),
     }
 }
 
@@ -168,7 +174,10 @@ pub async fn create_geofence(
     .await
     {
         Ok(geofence) => Json(ApiResponse::success(geofence, "创建地理围栏成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库插入失败",
+            e,
+        ))),
     }
 }
 
@@ -190,7 +199,10 @@ pub async fn update_geofence(
             return Json(ApiResponse::error(404, "地理围栏未找到"));
         }
         Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal("数据库查询失败", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "数据库查询失败",
+                e,
+            )));
         }
     };
 
@@ -245,7 +257,10 @@ pub async fn update_geofence(
     .await
     {
         Ok(geofence) => Json(ApiResponse::success(geofence, "更新地理围栏成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库更新失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库更新失败",
+            e,
+        ))),
     }
 }
 
@@ -268,6 +283,9 @@ pub async fn delete_geofence(
                 Json(ApiResponse::error(404, "地理围栏未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }

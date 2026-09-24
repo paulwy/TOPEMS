@@ -222,9 +222,18 @@ mod tests {
 
     #[test]
     fn test_production_plan_requires_approval() {
-        assert!(production_plan_requires_approval("pending_approval", "approved"));
-        assert!(!production_plan_requires_approval("draft", "pending_approval"));
-        assert!(!production_plan_requires_approval("approved", "in_progress"));
+        assert!(production_plan_requires_approval(
+            "pending_approval",
+            "approved"
+        ));
+        assert!(!production_plan_requires_approval(
+            "draft",
+            "pending_approval"
+        ));
+        assert!(!production_plan_requires_approval(
+            "approved",
+            "in_progress"
+        ));
     }
 
     #[test]
@@ -380,7 +389,10 @@ mod tests {
     fn test_demand_forecast_requires_approval() {
         assert!(demand_forecast_requires_approval("validated", "adopted"));
         assert!(!demand_forecast_requires_approval("draft", "calculated"));
-        assert!(!demand_forecast_requires_approval("calculated", "validated"));
+        assert!(!demand_forecast_requires_approval(
+            "calculated",
+            "validated"
+        ));
     }
 
     #[test]

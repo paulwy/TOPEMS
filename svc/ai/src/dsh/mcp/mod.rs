@@ -67,35 +67,44 @@ mod business_tools_integration_tests {
             "finance.list_receivables",
         ];
         for tool in &expected_tools {
-            assert!(
-                registry.has_tool(tool).await,
-                "工具未注册: {}",
-                tool
-            );
+            assert!(registry.has_tool(tool).await, "工具未注册: {}", tool);
         }
         assert_eq!(registry.len().await, 10, "应注册 10 个业务工具");
 
         // 逐个调用工具（API 不可达时走 mock 降级，均应返回 Ok）
         let calls: Vec<(&str, serde_json::Value)> = vec![
             ("crm.list_customers", json!({"page": 1, "page_size": 5})),
-            ("crm.get_customer_profile", json!({"customer_id": "CUST-0001"})),
-            ("crm.create_opportunity", json!({"customer_id": "CUST-0001", "name": "测试商机", "amount": 50000.0})),
+            (
+                "crm.get_customer_profile",
+                json!({"customer_id": "CUST-0001"}),
+            ),
+            (
+                "crm.create_opportunity",
+                json!({"customer_id": "CUST-0001", "name": "测试商机", "amount": 50000.0}),
+            ),
             ("erp.list_sales_orders", json!({"page": 1, "page_size": 5})),
             ("erp.get_inventory_summary", json!({})),
-            ("erp.create_purchase_order", json!({"supplier_id": "SUP-001", "items": [{"material_id": "M1", "quantity": 5, "unit_price": 100.0}]})),
-            ("erp.get_sales_order_detail", json!({"order_id": "ORD-00000001"})),
-            ("finance.create_voucher", json!({"voucher_date": "2026-09-13", "summary": "集成测试凭证", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]})),
+            (
+                "erp.create_purchase_order",
+                json!({"supplier_id": "SUP-001", "items": [{"material_id": "M1", "quantity": 5, "unit_price": 100.0}]}),
+            ),
+            (
+                "erp.get_sales_order_detail",
+                json!({"order_id": "ORD-00000001"}),
+            ),
+            (
+                "finance.create_voucher",
+                json!({"voucher_date": "2026-09-13", "summary": "集成测试凭证", "entries": [{"subject_code": "1001", "direction": "debit", "amount": 100.0}, {"subject_code": "1002", "direction": "credit", "amount": 100.0}]}),
+            ),
             ("finance.get_account_balance", json!({})),
-            ("finance.list_receivables", json!({"page": 1, "page_size": 5})),
+            (
+                "finance.list_receivables",
+                json!({"page": 1, "page_size": 5}),
+            ),
         ];
         for (tool, args) in &calls {
             let result = registry.call_tool(tool, args.clone()).await;
-            assert!(
-                result.is_ok(),
-                "工具调用失败 {}: {:?}",
-                tool,
-                result.err()
-            );
+            assert!(result.is_ok(), "工具调用失败 {}: {:?}", tool, result.err());
             // 验证返回内容含 source 字段（real_api 或 mock_fallback）
             let content = result.unwrap().content;
             assert!(!content.is_empty(), "{} 返回内容为空", tool);

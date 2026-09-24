@@ -162,8 +162,7 @@ pub struct OeeStatisticsQuery {
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {

@@ -27,7 +27,7 @@ use std::sync::Arc;
 use tracing::warn;
 use uuid::Uuid;
 
-use crate::modules::subscription::{PlanTier, TierFeatureMatrix, TenantSubscription};
+use crate::modules::subscription::{PlanTier, TenantSubscription, TierFeatureMatrix};
 
 /// Tier 裁剪配置
 #[derive(Debug, Clone)]
@@ -163,10 +163,7 @@ pub async fn tier_gate_middleware(
     if !is_available {
         warn!(
             "Tier gate blocked: module={}, tenant={:?}, current_tier={}, required_tier>={}",
-            config.module,
-            tenant_id,
-            plan_tier,
-            config.min_tier
+            config.module, tenant_id, plan_tier, config.min_tier
         );
 
         let response = TierForbiddenResponse {
@@ -187,10 +184,7 @@ pub async fn tier_gate_middleware(
 }
 
 /// 检查租户订阅是否有模块访问权限（带 features 覆盖）
-pub fn check_module_access(
-    subscription: &TenantSubscription,
-    module: &str,
-) -> bool {
+pub fn check_module_access(subscription: &TenantSubscription, module: &str) -> bool {
     crate::modules::subscription::TierPermissionService::has_module_access(subscription, module)
 }
 
@@ -300,19 +294,46 @@ mod tests {
     #[test]
     fn test_module_availability_matches_matrix() {
         // mes 应该对 basic 及以上可用
-        assert!(TierFeatureMatrix::is_module_available("mes", &PlanTier::Basic));
-        assert!(TierFeatureMatrix::is_module_available("mes", &PlanTier::Advanced));
-        assert!(!TierFeatureMatrix::is_module_available("mes", &PlanTier::Free));
+        assert!(TierFeatureMatrix::is_module_available(
+            "mes",
+            &PlanTier::Basic
+        ));
+        assert!(TierFeatureMatrix::is_module_available(
+            "mes",
+            &PlanTier::Advanced
+        ));
+        assert!(!TierFeatureMatrix::is_module_available(
+            "mes",
+            &PlanTier::Free
+        ));
 
         // ai 应该只对 advanced 可用
-        assert!(TierFeatureMatrix::is_module_available("ai", &PlanTier::Advanced));
-        assert!(!TierFeatureMatrix::is_module_available("ai", &PlanTier::Basic));
-        assert!(!TierFeatureMatrix::is_module_available("ai", &PlanTier::Free));
+        assert!(TierFeatureMatrix::is_module_available(
+            "ai",
+            &PlanTier::Advanced
+        ));
+        assert!(!TierFeatureMatrix::is_module_available(
+            "ai",
+            &PlanTier::Basic
+        ));
+        assert!(!TierFeatureMatrix::is_module_available(
+            "ai",
+            &PlanTier::Free
+        ));
 
         // iam 应该对所有层级可用
-        assert!(TierFeatureMatrix::is_module_available("iam", &PlanTier::Free));
-        assert!(TierFeatureMatrix::is_module_available("iam", &PlanTier::Basic));
-        assert!(TierFeatureMatrix::is_module_available("iam", &PlanTier::Advanced));
+        assert!(TierFeatureMatrix::is_module_available(
+            "iam",
+            &PlanTier::Free
+        ));
+        assert!(TierFeatureMatrix::is_module_available(
+            "iam",
+            &PlanTier::Basic
+        ));
+        assert!(TierFeatureMatrix::is_module_available(
+            "iam",
+            &PlanTier::Advanced
+        ));
     }
 
     #[test]

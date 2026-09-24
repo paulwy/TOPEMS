@@ -138,7 +138,10 @@ pub async fn list_events(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch events: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch events", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch events",
+                e,
+            )))
         }
     }
 }
@@ -181,7 +184,10 @@ pub async fn create_event(
         Ok(event) => Json(ApiResponse::success(event, "Event created successfully")),
         Err(e) => {
             tracing::error!("Failed to create event: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to create event", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to create event",
+                e,
+            )))
         }
     }
 }

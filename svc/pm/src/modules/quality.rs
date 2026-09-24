@@ -6,11 +6,11 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
-use topems_shared_auth::auth::Claims;
-use topems_shared_auth::middleware::tenant::TenantContext;
 
 use crate::models::quality::{
     CreateDefectRequest, CreateQualityCheckRequest, Defect, QualityCheck, UpdateDefectRequest,

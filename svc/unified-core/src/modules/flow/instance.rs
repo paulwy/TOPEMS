@@ -256,7 +256,11 @@ pub async fn create_instance(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateInstanceRequest>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let create_tenant: Uuid = claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let create_tenant: Uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "INSERT INTO core_workflow_instances (workflow_id, title, initiator_id, variables, status, started_at, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, NOW(), $6) 
@@ -300,7 +304,14 @@ pub async fn start_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'running', started_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
@@ -343,7 +354,14 @@ pub async fn approve_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'approved', completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
@@ -386,7 +404,14 @@ pub async fn reject_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'rejected', completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
@@ -429,7 +454,14 @@ pub async fn cancel_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'cancelled', completed_at = NOW(), updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
@@ -472,7 +504,14 @@ pub async fn resume_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'running', completed_at = NULL, updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
@@ -515,7 +554,14 @@ pub async fn suspend_instance(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances SET status = 'suspended', updated_at = NOW() 
          WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) 
@@ -685,7 +731,14 @@ pub async fn retry_instance(
     Path(id): Path<Uuid>,
     Json(payload): Json<Option<RetryInstanceRequest>>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let tenant_opt: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()) };
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let node_id = payload.and_then(|p| p.node_id);
     let instance = sqlx::query_as::<_, WorkflowInstance>(
         "UPDATE core_workflow_instances

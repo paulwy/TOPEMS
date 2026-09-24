@@ -58,10 +58,7 @@ fn forward_accept_language(
     builder: reqwest::RequestBuilder,
     headers: &HeaderMap,
 ) -> reqwest::RequestBuilder {
-    match headers
-        .get("accept-language")
-        .and_then(|v| v.to_str().ok())
-    {
+    match headers.get("accept-language").and_then(|v| v.to_str().ok()) {
         Some(lang) if !lang.is_empty() => builder.header("Accept-Language", lang),
         _ => builder,
     }
@@ -123,10 +120,7 @@ pub async fn get_announcements(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Announcement>>> {
     let url = format!("{}/api/erp/announcements", erp_base_url());
-    let req = forward_accept_language(
-        erp_auth(state.http_client.get(&url), &state),
-        &headers,
-    );
+    let req = forward_accept_language(erp_auth(state.http_client.get(&url), &state), &headers);
     match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
@@ -158,10 +152,7 @@ pub async fn get_announcement(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Announcement>> {
     let url = format!("{}/api/erp/announcements/{}", erp_base_url(), id);
-    let req = forward_accept_language(
-        erp_auth(state.http_client.get(&url), &state),
-        &headers,
-    );
+    let req = forward_accept_language(erp_auth(state.http_client.get(&url), &state), &headers);
     match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {
@@ -323,10 +314,7 @@ pub async fn get_pinned_announcements(
     headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Announcement>>> {
     let url = format!("{}/api/erp/announcements?priority=pinned", erp_base_url());
-    let req = forward_accept_language(
-        erp_auth(state.http_client.get(&url), &state),
-        &headers,
-    );
+    let req = forward_accept_language(erp_auth(state.http_client.get(&url), &state), &headers);
     match req.send().await {
         Ok(resp) => match resp.json::<serde_json::Value>().await {
             Ok(json) => {

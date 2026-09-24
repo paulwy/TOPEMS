@@ -90,14 +90,20 @@ async fn build_router_inner(
     try_init("flow", || crate::modules::flow::init_database(&ctx.db)).await;
     try_init("file", || crate::modules::file::init_database(&ctx.db)).await;
     try_init("tenant", || crate::modules::tenant::init_database(&ctx.db)).await;
-    try_init("migration", || crate::modules::migration::init_database(&ctx.db)).await;
+    try_init("migration", || {
+        crate::modules::migration::init_database(&ctx.db)
+    })
+    .await;
     try_init("master", || {
         crate::modules::master::handlers::init_mdm_tables(&ctx.db)
     })
     .await;
     try_init("menu", || crate::modules::menu::init_database(&ctx.db)).await;
     try_init("audit", || crate::modules::audit::init_database(&ctx.db)).await;
-    try_init("doc", || crate::modules::doc::services::init_database(&ctx.db)).await;
+    try_init("doc", || {
+        crate::modules::doc::services::init_database(&ctx.db)
+    })
+    .await;
 
     // Schema 防御：增量迁移 + 一致性自检
     if let Err(e) = crate::schema_defense::run_schema_migration_and_verify(&ctx.db).await {
@@ -119,36 +125,32 @@ async fn build_router_inner(
     );
 
     let version_config = crate::middleware::versioning::VersionConfig::default();
-    let versioning_middleware =
-        std::sync::Arc::new(crate::middleware::versioning::VersionMiddleware::new(version_config));
+    let versioning_middleware = std::sync::Arc::new(
+        crate::middleware::versioning::VersionMiddleware::new(version_config),
+    );
 
-    let security_headers_config =
-        topems_shared_auth::security::SecurityHeadersConfig::default();
-    let security_headers_layer =
-        std::sync::Arc::new(topems_shared_auth::security::SecurityHeadersLayer::new(
-            security_headers_config,
-        ));
+    let security_headers_config = topems_shared_auth::security::SecurityHeadersConfig::default();
+    let security_headers_layer = std::sync::Arc::new(
+        topems_shared_auth::security::SecurityHeadersLayer::new(security_headers_config),
+    );
 
     let compression_config = topems_shared_core::compression::CompressionConfig::default();
-    let compression_middleware =
-        std::sync::Arc::new(topems_shared_core::compression::CompressionMiddleware::new(
-            compression_config,
-        ));
+    let compression_middleware = std::sync::Arc::new(
+        topems_shared_core::compression::CompressionMiddleware::new(compression_config),
+    );
 
     let body_limit_config = topems_shared_auth::security::BodyLimitConfig::default();
-    let body_limit_mw =
-        std::sync::Arc::new(topems_shared_auth::security::BodyLimitMiddleware::new(
-            body_limit_config,
-        ));
+    let body_limit_mw = std::sync::Arc::new(
+        topems_shared_auth::security::BodyLimitMiddleware::new(body_limit_config),
+    );
 
-    let audit_logger_config =
-        topems_shared_auth::security::AuditLoggerConfig::default().add_skip_path("/api/core/health");
-    let audit_logger_mw = std::sync::Arc::new(
-        topems_shared_auth::security::AuditLoggerMiddleware::new(
+    let audit_logger_config = topems_shared_auth::security::AuditLoggerConfig::default()
+        .add_skip_path("/api/core/health");
+    let audit_logger_mw =
+        std::sync::Arc::new(topems_shared_auth::security::AuditLoggerMiddleware::new(
             audit_logger_config,
             ctx.db.clone(),
-        ),
-    );
+        ));
 
     let input_validation_config =
         crate::middleware::input_validation::InputValidationConfig::default()
@@ -167,15 +169,17 @@ async fn build_router_inner(
     let sse_sessions = std::sync::Arc::new(crate::shared::SseSessionManager::new());
 
     // Business tool registry
-    let service_registry = std::sync::Arc::new(crate::shared::service_client::ServiceRegistry::new());
+    let service_registry =
+        std::sync::Arc::new(crate::shared::service_client::ServiceRegistry::new());
     let business_tool_registry =
         crate::modules::business_tools::create_default_registry(service_registry.clone())
             .unwrap_or_else(|_| crate::modules::business_tools::BusinessToolRegistry::new());
 
     // Permission store
-    let permission_store = crate::routes::business_tools::permission_store_factory::PermissionStoreFactory::from_env(
-        Some(ctx.db.clone()),
-    );
+    let permission_store =
+        crate::routes::business_tools::permission_store_factory::PermissionStoreFactory::from_env(
+            Some(ctx.db.clone()),
+        );
 
     // Audit log store
     let audit_logger: std::sync::Arc<
@@ -191,7 +195,8 @@ async fn build_router_inner(
             _ => {
                 tracing::info!("Using in-memory audit log store");
                 std::sync::Arc::new(
-                    crate::routes::business_tools::permission_audit_log::InMemoryAuditLogStore::new(),
+                    crate::routes::business_tools::permission_audit_log::InMemoryAuditLogStore::new(
+                    ),
                 )
             }
         }
@@ -266,7 +271,9 @@ async fn build_router_inner(
     let cors = topems_shared::create_cors_layer();
 
     let app = crate::routes::create_routes(&state, move || String::new(), embed_mode)
-        .layer(axum::middleware::from_fn(topems_shared_core::logging::request_context_middleware))
+        .layer(axum::middleware::from_fn(
+            topems_shared_core::logging::request_context_middleware,
+        ))
         .layer(cors)
         .with_state(state);
 
@@ -283,7 +290,10 @@ async fn spawn_background_tasks(state: &AppState, _pool: sqlx::PgPool) {
             interval.tick().await;
             let removed = ws_state_cleanup.cleanup_timeout_connections(90).await;
             if !removed.is_empty() {
-                tracing::info!("WebSocket cleanup: removed {} timeout connections", removed.len());
+                tracing::info!(
+                    "WebSocket cleanup: removed {} timeout connections",
+                    removed.len()
+                );
             }
         }
     });
@@ -323,7 +333,8 @@ async fn spawn_background_tasks(state: &AppState, _pool: sqlx::PgPool) {
 }
 
 /// 初始化字段加密服务
-fn init_field_encryption() -> Option<std::sync::Arc<topems_shared_auth::security::FieldEncryptionService>> {
+fn init_field_encryption(
+) -> Option<std::sync::Arc<topems_shared_auth::security::FieldEncryptionService>> {
     // 简化：跳过字段加密初始化
     None
 }

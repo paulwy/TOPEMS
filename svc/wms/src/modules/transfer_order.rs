@@ -149,7 +149,11 @@ pub async fn create_transfer(
     let id = Uuid::new_v4();
     let order_number = format!("TF{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
     let now = Utc::now();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",

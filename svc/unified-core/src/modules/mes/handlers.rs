@@ -1,9 +1,8 @@
 //! MES API 处理器
 
-use axum::extract::{Query};
+use axum::extract::Query;
 use axum::Json;
 use serde::Deserialize;
-
 
 use super::models::*;
 use super::service::MesService;
@@ -36,7 +35,9 @@ pub async fn dashboard_stats() -> Json<ApiResponse<serde_json::Value>> {
 }
 
 /// 设备列表
-pub async fn list_equipment(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<Equipment>>> {
+pub async fn list_equipment(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<Equipment>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_equipment(params.page, params.pagesize);
     Json(ApiResponse {
@@ -47,7 +48,9 @@ pub async fn list_equipment(Query(params): Query<ListParams>) -> Json<ApiRespons
 }
 
 /// 工单列表
-pub async fn list_work_orders(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<WorkOrder>>> {
+pub async fn list_work_orders(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<WorkOrder>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_work_orders(params.page, params.pagesize);
     Json(ApiResponse {
@@ -69,7 +72,9 @@ pub async fn wip_statistics() -> Json<ApiResponse<WipStatistics>> {
 }
 
 /// 质量检测记录
-pub async fn list_quality_inspections(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<QualityInspection>>> {
+pub async fn list_quality_inspections(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<QualityInspection>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_quality_inspections(params.page, params.pagesize);
     Json(ApiResponse {
@@ -80,7 +85,9 @@ pub async fn list_quality_inspections(Query(params): Query<ListParams>) -> Json<
 }
 
 /// 生产订单列表
-pub async fn list_production_orders(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<ProductionOrder>>> {
+pub async fn list_production_orders(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<ProductionOrder>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_production_orders(params.page, params.pagesize);
     Json(ApiResponse {
@@ -91,7 +98,9 @@ pub async fn list_production_orders(Query(params): Query<ListParams>) -> Json<Ap
 }
 
 /// 工作站列表
-pub async fn list_workstations(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<WorkStation>>> {
+pub async fn list_workstations(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<WorkStation>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_workstations(params.page, params.pagesize);
     Json(ApiResponse {
@@ -102,7 +111,9 @@ pub async fn list_workstations(Query(params): Query<ListParams>) -> Json<ApiResp
 }
 
 /// 生产记录列表
-pub async fn list_production_records(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<ProductionRecord>>> {
+pub async fn list_production_records(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<ProductionRecord>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_production_records(params.page, params.pagesize);
     Json(ApiResponse {
@@ -113,7 +124,9 @@ pub async fn list_production_records(Query(params): Query<ListParams>) -> Json<A
 }
 
 /// 生产排程列表
-pub async fn list_production_schedules(Query(params): Query<ListParams>) -> Json<ApiResponse<PaginatedResponse<ProductionSchedule>>> {
+pub async fn list_production_schedules(
+    Query(params): Query<ListParams>,
+) -> Json<ApiResponse<PaginatedResponse<ProductionSchedule>>> {
     let service = MesService::instance().lock().unwrap();
     let result = service.list_production_schedules(params.page, params.pagesize);
     Json(ApiResponse {

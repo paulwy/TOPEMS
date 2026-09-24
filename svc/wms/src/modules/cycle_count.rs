@@ -465,7 +465,11 @@ pub async fn generate_cycle_count(
 
     // 创建盘点单
     let stock_take_id = Uuid::new_v4();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
     let result = sqlx::query!(
         r#"
         INSERT INTO wms.stock_takes (id, stock_take_number, stock_take_type, warehouse_id, warehouse_name,
@@ -565,7 +569,11 @@ pub async fn generate_all_cycle_counts(
     }
 
     let now = Utc::now();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     // 查询所有到期的配置
     let configs = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(

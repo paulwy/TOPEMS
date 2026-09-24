@@ -7,10 +7,10 @@ use axum::{
     Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use sqlx::Row;
 
 use uuid::Uuid;
 
@@ -53,14 +53,8 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/issues/{id}/verification", post(verify_hazard))
         .route("/issues/{id}/close", post(close_hazard))
-        .route(
-            "/issues/{id}/approval/start",
-            post(start_hazard_approval),
-        )
-        .route(
-            "/issues/{id}/approval/approve",
-            post(approve_hazard),
-        )
+        .route("/issues/{id}/approval/start", post(start_hazard_approval))
+        .route("/issues/{id}/approval/approve", post(approve_hazard))
         .route("/issues/{id}/approval/reject", post(reject_hazard))
 }
 
@@ -256,14 +250,33 @@ pub async fn list_hazards(
             hazard_no: r.try_get::<String, _>("hazard_no").unwrap_or_default(),
             title: r.try_get::<String, _>("title").unwrap_or_default(),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-            category: r.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
-            level: r.try_get::<Option<String>, _>("level").ok().flatten().unwrap_or_default(),
-            source: r.try_get::<Option<String>, _>("source").ok().flatten().unwrap_or_else(|| "inspection".to_string()),
+            category: r
+                .try_get::<Option<String>, _>("category")
+                .ok()
+                .flatten()
+                .unwrap_or_default(),
+            level: r
+                .try_get::<Option<String>, _>("level")
+                .ok()
+                .flatten()
+                .unwrap_or_default(),
+            source: r
+                .try_get::<Option<String>, _>("source")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "inspection".to_string()),
             location: r.try_get::<Option<String>, _>("location").ok().flatten(),
             reported_by: r.try_get::<Option<String>, _>("reported_by").ok().flatten(),
             reported_at: r.try_get::<Option<String>, _>("reported_at").ok().flatten(),
-            status: r.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "reported".to_string()),
-            inspection_id: r.try_get::<Option<String>, _>("inspection_id").ok().flatten(),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "reported".to_string()),
+            inspection_id: r
+                .try_get::<Option<String>, _>("inspection_id")
+                .ok()
+                .flatten(),
             approval_workflow_id: None,
             approval_status: None,
             created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
@@ -293,11 +306,13 @@ pub async fn create_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Creating hazard: {:?}", req);
 
     let hazard_id = uuid::Uuid::new_v4();
@@ -421,7 +436,7 @@ pub async fn get_hazard(
     headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardDetail>> {
-        let tenant_bind: String = if claims.is_superuser {
+    let tenant_bind: String = if claims.is_superuser {
         uuid::Uuid::nil().to_string()
     } else {
         claims
@@ -467,24 +482,63 @@ pub async fn get_hazard(
         id: row.try_get::<String, _>("id").unwrap_or_default(),
         hazard_no: row.try_get::<String, _>("hazard_no").unwrap_or_default(),
         title: row.try_get::<String, _>("title").unwrap_or_default(),
-        description: row.try_get::<Option<String>, _>("description").ok().flatten(),
-        category: row.try_get::<Option<String>, _>("category").ok().flatten().unwrap_or_default(),
-        level: row.try_get::<Option<String>, _>("level").ok().flatten().unwrap_or_default(),
-        source: row.try_get::<Option<String>, _>("source").ok().flatten().unwrap_or_else(|| "inspection".to_string()),
+        description: row
+            .try_get::<Option<String>, _>("description")
+            .ok()
+            .flatten(),
+        category: row
+            .try_get::<Option<String>, _>("category")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+        level: row
+            .try_get::<Option<String>, _>("level")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+        source: row
+            .try_get::<Option<String>, _>("source")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "inspection".to_string()),
         location: row.try_get::<Option<String>, _>("location").ok().flatten(),
-        reported_by: row.try_get::<Option<String>, _>("reported_by").ok().flatten(),
-        reported_at: row.try_get::<Option<String>, _>("reported_at").ok().flatten(),
-        status: row.try_get::<Option<String>, _>("status").ok().flatten().unwrap_or_else(|| "reported".to_string()),
-        inspection_id: row.try_get::<Option<String>, _>("inspection_id").ok().flatten(),
+        reported_by: row
+            .try_get::<Option<String>, _>("reported_by")
+            .ok()
+            .flatten(),
+        reported_at: row
+            .try_get::<Option<String>, _>("reported_at")
+            .ok()
+            .flatten(),
+        status: row
+            .try_get::<Option<String>, _>("status")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "reported".to_string()),
+        inspection_id: row
+            .try_get::<Option<String>, _>("inspection_id")
+            .ok()
+            .flatten(),
         approval_workflow_id: None,
         approval_status: None,
-        created_at: row.try_get::<Option<String>, _>("created_at").ok().flatten(),
-        updated_at: row.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+        created_at: row
+            .try_get::<Option<String>, _>("created_at")
+            .ok()
+            .flatten(),
+        updated_at: row
+            .try_get::<Option<String>, _>("updated_at")
+            .ok()
+            .flatten(),
         tenant_id: uuid::Uuid::nil(),
     };
 
     Json(ApiResponse::success(
-        HazardDetail { hazard, rectification: None, verification: None, tenant_id: uuid::Uuid::nil() },
+        HazardDetail {
+            hazard,
+            rectification: None,
+            verification: None,
+            tenant_id: uuid::Uuid::nil(),
+        },
         "获取隐患详情成功",
     ))
 }
@@ -511,11 +565,13 @@ pub async fn update_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating hazard {}: {:?}", id, req);
 
     let cache_key = hazard_cache_key(tenant_id, &id);
@@ -579,11 +635,13 @@ pub async fn delete_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Deleting hazard: {}", id);
 
     let cache_key = hazard_cache_key(tenant_id, &id);
@@ -626,11 +684,13 @@ pub async fn start_rectification(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Starting rectification for hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Rectification {
@@ -674,11 +734,13 @@ pub async fn update_rectification(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Updating rectification {}: {:?}", id, req);
     let status = req
         .status
@@ -738,11 +800,13 @@ pub async fn submit_rectification(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::info!("Submitting rectification for hazard: {}", id);
     Json(ApiResponse::success(
         Rectification {
@@ -786,11 +850,13 @@ pub async fn verify_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Verifying hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Verification {
@@ -829,11 +895,13 @@ pub async fn close_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::info!("Closing hazard: {}", id);
     Json(ApiResponse::success(
         Hazard {
@@ -893,11 +961,13 @@ pub async fn start_hazard_approval(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::info!(
         "Starting approval for hazard {}: workflow_id={}",
         id,
@@ -970,11 +1040,13 @@ pub async fn approve_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::info!("Approving hazard {}", id);
 
     Json(ApiResponse::success(
@@ -1023,11 +1095,13 @@ pub async fn reject_hazard(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::info!("Rejecting hazard {}", id);
 
     Json(ApiResponse::success(

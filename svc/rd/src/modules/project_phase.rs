@@ -39,9 +39,13 @@ pub async fn create_phase(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     match check_project_permission(
         &mut **txn,
         &claims,
@@ -164,7 +168,10 @@ pub async fn get_project_phases(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     match check_project_permission(&mut **txn, &claims, &project_id, &ProjectPermission::Read).await
     {
@@ -242,7 +249,10 @@ pub async fn update_phase(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let project_id = match sqlx::query_scalar::<_, Uuid>(
         "SELECT project_id FROM rs.project_phases WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
@@ -390,7 +400,10 @@ pub async fn delete_phase(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();

@@ -9,7 +9,6 @@ use crate::db::repository::*;
 use crate::models::*;
 use topems_shared::ApiResponse;
 
-
 use axum::extract::FromRef;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -97,6 +96,16 @@ use crate::modules::inventory::{
     list_outbound_orders, list_stocktake_tasks,
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
+use crate::modules::missing_endpoints::{
+    get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config,
+    update_push_template,
+};
+use crate::modules::oa::{
+    complete_oa_task, create_calendar_event, create_meeting, create_oa_task, delete_calendar_event,
+    delete_meeting, delete_oa_task, get_announcement, get_meeting, get_oa_stats, get_oa_task,
+    join_meeting, leave_meeting, list_announcements, list_calendar_events, list_meetings,
+    list_oa_tasks, mark_announcement_read, update_calendar_event, update_meeting, update_oa_task,
+};
 use crate::modules::offline::{get_offline_status, sync_offline_data};
 use crate::modules::offline_records::{
     clear_synced as clear_offline_synced, get_pending_records as get_offline_pending_records,
@@ -135,16 +144,6 @@ use crate::modules::task::{
 };
 use crate::modules::user::{get_profile, update_profile, upload_avatar};
 use crate::modules::workbench::get_workbench_data;
-use crate::modules::missing_endpoints::{
-    get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config,
-    update_push_template,
-};
-use crate::modules::oa::{
-    complete_oa_task, create_calendar_event, create_meeting, create_oa_task, delete_calendar_event,
-    delete_meeting, delete_oa_task, get_announcement, get_meeting, get_oa_stats, get_oa_task,
-    join_meeting, leave_meeting, list_announcements, list_calendar_events, list_meetings,
-    list_oa_tasks, mark_announcement_read, update_calendar_event, update_meeting, update_oa_task,
-};
 use axum::Router;
 
 /// 6 个服务客户端统一初始化（service token：最小权限 + 短时效），
@@ -734,4 +733,3 @@ async fn create_video_recording(
         }
     }
 }
-

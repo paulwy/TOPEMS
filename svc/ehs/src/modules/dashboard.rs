@@ -4,11 +4,11 @@
 //! 从 qa_ehs_accidents / qa_ehs_hazards / qa_ehs_trainings / qa_ehs_drill_records
 //! 聚合统计数据返回。
 
-use axum::extract::{State, Extension};
+use axum::extract::{Extension, State};
 use axum::{routing::get, Json, Router};
 use serde::Serialize;
-use topems_shared_auth::auth::Claims;
 use sqlx::Row;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;

@@ -91,15 +91,25 @@ fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
 }
 
 fn big_decimal_to_f64<T: Into<Option<BigDecimal>>>(bd: T) -> f64 {
-    bd.into().map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)).unwrap_or(0.0)
+    bd.into()
+        .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0))
+        .unwrap_or(0.0)
 }
 
 #[allow(dead_code)]
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
-    s.and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").map(|dt| dt.and_utc()).ok())
+    s.and_then(|s| {
+        NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
+            .map(|dt| dt.and_utc())
+            .ok()
+    })
 }
 
 #[allow(dead_code)]
 fn parse_opt_date(s: Option<String>) -> Option<DateTime<Utc>> {
-    s.and_then(|s| NaiveDateTime::parse_from_str(&s, "%Y-%m-%d").map(|dt| dt.and_utc()).ok())
+    s.and_then(|s| {
+        NaiveDateTime::parse_from_str(&s, "%Y-%m-%d")
+            .map(|dt| dt.and_utc())
+            .ok()
+    })
 }

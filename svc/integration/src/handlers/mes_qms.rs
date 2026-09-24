@@ -48,7 +48,10 @@ pub async fn list_mes_qms_sync_api(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS syncs: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch MES↔QMS syncs", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch MES↔QMS syncs",
+                e,
+            )))
         }
     }
 }
@@ -75,7 +78,10 @@ pub async fn get_mes_qms_sync_api(
         Ok(None) => Json(ApiResponse::error(404, "MES↔QMS sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch MES↔QMS sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch MES↔QMS sync",
+                e,
+            )))
         }
     }
 }
@@ -99,7 +105,10 @@ pub async fn get_mes_qms_stats_api(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS stats: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch MES↔QMS stats", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch MES↔QMS stats",
+                e,
+            )))
         }
     }
 }
@@ -136,7 +145,10 @@ pub async fn trigger_qms_inspection_api(
         )),
         Err(e) => {
             tracing::error!("Failed to trigger QMS inspection: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to trigger QMS inspection", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to trigger QMS inspection",
+                e,
+            )))
         }
     }
 }
@@ -172,7 +184,10 @@ pub async fn sync_quality_result_api(
         )),
         Err(e) => {
             tracing::error!("Failed to sync quality result to MES: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to sync quality result to MES", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to sync quality result to MES",
+                e,
+            )))
         }
     }
 }
@@ -208,7 +223,10 @@ pub async fn sync_trace_chain_api(
         )),
         Err(e) => {
             tracing::error!("Failed to sync trace chain data: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to sync trace chain data", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to sync trace chain data",
+                e,
+            )))
         }
     }
 }
@@ -244,7 +262,10 @@ pub async fn defect_handling_api(
         )),
         Err(e) => {
             tracing::error!("Failed to process defect handling: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to process defect handling", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to process defect handling",
+                e,
+            )))
         }
     }
 }
@@ -275,7 +296,10 @@ pub async fn retry_mes_qms_sync_api(
         )),
         Err(e) => {
             tracing::error!("Failed to retry MES↔QMS sync: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to retry MES↔QMS sync", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to retry MES↔QMS sync",
+                e,
+            )))
         }
     }
 }

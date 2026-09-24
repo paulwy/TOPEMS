@@ -114,7 +114,10 @@ pub async fn list_devices(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, Device>(only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
@@ -155,7 +158,10 @@ pub async fn get_device(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, Device>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, device_code, device_name, device_type, description, properties, status, registered_by, created_at, updated_at FROM gis.devices WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
@@ -441,7 +447,10 @@ pub async fn get_device_history(
                 "获取设备历史位置成功",
             ))
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询历史位置失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "查询历史位置失败",
+            e,
+        ))),
     }
 }
 

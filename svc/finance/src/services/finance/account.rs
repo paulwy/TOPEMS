@@ -80,7 +80,11 @@ impl FinanceService {
         Ok(account)
     }
 
-    pub async fn list_accounts(&self, tenant_id: Uuid, locale: &str) -> Result<Vec<Account>, TopemsError> {
+    pub async fn list_accounts(
+        &self,
+        tenant_id: Uuid,
+        locale: &str,
+    ) -> Result<Vec<Account>, TopemsError> {
         let accounts = sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, tenant_id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, parent_id, account_type, level, currency, is_enabled, description, name_en, full_name, balance_direction, type, parent_code, haschildren, is_cash_flow, enable_quantity, unit, enable_foreign_currency, default_currency, is_detail, status, created_by, updated_by, created_at, updated_at FROM finance.core_finance_accounts WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) ORDER BY code"),
         )

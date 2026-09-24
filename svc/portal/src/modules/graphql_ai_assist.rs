@@ -1709,4 +1709,3 @@ pub fn init_ai_assistance() {
     seed_optimization_demo_data();
     let _ = generate_cache_recommendations();
 }
-

@@ -11,7 +11,7 @@ use crate::models::supplier_admission::{
     AuditRequest, CreateSupplierAdmissionRequest, SupplierAdmission, SupplierAdmissionQueryParams,
     UpdateSupplierAdmissionRequest,
 };
-use crate::shared::permission::{check_permission, ModulePermission, tenant_bind_value};
+use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 

@@ -42,8 +42,14 @@ impl MobileRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // 1. 6 个服务客户端统一初始化（与独立部署一致的 service token）
-        let (wms_client, hrm_client, workflow_client, notification_client, mes_api_client, qms_api_client) =
-            topems_mobile::shared::build_service_clients(&ctx.auth_state.jwt_secret).await;
+        let (
+            wms_client,
+            hrm_client,
+            workflow_client,
+            notification_client,
+            mes_api_client,
+            qms_api_client,
+        ) = topems_mobile::shared::build_service_clients(&ctx.auth_state.jwt_secret).await;
 
         // 2. 构造 mobile AppState（复用 svc/mobile 类型）
         let state = topems_mobile::shared::AppState {
@@ -60,7 +66,9 @@ impl MobileRealModule {
 
         // 3. 完整 protected 业务路由（approvals/oa/media/scan/patrol/offline 等 99 条）
         let protected_routes = topems_mobile::shared::build_protected_routes(state.clone())
-            .layer(axum::middleware::from_fn(require_permission("mobile:admin")))
+            .layer(axum::middleware::from_fn(require_permission(
+                "mobile:admin",
+            )))
             .with_state(state);
 
         // 4. 组装：api_prefix + 统一 JWT 认证（与独立部署一致）

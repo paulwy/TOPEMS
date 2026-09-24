@@ -251,7 +251,11 @@ pub async fn get_carrier_performance(
                     total_shipments: total,
                     completed_shipments: completed_shipments.unwrap_or(0),
                     total_freight: freight,
-                    avg_freight: if total > 0 { freight / total as f64 } else { 0.0 },
+                    avg_freight: if total > 0 {
+                        freight / total as f64
+                    } else {
+                        0.0
+                    },
                 }
             },
         )
@@ -308,7 +312,11 @@ pub async fn get_route_efficiency(
                     estimated_hours: estimated_hours.unwrap_or(0.0),
                     total_trips: total_trips.unwrap_or(0),
                     total_freight: freight,
-                    cost_per_km: if distance > 0.0 { freight / distance } else { 0.0 },
+                    cost_per_km: if distance > 0.0 {
+                        freight / distance
+                    } else {
+                        0.0
+                    },
                 }
             },
         )
@@ -359,7 +367,11 @@ pub async fn get_driver_performance(
                     total_deliveries: total,
                     completed_deliveries: completed_deliveries.unwrap_or(0),
                     total_freight: freight,
-                    avg_freight: if total > 0 { freight / total as f64 } else { 0.0 },
+                    avg_freight: if total > 0 {
+                        freight / total as f64
+                    } else {
+                        0.0
+                    },
                 }
             },
         )
@@ -409,7 +421,7 @@ pub async fn get_shipment_trend_enhanced(
              WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
              GROUP BY DATE_TRUNC('month', created_at)::date
          ) s ON months.month = s.month
-         ORDER BY months.month"
+         ORDER BY months.month",
     )
     .fetch_all(&state.db)
     .await
@@ -418,15 +430,13 @@ pub async fn get_shipment_trend_enhanced(
     let items: Vec<ShipmentTrendEnhancedItem> = rows
         .into_iter()
         .map(
-            |(month, total, delivered, cancelled, in_transit, pending)| {
-                ShipmentTrendEnhancedItem {
-                    month: month.unwrap_or_default(),
-                    total: total.unwrap_or(0),
-                    delivered: delivered.unwrap_or(0),
-                    cancelled: cancelled.unwrap_or(0),
-                    in_transit: in_transit.unwrap_or(0),
-                    pending: pending.unwrap_or(0),
-                }
+            |(month, total, delivered, cancelled, in_transit, pending)| ShipmentTrendEnhancedItem {
+                month: month.unwrap_or_default(),
+                total: total.unwrap_or(0),
+                delivered: delivered.unwrap_or(0),
+                cancelled: cancelled.unwrap_or(0),
+                in_transit: in_transit.unwrap_or(0),
+                pending: pending.unwrap_or(0),
             },
         )
         .collect();
@@ -442,12 +452,11 @@ pub async fn get_vehicle_utilization(
     tracing::info!("获取TMS车辆利用率数据");
 
     // 先获取总运单数
-    let total_shipments: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM tms.tms_shipments WHERE vehicle_id IS NOT NULL"
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let total_shipments: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM tms.tms_shipments WHERE vehicle_id IS NOT NULL")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let rows: Vec<(Option<String>, Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT 
@@ -514,7 +523,7 @@ pub async fn get_freight_cost_trend(
                AND freight_amount IS NOT NULL
              GROUP BY DATE_TRUNC('month', created_at)::date
          ) s ON months.month = s.month
-         ORDER BY months.month"
+         ORDER BY months.month",
     )
     .fetch_all(&state.db)
     .await
@@ -529,7 +538,11 @@ pub async fn get_freight_cost_trend(
                 month: month.unwrap_or_default(),
                 total_freight: freight,
                 shipment_count: count,
-                avg_freight: if count > 0 { freight / count as f64 } else { 0.0 },
+                avg_freight: if count > 0 {
+                    freight / count as f64
+                } else {
+                    0.0
+                },
             }
         })
         .collect();
@@ -555,14 +568,8 @@ where
             "/analytics/carrier-performance",
             get(get_carrier_performance),
         )
-        .route(
-            "/analytics/route-efficiency",
-            get(get_route_efficiency),
-        )
-        .route(
-            "/analytics/driver-performance",
-            get(get_driver_performance),
-        )
+        .route("/analytics/route-efficiency", get(get_route_efficiency))
+        .route("/analytics/driver-performance", get(get_driver_performance))
         .route(
             "/analytics/shipment-trend-enhanced",
             get(get_shipment_trend_enhanced),
@@ -571,8 +578,5 @@ where
             "/analytics/vehicle-utilization",
             get(get_vehicle_utilization),
         )
-        .route(
-            "/analytics/freight-cost-trend",
-            get(get_freight_cost_trend),
-        )
+        .route("/analytics/freight-cost-trend", get(get_freight_cost_trend))
 }

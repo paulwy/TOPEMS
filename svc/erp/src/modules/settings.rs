@@ -22,15 +22,10 @@ use super::ApiState;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/system/settings", get(list_settings).post(create_setting))
-        .route(
-            "/system/settings/batch",
-            put(batch_update_settings),
-        )
+        .route("/system/settings/batch", put(batch_update_settings))
         .route(
             "/system/settings/{key}",
-            get(get_setting)
-                .put(update_setting)
-                .delete(delete_setting),
+            get(get_setting).put(update_setting).delete(delete_setting),
         )
 }
 

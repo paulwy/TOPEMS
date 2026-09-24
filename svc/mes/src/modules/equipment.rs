@@ -111,8 +111,7 @@ pub struct ListEquipmentResponse {
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -1178,7 +1177,10 @@ pub async fn list_inspections(
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                     inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                    inspection_date: r
+                        .inspection_date
+                        .map(|d| d.to_rfc3339())
+                        .unwrap_or_default(),
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1308,7 +1310,10 @@ pub async fn create_inspection(
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                 inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|d| d.to_rfc3339()).unwrap_or_default(),
+                inspection_date: r
+                    .inspection_date
+                    .map(|d| d.to_rfc3339())
+                    .unwrap_or_default(),
                 location: r.location,
                 temperature: r
                     .temperature

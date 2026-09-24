@@ -857,4 +857,3 @@ pub fn init_enterprise_security() {
     init_field_permissions();
     init_masking_rules();
 }
-

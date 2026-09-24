@@ -38,7 +38,13 @@ pub async fn get_settings(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let result = sqlx::query(
@@ -82,11 +88,13 @@ pub async fn update_settings(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let now = chrono::Utc::now().naive_utc();
 
     let mut updated = 0;

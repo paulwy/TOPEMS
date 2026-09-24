@@ -77,7 +77,9 @@ impl IntegrationRealModule {
         // 自带 /api/integration 前缀（public /api/plugins/* + protected），merge 避免双重前缀
         // 且跳过 / 与 /health（与宿主根路由冲突）
         let routes = axum::Router::new()
-            .merge(topems_integration::routes::create_routes_embedded(app_state))
+            .merge(topems_integration::routes::create_routes_embedded(
+                app_state,
+            ))
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,

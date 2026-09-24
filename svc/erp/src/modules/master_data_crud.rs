@@ -5,8 +5,8 @@ use serde::Deserialize;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use topems_shared_boundary::only_own_schema_query;
 
-use topems_shared::ApiResponse;
 use topems_shared::auth::Claims;
+use topems_shared::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use super::ApiState;
@@ -183,7 +183,10 @@ pub async fn list_master_data_refs(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -266,7 +269,10 @@ pub async fn get_master_data_ref(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",
@@ -313,7 +319,10 @@ pub async fn get_master_data_ref_by_code(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
         "erp",

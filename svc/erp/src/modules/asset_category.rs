@@ -14,8 +14,8 @@ use axum::{
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::locale::Locale;
+use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
 use super::ApiState;

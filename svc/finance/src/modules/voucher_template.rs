@@ -260,7 +260,11 @@ pub async fn get_usage_stats(
     Path(template_id): Path<Uuid>,
     Query(_params): Query<UsageStatsQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let rule_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config->>'template_id' = $2"),
     )

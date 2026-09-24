@@ -29,7 +29,10 @@ pub async fn list_pipelines(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
     let page_size: i64 = params
@@ -97,7 +100,10 @@ pub async fn create_pipeline(
     .await
     {
         Ok(pipeline) => Json(ApiResponse::success(pipeline, "创建管道成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库插入失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库插入失败",
+            e,
+        ))),
     }
 }
 
@@ -109,7 +115,10 @@ pub async fn get_pipeline(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, Pipeline>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
@@ -185,7 +194,10 @@ pub async fn delete_pipeline(
                 Json(ApiResponse::error(404, "管道未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }
 
@@ -197,7 +209,10 @@ pub async fn list_pipelines_by_map(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, Pipeline>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, code, pipeline_type, path, properties, status, created_at, updated_at FROM gis.pipelines WHERE deleted_at IS NULL AND map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),

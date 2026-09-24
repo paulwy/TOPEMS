@@ -50,10 +50,7 @@ where
             "/inventory-movements",
             get(list_inventory_movements).post(create_inventory_movement),
         )
-        .route(
-            "/inventory-movements/{id}",
-            get(get_inventory_movement),
-        )
+        .route("/inventory-movements/{id}", get(get_inventory_movement))
 }
 
 #[utoipa::path(

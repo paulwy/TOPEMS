@@ -21,8 +21,17 @@ pub fn wms_routes() -> Router<AppState> {
         // 调拨
         .route("/api/wms/transfers", get(list_transfers))
         // Analytics
-        .route("/api/wms/analytics/dashboard-summary", get(analytics_dashboard_summary))
-        .route("/api/wms/analytics/inventory-types", get(analytics_inventory_types))
-        .route("/api/wms/analytics/inventory-distribution", get(analytics_inventory_distribution))
+        .route(
+            "/api/wms/analytics/dashboard-summary",
+            get(analytics_dashboard_summary),
+        )
+        .route(
+            "/api/wms/analytics/inventory-types",
+            get(analytics_inventory_types),
+        )
+        .route(
+            "/api/wms/analytics/inventory-distribution",
+            get(analytics_inventory_distribution),
+        )
         .route("/api/wms/analytics/daily-trend", get(analytics_daily_trend))
 }

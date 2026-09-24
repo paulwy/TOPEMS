@@ -321,7 +321,8 @@ impl SchemaRegistry {
     }
 
     /// 注册新 Schema 版本
-    pub fn register(        &mut self,
+    pub fn register(
+        &mut self,
         service: &str,
         version: &str,
         sdl: &str,
@@ -393,15 +394,18 @@ impl SchemaRegistry {
         })
     }
 
-    pub fn get_version(&self, service: &str, version: &str) -> Option<SchemaRegistryEntryGql> {        self.entries
+    pub fn get_version(&self, service: &str, version: &str) -> Option<SchemaRegistryEntryGql> {
+        self.entries
             .get(service)
             .and_then(|versions| versions.iter().find(|v| v.version == version).cloned())
     }
 
-    pub fn list_versions(&self, service: &str) -> Vec<SchemaRegistryEntryGql> {        self.entries.get(service).cloned().unwrap_or_default()
+    pub fn list_versions(&self, service: &str) -> Vec<SchemaRegistryEntryGql> {
+        self.entries.get(service).cloned().unwrap_or_default()
     }
 
-    pub fn deprecate(&mut self, service: &str, version: &str) -> bool {        if let Some(versions) = self.entries.get_mut(service) {
+    pub fn deprecate(&mut self, service: &str, version: &str) -> bool {
+        if let Some(versions) = self.entries.get_mut(service) {
             for v in versions.iter_mut() {
                 if v.version == version && v.status == SchemaVersionStatusGql::Active {
                     v.status = SchemaVersionStatusGql::Deprecated;
@@ -412,7 +416,8 @@ impl SchemaRegistry {
         false
     }
 
-    pub fn retire(&mut self, service: &str, version: &str) -> bool {        if let Some(versions) = self.entries.get_mut(service) {
+    pub fn retire(&mut self, service: &str, version: &str) -> bool {
+        if let Some(versions) = self.entries.get_mut(service) {
             for v in versions.iter_mut() {
                 if v.version == version {
                     v.status = SchemaVersionStatusGql::Retired;
@@ -423,7 +428,8 @@ impl SchemaRegistry {
         false
     }
 
-    pub fn diff_versions(        &self,
+    pub fn diff_versions(
+        &self,
         service: &str,
         from_version: &str,
         to_version: &str,
@@ -524,7 +530,11 @@ impl BreakingChangeDetector {
     }
 
     /// 生成兼容性报告
-    pub fn diff_versions(from: &SchemaRegistryEntryGql, to: &SchemaRegistryEntryGql) -> VersionDiffGql {        let from_types = parse_sdl_types(&from.sdl);
+    pub fn diff_versions(
+        from: &SchemaRegistryEntryGql,
+        to: &SchemaRegistryEntryGql,
+    ) -> VersionDiffGql {
+        let from_types = parse_sdl_types(&from.sdl);
         let to_types = parse_sdl_types(&to.sdl);
 
         let mut added_types = Vec::new();
@@ -605,7 +615,8 @@ impl ContractTestRunner {
         }
     }
 
-    pub fn run_test(&mut self, test_id: &str) -> Option<ContractTestResultGql> {        let test = self.tests.get(test_id)?.clone();
+    pub fn run_test(&mut self, test_id: &str) -> Option<ContractTestResultGql> {
+        let test = self.tests.get(test_id)?.clone();
         Some(self.execute_test(&test))
     }
 
@@ -682,7 +693,8 @@ impl ContractTestRunner {
         result
     }
 
-    pub fn run_all(&mut self, service: Option<&str>) -> u32 {        let tests: Vec<ContractTestGql> = self
+    pub fn run_all(&mut self, service: Option<&str>) -> u32 {
+        let tests: Vec<ContractTestGql> = self
             .tests
             .values()
             .filter(|t| service.is_none_or(|s| t.service == s))
@@ -697,7 +709,8 @@ impl ContractTestRunner {
         count
     }
 
-    pub fn add_test(&mut self, input: ContractTestInput) -> String {        let id = format!("ct-{}", uuid::Uuid::new_v4());
+    pub fn add_test(&mut self, input: ContractTestInput) -> String {
+        let id = format!("ct-{}", uuid::Uuid::new_v4());
         let test = ContractTestGql {
             id: id.clone(),
             name: input.name,
@@ -715,7 +728,8 @@ impl ContractTestRunner {
         id
     }
 
-    pub fn update_test(&mut self, id: &str, input: ContractTestInput) -> bool {        if let Some(test) = self.tests.get_mut(id) {
+    pub fn update_test(&mut self, id: &str, input: ContractTestInput) -> bool {
+        if let Some(test) = self.tests.get_mut(id) {
             test.name = input.name;
             test.service = input.service;
             test.operation_type = input.operation_type;
@@ -734,10 +748,12 @@ impl ContractTestRunner {
         }
     }
 
-    pub fn remove_test(&mut self, id: &str) -> bool {        self.tests.remove(id).is_some()
+    pub fn remove_test(&mut self, id: &str) -> bool {
+        self.tests.remove(id).is_some()
     }
 
-    pub fn get_results(&self, test_id: &str, limit: usize) -> Vec<ContractTestResultGql> {        self.results
+    pub fn get_results(&self, test_id: &str, limit: usize) -> Vec<ContractTestResultGql> {
+        self.results
             .iter()
             .filter(|r| r.test_id == test_id)
             .rev()
@@ -785,7 +801,8 @@ impl SchemaVersionManager {
     }
 
     /// 发布新版本
-    pub fn publish(        &mut self,
+    pub fn publish(
+        &mut self,
         service: &str,
         version: &str,
         _changelog_text: &str,
@@ -861,19 +878,22 @@ impl SchemaVersionManager {
         version_entry.version
     }
 
-    pub fn get_version(&self, service: &str, version: &str) -> Option<SchemaVersionGql> {        self.versions
+    pub fn get_version(&self, service: &str, version: &str) -> Option<SchemaVersionGql> {
+        self.versions
             .get(service)
             .and_then(|vs| vs.iter().find(|v| v.version == version).cloned())
     }
 
-    pub fn list_versions(&self, service: &str) -> Vec<SchemaVersionGql> {        self.versions.get(service).cloned().unwrap_or_default()
+    pub fn list_versions(&self, service: &str) -> Vec<SchemaVersionGql> {
+        self.versions.get(service).cloned().unwrap_or_default()
     }
 
     fn get_changelog(&self, service: &str, version: &str) -> Option<VersionChangelogGql> {
         self.get_version(service, version).map(|v| v.changelog)
     }
 
-    pub fn diff(&self, service: &str, from: &str, to: &str) -> Option<VersionDiffGql> {        let from_version = self.get_version(service, from)?;
+    pub fn diff(&self, service: &str, from: &str, to: &str) -> Option<VersionDiffGql> {
+        let from_version = self.get_version(service, from)?;
         let to_version = self.get_version(service, to)?;
 
         let from_types = parse_sdl_types(&from_version.sdl);
@@ -940,7 +960,8 @@ impl SchemaVersionManager {
     }
 
     /// 回滚到指定版本（降级当前 Active，提升目标版本为 Active）
-    pub fn rollback(&mut self, service: &str, to_version: &str) -> bool {        if let Some(versions) = self.versions.get_mut(service) {
+    pub fn rollback(&mut self, service: &str, to_version: &str) -> bool {
+        if let Some(versions) = self.versions.get_mut(service) {
             // 降级所有 Active 版本
             for v in versions.iter_mut() {
                 if v.status == SchemaVersionStatusGql::Active {
@@ -959,7 +980,8 @@ impl SchemaVersionManager {
     }
 
     /// 提升版本为 Active
-    pub fn promote(&mut self, service: &str, version: &str) -> bool {        if let Some(versions) = self.versions.get_mut(service) {
+    pub fn promote(&mut self, service: &str, version: &str) -> bool {
+        if let Some(versions) = self.versions.get_mut(service) {
             // 降级当前 Active
             for v in versions.iter_mut() {
                 if v.status == SchemaVersionStatusGql::Active {
@@ -998,7 +1020,7 @@ impl SchemaVersionManager {
 /// V45.0: 全局 Schema 注册表
 static SCHEMA_REGISTRY: std::sync::OnceLock<Mutex<SchemaRegistry>> = std::sync::OnceLock::new();
 
-    pub fn schema_registry() -> &'static Mutex<SchemaRegistry> {
+pub fn schema_registry() -> &'static Mutex<SchemaRegistry> {
     SCHEMA_REGISTRY.get_or_init(|| Mutex::new(SchemaRegistry::new()))
 }
 
@@ -1006,7 +1028,7 @@ static SCHEMA_REGISTRY: std::sync::OnceLock<Mutex<SchemaRegistry>> = std::sync::
 static CONTRACT_TEST_RUNNER: std::sync::OnceLock<Mutex<ContractTestRunner>> =
     std::sync::OnceLock::new();
 
-    pub fn contract_test_runner() -> &'static Mutex<ContractTestRunner> {
+pub fn contract_test_runner() -> &'static Mutex<ContractTestRunner> {
     CONTRACT_TEST_RUNNER.get_or_init(|| Mutex::new(ContractTestRunner::new()))
 }
 
@@ -1014,7 +1036,7 @@ static CONTRACT_TEST_RUNNER: std::sync::OnceLock<Mutex<ContractTestRunner>> =
 static SCHEMA_VERSION_MANAGER: std::sync::OnceLock<Mutex<SchemaVersionManager>> =
     std::sync::OnceLock::new();
 
-    pub fn schema_version_manager() -> &'static Mutex<SchemaVersionManager> {
+pub fn schema_version_manager() -> &'static Mutex<SchemaVersionManager> {
     SCHEMA_VERSION_MANAGER.get_or_init(|| Mutex::new(SchemaVersionManager::new()))
 }
 
@@ -1402,4 +1424,3 @@ type Query {
         gov.last_scan = Utc::now().to_rfc3339();
     }
 }
-

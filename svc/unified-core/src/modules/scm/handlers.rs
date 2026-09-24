@@ -113,9 +113,7 @@ pub async fn list_price_comparisons(
 }
 
 /// 获取 SCM 概览
-pub async fn get_scm_overview(
-    State(_state): State<AppState>,
-) -> Json<ScmOverview> {
+pub async fn get_scm_overview(State(_state): State<AppState>) -> Json<ScmOverview> {
     Json(ScmOverview {
         total_suppliers: 156,
         total_purchase_orders: 342,

@@ -1,4 +1,3 @@
-use topems_shared_boundary::only_own_schema_query;
 use anyhow::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -9,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use crate::models::{AwardBiddingRequest, Bidding, CreateBiddingRequest, UpdateBiddingRequest};
@@ -140,9 +140,11 @@ pub async fn create_bidding(
         return Json(ApiResponse::<Bidding>::error(400, "招标编号和标题不能为空"));
     }
 
-    let existing = sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("srm", "SELECT COUNT(*) FROM srm.biddings WHERE deleted_at IS NULL AND bidding_no = $1", "srm"),
-    )
+    let existing = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+        "srm",
+        "SELECT COUNT(*) FROM srm.biddings WHERE deleted_at IS NULL AND bidding_no = $1",
+        "srm"
+    ))
     .bind(&req.bidding_no)
     .fetch_one(&mut **txn)
     .await
@@ -198,12 +200,12 @@ pub async fn create_bidding(
         Ok(bidding) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "招标创建成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("创建招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "招标创建失败"))
@@ -304,12 +306,12 @@ pub async fn update_bidding(
         Ok(bidding) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "招标更新成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "更新招标失败"))
@@ -326,10 +328,14 @@ pub async fn delete_bidding(
 ) -> Json<ApiResponse<bool>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let result = sqlx::query(only_own_schema_query!("srm", "UPDATE srm.biddings SET deleted_at = NOW() WHERE id = $1", "srm"))
-        .bind(id)
-        .execute(&mut **txn)
-        .await;
+    let result = sqlx::query(only_own_schema_query!(
+        "srm",
+        "UPDATE srm.biddings SET deleted_at = NOW() WHERE id = $1",
+        "srm"
+    ))
+    .bind(id)
+    .execute(&mut **txn)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "招标删除成功")),
@@ -371,12 +377,12 @@ pub async fn publish_bidding(
         Ok(bidding) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "招标发布成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "发布招标失败"))
@@ -414,12 +420,12 @@ pub async fn open_bidding(
         Ok(bidding) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "开标成功"))
-        },
+        }
         Err(e) => {
             tracing::error!("开标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "开标失败"))
@@ -456,12 +462,12 @@ pub async fn evaluate_bidding(
         Ok(bidding) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "评标完成"))
-        },
+        }
         Err(e) => {
             tracing::error!("评标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "评标失败"))
@@ -486,12 +492,15 @@ pub async fn award_bidding(
         Err(_) => return Json(ApiResponse::<Bidding>::error(400, "供应商ID格式错误")),
     };
 
-    let supplier_name: Option<String> =
-        sqlx::query_scalar(only_own_schema_query!("srm", "SELECT name FROM srm.suppliers WHERE id = $1", "srm"))
-            .bind(supplier_id)
-            .fetch_optional(&mut **txn)
-            .await
-            .unwrap_or(None);
+    let supplier_name: Option<String> = sqlx::query_scalar(only_own_schema_query!(
+        "srm",
+        "SELECT name FROM srm.suppliers WHERE id = $1",
+        "srm"
+    ))
+    .bind(supplier_id)
+    .fetch_optional(&mut **txn)
+    .await
+    .unwrap_or(None);
 
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
@@ -514,12 +523,12 @@ pub async fn award_bidding(
         Ok(bidding) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
-                        tracing::error!("rls commit failed: {}", e);
-                        return Json(ApiResponse::error(500, "提交事务失败"));
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
                 }
             }
             Json(ApiResponse::success(bidding, "中标结果已确定"))
-        },
+        }
         Err(e) => {
             tracing::error!("确定中标结果失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "确定中标结果失败"))
@@ -536,13 +545,15 @@ pub async fn list_bidding_suppliers(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let result = sqlx::query_as::<_, (Uuid, String)>(
-        only_own_schema_query!("srm", r#"
+    let result = sqlx::query_as::<_, (Uuid, String)>(only_own_schema_query!(
+        "srm",
+        r#"
         SELECT s.id, s.name FROM srm.suppliers s
         JOIN srm.bidding_suppliers bs ON s.id = bs.supplier_id
         WHERE bs.bidding_id = $1
-        "#, "srm"),
-    )
+        "#,
+        "srm"
+    ))
     .bind(id)
     .fetch_all(&mut **txn)
     .await;

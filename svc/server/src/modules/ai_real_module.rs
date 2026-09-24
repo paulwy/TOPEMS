@@ -7,9 +7,9 @@
 
 #![cfg(feature = "module-ai")]
 
+use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use axum_prometheus::PrometheusMetricLayer;
-use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use reqwest::Client;
 use std::sync::{Arc, Mutex};
 use topems_ai::models::{
@@ -54,17 +54,16 @@ impl AiRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // AI 专用 Database（提供 run_migrations 和服务内部状态）
-        let database_url = std::env::var("DATABASE_URL").map_err(|_| {
-            anyhow::anyhow!("DATABASE_URL environment variable is required")
-        })?;
+        let database_url = std::env::var("DATABASE_URL")
+            .map_err(|_| anyhow::anyhow!("DATABASE_URL environment variable is required"))?;
         let db = Database::new(&database_url).await?;
 
         // 迁移 / schema 防御 / ai_knowledge 初始化（失败仅告警不阻塞启动）
         if let Err(e) = db.run_migrations().await {
             tracing::warn!("⚠️ AI 迁移失败（表已存在则跳过）: {}", e);
         }
-        if let Err(e) = topems_ai::schema_defense::run_schema_migration_and_verify(db.ddl_pool())
-            .await
+        if let Err(e) =
+            topems_ai::schema_defense::run_schema_migration_and_verify(db.ddl_pool()).await
         {
             tracing::error!("[ai] Schema 防御检查失败: {:?}", e);
         }
@@ -104,8 +103,8 @@ impl AiRealModule {
 
         // Dify 集成配置（可选）
         let dify_config = {
-            let base_url =
-                std::env::var("DIFY_BASE_URL").unwrap_or_else(|_| "http://localhost:8180".to_string());
+            let base_url = std::env::var("DIFY_BASE_URL")
+                .unwrap_or_else(|_| "http://localhost:8180".to_string());
             let api_key = std::env::var("DIFY_API_KEY").unwrap_or_default();
             let default_user =
                 std::env::var("DIFY_DEFAULT_USER").unwrap_or_else(|_| "topems-user".to_string());
@@ -131,10 +130,8 @@ impl AiRealModule {
             }
             cfg
         };
-        let dify_service = topems_ai::services::DifyService::new(
-            http_client.clone(),
-            dify_config.clone(),
-        );
+        let dify_service =
+            topems_ai::services::DifyService::new(http_client.clone(), dify_config.clone());
         let _ = DIFY_CONFIG.set(dify_config);
 
         // 创建服务

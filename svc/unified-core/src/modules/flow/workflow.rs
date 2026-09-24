@@ -46,7 +46,10 @@ pub async fn list_workflows(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -153,7 +156,10 @@ pub async fn get_workflow(
     let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "SELECT id, tenant_id, name, code, description, definition, status, version, created_by, created_at, updated_at, published_at FROM core_workflows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR ($2::uuid IS NULL OR tenant_id = $2))",
@@ -195,9 +201,16 @@ pub async fn create_workflow(
     let _tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let create_tenant: Uuid = claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let create_tenant: Uuid = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow = match sqlx::query_as::<_, Workflow>(
         "INSERT INTO core_workflows (name, code, description, definition, status, version, created_by, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
@@ -248,7 +261,10 @@ pub async fn update_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET 
@@ -304,7 +320,10 @@ pub async fn delete_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query("UPDATE core_workflows SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id=$2)")
         .bind(id)
@@ -349,7 +368,10 @@ pub async fn publish_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'published', published_at = NOW(), updated_at = NOW() 
@@ -396,7 +418,10 @@ pub async fn unpublish_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'draft', published_at = NULL, updated_at = NOW() 
@@ -443,7 +468,10 @@ pub async fn activate_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'active', updated_at = NOW() 
@@ -490,7 +518,10 @@ pub async fn deactivate_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'inactive', updated_at = NOW() 
@@ -537,7 +568,10 @@ pub async fn deploy_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let workflow = match sqlx::query_as::<_, Workflow>(
         "UPDATE core_workflows SET status = 'deployed', updated_at = NOW() 
@@ -586,7 +620,10 @@ pub async fn rollback_workflow(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     // 1) 取目标版本 definition（to_version 可能命中多行，取最新一条）
     let target_definition = match sqlx::query_as::<_, (serde_json::Value,)>(
@@ -689,7 +726,10 @@ pub async fn list_workflow_versions(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let versions = sqlx::query_as::<_, WorkflowVersion>(
         "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
@@ -736,7 +776,10 @@ pub async fn create_workflow_version(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let wf_ok: bool = match sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM core_workflows WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id=$2))",
@@ -835,7 +878,10 @@ pub async fn get_workflow_version(
     let _tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let version = sqlx::query_as::<_, WorkflowVersion>(
         "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
@@ -884,7 +930,10 @@ pub async fn activate_workflow_version(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
@@ -979,7 +1028,10 @@ pub async fn delete_workflow_version(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query(
         "UPDATE core_workflow_versions SET deleted_at = NOW()

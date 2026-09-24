@@ -1202,9 +1202,13 @@ impl AutoComplianceReviewer {
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Result<ComplianceReport, sqlx::Error> {
-        let results =
-            Self::get_review_results(pool, Some(tenant_id), entity_type.clone(), entity_id.clone())
-                .await?;
+        let results = Self::get_review_results(
+            pool,
+            Some(tenant_id),
+            entity_type.clone(),
+            entity_id.clone(),
+        )
+        .await?;
 
         let total_rules = results.len() as i64;
         let passed_rules = results.iter().filter(|r| r.passed).count() as i64;
@@ -1286,7 +1290,11 @@ async fn get_risk_dashboard_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskDashboard>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     match RealTimeRiskMonitor::get_dashboard(&pool, tenant_id).await {
         Ok(dashboard) => Json(ApiResponse::success(dashboard, "查询成功")),
@@ -1316,7 +1324,11 @@ async fn get_risk_alerts_handler(
     Query(params): Query<AlertQueryParams>,
 ) -> Json<ApiResponse<Vec<RiskAlert>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     if let Some(ref cat) = params.category {
         match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, cat.clone()).await {
@@ -1434,7 +1446,11 @@ async fn get_fraud_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     match AntiFraudEngine::get_fraud_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
@@ -1572,7 +1588,11 @@ async fn get_review_results_handler(
     Query(params): Query<ReviewResultQueryParams>,
 ) -> Json<ApiResponse<Vec<ReviewResult>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     match AutoComplianceReviewer::get_review_results(
         &pool,
@@ -1603,7 +1623,11 @@ async fn get_compliance_status_handler(
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<ReviewWorkflow>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
 
     match AutoComplianceReviewer::get_compliance_status(&pool, tenant_id, entity_type, entity_id)
         .await

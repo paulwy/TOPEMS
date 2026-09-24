@@ -248,7 +248,11 @@ pub async fn bulk_create_serial_numbers(
 
     let mut created_serials = Vec::new();
     let now = Utc::now();
-    let tenant_id = claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil());
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil());
 
     for item in req {
         let id = Uuid::new_v4();

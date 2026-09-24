@@ -12,9 +12,7 @@ pub mod supplier_evaluation;
 pub mod supplier_performance;
 pub mod supplier_product;
 
-pub use bidding::{
-    AwardBiddingRequest, Bidding, CreateBiddingRequest, UpdateBiddingRequest,
-};
+pub use bidding::{AwardBiddingRequest, Bidding, CreateBiddingRequest, UpdateBiddingRequest};
 pub use contract_term::ContractTerm;
 pub use quotation::{CreateQuotationRequest, Quotation, UpdateQuotationRequest};
 pub use scoring_dimension::{

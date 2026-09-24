@@ -770,9 +770,18 @@ impl GovernanceDashboardGenerator {
         let security_events = self.security_events.lock();
         let security_risk_score = if !security_events.is_empty() {
             // 基于安全事件数量和严重程度计算风险分数
-            let critical_count = security_events.iter().filter(|e| e.severity == RiskLevel::Critical).count();
-            let high_count = security_events.iter().filter(|e| e.severity == RiskLevel::High).count();
-            let medium_count = security_events.iter().filter(|e| e.severity == RiskLevel::Medium).count();
+            let critical_count = security_events
+                .iter()
+                .filter(|e| e.severity == RiskLevel::Critical)
+                .count();
+            let high_count = security_events
+                .iter()
+                .filter(|e| e.severity == RiskLevel::High)
+                .count();
+            let medium_count = security_events
+                .iter()
+                .filter(|e| e.severity == RiskLevel::Medium)
+                .count();
             let score = (critical_count * 30 + high_count * 15 + medium_count * 5) as f64;
             score.min(100.0)
         } else {
@@ -812,7 +821,8 @@ impl GovernanceDashboardGenerator {
         {
             if stats.total_calls > 0 {
                 // 基于总成本计算风险分数（示例：成本越高风险越高）
-                let total_cost = stats.total_input_tokens as f64 * 0.000002 + stats.total_output_tokens as f64 * 0.000006;
+                let total_cost = stats.total_input_tokens as f64 * 0.000002
+                    + stats.total_output_tokens as f64 * 0.000006;
                 (total_cost / 1000.0).min(100.0)
             } else {
                 20.0
@@ -1122,7 +1132,9 @@ impl GovernanceDashboardGenerator {
             for log in logs.iter() {
                 *by_operation.entry(log.operation.clone()).or_insert(0) += 1;
                 *by_user.entry(log.user_id.clone()).or_insert(0) += 1;
-                *by_resource_type.entry(log.resource_type.clone()).or_insert(0) += 1;
+                *by_resource_type
+                    .entry(log.resource_type.clone())
+                    .or_insert(0) += 1;
             }
 
             // 按用户统计 Top 10
@@ -1184,10 +1196,14 @@ impl GovernanceDashboardGenerator {
             // 按时间间隔分桶统计
             for i in 0..points {
                 let bucket_start = chrono::Utc::now()
-                    .checked_sub_signed(chrono::Duration::hours((points - i) as i64 * interval_hours as i64))
+                    .checked_sub_signed(chrono::Duration::hours(
+                        (points - i) as i64 * interval_hours as i64,
+                    ))
                     .unwrap_or_else(chrono::Utc::now);
                 let bucket_end = chrono::Utc::now()
-                    .checked_sub_signed(chrono::Duration::hours((points - i - 1) as i64 * interval_hours as i64))
+                    .checked_sub_signed(chrono::Duration::hours(
+                        (points - i - 1) as i64 * interval_hours as i64,
+                    ))
                     .unwrap_or_else(chrono::Utc::now);
 
                 let bucket_logs: Vec<_> = audit_logs

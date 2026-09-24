@@ -136,7 +136,10 @@ pub async fn list_maps(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"))
         .bind(tenant_opt)
@@ -177,7 +180,10 @@ pub async fn get_map(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, Map>(only_own_schema_query!("gis", "SELECT id, tenant_id, name, code, description, map_type, projection, bounds, center, zoom_level, status, created_by, created_at, updated_at FROM gis.maps WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
         .bind(id)
@@ -298,7 +304,10 @@ pub async fn list_map_layers(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, MapLayer>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, name, layer_type, source_type, source_url, source_data, style_config, opacity, visible, z_index, min_zoom, max_zoom, properties, created_at, updated_at FROM gis.map_layers WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY z_index DESC, created_at DESC"),

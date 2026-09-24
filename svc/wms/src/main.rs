@@ -182,11 +182,8 @@ async fn main() -> Result<()> {
             "wms:inventory:",
         );
         cache_invalidation_listener.register_handler(inventory_handler);
-        let dict_handler = AsyncL2CacheInvalidationHandler::new(
-            "wms_dict_cache",
-            dict_cache.clone(),
-            "wms:dict:",
-        );
+        let dict_handler =
+            AsyncL2CacheInvalidationHandler::new("wms_dict_cache", dict_cache.clone(), "wms:dict:");
         cache_invalidation_listener.register_handler(dict_handler);
         let cache_invalidation_listener = Arc::new(cache_invalidation_listener);
 

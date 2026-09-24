@@ -693,7 +693,10 @@ async fn sync_entity(
     .await
     {
         tracing::error!("sync_entity insert log: {}", e);
-        return Json(ApiResponse::from(TopemsError::internal("创建同步任务失败", e)));
+        return Json(ApiResponse::from(TopemsError::internal(
+            "创建同步任务失败",
+            e,
+        )));
     }
 
     // 验证连接

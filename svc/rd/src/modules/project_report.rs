@@ -128,8 +128,9 @@ pub async fn get_project_summary(
                 completed_projects: row.get("completed_projects"),
                 delayed_projects: row.get("delayed_projects"),
                 total_budget: row.get::<Option<f64>, _>("total_budget").unwrap_or(0.0),
-                total_actual_cost: row.get::<Option<f64>, _>("total_actual_cost").unwrap_or(0.0)
-                    as f64,
+                total_actual_cost: row
+                    .get::<Option<f64>, _>("total_actual_cost")
+                    .unwrap_or(0.0) as f64,
                 avg_progress: row.get::<Option<f64>, _>("avg_progress").unwrap_or(0.0),
                 total_members: member_count,
             };

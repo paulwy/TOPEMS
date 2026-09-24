@@ -96,28 +96,45 @@ impl TierFeatureMatrix {
                 name: "身份认证与权限".to_string(),
                 description: Some("用户、角色、权限、认证".to_string()),
                 min_tier: PlanTier::Free,
-                features: vec!["用户管理".to_string(), "角色管理".to_string(), "权限控制".to_string(), "登录认证".to_string()],
+                features: vec![
+                    "用户管理".to_string(),
+                    "角色管理".to_string(),
+                    "权限控制".to_string(),
+                    "登录认证".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "tenant".to_string(),
                 name: "租户管理".to_string(),
                 description: Some("多租户隔离与管理".to_string()),
                 min_tier: PlanTier::Free,
-                features: vec!["租户创建".to_string(), "租户配置".to_string(), "数据隔离".to_string()],
+                features: vec![
+                    "租户创建".to_string(),
+                    "租户配置".to_string(),
+                    "数据隔离".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "master-data".to_string(),
                 name: "基础数据".to_string(),
                 description: Some("物料、客户、供应商等基础数据".to_string()),
                 min_tier: PlanTier::Free,
-                features: vec!["物料管理".to_string(), "客户管理".to_string(), "供应商管理".to_string()],
+                features: vec![
+                    "物料管理".to_string(),
+                    "客户管理".to_string(),
+                    "供应商管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "ticket".to_string(),
                 name: "工单管理".to_string(),
                 description: Some("工单创建、分配、跟踪".to_string()),
                 min_tier: PlanTier::Free,
-                features: vec!["工单创建".to_string(), "工单分配".to_string(), "工单跟踪".to_string()],
+                features: vec![
+                    "工单创建".to_string(),
+                    "工单分配".to_string(),
+                    "工单跟踪".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "communication".to_string(),
@@ -126,70 +143,109 @@ impl TierFeatureMatrix {
                 min_tier: PlanTier::Free,
                 features: vec!["消息通知".to_string(), "站内信".to_string()],
             },
-
             // === Basic 层（核心业务）===
             ModuleFeature {
                 module: "mes".to_string(),
                 name: "制造执行系统".to_string(),
                 description: Some("生产订单、工单、报工、质量".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["生产订单".to_string(), "工单管理".to_string(), "生产报工".to_string(), "质量检验".to_string(), "设备管理".to_string()],
+                features: vec![
+                    "生产订单".to_string(),
+                    "工单管理".to_string(),
+                    "生产报工".to_string(),
+                    "质量检验".to_string(),
+                    "设备管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "wms".to_string(),
                 name: "仓储管理系统".to_string(),
                 description: Some("入库、出库、库存、盘点".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["入库管理".to_string(), "出库管理".to_string(), "库存管理".to_string(), "盘点管理".to_string()],
+                features: vec![
+                    "入库管理".to_string(),
+                    "出库管理".to_string(),
+                    "库存管理".to_string(),
+                    "盘点管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "qms".to_string(),
                 name: "质量管理系统".to_string(),
                 description: Some("质量标准、检验、不合格品".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["质量标准".to_string(), "质量检验".to_string(), "不合格品".to_string(), "质量追溯".to_string()],
+                features: vec![
+                    "质量标准".to_string(),
+                    "质量检验".to_string(),
+                    "不合格品".to_string(),
+                    "质量追溯".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "scm".to_string(),
                 name: "供应链管理".to_string(),
                 description: Some("采购、需求、计划".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["采购管理".to_string(), "需求计划".to_string(), "供应链协同".to_string()],
+                features: vec![
+                    "采购管理".to_string(),
+                    "需求计划".to_string(),
+                    "供应链协同".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "srm".to_string(),
                 name: "供应商关系管理".to_string(),
                 description: Some("供应商评估、绩效、协同".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["供应商档案".to_string(), "供应商评估".to_string(), "供应商绩效".to_string()],
+                features: vec![
+                    "供应商档案".to_string(),
+                    "供应商评估".to_string(),
+                    "供应商绩效".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "crm".to_string(),
                 name: "客户关系管理".to_string(),
                 description: Some("客户、商机、合同".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["客户管理".to_string(), "商机管理".to_string(), "合同管理".to_string()],
+                features: vec![
+                    "客户管理".to_string(),
+                    "商机管理".to_string(),
+                    "合同管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "finance".to_string(),
                 name: "财务管理".to_string(),
                 description: Some("应收、应付、总账、报表".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["应收管理".to_string(), "应付管理".to_string(), "财务报表".to_string()],
+                features: vec![
+                    "应收管理".to_string(),
+                    "应付管理".to_string(),
+                    "财务报表".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "hrm".to_string(),
                 name: "人力资源管理".to_string(),
                 description: Some("员工、组织、考勤、薪酬".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["员工管理".to_string(), "组织管理".to_string(), "考勤管理".to_string()],
+                features: vec![
+                    "员工管理".to_string(),
+                    "组织管理".to_string(),
+                    "考勤管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "analytics".to_string(),
                 name: "数据分析（基础）".to_string(),
                 description: Some("报表、仪表盘、基础分析".to_string()),
                 min_tier: PlanTier::Basic,
-                features: vec!["报表管理".to_string(), "仪表盘".to_string(), "基础数据分析".to_string()],
+                features: vec![
+                    "报表管理".to_string(),
+                    "仪表盘".to_string(),
+                    "基础数据分析".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "erp".to_string(),
@@ -205,28 +261,41 @@ impl TierFeatureMatrix {
                 min_tier: PlanTier::Basic,
                 features: vec!["EHS 基础".to_string()],
             },
-
             // === Advanced 层（全功能）===
             ModuleFeature {
                 module: "ai".to_string(),
                 name: "AI 智能".to_string(),
                 description: Some("AI Copilot、智能分析、预测".to_string()),
                 min_tier: PlanTier::Advanced,
-                features: vec!["AI Copilot".to_string(), "智能分析".to_string(), "预测模型".to_string(), "MCP 工具".to_string()],
+                features: vec![
+                    "AI Copilot".to_string(),
+                    "智能分析".to_string(),
+                    "预测模型".to_string(),
+                    "MCP 工具".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "lims".to_string(),
                 name: "实验室管理".to_string(),
                 description: Some("样品、检验、仪器、校准".to_string()),
                 min_tier: PlanTier::Advanced,
-                features: vec!["样品管理".to_string(), "检验管理".to_string(), "仪器管理".to_string(), "校准管理".to_string()],
+                features: vec![
+                    "样品管理".to_string(),
+                    "检验管理".to_string(),
+                    "仪器管理".to_string(),
+                    "校准管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "pdm".to_string(),
                 name: "产品数据管理".to_string(),
                 description: Some("BOM、工艺、文档".to_string()),
                 min_tier: PlanTier::Advanced,
-                features: vec!["BOM 管理".to_string(), "工艺管理".to_string(), "文档管理".to_string()],
+                features: vec![
+                    "BOM 管理".to_string(),
+                    "工艺管理".to_string(),
+                    "文档管理".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "rd".to_string(),
@@ -240,7 +309,11 @@ impl TierFeatureMatrix {
                 name: "项目管理".to_string(),
                 description: Some("项目、任务、甘特图".to_string()),
                 min_tier: PlanTier::Advanced,
-                features: vec!["项目管理".to_string(), "任务管理".to_string(), "甘特图".to_string()],
+                features: vec![
+                    "项目管理".to_string(),
+                    "任务管理".to_string(),
+                    "甘特图".to_string(),
+                ],
             },
             ModuleFeature {
                 module: "tms".to_string(),
@@ -457,16 +530,12 @@ impl SubscriptionLifecycleService {
         subscription.started_at = Some(chrono::Utc::now());
 
         if let Some(days) = duration_days {
-            subscription.expires_at = Some(
-                chrono::Utc::now() + chrono::Duration::days(days),
-            );
+            subscription.expires_at = Some(chrono::Utc::now() + chrono::Duration::days(days));
         }
 
         // 重新同步权限
-        let sync_result = TierPermissionService::sync_permissions_for_tenant(
-            subscription.tenant_id,
-            &new_tier,
-        );
+        let sync_result =
+            TierPermissionService::sync_permissions_for_tenant(subscription.tenant_id, &new_tier);
 
         SubscriptionChangeResult {
             tenant_id: subscription.tenant_id,
@@ -589,10 +658,7 @@ impl TierPermissionService {
     }
 
     /// 检查租户是否有指定模块的访问权限
-    pub fn has_module_access(
-        subscription: &TenantSubscription,
-        module: &str,
-    ) -> bool {
+    pub fn has_module_access(subscription: &TenantSubscription, module: &str) -> bool {
         if subscription.status != SubscriptionStatus::Active
             && subscription.status != SubscriptionStatus::Trial
         {
@@ -704,11 +770,26 @@ mod tests {
 
     #[test]
     fn test_is_module_available() {
-        assert!(TierFeatureMatrix::is_module_available("iam", &PlanTier::Free));
-        assert!(TierFeatureMatrix::is_module_available("mes", &PlanTier::Basic));
-        assert!(!TierFeatureMatrix::is_module_available("mes", &PlanTier::Free));
-        assert!(TierFeatureMatrix::is_module_available("ai", &PlanTier::Advanced));
-        assert!(!TierFeatureMatrix::is_module_available("ai", &PlanTier::Basic));
+        assert!(TierFeatureMatrix::is_module_available(
+            "iam",
+            &PlanTier::Free
+        ));
+        assert!(TierFeatureMatrix::is_module_available(
+            "mes",
+            &PlanTier::Basic
+        ));
+        assert!(!TierFeatureMatrix::is_module_available(
+            "mes",
+            &PlanTier::Free
+        ));
+        assert!(TierFeatureMatrix::is_module_available(
+            "ai",
+            &PlanTier::Advanced
+        ));
+        assert!(!TierFeatureMatrix::is_module_available(
+            "ai",
+            &PlanTier::Basic
+        ));
     }
 
     #[test]
@@ -725,7 +806,8 @@ mod tests {
     fn test_default_permissions_for_tier() {
         let free_perms = TierPermissionService::default_permissions_for_tier(&PlanTier::Free);
         let basic_perms = TierPermissionService::default_permissions_for_tier(&PlanTier::Basic);
-        let advanced_perms = TierPermissionService::default_permissions_for_tier(&PlanTier::Advanced);
+        let advanced_perms =
+            TierPermissionService::default_permissions_for_tier(&PlanTier::Advanced);
 
         assert!(advanced_perms.len() >= basic_perms.len());
         assert!(basic_perms.len() >= free_perms.len());
@@ -747,25 +829,36 @@ mod tests {
         };
 
         // basic 层级应该有 mes 访问权限
-        assert!(TierPermissionService::has_module_access(&subscription, "mes"));
+        assert!(TierPermissionService::has_module_access(
+            &subscription,
+            "mes"
+        ));
         // basic 层级不应该有 ai 访问权限
-        assert!(!TierPermissionService::has_module_access(&subscription, "ai"));
+        assert!(!TierPermissionService::has_module_access(
+            &subscription,
+            "ai"
+        ));
 
         // features 覆盖
         subscription.features.insert("ai".to_string(), true);
-        assert!(TierPermissionService::has_module_access(&subscription, "ai"));
+        assert!(TierPermissionService::has_module_access(
+            &subscription,
+            "ai"
+        ));
 
         // 过期订阅不应该有访问权限
         subscription.status = SubscriptionStatus::Expired;
-        assert!(!TierPermissionService::has_module_access(&subscription, "mes"));
+        assert!(!TierPermissionService::has_module_access(
+            &subscription,
+            "mes"
+        ));
     }
 
     // ===== 订阅生命周期服务测试 =====
 
     fn make_test_subscription(tier: PlanTier, expires_in_days: Option<i64>) -> TenantSubscription {
-        let expires_at = expires_in_days.map(|days| {
-            chrono::Utc::now() + chrono::Duration::days(days)
-        });
+        let expires_at =
+            expires_in_days.map(|days| chrono::Utc::now() + chrono::Duration::days(days));
         TenantSubscription {
             tenant_id: Uuid::new_v4(),
             plan_tier: tier,
@@ -796,7 +889,9 @@ mod tests {
         assert!(SubscriptionLifecycleService::is_expiring_soon(&expiring));
 
         let not_expiring = make_test_subscription(PlanTier::Basic, Some(30));
-        assert!(!SubscriptionLifecycleService::is_expiring_soon(&not_expiring));
+        assert!(!SubscriptionLifecycleService::is_expiring_soon(
+            &not_expiring
+        ));
 
         let expired = make_test_subscription(PlanTier::Basic, Some(-1));
         assert!(!SubscriptionLifecycleService::is_expiring_soon(&expired));
@@ -844,11 +939,8 @@ mod tests {
     #[test]
     fn test_subscription_handle_upgrade() {
         let mut sub = make_test_subscription(PlanTier::Free, Some(30));
-        let result = SubscriptionLifecycleService::handle_upgrade(
-            &mut sub,
-            PlanTier::Advanced,
-            Some(365),
-        );
+        let result =
+            SubscriptionLifecycleService::handle_upgrade(&mut sub, PlanTier::Advanced, Some(365));
 
         assert_eq!(result.new_tier, PlanTier::Advanced);
         assert_eq!(result.new_status, SubscriptionStatus::Active);
@@ -874,7 +966,10 @@ mod tests {
         let reminder = SubscriptionLifecycleService::expiration_reminder(&expiring);
         assert!(reminder.is_some());
         let msg = reminder.unwrap();
-        assert!(msg.contains("2") || msg.contains("3"), "unexpected reminder: {msg}");
+        assert!(
+            msg.contains("2") || msg.contains("3"),
+            "unexpected reminder: {msg}"
+        );
 
         let not_expiring = make_test_subscription(PlanTier::Basic, Some(30));
         assert!(SubscriptionLifecycleService::expiration_reminder(&not_expiring).is_none());
@@ -882,10 +977,8 @@ mod tests {
 
     #[test]
     fn test_permission_sync_result() {
-        let result = TierPermissionService::sync_permissions_for_tenant(
-            Uuid::new_v4(),
-            &PlanTier::Basic,
-        );
+        let result =
+            TierPermissionService::sync_permissions_for_tenant(Uuid::new_v4(), &PlanTier::Basic);
         assert_eq!(result.plan_tier, PlanTier::Basic);
         assert!(!result.roles_synced.is_empty());
         assert!(result.permissions_synced > 0);

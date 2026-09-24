@@ -9,8 +9,8 @@
 
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
@@ -150,7 +150,9 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
                 return None;
             }
 
-            let value = entry.access(self.clock.fetch_add(1, Ordering::Relaxed)).clone();
+            let value = entry
+                .access(self.clock.fetch_add(1, Ordering::Relaxed))
+                .clone();
             drop(entries);
             self.stats.lock().hits += 1;
             Some(value)

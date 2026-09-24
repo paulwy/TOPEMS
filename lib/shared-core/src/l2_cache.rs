@@ -302,7 +302,6 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
 
     /// 按通配符模式删除 Redis L2 key（SCAN 迭代 + DEL）
 
-
     // ===== 公共 API =====
 
     /// 读取一个 key：先查 L1，miss 查 L2，L2 hit 回填 L1
@@ -361,7 +360,13 @@ impl<T: Clone + Send + Sync + 'static> AsyncL2Cache<T> {
                     ) {
                         record_l2_cache_hit(service, entity, "get");
                         record_l2_cache_query_duration(service, entity, "get", l2_duration);
-                        record_cache_query_duration(service, entity, "get", "l2_hit", total_duration);
+                        record_cache_query_duration(
+                            service,
+                            entity,
+                            "get",
+                            "l2_hit",
+                            total_duration,
+                        );
                     }
                 }
                 return Some(v);

@@ -838,7 +838,9 @@ mod tests {
 
         // Delete (soft delete)
         let delete = sqlx::query("UPDATE mes.work_orders SET deleted_at = NOW() WHERE id = $1")
-            .bind(wo_id).execute(&pool).await;
+            .bind(wo_id)
+            .execute(&pool)
+            .await;
         assert!(delete.is_ok(), "工单软删除应该成功");
     }
 
@@ -872,7 +874,10 @@ mod tests {
         let submit = sqlx::query("UPDATE mes.production_plans SET status = 'pending_approval', updated_at = NOW() WHERE id = $1 RETURNING status")
             .bind(plan_id).fetch_one(&pool).await;
         assert!(submit.is_ok(), "生产计划提交审批应该成功");
-        assert_eq!(submit.unwrap().get::<String, _>("status"), "pending_approval");
+        assert_eq!(
+            submit.unwrap().get::<String, _>("status"),
+            "pending_approval"
+        );
 
         // Approve
         let approve = sqlx::query("UPDATE mes.production_plans SET status = 'approved', updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -882,7 +887,9 @@ mod tests {
 
         // Delete
         let delete = sqlx::query("DELETE FROM mes.production_plans WHERE id = $1")
-            .bind(plan_id).execute(&pool).await;
+            .bind(plan_id)
+            .execute(&pool)
+            .await;
         assert!(delete.is_ok(), "生产计划删除应该成功");
     }
 
@@ -902,29 +909,59 @@ mod tests {
         // pending → in_progress
         sqlx::query("UPDATE mes.work_orders SET status = 'in_progress', actual_start_date = NOW(), updated_at = NOW() WHERE id = $1")
             .bind(wo_id).execute(&pool).await.unwrap();
-        let s1: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1").bind(wo_id).fetch_one(&pool).await.unwrap();
+        let s1: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1")
+            .bind(wo_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
         assert_eq!(s1, "in_progress");
 
         // in_progress → paused
-        sqlx::query("UPDATE mes.work_orders SET status = 'paused', updated_at = NOW() WHERE id = $1")
-            .bind(wo_id).execute(&pool).await.unwrap();
-        let s2: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1").bind(wo_id).fetch_one(&pool).await.unwrap();
+        sqlx::query(
+            "UPDATE mes.work_orders SET status = 'paused', updated_at = NOW() WHERE id = $1",
+        )
+        .bind(wo_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+        let s2: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1")
+            .bind(wo_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
         assert_eq!(s2, "paused");
 
         // paused → in_progress (resume)
-        sqlx::query("UPDATE mes.work_orders SET status = 'in_progress', updated_at = NOW() WHERE id = $1")
-            .bind(wo_id).execute(&pool).await.unwrap();
-        let s3: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1").bind(wo_id).fetch_one(&pool).await.unwrap();
+        sqlx::query(
+            "UPDATE mes.work_orders SET status = 'in_progress', updated_at = NOW() WHERE id = $1",
+        )
+        .bind(wo_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+        let s3: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1")
+            .bind(wo_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
         assert_eq!(s3, "in_progress");
 
         // in_progress → completed
         sqlx::query("UPDATE mes.work_orders SET status = 'completed', completed_quantity = 100, actual_end_date = NOW(), updated_at = NOW() WHERE id = $1")
             .bind(wo_id).execute(&pool).await.unwrap();
-        let s4: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1").bind(wo_id).fetch_one(&pool).await.unwrap();
+        let s4: String = sqlx::query_scalar("SELECT status FROM mes.work_orders WHERE id = $1")
+            .bind(wo_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
         assert_eq!(s4, "completed");
 
         // Cleanup
-        sqlx::query("DELETE FROM mes.work_orders WHERE id = $1").bind(wo_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.work_orders WHERE id = $1")
+            .bind(wo_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -965,7 +1002,11 @@ mod tests {
         assert_eq!(overload.unwrap().get::<String, _>("status"), "overloaded");
 
         // Delete
-        sqlx::query("DELETE FROM mes.capacities WHERE id = $1").bind(cap_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.capacities WHERE id = $1")
+            .bind(cap_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1007,7 +1048,11 @@ mod tests {
         assert!(!deactivate.unwrap().get::<bool, _>("is_active"));
 
         // Delete
-        sqlx::query("DELETE FROM mes.process_routes WHERE id = $1").bind(route_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.process_routes WHERE id = $1")
+            .bind(route_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1033,8 +1078,12 @@ mod tests {
         assert_eq!(row.get::<i32, _>("member_count"), 5);
 
         // Read
-        let read = sqlx::query("SELECT id, team_code, team_name, team_type, status FROM mes.teams WHERE id = $1")
-            .bind(team_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, team_code, team_name, team_type, status FROM mes.teams WHERE id = $1",
+        )
+        .bind(team_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "团队读取应该成功");
 
         // Update: add members
@@ -1050,7 +1099,11 @@ mod tests {
         assert_eq!(deactivate.unwrap().get::<String, _>("status"), "inactive");
 
         // Delete
-        sqlx::query("DELETE FROM mes.teams WHERE id = $1").bind(team_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.teams WHERE id = $1")
+            .bind(team_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1079,7 +1132,11 @@ mod tests {
             .bind(mp_id).fetch_one(&pool).await;
         assert!(update.is_ok(), "物料计划更新应该成功");
 
-        sqlx::query("DELETE FROM mes.material_plans WHERE id = $1").bind(mp_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.material_plans WHERE id = $1")
+            .bind(mp_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1100,8 +1157,12 @@ mod tests {
         .bind(df_id).bind(&forecast_no).fetch_one(&pool).await;
         assert!(create.is_ok(), "需求预测创建应该成功");
 
-        let read = sqlx::query("SELECT id, forecast_quantity, method FROM mes.demand_forecasts WHERE id = $1")
-            .bind(df_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, forecast_quantity, method FROM mes.demand_forecasts WHERE id = $1",
+        )
+        .bind(df_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "需求预测读取应该成功");
 
         // Update with actual quantity and calculate accuracy
@@ -1110,7 +1171,11 @@ mod tests {
         assert!(update.is_ok(), "需求预测更新应该成功");
         assert_eq!(update.unwrap().get::<String, _>("status"), "completed");
 
-        sqlx::query("DELETE FROM mes.demand_forecasts WHERE id = $1").bind(df_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.demand_forecasts WHERE id = $1")
+            .bind(df_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1131,8 +1196,12 @@ mod tests {
         .bind(qs_id).bind(&code).fetch_one(&pool).await;
         assert!(create.is_ok(), "质量标准创建应该成功");
 
-        let read = sqlx::query("SELECT id, code, name, inspection_type FROM mes.quality_standards WHERE id = $1")
-            .bind(qs_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, code, name, inspection_type FROM mes.quality_standards WHERE id = $1",
+        )
+        .bind(qs_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "质量标准读取应该成功");
 
         let update = sqlx::query("UPDATE mes.quality_standards SET version = '2.0', description = '表面无划痕、无气泡', updated_at = NOW() WHERE id = $1 RETURNING version")
@@ -1144,7 +1213,11 @@ mod tests {
             .bind(qs_id).fetch_one(&pool).await;
         assert!(deactivate.is_ok(), "质量标准停用应该成功");
 
-        sqlx::query("DELETE FROM mes.quality_standards WHERE id = $1").bind(qs_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.quality_standards WHERE id = $1")
+            .bind(qs_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1167,7 +1240,9 @@ mod tests {
         assert_eq!(create.unwrap().get::<String, _>("status"), "in_progress");
 
         let read = sqlx::query("SELECT id, wip_no, quantity, status FROM mes.wips WHERE id = $1")
-            .bind(wip_id).fetch_one(&pool).await;
+            .bind(wip_id)
+            .fetch_one(&pool)
+            .await;
         assert!(read.is_ok(), "在制品读取应该成功");
 
         // Transfer to next process
@@ -1181,7 +1256,11 @@ mod tests {
         assert!(complete.is_ok(), "在制品完成应该成功");
         assert_eq!(complete.unwrap().get::<String, _>("status"), "completed");
 
-        sqlx::query("DELETE FROM mes.wips WHERE id = $1").bind(wip_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.wips WHERE id = $1")
+            .bind(wip_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1207,15 +1286,25 @@ mod tests {
         assert!(create.is_ok(), "设备OEE记录创建应该成功");
 
         let read = sqlx::query("SELECT id, oee, availability FROM mes.equipment_oee WHERE id = $1")
-            .bind(oee_id).fetch_one(&pool).await;
+            .bind(oee_id)
+            .fetch_one(&pool)
+            .await;
         assert!(read.is_ok(), "设备OEE记录读取应该成功");
 
         let update = sqlx::query("UPDATE mes.equipment_oee SET actual_run_time = 450.0, downtime = 30.0, availability = 0.9375, oee = 0.82, updated_at = NOW() WHERE id = $1 RETURNING oee")
             .bind(oee_id).fetch_one(&pool).await;
         assert!(update.is_ok(), "设备OEE记录更新应该成功");
 
-        sqlx::query("DELETE FROM mes.equipment_oee WHERE id = $1").bind(oee_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.equipment WHERE id = $1").bind(eq_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.equipment_oee WHERE id = $1")
+            .bind(oee_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.equipment WHERE id = $1")
+            .bind(eq_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1236,8 +1325,12 @@ mod tests {
         .bind(sch_id).bind(&sch_no).fetch_one(&pool).await;
         assert!(create.is_ok(), "生产排程创建应该成功");
 
-        let read = sqlx::query("SELECT id, schedule_no, quantity, status FROM mes.production_schedules WHERE id = $1")
-            .bind(sch_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, schedule_no, quantity, status FROM mes.production_schedules WHERE id = $1",
+        )
+        .bind(sch_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "生产排程读取应该成功");
 
         let release = sqlx::query("UPDATE mes.production_schedules SET status = 'released', updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -1249,7 +1342,11 @@ mod tests {
             .bind(sch_id).fetch_one(&pool).await;
         assert!(complete.is_ok(), "生产排程完成应该成功");
 
-        sqlx::query("DELETE FROM mes.production_schedules WHERE id = $1").bind(sch_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.production_schedules WHERE id = $1")
+            .bind(sch_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1270,8 +1367,12 @@ mod tests {
         .bind(qi_id).bind(&insp_no).fetch_one(&pool).await;
         assert!(create.is_ok(), "质量检验创建应该成功");
 
-        let read = sqlx::query("SELECT id, inspection_no, status FROM mes.quality_inspections WHERE id = $1")
-            .bind(qi_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, inspection_no, status FROM mes.quality_inspections WHERE id = $1",
+        )
+        .bind(qi_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "质量检验读取应该成功");
 
         let pass = sqlx::query("UPDATE mes.quality_inspections SET status = 'passed', result = '合格', updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -1279,7 +1380,11 @@ mod tests {
         assert!(pass.is_ok(), "质量检验合格应该成功");
         assert_eq!(pass.unwrap().get::<String, _>("status"), "passed");
 
-        sqlx::query("DELETE FROM mes.quality_inspections WHERE id = $1").bind(qi_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.quality_inspections WHERE id = $1")
+            .bind(qi_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1297,12 +1402,18 @@ mod tests {
                VALUES ($1, $2, 'pending', '生产领料', NOW(), NOW())
                RETURNING id, issue_no, status"#,
         )
-        .bind(issue_id).bind(&issue_no).fetch_one(&pool).await;
+        .bind(issue_id)
+        .bind(&issue_no)
+        .fetch_one(&pool)
+        .await;
         assert!(create.is_ok(), "领料单创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "pending");
 
-        let read = sqlx::query("SELECT id, issue_no, status FROM mes.material_issues WHERE id = $1")
-            .bind(issue_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, issue_no, status FROM mes.material_issues WHERE id = $1")
+                .bind(issue_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "领料单读取应该成功");
 
         let approve = sqlx::query("UPDATE mes.material_issues SET status = 'approved', updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -1315,7 +1426,11 @@ mod tests {
         assert!(issue.is_ok(), "领料单出库应该成功");
         assert_eq!(issue.unwrap().get::<String, _>("status"), "issued");
 
-        sqlx::query("DELETE FROM mes.material_issues WHERE id = $1").bind(issue_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.material_issues WHERE id = $1")
+            .bind(issue_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1337,8 +1452,12 @@ mod tests {
         assert!(create.is_ok(), "工艺流程创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "active");
 
-        let read = sqlx::query("SELECT id, code, name, production_line, capacity FROM mes.process_flows WHERE id = $1")
-            .bind(pf_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, code, name, production_line, capacity FROM mes.process_flows WHERE id = $1",
+        )
+        .bind(pf_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "工艺流程读取应该成功");
 
         let update = sqlx::query("UPDATE mes.process_flows SET version = '2.0', capacity = 1200.0, updated_at = NOW() WHERE id = $1 RETURNING version, capacity")
@@ -1350,7 +1469,11 @@ mod tests {
             .bind(pf_id).fetch_one(&pool).await;
         assert!(deactivate.is_ok(), "工艺流程停用应该成功");
 
-        sqlx::query("DELETE FROM mes.process_flows WHERE id = $1").bind(pf_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.process_flows WHERE id = $1")
+            .bind(pf_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1372,21 +1495,32 @@ mod tests {
         assert!(create.is_ok(), "物料清单创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "draft");
 
-        let read = sqlx::query("SELECT id, bom_no, product_name, version FROM mes.material_boms WHERE id = $1")
-            .bind(bom_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, bom_no, product_name, version FROM mes.material_boms WHERE id = $1",
+        )
+        .bind(bom_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "物料清单读取应该成功");
 
         let submit = sqlx::query("UPDATE mes.material_boms SET status = 'pending_approval', updated_at = NOW() WHERE id = $1 RETURNING status")
             .bind(bom_id).fetch_one(&pool).await;
         assert!(submit.is_ok(), "物料清单提交审批应该成功");
-        assert_eq!(submit.unwrap().get::<String, _>("status"), "pending_approval");
+        assert_eq!(
+            submit.unwrap().get::<String, _>("status"),
+            "pending_approval"
+        );
 
         let approve = sqlx::query("UPDATE mes.material_boms SET status = 'approved', updated_at = NOW() WHERE id = $1 RETURNING status")
             .bind(bom_id).fetch_one(&pool).await;
         assert!(approve.is_ok(), "物料清单审批应该成功");
         assert_eq!(approve.unwrap().get::<String, _>("status"), "approved");
 
-        sqlx::query("DELETE FROM mes.material_boms WHERE id = $1").bind(bom_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.material_boms WHERE id = $1")
+            .bind(bom_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1408,8 +1542,12 @@ mod tests {
         assert!(create.is_ok(), "质量巡检创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "pending");
 
-        let read = sqlx::query("SELECT id, patrol_no, production_line, status FROM mes.quality_patrols WHERE id = $1")
-            .bind(qp_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, patrol_no, production_line, status FROM mes.quality_patrols WHERE id = $1",
+        )
+        .bind(qp_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "质量巡检读取应该成功");
 
         let start = sqlx::query("UPDATE mes.quality_patrols SET status = 'in_progress', updated_at = NOW() WHERE id = $1 RETURNING status")
@@ -1422,7 +1560,11 @@ mod tests {
         assert!(complete.is_ok(), "质量巡检完成应该成功");
         assert_eq!(complete.unwrap().get::<String, _>("result"), "pass");
 
-        sqlx::query("DELETE FROM mes.quality_patrols WHERE id = $1").bind(qp_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.quality_patrols WHERE id = $1")
+            .bind(qp_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1444,8 +1586,12 @@ mod tests {
         assert!(create.is_ok(), "批次记录创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "in_stock");
 
-        let read = sqlx::query("SELECT id, batch_no, quantity, production_date FROM mes.batch_records WHERE id = $1")
-            .bind(br_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, batch_no, quantity, production_date FROM mes.batch_records WHERE id = $1",
+        )
+        .bind(br_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "批次记录读取应该成功");
 
         let update = sqlx::query("UPDATE mes.batch_records SET quantity = 3000, status = 'partially_used', updated_at = NOW() WHERE id = $1 RETURNING quantity, status")
@@ -1458,7 +1604,11 @@ mod tests {
         assert!(exhaust.is_ok(), "批次记录耗尽应该成功");
         assert_eq!(exhaust.unwrap().get::<String, _>("status"), "exhausted");
 
-        sqlx::query("DELETE FROM mes.batch_records WHERE id = $1").bind(br_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.batch_records WHERE id = $1")
+            .bind(br_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1492,8 +1642,16 @@ mod tests {
         assert!(abnormal.is_ok(), "设备点检异常更新应该成功");
         assert_eq!(abnormal.unwrap().get::<String, _>("status"), "needs_repair");
 
-        sqlx::query("DELETE FROM mes.equipment_inspections WHERE id = $1").bind(ei_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.equipment WHERE id = $1").bind(eq_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.equipment_inspections WHERE id = $1")
+            .bind(ei_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.equipment WHERE id = $1")
+            .bind(eq_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1529,7 +1687,11 @@ mod tests {
         assert!(fulfill.is_ok(), "物料需求满足应该成功");
         assert_eq!(fulfill.unwrap().get::<String, _>("status"), "fulfilled");
 
-        sqlx::query("DELETE FROM mes.material_requirements WHERE id = $1").bind(mr_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.material_requirements WHERE id = $1")
+            .bind(mr_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1565,8 +1727,16 @@ mod tests {
         assert!(update.is_ok(), "设备维护记录更新应该成功");
         assert_eq!(update.unwrap().get::<String, _>("status"), "in_progress");
 
-        sqlx::query("DELETE FROM mes.equipment_maintenance_records WHERE id = $1").bind(em_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.equipment WHERE id = $1").bind(eq_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.equipment_maintenance_records WHERE id = $1")
+            .bind(em_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.equipment WHERE id = $1")
+            .bind(eq_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1588,8 +1758,12 @@ mod tests {
         assert!(create.is_ok(), "质量记录创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("quality_status"), "pass");
 
-        let read = sqlx::query("SELECT id, record_no, quantity, quality_status FROM mes.quality_records WHERE id = $1")
-            .bind(qr_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, record_no, quantity, quality_status FROM mes.quality_records WHERE id = $1",
+        )
+        .bind(qr_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "质量记录读取应该成功");
 
         let update = sqlx::query("UPDATE mes.quality_records SET quality_status = 'fail', defective_quantity = 10, qualified_quantity = 490, notes = '发现10件不合格品', updated_at = NOW() WHERE id = $1 RETURNING quality_status")
@@ -1597,7 +1771,11 @@ mod tests {
         assert!(update.is_ok(), "质量记录更新应该成功");
         assert_eq!(update.unwrap().get::<String, _>("quality_status"), "fail");
 
-        sqlx::query("DELETE FROM mes.quality_records WHERE id = $1").bind(qr_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.quality_records WHERE id = $1")
+            .bind(qr_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1613,8 +1791,16 @@ mod tests {
         let wip_no = format!("WIP-WT-{}", &wip_id.to_string()[..8]);
 
         // 清理可能存在的旧记录
-        sqlx::query("DELETE FROM mes.wip_transfers WHERE wip_id = $1").bind(wip_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.wips WHERE id = $1").bind(wip_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.wip_transfers WHERE wip_id = $1")
+            .bind(wip_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.wips WHERE id = $1")
+            .bind(wip_id)
+            .execute(&pool)
+            .await
+            .unwrap();
 
         // 先创建关联的 wip
         sqlx::query("INSERT INTO mes.wips (id, wip_no, product_name, product_code, quantity, status, created_at, updated_at) VALUES ($1, $2, '转移测试产品', 'WIP-WT-001', 300, 'in_progress', NOW(), NOW())")
@@ -1629,8 +1815,12 @@ mod tests {
         .fetch_one(&pool).await;
         assert!(create.is_ok(), "在制品转移创建应该成功");
 
-        let read = sqlx::query("SELECT id, transfer_no, quantity, operator FROM mes.wip_transfers WHERE id = $1")
-            .bind(wt_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, transfer_no, quantity, operator FROM mes.wip_transfers WHERE id = $1",
+        )
+        .bind(wt_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "在制品转移读取应该成功");
 
         let update = sqlx::query("UPDATE mes.wip_transfers SET notes = '转移已确认', transfer_type = 'rework' WHERE id = $1 RETURNING transfer_type")
@@ -1638,8 +1828,16 @@ mod tests {
         assert!(update.is_ok(), "在制品转移更新应该成功");
         assert_eq!(update.unwrap().get::<String, _>("transfer_type"), "rework");
 
-        sqlx::query("DELETE FROM mes.wip_transfers WHERE id = $1").bind(wt_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.wips WHERE id = $1").bind(wip_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.wip_transfers WHERE id = $1")
+            .bind(wt_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.wips WHERE id = $1")
+            .bind(wip_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1661,8 +1859,12 @@ mod tests {
         assert!(create.is_ok(), "物料分类创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("name"), "原材料");
 
-        let read = sqlx::query("SELECT id, name, description, sort_order FROM mes.material_categories WHERE id = $1")
-            .bind(cat_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, name, description, sort_order FROM mes.material_categories WHERE id = $1",
+        )
+        .bind(cat_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "物料分类读取应该成功");
 
         let update = sqlx::query("UPDATE mes.material_categories SET name = '主要原材料', sort_order = 2, description = '主要生产用原材料' WHERE id = $1 RETURNING name, sort_order")
@@ -1670,11 +1872,18 @@ mod tests {
         assert!(update.is_ok(), "物料分类更新应该成功");
         assert_eq!(update.unwrap().get::<String, _>("name"), "主要原材料");
 
-        let soft_delete = sqlx::query("UPDATE mes.material_categories SET deleted_at = NOW() WHERE id = $1")
-            .bind(cat_id).execute(&pool).await;
+        let soft_delete =
+            sqlx::query("UPDATE mes.material_categories SET deleted_at = NOW() WHERE id = $1")
+                .bind(cat_id)
+                .execute(&pool)
+                .await;
         assert!(soft_delete.is_ok(), "物料分类软删除应该成功");
 
-        sqlx::query("DELETE FROM mes.material_categories WHERE id = $1").bind(cat_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.material_categories WHERE id = $1")
+            .bind(cat_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1710,8 +1919,16 @@ mod tests {
         assert!(abnormal.is_ok(), "设备点检记录异常更新应该成功");
         assert_eq!(abnormal.unwrap().get::<String, _>("status"), "needs_repair");
 
-        sqlx::query("DELETE FROM mes.equipment_inspection_records WHERE id = $1").bind(eir_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.equipment WHERE id = $1").bind(eq_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.equipment_inspection_records WHERE id = $1")
+            .bind(eir_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.equipment WHERE id = $1")
+            .bind(eq_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1747,8 +1964,16 @@ mod tests {
         assert!(fail.is_ok(), "质量巡检项不合格更新应该成功");
         assert_eq!(fail.unwrap().get::<String, _>("status"), "fail");
 
-        sqlx::query("DELETE FROM mes.quality_patrol_items WHERE id = $1").bind(qpi_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.quality_patrols WHERE id = $1").bind(patrol_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.quality_patrol_items WHERE id = $1")
+            .bind(qpi_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.quality_patrols WHERE id = $1")
+            .bind(patrol_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1773,8 +1998,11 @@ mod tests {
         assert!(create.is_ok(), "模块设置创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("value"), "true");
 
-        let read = sqlx::query("SELECT id, category, key, value FROM mes.module_settings WHERE id = $1")
-            .bind(ms_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, category, key, value FROM mes.module_settings WHERE id = $1")
+                .bind(ms_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "模块设置读取应该成功");
 
         let update = sqlx::query("UPDATE mes.module_settings SET value = 'false', updated_at = NOW() WHERE id = $1 RETURNING value")
@@ -1782,7 +2010,11 @@ mod tests {
         assert!(update.is_ok(), "模块设置更新应该成功");
         assert_eq!(update.unwrap().get::<String, _>("value"), "false");
 
-        sqlx::query("DELETE FROM mes.module_settings WHERE id = $1").bind(ms_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.module_settings WHERE id = $1")
+            .bind(ms_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1805,15 +2037,27 @@ mod tests {
         assert!(create.is_ok(), "审计日志创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("action"), "create");
 
-        let read = sqlx::query("SELECT id, action, entity_type, user_name FROM mes.audit_logs WHERE id = $1")
-            .bind(al_id).fetch_one(&pool).await;
+        let read = sqlx::query(
+            "SELECT id, action, entity_type, user_name FROM mes.audit_logs WHERE id = $1",
+        )
+        .bind(al_id)
+        .fetch_one(&pool)
+        .await;
         assert!(read.is_ok(), "审计日志读取应该成功");
 
-        let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM mes.audit_logs WHERE user_id = $1")
-            .bind(user_id).fetch_one(&pool).await.unwrap();
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM mes.audit_logs WHERE user_id = $1")
+                .bind(user_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert!(count >= 1, "应该能查询到该用户的审计日志");
 
-        sqlx::query("DELETE FROM mes.audit_logs WHERE id = $1").bind(al_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.audit_logs WHERE id = $1")
+            .bind(al_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1839,8 +2083,11 @@ mod tests {
         assert!(create.is_ok(), "团队成员创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("status"), "active");
 
-        let read = sqlx::query("SELECT id, employee_name, position FROM mes.team_members WHERE id = $1")
-            .bind(tm_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, employee_name, position FROM mes.team_members WHERE id = $1")
+                .bind(tm_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "团队成员读取应该成功");
 
         let update = sqlx::query("UPDATE mes.team_members SET position = 'team_leader', status = 'active', created_at = NOW() WHERE id = $1 RETURNING position")
@@ -1853,8 +2100,16 @@ mod tests {
         assert!(deactivate.is_ok(), "团队成员停用应该成功");
         assert_eq!(deactivate.unwrap().get::<String, _>("status"), "inactive");
 
-        sqlx::query("DELETE FROM mes.team_members WHERE id = $1").bind(tm_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM mes.teams WHERE id = $1").bind(team_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM mes.team_members WHERE id = $1")
+            .bind(tm_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM mes.teams WHERE id = $1")
+            .bind(team_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1870,7 +2125,11 @@ mod tests {
         .fetch_one(&pool)
         .await
         .unwrap();
-        assert!(count >= 30, "mes schema 应该至少有 30 个表，实际有 {}", count);
+        assert!(
+            count >= 30,
+            "mes schema 应该至少有 30 个表，实际有 {}",
+            count
+        );
         eprintln!("mes schema 表数量: {}", count);
     }
 

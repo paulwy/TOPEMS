@@ -1,4 +1,3 @@
-use topems_shared::auth::Claims;
 use super::ApiState;
 use crate::models::{Announcement, CreateAnnouncementRequest, UpdateAnnouncementRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
@@ -11,6 +10,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
@@ -65,7 +65,10 @@ pub async fn list_announcements(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -260,7 +263,10 @@ pub async fn get_announcement(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
@@ -314,7 +320,10 @@ pub async fn update_announcement(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let existing = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", "SELECT id, title, content, author, status, priority, publish_at, expire_at, created_at, updated_at FROM announcements WHERE deleted_at IS NULL AND id = $1"),
@@ -436,7 +445,10 @@ pub async fn delete_announcement(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
@@ -524,7 +536,10 @@ pub async fn publish_announcement(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(
@@ -621,7 +636,10 @@ pub async fn unpublish_announcement(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let now = Utc::now();
     let result = sqlx::query_as::<_, Announcement>(

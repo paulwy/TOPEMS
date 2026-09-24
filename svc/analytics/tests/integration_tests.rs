@@ -61,8 +61,11 @@ mod tests {
         assert!(create.is_ok(), "看板创建应该成功");
         assert_eq!(create.unwrap().get::<String, _>("name"), "生产概览看板");
 
-        let read = sqlx::query("SELECT id, name, description FROM bi.analytics_dashboards WHERE id = $1")
-            .bind(dash_id).fetch_one(&pool).await;
+        let read =
+            sqlx::query("SELECT id, name, description FROM bi.analytics_dashboards WHERE id = $1")
+                .bind(dash_id)
+                .fetch_one(&pool)
+                .await;
         assert!(read.is_ok(), "看板读取应该成功");
 
         let update = sqlx::query("UPDATE bi.analytics_dashboards SET name = '生产概览看板V2', auto_refresh_enabled = true, auto_refresh_interval = 300, updated_at = NOW() WHERE id = $1 RETURNING name, auto_refresh_enabled")
@@ -70,7 +73,11 @@ mod tests {
         assert!(update.is_ok(), "看板更新应该成功");
         assert!(update.unwrap().get::<bool, _>("auto_refresh_enabled"));
 
-        sqlx::query("DELETE FROM bi.analytics_dashboards WHERE id = $1").bind(dash_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM bi.analytics_dashboards WHERE id = $1")
+            .bind(dash_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -92,14 +99,20 @@ mod tests {
         assert_eq!(create.unwrap().get::<String, _>("name"), "月度生产报表");
 
         let read = sqlx::query("SELECT id, name, report_type FROM bi.reports WHERE id = $1")
-            .bind(report_id).fetch_one(&pool).await;
+            .bind(report_id)
+            .fetch_one(&pool)
+            .await;
         assert!(read.is_ok(), "报表读取应该成功");
 
         let publish = sqlx::query("UPDATE bi.reports SET status = 'published', updated_at = NOW() WHERE id = $1 RETURNING id")
             .bind(report_id).fetch_one(&pool).await;
         assert!(publish.is_ok(), "报表发布应该成功");
 
-        sqlx::query("DELETE FROM bi.reports WHERE id = $1").bind(report_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM bi.reports WHERE id = $1")
+            .bind(report_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -126,7 +139,9 @@ mod tests {
         assert!(create.unwrap().get::<bool, _>("is_active"));
 
         let read = sqlx::query("SELECT id, cron_expression FROM bi.report_schedules WHERE id = $1")
-            .bind(sched_id).fetch_one(&pool).await;
+            .bind(sched_id)
+            .fetch_one(&pool)
+            .await;
         assert!(read.is_ok(), "报表计划读取应该成功");
 
         let deactivate = sqlx::query("UPDATE bi.report_schedules SET is_active = false, updated_at = NOW() WHERE id = $1 RETURNING is_active")
@@ -134,8 +149,16 @@ mod tests {
         assert!(deactivate.is_ok(), "报表计划停用应该成功");
         assert!(!deactivate.unwrap().get::<bool, _>("is_active"));
 
-        sqlx::query("DELETE FROM bi.report_schedules WHERE id = $1").bind(sched_id).execute(&pool).await.unwrap();
-        sqlx::query("DELETE FROM bi.reports WHERE id = $1").bind(report_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM bi.report_schedules WHERE id = $1")
+            .bind(sched_id)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("DELETE FROM bi.reports WHERE id = $1")
+            .bind(report_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -157,14 +180,20 @@ mod tests {
         assert!(create.unwrap().get::<bool, _>("is_active"));
 
         let read = sqlx::query("SELECT id, name FROM bi.report_templates WHERE id = $1")
-            .bind(tpl_id).fetch_one(&pool).await;
+            .bind(tpl_id)
+            .fetch_one(&pool)
+            .await;
         assert!(read.is_ok(), "报表模板读取应该成功");
 
         let update = sqlx::query("UPDATE bi.report_templates SET name = '标准生产报表模板V2', updated_at = NOW() WHERE id = $1 RETURNING name")
             .bind(tpl_id).fetch_one(&pool).await;
         assert!(update.is_ok(), "报表模板更新应该成功");
 
-        sqlx::query("DELETE FROM bi.report_templates WHERE id = $1").bind(tpl_id).execute(&pool).await.unwrap();
+        sqlx::query("DELETE FROM bi.report_templates WHERE id = $1")
+            .bind(tpl_id)
+            .execute(&pool)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -180,7 +209,11 @@ mod tests {
         .fetch_one(&pool)
         .await
         .unwrap();
-        assert!(count >= 10, "bi schema 应该至少有 10 个表，实际有 {}", count);
+        assert!(
+            count >= 10,
+            "bi schema 应该至少有 10 个表，实际有 {}",
+            count
+        );
         eprintln!("bi schema 表数量: {}", count);
     }
 }

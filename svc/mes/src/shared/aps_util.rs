@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 
 pub fn validate_resource_id(id: &str) -> bool {
     if id.is_empty() || id.len() > 64 {
@@ -212,7 +212,10 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 30, 0)
             .unwrap();
-        assert_eq!(calc_duration_minutes(start.and_utc(), end.and_utc()), Some(90));
+        assert_eq!(
+            calc_duration_minutes(start.and_utc(), end.and_utc()),
+            Some(90)
+        );
 
         let end2 = NaiveDate::from_ymd_opt(2024, 1, 1)
             .unwrap()
@@ -386,7 +389,10 @@ mod tests {
             .unwrap()
             .and_hms_opt(2, 0, 0)
             .unwrap();
-        assert_eq!(calc_duration_minutes(start.and_utc(), end.and_utc()), Some(240));
+        assert_eq!(
+            calc_duration_minutes(start.and_utc(), end.and_utc()),
+            Some(240)
+        );
     }
 
     #[test]
@@ -399,7 +405,10 @@ mod tests {
             .unwrap()
             .and_hms_opt(18, 30, 0)
             .unwrap();
-        assert_eq!(calc_duration_minutes(start.and_utc(), end.and_utc()), Some(750));
+        assert_eq!(
+            calc_duration_minutes(start.and_utc(), end.and_utc()),
+            Some(750)
+        );
     }
 
     #[test]

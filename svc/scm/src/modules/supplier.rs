@@ -474,7 +474,11 @@ pub async fn get_supplier(
         .tenant_id
         .clone()
         .unwrap_or_else(|| "default".to_string());
-    let cache_key = supplier_cache_key(&tenant_id, &id, Some(Locale::from_headers(&headers).as_sql()));
+    let cache_key = supplier_cache_key(
+        &tenant_id,
+        &id,
+        Some(Locale::from_headers(&headers).as_sql()),
+    );
 
     if let Some(cached) = state.supplier_cache.get(&cache_key).await {
         record_cache_hit("scm", "supplier", "get");

@@ -9,7 +9,7 @@ use axum::{
 };
 use serde::Serialize;
 use serde_json::json;
-use sqlx::{Row};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 

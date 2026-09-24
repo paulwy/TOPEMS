@@ -104,10 +104,7 @@ pub fn create_routes(
             get(modules::communication::ws::websocket_handler),
         )
         // MES Dashboard WebSocket（公共路由，无需认证）
-        .route(
-            "/ws/mes/dashboard",
-            get(modules::mes::ws::mes_dashboard_ws),
-        )
+        .route("/ws/mes/dashboard", get(modules::mes::ws::mes_dashboard_ws))
         // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
         .route("/api/sse/connect", get(sse::sse_connect_handler))
         .route(

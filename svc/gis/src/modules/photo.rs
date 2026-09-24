@@ -29,7 +29,10 @@ pub async fn list_location_photos(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"),
@@ -57,7 +60,10 @@ pub async fn get_location_photo(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, LocationPhoto>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"))
         .bind(id)
@@ -152,7 +158,10 @@ pub async fn delete_location_photo(
                 Json(ApiResponse::error(404, "位置照片未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }
 
@@ -164,7 +173,10 @@ pub async fn list_location_photos_by_map(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, LocationPhoto>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, position, photo_url, description, taken_by, taken_at, created_at FROM gis.location_photos WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),

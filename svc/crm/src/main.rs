@@ -1,10 +1,10 @@
 use anyhow::Result;
-use uuid::Uuid;
 use axum::{routing::get, Router};
 use std::env;
 use std::sync::Arc;
 use std::time::Duration;
 use utoipa::OpenApi;
+use uuid::Uuid;
 
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
@@ -130,21 +130,21 @@ async fn main() -> Result<()> {
         ..Default::default()
     }
     .with_metrics("crm", "dict");
-    let dict_cache = match AsyncL2Cache::<String>::try_new(dict_l2_config, redis_url.as_deref()).await
-    {
-        Ok(cache) => {
-            if cache.has_l2() {
-                tracing::info!("💾 多级缓存初始化完成（CRM dict，L1+L2 Redis）");
-            } else {
-                tracing::info!("💾 多级缓存初始化完成（CRM dict，纯 L1）");
+    let dict_cache =
+        match AsyncL2Cache::<String>::try_new(dict_l2_config, redis_url.as_deref()).await {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（CRM dict，L1+L2 Redis）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（CRM dict，纯 L1）");
+                }
+                Arc::new(cache)
             }
-            Arc::new(cache)
-        }
-        Err((cache, warn)) => {
-            tracing::warn!("💾 多级缓存初始化降级（CRM dict）: {}", warn);
-            Arc::new(cache)
-        }
-    };
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（CRM dict）: {}", warn);
+                Arc::new(cache)
+            }
+        };
 
     let dashboard_l2_config = L2CacheConfig {
         instance_prefix: "crm".to_string(),
@@ -154,25 +154,23 @@ async fn main() -> Result<()> {
         ..Default::default()
     }
     .with_metrics("crm", "dashboard");
-    let dashboard_cache = match AsyncL2Cache::<serde_json::Value>::try_new(
-        dashboard_l2_config,
-        redis_url.as_deref(),
-    )
-    .await
-    {
-        Ok(cache) => {
-            if cache.has_l2() {
-                tracing::info!("💾 多级缓存初始化完成（CRM dashboard，L1+L2 Redis）");
-            } else {
-                tracing::info!("💾 多级缓存初始化完成（CRM dashboard，纯 L1）");
+    let dashboard_cache =
+        match AsyncL2Cache::<serde_json::Value>::try_new(dashboard_l2_config, redis_url.as_deref())
+            .await
+        {
+            Ok(cache) => {
+                if cache.has_l2() {
+                    tracing::info!("💾 多级缓存初始化完成（CRM dashboard，L1+L2 Redis）");
+                } else {
+                    tracing::info!("💾 多级缓存初始化完成（CRM dashboard，纯 L1）");
+                }
+                Arc::new(cache)
             }
-            Arc::new(cache)
-        }
-        Err((cache, warn)) => {
-            tracing::warn!("💾 多级缓存初始化降级（CRM dashboard）: {}", warn);
-            Arc::new(cache)
-        }
-    };
+            Err((cache, warn)) => {
+                tracing::warn!("💾 多级缓存初始化降级（CRM dashboard）: {}", warn);
+                Arc::new(cache)
+            }
+        };
 
     // 缓存预热：启动时异步加载客户列表默认页，避免首次请求缓存未命中
     {
@@ -182,10 +180,8 @@ async fn main() -> Result<()> {
             tracing::info!("[crm] 开始客户列表缓存预热...");
             // 预热使用默认租户占位（与 create_customer 中使用的组织 UUID 一致），
             // 默认参数：page=1, page_size=25, search=None
-            let warmup_tenant = Uuid::parse_str(
-                "00000000-0000-0000-0000-000000000001"
-            )
-            .expect("default tenant uuid");
+            let warmup_tenant = Uuid::parse_str("00000000-0000-0000-0000-000000000001")
+                .expect("default tenant uuid");
             match sqlx::query_scalar::<_, serde_json::Value>(
                 r#"
                 SELECT json_build_object(
@@ -223,20 +219,16 @@ async fn main() -> Result<()> {
     // 缓存失效事件订阅（事件驱动缓存一致性）
     {
         let mut cache_invalidation_listener = CacheInvalidationListener::new("crm");
-        cache_invalidation_listener.register_handler(
-            AsyncL2CacheInvalidationHandler::new(
-                "crm_customer_cache",
-                customer_cache.clone(),
-                "crm:customer:",
-            ),
-        );
-        cache_invalidation_listener.register_handler(
-            AsyncL2CacheInvalidationHandler::new(
-                "crm_opportunity_cache",
-                opportunity_cache.clone(),
-                "crm:opportunity:",
-            ),
-        );
+        cache_invalidation_listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "crm_customer_cache",
+            customer_cache.clone(),
+            "crm:customer:",
+        ));
+        cache_invalidation_listener.register_handler(AsyncL2CacheInvalidationHandler::new(
+            "crm_opportunity_cache",
+            opportunity_cache.clone(),
+            "crm:opportunity:",
+        ));
         cache_invalidation_listener.register_handler(AsyncL2CacheInvalidationHandler::new(
             "crm_dict_cache",
             dict_cache.clone(),
@@ -252,9 +244,8 @@ async fn main() -> Result<()> {
         match EventSubscriber::new("crm-cache-invalidation") {
             Ok(cache_subscriber) => {
                 let listener = cache_invalidation_listener.clone();
-                let cache_subscriber = cache_subscriber.subscribe(
-                    vec![EventType::CacheInvalidated],
-                    move |event| {
+                let cache_subscriber =
+                    cache_subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
                         let listener = listener.clone();
                         Box::pin(async move {
                             if let Ok(payload) = event.parse_payload::<CacheInvalidatedPayload>() {
@@ -270,8 +261,7 @@ async fn main() -> Result<()> {
                                 listener.dispatch_invalidation(&invalidation_event);
                             }
                         })
-                    },
-                );
+                    });
 
                 tokio::spawn(async move {
                     if let Err(e) = cache_subscriber.start_listening().await {

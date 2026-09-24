@@ -392,12 +392,14 @@ impl TicketService {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query("UPDATE ticket.core_tickets SET updated_at = $1 WHERE id = $2 AND tenant_id = $3")
-            .bind(now)
-            .bind(ticket_id)
-            .bind(tenant_id)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            "UPDATE ticket.core_tickets SET updated_at = $1 WHERE id = $2 AND tenant_id = $3",
+        )
+        .bind(now)
+        .bind(ticket_id)
+        .bind(tenant_id)
+        .execute(&self.pool)
+        .await?;
 
         sqlx::query_as::<_, TicketComment>(
             r#"
@@ -627,7 +629,10 @@ pub async fn create_ticket_handler(
     let reporter_id = Uuid::parse_str(&claims.sub).ok();
     let locale = Locale::from_headers(&headers).as_sql();
 
-    match service.create_ticket(tenant_id, reporter_id, req, locale).await {
+    match service
+        .create_ticket(tenant_id, reporter_id, req, locale)
+        .await
+    {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单创建成功")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("创建工单失败", e))),
     }
@@ -881,10 +886,12 @@ pub async fn get_ticket_sla_handler(
 
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::from({
-            tracing::warn!("工单不存在: {}", e);
-            TopemsError::ResourceNotFound("工单不存在".to_string())
-        })),
+        Err(e) => {
+            return Json(ApiResponse::from({
+                tracing::warn!("工单不存在: {}", e);
+                TopemsError::ResourceNotFound("工单不存在".to_string())
+            }))
+        }
     };
 
     match sla_service.calculate_sla(&ticket).await {
@@ -905,15 +912,20 @@ pub async fn trigger_sla_escalation_handler(
 
     let ticket = match ticket_service.get_ticket(tenant_id, id).await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::from({
-            tracing::warn!("工单不存在: {}", e);
-            TopemsError::ResourceNotFound("工单不存在".to_string())
-        })),
+        Err(e) => {
+            return Json(ApiResponse::from({
+                tracing::warn!("工单不存在: {}", e);
+                TopemsError::ResourceNotFound("工单不存在".to_string())
+            }))
+        }
     };
 
     match sla_service.check_and_escalate(&ticket).await {
         Ok(events) => Json(ApiResponse::success(events, "SLA 升级检查完成")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("SLA 升级检查失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "SLA 升级检查失败",
+            e,
+        ))),
     }
 }
 
@@ -925,12 +937,18 @@ pub async fn get_sla_stats_handler(
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
+        Some(
+            Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or(""))
+                .unwrap_or_else(|_| Uuid::nil()),
+        )
     };
 
     match service.get_sla_stats(opt_tenant_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA统计失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "查询SLA统计失败",
+            e,
+        ))),
     }
 }
 
@@ -958,7 +976,10 @@ pub async fn create_sla_policy_handler(
 
     match service.create_policy(tenant_id, req, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建SLA策略失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "创建SLA策略失败",
+            e,
+        ))),
     }
 }
 
@@ -981,13 +1002,19 @@ pub async fn list_sla_policies_handler(
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
+        Some(
+            Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or(""))
+                .unwrap_or_else(|_| Uuid::nil()),
+        )
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
     match service.list_policies(opt_tenant_id, locale).await {
         Ok(policies) => Json(ApiResponse::success(policies, "查询成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA策略失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "查询SLA策略失败",
+            e,
+        ))),
     }
 }
 
@@ -1001,7 +1028,10 @@ pub async fn get_sla_policy_handler(
     let opt_tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil()))
+        Some(
+            Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or(""))
+                .unwrap_or_else(|_| Uuid::nil()),
+        )
     };
     let locale = Locale::from_headers(&headers).as_sql();
 
@@ -1028,7 +1058,10 @@ pub async fn update_sla_policy_handler(
 
     match service.update_policy(tenant_id, id, req, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略更新成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新SLA策略失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新SLA策略失败",
+            e,
+        ))),
     }
 }
 
@@ -1047,7 +1080,10 @@ pub async fn delete_sla_policy_handler(
             "SLA策略已删除",
         )),
         Ok(false) => Json(ApiResponse::error(404, "SLA策略不存在或为默认策略不可删除")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除SLA策略失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "删除SLA策略失败",
+            e,
+        ))),
     }
 }
 
@@ -1272,7 +1308,10 @@ pub async fn create_automation_rule_handler(
     .await;
     match result {
         Ok(rule) => Json(ApiResponse::success(rule, "自动化规则创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建自动化规则失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "创建自动化规则失败",
+            e,
+        ))),
     }
 }
 
@@ -1284,7 +1323,10 @@ pub async fn list_automation_rules_handler(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, AutomationRule>(
@@ -1310,7 +1352,10 @@ pub async fn get_automation_rule_handler(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, AutomationRule>(
@@ -1368,7 +1413,10 @@ pub async fn update_automation_rule_handler(
     match result {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "自动化规则更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新自动化规则失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新自动化规则失败",
+            e,
+        ))),
     }
 }
 
@@ -1390,7 +1438,10 @@ pub async fn delete_automation_rule_handler(
             "自动化规则已删除",
         )),
         Ok(_) => Json(ApiResponse::error(404, "自动化规则不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除自动化规则失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "删除自动化规则失败",
+            e,
+        ))),
     }
 }
 
@@ -1423,7 +1474,10 @@ pub async fn create_knowledge_article_handler(
     .await;
     match result {
         Ok(article) => Json(ApiResponse::success(article, "知识文章创建成功")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建知识文章失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "创建知识文章失败",
+            e,
+        ))),
     }
 }
 
@@ -1435,7 +1489,10 @@ pub async fn list_knowledge_articles_handler(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
@@ -1480,7 +1537,10 @@ pub async fn get_knowledge_article_handler(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
@@ -1530,7 +1590,10 @@ pub async fn update_knowledge_article_handler(
     match result {
         Ok(Some(a)) => Json(ApiResponse::success(a, "知识文章更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "知识文章不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新知识文章失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新知识文章失败",
+            e,
+        ))),
     }
 }
 
@@ -1541,18 +1604,23 @@ pub async fn delete_knowledge_article_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id =
         Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
-    match sqlx::query("DELETE FROM ticket.ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2")
-        .bind(id)
-        .bind(tenant_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(
+        "DELETE FROM ticket.ticket_knowledge_articles WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&pool)
+    .await
     {
         Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success(
             json!({"deleted": true}),
             "知识文章已删除",
         )),
         Ok(_) => Json(ApiResponse::error(404, "知识文章不存在")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除知识文章失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "删除知识文章失败",
+            e,
+        ))),
     }
 }
 

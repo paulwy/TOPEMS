@@ -150,7 +150,8 @@ pub async fn create_inbound_from_purchase(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let tenant_bind = tenant_bind_value(&claims);
-    let result = create_inbound_from_purchase_internal(&state, id, None, None, tenant_bind, &mut *txn).await;
+    let result =
+        create_inbound_from_purchase_internal(&state, id, None, None, tenant_bind, &mut *txn).await;
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
@@ -380,7 +381,9 @@ pub async fn create_inbound_from_purchase_internal(
         Err(e) => {
             tracing::error!("创建入库单失败: {}", e);
 
-            let retry_count = get_retry_count(state, purchase_order_id, tenant_bind).await.unwrap_or(0);
+            let retry_count = get_retry_count(state, purchase_order_id, tenant_bind)
+                .await
+                .unwrap_or(0);
             let new_retry_count = retry_count + 1;
             let max_retries = 3;
 

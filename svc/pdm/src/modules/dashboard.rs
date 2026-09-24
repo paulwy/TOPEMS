@@ -55,7 +55,13 @@ pub async fn get_dashboard(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let pending_reviews = sqlx::query_scalar::<_, i64>(
@@ -74,12 +80,13 @@ pub async fn get_dashboard(
     .await
     .unwrap_or(0);
 
-    let total_boms =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM pdm_boms WHERE ($1::uuid IS NULL OR tenant_id = $1)")
-            .bind(tenant_id)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total_boms = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM pdm_boms WHERE ($1::uuid IS NULL OR tenant_id = $1)",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let document_types = fetch_named_counts(
         &state,
@@ -143,7 +150,11 @@ pub async fn get_dashboard(
     }
 }
 
-async fn fetch_named_counts(state: &AppState, tenant_id: Option<Uuid>, sql: &str) -> Vec<NamedCount> {
+async fn fetch_named_counts(
+    state: &AppState,
+    tenant_id: Option<Uuid>,
+    sql: &str,
+) -> Vec<NamedCount> {
     sqlx::query_as::<_, NamedCountRow>(sql)
         .bind(tenant_id)
         .fetch_all(&state.pool)

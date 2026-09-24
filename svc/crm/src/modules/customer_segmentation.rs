@@ -13,8 +13,8 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
-use topems_shared_core::response::api_error;
 use topems_shared_core::locale::Locale;
+use topems_shared_core::response::api_error;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct CustomerSegment {

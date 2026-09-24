@@ -116,8 +116,7 @@ pub struct ListProcessesResponse {
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 // ==================== Production Process Handlers ====================

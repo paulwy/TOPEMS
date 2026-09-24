@@ -34,9 +34,13 @@ pub async fn create_member(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -139,7 +143,10 @@ pub async fn get_project_members(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -199,7 +206,10 @@ pub async fn update_member(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -308,7 +318,10 @@ pub async fn delete_member(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
@@ -319,11 +332,13 @@ pub async fn delete_member(
         "删除项目成员请求开始"
     );
 
-    let result = sqlx::query(r#"DELETE FROM rs.project_members WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)
-        .bind(id)
-        .bind(tenant_opt)
-        .execute(&mut **txn)
-        .await;
+    let result = sqlx::query(
+        r#"DELETE FROM rs.project_members WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#,
+    )
+    .bind(id)
+    .bind(tenant_opt)
+    .execute(&mut **txn)
+    .await;
 
     let duration = Utc::now() - start_time;
 

@@ -187,7 +187,11 @@ pub async fn list_collection_tasks(
     let mut query_builder = sqlx::query(sql);
     match query.status.as_ref() {
         Some(status) => {
-            query_builder = query_builder.bind(status).bind(page_size).bind(offset).bind(locale);
+            query_builder = query_builder
+                .bind(status)
+                .bind(page_size)
+                .bind(offset)
+                .bind(locale);
         }
         None => {
             query_builder = query_builder.bind(page_size).bind(offset).bind(locale);

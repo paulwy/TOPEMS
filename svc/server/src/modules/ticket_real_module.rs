@@ -14,11 +14,11 @@ use std::sync::Arc;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
 use topems_shared_event::event::EventPublisher;
-use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
-use topems_unified_core::modules::subscription::PlanTier;
 use topems_ticket::feedback_compat;
 use topems_ticket::handlers;
 use topems_ticket::ticket_ext;
+use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
+use topems_unified_core::modules::subscription::PlanTier;
 
 /// 真实 Ticket 模块：持有数据库连接池 + 完整业务路由（ticket + feedback 兼容）
 pub struct TicketRealModule {

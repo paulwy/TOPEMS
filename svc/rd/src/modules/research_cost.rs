@@ -65,7 +65,13 @@ pub struct ListParams {
     #[serde(default, alias = "p")]
     pub page: Option<i64>,
     /// 每页大小，默认 20，最多 100
-    #[serde(default, alias = "pagesize", alias = "pageSize", alias = "size", alias = "limit")]
+    #[serde(
+        default,
+        alias = "pagesize",
+        alias = "pageSize",
+        alias = "size",
+        alias = "limit"
+    )]
     pub page_size: Option<i64>,
     /// 关键字搜索
     #[serde(default, alias = "q", alias = "keyword")]
@@ -74,7 +80,13 @@ pub struct ListParams {
     #[serde(default, alias = "sort", alias = "sortBy")]
     pub sort_by: Option<String>,
     /// 排序方向：asc / desc
-    #[serde(default, alias = "sortorder", alias = "sortOrder", alias = "sort_dir", alias = "dir")]
+    #[serde(
+        default,
+        alias = "sortorder",
+        alias = "sortOrder",
+        alias = "sort_dir",
+        alias = "dir"
+    )]
     pub sort_dir: Option<String>,
     pub project_id: Option<Uuid>,
     pub category: Option<String>,
@@ -95,8 +107,6 @@ impl ListParams {
         (self.page_or_default() - 1) * self.page_size_or_default()
     }
 }
-
-
 
 pub fn create_routes() -> Router<ApiState> {
     Router::<ApiState>::new()

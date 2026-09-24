@@ -64,7 +64,10 @@ pub fn target_service_from_path(path: &str) -> String {
             idx = 2;
         }
     }
-    let svc = segments.get(idx).filter(|s| !s.is_empty()).unwrap_or(&"unknown");
+    let svc = segments
+        .get(idx)
+        .filter(|s| !s.is_empty())
+        .unwrap_or(&"unknown");
     format!("{}-service", svc)
 }
 

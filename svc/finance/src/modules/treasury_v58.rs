@@ -468,7 +468,10 @@ impl CashPoolManager {
         .await
     }
 
-    pub async fn list_pools(pool: &PgPool, tenant_id: Option<Uuid>) -> Result<Vec<CashPool>, sqlx::Error> {
+    pub async fn list_pools(
+        pool: &PgPool,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Vec<CashPool>, sqlx::Error> {
         sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 500"),
         )
@@ -1010,7 +1013,11 @@ impl LiquidityOptimizer {
         }))
     }
 
-    async fn estimate_current_balance(_pool: &PgPool, _tenant_id: Option<Uuid>, _entity_id: &str) -> f64 {
+    async fn estimate_current_balance(
+        _pool: &PgPool,
+        _tenant_id: Option<Uuid>,
+        _entity_id: &str,
+    ) -> f64 {
         500_000.0 + (_entity_id.len() as f64 * 10_000.0)
     }
 
@@ -1047,7 +1054,8 @@ impl LiquidityOptimizer {
         let mut results = Vec::new();
 
         for target in &targets {
-            let current = Self::estimate_current_balance(pool, Some(tenant_id), &target.entity_id).await;
+            let current =
+                Self::estimate_current_balance(pool, Some(tenant_id), &target.entity_id).await;
             let actions = Self::generate_actions(current, target);
             let projected_savings = Self::calculate_projected_savings(&actions, current, target);
             let risk_level = Self::assess_risk(&actions);
@@ -1302,7 +1310,11 @@ async fn get_pool_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<CashPool>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashPoolManager::get_pool(&pool, tenant_id, id).await {
         Ok(p) => Json(ApiResponse::success(p, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1324,7 +1336,11 @@ async fn list_pools_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<CashPool>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashPoolManager::list_pools(&pool, tenant_id).await {
         Ok(pools) => Json(ApiResponse::success(pools, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1398,7 +1414,11 @@ async fn get_pool_balance_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<CashPool>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashPoolManager::get_pool_balance(&pool, tenant_id, id).await {
         Ok(b) => Json(ApiResponse::success(b, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1421,7 +1441,11 @@ async fn get_pool_history_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<PoolTransfer>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashPoolManager::get_pool_history(&pool, tenant_id, id).await {
         Ok(h) => Json(ApiResponse::success(h, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1520,7 +1544,11 @@ async fn get_forecast_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ForecastResult>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashFlowPredictor::get_forecast(&pool, tenant_id, id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1542,7 +1570,11 @@ async fn list_scenarios_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ForecastScenario>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashFlowPredictor::list_scenarios(&pool, tenant_id).await {
         Ok(s) => Json(ApiResponse::success(s, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1592,7 +1624,11 @@ async fn get_forecast_summary_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CashFlowPredictor::get_forecast_summary(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1640,7 +1676,11 @@ async fn get_liquidity_snapshot_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match LiquidityOptimizer::get_liquidity_snapshot(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1690,7 +1730,11 @@ async fn get_recommendations_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match LiquidityOptimizer::get_recommendations(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1735,7 +1779,11 @@ async fn get_targets_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<LiquidityTarget>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match LiquidityOptimizer::get_targets(&pool, tenant_id).await {
         Ok(t) => Json(ApiResponse::success(t, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1788,7 +1836,11 @@ async fn get_optimization_history_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match LiquidityOptimizer::get_optimization_history(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

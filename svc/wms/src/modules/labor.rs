@@ -28,8 +28,14 @@ where
         .route("/labor/efficiency/{userId}", get(user_labor_efficiency))
         .route("/labor/productivity", get(labor_productivity))
         .route("/labor/workload", get(labor_workload))
-        .route("/labor/performance-dashboard", get(labor_performance_dashboard))
-        .route("/labor/shifts", get(list_labor_shifts).post(create_labor_shift))
+        .route(
+            "/labor/performance-dashboard",
+            get(labor_performance_dashboard),
+        )
+        .route(
+            "/labor/shifts",
+            get(list_labor_shifts).post(create_labor_shift),
+        )
 }
 
 // ==================== 员工拣货效率 ====================
@@ -195,10 +201,9 @@ pub async fn labor_productivity(
         return e;
     }
 
-    let row = sqlx::query(
-        only_own_schema_query!(
-            "wms",
-            r#"
+    let row = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
             SELECT COUNT(DISTINCT assigned_to)::bigint,
                    COUNT(*)::bigint,
                    COUNT(*) FILTER (WHERE status = 'completed')::bigint,
@@ -210,8 +215,7 @@ pub async fn labor_productivity(
               AND ($2::date IS NULL OR created_at::date <= $2)
               AND ($3::uuid IS NULL OR warehouse_id = $3)
             "#
-        ),
-    )
+    ))
     .bind(&params.date_from)
     .bind(&params.date_to)
     .bind(&params.warehouse_id)
@@ -284,10 +288,9 @@ pub async fn labor_workload(
         return e;
     }
 
-    let rows = sqlx::query(
-        only_own_schema_query!(
-            "wms",
-            r#"
+    let rows = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
             SELECT created_at::date::text AS date,
                    COUNT(*)::bigint AS total_lists,
                    COUNT(*) FILTER (WHERE status = 'completed')::bigint AS completed_lists,
@@ -303,8 +306,7 @@ pub async fn labor_workload(
             ORDER BY created_at::date DESC
             LIMIT 30
             "#
-        ),
-    )
+    ))
     .bind(&params.date_from)
     .bind(&params.date_to)
     .bind(&params.warehouse_id)
@@ -362,10 +364,9 @@ pub async fn labor_performance_dashboard(
         return e;
     }
 
-    let agg = sqlx::query(
-        only_own_schema_query!(
-            "wms",
-            r#"
+    let agg = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
             SELECT COUNT(DISTINCT assigned_to)::bigint,
                    COUNT(*)::bigint,
                    COUNT(*) FILTER (WHERE status = 'completed')::bigint,
@@ -379,27 +380,33 @@ pub async fn labor_performance_dashboard(
               AND ($2::date IS NULL OR created_at::date <= $2)
               AND ($3::uuid IS NULL OR warehouse_id = $3)
             "#
-        ),
-    )
+    ))
     .bind(&params.date_from)
     .bind(&params.date_to)
     .bind(&params.warehouse_id)
     .fetch_one(&mut **txn)
     .await;
 
-    let (total_workers, total_lists, completed_lists, pending_lists, in_progress_lists, total_items, picked_items) =
-        match agg {
-            Ok(row) => (
-                row.get::<i64, _>(0),
-                row.get::<i64, _>(1),
-                row.get::<i64, _>(2),
-                row.get::<i64, _>(3),
-                row.get::<i64, _>(4),
-                row.get::<i64, _>(5),
-                row.get::<i64, _>(6),
-            ),
-            Err(_) => (0, 0, 0, 0, 0, 0, 0),
-        };
+    let (
+        total_workers,
+        total_lists,
+        completed_lists,
+        pending_lists,
+        in_progress_lists,
+        total_items,
+        picked_items,
+    ) = match agg {
+        Ok(row) => (
+            row.get::<i64, _>(0),
+            row.get::<i64, _>(1),
+            row.get::<i64, _>(2),
+            row.get::<i64, _>(3),
+            row.get::<i64, _>(4),
+            row.get::<i64, _>(5),
+            row.get::<i64, _>(6),
+        ),
+        Err(_) => (0, 0, 0, 0, 0, 0, 0),
+    };
 
     let top_workers = efficiency_query(
         &mut **txn,
@@ -541,8 +548,8 @@ pub async fn create_labor_shift(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
         return e;
     }
-    let tenant_id = Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or(""))
-        .unwrap_or_else(|_| Uuid::nil());
+    let tenant_id =
+        Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil());
     let organization_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
 
     let row = sqlx::query_as::<_, LaborShift>(only_own_schema_query!(

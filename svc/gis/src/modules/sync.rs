@@ -313,7 +313,12 @@ pub async fn download_offline_data(
 
         match q.fetch_all(&pool).await {
             Ok(data) => tracks = data,
-            Err(e) => return Json(ApiResponse::from(TopemsError::internal("下载轨迹数据失败", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal(
+                    "下载轨迹数据失败",
+                    e,
+                )))
+            }
         }
 
         // 下载轨迹位置点

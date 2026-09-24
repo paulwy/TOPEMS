@@ -367,7 +367,9 @@ impl FinanceService {
         .await?;
 
         let updated_voucher = updated_voucher.ok_or_else(|| {
-            TopemsError::ValidationFailed("凭证状态不允许过账：可能已过账或状态已被其他操作修改".to_string())
+            TopemsError::ValidationFailed(
+                "凭证状态不允许过账：可能已过账或状态已被其他操作修改".to_string(),
+            )
         })?;
 
         tx.commit().await?;

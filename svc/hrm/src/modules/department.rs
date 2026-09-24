@@ -76,8 +76,9 @@ pub async fn list_departments(
     let status_filter = params.status.clone();
     let org_id_filter = params.org_id;
 
-    let result = sqlx::query_as::<_, Department>(
-        only_own_schema_query!("hrm", r#"
+    let result = sqlx::query_as::<_, Department>(only_own_schema_query!(
+        "hrm",
+        r#"
         SELECT id, tenant_id, organization_id AS org_id,
                CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, parent_id, manager_id, description, status, created_at, updated_at
@@ -87,8 +88,8 @@ pub async fn list_departments(
           AND ($3::uuid IS NULL OR organization_id = $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-        "#),
-    )
+        "#
+    ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(org_id_filter)
@@ -264,14 +265,15 @@ pub async fn get_department(
 ) -> Json<ApiResponse<Department>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let result = sqlx::query_as::<_, Department>(
-        only_own_schema_query!("hrm", r#"
+    let result = sqlx::query_as::<_, Department>(only_own_schema_query!(
+        "hrm",
+        r#"
         SELECT id, tenant_id, organization_id AS org_id,
                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, parent_id, manager_id, description, status, created_at, updated_at
         FROM hrm.departments WHERE id = $1
-        "#),
-    )
+        "#
+    ))
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_optional(&mut **txn)

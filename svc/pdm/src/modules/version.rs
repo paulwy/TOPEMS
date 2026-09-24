@@ -82,7 +82,13 @@ pub async fn list_versions(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
@@ -169,11 +175,13 @@ pub async fn create_version(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if req.version_no.is_empty() {
         return Json(ApiResponse::error(400, "版本号不能为空"));
@@ -233,7 +241,13 @@ pub async fn get_version(
     let tenant_id: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok()).unwrap_or_default())
+        Some(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+                .unwrap_or_default(),
+        )
     };
 
     let result = sqlx::query_as::<_, Version>(
@@ -280,11 +294,13 @@ pub async fn update_version(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Version>(
@@ -348,11 +364,13 @@ pub async fn delete_version(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     let result =
         sqlx::query("UPDATE pdm_versions SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2")
@@ -399,13 +417,16 @@ mod tests {
         let claims = make_claims(Some("550e8400-e29b-41d4-a716-446655440000"));
         let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(
             tid,
             Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -421,13 +442,16 @@ mod tests {
             "550e8400-e29b-41d4-a716-446655440040".parse().unwrap(),
         );
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(
             tid,
             Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
@@ -439,13 +463,16 @@ mod tests {
         let claims = make_claims(None);
         let _headers = axum::http::HeaderMap::new();
         let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tid = tenant_opt.unwrap_or_else(|| {
-        uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
-    });
+            None
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        };
+        let tid = tenant_opt.unwrap_or_else(|| {
+            uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        });
         assert_eq!(tid.get_version(), Some(uuid::Version::Nil));
     }
 

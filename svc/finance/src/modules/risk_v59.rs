@@ -734,7 +734,10 @@ impl AntiFraudEngine {
         .await
     }
 
-    pub async fn get_rules(pool: &PgPool, tenant_id: Option<Uuid>) -> Result<Vec<FraudRule>, sqlx::Error> {
+    pub async fn get_rules(
+        pool: &PgPool,
+        tenant_id: Option<Uuid>,
+    ) -> Result<Vec<FraudRule>, sqlx::Error> {
         sqlx::query_as(
             only_own_schema_query!("finance", "SELECT id, name, signal_type, threshold, enabled FROM finance.finance_v59_fraud_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY signal_type, name"),
         )
@@ -1428,7 +1431,11 @@ async fn get_fraud_decision_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<FraudDecision>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AntiFraudEngine::get_fraud_decision(&pool, tenant_id, id).await {
         Ok(decision) => Json(ApiResponse::success(decision, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1456,7 +1463,11 @@ async fn get_signals_handler(
     Query(params): Query<SignalQueryParams>,
 ) -> Json<ApiResponse<Vec<FraudSignal>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AntiFraudEngine::get_signals(&pool, tenant_id, params.signal_type).await {
         Ok(signals) => Json(ApiResponse::success(signals, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1509,7 +1520,11 @@ async fn get_device_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DeviceProfile>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     let result: Result<DeviceProfile, sqlx::Error> = sqlx::query_as(
         only_own_schema_query!("finance", "SELECT id, device_id, fingerprint, trust_score, last_seen, ip_history FROM finance.finance_v59_device_profiles WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
@@ -1539,7 +1554,11 @@ async fn list_blocked_devices_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DeviceProfile>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AntiFraudEngine::list_blocked_devices(&pool, tenant_id).await {
         Ok(devices) => Json(ApiResponse::success(devices, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1584,7 +1603,11 @@ async fn get_rules_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match AntiFraudEngine::get_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1659,7 +1682,11 @@ async fn get_scoring_models_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ScoringModel>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CreditScoringEngine::get_scoring_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1764,7 +1791,11 @@ async fn get_model_comparison_handler(
     Query(params): Query<CompareModelsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match CreditScoringEngine::get_model_comparison(&pool, tenant_id, params.model_ids).await {
         Ok(result) => Json(ApiResponse::success(result, "对比完成")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1863,7 +1894,11 @@ async fn get_test_result_handler(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<StressResult>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match StressTestEngine::get_test_result(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1885,7 +1920,11 @@ async fn list_scenarios_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<StressScenario>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match StressTestEngine::list_scenarios(&pool, tenant_id).await {
         Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1941,7 +1980,11 @@ async fn get_scenario_parameters_handler(
     Query(params): Query<GetParamsQueryParams>,
 ) -> Json<ApiResponse<Vec<ScenarioParameter>>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match StressTestEngine::get_scenario_parameters(&pool, tenant_id, params.scenario_id).await {
         Ok(params) => Json(ApiResponse::success(params, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
@@ -1963,7 +2006,11 @@ async fn get_test_summary_handler(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let pool = state.pool.clone();
-    let tenant_id: Option<Uuid> = if claims.is_superuser { None } else { Some(get_tenant_id_from_claims(&claims)) };
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id_from_claims(&claims))
+    };
     match StressTestEngine::get_test_summary(&pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),

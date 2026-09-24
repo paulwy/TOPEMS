@@ -114,7 +114,11 @@ pub async fn list_employees(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
+    let tenant_id = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        get_tenant_id(&claims, &headers)
+    };
     let service = EmployeeService::new(
         state.db.clone(),
         (*state.encryption).clone(),
@@ -167,7 +171,11 @@ pub async fn get_employee(
     }
 
     // 从 claims 和 headers 中获取 tenant_id，用于多租户缓存隔离
-    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
+    let tenant_id = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        get_tenant_id(&claims, &headers)
+    };
     let locale = Locale::from_headers(&headers).as_sql();
     let cache_key = employee_cache_key(&tenant_id, &id, locale);
 
@@ -253,7 +261,11 @@ pub async fn get_employee_details(
         return e;
     }
 
-    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
+    let tenant_id = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        get_tenant_id(&claims, &headers)
+    };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
         r#"
@@ -362,7 +374,11 @@ pub async fn create_employee(
             let _ = state
                 .cache
                 .set(
-                    &employee_cache_key(&tenant_id, &employee.id, Locale::from_headers(&headers).as_sql()),
+                    &employee_cache_key(
+                        &tenant_id,
+                        &employee.id,
+                        Locale::from_headers(&headers).as_sql(),
+                    ),
                     &serde_json::to_string(employee).unwrap_or_default(),
                     Some(EMPLOYEE_CACHE_TTL),
                 )
@@ -729,7 +745,11 @@ pub async fn export_employees(
     // 导出数量限制，防止大结果集导致的性能问题
     const MAX_EXPORT_COUNT: i64 = 10000;
 
-    let tenant_id = if claims.is_superuser { Uuid::nil() } else { get_tenant_id(&claims, &headers) };
+    let tenant_id = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        get_tenant_id(&claims, &headers)
+    };
 
     let employees = match &req.ids {
         Some(ids) => {
@@ -817,7 +837,10 @@ mod tests {
         let id = Uuid::new_v4();
         let tenant_id = Uuid::new_v4();
         let key = employee_cache_key(&tenant_id, &id, "zh");
-        assert_eq!(key, format!("hrm:employee:get:{}:{}:locale:zh", tenant_id, id));
+        assert_eq!(
+            key,
+            format!("hrm:employee:get:{}:{}:locale:zh", tenant_id, id)
+        );
     }
 
     #[test]

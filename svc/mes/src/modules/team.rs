@@ -114,8 +114,7 @@ pub struct ListTeamMembersResponse {
 }
 
 fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
-    dt.into().map(|d| d)
-        .unwrap_or_else(Utc::now)
+    dt.into().map(|d| d).unwrap_or_else(Utc::now)
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
@@ -660,13 +659,14 @@ pub async fn add_team_member(
     let member = TeamMemberResponse {
         id: result.id.to_string(),
         team_id: result.team_id.map(|d| d.to_string()).unwrap_or_default(),
-        employee_id: result.employee_id.map(|d| d.to_string()).unwrap_or_default(),
+        employee_id: result
+            .employee_id
+            .map(|d| d.to_string())
+            .unwrap_or_default(),
         employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,
-        join_date: result
-            .join_date
-            .map(|d| d.to_rfc3339()),
+        join_date: result.join_date.map(|d| d.to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 

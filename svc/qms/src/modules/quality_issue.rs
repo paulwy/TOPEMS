@@ -51,7 +51,10 @@ pub async fn list_issues(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let locale = Locale::from_headers(&headers).as_sql();
@@ -65,7 +68,12 @@ pub async fn list_issues(
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_opt).bind(st).bind(sv).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt)
+                .bind(st)
+                .bind(sv)
+                .bind(page_size)
+                .bind(offset)
+                .bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
@@ -76,7 +84,11 @@ pub async fn list_issues(
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_opt).bind(st).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt)
+                .bind(st)
+                .bind(page_size)
+                .bind(offset)
+                .bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
@@ -87,7 +99,11 @@ pub async fn list_issues(
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_opt).bind(sv).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt)
+                .bind(sv)
+                .bind(page_size)
+                .bind(offset)
+                .bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
@@ -98,7 +114,10 @@ pub async fn list_issues(
                 cols
             );
             sqlx::query_as::<_, QualityIssue>(&sql)
-                .bind(tenant_opt).bind(page_size).bind(offset).bind(locale)
+                .bind(tenant_opt)
+                .bind(page_size)
+                .bind(offset)
+                .bind(locale)
                 .fetch_all(&state.pool)
                 .await
         }
@@ -209,7 +228,10 @@ pub async fn get_issue(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
@@ -350,7 +372,10 @@ pub async fn start_issue_approval(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
     let issue_id = match Uuid::parse_str(&id) {
@@ -528,7 +553,10 @@ pub async fn approve_issue_status(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
@@ -594,7 +622,10 @@ pub async fn reject_issue_status(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
@@ -655,7 +686,10 @@ pub async fn cancel_issue(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {

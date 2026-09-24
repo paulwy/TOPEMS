@@ -371,12 +371,13 @@ pub async fn update_role(
     }
 
     if let Some(desc) = &description {
-        if let Err(e) =
-            sqlx::query("UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2")
-                .bind(desc)
-                .bind(role_uuid)
-                .execute(&mut *tx)
-                .await
+        if let Err(e) = sqlx::query(
+            "UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2",
+        )
+        .bind(desc)
+        .bind(role_uuid)
+        .execute(&mut *tx)
+        .await
         {
             let _ = tx.rollback().await;
             tracing::error!("更新角色描述失败: {}", e);
@@ -451,12 +452,13 @@ pub async fn delete_role(
     };
 
     // 检查是否是系统内置角色（不能删除）
-    let role_name: Option<String> =
-        sqlx::query_scalar("SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1")
-            .bind(role_uuid)
-            .fetch_optional(&state.pool)
-            .await
-            .unwrap_or(None);
+    let role_name: Option<String> = sqlx::query_scalar(
+        "SELECT name FROM public.core_roles WHERE deleted_at IS NULL AND id = $1",
+    )
+    .bind(role_uuid)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
 
     if let Some(name) = &role_name {
         if ["superadmin", "admin"].contains(&name.as_str()) {

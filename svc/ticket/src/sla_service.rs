@@ -610,7 +610,10 @@ impl TicketSlaService {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn get_sla_stats(&self, tenant_id: Option<Uuid>) -> Result<TicketSlaStats, sqlx::Error> {
+    pub async fn get_sla_stats(
+        &self,
+        tenant_id: Option<Uuid>,
+    ) -> Result<TicketSlaStats, sqlx::Error> {
         let total: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM ticket.core_tickets

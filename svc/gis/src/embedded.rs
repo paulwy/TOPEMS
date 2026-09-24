@@ -122,7 +122,6 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/location-photos/map/{map_id}",
             axum::routing::get(modules::photo::list_location_photos_by_map),
         )
-
         .route(
             "/map-markers",
             axum::routing::get(modules::marker::list_map_markers),
@@ -161,7 +160,6 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/devices/{id}",
             axum::routing::get(modules::device::get_device),
         )
-
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),
             topems_shared_auth::tenant_middleware(),
@@ -428,7 +426,9 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         }
     }));
 
-    authed_query_routes.merge(public_business_routes).merge(protected_api)
+    authed_query_routes
+        .merge(public_business_routes)
+        .merge(protected_api)
 }
 
 async fn list_device_locations_by_map(
@@ -439,7 +439,10 @@ async fn list_device_locations_by_map(
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| uuid::Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, device_name, device_code, device_type, position, status, description, last_inspected, created_at, updated_at FROM gis.device_locations WHERE map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
@@ -569,6 +572,9 @@ async fn delete_device_location(
                 Json(ApiResponse::error(404, "设备位置未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("数据库删除失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }

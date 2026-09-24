@@ -98,8 +98,7 @@ pub struct ListWorkStationsResponse {
 }
 
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
-    dt
-        .unwrap_or_else(Utc::now)
+    dt.unwrap_or_else(Utc::now)
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {

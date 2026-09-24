@@ -191,11 +191,7 @@ pub async fn create_inquiry(
     let txn = guard.as_mut().expect("rls txn missing");
     let tenant_id = current_tenant_id(&claims).await.unwrap_or_else(Uuid::nil);
     let creator = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
-    let inquiry_no = format!(
-        "INQ-{}-{:04}",
-        Utc::now().format("%Y%m%d"),
-        rand_no()
-    );
+    let inquiry_no = format!("INQ-{}-{:04}", Utc::now().format("%Y%m%d"), rand_no());
 
     let result = sqlx::query_as::<_, Inquiry>(
         r#"
@@ -304,7 +300,10 @@ pub async fn delete_inquiry(
                     return Json(api_error(500, "询价单删除失败"));
                 }
             }
-            Json(ApiResponse::success(serde_json::json!({"id": id}), "询价单删除成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({"id": id}),
+                "询价单删除成功",
+            ))
         }
         Ok(_) => Json(api_error(404, "询价单不存在")),
         Err(e) => {
@@ -341,9 +340,7 @@ async fn transition_inquiry(
     target_status: &str,
     allowed_from: &[&str],
     action: &str,
-    txn_arc: std::sync::Arc<
-        tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>,
-    >,
+    txn_arc: std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
 ) -> Json<ApiResponse<Inquiry>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
@@ -365,7 +362,10 @@ async fn transition_inquiry(
     };
 
     if !allowed_from.contains(&current.as_str()) {
-        return Json(api_error(400, &format!("当前状态 {} 不允许{}", current, action)));
+        return Json(api_error(
+            400,
+            &format!("当前状态 {} 不允许{}", current, action),
+        ));
     }
 
     let result = sqlx::query_as::<_, Inquiry>(
@@ -390,7 +390,10 @@ async fn transition_inquiry(
                     return Json(api_error(500, &format!("询价单{}失败", action)));
                 }
             }
-            Json(ApiResponse::success(inquiry, &format!("询价单{}成功", action)))
+            Json(ApiResponse::success(
+                inquiry,
+                &format!("询价单{}成功", action),
+            ))
         }
         Err(e) => {
             tracing::error!("询价单{}失败: {}", action, e);

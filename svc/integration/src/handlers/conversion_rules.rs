@@ -33,7 +33,10 @@ pub async fn list_conversion_rules_api(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rules: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch conversion rules", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch conversion rules",
+                e,
+            )))
         }
     }
 }
@@ -120,7 +123,10 @@ pub async fn create_conversion_rule_api(
         )),
         Err(e) => {
             tracing::error!("Failed to create conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to create conversion rule", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to create conversion rule",
+                e,
+            )))
         }
     }
 }
@@ -196,7 +202,10 @@ pub async fn update_conversion_rule_api(
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to update conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to update conversion rule", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to update conversion rule",
+                e,
+            )))
         }
     }
 }
@@ -238,7 +247,10 @@ pub async fn delete_conversion_rule_api(
         }
         Err(e) => {
             tracing::error!("Failed to delete conversion rule: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to delete conversion rule", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to delete conversion rule",
+                e,
+            )))
         }
     }
 }
@@ -267,7 +279,10 @@ pub async fn get_rule_executions_api(
         )),
         Err(e) => {
             tracing::error!("Failed to fetch rule executions: {}", e);
-            Json(ApiResponse::from(TopemsError::internal("Failed to fetch rule executions", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to fetch rule executions",
+                e,
+            )))
         }
     }
 }

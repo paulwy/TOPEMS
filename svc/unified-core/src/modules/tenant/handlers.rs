@@ -250,13 +250,14 @@ async fn seed_tenant_defaults(
         .map_err(|e| format!("Failed to hash admin password: {}", e))?;
 
     // 2. Guard against duplicate admin credentials (username/email are unique).
-    let dup: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM public.core_users WHERE username = $1 OR email = $2")
-            .bind(admin_username)
-            .bind(admin_email)
-            .fetch_one(&mut **tx)
-            .await
-            .map_err(|e| format!("Failed to check existing admin user: {}", e))?;
+    let dup: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM public.core_users WHERE username = $1 OR email = $2",
+    )
+    .bind(admin_username)
+    .bind(admin_email)
+    .fetch_one(&mut **tx)
+    .await
+    .map_err(|e| format!("Failed to check existing admin user: {}", e))?;
     if dup > 0 {
         return Err("Admin username or email already exists".to_string());
     }

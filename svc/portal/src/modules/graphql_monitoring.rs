@@ -18,9 +18,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::Mutex;
 
 use crate::modules::graphql_federation::{simple_random_u128, simple_random_u64};
-use crate::modules::graphql_schema::{
-    get_federation_stats, global_event_bus, SubscriptionChannel,
-};
+use crate::modules::graphql_schema::{get_federation_stats, global_event_bus, SubscriptionChannel};
 use crate::modules::graphql_security::{get_security_event_count, get_security_events};
 
 // ---------- 1. 全链路查询追踪 ----------
@@ -1409,4 +1407,3 @@ pub fn get_error_rate_trend(
         interval_seconds: interval,
     }
 }
-

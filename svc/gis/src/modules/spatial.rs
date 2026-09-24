@@ -111,7 +111,10 @@ pub async fn buffer_analysis(
             }),
             "缓冲区分析完成",
         )),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("保存分析结果失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "保存分析结果失败",
+            e,
+        ))),
     }
 }
 

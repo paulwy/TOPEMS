@@ -99,7 +99,10 @@ pub async fn list_projects(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -354,7 +357,10 @@ pub async fn get_project(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Read).await {
         Ok(_) => {}
@@ -431,7 +437,10 @@ pub async fn update_project(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     match check_project_permission(&mut **txn, &claims, &id, &ProjectPermission::Update).await {
         Ok(_) => {}
@@ -563,7 +572,10 @@ pub async fn delete_project(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     match check_project_owner(&mut **txn, &claims, &id).await {
         Ok(_) => {}
@@ -811,7 +823,10 @@ pub async fn batch_delete_projects(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     if req.ids.is_empty() {
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
@@ -925,7 +940,10 @@ pub async fn export_projects(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let result = sqlx::query_as::<_, Project>(
         r#"
@@ -1370,7 +1388,10 @@ pub async fn get_project_dashboard(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let project_result = sqlx::query_as::<_, Project>(
         r#"
@@ -1570,7 +1591,10 @@ pub async fn get_project_gantt(
     let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(
         r#"

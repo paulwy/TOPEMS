@@ -188,8 +188,8 @@
     clippy::unnecessary_cast,
     clippy::useless_format
 )]
-pub mod handlers;
 pub mod embedded;
+pub mod handlers;
 pub mod middleware;
 pub mod models;
 pub mod modules;

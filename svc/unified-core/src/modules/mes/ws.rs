@@ -29,7 +29,7 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
                     let service = MesService::instance().lock().unwrap();
                     service.get_dashboard_stats()
                 };
-                
+
                 let message = json!({
                     "type": "dashboard_update",
                     "data": stats,
@@ -73,7 +73,7 @@ pub async fn mes_dashboard_initial() -> Json<serde_json::Value> {
     let service = MesService::instance().lock().unwrap();
     let stats = service.get_dashboard_stats();
     let wip = service.get_wip_statistics();
-    
+
     Json(json!({
         "success": true,
         "data": {

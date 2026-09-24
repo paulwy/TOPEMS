@@ -239,7 +239,9 @@ impl<T: ServiceApi> TypedServiceClient<T> {
         body: &B,
         extra_headers: &[(&str, &str)],
     ) -> ServiceClientResult<R> {
-        self.inner.post_with_headers(path, body, extra_headers).await
+        self.inner
+            .post_with_headers(path, body, extra_headers)
+            .await
     }
 
     /// POST 请求 without body，反序列化为 `R`。
