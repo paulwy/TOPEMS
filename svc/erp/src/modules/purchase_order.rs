@@ -102,7 +102,7 @@ pub async fn list_purchase_orders(
     };
 
     let total = match sqlx::query_scalar::<_, i64>(
-        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE deleted_at IS NULL AND (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
+        only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM erp.purchase_orders WHERE (order_no ILIKE $1 OR supplier_name ILIKE $1) AND ($2 = '' OR status = $2)"#)
     )
     .bind(params.search.as_deref().map(|s| format!("%{}%", s)).unwrap_or_else(|| "%%".to_string()))
     .bind(status_filter.as_deref().unwrap_or(""))
