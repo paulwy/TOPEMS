@@ -389,7 +389,7 @@ pub async fn create_wip(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.and_then(|x| x);
+    let order_no_arg = order_no_flat.and_then(|x| Some(x));
     let result = sqlx::query!(
         r#"
         INSERT INTO wips (
