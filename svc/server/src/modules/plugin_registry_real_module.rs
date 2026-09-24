@@ -53,6 +53,10 @@ impl PluginRegistryRealModule {
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.db.clone(),
+                topems_shared_auth::middleware::tenant::tenant_middleware(),
             ));
 
         Ok(Self {
