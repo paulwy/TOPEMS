@@ -374,8 +374,8 @@ pub async fn get_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: datetime_to_string(Some(standard.created_at)),
-            updated_at: datetime_to_string(Some(standard.updated_at)),
+            created_at: datetime_to_string(standard.created_at.unwrap_or_default()),
+            updated_at: datetime_to_string(standard.updated_at.unwrap_or_default()),
         },
         "获取质量标准成功",
     ))
@@ -522,8 +522,8 @@ pub async fn create_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: datetime_to_string(Some(standard.created_at)),
-            updated_at: datetime_to_string(Some(standard.updated_at)),
+            created_at: datetime_to_string(standard.created_at.unwrap_or_default()),
+            updated_at: datetime_to_string(standard.updated_at.unwrap_or_default()),
         },
         "创建质量标准成功",
     ))
@@ -734,8 +734,8 @@ pub async fn update_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: datetime_to_string(Some(standard.created_at)),
-            updated_at: datetime_to_string(Some(standard.updated_at)),
+            created_at: datetime_to_string(standard.created_at.unwrap_or_default()),
+            updated_at: datetime_to_string(standard.updated_at.unwrap_or_default()),
         },
         "更新质量标准成功",
     ))
