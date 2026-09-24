@@ -141,11 +141,158 @@ fn main() {
             .expect("finance ApiDoc 序列化失败"),
         "finance",
     );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_qms::openapi::QmsApiDoc::openapi())
+            .expect("qms ApiDoc 序列化失败"),
+        "qms",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_scm::modules::openapi::ScmApiDoc::openapi())
+            .expect("scm ApiDoc 序列化失败"),
+        "scm",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_wms::modules::openapi::WmsApiDoc::openapi())
+            .expect("wms ApiDoc 序列化失败"),
+        "wms",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_hrm::modules::openapi::ApiDoc::openapi())
+            .expect("hrm ApiDoc 序列化失败"),
+        "hrm",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_mes::modules::openapi::MesApiDoc::openapi())
+            .expect("mes ApiDoc 序列化失败"),
+        "mes",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_tms::modules::openapi::TmsApiDoc::openapi())
+            .expect("tms ApiDoc 序列化失败"),
+        "tms",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_ticket::openapi::TicketApiDoc::openapi())
+            .expect("ticket ApiDoc 序列化失败"),
+        "ticket",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_rd::modules::openapi::ApiDoc::openapi())
+            .expect("rd ApiDoc 序列化失败"),
+        "rd",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_srm::modules::openapi::SrmApiDoc::openapi())
+            .expect("srm ApiDoc 序列化失败"),
+        "srm",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_gis::modules::openapi::GisApiDoc::openapi())
+            .expect("gis ApiDoc 序列化失败"),
+        "gis",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_portal::openapi::ApiDoc::openapi())
+            .expect("portal ApiDoc 序列化失败"),
+        "portal",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_analytics::openapi::ApiDoc::openapi())
+            .expect("analytics ApiDoc 序列化失败"),
+        "bi",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_ehs::modules::openapi::ApiDoc::openapi())
+            .expect("ehs ApiDoc 序列化失败"),
+        "ehs",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_pdm::modules::openapi::ApiDoc::openapi())
+            .expect("pdm ApiDoc 序列化失败"),
+        "pdm",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_monitor::openapi::MonitorApiDoc::openapi())
+            .expect("monitor ApiDoc 序列化失败"),
+        "monitor",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_search::openapi::SearchApiDoc::openapi())
+            .expect("search ApiDoc 序列化失败"),
+        "search",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_communication::openapi::CommunicationApiDoc::openapi())
+            .expect("communication ApiDoc 序列化失败"),
+        "communication",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_integration::openapi::ApiDoc::openapi())
+            .expect("integration ApiDoc 序列化失败"),
+        "integration",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_master_data::openapi::MasterDataApiDoc::openapi())
+            .expect("master-data ApiDoc 序列化失败"),
+        "master-data",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_ai::modules::openapi::ApiDoc::openapi())
+            .expect("ai ApiDoc 序列化失败"),
+        "ai",
+    );
+    merge_doc(
+        &mut merged_paths,
+        &mut merged_components,
+        &serde_json::to_value(topems_plugin_registry::openapi::PluginRegistryApiDoc::openapi())
+            .expect("plugin-registry ApiDoc 序列化失败"),
+        "plugins",
+    );
 
     merged["paths"] = Value::Object(merged_paths);
     merged["components"] = Value::Object(merged_components);
 
-    let out = serde_json::to_string_pretty(&merged).expect("输出序列化失败");
+    let out = serde_json::to_string(&merged).expect("输出序列化失败");
     std::fs::write(base_path, out).expect("写入 openapi.json 失败");
 
     let count = merged["paths"].as_object().map(|p| p.len()).unwrap_or(0);
