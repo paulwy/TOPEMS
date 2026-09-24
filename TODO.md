@@ -796,6 +796,6 @@ D
 - [x] **P4-2 依赖锁定项复查**（2026-09-24 完成：四条链（lopdf/pdf-extract/amqprs/tokio-rustls 0.23.4）cargo update --dry-run 均 0 更新（锁定）；crates.io API 不可达（网络限制）；依赖树已含新版 tokio-rustls 0.26.4（rustls 0.23 链）——amqprs 1.8.0 为唯一旧 rustls 0.20 持有者（维护不活跃）；结论：维持接受（风险已记录），升级路径=上游更新或替代库迁移（大工程不值））
   - lopdf/pdf-extract/amqprs 上游新版本检查（解除 rustls-0.20/0.23 锁定）
   - 预计时间：30 分钟
-- [ ] **P4-3 API 文档全量化**
+- [ ] **P4-3 API 文档全量化**（2026-09-24 部分完成：openapi.json 8→13 端点——实测确认并新增 /api/erp/sales-orders、/api/finance/receivables、/api/finance/vouchers、/api/finance/ledger、/api/pm/projects（带分页参数实测 200，ApiResponse 引用 schema，服务端重编译后验证生效）；现有注解分布：pm 46 + lims 2，其余模块空白；**剩余**：其他域（hr/iot/ehs/qms/scm/oa/bi/cs/aps/lims）端点扩展 + 注解驱动全量化（150-250 个 #[utoipa::path]，长期演进）
   - 31 模块全量 utoipa 注解（当前仅 8 个核心端点）
   - 预计时间：4-8 小时
