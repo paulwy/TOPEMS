@@ -924,10 +924,8 @@ mod tests {
     // ---- to_rfc3339 ----
     #[test]
     fn to_rfc3339_basic() {
-        let dt = chrono::NaiveDate::from_ymd_opt(2024, 6, 15)
-            .unwrap()
-            .and_hms_opt(8, 30, 0)
-            .unwrap();
+        use chrono::TimeZone;
+        let dt = chrono::Utc.with_ymd_and_hms(2024, 6, 15, 8, 30, 0).unwrap();
         assert_eq!(to_rfc3339(dt), "2024-06-15T08:30:00+00:00");
     }
 }
