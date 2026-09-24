@@ -16,16 +16,13 @@ use topems_server::modules::dashboard_module::DashboardModule;
 use topems_server::modules::finance_module::FinanceModule;
 use topems_server::platform_module::PlatformModule;
 use topems_server::ModuleRegistry;
+use topems_shared_core::logging::init_logging;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // 初始化日志（使用 try_init 避免全局 subscriber 重复设置 panic）
-    let _ = tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,tower_http=info".into()),
-        )
-        .try_init();
+    // 初始化日志：LOG_FORMAT=text|json|file 控制格式（默认 text），RUST_LOG 控制级别
+    // （默认 topems-server=info + 端口排查相关 directives），支持滚动文件与 JSON 结构化
+    init_logging("topems-server");
 
     tracing::info!("🚀 启动 topems-server 模块化单体统一入口");
     tracing::info!("部署模式: private-deployment（进程内 trait 调用）");

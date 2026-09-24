@@ -718,8 +718,9 @@ D
 - [ ] **P1-3 错误处理优化**
   - 统一错误格式、友好提示
   - 预计时间：4 小时
-- [ ] **P1-4 日志优化**
-  - 结构化日志、日志级别调整
+- [x] **P1-4 日志优化**（2026-09-24：main.rs 接线 shared-core init_logging——LOG_FORMAT=text/json/file 三格式（含滚动文件）、RUST_LOG 级别控制（默认 topems-server=info+端口排查 directives）、JSON 结构化含 timestamp/level/trace_id/fields 已实测验证；此前 main.rs 仅裸 fmt() 未接线已有能力）
+  - 结构化日志：JSON/File/Text 三格式（LOG_FORMAT env 切换）✅
+  - 日志级别调整：RUST_LOG EnvFilter 支持 ✅
   - 预计时间：2 小时
 - [ ] **P1-5 数据库索引优化**
   - 慢查询优化
