@@ -811,3 +811,6 @@ D
 - [ ] portal 剩余：ai_ops 49/deployment_manager 52/deep_federation 42/gateway_* 等大模块（分轮）
 - [x] **portal 第三批**：9 个注解（search_suggestions + aggregation business-stats/unified-todos + dashboard add/remove quick-access + monitoring acknowledge + navigation remove-pinned + plugin health + quick-action execute），聚合 + Plugins tag；编译通过（已提交）
 - [ ] portal 累计 33 注解（10→33）；ai_ops 等大模块 handler 未挂载路由（跳过）
+- [x] **ticket**：补 6 个注解（activities + SLA 详情/统计/策略 CRUD）+ 聚合 + sla tag；编译通过（commit 6557aba1a）
+- [x] **communication**：补 9 个注解（im_location 5 + notification unread-count + mail get/delete/mark-read）+ 聚合 + location tag；编译通过（已提交）
+- [ ] 累计：qms 3 + scm 3 + srm 3 + gis 3 + portal 23 + ticket 6 + communication 9 = 50 个新注解（文档待并入）
