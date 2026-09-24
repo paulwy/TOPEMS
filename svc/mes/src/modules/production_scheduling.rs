@@ -477,7 +477,7 @@ pub async fn create_production_schedule(
         id: result.id,
         schedule_no: result.schedule_no,
         order_id: result.order_id,
-        order_no: Some(result.order_no.unwrap_or_default()),
+        order_no: result.order_no.unwrap_or_default(),
         product_id: result.product_id,
         product_name: result.product_name,
         product_code: result.product_code,
@@ -496,7 +496,7 @@ pub async fn create_production_schedule(
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: Some(result.created_at.unwrap_or_default()),        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at.unwrap_or_default(),        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -575,7 +575,7 @@ pub async fn get_production_schedule(
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: Some(r.work_station_name),
-                equipment_id: Some(r.equipment_id.unwrap_or_default()),
+                equipment_id: r.equipment_id.unwrap_or_default(),
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
                 process_name: Some(r.process_name),
@@ -685,7 +685,7 @@ pub async fn update_production_schedule(
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: None,
-                equipment_id: Some(r.equipment_id.unwrap_or_default()),
+                equipment_id: r.equipment_id.unwrap_or_default(),
                 equipment_name: None,
                 process_id: r.process_id,
                 process_name: None,

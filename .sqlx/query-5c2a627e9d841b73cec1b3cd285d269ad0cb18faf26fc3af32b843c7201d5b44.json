@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE tenant_permissions\n            SET deleted_at = NOW(), active = FALSE\n            WHERE tenant_id = $1 AND user_id = $2 AND deleted_at IS NULL\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "5c2a627e9d841b73cec1b3cd285d269ad0cb18faf26fc3af32b843c7201d5b44"
+}

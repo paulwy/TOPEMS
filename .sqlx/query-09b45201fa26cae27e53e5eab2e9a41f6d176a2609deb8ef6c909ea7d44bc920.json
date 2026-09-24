@@ -1,0 +1,112 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            wt.id, wt.transfer_no, wt.wip_id,\n            wt.from_process_id, wt.from_work_station_id,\n            wt.to_process_id, wt.to_work_station_id,\n            wt.quantity, wt.transfer_time, wt.operator, wt.transfer_type, wt.notes,\n            fp.process_name as from_process_name,\n            tp.process_name as to_process_name,\n            fws.station_name as from_work_station_name,\n            tws.station_name as to_work_station_name\n        FROM wip_transfers wt\n        LEFT JOIN production_processes fp ON wt.from_process_id = fp.id\n        LEFT JOIN production_processes tp ON wt.to_process_id = tp.id\n        LEFT JOIN work_stations fws ON wt.from_work_station_id = fws.id\n        LEFT JOIN work_stations tws ON wt.to_work_station_id = tws.id\n        WHERE wt.wip_id = $1\n        ORDER BY wt.transfer_time DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "transfer_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "wip_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "from_process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "from_work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "to_process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "to_work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "transfer_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "operator",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "transfer_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "from_process_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "to_process_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 14,
+        "name": "from_work_station_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 15,
+        "name": "to_work_station_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "09b45201fa26cae27e53e5eab2e9a41f6d176a2609deb8ef6c909ea7d44bc920"
+}

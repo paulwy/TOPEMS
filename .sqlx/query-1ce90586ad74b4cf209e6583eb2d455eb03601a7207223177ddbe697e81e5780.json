@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO bom_items (\n                    bom_id, material_id, material_code, material_name,\n                    specification, unit, quantity, loss_rate, sequence, notes\n                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Numeric",
+        "Numeric",
+        "Int4",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1ce90586ad74b4cf209e6583eb2d455eb03601a7207223177ddbe697e81e5780"
+}

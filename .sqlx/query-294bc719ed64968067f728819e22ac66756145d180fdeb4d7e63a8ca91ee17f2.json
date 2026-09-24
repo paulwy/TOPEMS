@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COALESCE(SUM(completed_quantity), 0) as today_output\n        FROM production_records\n        WHERE start_time::date = CURRENT_DATE\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "today_output",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "294bc719ed64968067f728819e22ac66756145d180fdeb4d7e63a8ca91ee17f2"
+}

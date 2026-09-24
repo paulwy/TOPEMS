@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, rule_type, condition\n        FROM analytics_row_level_permissions\n        WHERE datasource_id = $1\n          AND table_name = $2\n          AND is_active = true\n          AND (\n            user_ids @> $3::text[]\n            OR role_ids && $4::text[]\n            OR (user_ids IS NULL AND role_ids IS NULL)\n          )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "rule_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "condition",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "TextArray",
+        "TextArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "7150ed306162ded73de70f3e5276d12e462696d9613e89daa689ada61d8b0423"
+}

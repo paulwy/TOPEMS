@@ -501,7 +501,7 @@ pub async fn create_oee_record(
         id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().and_then(|e| Some(e.name.clone())),
-        equipment_code: Some(equipment.as_ref().and_then(|e| Some(e.equipment_no.clone()))),        record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
+        equipment_code: equipment.as_ref().and_then(|e| Some(e.equipment_no.clone())).unwrap_or_default(),        record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),
         downtime: big_decimal_to_f64(result.downtime),
@@ -516,7 +516,7 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: Some(result.created_at.unwrap_or_default()),        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at.unwrap_or_default(),        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))

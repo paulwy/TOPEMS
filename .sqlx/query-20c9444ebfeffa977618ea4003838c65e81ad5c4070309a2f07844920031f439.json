@@ -1,0 +1,98 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO wip_transfers (\n            transfer_no, wip_id,\n            from_process_id, from_work_station_id,\n            to_process_id, to_work_station_id,\n            quantity, transfer_time, operator, transfer_type, notes\n        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n        RETURNING \n            id, transfer_no, wip_id,\n            from_process_id, from_work_station_id,\n            to_process_id, to_work_station_id,\n            quantity, transfer_time, operator, transfer_type, notes\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "transfer_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "wip_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "from_process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "from_work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "to_process_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "to_work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "transfer_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "operator",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "transfer_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "notes",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Numeric",
+        "Timestamptz",
+        "Varchar",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "20c9444ebfeffa977618ea4003838c65e81ad5c4070309a2f07844920031f439"
+}
