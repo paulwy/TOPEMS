@@ -571,7 +571,7 @@ pub async fn get_production_schedule(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: Some(r.work_station_name),

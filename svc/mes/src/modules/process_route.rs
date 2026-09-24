@@ -749,7 +749,7 @@ pub async fn add_route_step(
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
@@ -836,7 +836,7 @@ pub async fn update_route_step(
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
-                    process_name: process_name,
+                    process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s

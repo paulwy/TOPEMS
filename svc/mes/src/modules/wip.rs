@@ -515,7 +515,7 @@ pub async fn get_wip(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 current_process_id: r.current_process_id,
                 current_process_name: Some(r.process_name),
