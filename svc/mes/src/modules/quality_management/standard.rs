@@ -240,11 +240,11 @@ pub async fn list_standards(
                 product_code: r
                     .try_get::<Option<String>, _>("product_code")
                     .ok()
-                    .flatten()
+                    .flatten(),
                 product_name: r
                     .try_get::<Option<String>, _>("product_name")
                     .ok()
-                    .flatten()
+                    .flatten(),
                 inspection_type: r
                     .try_get::<String, _>("inspection_type")
                     .unwrap_or_default(),
@@ -252,23 +252,23 @@ pub async fn list_standards(
                 status: r
                     .try_get::<Option<String>, _>("status")
                     .ok()
-                    .flatten()
+                    .flatten(),
                     .unwrap_or_else(|| "active".to_string()),
                 version: r.try_get::<Option<String>, _>("version").ok().flatten(),
                 effective_date: r
                     .try_get::<Option<String>, _>("effective_date")
                     .ok()
-                    .flatten()
+                    .flatten(),
                 description: r.try_get::<Option<String>, _>("description").ok().flatten(),
                 created_at: (
                     r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                         .ok()
-                        .flatten()
+                        .flatten(),
                 ).unwrap_or_default(),
                 updated_at: (
                     r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                         .ok()
-                        .flatten()
+                        .flatten(),
                 ).unwrap_or_default(),
             }
         })
