@@ -169,6 +169,13 @@ pub async fn list_discrepancies(
 }
 
 /// 获取差异处理详情
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:discrepancy:read"])),
+    path = "/api/wms/discrepancies/{id}",
+    responses((status = 200, description = "Get discrepancy")),
+    tag = "wms"
+)]
 pub async fn get_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

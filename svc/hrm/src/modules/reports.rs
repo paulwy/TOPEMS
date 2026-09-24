@@ -94,6 +94,13 @@ pub struct EmployeeSummaryResponse {
     pub terminations_this_month: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:report:read"])),
+    path = "/reports/employee-summary",
+    responses((status = 200, description = "Employee summary")),
+    tag = "reports"
+)]
 pub async fn employee_summary(
     State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,
@@ -234,6 +241,13 @@ struct DepartmentSummaryRow {
     active_count: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:report:read"])),
+    path = "/reports/department-summary",
+    responses((status = 200, description = "Department summary")),
+    tag = "reports"
+)]
 pub async fn department_summary(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -486,6 +500,13 @@ pub struct AttendanceSummaryResponse {
     pub attendance_rate: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:report:read"])),
+    path = "/reports/attendance-summary",
+    responses((status = 200, description = "Attendance summary")),
+    tag = "reports"
+)]
 pub async fn attendance_summary(
     State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,

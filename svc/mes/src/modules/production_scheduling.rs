@@ -1055,7 +1055,7 @@ async fn transition_schedule(
             ScheduleActionResponse {
                 success: true,
                 message: format!("排产单已{}", to_status),
-                id: Some(id),
+                id: id,
             },
             "操作成功",
         )),

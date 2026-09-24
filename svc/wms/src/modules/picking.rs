@@ -33,6 +33,13 @@ where
 
 // ==================== 拣货单列表 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:picking:read"])),
+    path = "/api/wms/picking/lists",
+    responses((status = 200, description = "List picking lists")),
+    tag = "wms"
+)]
 pub async fn list_picking_lists(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

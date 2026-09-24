@@ -48,6 +48,13 @@ where
 }
 
 /// 获取循环盘点配置列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:cycle-count:read"])),
+    path = "/api/wms/cycle-counts",
+    responses((status = 200, description = "List cycle count configs")),
+    tag = "wms"
+)]
 pub async fn list_cycle_count_configs(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

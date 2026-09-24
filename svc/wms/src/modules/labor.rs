@@ -112,6 +112,13 @@ where
     Ok(rows)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:labor:read"])),
+    path = "/api/wms/labor/efficiency",
+    responses((status = 200, description = "List labor efficiency")),
+    tag = "wms"
+)]
 pub async fn list_labor_efficiency(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -187,6 +194,13 @@ pub struct ProductivityStats {
     avg_lists_per_worker: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:labor:read"])),
+    path = "/api/wms/labor/productivity",
+    responses((status = 200, description = "Labor productivity")),
+    tag = "wms"
+)]
 pub async fn labor_productivity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

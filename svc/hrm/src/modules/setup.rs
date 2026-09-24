@@ -116,6 +116,13 @@ pub fn create_routes() -> Router<ApiState> {
 
 const DEFAULT_ORG_ID: Uuid = Uuid::from_u128(0x00000000000000000000000000000001);
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:setup:read"])),
+    path = "/setup/progress",
+    responses((status = 200, description = "Get init progress")),
+    tag = "setup"
+)]
 pub async fn get_init_progress(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -185,6 +192,13 @@ pub async fn get_init_progress(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["hrm:setup:write"])),
+    path = "/setup/company",
+    responses((status = 200, description = "Setup company info")),
+    tag = "setup"
+)]
 pub async fn setup_company_info(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

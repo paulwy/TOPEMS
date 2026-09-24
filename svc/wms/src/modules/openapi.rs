@@ -175,6 +175,12 @@ pub struct OutboundOrder {
         crate::modules::wave_pick::start_wave_pick,
         crate::modules::wave_pick::complete_wave_pick,
         crate::modules::wave_pick::cancel_wave_pick,
+
+        crate::modules::labor::list_labor_efficiency,
+        crate::modules::labor::labor_productivity,
+        crate::modules::discrepancy::get_discrepancy,
+        crate::modules::picking::list_picking_lists,
+        crate::modules::cycle_count::list_cycle_count_configs,
     ),
     components(
         schemas(
