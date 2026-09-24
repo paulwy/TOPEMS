@@ -367,8 +367,8 @@ pub async fn get_process_flow(
                 production_line: r.production_line,
                 capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "获取工艺流程成功",
         )),
@@ -434,8 +434,8 @@ pub async fn create_process_flow(
                 production_line: r.production_line,
                 capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "创建工艺流程成功",
         )),
@@ -516,8 +516,8 @@ pub async fn update_process_flow(
                 production_line: r.production_line,
                 capacity: r.capacity.map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新工艺流程成功",
         )),
@@ -621,7 +621,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -754,7 +754,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -880,7 +880,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1019,7 +1019,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.and_utc().to_rfc3339(),
+                    created_at: s.created_at.to_rfc3339(),
                 })
                 .collect();
 
@@ -1109,7 +1109,7 @@ pub async fn analyze_capacity(
 
     let effective_capacity = theoretical_capacity * 0.85;
     let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
-        (flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity) * 100.0 
+        ((flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity) * 100.0)
     } else {
         0.0
     };
@@ -1126,7 +1126,7 @@ pub async fn analyze_capacity(
             0.0
         };
         let step_utilization = if step_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
-            (flow_capacity.to_string().parse::<f64>().unwrap_or_default() / step_capacity) * 100.0 
+            ((flow_capacity.to_string().parse::<f64>().unwrap_or_default() / step_capacity) * 100.0)
         } else {
             0.0
         };

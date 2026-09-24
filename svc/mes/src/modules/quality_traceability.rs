@@ -167,7 +167,7 @@ pub async fn forward_traceability(
         status: Some(order.status.clone().unwrap_or_default()),
         timestamp: order
             .actual_start_date
-                        .map(|d| d.and_utc()),
+            .map(|d| d),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -203,7 +203,7 @@ pub async fn forward_traceability(
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone().unwrap_or_default()),
-            timestamp: Some(record.start_time.and_utc()),
+            timestamp: Some(record.start_time),
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
@@ -230,7 +230,7 @@ pub async fn forward_traceability(
         status: Some(order.status.clone().unwrap_or_default()),
         timestamp: order
             .actual_end_date
-                        .map(|d| d.and_utc()),
+            .map(|d| d),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -669,11 +669,10 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
     }
 
     #[test]
@@ -689,8 +688,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 2, 28)
             .unwrap()
             .and_hms_opt(23, 59, 59)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let r = opt_naive_to_utc(Some(dt)).unwrap();
         assert_eq!(r.year(), 2024);
         assert_eq!(r.month(), 2);

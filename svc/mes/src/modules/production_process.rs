@@ -482,7 +482,7 @@ pub async fn deactivate_process(
             created_at, updated_at
         "#,
         id,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -507,8 +507,8 @@ pub async fn deactivate_process(
                 sequence: r.sequence.unwrap_or_default(),
                 equipment_required: false,
                 estimated_duration: 0,
-                created_at: r.created_at.and_utc(),
-                updated_at: r.updated_at.and_utc(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }

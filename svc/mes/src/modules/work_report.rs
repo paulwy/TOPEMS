@@ -477,10 +477,10 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "获取工报成功",
         )),
@@ -675,10 +675,10 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                    approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
                     approval_remark: r.approval_remark,
-                    created_at: r.created_at.and_utc().to_rfc3339(),
-                    updated_at: r.updated_at.and_utc().to_rfc3339(),
+                    created_at: r.created_at.to_rfc3339(),
+                    updated_at: r.updated_at.to_rfc3339(),
                 },
                 "创建工报成功",
             ))
@@ -821,10 +821,10 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "更新工报成功",
         )),
@@ -961,10 +961,10 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "审批通过成功",
         )),
@@ -1056,10 +1056,10 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.and_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d)),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at.and_utc().to_rfc3339(),
-                updated_at: r.updated_at.and_utc().to_rfc3339(),
+                created_at: r.created_at.to_rfc3339(),
+                updated_at: r.updated_at.to_rfc3339(),
             },
             "审批驳回成功",
         )),
@@ -1247,8 +1247,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 5, 20)
             .unwrap()
             .and_hms_opt(8, 30, 15)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.year(), 2024);
         assert_eq!(utc.month(), 5);
@@ -1272,8 +1271,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 1, 2)
             .unwrap()
             .and_hms_opt(3, 4, 5)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
@@ -1290,8 +1288,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 6, 15)
             .unwrap()
             .and_hms_opt(12, 0, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));

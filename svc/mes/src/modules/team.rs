@@ -396,7 +396,7 @@ pub async fn create_team(
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -590,7 +590,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| d.and_utc().to_rfc3339()),
+            join_date: r.join_date.map(|d| d.to_rfc3339()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -632,7 +632,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -666,7 +666,7 @@ pub async fn add_team_member(
         position: result.position,
         join_date: result
             .join_date
-            .map(|d| d.and_utc().to_rfc3339()),
+            .map(|d| d.to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
@@ -732,11 +732,10 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 7, 1)
             .unwrap()
             .and_hms_opt(9, 45, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.naive_utc().date(), dt.date());
+        assert_eq!(utc.naive_utc().time(), dt.time());
     }
 
     #[test]
@@ -752,8 +751,7 @@ mod tests {
         let dt = NaiveDate::from_ymd_opt(2024, 3, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
-            .unwrap()
-            .and_utc();
+            .unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
