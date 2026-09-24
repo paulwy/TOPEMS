@@ -746,7 +746,7 @@ D
 ### 🚀 P3 - 长期（下季度完成）
 - [x] **P3-1 微服务拆分**（2026-09-24 评估结论：**不建议当前拆分**——模块化单体已完成 P0-P2 全链路收尾（Docker 镜像/CI/监控/连接池均为 monolith 维度），拆分将推翻既有成果并引入运维/网络/事务复杂度；拆分触发条件未满足（单实例性能瓶颈未出现、模块独立伸缩需求未实测、单团队发布）；**替代路径**：monolith 水平复制（P3-2 K8s HPA 已支持 2-6 副本）——触发条件出现（性能瓶颈/独立伸缩/团队拆分）时再评估）
   - 从模块化单体拆分为微服务
-- [ ] **P3-2 容器编排**
+- [x] **P3-2 容器编排**（2026-09-24 完成：deploy/k8s/services/monolith.yaml——Deployment（2 副本，就绪/存活探针 /api/server/health）+ Service（8099）+ HPA（CPU 70%，2-6 副本）；与 P2-1 Dockerfile.server / P2-2 docker-build 镜像衔接；现有 deploy-k8s.yml CI workflow + kustomize base（ingress/postgres/redis/monitoring）齐备；注：未连接真实集群验证，镜像源按环境切换（topems/monolith:latest ↔ ghcr.io/{owner}/topems-monolith））
   - Kubernetes 部署
 - [x] **P3-3 多租户优化**（2026-09-24 完成：①隔离评估——tenant_id 列级隔离已覆盖 247 张表（非 schema/库级，符合单库多租户设计）②性能优化——223/247 表 tenant_id 已入索引，补 24 张缺索引表（pdm/quality/production/audit 系）批量建单列索引（to_regclass 幂等 DO 块，验证缺索引 0）③迁移文件 database/migrations/20260924150000_create_tenant_id_indexes.sql（幂等，重跑安全））
   - 数据隔离、性能优化
