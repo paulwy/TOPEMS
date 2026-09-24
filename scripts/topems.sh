@@ -258,7 +258,7 @@ build_service() {
     if [ "$service_name" = "mes" ]; then
         rm -f svc/mes/.sqlx/query-*.json
         export SQLX_OFFLINE=false
-        export DATABASE_URL="postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public"
+        export DATABASE_URL="postgresql://topems:topems_secret@localhost:5432/topems?options=-csearch_path=mes,public"
         info "  mes 在线编译配方（mes_guard 机制，search_path=mes,public）"
         if cargo build $profile --bin "$executable_name" 2>&1; then
             success "mes 编译成功（在线，search_path=mes,public）"
@@ -3257,7 +3257,7 @@ case "${1:-help}" in
             mes)
                 # mes 重启前编译守卫：防启动坏/旧版本（MES_GUARD_SKIP=1 跳过）
                 if [ "${MES_GUARD_SKIP:-0}" != "1" ]; then
-                    bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public" || {
+                    bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems:topems_secret@localhost:5432/topems?options=-csearch_path=mes,public" || {
                         error "mes 编译守卫失败，已中止重启（MES_GUARD_SKIP=1 可跳过）"
                         exit 1
                     }
@@ -3284,7 +3284,7 @@ case "${1:-help}" in
         ;;
     mes-guard)
         # mes 编译守卫：遮蔽检查 + 在线编译断言 0 error（--clean/--sync-snapshot/--skip-compile 透传）
-        bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems_app:topems_app_secret@localhost:5432/topems?options=-csearch_path=mes,public" "${@:2}"
+        bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems:topems_secret@localhost:5432/topems?options=-csearch_path=mes,public" "${@:2}"
         ;;
     build-all)
         build_all "${@:2}"

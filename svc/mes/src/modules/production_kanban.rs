@@ -250,12 +250,12 @@ pub async fn get_dashboard(
                 };
                 OrderProgressResponse {
                     order_id: r.id.to_string(),
-                    order_number: r.order_no.unwrap_or_default(),
+                    order_number: r.order_no,
                     product_name: r.product_name,
                     planned_quantity: planned,
                     completed_quantity: completed,
                     progress,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                 }
             })
             .collect(),
@@ -512,12 +512,12 @@ pub async fn get_order_progress(
             };
             OrderProgressResponse {
                 order_id: r.id.to_string(),
-                order_number: r.order_no.unwrap_or_default(),
+                order_number: r.order_no,
                 product_name: r.product_name,
                 planned_quantity: planned,
                 completed_quantity: completed,
                 progress,
-                status: r.status.unwrap_or_default(),
+                status: r.status,
             }
         })
         .collect();

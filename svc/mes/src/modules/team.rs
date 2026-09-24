@@ -313,15 +313,15 @@ pub async fn get_team(
                 work_station_name: if r.work_station_name.as_deref().unwrap_or("").is_empty() {
                     None
                 } else {
-                    Some(r.work_station_name.unwrap_or_default())
+                    Some(r.work_station_name)
                 },
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -503,8 +503,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.to_rfc3339(),
-                updated_at: r.updated_at.to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                updated_at: r.updated_at.unwrap_or_default().to_rfc3339(),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -584,9 +584,9 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.map(|d| d.to_string()).unwrap_or_default(),
-            employee_id: r.employee_id.map(|d| d.to_string()).unwrap_or_default(),
-            employee_name: r.employee_name.unwrap_or_default(),
+            team_id: r.team_id.to_string(),
+            employee_id: r.employee_id.to_string(),
+            employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
             join_date: r.join_date.map(|d| d.to_rfc3339()),
@@ -658,12 +658,12 @@ pub async fn add_team_member(
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.map(|d| d.to_string()).unwrap_or_default(),
+        team_id: result.team_id.to_string(),
         employee_id: result
             .employee_id
             .map(|d| d.to_string())
             .unwrap_or_default(),
-        employee_name: result.employee_name.unwrap_or_default(),
+        employee_name: result.employee_name,
         employee_code: result.employee_code,
         position: result.position,
         join_date: result.join_date.map(|d| d.to_rfc3339()),

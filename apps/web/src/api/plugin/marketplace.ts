@@ -33,13 +33,10 @@ pluginAxios.interceptors.request.use((config) => {
 pluginAxios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && localStorage.getItem('token')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('roles');
-      localStorage.removeItem('permissions');
-      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-    }
+    // V64: 插件 marketplace 是可选功能，401/500 不应触发全局登出
+    // 之前的问题：登录后 Dashboard 自动调用 plugin API，
+    // 因竞态条件导致首次请求未带 token → 401 → 误触发全局登出
+    // 现在改为静默降级，不影响主登录流程
     return Promise.reject(error);
   }
 );

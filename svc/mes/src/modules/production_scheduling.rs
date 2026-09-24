@@ -496,8 +496,7 @@ pub async fn create_production_schedule(
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: result.created_at,
-        updated_at: result.updated_at,
+        created_at: Some(result.created_at),        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -575,11 +574,11 @@ pub async fn get_production_schedule(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
-                work_station_name: Some(r.work_station_name.unwrap_or_default()),
+                work_station_name: Some(r.work_station_name),
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
-                equipment_name: Some(r.equipment_name.unwrap_or_default()),
+                equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
-                process_name: Some(r.process_name.unwrap_or_default()),
+                process_name: Some(r.process_name),
                 planned_start_time: r.planned_start_time.map(|d| d),
                 planned_end_time: r.planned_end_time.map(|d| d),
                 actual_start_time: r.actual_start_time.map(|d| d),
@@ -890,8 +889,8 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone().unwrap_or_default(),
-                name: resource_name.clone().unwrap_or_default(),
+                id: resource_name.clone(),
+                name: resource_name.clone(),
                 category: "workstation".to_string(),
             });
         }
@@ -907,7 +906,7 @@ pub async fn get_gantt_data(
             end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
-            resource: Some(resource_name.unwrap_or_default()),
+            resource: Some(resource_name),
             parent: None,
         });
     }

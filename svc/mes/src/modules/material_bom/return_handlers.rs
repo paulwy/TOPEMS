@@ -127,8 +127,7 @@ pub async fn create_material_return(
         operator_id: return_record.operator_id.map(|u| u.to_string()),
         return_time: opt_datetime_to_string(return_record.return_time.map(|d| d)),
         notes: return_record.notes,
-        created_at: datetime_to_string(Some(return_record.created_at)),
-        updated_at: datetime_to_string(Some(return_record.updated_at)),
+        created_at: Some(datetime_to_string(Some(return_record.created_at))),        updated_at: datetime_to_string(Some(return_record.updated_at)),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))

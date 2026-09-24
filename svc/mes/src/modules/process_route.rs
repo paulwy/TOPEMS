@@ -369,11 +369,11 @@ pub async fn get_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code.unwrap_or_default(),
-                    name: r.name.unwrap_or_default(),
+                    code: r.code,
+                    name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: total_estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
@@ -442,11 +442,11 @@ pub async fn create_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code.unwrap_or_default(),
-                    name: r.name.unwrap_or_default(),
+                    code: r.code,
+                    name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
@@ -527,11 +527,11 @@ pub async fn update_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code.unwrap_or_default(),
-                    name: r.name.unwrap_or_default(),
+                    code: r.code,
+                    name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
@@ -649,16 +649,16 @@ pub async fn get_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_name: s.process_name.unwrap_or_default(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
+                    process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     description: s.description,
                     created_at: s.created_at.to_rfc3339(),
                 })
@@ -747,9 +747,9 @@ pub async fn add_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_name: process_name.unwrap_or_default().unwrap_or_default(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
+                    process_name: process_name,
                     process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
@@ -834,9 +834,9 @@ pub async fn update_route_step(
             Json(ApiResponse::success(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_name: process_name.unwrap_or_default().unwrap_or_default(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
+                    process_name: process_name,
                     process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
@@ -977,16 +977,16 @@ pub async fn reorder_route_steps(
                 .into_iter()
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
-                    route_id: s.route_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_id: s.process_id.map(|d| d.to_string()).unwrap_or_default(),
-                    process_name: s.process_name.unwrap_or_default(),
+                    route_id: s.route_id.to_string(),
+                    process_id: s.process_id.to_string(),
+                    process_name: s.process_name,
                     process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     description: s.description,
                     created_at: s.created_at.to_rfc3339(),
                 })
