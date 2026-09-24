@@ -814,3 +814,6 @@ D
 - [x] **ticket**：补 6 个注解（activities + SLA 详情/统计/策略 CRUD）+ 聚合 + sla tag；编译通过（commit 6557aba1a）
 - [x] **communication**：补 9 个注解（im_location 5 + notification unread-count + mail get/delete/mark-read）+ 聚合 + location tag；编译通过（已提交）
 - [ ] 累计：qms 3 + scm 3 + srm 3 + gis 3 + portal 23 + ticket 6 + communication 9 = 50 个新注解（文档待并入）
+- [x] **wms**：补 5 个注解（labor efficiency/productivity + discrepancy detail + picking lists + cycle-count configs）+ 聚合；编译通过（已提交）
+- [x] **hrm**：补 5 个注解（reports 3 + setup 2）+ 聚合 + reports/setup tags；编译通过（已提交）
+- [ ] 累计：3+3+3+3+23+6+9+5+5 = 60 个新注解（文档待并入，1408 → 1468）
