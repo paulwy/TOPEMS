@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import { DepartmentSelect } from './DepartmentSelect';
+import DepartmentSelect from './DepartmentSelect';
 import type { Department } from './DepartmentSelect';
 
 const sampleDepartments: Department[] = [

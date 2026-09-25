@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import PaginationComponent from './Pagination';
+import { Pagination as PaginationComponent } from '@topems/shared-components';
 
 const meta = {
   title: 'Common/Pagination',

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import { ActionButton } from './ActionButton';
+import ActionButton from './ActionButton';
 import { Save, Delete, Plus, Download } from 'lucide-react';
 
 const meta = {

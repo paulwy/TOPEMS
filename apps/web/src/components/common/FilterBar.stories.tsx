@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import { FilterBar } from './FilterBar';
-import type { FilterConfig } from './FilterBar';
+import { FilterBar } from '@topems/shared-components';
+import type { FilterConfig } from '@topems/shared-components';
 
 const meta = {
   title: 'Common/FilterBar',

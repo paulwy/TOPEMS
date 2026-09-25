@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { RelativeTime } from './RelativeTime';
+import RelativeTime from './RelativeTime';
 
 const now = new Date();
 const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);

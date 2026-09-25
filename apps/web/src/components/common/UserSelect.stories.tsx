@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import { UserSelect } from './UserSelect';
-import type { User } from './UserSelect';
+import UserSelect from './UserSelect';
 
-const sampleUsers: User[] = [
+const sampleUsers = [
   { id: '1', name: '张三', email: 'zhangsan@example.com', department: '研发部' },
   { id: '2', name: '李四', email: 'lisi@example.com', department: '市场部' },
   { id: '3', name: '王五', email: 'wangwu@example.com', department: '财务部' },

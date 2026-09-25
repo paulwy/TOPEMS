@@ -2,15 +2,14 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
 import Stepper from './Stepper';
-import type { StepItem } from './Stepper';
 
-const defaultSteps: StepItem[] = [
+const defaultSteps = [
   { label: '填写信息', description: '输入基本信息' },
   { label: '审核确认', description: '主管审核' },
   { label: '完成', description: '流程结束' },
 ];
 
-const errorSteps: StepItem[] = [
+const errorSteps = [
   { label: '提交申请', description: '填写并提交', status: 'completed' },
   { label: '主管审核', description: '等待主管审核', status: 'error' },
   { label: '完成', description: '流程结束', status: 'pending' },

@@ -1,13 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
-import {
-  EmptyState,
-  ListEmptyState,
-  SearchEmptyState,
-  PermissionEmptyState,
-  ErrorEmptyState,
-} from './EmptyState';
+import { EmptyState } from './EmptyState';
+import InboxOutlined from '@mui/icons-material/InboxOutlined';
 
 const meta = {
   title: 'Common/EmptyState',
@@ -103,33 +98,40 @@ export const Compact: Story = {
 
 const SearchEmpty: Story = {
   render: () => (
-    <SearchEmptyState
-      keyword='React'
-      onClear={fn()}
+    <EmptyState
+      title='未找到与 "React" 相关的结果'
+      description='请尝试其他关键词'
+      action={{ label: '清除搜索', onClick: fn() }}
     />
   ),
 };
 
 const ListEmpty: Story = {
   render: () => (
-    <ListEmptyState
+    <EmptyState
       title='列表为空'
       description='还没有添加任何数据，点击下方按钮开始'
-      actionLabel='立即添加'
-      onAction={fn()}
+      action={{ label: '立即添加', onClick: fn() }}
     />
   ),
 };
 
 const PermissionEmpty: Story = {
-  render: () => <PermissionEmptyState onRequest={fn()} />,
+  render: () => (
+    <EmptyState
+      title='无访问权限'
+      description='您需要申请权限后才能访问该内容'
+      action={{ label: '申请权限', onClick: fn() }}
+    />
+  ),
 };
 
 const ErrorEmpty: Story = {
   render: () => (
-    <ErrorEmptyState
-      error='网络连接超时，请检查网络后重试'
-      onRetry={fn()}
+    <EmptyState
+      title='加载失败'
+      description='网络连接超时，请检查网络后重试'
+      action={{ label: '重试', onClick: fn() }}
     />
   ),
 };

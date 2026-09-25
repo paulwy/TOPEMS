@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 
 import DataExport from './DataExport';
-import type { ExportField } from './DataExport';
 
 const sampleData: Record<string, unknown>[] = [
   {
@@ -42,7 +41,7 @@ const sampleData: Record<string, unknown>[] = [
   },
 ];
 
-const sampleFields: ExportField[] = [
+const sampleFields = [
   { key: 'name', title: '姓名', width: 12 },
   { key: 'department', title: '部门', width: 15 },
   { key: 'position', title: '职位', width: 15 },

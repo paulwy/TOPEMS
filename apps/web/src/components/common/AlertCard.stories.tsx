@@ -1,12 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { Box } from '@mui/material';
-import AlertCard, {
-  SuccessAlertCard,
-  WarningAlertCard,
-  ErrorAlertCard,
-  InfoAlertCard,
-} from './AlertCard';
+import AlertCard from './AlertCard';
 
 const meta = {
   title: 'Common/AlertCard',
@@ -117,19 +112,23 @@ const InlineMode: Story = {
 const PresetComponents: Story = {
   render: () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <SuccessAlertCard
+      <AlertCard
+        level='success'
         title='发布完成'
         message='v2.3.1 已成功部署到生产环境。'
       />
-      <WarningAlertCard
+      <AlertCard
+        level='warning'
         title='磁盘告警'
         message='/data 分区使用率已达 85%，建议清理。'
       />
-      <ErrorAlertCard
+      <AlertCard
+        level='error'
         title='服务异常'
         message='订单服务连续 3 次健康检查失败，已自动重启。'
       />
-      <InfoAlertCard
+      <AlertCard
+        level='info'
         title='版本更新'
         message='新版本 v2.4.0 已发布，点击查看更新日志。'
       />

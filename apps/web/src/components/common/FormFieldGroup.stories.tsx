@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { FormFieldGroup } from './FormFieldGroup';
+import FormFieldGroup from './FormFieldGroup';
 import { TextField, Box } from '@mui/material';
 
 const meta = {

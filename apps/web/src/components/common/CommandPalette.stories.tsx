@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from 'storybook/test';
 import { Search, FileText, Settings, Home, Users, LayoutDashboard, Zap } from 'lucide-react';
 import { MemoryRouter } from 'react-router-dom';
-import CommandPalette from './CommandPalette';
+import { CommandPalette } from '@topems/shared-components';
 
 // ============ Decorator: MemoryRouter for react-router-dom dependency ============
 
