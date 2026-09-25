@@ -825,6 +825,7 @@ D
 - [x] **finance**：补 3 个注解（cash-flow/aging/profit analysis）+ business-overview 补聚合；编译通过（已提交）
 - [x] **analytics**：核查已全覆盖（54 handler/54 注解，无缺口）
 - [ ] 累计：60 + 5 = 65 个新注解（文档待并入，1408 → 1473）
+- [x] **openapi.json 重生成 1408 → 1458 端点（2026-09-25）**：此前阻塞（mes 编译 76 个 E0308）已解除——`cargo run -p topems-server --bin openapi-gen` 成功，1458 端点全带 /api/ 前缀，0 丢失（新增 50：communication geofences/mail/notification/pois 等）；剩余 portal 733/ticket 43/communication 78 等域注解分轮推进
 - [x] **erp**：补 settings 2 个（list/get）+ 聚合；编译通过（已提交）
 - [x] **crm**：补 analytics 3（overview/funnel/scoring）+ crm_plugin 2（info/health）+ 聚合；编译通过（已提交）
 - [x] **ai**：核查无缺口（ai_plugin 2/2，auto_register 非路由）
@@ -886,6 +887,7 @@ D
     - ⑨ 20260923150000 / 20260923160000 引用 public.core_workflows（权威已收敛至 flow，public 影子按设计删除）→ ALTER IF EXISTS + DO 块表存在守卫（CREATE POLICY / ENABLE FORCE RLS 条件化）
     - 收尾：**本地主库 checksum 同步 31 个被修改且已应用迁移的 sha384**，`migrate.sh run` 主库幂等 0 错误、`check-migrations.mjs` 仅既有版本号不连续警告
     - **空库验证固化 CI 门禁**：新增 `scripts/migrate-verify-empty.sh`（DROP/CREATE 验证库 → sqlx migrate run → 断言 _sqlx_migrations 全量 success=true → 自动清理），本地跑通 276/276；CI migration-test job 追加 `Verify top-level migration chain on empty database` step——顶层迁移链新环境可用性正式纳入门禁（此前仅静态检查 + svc 子迁移 up-down-up，顶层链无真库验证）
+    - **mes 运行时端到端冒烟（2026-09-25）**：空库 + 迁移链 276/276 后启动 topems-mes（MES_PORT=8031）→ health 200（degraded=IAM/core 未起，环境依赖）→ init_database 自建 25 表与迁移链表幂等共存（mes schema 43 表：wips/work_orders/production_schedules/batch_records 等由服务建，teams/equipment_oee 由迁移链建、服务 IF NOT EXISTS 跳过）→ 业务端点 /api/mes/orders、/teams、/equipment-oee、/work-orders 均 401（路由挂载正确，认证拦截）——迁移链 + 服务自建表运行时一致性验证通过
 - [x] **P2-3 审计工具进 CI 门禁 ✅（2026-09-25）**：
   - **CI 新增 `date-type-audit` gate job**（与 mes-online-check 同级）：纯 Python 静态扫描（无需 DB），`python3 scripts/date-type-audit.py` exit 0 即绿——实体层违规 0 + Instant 序列化边界违规 0；触发条件与 cargo-check/mes-online-check 一致（rust/ci 变化）；本地复现命令一致
   - **工具新增 Instant 序列化检查**：Serialize derive struct 内时间字段为 Instant/Option<Instant> → 违规（契约：Instant 仅限进程内计时，禁止跨序列化边界）；当前 18 处 Instant 全部 non-serde（ApiState/AppState.start_time 进程启动、CacheEntry.expires_at 内存缓存、SseSession/TransportSession 内部会话、ExecutionTimer/ExecutionRecord 性能计时）→ 违规 0，契约已满足，检查作防回归
