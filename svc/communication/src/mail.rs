@@ -662,6 +662,16 @@ pub async fn mark_as_read(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:mail:read"])),
+    path = "/mail/templates",
+    responses(
+        (status = 200, description = "List templates", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn list_templates(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -734,6 +744,16 @@ pub async fn list_templates(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:mail:write"])),
+    path = "/mail/templates",
+    responses(
+        (status = 200, description = "Create template", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn create_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -809,6 +829,19 @@ pub async fn create_template(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:mail:read"])),
+    path = "/mail/templates/{id}",
+    params(
+        ("id" = String, Path, description = "Template ID")
+    ),
+    responses(
+        (status = 200, description = "Get template", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn get_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -892,6 +925,19 @@ pub async fn get_template(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:mail:write"])),
+    path = "/mail/templates/{id}",
+    params(
+        ("id" = String, Path, description = "Template ID")
+    ),
+    responses(
+        (status = 200, description = "Update template", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn update_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1046,6 +1092,19 @@ pub async fn delete_template(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:mail:write"])),
+    path = "/mail/templates/{id}/send",
+    params(
+        ("id" = String, Path, description = "Template ID")
+    ),
+    responses(
+        (status = 200, description = "Send with template", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn send_with_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1503,6 +1562,16 @@ pub fn get_queue_stats() -> serde_json::Value {
 // ===== 缺口#10: mail stats / send-with-template / resend =====
 
 /// GET /mail/emails/stats
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:mail:read"])),
+    path = "/mail/emails/stats",
+    responses(
+        (status = 200, description = "Email stats", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn get_stats(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1548,6 +1617,16 @@ pub async fn get_stats(
 }
 
 /// POST /mail/emails/send-with-template
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:mail:write"])),
+    path = "/mail/emails/send-with-template",
+    responses(
+        (status = 200, description = "Send with template by code", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn send_with_template_by_code(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1653,6 +1732,16 @@ pub async fn send_with_template_by_code(
 }
 
 /// POST /mail/emails/resend
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:mail:write"])),
+    path = "/mail/emails/resend",
+    responses(
+        (status = 200, description = "Resend emails", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "email"
+)]
 pub async fn resend_emails(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

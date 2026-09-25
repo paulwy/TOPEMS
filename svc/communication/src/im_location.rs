@@ -344,6 +344,16 @@ pub async fn list_location_messages(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:location:write"])),
+    path = "/locations/geofences",
+    responses(
+        (status = 200, description = "Create geofence", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "location"
+)]
 pub async fn create_geofence(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateImGeofenceRequest>,
@@ -533,6 +543,19 @@ pub async fn list_geofences(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:location:write"])),
+    path = "/locations/geofences/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Geofence ID")
+    ),
+    responses(
+        (status = 200, description = "Update geofence", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "location"
+)]
 pub async fn update_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -626,6 +649,19 @@ pub async fn update_geofence(
     Json(ApiResponse::success(sync_result, "更新地理围栏成功"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:location:write"])),
+    path = "/locations/geofences/{id}",
+    params(
+        ("id" = Uuid, Path, description = "Geofence ID")
+    ),
+    responses(
+        (status = 200, description = "Delete geofence", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "location"
+)]
 pub async fn delete_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

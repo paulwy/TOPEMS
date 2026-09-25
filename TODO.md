@@ -817,6 +817,7 @@ D
 - [ ] portal 累计 33 注解（10→33）；ai_ops 等大模块 handler 未挂载路由（跳过）
 - [x] **ticket**：补 6 个注解（activities + SLA 详情/统计/策略 CRUD）+ 聚合 + sla tag；编译通过（commit 6557aba1a）
 - [x] **communication**：补 9 个注解（im_location 5 + notification unread-count + mail get/delete/mark-read）+ 聚合 + location tag；编译通过（已提交）
+- [x] **communication 第二轮**：补 11 个注解（im_location create/update/delete_geofence 3 + mail get_stats/list_templates/get_template/create_template/update_template/send_with_template/send_with_template_by_code/resend_emails 8）+ 聚合；编译通过；1462 → 1468 端点（+6 路径 mail templates/emails stats 等，+3 method geofences POST/PUT/DELETE 由 method 级合并生效）（已提交）
 - [ ] 累计：qms 3 + scm 3 + srm 3 + gis 3 + portal 23 + ticket 6 + communication 9 = 50 个新注解（文档待并入）
 - [x] **wms**：补 5 个注解（labor efficiency/productivity + discrepancy detail + picking lists + cycle-count configs）+ 聚合；编译通过（已提交）
 - [x] **hrm**：补 5 个注解（reports 3 + setup 2）+ 聚合 + reports/setup tags；编译通过（已提交）
