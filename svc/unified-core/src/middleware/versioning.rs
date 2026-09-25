@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -155,7 +155,7 @@ impl VersionConfig {
 
     pub async fn load_from_db(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
         let configs: Vec<ApiVersionConfigRecord> =
-            sqlx::query_as("SELECT id, version, api_version, is_default, deprecated_at, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL")
+            sqlx::query_as("SELECT id, version, api_version, is_default, deprecated_at, sunset_date, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL")
                 .fetch_all(pool)
                 .await?;
 
@@ -167,7 +167,7 @@ impl VersionConfig {
                     version: config.version,
                     status: config.status.into(),
                     deprecated_since: config.deprecated_since,
-                    sunset_date: config.sunset_date,
+                    sunset_date: config.sunset_date.map(|d| d.format("%Y-%m-%d").to_string()),
                     message: config.message,
                     migration_guide: config.migration_guide,
                     changes: config.changes,
@@ -214,7 +214,7 @@ pub struct ApiVersionConfigRecord {
     pub version: String,
     pub status: String,
     pub deprecated_since: Option<String>,
-    pub sunset_date: Option<String>,
+    pub sunset_date: Option<NaiveDate>,
     pub message: Option<String>,
     pub migration_guide: Option<String>,
     pub changes: Option<String>,
@@ -538,7 +538,7 @@ pub async fn list_versions(
 ) -> Json<crate::CoreResponse<Vec<ApiVersionConfigRecord>>> {
     tracing::info!("[Versioning] Listing all API versions");
 
-    let result = sqlx::query_as("SELECT id, version, api_version, is_default, deprecated_at, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs ORDER BY version")
+    let result = sqlx::query_as("SELECT id, version, api_version, is_default, deprecated_at, sunset_date, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs ORDER BY version")
         .fetch_all(&state.pool)
         .await;
 
@@ -561,7 +561,7 @@ pub async fn get_version(
     tracing::info!("[Versioning] Getting API version: {}", version);
 
     let result = sqlx::query_as(
-        "SELECT id, version, api_version, is_default, deprecated_at, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
+        "SELECT id, version, api_version, is_default, deprecated_at, sunset_date, description, is_active, created_at, updated_at, deleted_at FROM core_api_version_configs WHERE deleted_at IS NULL AND version = $1",
     )
     .bind(&version)
     .fetch_optional(&state.pool)

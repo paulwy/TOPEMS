@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -27,7 +27,7 @@ pub struct SupplierAdmission {
     pub approver: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
     pub applicant: Option<String>,
-    pub application_date: Option<String>,
+    pub application_date: Option<NaiveDate>,
     pub remarks: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -159,7 +159,7 @@ mod tests {
             approver: Some("admin".to_string()),
             approved_at: Some(fixed_dt()),
             applicant: Some("u-001".to_string()),
-            application_date: Some("2026-08-01".to_string()),
+            application_date: NaiveDate::from_ymd_opt(2026, 8, 1),
             remarks: Some("备注".to_string()),
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
@@ -227,7 +227,7 @@ mod tests {
             approver: Some("admin".to_string()),
             approved_at: None,
             applicant: Some("u-002".to_string()),
-            application_date: Some("2026-08-02".to_string()),
+            application_date: NaiveDate::from_ymd_opt(2026, 8, 2),
             remarks: None,
             created_at: fixed_dt(),
             updated_at: fixed_dt(),
