@@ -23,6 +23,38 @@ use crate::models::quality_standard::{
     UpdateStandardRequest,
 };
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/",
+    tag = "qms",
+    responses((status = 200, description = "home OK")),
+)]
+fn _home() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/health",
+    tag = "qms",
+    responses((status = 200, description = "health OK")),
+)]
+fn _health() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/health/detailed",
+    tag = "qms",
+    responses((status = 200, description = "detailed_health OK")),
+)]
+fn _detailed_health() {}
+
 #[derive(OpenApi)]
 #[openapi(
     components(
@@ -222,7 +254,15 @@ use crate::models::quality_standard::{
         crate::modules::apqp::approve_apqp,
         crate::modules::apqp::complete_apqp,
         crate::modules::apqp::cancel_apqp,
-    ),
+            crate::modules::quality_inspection::assign_inspection,
+        crate::modules::quality_issue::resolve_issue,
+        crate::modules::quality_issue::start_issue_approval,
+        crate::modules::qms_plugin::get_plugin_info,
+        crate::modules::qms_plugin::plugin_health_check,
+        _home,
+        _health,
+        _detailed_health,
+),
     tags(
         (name = "quality_standard", description = "质量标准 API"),
         (name = "quality_inspection", description = "质量检验 API"),

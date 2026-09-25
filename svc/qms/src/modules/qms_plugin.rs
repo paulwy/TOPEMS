@@ -40,6 +40,13 @@ pub struct PluginHealth {
 }
 
 // Plugin info endpoint
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/plugins/info",
+    responses((status = 200, description = "get_plugin_info OK")),
+    tag = "qms_plugin"
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
@@ -91,6 +98,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 // Plugin health check endpoint
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:read"])),
+    path = "/api/plugins/health",
+    responses((status = 200, description = "plugin_health_check OK")),
+    tag = "qms_plugin"
+)]
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<PluginHealth>> {
     let db_status = sqlx::query(only_own_schema_query!("qms", "SELECT 1"))
         .fetch_one(&state.pool)

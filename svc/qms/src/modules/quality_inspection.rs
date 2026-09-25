@@ -313,6 +313,16 @@ pub async fn delete_inspection(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection:write"])),
+    path = "/checks/{id}/assign",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "assign_inspection OK")),
+    tag = "quality_inspection"
+)]
 
 pub async fn assign_inspection(
     State(state): State<crate::AppState>,
