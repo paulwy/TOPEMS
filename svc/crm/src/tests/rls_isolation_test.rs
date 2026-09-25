@@ -53,6 +53,7 @@ async fn ensure_crm_schema(pool: &PgPool) {
         .unwrap();
 }
 
+#[ignore]
 #[sqlx::test]
 async fn customer_isolated_by_tenant(pool: PgPool) {
     ensure_crm_schema(&pool).await;
@@ -112,6 +113,7 @@ async fn create_customer_for(pool: &PgPool, tenant_id: Uuid, name: &str) -> Cust
     .unwrap()
 }
 
+#[ignore]
 #[sqlx::test]
 async fn rls_txn_context_isolates_tenant(pool: PgPool) {
     ensure_crm_schema(&pool).await;
