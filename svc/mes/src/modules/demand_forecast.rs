@@ -155,6 +155,16 @@ fn calc_accuracy(forecast: Option<f64>, actual: Option<f64>) -> Option<f64> {
 
 // ==================== Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:forecast:read"])),
+    path = "/demand-forecasts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Forecast"
+)]
 pub async fn list_forecasts(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -233,6 +243,19 @@ pub async fn list_forecasts(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:forecast:read"])),
+    path = "/demand-forecasts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Forecast"
+)]
 pub async fn get_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -412,6 +435,19 @@ pub async fn delete_forecast(
 
 // ==================== State Machine Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:forecast:write"])),
+    path = "/demand-forecasts/{id}/calculate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Forecast"
+)]
 pub async fn calculate_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -471,6 +507,19 @@ pub async fn calculate_forecast(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:forecast:write"])),
+    path = "/demand-forecasts/{id}/validate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Forecast"
+)]
 pub async fn validate_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -528,6 +577,19 @@ pub async fn validate_forecast(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:forecast:write"])),
+    path = "/demand-forecasts/{id}/adopt",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Forecast"
+)]
 pub async fn adopt_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

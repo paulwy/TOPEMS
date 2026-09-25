@@ -167,6 +167,16 @@ pub fn create_routes() -> Router<AppState> {
 // ==================== Handler 实现 ====================
 
 /// 产能利用率热力图
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:analytics:read"])),
+    path = "/analytics/capacity-utilization",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Analytics"
+)]
 pub async fn get_capacity_utilization(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -235,6 +245,16 @@ pub async fn get_capacity_utilization(
 }
 
 /// 能源成本分析
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:analytics:read"])),
+    path = "/analytics/energy-cost",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Analytics"
+)]
 pub async fn get_energy_cost(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -357,6 +377,16 @@ pub async fn get_energy_cost(
 }
 
 /// 设备 MTBF 分析
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:analytics:read"])),
+    path = "/analytics/equipment-mtbf",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Analytics"
+)]
 pub async fn get_equipment_mtbf(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -478,6 +508,16 @@ pub async fn get_equipment_mtbf(
 }
 
 /// 交付分析
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:analytics:read"])),
+    path = "/analytics/delivery-analytics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Analytics"
+)]
 pub async fn get_delivery_analytics(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -551,6 +591,16 @@ pub async fn get_delivery_analytics(
 }
 
 /// OEE 仪表盘
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:analytics:read"])),
+    path = "/analytics/oee-dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Analytics"
+)]
 pub async fn get_oee_dashboard(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -667,6 +717,16 @@ pub async fn get_oee_dashboard(
 }
 
 /// 质量帕累托
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:analytics:read"])),
+    path = "/analytics/quality-pareto",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Analytics"
+)]
 pub async fn get_quality_pareto(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,

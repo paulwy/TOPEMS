@@ -138,6 +138,16 @@ fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-routes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn list_process_routes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -309,6 +319,19 @@ pub async fn list_process_routes(
     Json(ApiResponse::success(response_data, "获取工艺路线列表成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-routes/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn get_process_route(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -607,6 +630,19 @@ pub async fn delete_process_route(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-routes/{id}/steps",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn get_route_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -770,6 +806,20 @@ pub async fn add_route_step(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:process:write"])),
+    path = "/process-routes/{id}/steps/{step_id}",
+    params(
+("id" = String, Path, description = "id"),
+("step_id" = String, Path, description = "step_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn update_route_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -894,6 +944,19 @@ pub async fn remove_route_step(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:process:write"])),
+    path = "/process-routes/{id}/steps/reorder",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn reorder_route_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

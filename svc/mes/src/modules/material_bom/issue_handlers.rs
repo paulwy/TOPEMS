@@ -140,6 +140,16 @@ pub async fn create_material_issue(
     Json(ApiResponse::success(response, "物料领用单创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/material-issues",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn list_material_issues(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -285,6 +295,19 @@ pub async fn list_material_issues(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/material-issues/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn get_material_issue(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

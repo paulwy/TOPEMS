@@ -1071,6 +1071,19 @@ fn get_schedule_tenant_id(claims: &Claims) -> Uuid {
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:scheduling:write"])),
+    path = "/schedules/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionScheduling"
+)]
 pub async fn submit_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1080,6 +1093,19 @@ pub async fn submit_schedule(
     transition_schedule(&state, &claims, id, "released", req.comment).await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:scheduling:write"])),
+    path = "/schedules/{id}/release",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionScheduling"
+)]
 pub async fn release_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1089,6 +1115,19 @@ pub async fn release_schedule(
     transition_schedule(&state, &claims, id, "released", req.comment).await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:scheduling:write"])),
+    path = "/schedules/{id}/hold",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionScheduling"
+)]
 pub async fn hold_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1098,6 +1137,19 @@ pub async fn hold_schedule(
     transition_schedule(&state, &claims, id, "pending", req.comment).await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:scheduling:write"])),
+    path = "/schedules/{id}/start",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionScheduling"
+)]
 pub async fn start_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1107,6 +1159,19 @@ pub async fn start_schedule(
     transition_schedule(&state, &claims, id, "running", req.comment).await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:scheduling:write"])),
+    path = "/schedules/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionScheduling"
+)]
 pub async fn complete_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1116,6 +1181,19 @@ pub async fn complete_schedule(
     transition_schedule(&state, &claims, id, "completed", req.comment).await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:scheduling:write"])),
+    path = "/schedules/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionScheduling"
+)]
 pub async fn cancel_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

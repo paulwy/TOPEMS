@@ -91,6 +91,16 @@ pub struct StandardResponse {
     pub updated_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:quality:read"])),
+    path = "/quality/standards",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn list_standards(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -286,6 +296,19 @@ pub async fn list_standards(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:quality:read"])),
+    path = "/quality/standards/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn get_standard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -180,6 +180,16 @@ fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-flows",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn list_process_flows(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -320,6 +330,19 @@ pub async fn list_process_flows(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-flows/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn get_process_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -571,6 +594,19 @@ pub async fn delete_process_flow(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-flows/{id}/steps",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn get_flow_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -785,6 +821,20 @@ pub async fn add_flow_step(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:process:write"])),
+    path = "/process-flows/{id}/steps/{step_id}",
+    params(
+("id" = String, Path, description = "id"),
+("step_id" = String, Path, description = "step_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn update_flow_step(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -955,6 +1005,19 @@ pub async fn remove_flow_step(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:process:write"])),
+    path = "/process-flows/{id}/steps/reorder",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn reorder_flow_steps(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1067,6 +1130,19 @@ pub async fn reorder_flow_steps(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/process-flows/{id}/capacity",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn analyze_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

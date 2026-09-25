@@ -59,6 +59,16 @@ pub struct PatrolResponse {
     pub updated_at: DateTime<Utc>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:quality:read"])),
+    path = "/quality/patrols",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn list_patrols(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -201,6 +211,19 @@ pub async fn list_patrols(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:quality:read"])),
+    path = "/quality/patrols/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn get_patrol(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -502,6 +525,19 @@ pub struct PatrolItemResponse {
     pub remark: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:quality:read"])),
+    path = "/quality/patrols/{patrol_id}/items",
+    params(
+("patrol_id" = String, Path, description = "patrol_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn list_patrol_items(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -626,6 +662,19 @@ pub struct UpdatePatrolItemRequest {
     pub remark: Option<String>,
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:quality:write"])),
+    path = "/quality/patrol-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn update_patrol_item(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

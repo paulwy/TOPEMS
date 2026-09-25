@@ -110,6 +110,16 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/material-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn list_material_plans(
     State(state): State<AppState>,
     Query(params): Query<ListMaterialPlansQuery>,
@@ -173,6 +183,19 @@ pub async fn list_material_plans(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/material-plans/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn get_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -355,6 +378,19 @@ async fn transition_status(
     .await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:material:write"])),
+    path = "/material-plans/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn submit_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -377,6 +413,19 @@ pub async fn submit_material_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:material:write"])),
+    path = "/material-plans/{id}/requisition",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn requisition_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -399,6 +448,19 @@ pub async fn requisition_material_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:material:write"])),
+    path = "/material-plans/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn cancel_material_plan(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

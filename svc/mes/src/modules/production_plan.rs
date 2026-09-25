@@ -139,6 +139,16 @@ fn can_transition(from: &str, to: &str) -> bool {
 
 // ==================== Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:production-plan:read"])),
+    path = "/production-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionPlan"
+)]
 pub async fn list_plans(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -206,6 +216,19 @@ pub async fn list_plans(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:production-plan:read"])),
+    path = "/production-plans/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionPlan"
+)]
 pub async fn get_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -381,6 +404,19 @@ pub async fn delete_plan(
 
 // ==================== State Machine Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:production-plan:write"])),
+    path = "/production-plans/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionPlan"
+)]
 pub async fn submit_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -426,6 +462,19 @@ pub async fn submit_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:production-plan:write"])),
+    path = "/production-plans/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionPlan"
+)]
 pub async fn approve_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -472,6 +521,19 @@ pub async fn approve_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:production-plan:write"])),
+    path = "/production-plans/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ProductionPlan"
+)]
 pub async fn reject_plan(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

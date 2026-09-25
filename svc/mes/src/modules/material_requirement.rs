@@ -128,6 +128,16 @@ fn big_decimal_to_f64_non_opt(bd: BigDecimal) -> f64 {
     bd.to_string().parse::<f64>().unwrap_or(0.0)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/material-requirements",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn list_material_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -281,6 +291,19 @@ pub async fn list_material_requirements(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/material-requirements/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn get_material_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -595,6 +618,16 @@ pub struct CalculateRequirementsRequest {
     pub order_id: String,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:material:write"])),
+    path = "/material-requirements/calculate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn calculate_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -718,6 +751,19 @@ pub async fn calculate_requirements(
     Json(ApiResponse::success(requirements, "物料需求计算成功"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:material:write"])),
+    path = "/material-requirements/{id}/confirm",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn confirm_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -786,6 +832,19 @@ pub async fn confirm_requirement(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:material:write"])),
+    path = "/material-requirements/{id}/release",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn release_requirement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -115,6 +115,19 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 
 // ==================== Quality Traceability Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:traceability:read"])),
+    path = "/traceability/forward/{order_id}",
+    params(
+("order_id" = String, Path, description = "order_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Traceability"
+)]
 pub async fn forward_traceability(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -265,6 +278,19 @@ pub async fn forward_traceability(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:traceability:read"])),
+    path = "/traceability/backward/{batch_no}",
+    params(
+("batch_no" = String, Path, description = "batch_no")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Traceability"
+)]
 pub async fn backward_traceability(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -406,6 +432,16 @@ pub struct TraceChainQuery {
     identifier: String,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:traceability:read"])),
+    path = "/traceability/chain",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Traceability"
+)]
 pub async fn get_trace_chain(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -474,6 +510,16 @@ pub struct ListQualityRecordsResponse {
     pub page_size: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:traceability:read"])),
+    path = "/traceability/quality-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Traceability"
+)]
 pub async fn list_quality_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

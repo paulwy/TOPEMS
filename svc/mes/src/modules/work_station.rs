@@ -173,6 +173,16 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
 
 // ==================== Work Station Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:equipment:read"])),
+    path = "/workstations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Equipment"
+)]
 pub async fn list_work_stations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -351,6 +361,19 @@ pub async fn create_work_station(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:equipment:read"])),
+    path = "/workstations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Equipment"
+)]
 pub async fn get_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -507,6 +530,19 @@ pub async fn delete_work_station(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:equipment:write"])),
+    path = "/workstations/{id}/activate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Equipment"
+)]
 pub async fn activate_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -552,6 +588,19 @@ pub async fn activate_work_station(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:equipment:write"])),
+    path = "/workstations/{id}/deactivate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Equipment"
+)]
 pub async fn deactivate_work_station(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

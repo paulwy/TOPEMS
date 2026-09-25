@@ -133,6 +133,16 @@ pub fn create_routes() -> Router<AppState> {
 // ==================== Handlers ====================
 
 /// 获取异常预警列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:anomaly:read"])),
+    path = "/anomaly/alerts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn list_anomaly_alerts(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -191,6 +201,16 @@ pub async fn list_anomaly_alerts(
 }
 
 /// 获取异常预警汇总
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:anomaly:read"])),
+    path = "/anomaly/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn get_anomaly_summary(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -251,6 +271,19 @@ pub async fn get_anomaly_summary(
 }
 
 /// 获取指定设备的异常预警
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:anomaly:read"])),
+    path = "/anomaly/equipment/{equipment_id}",
+    params(
+("equipment_id" = String, Path, description = "equipment_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn get_equipment_anomalies(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -266,6 +299,16 @@ pub async fn get_equipment_anomalies(
 }
 
 /// 获取异常预警规则列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:anomaly:read"])),
+    path = "/anomaly/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn list_anomaly_rules(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -275,6 +318,19 @@ pub async fn list_anomaly_rules(
 }
 
 /// 获取单个预警规则
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:anomaly:read"])),
+    path = "/anomaly/rules/{rule_id}",
+    params(
+("rule_id" = String, Path, description = "rule_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn get_anomaly_rule(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -321,6 +377,16 @@ pub async fn update_anomaly_rule(
 }
 
 /// 手动触发异常扫描
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:anomaly:write"])),
+    path = "/anomaly/scan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn trigger_anomaly_scan(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -345,6 +411,16 @@ pub async fn trigger_anomaly_scan(
 }
 
 /// 获取异常趋势
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:anomaly:read"])),
+    path = "/anomaly/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AnomalyDetection"
+)]
 pub async fn get_anomaly_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

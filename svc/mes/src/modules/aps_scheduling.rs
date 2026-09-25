@@ -901,6 +901,16 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
 
 // ==================== API Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:aps:write"])),
+    path = "/aps/schedule",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "APS"
+)]
 pub async fn execute_aps_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -925,6 +935,16 @@ pub async fn execute_aps_schedule(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:aps:write"])),
+    path = "/aps/schedule/simulate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "APS"
+)]
 pub async fn simulate_aps_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -990,6 +1010,16 @@ pub async fn simulate_aps_schedule(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:aps:write"])),
+    path = "/aps/schedule/check-constraints",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "APS"
+)]
 pub async fn check_schedule_constraints(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1196,6 +1226,16 @@ pub async fn check_schedule_constraints(
     Json(ApiResponse::success(results, "约束检查完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:aps:read"])),
+    path = "/aps/schedule/optimization-report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "APS"
+)]
 pub async fn get_optimization_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1335,6 +1375,16 @@ pub async fn get_optimization_report(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:aps:read"])),
+    path = "/aps/schedule/bottleneck-analysis",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "APS"
+)]
 pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1483,6 +1533,19 @@ pub async fn get_bottleneck_analysis(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:aps:read"])),
+    path = "/aps/orders/{id}/feasibility",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "APS"
+)]
 pub async fn check_order_feasibility(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

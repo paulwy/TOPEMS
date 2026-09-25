@@ -144,6 +144,16 @@ pub struct ForecastParams {
     pub equipment_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/realtime",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn get_real_time_consumption(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -201,6 +211,16 @@ async fn get_real_time_consumption(
     Ok(Json(ApiResponse::success(records, "实时能耗数据获取成功")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn get_consumption_history(
     State(state): State<AppState>,
     Query(_params): Query<QueryParams>,
@@ -233,6 +253,16 @@ async fn get_consumption_history(
     Ok(Json(ApiResponse::success(records, "能耗历史数据获取成功")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn get_energy_report(
     State(state): State<AppState>,
     Query(_params): Query<ReportParams>,
@@ -342,6 +372,16 @@ async fn get_energy_report(
     Ok(Json(ApiResponse::success(response, "能耗报表生成成功")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/forecast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn get_energy_forecast(
     State(state): State<AppState>,
     Query(params): Query<ForecastParams>,
@@ -365,6 +405,16 @@ async fn get_energy_forecast(
     Ok(Json(ApiResponse::success(response, "能耗预测数据获取成功")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/alerts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn get_energy_alerts(
     State(state): State<AppState>,
     Query(_params): Query<QueryParams>,
@@ -424,6 +474,19 @@ async fn get_energy_alerts(
     Ok(Json(ApiResponse::success(response, "能耗告警列表获取成功")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/equipment/{equipment_id}",
+    params(
+("equipment_id" = String, Path, description = "equipment_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn get_equipment_consumption(
     State(state): State<AppState>,
     Path(equipment_id): Path<Uuid>,
@@ -457,6 +520,16 @@ async fn get_equipment_consumption(
     Ok(Json(ApiResponse::success(records, "设备能耗数据获取成功")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:energy:read"])),
+    path = "/energy/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Energy"
+)]
 async fn export_energy_report(
     State(state): State<AppState>,
     Query(_params): Query<ReportParams>,

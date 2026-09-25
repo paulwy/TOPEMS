@@ -111,6 +111,16 @@ fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
 
 // ==================== Production Record Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:record:read"])),
+    path = "/records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Record"
+)]
 pub async fn list_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -326,6 +336,19 @@ pub async fn create_record(
     Json(ApiResponse::success(record, "生产记录创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:record:read"])),
+    path = "/records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Record"
+)]
 pub async fn get_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -496,6 +519,19 @@ pub async fn delete_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:record:write"])),
+    path = "/records/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Record"
+)]
 pub async fn complete_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

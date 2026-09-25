@@ -52,6 +52,16 @@ pub struct ListAuditLogsQuery {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:audit:read"])),
+    path = "/audit-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Audit"
+)]
 async fn list_audit_logs(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -134,6 +144,19 @@ async fn list_audit_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:audit:read"])),
+    path = "/audit-logs/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Audit"
+)]
 async fn get_audit_log(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

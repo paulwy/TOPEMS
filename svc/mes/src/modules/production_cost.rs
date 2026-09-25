@@ -401,6 +401,19 @@ async fn calculate_work_order_cost_detail_db(
 
 // ==================== API Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:cost:read"])),
+    path = "/cost/work-order/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn calculate_work_order_cost(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -424,6 +437,19 @@ pub async fn calculate_work_order_cost(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:cost:read"])),
+    path = "/cost/work-order/{id}/detail",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn get_work_order_cost_detail(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -447,6 +473,19 @@ pub async fn get_work_order_cost_detail(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:cost:read"])),
+    path = "/cost/production-order/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn calculate_production_order_cost(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -557,6 +596,16 @@ pub async fn calculate_production_order_cost(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:cost:read"])),
+    path = "/cost/period",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn get_period_cost_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -695,6 +744,16 @@ pub async fn get_period_cost_report(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:cost:read"])),
+    path = "/cost/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn get_cost_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -761,6 +820,16 @@ pub async fn get_cost_trend(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:cost:write"])),
+    path = "/cost/comparison",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn get_cost_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -812,6 +881,16 @@ pub async fn get_cost_comparison(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:cost:read"])),
+    path = "/cost/forecast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Cost"
+)]
 pub async fn get_cost_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

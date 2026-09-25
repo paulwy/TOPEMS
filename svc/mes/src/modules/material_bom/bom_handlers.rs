@@ -11,6 +11,16 @@ use topems_shared::response::ApiResponse;
 use super::models::*;
 use super::utils::*;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/boms",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn list_material_boms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -287,6 +297,19 @@ pub async fn create_material_bom(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:material:read"])),
+    path = "/boms/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Material"
+)]
 pub async fn get_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

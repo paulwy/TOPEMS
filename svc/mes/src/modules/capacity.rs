@@ -132,6 +132,16 @@ fn calc_utilization(available: Option<f64>, used: Option<f64>) -> Option<f64> {
 
 // ==================== Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:capacity:read"])),
+    path = "/capacities",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Capacity"
+)]
 pub async fn list_capacities(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -246,6 +256,19 @@ pub async fn list_capacities(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:capacity:read"])),
+    path = "/capacities/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Capacity"
+)]
 pub async fn get_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -475,6 +498,19 @@ pub async fn delete_capacity(
 
 // ==================== State Machine Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:capacity:write"])),
+    path = "/capacities/{id}/allocate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Capacity"
+)]
 pub async fn allocate_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -546,6 +582,19 @@ pub async fn allocate_capacity(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:capacity:write"])),
+    path = "/capacities/{id}/release",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Capacity"
+)]
 pub async fn release_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -606,6 +655,19 @@ pub async fn release_capacity(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:capacity:write"])),
+    path = "/capacities/{id}/maintenance",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Capacity"
+)]
 pub async fn maintenance_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -714,6 +776,19 @@ pub struct SubmitCapacityRequest {
     pub comment: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mes:capacity:write"])),
+    path = "/capacities/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Capacity"
+)]
 pub async fn submit_capacity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

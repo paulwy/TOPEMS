@@ -121,6 +121,16 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 
 // ==================== Production Process Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/processes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn list_processes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -323,6 +333,19 @@ pub async fn create_process(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:process:read"])),
+    path = "/processes/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn get_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -460,6 +483,19 @@ pub async fn delete_process(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mes:process:write"])),
+    path = "/processes/{id}/deactivate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Process"
+)]
 pub async fn deactivate_process(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

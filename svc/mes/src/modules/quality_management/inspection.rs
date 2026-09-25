@@ -269,6 +269,19 @@ pub async fn list_inspections(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:quality:read"])),
+    path = "/quality/inspections/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Quality"
+)]
 pub async fn get_inspection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

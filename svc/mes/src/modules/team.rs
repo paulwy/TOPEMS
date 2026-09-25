@@ -121,6 +121,16 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:team:read"])),
+    path = "/teams",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Team"
+)]
 pub async fn list_teams(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -268,6 +278,19 @@ pub async fn list_teams(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:team:read"])),
+    path = "/teams/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Team"
+)]
 pub async fn get_team(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -548,6 +571,19 @@ pub async fn delete_team(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:team:read"])),
+    path = "/teams/{id}/members",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Team"
+)]
 pub async fn get_team_members(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -670,6 +706,20 @@ pub async fn add_team_member(
     Json(ApiResponse::success(member, "班组成员添加成功"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["mes:team:write"])),
+    path = "/teams/{id}/members/{member_id}",
+    params(
+("id" = String, Path, description = "id"),
+("member_id" = String, Path, description = "member_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Team"
+)]
 pub async fn remove_team_member(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
