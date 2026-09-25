@@ -1196,7 +1196,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
                 })
                 .collect();
 
@@ -1326,7 +1326,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
             },
             "创建点检记录成功",
         )),
