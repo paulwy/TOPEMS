@@ -379,7 +379,11 @@
 - [x] P0-1：统一所有 MES 文件中的辅助函数签名（datetime_to_string/opt_datetime_to_string）（2026-09-19 轮完成：57 处清零，签名收 DateTime<Utc>）
   - 标准签名（对齐 CRM 模块）：`fn datetime_to_string(dt: DateTime<Utc>) -> String`
   - 批量修改所有 MES 文件中的辅助函数定义和调用
-- [ ] P0-2：统一所有 MES 文件中的 SQL 查询 schema 指定（加 mes. 前缀）——**未完成（已知风险）**：mes 仍有裸 INSERT INTO（production_scheduling/equipment_oee/process_route 等），运行时端点 /api/mes/orders 200 但 SEARCH_PATH 不含 mes、存在解析到 public 同名旧表的错表风险；修复需全量 SQL 加前缀并重生成 .sqlx，收益/风险比低，暂缓
+- [ ] P0-2：统一所有 MES 文件中的 SQL 查询 schema 指定（加 mes. 前缀）——**维持暂缓（2026-09-25 空库治理后风险查证：实质消除）**：mes 仍有裸 INSERT INTO（production_scheduling/equipment_oee/process_route 等），但——
+  - **SEARCH_PATH 已确认含 mes**（svc/mes/src/main.rs:32 `set_var("SEARCH_PATH", "mes, public")`）→ 裸查询优先解析 mes.*
+  - **错表风险不成立**：主库 5432 与空库迁移链（topems_mig_verify 全量重建后）的 public schema **均无 mes 同名表**（production_scheduling/equipment_oee/process_route/teams/work_orders/wips 等全查无）→ 无 public 旧表可被误解析；缺表时表现为"relation does not exist"报错（安全失败），非错表写数据
+  - **运行时表由服务补齐**：mes init_database 自建 25 表（wips/work_orders/production_schedules/equipment_oee/teams/team_members 等，生产环境启动时建）；equipment_oee/teams/team_members 已由迁移链 20260921000106 补建，服务侧 IF NOT EXISTS 幂等兼容
+  - 结论：全量加前缀收益/风险比仍低（需重生成 .sqlx），维持暂缓；若后续出现 public 同名表或 SEARCH_PATH 变更需重评估
   - 对齐 CRM 模块的做法：`INSERT INTO crm.customers` → `INSERT INTO mes.production_orders`
 - [x] P0-3：重新生成 .sqlx 缓存（2026-09-24：mes 144→165，crm/analytics/portal/server/wms 同步生成）
   - 用 SQLX_OFFLINE=false cargo check -p topems-mes 重新生成缓存
