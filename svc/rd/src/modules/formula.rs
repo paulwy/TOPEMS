@@ -76,6 +76,16 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/formulas/{id}/approve", post(approve_formula))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/formulas",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn list_formulas(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -277,6 +287,19 @@ pub async fn create_formula(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/formulas/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn get_formula(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -513,6 +536,19 @@ pub async fn delete_formula(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/formulas/{id}/versions",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn get_formula_versions(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -662,6 +698,19 @@ pub async fn create_formula_version(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/formulas/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "formula"
+)]
 pub async fn approve_formula(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,

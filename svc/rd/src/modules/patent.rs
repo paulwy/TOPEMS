@@ -149,6 +149,16 @@ fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/patents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "patent"
+)]
 pub async fn list_patents(
     State(_state): State<crate::modules::ApiState>,
     Query(params): Query<ListParams>,
@@ -219,6 +229,19 @@ pub async fn list_patents(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/patents/project/{project_id}",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "patent"
+)]
 pub async fn list_patents_by_project(
     State(_state): State<crate::modules::ApiState>,
     Path(project_id): Path<Uuid>,
@@ -313,6 +336,19 @@ pub async fn create_patent(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/patents/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "patent"
+)]
 pub async fn get_patent(
     State(_state): State<crate::modules::ApiState>,
     Path(id): Path<Uuid>,

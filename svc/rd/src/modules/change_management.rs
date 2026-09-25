@@ -202,6 +202,16 @@ pub async fn create_change_request(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/change-requests",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "change_management"
+)]
 pub async fn list_change_requests(
     State(_state): State<ApiState>,
     axum::extract::Query(params): axum::extract::Query<serde_json::Value>,
@@ -261,6 +271,19 @@ pub async fn list_change_requests(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/change-requests/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "change_management"
+)]
 pub async fn get_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -395,6 +418,19 @@ pub async fn delete_change_request(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/change-requests/{id}/transition",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "change_management"
+)]
 pub async fn transition_change_request(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -481,6 +517,19 @@ pub async fn transition_change_request(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/change-requests/{id}/change-orders",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "change_management"
+)]
 pub async fn create_change_order(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -561,6 +610,16 @@ pub async fn create_change_order(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/change-orders",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "change_management"
+)]
 pub async fn list_change_orders(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

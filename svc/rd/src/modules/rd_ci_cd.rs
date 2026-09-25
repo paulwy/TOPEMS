@@ -134,6 +134,16 @@ async fn list_typed(
     Ok((total, rows))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/bugs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn list_bugs(
     State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
@@ -160,6 +170,19 @@ pub async fn list_bugs(
     )))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/bugs/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn get_bug(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -315,6 +338,16 @@ fn build_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/builds",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn list_builds(
     State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
@@ -342,6 +375,19 @@ pub async fn list_builds(
     )))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/builds/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn get_build(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -442,6 +488,16 @@ fn deploy_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/deploys",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn list_deploys(
     State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
@@ -469,6 +525,19 @@ pub async fn list_deploys(
     )))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/deploys/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn get_deploy(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -568,6 +637,16 @@ fn test_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/tests",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn list_tests(
     State(_state): State<ApiState>,
     Query(params): Query<ListBugsQuery>,
@@ -595,6 +674,19 @@ pub async fn list_tests(
     )))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/tests/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rd_ci_cd"
+)]
 pub async fn get_test(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

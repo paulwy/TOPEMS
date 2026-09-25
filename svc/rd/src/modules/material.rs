@@ -112,6 +112,16 @@ pub fn create_routes() -> Router<super::ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/material-tests",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "material"
+)]
 pub async fn list_material_tests(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
@@ -180,6 +190,19 @@ pub async fn list_material_tests(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/material-tests/project/{project_id}",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "material"
+)]
 pub async fn list_by_project(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
@@ -211,6 +234,19 @@ pub async fn list_by_project(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/material-tests/experiment/{experiment_id}",
+    params(
+("experiment_id" = String, Path, description = "experiment_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "material"
+)]
 pub async fn list_by_experiment(
     State(_state): State<super::ApiState>,
     Path(experiment_id): Path<Uuid>,
@@ -338,6 +374,19 @@ pub async fn create_material_test(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/material-tests/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "material"
+)]
 pub async fn get_material_test(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,

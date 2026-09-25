@@ -83,6 +83,16 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/batch-trace/{batch_number}", get(trace_batch))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn list_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -284,6 +294,19 @@ pub async fn create_experiment(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn get_experiment(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -512,6 +535,19 @@ pub async fn delete_experiment(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments/{id}/records",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn get_experiment_records(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -614,6 +650,16 @@ pub async fn create_experiment_record(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments/phase/lab",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn list_lab_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -695,6 +741,16 @@ pub async fn list_lab_experiments(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments/phase/pilot",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn list_pilot_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -776,6 +832,16 @@ pub async fn list_pilot_experiments(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/experiments/phase/scaleup",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn list_scaleup_experiments(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -857,6 +923,19 @@ pub async fn list_scaleup_experiments(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/experiments/{id}/advance-phase",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn advance_phase(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -933,6 +1012,19 @@ pub async fn advance_phase(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/batch-trace/{batch_number}",
+    params(
+("batch_number" = String, Path, description = "batch_number")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "experiment"
+)]
 pub async fn trace_batch(
     State(_state): State<super::ApiState>,
     Path(batch_number): Path<String>,

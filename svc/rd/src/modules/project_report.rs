@@ -70,6 +70,16 @@ pub fn create_routes() -> Router<super::ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/reports/projects/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_report"
+)]
 pub async fn get_project_summary(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
@@ -144,6 +154,16 @@ pub async fn get_project_summary(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/reports/projects/trends",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_report"
+)]
 pub async fn get_project_trends(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
@@ -204,6 +224,16 @@ pub async fn get_project_trends(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/reports/projects/types",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_report"
+)]
 pub async fn get_project_type_stats(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
@@ -248,6 +278,16 @@ pub async fn get_project_type_stats(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/reports/projects/performance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_report"
+)]
 pub async fn get_performance_metrics(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
@@ -361,6 +401,19 @@ pub struct ProjectDetailReport {
     pub contract_total_amount: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/reports/projects/{id}/details",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_report"
+)]
 pub async fn get_project_detail_report(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,

@@ -122,6 +122,16 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/research-costs/statistics", get(get_cost_statistics))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/research-costs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "research_cost"
+)]
 pub async fn list_costs(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,
@@ -308,6 +318,19 @@ pub async fn create_cost(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/research-costs/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "research_cost"
+)]
 pub async fn get_cost(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -459,6 +482,19 @@ pub async fn delete_cost(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/research-costs/project/{project_id}",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "research_cost"
+)]
 pub async fn list_costs_by_project(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
@@ -491,6 +527,16 @@ pub async fn list_costs_by_project(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/research-costs/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "research_cost"
+)]
 pub async fn get_cost_statistics(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,

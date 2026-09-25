@@ -31,6 +31,16 @@ pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new().route("/statistics", get(get_statistics))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "statistics"
+)]
 pub async fn get_statistics(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<

@@ -94,6 +94,16 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/ai/analyses",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_integration"
+)]
 async fn list_analyses(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,
@@ -142,6 +152,16 @@ async fn list_analyses(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/ai/analyses",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_integration"
+)]
 async fn create_analysis(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
@@ -204,6 +224,19 @@ async fn create_analysis(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/ai/analyses/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_integration"
+)]
 async fn get_analysis(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -239,6 +272,16 @@ async fn get_analysis(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/ai/chat",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_integration"
+)]
 async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
     let ai_service_url = resolve_ai_service_url();
 
@@ -254,6 +297,20 @@ async fn ai_chat(Json(request): Json<AiChatRequest>) -> impl IntoResponse {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/entities/{entity_type}/{entity_id}/analyses",
+    params(
+("entity_type" = String, Path, description = "entity_type"),
+("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_integration"
+)]
 async fn get_entity_analyses(
     State(_state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,

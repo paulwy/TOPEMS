@@ -63,6 +63,16 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/documents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "doc_integration"
+)]
 pub async fn list_documents(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<DocRelationQuery>,
@@ -110,6 +120,16 @@ pub async fn list_documents(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/documents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "doc_integration"
+)]
 pub async fn create_document_relation(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<
@@ -166,6 +186,19 @@ pub async fn create_document_relation(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/documents/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "doc_integration"
+)]
 pub async fn get_document_relation(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -200,6 +233,19 @@ pub async fn get_document_relation(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/documents/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "doc_integration"
+)]
 pub async fn delete_document_relation(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -231,6 +277,20 @@ pub async fn delete_document_relation(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/entities/{entity_type}/{entity_id}/documents",
+    params(
+("entity_type" = String, Path, description = "entity_type"),
+("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "doc_integration"
+)]
 pub async fn get_entity_documents(
     State(_state): State<super::ApiState>,
     Path((entity_type, entity_id)): Path<(String, Uuid)>,

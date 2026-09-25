@@ -21,6 +21,16 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/members/{id}", delete(delete_member))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/members",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_member"
+)]
 pub async fn create_member(
     State(_state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -130,6 +140,19 @@ pub async fn create_member(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/members/project/{project_id}",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_member"
+)]
 pub async fn get_project_members(
     State(_state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
@@ -192,6 +215,19 @@ pub async fn get_project_members(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/members/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_member"
+)]
 pub async fn update_member(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
@@ -305,6 +341,19 @@ pub async fn update_member(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["rd:write"])),
+    path = "/members/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_member"
+)]
 pub async fn delete_member(
     State(_state): State<super::ApiState>,
     Path(id): Path<Uuid>,
