@@ -558,6 +558,16 @@ pub struct SLAReportQuery {
 
 // ==================== 处理器：API 商业化 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/products",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn create_api_product(
     State(_state): State<AppState>,
     Json(req): Json<CreateAPIProductRequest>,
@@ -587,6 +597,16 @@ pub async fn create_api_product(
     Json(ApiResponse::success(product, "API 产品已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/products",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn list_api_products(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<APIProduct>>> {
@@ -597,6 +617,19 @@ pub async fn list_api_products(
     Json(ApiResponse::success(active, "API 产品列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/products/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_api_product(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -610,6 +643,16 @@ pub async fn get_api_product(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/subscribe",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn subscribe_tenant(
     State(_state): State<AppState>,
     Json(req): Json<SubscribeTenantRequest>,
@@ -649,6 +692,19 @@ pub async fn subscribe_tenant(
     Json(ApiResponse::success(sub, "租户订阅已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/subscriptions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_subscription(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -662,6 +718,16 @@ pub async fn get_subscription(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/subscriptions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn list_subscriptions(
     State(_state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
@@ -691,6 +757,19 @@ pub async fn list_subscriptions(
     Json(ApiResponse::success(filtered, "订阅列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/subscriptions/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn cancel_subscription(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -708,6 +787,19 @@ pub async fn cancel_subscription(
     Json(ApiResponse::success(sub.clone(), "订阅已取消"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/subscriptions/{id}/upgrade",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn upgrade_tier(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -732,6 +824,16 @@ pub async fn upgrade_tier(
 
 // ==================== 处理器：计量计费 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/usage/record",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn record_usage(
     State(_state): State<AppState>,
     Json(req): Json<RecordUsageRequest>,
@@ -755,6 +857,16 @@ pub async fn record_usage(
     Json(ApiResponse::success(record, "使用记录已保存"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/usage/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_usage_summary(
     State(_state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
@@ -810,6 +922,16 @@ pub async fn get_usage_summary(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/bill/generate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn generate_bill(
     State(_state): State<AppState>,
     Json(req): Json<GenerateBillRequest>,
@@ -898,6 +1020,16 @@ pub async fn generate_bill(
     Json(ApiResponse::success(bill, "账单已生成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/billing",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_billing_history(
     State(_state): State<AppState>,
     Query(params): Query<BillingHistoryQuery>,
@@ -941,6 +1073,16 @@ pub async fn get_billing_history(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/rate-cards",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn create_rate_card(
     State(_state): State<AppState>,
     Json(req): Json<CreateRateCardRequest>,
@@ -962,6 +1104,16 @@ pub async fn create_rate_card(
     Json(ApiResponse::success(card, "费率卡已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/rate-cards",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_rate_cards(State(_state): State<AppState>) -> Json<ApiResponse<Vec<RateCard>>> {
     ensure_initialized().await;
     let store = get_v55_store();
@@ -969,6 +1121,19 @@ pub async fn get_rate_cards(State(_state): State<AppState>) -> Json<ApiResponse<
     Json(ApiResponse::success(cards.clone(), "费率卡列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/billing/{id}/mark-paid",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn mark_bill_paid(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -988,6 +1153,16 @@ pub async fn mark_bill_paid(
 
 // ==================== 处理器：SLA 保障 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/sla/configure",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn configure_sla(
     State(_state): State<AppState>,
     Json(req): Json<ConfigureSLARequest>,
@@ -1015,6 +1190,16 @@ pub async fn configure_sla(
     Json(ApiResponse::success(config, "SLA 配置已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/sla/measure",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn measure_sla(
     State(_state): State<AppState>,
     Json(req): Json<MeasureSLARequest>,
@@ -1055,6 +1240,16 @@ pub async fn measure_sla(
     Json(ApiResponse::success(measurement, "SLA 度量已记录"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/sla/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_sla_status(
     State(_state): State<AppState>,
     Query(params): Query<SLAStatusQuery>,
@@ -1112,6 +1307,16 @@ pub async fn get_sla_status(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/sla/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_sla_history(
     State(_state): State<AppState>,
     Query(params): Query<SLAHistoryQuery>,
@@ -1151,6 +1356,16 @@ pub async fn get_sla_history(
     Json(ApiResponse::success(filtered, "SLA 历史记录"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/sla/penalty",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn calculate_penalty(
     State(_state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
@@ -1187,6 +1402,16 @@ pub async fn calculate_penalty(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:commercial:write"])),
+    path = "/sla/incident",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn create_incident(
     State(_state): State<AppState>,
     Json(req): Json<CreateSLAIncidentRequest>,
@@ -1232,6 +1457,16 @@ pub async fn create_incident(
     Json(ApiResponse::success(incident, "SLA 事故已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/sla/incidents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn get_incidents(
     State(_state): State<AppState>,
     Query(params): Query<SLAIncidentsQuery>,
@@ -1267,6 +1502,16 @@ pub async fn get_incidents(
     Json(ApiResponse::success(filtered, "SLA 事故列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:commercial:read"])),
+    path = "/sla/report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "commercial_v55"
+)]
 pub async fn generate_sla_report(
     State(_state): State<AppState>,
     Query(params): Query<SLAReportQuery>,

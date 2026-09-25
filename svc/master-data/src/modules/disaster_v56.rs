@@ -594,6 +594,16 @@ pub struct SwitchRegionsRequest {
 
 // ==================== 处理器：灾难恢复 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/recovery/point",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn create_recovery_point(
     State(_state): State<AppState>,
     Json(req): Json<CreateRecoveryPointRequest>,
@@ -630,6 +640,16 @@ pub async fn create_recovery_point(
     Json(ApiResponse::success(rp, "恢复点已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/recovery/points",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn list_recovery_points(
     State(_state): State<AppState>,
     Query(params): Query<ListRecoveryPointsQuery>,
@@ -678,6 +698,16 @@ pub async fn list_recovery_points(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/recovery/restore",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn restore_from_point(
     State(_state): State<AppState>,
     Json(req): Json<RestoreRequest>,
@@ -706,6 +736,16 @@ pub async fn restore_from_point(
     Json(ApiResponse::success(restore_result, "数据恢复已完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/recovery/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_recovery_status(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -756,6 +796,16 @@ pub async fn get_recovery_status(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/recovery/plan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn create_recovery_plan(
     State(_state): State<AppState>,
     Json(req): Json<CreateRecoveryPlanRequest>,
@@ -807,6 +857,16 @@ pub async fn create_recovery_plan(
     Json(ApiResponse::success(plan, "恢复计划已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/recovery/plan/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn execute_plan(
     State(_state): State<AppState>,
     Json(req): Json<ExecutePlanRequest>,
@@ -846,6 +906,19 @@ pub async fn execute_plan(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/recovery/plan/{id}/progress",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_plan_progress(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -885,6 +958,16 @@ pub async fn get_plan_progress(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/recovery/test",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn test_recovery(
     State(_state): State<AppState>,
     Json(req): Json<TestRecoveryRequest>,
@@ -932,6 +1015,16 @@ pub async fn test_recovery(
 
 // ==================== 处理器：业务连续性 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/continuity/plan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn create_continuity_plan(
     State(_state): State<AppState>,
     Json(req): Json<CreateContinuityPlanRequest>,
@@ -980,6 +1073,16 @@ pub async fn create_continuity_plan(
     Json(ApiResponse::success(plan, "连续性计划已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/continuity/plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<ContinuityPlan>>> {
     ensure_initialized().await;
     let store = get_v56_store();
@@ -987,6 +1090,19 @@ pub async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<
     Json(ApiResponse::success(plans.clone(), "连续性计划列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/continuity/plan/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_plan(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1000,6 +1116,19 @@ pub async fn get_plan(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/continuity/plan/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn update_plan(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1038,6 +1167,19 @@ pub async fn update_plan(
     Json(ApiResponse::success(plan.clone(), "连续性计划已更新"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/continuity/plan/{id}/test",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn test_plan(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1099,6 +1241,16 @@ pub async fn get_test_results(
     Json(ApiResponse::success(filtered, "测试结果列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/continuity/impact",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn assess_impact(
     State(_state): State<AppState>,
     Query(params): Query<ImpactQuery>,
@@ -1164,6 +1316,16 @@ pub async fn assess_impact(
     Json(ApiResponse::success(impact, "影响评估报告"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/continuity/score",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_continuity_score(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1232,6 +1394,16 @@ pub async fn get_continuity_score(
 
 // ==================== 处理器：跨地域容灾 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/dr/replication",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn configure_replication(
     State(_state): State<AppState>,
     Json(req): Json<ConfigureReplicationRequest>,
@@ -1260,6 +1432,16 @@ pub async fn configure_replication(
     Json(ApiResponse::success(config, "复制配置已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/dr/replication/start",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn start_replication(
     State(_state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
@@ -1287,6 +1469,16 @@ pub async fn start_replication(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/dr/replication/stop",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn stop_replication(
     State(_state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
@@ -1312,6 +1504,16 @@ pub async fn stop_replication(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/dr/replication/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_replication_status(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1348,6 +1550,16 @@ pub async fn get_replication_status(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/dr/failover",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn initiate_failover(
     State(_state): State<AppState>,
     Json(req): Json<InitiateFailoverRequest>,
@@ -1382,6 +1594,19 @@ pub async fn initiate_failover(
     Json(ApiResponse::success(failover, "故障转移已发起"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/dr/failover/{id}/complete",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn complete_failover(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1427,6 +1652,16 @@ pub async fn complete_failover(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/dr/failover/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_failover_history(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<FailoverRecord>>> {
@@ -1436,6 +1671,16 @@ pub async fn get_failover_history(
     Json(ApiResponse::success(records.clone(), "故障转移历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:disaster:write"])),
+    path = "/dr/switch",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn switch_regions(
     State(_state): State<AppState>,
     Json(req): Json<SwitchRegionsRequest>,
@@ -1481,6 +1726,16 @@ pub async fn switch_regions(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:disaster:read"])),
+    path = "/dr/region-health",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "disaster_v56"
+)]
 pub async fn get_region_health(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

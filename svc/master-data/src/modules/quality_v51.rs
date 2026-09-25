@@ -783,6 +783,20 @@ pub async fn list_quality_checks(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:quality:read"])),
+    path = "/checks/{entity_type}/{entity_id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn get_quality_check_results(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -901,6 +915,19 @@ pub async fn update_quality_rule(
     Json(ApiResponse::success(rule.clone(), "质量规则已更新"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:quality:write"])),
+    path = "/rules/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn delete_quality_rule(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1148,6 +1175,19 @@ pub async fn get_fix_actions(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:quality:write"])),
+    path = "/auto-fix/actions/{id}/revert",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn revert_fix_action(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1170,6 +1210,16 @@ pub async fn revert_fix_action(
     Json(ApiResponse::success(action.clone(), "修复操作已回滚"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:quality:read"])),
+    path = "/auto-fix/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn get_fix_history(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<FixHistoryEntry>>> {
@@ -1196,6 +1246,16 @@ pub async fn get_fix_history(
     Json(ApiResponse::success(history, "修复历史记录"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:quality:write"])),
+    path = "/auto-fix/workflow",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn run_fix_workflow(
     State(_state): State<AppState>,
     Json(req): Json<RunFixWorkflowRequest>,
@@ -1370,6 +1430,19 @@ pub async fn get_suggestions(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:quality:write"])),
+    path = "/ai/suggestions/{id}/approve",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn approve_suggestion(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1390,6 +1463,19 @@ pub async fn approve_suggestion(
     Json(ApiResponse::success(suggestion.clone(), "治理建议已批准"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:quality:write"])),
+    path = "/ai/suggestions/{id}/reject",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn reject_suggestion(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1410,6 +1496,16 @@ pub async fn reject_suggestion(
     Json(ApiResponse::success(suggestion.clone(), "治理建议已拒绝"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:quality:read"])),
+    path = "/ai/insights",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn get_governance_insights(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<GovernanceInsight>>> {
@@ -1419,6 +1515,16 @@ pub async fn get_governance_insights(
     Json(ApiResponse::success(insights.clone(), "治理洞察列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:quality:write"])),
+    path = "/ai/predict",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_v51"
+)]
 pub async fn predict_quality_trend(
     State(_state): State<AppState>,
     Json(req): Json<PredictTrendRequest>,

@@ -1043,6 +1043,16 @@ pub struct SuggestTagsRequest {
 
 // ==================== 处理器：图谱 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/graph/node",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn add_graph_node(
     State(_state): State<AppState>,
     Json(req): Json<AddGraphNodeRequest>,
@@ -1067,6 +1077,16 @@ pub async fn add_graph_node(
     Json(ApiResponse::success(result, "图谱节点已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/graph/edge",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn add_graph_edge(
     State(_state): State<AppState>,
     Json(req): Json<AddGraphEdgeRequest>,
@@ -1086,6 +1106,19 @@ pub async fn add_graph_edge(
     Json(ApiResponse::success(result, "图谱边已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/graph/neighbors/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn get_neighbors(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1096,6 +1129,19 @@ pub async fn get_neighbors(
     Json(ApiResponse::success(neighbors, "邻居节点列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/graph/community/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn get_community(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1112,6 +1158,16 @@ pub async fn get_community(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/graph/path",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn find_shortest_path_handler(
     State(_state): State<AppState>,
     Json(req): Json<FindPathRequest>,
@@ -1171,6 +1227,16 @@ pub async fn get_subgraph(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/graph/embeddings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn compute_embeddings_handler(
     State(_state): State<AppState>,
     Json(_req): Json<ComputeEmbeddingsRequest>,
@@ -1189,6 +1255,16 @@ pub async fn compute_embeddings_handler(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/graph/communities",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn detect_communities_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<GraphCommunity>>> {
@@ -1201,6 +1277,16 @@ pub async fn detect_communities_handler(
 
 // ==================== 处理器：语义搜索 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/search/index",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn index_entity(
     State(_state): State<AppState>,
     Json(req): Json<IndexEntityRequest>,
@@ -1217,6 +1303,16 @@ pub async fn index_entity(
     Json(ApiResponse::success(result, "实体已索引"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/search/semantic",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn search_semantic_handler(
     State(_state): State<AppState>,
     Json(req): Json<SemanticSearchRequest>,
@@ -1238,6 +1334,16 @@ pub async fn search_semantic_handler(
     Json(ApiResponse::success(results, "语义搜索结果"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/search/hybrid",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn search_hybrid_handler(
     State(_state): State<AppState>,
     Json(req): Json<HybridSearchRequest>,
@@ -1258,6 +1364,16 @@ pub async fn search_hybrid_handler(
     Json(ApiResponse::success(results, "混合搜索结果"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/search/reindex",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn reindex_all(
     State(_state): State<AppState>,
     Json(_req): Json<ReindexRequest>,
@@ -1276,6 +1392,16 @@ pub async fn reindex_all(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/search/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn get_search_stats(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1285,6 +1411,19 @@ pub async fn get_search_stats(
     Json(ApiResponse::success(stats, "搜索统计"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/search/index/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn remove_from_index(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1306,6 +1445,16 @@ pub async fn remove_from_index(
 
 // ==================== 处理器：智能标签 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/tags",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn create_tag(
     State(_state): State<AppState>,
     Json(req): Json<CreateTagRequest>,
@@ -1326,6 +1475,16 @@ pub async fn create_tag(
     Json(ApiResponse::success(result, "标签已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/tag/apply",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn apply_tag(
     State(_state): State<AppState>,
     Json(req): Json<ApplyTagRequest>,
@@ -1341,6 +1500,16 @@ pub async fn apply_tag(
     Json(ApiResponse::success(result, "标签已应用"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/tag/auto",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn auto_tag(
     State(_state): State<AppState>,
     Json(req): Json<AutoTagRequest>,
@@ -1364,6 +1533,20 @@ pub async fn auto_tag(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/tags/entity/{type}/{id}",
+    params(
+        ("type" = String, Path, description = "type"),
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn get_tags_for_entity(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -1378,6 +1561,19 @@ pub async fn get_tags_for_entity(
     Json(ApiResponse::success(tags, "实体标签列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/entities/tag/{tag}",
+    params(
+        ("tag" = String, Path, description = "tag")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn get_entities_by_tag(
     State(_state): State<AppState>,
     Path(tag): Path<String>,
@@ -1389,6 +1585,19 @@ pub async fn get_entities_by_tag(
     Json(ApiResponse::success(entities, "标签实体列表"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/tag/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn remove_tag_handler(
     State(_state): State<AppState>,
     Json(req): Json<RemoveTagRequest>,
@@ -1416,6 +1625,16 @@ pub async fn remove_tag_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/tags",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn list_tags(
     State(_state): State<AppState>,
     Query(params): Query<ListTagsQuery>,
@@ -1434,6 +1653,16 @@ pub async fn get_tag_stats(State(_state): State<AppState>) -> Json<ApiResponse<s
     Json(ApiResponse::success(stats, "标签统计"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:semantic:read"])),
+    path = "/tags/suggest",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "semantic_v57"
+)]
 pub async fn suggest_tags(
     State(_state): State<AppState>,
     Json(req): Json<SuggestTagsRequest>,

@@ -693,6 +693,16 @@ fn compute_diff(from: &serde_json::Value, to: &serde_json::Value) -> VersionDiff
 
 // ==================== 处理器：版本控制 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/version/snapshot",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn create_snapshot(
     State(_state): State<AppState>,
     Json(req): Json<CreateSnapshotRequest>,
@@ -737,6 +747,20 @@ pub async fn create_snapshot(
     Json(ApiResponse::success(snapshot, "版本快照已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/version/{entity_type}/{entity_id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn get_version(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -763,6 +787,16 @@ pub async fn get_version(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/version/diff",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn diff_versions(
     State(_state): State<AppState>,
     Query(params): Query<VersionDiffQuery>,
@@ -793,6 +827,16 @@ pub async fn diff_versions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/version/restore",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn restore_version(
     State(_state): State<AppState>,
     Json(req): Json<RestoreVersionRequest>,
@@ -852,6 +896,20 @@ pub async fn restore_version(
     Json(ApiResponse::success(restored, "版本已恢复"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/version/history/{entity_type}/{entity_id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn list_history(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -891,6 +949,16 @@ pub async fn list_history(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/version/branch",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn create_branch(
     State(_state): State<AppState>,
     Json(req): Json<CreateBranchRequest>,
@@ -922,6 +990,16 @@ pub async fn create_branch(
     Json(ApiResponse::success(branch, "分支已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/version/merge",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn merge_branch(
     State(_state): State<AppState>,
     Json(req): Json<MergeBranchRequest>,
@@ -950,6 +1028,16 @@ pub async fn merge_branch(
 
 // ==================== 处理器：审计日志 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/audit/log",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn query_audit_log(
     State(_state): State<AppState>,
     Query(params): Query<AuditLogQuery>,
@@ -1029,6 +1117,19 @@ pub async fn query_audit_log(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/audit/user/{user_id}",
+    params(
+        ("user_id" = String, Path, description = "user_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn get_user_activity(
     State(_state): State<AppState>,
     Path(user_id): Path<String>,
@@ -1086,6 +1187,20 @@ pub async fn get_user_activity(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/audit/entity/{entity_type}/{entity_id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn get_entity_history(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -1143,6 +1258,16 @@ pub async fn get_entity_history(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/audit/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn export_audit_log(
     State(_state): State<AppState>,
     Json(req): Json<ExportAuditLogRequest>,
@@ -1191,6 +1316,16 @@ pub async fn export_audit_log(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/audit/compliance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn get_compliance_audit(
     State(_state): State<AppState>,
     Query(params): Query<ComplianceAuditQuery>,
@@ -1245,6 +1380,16 @@ pub async fn get_compliance_audit(
 
 // ==================== 处理器：数据权限矩阵 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/permissions/grant",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn grant_permission(
     State(_state): State<AppState>,
     Json(req): Json<GrantPermissionRequest>,
@@ -1267,6 +1412,19 @@ pub async fn grant_permission(
     Json(ApiResponse::success(perm, "权限已授予"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/permissions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn revoke_permission(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1284,6 +1442,16 @@ pub async fn revoke_permission(
     Json(ApiResponse::success_no_data("权限已撤销"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/permissions/check",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn check_permission(
     State(_state): State<AppState>,
     Query(params): Query<CheckPermissionQuery>,
@@ -1344,6 +1512,19 @@ pub async fn check_permission(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/permissions/user/{user_id}",
+    params(
+        ("user_id" = String, Path, description = "user_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn get_user_permissions(
     State(_state): State<AppState>,
     Path(user_id): Path<String>,
@@ -1404,6 +1585,16 @@ pub async fn get_user_permissions(
     Json(ApiResponse::success(filtered, "用户权限列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:versioning:read"])),
+    path = "/permissions/resource",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn get_resource_permissions(
     State(_state): State<AppState>,
     Query(params): Query<ResourcePermissionsQuery>,
@@ -1439,6 +1630,16 @@ pub async fn get_resource_permissions(
     Json(ApiResponse::success(filtered, "资源权限列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/roles",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn create_role(
     State(_state): State<AppState>,
     Json(req): Json<CreateRoleRequest>,
@@ -1461,6 +1662,16 @@ pub async fn create_role(
     Json(ApiResponse::success(role, "角色已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/roles/assign",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn assign_role(
     State(_state): State<AppState>,
     Json(req): Json<AssignRoleRequest>,
@@ -1482,6 +1693,16 @@ pub async fn assign_role(
     Json(ApiResponse::success(assignment, "角色已分配"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:versioning:write"])),
+    path = "/roles/revoke",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "versioning_v54"
+)]
 pub async fn revoke_role(
     State(_state): State<AppState>,
     Json(req): Json<RevokeRoleRequest>,

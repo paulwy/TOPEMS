@@ -1159,6 +1159,16 @@ pub struct ExposeApiRequest {
 
 // ==================== 处理器：治理成熟度 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/maturity/assess",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn assess_maturity(
     State(_state): State<AppState>,
     Json(req): Json<AssessMaturityRequest>,
@@ -1180,6 +1190,16 @@ pub async fn assess_maturity(
     Json(ApiResponse::success(result, "成熟度评估完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/maturity/assessment",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_assessment(
     State(_state): State<AppState>,
     Query(params): Query<GetAssessmentQuery>,
@@ -1201,6 +1221,16 @@ pub async fn get_assessment(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/maturity/scores",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_dimension_scores(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<DimensionScore>>> {
@@ -1210,6 +1240,16 @@ pub async fn get_dimension_scores(
     Json(ApiResponse::success(scores, "维度评分列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/maturity/improvement-plan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn create_improvement_plan(
     State(_state): State<AppState>,
     Json(req): Json<ImprovementPlanRequest>,
@@ -1233,6 +1273,16 @@ pub async fn create_improvement_plan(
     Json(ApiResponse::success(plan, "改进计划已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/maturity/progress",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn track_progress(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MaturityProgress>>> {
@@ -1242,6 +1292,16 @@ pub async fn track_progress(
     Json(ApiResponse::success(progress, "成熟度进度"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/maturity/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_maturity_history(
     State(_state): State<AppState>,
     Query(params): Query<MaturityHistoryQuery>,
@@ -1255,6 +1315,16 @@ pub async fn get_maturity_history(
     Json(ApiResponse::success(history, "成熟度历史"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/maturity/benchmark",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_benchmark(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<BenchmarkData>>> {
@@ -1266,6 +1336,16 @@ pub async fn get_benchmark(
 
 // ==================== 处理器：自动化工作流 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/workflow",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn create_workflow(
     State(_state): State<AppState>,
     Json(req): Json<CreateWorkflowRequest>,
@@ -1307,6 +1387,19 @@ pub async fn create_workflow(
     Json(ApiResponse::success(workflow, "工作流已创建"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/workflow/{id}/start",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn start_workflow(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1320,6 +1413,19 @@ pub async fn start_workflow(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/workflow/{id}/advance",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn advance_step(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1334,6 +1440,19 @@ pub async fn advance_step(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/workflow/{id}/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_workflow_status(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1347,6 +1466,16 @@ pub async fn get_workflow_status(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/workflows",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn list_workflows(
     State(_state): State<AppState>,
     Query(params): Query<ListWorkflowsQuery>,
@@ -1360,6 +1489,16 @@ pub async fn list_workflows(
     Json(ApiResponse::success(workflows, "工作流列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/workflow/templates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_workflow_templates(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<WorkflowTemplate>>> {
@@ -1369,6 +1508,19 @@ pub async fn get_workflow_templates(
     Json(ApiResponse::success(templates, "工作流模板"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/workflow/step/{id}/approve",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn approve_step(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1388,6 +1540,19 @@ pub async fn approve_step(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/workflow/step/{id}/reject",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn reject_step(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1419,6 +1584,16 @@ pub async fn get_workflow_history(
 
 // ==================== 处理器：数据产品化 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/data-product",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn create_data_product(
     State(_state): State<AppState>,
     Json(req): Json<CreateDataProductRequest>,
@@ -1439,6 +1614,19 @@ pub async fn create_data_product(
     Json(ApiResponse::success(product, "数据产品已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/data-product/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_data_product(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1452,6 +1640,16 @@ pub async fn get_data_product(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/data-products",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn list_data_products(
     State(_state): State<AppState>,
     Query(params): Query<ListDataProductsQuery>,
@@ -1465,6 +1663,19 @@ pub async fn list_data_products(
     Json(ApiResponse::success(products, "数据产品列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/data-product/{id}/contract",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn update_contract(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1499,6 +1710,19 @@ pub async fn update_contract(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/data-product/{id}/contract/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_contract_status(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1512,6 +1736,19 @@ pub async fn get_contract_status(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:governance:write"])),
+    path = "/data-product/{id}/expose",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn expose_as_api(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1529,6 +1766,19 @@ pub async fn expose_as_api(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/data-product/{id}/consumers",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_consumers(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1539,6 +1789,19 @@ pub async fn get_consumers(
     Json(ApiResponse::success(consumers, "消费者列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:governance:read"])),
+    path = "/data-product/{id}/lineage",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "governance_v58"
+)]
 pub async fn get_product_lineage(
     State(_state): State<AppState>,
     Path(id): Path<String>,

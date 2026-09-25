@@ -1322,6 +1322,16 @@ pub struct UpdateAssetRequest {
 
 // ==================== API 处理器：知识图谱 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:knowledge:write"])),
+    path = "/nodes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn add_kg_node(
     State(_state): State<AppState>,
     Json(req): Json<AddKGNodeRequest>,
@@ -1337,6 +1347,16 @@ pub async fn add_kg_node(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:knowledge:write"])),
+    path = "/edges",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn add_kg_edge(
     State(_state): State<AppState>,
     Json(req): Json<AddKGEdgeRequest>,
@@ -1371,6 +1391,16 @@ pub async fn get_subgraph(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/path",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn find_path(
     State(_state): State<AppState>,
     Query(params): Query<PathQuery>,
@@ -1383,6 +1413,19 @@ pub async fn find_path(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/similar/{node_id}",
+    params(
+        ("node_id" = String, Path, description = "node_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn get_similar(
     State(_state): State<AppState>,
     Path(node_id): Path<String>,
@@ -1396,6 +1439,16 @@ pub async fn get_similar(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn export_kg(
     State(_state): State<AppState>,
     Query(params): Query<ExportKGQuery>,
@@ -1424,6 +1477,19 @@ pub async fn export_kg(
 
 // ==================== API 处理器：智能推荐 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/recommendations/{user_id}",
+    params(
+        ("user_id" = String, Path, description = "user_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn get_recommendations(
     State(_state): State<AppState>,
     Path(user_id): Path<String>,
@@ -1438,6 +1504,16 @@ pub async fn get_recommendations(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:knowledge:write"])),
+    path = "/interactions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn record_interaction(
     State(_state): State<AppState>,
     Json(req): Json<RecordInteractionRequest>,
@@ -1451,6 +1527,19 @@ pub async fn record_interaction(
     Json(ApiResponse::success(record, "交互记录已保存"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/similar-items/{item_id}",
+    params(
+        ("item_id" = String, Path, description = "item_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn get_similar_items(
     State(_state): State<AppState>,
     Path(item_id): Path<String>,
@@ -1464,6 +1553,16 @@ pub async fn get_similar_items(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/trending",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn get_trending_items(
     State(_state): State<AppState>,
     Query(params): Query<TrendingQuery>,
@@ -1476,6 +1575,16 @@ pub async fn get_trending_items(
 
 // ==================== API 处理器：数据资产目录 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:knowledge:write"])),
+    path = "/assets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn register_asset(
     State(_state): State<AppState>,
     Json(req): Json<RegisterAssetRequest>,
@@ -1500,6 +1609,16 @@ pub async fn register_asset(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/assets",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn search_assets(
     State(_state): State<AppState>,
     Query(params): Query<SearchAssetsQuery>,
@@ -1537,6 +1656,19 @@ pub async fn search_assets(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/assets/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn get_asset(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1549,6 +1681,19 @@ pub async fn get_asset(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:knowledge:write"])),
+    path = "/assets/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn update_asset(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1571,6 +1716,16 @@ pub async fn update_asset(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn list_categories(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<AssetCategory>>> {
@@ -1580,6 +1735,16 @@ pub async fn list_categories(
     Json(ApiResponse::success(categories, "资产分类列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:knowledge:read"])),
+    path = "/assets/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "knowledge_v53"
+)]
 pub async fn get_asset_stats(State(_state): State<AppState>) -> Json<ApiResponse<AssetStats>> {
     ensure_initialized().await;
 

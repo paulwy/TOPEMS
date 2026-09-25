@@ -1093,6 +1093,16 @@ pub struct RollbackPropagationRequest {
 
 // ==================== API 处理器：数据血缘 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/register",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn register_lineage(
     State(_state): State<AppState>,
     Json(req): Json<RegisterLineageRequest>,
@@ -1203,6 +1213,16 @@ pub async fn export_lineage(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/delete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn delete_lineage(
     State(_state): State<AppState>,
     Json(req): Json<DeleteLineageRequest>,
@@ -1217,6 +1237,16 @@ pub async fn delete_lineage(
 
 // ==================== API 处理器：影响分析 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/impact/analyze",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn analyze_impact(
     State(_state): State<AppState>,
     Json(req): Json<AnalyzeImpactRequest>,
@@ -1237,6 +1267,19 @@ pub async fn analyze_impact(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:lineage:read"])),
+    path = "/impact/report/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn get_impact_report(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1249,6 +1292,16 @@ pub async fn get_impact_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/impact/simulate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn simulate_change(
     State(_state): State<AppState>,
     Json(req): Json<SimulateChangeRequest>,
@@ -1262,6 +1315,16 @@ pub async fn simulate_change(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:lineage:read"])),
+    path = "/impact/scope",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn get_affected_scope(
     State(_state): State<AppState>,
     Query(params): Query<AffectedScopeQuery>,
@@ -1276,6 +1339,16 @@ pub async fn get_affected_scope(
 
 // ==================== API 处理器：变更传播 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/propagate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn propagate_change(
     State(_state): State<AppState>,
     Json(req): Json<PropagateChangeRequest>,
@@ -1304,6 +1377,16 @@ pub async fn propagate_change(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:lineage:read"])),
+    path = "/propagation/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn get_propagation_rules(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<PropagationRule>>> {
@@ -1312,6 +1395,16 @@ pub async fn get_propagation_rules(
     Json(ApiResponse::success(rules, "传播规则列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/propagation/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn add_propagation_rule(
     State(_state): State<AppState>,
     Json(req): Json<AddPropagationRuleRequest>,
@@ -1330,6 +1423,16 @@ pub async fn add_propagation_rule(
     Json(ApiResponse::success(rule, "传播规则已添加"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:lineage:read"])),
+    path = "/propagation/log",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn get_propagation_log(
     State(_state): State<AppState>,
     Query(params): Query<PropagationLogQuery>,
@@ -1360,6 +1463,16 @@ pub async fn get_propagation_log(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:lineage:write"])),
+    path = "/propagation/rollback",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "lineage_v52"
+)]
 pub async fn rollback_propagation(
     State(_state): State<AppState>,
     Json(req): Json<RollbackPropagationRequest>,

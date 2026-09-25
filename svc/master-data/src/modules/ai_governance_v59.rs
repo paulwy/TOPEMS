@@ -836,6 +836,16 @@ pub struct UpdateRulesRequest {
 
 // ==================== 处理器：数据治理 AI ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/governance/analyze",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn analyze(
     State(_state): State<AppState>,
     Json(req): Json<AnalyzeRequest>,
@@ -865,6 +875,19 @@ pub async fn get_suggestions(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/governance/entity/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_entity_suggestions(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -875,6 +898,19 @@ pub async fn get_entity_suggestions(
     Json(ApiResponse::success(suggestions, "实体治理建议"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/governance/apply/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn apply_suggestion(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -888,6 +924,19 @@ pub async fn apply_suggestion(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/governance/dismiss/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn dismiss_suggestion(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -901,6 +950,16 @@ pub async fn dismiss_suggestion(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/governance/models",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_models(State(_state): State<AppState>) -> Json<ApiResponse<Vec<GovernanceModel>>> {
     ensure_initialized().await;
     let store = get_v59_store();
@@ -908,6 +967,19 @@ pub async fn get_models(State(_state): State<AppState>) -> Json<ApiResponse<Vec<
     Json(ApiResponse::success(models, "治理模型列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/governance/train/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn train_model(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -923,6 +995,16 @@ pub async fn train_model(
 
 // ==================== 处理器：智能匹配 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/matching/rule",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn create_match_rule(
     State(_state): State<AppState>,
     Json(req): Json<CreateMatchRuleRequest>,
@@ -944,6 +1026,16 @@ pub async fn create_match_rule(
     Json(ApiResponse::success(rule, "匹配规则已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/matching/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_match_rules(State(_state): State<AppState>) -> Json<ApiResponse<Vec<MatchRule>>> {
     ensure_initialized().await;
     let store = get_v59_store();
@@ -951,6 +1043,16 @@ pub async fn get_match_rules(State(_state): State<AppState>) -> Json<ApiResponse
     Json(ApiResponse::success(rules, "匹配规则列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/matching/entities",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn match_entities(
     State(_state): State<AppState>,
     Json(req): Json<MatchEntitiesRequest>,
@@ -965,6 +1067,16 @@ pub async fn match_entities(
     Json(ApiResponse::success(results, "实体匹配完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/matching/results",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_match_results(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MatchResult>>> {
@@ -974,6 +1086,19 @@ pub async fn get_match_results(
     Json(ApiResponse::success(results, "匹配结果列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/matching/review/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn review_match(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -993,6 +1118,19 @@ pub async fn review_match(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/matching/confirm/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn confirm_match(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1006,6 +1144,19 @@ pub async fn confirm_match(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/matching/reject/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn reject_match(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1019,6 +1170,16 @@ pub async fn reject_match(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/matching/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_match_stats(State(_state): State<AppState>) -> Json<ApiResponse<MatchStats>> {
     ensure_initialized().await;
     let store = get_v59_store();
@@ -1028,6 +1189,16 @@ pub async fn get_match_stats(State(_state): State<AppState>) -> Json<ApiResponse
 
 // ==================== 处理器：自动分类 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/classifier",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn create_classifier(
     State(_state): State<AppState>,
     Json(req): Json<CreateClassifierRequest>,
@@ -1048,6 +1219,16 @@ pub async fn create_classifier(
     Json(ApiResponse::success(model, "分类器已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/classifiers",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_classifiers(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ClassificationModel>>> {
@@ -1057,6 +1238,20 @@ pub async fn get_classifiers(
     Json(ApiResponse::success(models, "分类器列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/classify/{entity_type}/{id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn classify_entity(
     State(_state): State<AppState>,
     Path((entity_type, id)): Path<(String, String)>,
@@ -1067,6 +1262,20 @@ pub async fn classify_entity(
     Json(ApiResponse::success(result, "分类完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/classification/{entity_type}/{id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_classification(
     State(_state): State<AppState>,
     Path((_entity_type, id)): Path<(String, String)>,
@@ -1080,6 +1289,19 @@ pub async fn get_classification(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/classification/categories/{entity_type}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_entity_categories(
     State(_state): State<AppState>,
     Path(entity_type): Path<String>,
@@ -1090,6 +1312,19 @@ pub async fn get_entity_categories(
     Json(ApiResponse::success(categories, "实体分类列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/classification/review/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn review_classification(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1108,6 +1343,16 @@ pub async fn review_classification(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:ai_governance:read"])),
+    path = "/classification/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn get_classification_stats(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<ClassificationStats>> {
@@ -1117,6 +1362,19 @@ pub async fn get_classification_stats(
     Json(ApiResponse::success(stats, "分类统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:ai_governance:write"])),
+    path = "/classifier/rules/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai_governance_v59"
+)]
 pub async fn update_classifier_rules(
     State(_state): State<AppState>,
     Path(id): Path<String>,

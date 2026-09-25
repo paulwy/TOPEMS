@@ -1117,6 +1117,16 @@ pub struct BulkTransitionRequest {
 
 // ==================== 处理器：元数据管理 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/metadata",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn create_metadata(
     State(_state): State<AppState>,
     Json(req): Json<CreateMetadataRequest>,
@@ -1143,6 +1153,19 @@ pub async fn create_metadata(
     Json(ApiResponse::success(obj, "元数据对象已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/metadata/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_metadata(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1156,6 +1179,16 @@ pub async fn get_metadata(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/metadata",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn list_metadata(
     State(_state): State<AppState>,
     Query(params): Query<ListMetadataQuery>,
@@ -1169,6 +1202,16 @@ pub async fn list_metadata(
     Json(ApiResponse::success(list, "元数据对象列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/metadata/search",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn search_metadata(
     State(_state): State<AppState>,
     Query(params): Query<SearchMetadataQuery>,
@@ -1180,6 +1223,19 @@ pub async fn search_metadata(
     Json(ApiResponse::success(results, "元数据搜索结果"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/metadata/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn update_metadata(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1205,6 +1261,19 @@ pub async fn update_metadata(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/metadata/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn delete_metadata(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1218,6 +1287,19 @@ pub async fn delete_metadata(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/metadata/{id}/attribute",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn add_attribute(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1239,6 +1321,16 @@ pub async fn add_attribute(
     Json(ApiResponse::success(attr, "属性已添加"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/metadata/tag",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn add_tag(
     State(_state): State<AppState>,
     Json(req): Json<AddTagRequest>,
@@ -1257,6 +1349,16 @@ pub async fn add_tag(
     Json(ApiResponse::success(tag, "标签已添加"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/metadata/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_metadata_stats(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<MetadataStats>> {
@@ -1268,6 +1370,16 @@ pub async fn get_metadata_stats(
 
 // ==================== 处理器：数据血缘增强 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/lineage/graph",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn build_lineage_graph(
     State(_state): State<AppState>,
     Json(req): Json<BuildLineageGraphRequest>,
@@ -1318,6 +1430,16 @@ pub async fn get_downstream(
     Json(ApiResponse::success(nodes, "下游血缘节点"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/lineage/path",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_path(
     State(_state): State<AppState>,
     Json(req): Json<GetPathRequest>,
@@ -1331,6 +1453,19 @@ pub async fn get_path(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/lineage/{id}/impact",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_lineage_impact(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1342,6 +1477,16 @@ pub async fn get_lineage_impact(
     Json(ApiResponse::success(impact, "血缘影响分析"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/lineage/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_lineage_dashboard(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<LineageDashboard>> {
@@ -1365,6 +1510,19 @@ pub async fn export_lineage(
 
 // ==================== 处理器：生命周期管理 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/lifecycle/{id}/stage",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_current_stage(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1381,6 +1539,19 @@ pub async fn get_current_stage(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/lifecycle/{id}/transition",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn transition_stage(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1406,6 +1577,19 @@ pub async fn transition_stage(
     Json(ApiResponse::success(history, "生命周期阶段已转换"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/lifecycle/{id}/history",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_lifecycle_history(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1417,6 +1601,16 @@ pub async fn get_lifecycle_history(
     Json(ApiResponse::success(history, "生命周期历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/lifecycle/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn create_policy(
     State(_state): State<AppState>,
     Json(req): Json<CreatePolicyRequest>,
@@ -1436,6 +1630,16 @@ pub async fn create_policy(
     Json(ApiResponse::success(policy, "生命周期策略已创建"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/lifecycle/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_policies(
     State(_state): State<AppState>,
     Query(params): Query<GetPoliciesQuery>,
@@ -1447,6 +1651,16 @@ pub async fn get_policies(
     Json(ApiResponse::success(policies, "生命周期策略列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/lifecycle/auto-transition",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn auto_transition(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
@@ -1457,6 +1671,16 @@ pub async fn auto_transition(
     Json(ApiResponse::success(results, "自动转换完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:metadata:read"])),
+    path = "/lifecycle/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn get_lifecycle_dashboard(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<LifecycleDashboard>> {
@@ -1467,6 +1691,16 @@ pub async fn get_lifecycle_dashboard(
     Json(ApiResponse::success(dashboard, "生命周期仪表盘"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:metadata:write"])),
+    path = "/lifecycle/bulk",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metadata_v60"
+)]
 pub async fn bulk_transition(
     State(_state): State<AppState>,
     Json(req): Json<BulkTransitionRequest>,
