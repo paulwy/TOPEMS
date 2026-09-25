@@ -205,6 +205,16 @@ pub async fn send_notification(
 }
 
 /// 广播通知（管理员使用）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notify/broadcast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn broadcast_notification(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -517,6 +527,16 @@ pub async fn mark_as_read(
 }
 
 /// 标记所有通知为已读
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notify/read-all",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn mark_all_as_read(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -652,6 +672,16 @@ pub async fn get_unread_count(
 }
 
 /// 获取当前用户的未读通知列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notifications/unread",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_unread_notifications(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -818,6 +848,16 @@ pub async fn delete_notification(
 }
 
 /// 删除所有通知（当前用户的）
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn delete_all_notifications(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -949,6 +989,19 @@ pub async fn get_notification(
 }
 
 /// 标记为未读
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/{id}/unread",
+    params(
+        ("id" = String, Path, description = "Notification ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn mark_as_unread(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1027,6 +1080,16 @@ pub async fn mark_as_unread(
 }
 
 /// 批量标记已读
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-read",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn bulk_mark_read(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1094,6 +1157,16 @@ pub async fn bulk_mark_read(
 }
 
 /// 批量删除
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/bulk-delete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn bulk_delete(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1157,6 +1230,16 @@ pub async fn bulk_delete(
 }
 
 /// 获取当前用户的通知统计（按类型统计数量）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notifications/stats/me",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_notification_stats(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1243,6 +1326,19 @@ pub async fn get_notification_stats(
 }
 
 /// 归档通知
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/{id}/archive",
+    params(
+        ("id" = String, Path, description = "Notification ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn archive_notification(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1321,6 +1417,19 @@ pub async fn archive_notification(
 }
 
 /// 取消归档
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/{id}/unarchive",
+    params(
+        ("id" = String, Path, description = "Notification ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn unarchive_notification(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1399,6 +1508,16 @@ pub async fn unarchive_notification(
 }
 
 /// 列出归档通知
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notifications/archived",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn list_archived_notifications(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1506,6 +1625,16 @@ pub async fn list_archived_notifications(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notifications/archive/config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_archive_config(
     State(_pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,
@@ -1524,6 +1653,16 @@ pub async fn get_archive_config(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/archive/config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn update_archive_config(
     State(_pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,
@@ -1537,6 +1676,16 @@ pub async fn update_archive_config(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notifications/archive/run",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn run_auto_archive(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1587,6 +1736,16 @@ pub async fn run_auto_archive(
 }
 
 /// 列出通知模板
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notification-templates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn list_templates(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1643,6 +1802,19 @@ pub async fn list_templates(
 }
 
 /// 获取模板详情
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/notification-templates/{id}",
+    params(
+        ("id" = String, Path, description = "Template ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1699,6 +1871,16 @@ pub async fn get_template(
 }
 
 /// 创建模板
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notification-templates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn create_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1775,6 +1957,19 @@ pub async fn create_template(
 }
 
 /// 更新模板
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notification-templates/{id}",
+    params(
+        ("id" = String, Path, description = "Template ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn update_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1853,6 +2048,19 @@ pub async fn update_template(
 }
 
 /// 删除模板
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/notification-templates/{id}",
+    params(
+        ("id" = String, Path, description = "Template ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn delete_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1930,6 +2138,16 @@ async fn send_notification_email(pool: &PgPool, req: &SendNotificationRequest) -
 // ===== 通知渠道 CRUD =====
 
 /// 列出通知渠道
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/channels",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn list_channels(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -2009,6 +2227,19 @@ pub async fn list_channels(
 }
 
 /// 获取单个渠道
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/channels/{id}",
+    params(
+        ("id" = String, Path, description = "Channel ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_channel(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -2053,6 +2284,16 @@ pub async fn get_channel(
 }
 
 /// 创建渠道
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/channels",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn create_channel(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -2108,6 +2349,19 @@ pub async fn create_channel(
 }
 
 /// 更新渠道
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/channels/{id}",
+    params(
+        ("id" = String, Path, description = "Channel ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn update_channel(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -2170,6 +2424,19 @@ pub async fn update_channel(
 }
 
 /// 删除渠道
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/channels/{id}",
+    params(
+        ("id" = String, Path, description = "Channel ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn delete_channel(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -2203,6 +2470,19 @@ pub async fn delete_channel(
 }
 
 /// 测试渠道连接
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:notification:write"])),
+    path = "/notification/channels/{id}/test",
+    params(
+        ("id" = String, Path, description = "Channel ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn test_channel(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -2244,6 +2524,19 @@ pub async fn test_channel(
 }
 
 /// 获取渠道指标
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:notification:read"])),
+    path = "/notification/channels/{id}/metrics",
+    params(
+        ("id" = String, Path, description = "Channel ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 pub async fn get_channel_metrics(
     State(_pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,
