@@ -27,7 +27,6 @@ pub struct ImageCompareRequest {
 
 pub struct MultimodalApi;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -102,7 +101,6 @@ mod tests {
         assert!(debug_str.contains("image1_base64"));
     }
 }
-
 
 #[utoipa::path(
     post,

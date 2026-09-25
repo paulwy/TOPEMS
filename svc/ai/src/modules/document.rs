@@ -13,8 +13,6 @@ use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct DocumentApi;
 
-
-
 /// POST /api/documents/upload - 上传文档并处理
 #[utoipa::path(
     post,
@@ -106,7 +104,10 @@ pub async fn upload(
                     "json" => Some("application/json".to_string()),
                     "pdf" => Some("application/pdf".to_string()),
                     "doc" => Some("application/msword".to_string()),
-                    "docx" => Some("application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string()),
+                    "docx" => Some(
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            .to_string(),
+                    ),
                     _ => None,
                 };
             }
@@ -315,14 +316,7 @@ pub async fn delete(
         Ok(true) => {
             if let Err(e) = state
                 .audit
-                .log_document_operation(
-                    "delete_document",
-                    Some(id),
-                    user_id,
-                    None,
-                    "success",
-                    None,
-                )
+                .log_document_operation("delete_document", Some(id), user_id, None, "success", None)
                 .await
             {
                 tracing::warn!("ai audit failed: {e}");
@@ -476,8 +470,7 @@ pub async fn extract(
                                 .replace("```", "")
                                 .trim()
                                 .to_string();
-                            serde_json::from_str(&cleaned_response)
-                                .unwrap_or(serde_json::json!({}))
+                            serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
                             return Json(ApiResponse::<ExtractDocumentResponse>::error(
@@ -499,8 +492,7 @@ pub async fn extract(
                                 .replace("```", "")
                                 .trim()
                                 .to_string();
-                            serde_json::from_str(&cleaned_response)
-                                .unwrap_or(serde_json::json!({}))
+                            serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
                             return Json(ApiResponse::<ExtractDocumentResponse>::error(
@@ -522,8 +514,7 @@ pub async fn extract(
                                 .replace("```", "")
                                 .trim()
                                 .to_string();
-                            serde_json::from_str(&cleaned_response)
-                                .unwrap_or(serde_json::json!({}))
+                            serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
                             return Json(ApiResponse::<ExtractDocumentResponse>::error(
@@ -545,8 +536,7 @@ pub async fn extract(
                                 .replace("```", "")
                                 .trim()
                                 .to_string();
-                            serde_json::from_str(&cleaned_response)
-                                .unwrap_or(serde_json::json!({}))
+                            serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
                         }
                         Err(e) => {
                             return Json(ApiResponse::<ExtractDocumentResponse>::error(

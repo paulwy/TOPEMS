@@ -172,7 +172,10 @@ pub async fn list_share_links(
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
             expires_at: row.expires_at.map(|t| t.to_string()),
-            created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 

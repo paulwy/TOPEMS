@@ -8,7 +8,6 @@ use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct AnalysisApi;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -58,7 +57,6 @@ mod tests {
         assert_eq!(tid, Uuid::nil());
     }
 }
-
 
 /// POST /api/analysis/sentiment - 情感分析
 #[utoipa::path(

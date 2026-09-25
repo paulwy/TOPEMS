@@ -1417,11 +1417,12 @@ pub async fn get_bottleneck_analysis(
             .await
             .unwrap_or(0);
 
-    let in_progress: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress'")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let in_progress: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress'",
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
 
     let pending: i64 =
         sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'pending'")

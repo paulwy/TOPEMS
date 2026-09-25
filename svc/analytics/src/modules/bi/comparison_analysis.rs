@@ -201,8 +201,14 @@ pub async fn list_comparisons(
             status: row.status,
             last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
             created_by: row.created_by,
-            created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
+            updated_at: row
+                .updated_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 

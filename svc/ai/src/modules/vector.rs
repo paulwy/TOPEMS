@@ -14,8 +14,6 @@ use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct VectorApi;
 
-
-
 /// POST /api/vectors/store - 存储文档向量
 #[utoipa::path(
     post,
@@ -35,9 +33,8 @@ pub async fn store(
 ) -> Json<ApiResponse<StoreVectorResponse>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-    let details = Some(
-        serde_json::json!({"document_id": req.document_id, "chunk_index": req.chunk_index}),
-    );
+    let details =
+        Some(serde_json::json!({"document_id": req.document_id, "chunk_index": req.chunk_index}));
     let vector_req = crate::services::vector::SaveVectorRequest {
         document_id: req.document_id,
         chunk_id: req.chunk_id,
@@ -155,9 +152,9 @@ pub async fn get(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state.vector_service.get_vector(id, tenant_id).await {
         Ok(Some(vec)) => Json(ApiResponse::success(vec, "Success")),
-        Ok(None) => Json(
-            ApiResponse::<crate::services::vector::VectorEmbedding>::error(404, "向量不存在"),
-        ),
+        Ok(None) => {
+            Json(ApiResponse::<crate::services::vector::VectorEmbedding>::error(404, "向量不存在"))
+        }
         Err(e) => Json(
             ApiResponse::<crate::services::vector::VectorEmbedding>::error(500, &e.to_string()),
         ),

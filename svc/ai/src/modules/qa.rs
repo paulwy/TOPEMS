@@ -71,7 +71,6 @@ pub struct BatchDeleteResponse {
 
 pub struct QaApi;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -317,7 +316,6 @@ mod tests {
         assert_eq!(back.message, "成功删除 5 条记录");
     }
 }
-
 
 /// POST /api/qa/ask - 提问并获取答案
 #[utoipa::path(

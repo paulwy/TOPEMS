@@ -107,7 +107,6 @@ use utoipa::OpenApi;
         crate::modules::tag::list_tags,
         crate::modules::tag::remove_tag_from_customer,
     ),
-    tags(
-    ),
+    tags()
 )]
 pub struct CrmApiDoc;

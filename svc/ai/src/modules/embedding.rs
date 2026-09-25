@@ -21,7 +21,6 @@ pub struct EmbeddingResponse {
 
 pub struct EmbeddingApi;
 
-
 fn generate_embedding(text: &str, dimension: usize) -> Vec<f32> {
     let mut embedding = Vec::with_capacity(dimension);
 
@@ -123,7 +122,6 @@ mod tests {
         assert_eq!(cloned.dimension, resp.dimension);
     }
 }
-
 
 /// POST /api/embedding/generate - 生成文本向量
 pub async fn generate(

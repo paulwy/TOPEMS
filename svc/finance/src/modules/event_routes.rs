@@ -145,7 +145,9 @@ pub async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn route_event(Json(req): Json<RouteEventRequest>) -> Json<ApiResponse<RouteEventResponse>> {
+pub async fn route_event(
+    Json(req): Json<RouteEventRequest>,
+) -> Json<ApiResponse<RouteEventResponse>> {
     let pipeline = get_event_pipeline();
     let results = pipeline
         .get_router()
@@ -270,7 +272,9 @@ pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<S
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn compensate_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<CompensateSagaResponse>> {
+pub async fn compensate_saga(
+    Path(saga_id): Path<String>,
+) -> Json<ApiResponse<CompensateSagaResponse>> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()

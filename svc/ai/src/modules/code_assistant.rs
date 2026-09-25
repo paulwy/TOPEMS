@@ -134,7 +134,6 @@ fn generate_code_template(language: &str, framework: &str, prompt: &str) -> Stri
 
 pub struct CodeAssistantApi;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -367,7 +366,6 @@ mod tests {
         assert!(!body.issues.is_empty());
     }
 }
-
 
 pub async fn generate(
     Extension(_claims): Extension<Claims>,

@@ -128,8 +128,14 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
             config: row.config,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
+            updated_at: row
+                .updated_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 

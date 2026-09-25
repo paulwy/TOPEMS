@@ -126,16 +126,14 @@ pub async fn update_integration_inspection_result(
     State(state): State<AppState>,
     Json(req): Json<UpdateInspectionResultRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let result = sqlx::query(
-        only_own_schema_query!(
-            "qms",
-            "UPDATE qms.qa_quality_inspections
+    let result = sqlx::query(only_own_schema_query!(
+        "qms",
+        "UPDATE qms.qa_quality_inspections
              SET result = $1, memo = COALESCE($2, memo), updated_at = NOW()
              WHERE tenant_id = $3 AND inspection_no = $4 AND deleted_at IS NULL
              RETURNING id, inspection_no, result, status",
-            "qms"
-        ),
-    )
+        "qms"
+    ))
     .bind(&req.result)
     .bind(&req.memo)
     .bind(req.tenant_id)
