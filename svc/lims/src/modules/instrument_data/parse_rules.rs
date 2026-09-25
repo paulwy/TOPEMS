@@ -5,6 +5,16 @@ use topems_shared_core::response::ApiResponse;
 
 use super::models::{CreateParseRuleRequest, ParseRule, ParseRuleQuery, UpdateParseRuleRequest};
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/parse_rules:read"])),
+    path = "/parse-rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/parse_rules"
+)]
 pub async fn list_parse_rules(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<ParseRuleQuery>,
@@ -93,6 +103,19 @@ pub async fn list_parse_rules(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/parse_rules:read"])),
+    path = "/parse-rules/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/parse_rules"
+)]
 pub async fn get_parse_rule(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

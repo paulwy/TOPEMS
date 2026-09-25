@@ -266,6 +266,19 @@ pub async fn create_reagent(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:reagent:read"])),
+    path = "/lims/reagents/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "reagent"
+)]
 pub async fn get_reagent(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

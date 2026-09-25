@@ -32,6 +32,16 @@ pub struct LimsDashboardStats {
     pub instrument_status: Vec<NameValue>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:dashboard:read"])),
+    path = "/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "dashboard"
+)]
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<LimsDashboardStats>> {

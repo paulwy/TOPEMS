@@ -7,6 +7,16 @@ use super::models::{
     CreateInstrumentDataRequest, InstrumentData, InstrumentDataQuery, UpdateInstrumentDataRequest,
 };
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/instrument_data_crud:read"])),
+    path = "/instrument-data",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/instrument_data_crud"
+)]
 pub async fn list_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<InstrumentDataQuery>,
@@ -93,6 +103,19 @@ pub async fn list_instrument_data(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/instrument_data_crud:read"])),
+    path = "/instrument-data/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/instrument_data_crud"
+)]
 pub async fn get_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

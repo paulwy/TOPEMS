@@ -577,6 +577,19 @@ const LIFECYCLE_STAGES: &[(&str, &str)] = &[
     ("destroyed", "已销毁"),
 ];
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample:read"])),
+    path = "/lims/samples/{id}/lifecycle",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
 pub async fn get_sample_lifecycle(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -633,6 +646,16 @@ pub async fn get_sample_lifecycle(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample:write"])),
+    path = "/lims/samples/lifecycle",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
 pub async fn record_lifecycle_event(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -728,6 +751,20 @@ pub async fn record_lifecycle_event(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample:write"])),
+    path = "/lims/samples/{id}/stage/{to_stage}",
+    params(
+("id" = String, Path, description = "id"),
+("to_stage" = String, Path, description = "to_stage")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
 pub async fn transition_sample_stage(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -843,6 +880,16 @@ pub fn get_stage_name(stage: &str) -> String {
         .unwrap_or_else(|| stage.to_string())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample:read"])),
+    path = "/lims/lifecycle-stages",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
 pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let stages: Vec<serde_json::Value> = LIFECYCLE_STAGES
         .iter()
@@ -857,6 +904,19 @@ pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>>
     Json(ApiResponse::success(stages, "获取生命周期阶段列表成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample:read"])),
+    path = "/lifecycle-stages/{code}",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
 pub async fn get_lifecycle_stage(
     axum::extract::Path(code): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -870,6 +930,19 @@ pub async fn get_lifecycle_stage(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample:read"])),
+    path = "/lims/samples/{id}/traceability",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample"
+)]
 pub async fn get_sample_traceability(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

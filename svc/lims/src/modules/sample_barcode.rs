@@ -144,6 +144,16 @@ const BARCODE_TYPES: &[(&str, &str)] = &[
     ("upc", "UPC"),
 ];
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/barcodes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn list_barcodes(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<BarcodeQuery>,
@@ -334,6 +344,19 @@ pub async fn generate_barcode(
     Json(ApiResponse::success(generated, "条码生成成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/barcodes/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn get_barcode(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -426,6 +449,19 @@ pub async fn update_barcode(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample_barcode:write"])),
+    path = "/barcodes/{id}/print",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn print_barcode(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -492,6 +528,16 @@ pub async fn delete_barcode(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample_barcode:write"])),
+    path = "/barcodes/scan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn scan_barcode(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<BarcodeScanRequest>,
@@ -593,6 +639,16 @@ pub async fn scan_barcode(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/barcodes/types",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn get_barcode_types() -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let types: Vec<serde_json::Value> = BARCODE_TYPES
         .iter()
@@ -607,6 +663,16 @@ pub async fn get_barcode_types() -> Json<ApiResponse<Vec<serde_json::Value>>> {
     Json(ApiResponse::success(types, "获取条码类型列表成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/print-config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn get_print_config() -> Json<ApiResponse<serde_json::Value>> {
     let config = serde_json::json!({
         "printer_name": "Default Printer",
@@ -619,6 +685,16 @@ pub async fn get_print_config() -> Json<ApiResponse<serde_json::Value>> {
     Json(ApiResponse::success(config, "获取打印配置成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/print-config/default",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn get_default_print_config() -> Json<ApiResponse<serde_json::Value>> {
     let config = serde_json::json!({
         "printer_name": "Default Printer",
@@ -645,6 +721,16 @@ pub async fn update_print_config(
     Json(ApiResponse::success(config, "打印配置更新成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/rfid-tags",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn list_rfid_tags(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<RfidTagQuery>,
@@ -753,6 +839,20 @@ pub async fn create_rfid_tag(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample_barcode:write"])),
+    path = "/rfid-tags/{tag_id}/assign/{sample_id}",
+    params(
+("tag_id" = String, Path, description = "tag_id"),
+("sample_id" = String, Path, description = "sample_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn assign_rfid_tag(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path((tag_id, sample_id)): axum::extract::Path<(String, String)>,
@@ -817,6 +917,19 @@ pub async fn assign_rfid_tag(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:sample_barcode:write"])),
+    path = "/rfid-tags/{tag_id}/unassign",
+    params(
+("tag_id" = String, Path, description = "tag_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn unassign_rfid_tag(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(tag_id): axum::extract::Path<String>,
@@ -863,6 +976,19 @@ pub async fn unassign_rfid_tag(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["lims:sample_barcode:write"])),
+    path = "/rfid-tags/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn delete_rfid_tag(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -886,6 +1012,19 @@ pub async fn delete_rfid_tag(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:sample_barcode:read"])),
+    path = "/barcodes/trace/{barcode}",
+    params(
+("barcode" = String, Path, description = "barcode")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sample_barcode"
+)]
 pub async fn trace_sample_by_barcode(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(barcode): axum::extract::Path<String>,

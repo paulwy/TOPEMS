@@ -244,6 +244,19 @@ pub async fn create_instrument(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument:read"])),
+    path = "/lims/instruments/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument"
+)]
 pub async fn get_instrument(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -349,6 +362,19 @@ pub async fn update_instrument(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:instrument:write"])),
+    path = "/lims/instruments/{id}/calibration",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument"
+)]
 pub async fn calibrate(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -476,6 +502,19 @@ pub struct CreateCalibrationScheduleRequest {
     pub start_date: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument:read"])),
+    path = "/instruments/{id}/calibrations",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument"
+)]
 pub async fn get_calibration_history(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(instrument_id): axum::extract::Path<String>,
@@ -790,6 +829,19 @@ pub struct UpdateMaintenanceRequest {
 
 const MAINTENANCE_COLUMNS: &str = "id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost::float8 AS cost, notes, created_at";
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument:read"])),
+    path = "/instruments/{id}/maintenance",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument"
+)]
 pub async fn list_maintenance(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -840,6 +892,16 @@ pub async fn list_maintenance(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:instrument:write"])),
+    path = "/maintenance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument"
+)]
 pub async fn create_maintenance(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -882,6 +944,19 @@ pub async fn create_maintenance(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["lims:instrument:write"])),
+    path = "/maintenance/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument"
+)]
 pub async fn update_maintenance(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

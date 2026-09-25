@@ -45,6 +45,16 @@ pub struct UpdateProcessRequest {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:process:read"])),
+    path = "/processes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "process"
+)]
 pub async fn list_processes(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -87,6 +97,19 @@ pub async fn list_processes(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:process:read"])),
+    path = "/processes/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "process"
+)]
 pub async fn get_process(
     State(state): State<AppState>,
     headers: HeaderMap,

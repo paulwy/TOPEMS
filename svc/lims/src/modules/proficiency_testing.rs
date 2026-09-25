@@ -244,6 +244,16 @@ pub struct UpdatePtCorrectiveActionRequest {
     pub verified_by: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:proficiency_testing:read"])),
+    path = "/pt-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn list_plans(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<PtPlanQuery>,
@@ -486,6 +496,19 @@ pub async fn create_plan(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:proficiency_testing:read"])),
+    path = "/pt-plans/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn get_plan(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -644,6 +667,16 @@ pub async fn delete_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:proficiency_testing:write"])),
+    path = "/pt-samples/receive",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn receive_sample(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<PtSampleReceiveRequest>,
@@ -727,6 +760,19 @@ pub async fn receive_sample(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:proficiency_testing:read"])),
+    path = "/pt-plans/{id}/samples",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn list_plan_samples(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
@@ -919,6 +965,19 @@ pub async fn submit_result(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:proficiency_testing:read"])),
+    path = "/pt-plans/{id}/results",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn list_plan_results(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
@@ -980,6 +1039,16 @@ pub async fn list_plan_results(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:proficiency_testing:write"])),
+    path = "/pt-evaluations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn evaluate_result(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<PtEvaluateRequest>,
@@ -1106,6 +1175,19 @@ pub async fn evaluate_result(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:proficiency_testing:read"])),
+    path = "/pt-plans/{id}/evaluations",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn list_plan_evaluations(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
@@ -1169,6 +1251,16 @@ pub async fn list_plan_evaluations(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:proficiency_testing:write"])),
+    path = "/pt-corrective-actions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn create_corrective_action(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<CreatePtCorrectiveActionRequest>,
@@ -1247,6 +1339,19 @@ pub async fn create_corrective_action(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["lims:proficiency_testing:write"])),
+    path = "/pt-corrective-actions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn update_corrective_action(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1323,6 +1428,19 @@ pub async fn update_corrective_action(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:proficiency_testing:read"])),
+    path = "/pt-plans/{id}/corrective-actions",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "proficiency_testing"
+)]
 pub async fn list_plan_corrective_actions(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,

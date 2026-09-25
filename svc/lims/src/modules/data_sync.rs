@@ -66,6 +66,16 @@ pub struct SyncReagentToEhsRequest {
 
 // ==================== Handler Functions ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:data_sync:read"])),
+    path = "/lims/sync-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "data_sync"
+)]
 pub async fn list_sync_records(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
@@ -134,6 +144,19 @@ pub async fn list_sync_records(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:data_sync:read"])),
+    path = "/lims/sync-records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "data_sync"
+)]
 pub async fn get_sync_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -178,6 +201,16 @@ pub async fn get_sync_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:data_sync:write"])),
+    path = "/lims/sync/record-to-qms",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "data_sync"
+)]
 pub async fn sync_record_to_qms(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncRecordToQmsRequest>,
@@ -270,6 +303,16 @@ pub async fn sync_record_to_qms(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:data_sync:write"])),
+    path = "/lims/sync/reagent-to-ehs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "data_sync"
+)]
 pub async fn sync_reagent_to_ehs(
     State(state): State<crate::shared::AppState>,
     headers: axum::http::HeaderMap,
@@ -372,6 +415,19 @@ pub async fn sync_reagent_to_ehs(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:data_sync:write"])),
+    path = "/lims/sync-records/{id}/retry",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "data_sync"
+)]
 pub async fn retry_sync(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

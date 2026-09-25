@@ -159,6 +159,19 @@ pub async fn get_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:report:read"])),
+    path = "/uncertainty-projects/{id}/report",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "report"
+)]
 pub async fn generate_report(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<GenerateReportRequest>,

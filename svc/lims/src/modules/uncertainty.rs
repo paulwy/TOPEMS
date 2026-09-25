@@ -210,6 +210,16 @@ pub struct TypeBCalculationRequest {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:uncertainty:read"])),
+    path = "/uncertainty-projects",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn list_projects(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<UncertaintyProjectQuery>,
@@ -390,6 +400,19 @@ pub async fn create_project(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:uncertainty:read"])),
+    path = "/uncertainty-projects/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn get_project(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -549,6 +572,19 @@ pub async fn delete_project(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:uncertainty:read"])),
+    path = "/uncertainty-projects/{id}/sources",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn list_sources(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
@@ -599,6 +635,16 @@ pub async fn list_sources(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty-sources",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn create_source(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateUncertaintySourceRequest>,
@@ -655,6 +701,19 @@ pub async fn create_source(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty-sources/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn update_source(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -739,6 +798,19 @@ pub async fn delete_source(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:uncertainty:read"])),
+    path = "/uncertainty-projects/{id}/components",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn list_components(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
@@ -796,6 +868,16 @@ pub async fn list_components(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty-components",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn create_component(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateUncertaintyComponentRequest>,
@@ -880,6 +962,19 @@ pub async fn create_component(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty-components/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn update_component(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -974,6 +1069,16 @@ pub async fn delete_component(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty/type-a",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn calculate_type_a(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<TypeACalculationRequest>,
@@ -1069,6 +1174,16 @@ pub async fn calculate_type_a(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty/type-b",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn calculate_type_b(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<TypeBCalculationRequest>,
@@ -1154,6 +1269,19 @@ pub async fn calculate_type_b(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:uncertainty:write"])),
+    path = "/uncertainty-projects/{id}/combined",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "uncertainty"
+)]
 pub async fn calculate_combined(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,

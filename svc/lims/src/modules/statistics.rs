@@ -31,6 +31,16 @@ pub struct Statistics {
     pub disabled_instruments: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:statistics:read"])),
+    path = "/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "statistics"
+)]
 pub async fn get_statistics(
     State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<Statistics>> {

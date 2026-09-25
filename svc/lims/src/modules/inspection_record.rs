@@ -40,6 +40,16 @@ pub struct CreateRecordRequest {
     pub recorded_by: String,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:inspection_record:read"])),
+    path = "/records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inspection_record"
+)]
 pub async fn list_records(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<RecordQuery>,
@@ -155,6 +165,19 @@ pub async fn create_record(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:inspection_record:read"])),
+    path = "/records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inspection_record"
+)]
 pub async fn get_record(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

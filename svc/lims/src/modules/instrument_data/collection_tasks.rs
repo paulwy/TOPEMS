@@ -9,6 +9,19 @@ use super::models::{
     UpdateCollectionTaskRequest,
 };
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:instrument_data/collection_tasks:write"])),
+    path = "/collection-tasks/{id}/trigger",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/collection_tasks"
+)]
 pub async fn trigger_collection(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
@@ -148,6 +161,16 @@ pub async fn trigger_collection(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/collection_tasks:read"])),
+    path = "/collection-tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/collection_tasks"
+)]
 pub async fn list_collection_tasks(
     State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<CollectionTaskQuery>,
@@ -235,6 +258,19 @@ pub async fn list_collection_tasks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/collection_tasks:read"])),
+    path = "/collection-tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/collection_tasks"
+)]
 pub async fn get_collection_task(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

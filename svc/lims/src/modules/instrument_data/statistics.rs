@@ -4,6 +4,16 @@ use topems_shared_core::response::ApiResponse;
 
 use super::models::{InstrumentDataStatistics, ProtocolStat};
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:instrument_data/statistics:read"])),
+    path = "/instrument-data/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/statistics"
+)]
 pub async fn get_instrument_data_statistics(
     State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<InstrumentDataStatistics>> {

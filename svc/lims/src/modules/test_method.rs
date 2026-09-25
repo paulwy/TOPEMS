@@ -199,6 +199,16 @@ pub struct MethodVersion {
 
 const METHOD_SELECT_COLS: &str = "m.id::TEXT, m.tenant_id::TEXT, m.method_code, m.method_name, m.category_id::TEXT, c.category_name, m.standard, m.version, m.description, m.principle, m.instruments, m.reagents, m.parameters, m.steps, m.calculation_formula, m.uncertainty_ref, m.status, m.validated, m.validated_at::TEXT, m.validated_by, m.created_by, m.created_at::TEXT, m.updated_at::TEXT";
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:test_method:read"])),
+    path = "/lims/test-methods",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn list_methods(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -379,6 +389,19 @@ pub async fn create_method(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:test_method:read"])),
+    path = "/lims/test-methods/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn get_method(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -591,6 +614,16 @@ pub async fn delete_method(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:test_method:read"])),
+    path = "/lims/method-categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn list_categories(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -685,6 +718,19 @@ pub async fn create_category(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["lims:test_method:write"])),
+    path = "/lims/method-categories/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn update_category(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -769,6 +815,16 @@ pub async fn delete_category(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:test_method:read"])),
+    path = "/lims/method-validations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn list_validations(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -920,6 +976,19 @@ pub async fn create_validation(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:test_method:read"])),
+    path = "/lims/test-methods/{id}/versions",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn list_method_versions(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -975,6 +1044,19 @@ pub async fn list_method_versions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:test_method:write"])),
+    path = "/lims/test-methods/{id}/new-version",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "test_method"
+)]
 pub async fn create_new_version(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

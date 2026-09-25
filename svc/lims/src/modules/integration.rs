@@ -37,6 +37,16 @@ pub struct CreateIntegrationSampleRequest {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:integration:write"])),
+    path = "/api/internal/lims/samples/integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "integration"
+)]
 pub async fn create_integration_sample(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationSampleRequest>,
@@ -87,6 +97,16 @@ pub struct CreateIntegrationTaskRequest {
     // 修正：lims.qa_lab_tasks 无 priority 列（原 integration 直写字段为僵尸错误），移除
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:integration:write"])),
+    path = "/api/internal/lims/tasks/integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "integration"
+)]
 pub async fn create_integration_task(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationTaskRequest>,

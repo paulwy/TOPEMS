@@ -71,6 +71,16 @@ pub fn create_routes() -> Router<AppState> {
         .route("/audit-logs/export", get(export_audit_logs))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:audit:read"])),
+    path = "/audit-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "audit"
+)]
 pub async fn list_audit_logs(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<ListAuditLogsQuery>,
@@ -186,6 +196,19 @@ pub async fn list_audit_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:audit:read"])),
+    path = "/audit-logs/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "audit"
+)]
 pub async fn get_audit_log(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -231,6 +254,16 @@ pub async fn get_audit_log(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:audit:read"])),
+    path = "/audit-logs/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "audit"
+)]
 pub async fn export_audit_logs(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<ListAuditLogsQuery>,

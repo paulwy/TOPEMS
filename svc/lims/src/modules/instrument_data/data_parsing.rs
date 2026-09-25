@@ -5,6 +5,19 @@ use topems_shared_core::response::ApiResponse;
 
 use super::models::{InstrumentData, ParseDataRequest, ParseResult, TestItemResult};
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:instrument_data/data_parsing:write"])),
+    path = "/instrument-data/{id}/parse",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/data_parsing"
+)]
 pub async fn parse_instrument_data(
     State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -104,6 +117,16 @@ pub async fn parse_instrument_data(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:instrument_data/data_parsing:write"])),
+    path = "/instrument-data/parse/test",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "instrument_data/data_parsing"
+)]
 pub async fn test_parse_data(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<ParseDataRequest>,

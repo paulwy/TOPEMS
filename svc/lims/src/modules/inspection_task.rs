@@ -120,6 +120,19 @@ fn task_from_row(row: &sqlx::postgres::PgRow) -> InspectionTask {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:inspection_task:read"])),
+    path = "/tasks/sample/{sample_id}",
+    params(
+("sample_id" = String, Path, description = "sample_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inspection_task"
+)]
 pub async fn list_tasks_by_sample(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -157,6 +170,19 @@ pub async fn list_tasks_by_sample(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:inspection_task:write"])),
+    path = "/tasks/{id}/complete_step",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inspection_task"
+)]
 pub async fn complete_step(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -581,6 +607,19 @@ pub async fn update_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["lims:inspection_task:write"])),
+    path = "/lims/tasks/{id}/result",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inspection_task"
+)]
 pub async fn submit_result(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,
