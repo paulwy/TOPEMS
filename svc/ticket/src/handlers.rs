@@ -920,6 +920,19 @@ pub async fn get_ticket_sla_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:sla:write"])),
+    path = "/tickets/{id}/sla",
+    tag = "sla",
+    params(
+        ("id" = Uuid, Path, description = "工单ID")
+    ),
+    responses(
+        (status = 200, description = "SLA 升级已触发", body = Vec<SlaEscalationEvent>),
+        (status = 500, description = "触发 SLA 升级失败")
+    )
+)]
 pub async fn trigger_sla_escalation_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1336,6 +1349,17 @@ pub async fn init_sla_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 // ==================== Automation Rules ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket:write"])),
+    path = "/automation-rules",
+    tag = "tickets",
+    request_body = CreateAutomationRuleRequest,
+    responses(
+        (status = 200, description = "自动化规则创建成功", body = AutomationRule),
+        (status = 500, description = "创建自动化规则失败")
+    )
+)]
 pub async fn create_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1375,6 +1399,16 @@ pub async fn create_automation_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/automation-rules",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "自动化规则列表获取成功", body = Vec<AutomationRule>),
+        (status = 500, description = "获取自动化规则列表失败")
+    )
+)]
 pub async fn list_automation_rules_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1403,6 +1437,19 @@ pub async fn list_automation_rules_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/automation-rules/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "规则ID")
+    ),
+    responses(
+        (status = 200, description = "规则详情获取成功", body = AutomationRule),
+        (status = 500, description = "获取规则详情失败")
+    )
+)]
 pub async fn get_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1434,6 +1481,20 @@ pub async fn get_automation_rule_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:ticket:write"])),
+    path = "/automation-rules/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "规则ID")
+    ),
+    request_body = UpdateAutomationRuleRequest,
+    responses(
+        (status = 200, description = "自动化规则更新成功", body = AutomationRule),
+        (status = 500, description = "更新自动化规则失败")
+    )
+)]
 pub async fn update_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1480,6 +1541,19 @@ pub async fn update_automation_rule_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/automation-rules/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "规则ID")
+    ),
+    responses(
+        (status = 200, description = "自动化规则已删除", body = serde_json::Value),
+        (status = 500, description = "删除自动化规则失败")
+    )
+)]
 pub async fn delete_automation_rule_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1507,6 +1581,17 @@ pub async fn delete_automation_rule_handler(
 
 // ==================== Knowledge Base ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket:write"])),
+    path = "/knowledge-articles",
+    tag = "tickets",
+    request_body = CreateKnowledgeArticleRequest,
+    responses(
+        (status = 200, description = "知识文章创建成功", body = KnowledgeArticle),
+        (status = 500, description = "创建知识文章失败")
+    )
+)]
 pub async fn create_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1541,6 +1626,16 @@ pub async fn create_knowledge_article_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/knowledge-articles",
+    tag = "tickets",
+    responses(
+        (status = 200, description = "知识文章列表获取成功", body = Vec<KnowledgeArticle>),
+        (status = 500, description = "获取知识文章列表失败")
+    )
+)]
 pub async fn list_knowledge_articles_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1589,6 +1684,19 @@ pub async fn list_knowledge_articles_handler(
     Json(ApiResponse::success(sorted, "知识文章推荐结果"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/knowledge-articles/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "文章ID")
+    ),
+    responses(
+        (status = 200, description = "文章详情获取成功", body = KnowledgeArticle),
+        (status = 500, description = "获取文章详情失败")
+    )
+)]
 pub async fn get_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1619,6 +1727,20 @@ pub async fn get_knowledge_article_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:ticket:write"])),
+    path = "/knowledge-articles/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "文章ID")
+    ),
+    request_body = UpdateKnowledgeArticleRequest,
+    responses(
+        (status = 200, description = "知识文章更新成功", body = KnowledgeArticle),
+        (status = 500, description = "更新知识文章失败")
+    )
+)]
 pub async fn update_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1657,6 +1779,19 @@ pub async fn update_knowledge_article_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:ticket:read"])),
+    path = "/knowledge-articles/{id}",
+    tag = "tickets",
+    params(
+        ("id" = Uuid, Path, description = "文章ID")
+    ),
+    responses(
+        (status = 200, description = "知识文章已删除", body = serde_json::Value),
+        (status = 500, description = "删除知识文章失败")
+    )
+)]
 pub async fn delete_knowledge_article_handler(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

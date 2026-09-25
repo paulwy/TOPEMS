@@ -2,7 +2,9 @@
 use utoipa::OpenApi;
 
 use crate::models::{
-    AddCommentRequest, CreateSlaPolicyRequest, CreateTicketRequest, SeverityCount,
+    AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
+    CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, SeverityCount, UpdateAutomationRuleRequest,
+    UpdateKnowledgeArticleRequest,
     SlaBreachTrendItem, SlaEscalationEvent, SlaSeverityStat, SlaTypeStat, SourceCount, Ticket,
     TicketActivity, TicketComment, TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy,
     TicketSlaStats, TicketStats, TypeCount, UpdateSlaPolicyRequest, UpdateTicketRequest,
@@ -27,6 +29,17 @@ use crate::models::{
         crate::handlers::get_sla_policy_handler,
         crate::handlers::update_sla_policy_handler,
         crate::handlers::delete_sla_policy_handler,
+        crate::handlers::create_automation_rule_handler,
+        crate::handlers::list_automation_rules_handler,
+        crate::handlers::get_automation_rule_handler,
+        crate::handlers::update_automation_rule_handler,
+        crate::handlers::delete_automation_rule_handler,
+        crate::handlers::trigger_sla_escalation_handler,
+        crate::handlers::create_knowledge_article_handler,
+        crate::handlers::list_knowledge_articles_handler,
+        crate::handlers::get_knowledge_article_handler,
+        crate::handlers::update_knowledge_article_handler,
+        crate::handlers::delete_knowledge_article_handler,
     ),
     components(
         schemas(
@@ -48,6 +61,12 @@ use crate::models::{
             TicketListResponse,
             AddCommentRequest,
             TicketStats,
+            AutomationRule,
+            CreateAutomationRuleRequest,
+            UpdateAutomationRuleRequest,
+            KnowledgeArticle,
+            CreateKnowledgeArticleRequest,
+            UpdateKnowledgeArticleRequest,
             SeverityCount,
             TypeCount,
             SourceCount,
