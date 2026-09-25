@@ -43,7 +43,7 @@ struct SyncStatistics {
 
 // ===== connections =====
 
-async fn list_connections(
+pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ErpConnection>>> {
@@ -70,7 +70,17 @@ async fn list_connections(
     }
 }
 
-async fn create_connection(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["integration:external_erp:write"])),
+    path = "/api/integration/erp/connections",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn create_connection(
     State(state): State<AppState>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
@@ -228,7 +238,20 @@ async fn get_connection(
     }
 }
 
-async fn update_connection(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["integration:external_erp:write"])),
+    path = "/api/integration/erp/connections/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn update_connection(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
@@ -276,7 +299,20 @@ async fn update_connection(
     }
 }
 
-async fn delete_connection(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["integration:external_erp:write"])),
+    path = "/api/integration/erp/connections/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn delete_connection(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
@@ -298,7 +334,17 @@ async fn delete_connection(
 
 // ===== connections/{id}/{entity}-mappings =====
 
-async fn list_entity_mappings(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:external_erp:read"])),
+    path = "/api/integration/",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn list_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
@@ -383,7 +429,17 @@ async fn create_entity_mapping(
     }
 }
 
-async fn batch_entity_mappings(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["integration:external_erp:write"])),
+    path = "/api/integration/batch",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn batch_entity_mappings(
     State(state): State<AppState>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
@@ -455,7 +511,20 @@ async fn batch_entity_mappings(
 
 // ===== connections/{id}/preview/{entity} =====
 
-async fn preview_entity(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:external_erp:read"])),
+    path = "/api/integration/{entity}",
+    params(
+        ("entity" = String, Path, description = "entity")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn preview_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
@@ -657,7 +726,20 @@ async fn write_to_staging(
 
 // ===== sync/{entity} =====
 
-async fn sync_entity(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["integration:external_erp:write"])),
+    path = "/api/integration/{entity}",
+    params(
+        ("entity" = String, Path, description = "entity")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn sync_entity(
     State(state): State<AppState>,
     Path(entity): Path<String>,
     Json(body): Json<serde_json::Value>,
@@ -863,7 +945,17 @@ async fn sync_entity(
 
 // ===== sync-logs =====
 
-async fn sync_logs(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:external_erp:read"])),
+    path = "/api/integration/sync-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ExternalErpSyncLog>>> {
@@ -890,7 +982,17 @@ async fn sync_logs(
 
 // ===== sync-statistics =====
 
-async fn sync_statistics(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:external_erp:read"])),
+    path = "/api/integration/sync-statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn sync_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<SyncStatistics>> {
@@ -966,7 +1068,17 @@ async fn sync_statistics(
 
 // ===== export =====
 
-async fn export_mappings(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:external_erp:read"])),
+    path = "/api/integration/export/mappings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn export_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -997,7 +1109,17 @@ async fn export_mappings(
     }
 }
 
-async fn export_sync_logs(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:external_erp:read"])),
+    path = "/api/integration/export/sync-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ExternalErp"
+)]
+pub async fn export_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {

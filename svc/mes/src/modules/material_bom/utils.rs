@@ -62,27 +62,27 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = (Some(dt)).unwrap_or_default();
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = (None).unwrap_or_default();
+        let s = datetime_to_string(None);
         assert!(s.is_empty());
     }
 
     #[test]
     fn opt_datetime_to_string_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = Some(dt);
+        let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
 
     #[test]
     fn opt_datetime_to_string_none() {
-        assert!(None.is_none());
+        assert!(opt_datetime_to_string(None).is_none());
     }
 
     #[test]

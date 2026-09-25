@@ -1,7 +1,6 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{DateTime, Utc};
-use sqlx::types::BigDecimal;
-use sqlx::{types::Uuid, Row};
+use sqlx::{types::{BigDecimal, Uuid}, Row};
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -31,7 +30,7 @@ pub async fn create_material_return(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&state.pool)
@@ -52,10 +51,10 @@ pub async fn create_material_return(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat;
+    let order_no_arg = order_no_flat.and_then(|x| Some(x));
     let return_result = sqlx::query!(
         r#"
-        INSERT INTO mes.material_returns (
+        INSERT INTO material_returns (
             return_no, order_id, order_no, status,
             warehouse_id, operator_id, notes, created_at, updated_at
         ) VALUES ($1, $2, $3, 'pending', $4, $5, $6, $7, $7)
@@ -70,7 +69,7 @@ pub async fn create_material_return(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -87,7 +86,7 @@ pub async fn create_material_return(
     for item in &req.items {
         let _ = sqlx::query!(
             r#"
-            INSERT INTO mes.material_return_items (
+            INSERT INTO material_return_items (
                 return_id, material_id, material_code, material_name,
                 unit, quantity, reason, batch_no, notes
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -125,10 +124,9 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
+        return_time: return_record.return_time.map(|d| d.to_rfc3339()),
         notes: return_record.notes,
-        created_at: return_record.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: return_record.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+        created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -171,7 +169,7 @@ pub async fn list_material_returns(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.material_returns{}",
+        "SELECT COUNT(*) as total FROM material_returns{}",
         where_clause
     );
 
@@ -195,7 +193,7 @@ pub async fn list_material_returns(
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
             created_at, updated_at
-        FROM mes.material_returns
+        FROM material_returns
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -245,10 +243,23 @@ pub async fn list_material_returns(
                 .ok()
                 .flatten()
                 .map(|u| u.to_string()),
-            return_time: r.try_get::<Option<DateTime<Utc>>, _>("return_time").ok().flatten().map(|d| d.to_rfc3339()),
+            return_time: 
+                r.try_get::<Option<DateTime<Utc>>, _>("return_time")
+                    .ok()
+                    .flatten()
+                    .map(|d| d.to_rfc3339())
+            ,
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
-            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+            created_at: (
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten()
+            ).unwrap_or_default(),
+            updated_at: (
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten()
+            ).unwrap_or_default(),
         })
         .collect();
 
@@ -278,7 +289,7 @@ pub async fn get_material_return(
         SELECT id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
             created_at, updated_at
-        FROM mes.material_returns
+        FROM material_returns
         WHERE id = $1
         "#,
         id,
@@ -299,7 +310,7 @@ pub async fn get_material_return(
         r#"
         SELECT id, return_id, material_id, material_code, material_name,
             unit, quantity, reason, batch_no, notes
-        FROM mes.material_return_items
+        FROM material_return_items
         WHERE return_id = $1
         ORDER BY id ASC
         "#,
@@ -324,10 +335,10 @@ pub async fn get_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
+        "return_time": return_record.return_time.map(|d| d),
         "notes": return_record.notes,
-        "created_at": Some(return_record.created_at.unwrap_or_default()),
-        "updated_at": Some(return_record.updated_at.unwrap_or_default()),
+        "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
+        "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "return_id": i.return_id.to_string(),
@@ -361,7 +372,7 @@ pub async fn update_material_return(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.material_returns SET
+        UPDATE material_returns SET
             status = COALESCE($2, status),
             warehouse_id = COALESCE($3, warehouse_id),
             operator_id = COALESCE($4, operator_id),
@@ -378,7 +389,7 @@ pub async fn update_material_return(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -400,10 +411,10 @@ pub async fn update_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
+        "return_time": return_record.return_time.map(|d| d),
         "notes": return_record.notes,
-        "created_at": Some(return_record.created_at.unwrap_or_default()),
-        "updated_at": Some(return_record.updated_at.unwrap_or_default()),
+        "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
+        "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     });
 
     Json(ApiResponse::success(return_json, "物料退库单更新成功"))
@@ -428,12 +439,12 @@ pub async fn delete_material_return(
         }
     };
 
-    let _ = sqlx::query!("DELETE FROM mes.material_return_items WHERE return_id = $1", id)
+    let _ = sqlx::query!("DELETE FROM material_return_items WHERE return_id = $1", id)
         .execute(&mut *tx)
         .await;
 
     let result = sqlx::query!(
-        "UPDATE mes.material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
+        "UPDATE material_returns SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
         id
     )
     .execute(&mut *tx)

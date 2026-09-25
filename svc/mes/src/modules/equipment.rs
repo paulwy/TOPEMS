@@ -126,8 +126,8 @@ fn naive_date_to_string(d: Option<chrono::NaiveDate>) -> Option<String> {
     d.map(|date| date.format("%Y-%m-%d").to_string())
 }
 
-fn dt(input: Option<DateTime<Utc>>) -> String {
-    input.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
@@ -172,8 +172,16 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
                 .flatten(),
         ),
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-        created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-        updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+        created_at: (
+            r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten()
+        ).unwrap_or_default(),
+        updated_at: (
+            r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten()
+        ).unwrap_or_default(),
     }
 }
 
@@ -233,7 +241,7 @@ pub async fn list_equipment(
         params.push(serde_json::Value::String(pattern));
     }
 
-    let count_sql = format!("SELECT COUNT(*) as total FROM mes.equipment{}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) as total FROM equipment{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
@@ -256,7 +264,7 @@ pub async fn list_equipment(
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
-        FROM mes.equipment
+        FROM equipment
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -332,7 +340,7 @@ pub async fn create_equipment(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO mes.equipment (
+        INSERT INTO equipment (
             equipment_code, equipment_name, model, manufacturer, status,
             location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
@@ -402,7 +410,7 @@ pub async fn get_equipment(
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
-        FROM mes.equipment
+        FROM equipment
         WHERE id = $1
         "#,
     )
@@ -454,7 +462,7 @@ pub async fn update_equipment(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.equipment SET
+        UPDATE equipment SET
             name = COALESCE($2, name),
             model = COALESCE($3, model),
             manufacturer = COALESCE($4, manufacturer),
@@ -494,7 +502,7 @@ pub async fn update_equipment(
     let result = match result {
         Ok(r) => r,
         Err(e) => {
-            tracing::error!("Failed to update mes.equipment: {}", e);
+            tracing::error!("Failed to update equipment: {}", e);
             return Json(ApiResponse::error(500, "更新设备失败"));
         }
     };
@@ -533,7 +541,7 @@ pub async fn delete_equipment(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.equipment SET deleted_at = NOW()
+        UPDATE equipment SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -586,7 +594,7 @@ pub async fn maintenance_equipment(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.equipment SET
+        UPDATE equipment SET
             status = 'maintenance',
             last_maintenance_date = $2,
             next_maintenance_date = $3,
@@ -649,7 +657,7 @@ pub async fn get_equipment_statistics(
             SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
             SUM(CASE WHEN status = 'fault' THEN 1 ELSE 0 END) as fault_count,
             SUM(CASE WHEN next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
-        FROM mes.equipment
+        FROM equipment
         "#,
     )
     .fetch_one(&state.pool)
@@ -756,8 +764,8 @@ pub async fn list_maintenances(
             m.maintenance_type, m.description, m.maintainer,
             m.start_time, m.end_time, m.cost, m.result, m.status, m.remarks,
             m.created_at, m.updated_at
-        FROM mes.equipment_maintenance_records m
-        LEFT JOIN mes.equipment e ON m.equipment_id = e.id
+        FROM equipment_maintenance_records m
+        LEFT JOIN equipment e ON m.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR m.equipment_id = $1)
         ORDER BY m.created_at DESC
         LIMIT $2 OFFSET $3
@@ -788,7 +796,7 @@ pub async fn list_maintenances(
             description: Some(r.description),
             maintainer: r.maintainer,
             start_time: r.start_time,
-            end_time: r.end_time,
+            end_time: r.end_time.map(|d| d),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
             status: r.status,
@@ -800,7 +808,7 @@ pub async fn list_maintenances(
 
     let total_result = sqlx::query_scalar!(
         r#"
-        SELECT COUNT(*) FROM mes.equipment_maintenance_records
+        SELECT COUNT(*) FROM equipment_maintenance_records
         WHERE ($1::uuid IS NULL OR equipment_id = $1)
         "#,
         params.equipment_id,
@@ -855,7 +863,7 @@ pub async fn create_maintenance(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.equipment_maintenance_records (
+        INSERT INTO equipment_maintenance_records (
             equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
@@ -899,7 +907,7 @@ pub async fn create_maintenance(
     let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM mes.equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -908,7 +916,7 @@ pub async fn create_maintenance(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_code FROM mes.equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -965,7 +973,7 @@ pub async fn update_maintenance_status(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.equipment_maintenance_records SET
+        UPDATE equipment_maintenance_records SET
             status = $2,
             result = COALESCE($3, result),
             updated_at = $4
@@ -1004,7 +1012,7 @@ pub async fn update_maintenance_status(
     let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM mes.equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -1013,7 +1021,7 @@ pub async fn update_maintenance_status(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_code FROM mes.equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
         equipment_id,
     )
     .fetch_optional(&state.pool)
@@ -1119,7 +1127,7 @@ pub async fn list_inspections(
 
     let count_result = sqlx::query_scalar!(
         r#"
-        SELECT COUNT(*) FROM mes.equipment_inspections
+        SELECT COUNT(*) FROM equipment_inspections
         WHERE ($1::uuid IS NULL OR equipment_id = $1)
         "#,
         equipment_uuid,
@@ -1143,7 +1151,7 @@ pub async fn list_inspections(
             ei.temperature, ei.vibration, ei.noiselevel,
             ei.status, ei.items, ei.abnormalities, ei.remarks,
             ei.created_at
-        FROM mes.equipment_inspections ei
+        FROM equipment_inspections ei
         WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)
         ORDER BY ei.created_at DESC
         LIMIT $2 OFFSET $3
@@ -1187,7 +1195,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
                 })
                 .collect();
 
@@ -1237,7 +1245,7 @@ pub async fn create_inspection(
     };
 
     let equipment_info = sqlx::query!(
-        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM mes.equipment WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1"#,
         equipment_uuid,
     )
     .fetch_optional(&state.pool)
@@ -1264,7 +1272,7 @@ pub async fn create_inspection(
 
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO mes.equipment_inspections (
+        INSERT INTO equipment_inspections (
             equipment_id, equipment_code, equipment_name,
             inspector, inspection_date, location,
             temperature, vibration, noiselevel,
@@ -1320,7 +1328,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
             },
             "创建点检记录成功",
         )),
@@ -1420,13 +1428,13 @@ mod tests {
     fn datetime_to_string_some_rfc3339() {
         use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = Some(dt);
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = None;
+        let s = datetime_to_string(None);
         assert!(s.is_empty());
     }
 }

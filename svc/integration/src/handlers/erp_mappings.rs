@@ -10,6 +10,16 @@ use uuid::Uuid;
 
 use crate::models::{AppState, CreateErpMappingRequest, ErpMapping, UpdateErpMappingRequest};
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:erp_mappings:read"])),
+    path = "/api/integration/erp/mappings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ErpMappings"
+)]
 pub async fn list_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -37,6 +47,19 @@ pub async fn list_mappings(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:erp_mappings:read"])),
+    path = "/api/integration/erp/mappings/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ErpMappings"
+)]
 pub async fn get_mapping(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -64,6 +87,16 @@ pub async fn get_mapping(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["integration:erp_mappings:write"])),
+    path = "/api/integration/erp/mappings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ErpMappings"
+)]
 pub async fn create_mapping(
     State(state): State<AppState>,
     Json(req): Json<CreateErpMappingRequest>,
@@ -101,6 +134,19 @@ pub async fn create_mapping(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["integration:erp_mappings:write"])),
+    path = "/api/integration/erp/mappings/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ErpMappings"
+)]
 pub async fn update_mapping(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -147,6 +193,19 @@ pub async fn update_mapping(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["integration:erp_mappings:write"])),
+    path = "/api/integration/erp/mappings/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ErpMappings"
+)]
 pub async fn delete_mapping(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

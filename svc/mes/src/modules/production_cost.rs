@@ -872,7 +872,6 @@ pub async fn get_cost_forecast(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
     use chrono::TimeZone;
 
     #[test]

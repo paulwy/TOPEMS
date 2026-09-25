@@ -8,7 +8,6 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-use super::datetime_to_string;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListPatrolsQuery {

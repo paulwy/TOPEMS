@@ -101,8 +101,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
 }
 
-fn dt(input: Option<DateTime<Utc>>) -> String {
-    input.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse {
@@ -158,8 +158,16 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
             name.filter(|n| !n.is_empty())
         },
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-        created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-        updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+        created_at: (
+            r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten()
+        ).unwrap_or_default(),
+        updated_at: (
+            r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten()
+        ).unwrap_or_default(),
     }
 }
 
@@ -202,7 +210,7 @@ pub async fn list_work_stations(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.work_stations ws{}",
+        "SELECT COUNT(*) as total FROM work_stations ws{}",
         where_clause
     );
 
@@ -229,9 +237,9 @@ pub async fn list_work_stations(
             e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
-        FROM mes.work_stations ws
-        LEFT JOIN mes.equipment e ON ws.equipment_id = e.id
-        LEFT JOIN mes.production_processes pp ON ws.process_id = pp.id
+        FROM work_stations ws
+        LEFT JOIN equipment e ON ws.equipment_id = e.id
+        LEFT JOIN production_processes pp ON ws.process_id = pp.id
         {}
         ORDER BY ws.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -306,7 +314,7 @@ pub async fn create_work_station(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO mes.work_stations (
+        INSERT INTO work_stations (
             station_no, name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
             created_at, updated_at
@@ -362,9 +370,9 @@ pub async fn get_work_station(
             e.equipment_name as equipment_name,
             pp.process_name as process_name,
             '' as workshop_name
-        FROM mes.work_stations ws
-        LEFT JOIN mes.equipment e ON ws.equipment_id = e.id
-        LEFT JOIN mes.production_processes pp ON ws.process_id = pp.id
+        FROM work_stations ws
+        LEFT JOIN equipment e ON ws.equipment_id = e.id
+        LEFT JOIN production_processes pp ON ws.process_id = pp.id
         WHERE ws.id = $1
         "#,
     )
@@ -416,7 +424,7 @@ pub async fn update_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.work_stations SET
+        UPDATE work_stations SET
             name = COALESCE($2, name),
             workshop_id = COALESCE($3, workshop_id),
             location = COALESCE($4, location),
@@ -476,7 +484,7 @@ pub async fn delete_work_station(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.work_stations SET deleted_at = NOW()
+        UPDATE work_stations SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -512,7 +520,7 @@ pub async fn activate_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.work_stations SET
+        UPDATE work_stations SET
             status = 'active',
             updated_at = $2
         WHERE id = $1
@@ -557,7 +565,7 @@ pub async fn deactivate_work_station(
 
     let result = sqlx::query(
         r#"
-        UPDATE mes.work_stations SET
+        UPDATE work_stations SET
             status = 'inactive',
             updated_at = $2
         WHERE id = $1 AND status = 'active'
@@ -592,7 +600,6 @@ pub async fn deactivate_work_station(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
     use chrono::TimeZone;
 
     #[test]
@@ -614,13 +621,13 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = Some(dt);
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = None;
+        let s = datetime_to_string(None);
         assert!(s.is_empty());
     }
 }

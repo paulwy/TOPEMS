@@ -562,7 +562,7 @@ pub async fn complete_record(
 mod tests {
     use super::*;
     use chrono::TimeZone;
-    use chrono::{Datelike, NaiveDate, Timelike};
+    use chrono::{Datelike, Timelike};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

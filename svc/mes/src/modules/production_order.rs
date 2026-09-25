@@ -258,7 +258,7 @@ pub async fn list_production_orders(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.production_orders{}",
+        "SELECT COUNT(*) as total FROM production_orders{}",
         where_clause
     );
 
@@ -285,7 +285,7 @@ pub async fn list_production_orders(
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM mes.production_orders
+        FROM production_orders
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -448,7 +448,7 @@ pub async fn create_production_order(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.production_orders (
+        INSERT INTO production_orders (
             order_number, product_name, product_code,
             quantity, completed_quantity, status,
             planned_start_date, planned_end_date, workshop_id, notes,
@@ -609,7 +609,7 @@ pub async fn create_from_erp(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.production_orders (
+        INSERT INTO production_orders (
             order_number, product_name, product_code, quantity,
             status, source_order_id, source_order_number,
             planned_start_date, planned_end_date, workshop_id, notes,
@@ -718,7 +718,7 @@ pub async fn get_production_order(
             planned_start_date::timestamptz AS planned_start_date, planned_end_date::timestamptz AS planned_end_date,
             actual_start_date::timestamptz AS actual_start_date, actual_end_date::timestamptz AS actual_end_date,
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
-        FROM mes.production_orders
+        FROM production_orders
         WHERE id = $1
         "#,
         id,
@@ -795,7 +795,7 @@ pub async fn update_production_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.production_orders SET
+        UPDATE production_orders SET
             product_name = COALESCE($2, product_name),
             product_code = COALESCE($3, product_code),
             quantity = COALESCE($4, quantity),
@@ -816,7 +816,7 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.map(|q| q.to_string().parse::<i32>().unwrap_or_default()),
+        req.quantity.map(|q| q as i32),
         req.planned_start_date.map(|d| d.date_naive()),
         req.planned_end_date.map(|d| d.date_naive()),
         req.workshop_id,
@@ -893,7 +893,7 @@ pub async fn delete_production_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.production_orders SET deleted_at = NOW()
+        UPDATE production_orders SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
         id,
@@ -948,7 +948,7 @@ pub async fn start_production_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.production_orders SET
+        UPDATE production_orders SET
             status = 'in_progress',
             actual_start_date = $2,
             updated_at = $3
@@ -1037,7 +1037,7 @@ pub async fn complete_production_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.production_orders SET
+        UPDATE production_orders SET
             status = 'completed',
             completed_quantity = quantity,
             actual_end_date = $2,
@@ -1127,7 +1127,7 @@ pub async fn cancel_production_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.production_orders SET
+        UPDATE production_orders SET
             status = 'cancelled',
             updated_at = $2
         WHERE id = $1 AND status IN ('pending', 'released', 'paused')
@@ -1214,7 +1214,7 @@ pub async fn release_production_order(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.production_orders SET
+        UPDATE production_orders SET
             status = 'released',
             updated_at = $2
         WHERE id = $1 AND status = 'pending'

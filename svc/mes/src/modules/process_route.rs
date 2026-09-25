@@ -130,8 +130,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     }
 }
 
-fn dt(input: Option<DateTime<Utc>>) -> String {
-    input.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -207,7 +207,7 @@ pub async fn list_process_routes(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.process_routes pr{}",
+        "SELECT COUNT(*) as total FROM process_routes pr{}",
         where_clause
     );
 
@@ -230,7 +230,7 @@ pub async fn list_process_routes(
         SELECT 
             pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
             pr.created_at, pr.updated_at
-        FROM mes.process_routes pr
+        FROM process_routes pr
         {}
         ORDER BY pr.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -270,8 +270,16 @@ pub async fn list_process_routes(
             estimated_time_minutes: None,
             total_estimated_time_minutes: None,
             process_count: None,
-            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+            created_at: (
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten()
+            ).unwrap_or_default(),
+            updated_at: (
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten()
+            ).unwrap_or_default(),
         })
         .collect();
 
@@ -323,7 +331,7 @@ pub async fn get_process_route(
         SELECT 
             pr.id, pr.route_code AS code, pr.route_name AS name, pr.description, pr.status,
             pr.created_at, pr.updated_at
-        FROM mes.process_routes pr
+        FROM process_routes pr
         WHERE pr.id = $1
         "#,
         uuid,
@@ -338,7 +346,7 @@ pub async fn get_process_route(
                 SELECT 
                     COALESCE(SUM(prs.estimated_time_minutes), 0) as total_estimated_time_minutes,
                     COUNT(prs.id) as process_count
-                FROM mes.process_route_steps prs
+                FROM process_route_steps prs
                 WHERE prs.route_id = $1
                 "#,
             )
@@ -397,7 +405,7 @@ pub async fn create_process_route(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.process_routes (route_code, route_name, description)
+        INSERT INTO process_routes (route_code, route_name, description)
         VALUES ($1, $2, $3)
         RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
@@ -476,7 +484,7 @@ pub async fn update_process_route(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.process_routes
+        UPDATE process_routes
         SET 
             route_name = COALESCE($1, route_name),
             description = COALESCE($2, description),
@@ -561,7 +569,7 @@ pub async fn delete_process_route(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.process_routes SET deleted_at = NOW() WHERE id = $1
+        UPDATE process_routes SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )
@@ -624,9 +632,9 @@ pub async fn get_route_steps(
             NULL::text AS description, prs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM mes.process_route_steps prs
-        LEFT JOIN mes.production_processes pp ON prs.process_id = pp.id
-        LEFT JOIN mes.work_stations ws ON pp.work_station_id = ws.id
+        FROM process_route_steps prs
+        LEFT JOIN production_processes pp ON prs.process_id = pp.id
+        LEFT JOIN work_stations ws ON pp.work_station_id = ws.id
         WHERE prs.route_id = $1
         ORDER BY prs.sequence ASC
         "#,
@@ -704,7 +712,7 @@ pub async fn add_route_step(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.process_route_steps (
+        INSERT INTO process_route_steps (
             route_id, process_id, sequence, estimated_time_minutes
         )
         VALUES ($1, $2, $3, $4)
@@ -715,7 +723,7 @@ pub async fn add_route_step(
         route_uuid,
         process_uuid,
         body.sequence,
-        estimated_time_minutes.map(|d| d.to_string().parse::<BigDecimal>().unwrap_or_default()),
+        estimated_time_minutes,
     )
     .fetch_one(&state.pool)
     .await;
@@ -724,7 +732,7 @@ pub async fn add_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 process_uuid,
             )
@@ -791,7 +799,7 @@ pub async fn update_route_step(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.process_route_steps
+        UPDATE process_route_steps
         SET 
             sequence = COALESCE($1, sequence),
             estimated_time_minutes = COALESCE($2, estimated_time_minutes)
@@ -801,7 +809,7 @@ pub async fn update_route_step(
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
         "#,
         body.sequence,
-        estimated_time_minutes.map(|d| d.to_string().parse::<BigDecimal>().unwrap_or_default()),
+        estimated_time_minutes,
         step_uuid,
     )
     .fetch_one(&state.pool)
@@ -811,7 +819,7 @@ pub async fn update_route_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 s.process_id,
             )
@@ -870,7 +878,7 @@ pub async fn remove_route_step(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM mes.process_route_steps WHERE id = $1
+        DELETE FROM process_route_steps WHERE id = $1
         "#,
         step_uuid,
     )
@@ -923,7 +931,7 @@ pub async fn reorder_route_steps(
 
         if let Err(e) = sqlx::query!(
             r#"
-            UPDATE mes.process_route_steps
+            UPDATE process_route_steps
             SET sequence = $1
             WHERE id = $2 AND route_id = $3
             "#,
@@ -952,9 +960,9 @@ pub async fn reorder_route_steps(
             NULL::text AS description, prs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM mes.process_route_steps prs
-        LEFT JOIN mes.production_processes pp ON prs.process_id = pp.id
-        LEFT JOIN mes.work_stations ws ON pp.work_station_id = ws.id
+        FROM process_route_steps prs
+        LEFT JOIN production_processes pp ON prs.process_id = pp.id
+        LEFT JOIN work_stations ws ON pp.work_station_id = ws.id
         WHERE prs.route_id = $1
         ORDER BY prs.sequence ASC
         "#,
@@ -999,7 +1007,6 @@ pub async fn reorder_route_steps(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
     use chrono::TimeZone;
 
     #[test]
@@ -1021,13 +1028,13 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = Some(dt);
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = None;
+        let s = datetime_to_string(None);
         assert!(s.is_empty());
     }
 

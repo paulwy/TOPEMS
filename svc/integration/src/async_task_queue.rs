@@ -302,6 +302,19 @@ pub async fn mark_max_retries_exceeded(
 }
 
 /// 获取任务详情
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:async_task_queue:read"])),
+    path = "/api/integration/sync/tasks/{task_id}",
+    params(
+        ("task_id" = String, Path, description = "task_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AsyncTaskQueue"
+)]
 pub async fn get_task(pool: &PgPool, task_id: Uuid) -> Result<Option<AsyncTask>, String> {
     let row = sqlx::query(
         r#"

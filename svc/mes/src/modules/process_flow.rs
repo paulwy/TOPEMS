@@ -172,8 +172,8 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn dt(input: Option<DateTime<Utc>>) -> String {
-    input.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -217,7 +217,7 @@ pub async fn list_process_flows(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.process_flows pf{}",
+        "SELECT COUNT(*) as total FROM process_flows pf{}",
         where_clause
     );
 
@@ -242,8 +242,8 @@ pub async fn list_process_flows(
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
-        FROM mes.process_flows pf
-        LEFT JOIN mes.process_routes pr ON pf.route_id = pr.id
+        FROM process_flows pf
+        LEFT JOIN process_routes pr ON pf.route_id = pr.id
         {}
         ORDER BY pf.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -293,11 +293,19 @@ pub async fn list_process_flows(
             capacity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("capacity")
                     .ok()
-                    .flatten(),
+                    .flatten()
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+            created_at: (
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten()
+            ).unwrap_or_default(),
+            updated_at: (
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten()
+            ).unwrap_or_default(),
         })
         .collect();
 
@@ -336,8 +344,8 @@ pub async fn get_process_flow(
             pf.route_id, pf.production_line, pf.capacity, pf.unit,
             pf.created_at, pf.updated_at,
             pr.route_name as route_name
-        FROM mes.process_flows pf
-        LEFT JOIN mes.process_routes pr ON pf.route_id = pr.id
+        FROM process_flows pf
+        LEFT JOIN process_routes pr ON pf.route_id = pr.id
         WHERE pf.id = $1
         "#,
         uuid,
@@ -361,8 +369,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "获取工艺流程成功",
         )),
@@ -393,7 +401,7 @@ pub async fn create_process_flow(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.process_flows (
+        INSERT INTO process_flows (
             code, name, description, version, route_id,
             production_line, capacity, unit
         )
@@ -408,7 +416,7 @@ pub async fn create_process_flow(
         body.version,
         route_id,
         body.production_line,
-        capacity.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+        capacity.map(|d| d.to_string().parse::<BigDecimal>().unwrap_or_default()),
         body.unit,
     )
     .fetch_one(&state.pool)
@@ -430,8 +438,8 @@ pub async fn create_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "创建工艺流程成功",
         )),
@@ -469,7 +477,7 @@ pub async fn update_process_flow(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.process_flows
+        UPDATE process_flows
         SET 
             name = COALESCE($1, name),
             description = COALESCE($2, description),
@@ -490,7 +498,7 @@ pub async fn update_process_flow(
         body.version,
         route_id,
         body.production_line,
-        capacity.map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
+        capacity.map(|d| d.to_string().parse::<BigDecimal>().unwrap_or_default()),
         body.unit,
         body.status,
         uuid,
@@ -514,8 +522,8 @@ pub async fn update_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "更新工艺流程成功",
         )),
@@ -547,7 +555,7 @@ pub async fn delete_process_flow(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.process_flows SET deleted_at = NOW() WHERE id = $1
+        UPDATE process_flows SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )
@@ -589,9 +597,9 @@ pub async fn get_flow_steps(
             pfs.quality_check_required, pfs.description, pfs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM mes.process_flow_steps pfs
-        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN mes.work_stations ws ON pfs.work_station_id = ws.id
+        FROM process_flow_steps pfs
+        LEFT JOIN production_processes pp ON pfs.process_id = pp.id
+        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -625,7 +633,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                    created_at: s.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -700,7 +708,7 @@ pub async fn add_flow_step(
 
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO mes.process_flow_steps (
+        INSERT INTO process_flow_steps (
             flow_id, process_id, sequence, work_station_id,
             equipment_ids, standard_time, wait_time, transfer_time,
             quality_check_required, description
@@ -731,7 +739,7 @@ pub async fn add_flow_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 process_uuid,
             )
@@ -765,7 +773,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                    created_at: s.created_at.unwrap_or_default(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -829,7 +837,7 @@ pub async fn update_flow_step(
 
     let result = sqlx::query_unchecked!(
         r#"
-        UPDATE mes.process_flow_steps
+        UPDATE process_flow_steps
         SET
             sequence = COALESCE($1, sequence),
             work_station_id = COALESCE($2, work_station_id),
@@ -864,7 +872,7 @@ pub async fn update_flow_step(
         Ok(s) => {
             let process_info = sqlx::query!(
                 r#"
-                SELECT process_name AS name, process_code AS process_no FROM mes.production_processes WHERE id = $1
+                SELECT process_name AS name, process_code AS process_no FROM production_processes WHERE id = $1
                 "#,
                 s.process_id,
             )
@@ -898,7 +906,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                    created_at: s.created_at.unwrap_or_default(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -931,7 +939,7 @@ pub async fn remove_flow_step(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM mes.process_flow_steps WHERE id = $1
+        DELETE FROM process_flow_steps WHERE id = $1
         "#,
         step_uuid,
     )
@@ -977,7 +985,7 @@ pub async fn reorder_flow_steps(
     for (idx, step_uuid) in body.step_ids.iter().enumerate() {
         if let Err(e) = sqlx::query!(
             r#"
-            UPDATE mes.process_flow_steps
+            UPDATE process_flow_steps
             SET sequence = $1
             WHERE id = $2 AND flow_id = $3
             "#,
@@ -1007,9 +1015,9 @@ pub async fn reorder_flow_steps(
             pfs.quality_check_required, pfs.description, pfs.created_at,
             pp.process_name as process_name, pp.process_code as process_code,
             ws.station_name as work_station_name
-        FROM mes.process_flow_steps pfs
-        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id
-        LEFT JOIN mes.work_stations ws ON pfs.work_station_id = ws.id
+        FROM process_flow_steps pfs
+        LEFT JOIN production_processes pp ON pfs.process_id = pp.id
+        LEFT JOIN work_stations ws ON pfs.work_station_id = ws.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -1043,7 +1051,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                    created_at: s.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -1078,7 +1086,7 @@ pub async fn analyze_capacity(
 
     let flow_result = sqlx::query!(
         r#"
-        SELECT id, name, capacity FROM mes.process_flows WHERE deleted_at IS NULL AND id = $1
+        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1
         "#,
         flow_uuid,
     )
@@ -1101,8 +1109,8 @@ pub async fn analyze_capacity(
         SELECT 
             pfs.id, pfs.sequence, pfs.standard_time,
             pp.process_name as process_name
-        FROM mes.process_flow_steps pfs
-        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id
+        FROM process_flow_steps pfs
+        LEFT JOIN production_processes pp ON pfs.process_id = pp.id
         WHERE pfs.flow_id = $1
         ORDER BY pfs.sequence ASC
         "#,
@@ -1124,14 +1132,14 @@ pub async fn analyze_capacity(
         .map(|s| {
             s.standard_time
                 .clone()
-                .unwrap_or(0.0)
+                .unwrap_or(BigDecimal::from(0))
                 .to_string()
                 .parse::<f64>()
                 .unwrap_or_default()
         })
         .sum();
 
-    let flow_capacity = flow.capacity.clone().unwrap_or(0.0);
+    let flow_capacity = flow.capacity.clone().unwrap_or(BigDecimal::from(0));
     let theoretical_capacity = if total_time > 0.0 {
         480.0 / total_time
     } else {
@@ -1139,7 +1147,7 @@ pub async fn analyze_capacity(
     };
 
     let effective_capacity = theoretical_capacity * 0.85;
-    let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > 0.0 {
+    let utilization_rate = if theoretical_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
         (flow_capacity.to_string().parse::<f64>().unwrap_or_default() / theoretical_capacity)
             * 100.0
     } else {
@@ -1151,13 +1159,13 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.clone().unwrap_or(0.0);
-        let step_capacity = if step_time > 0.0 {
+        let step_time = step.standard_time.clone().unwrap_or(BigDecimal::from(0));
+        let step_capacity = if step_time > BigDecimal::from(0) {
             480.0 / step_time.to_string().parse::<f64>().unwrap_or_default()
         } else {
             0.0
         };
-        let step_utilization = if step_capacity > 0.0 && flow_capacity > 0.0 {
+        let step_utilization = if step_capacity > 0.0 && flow_capacity > BigDecimal::from(0) {
             (flow_capacity.to_string().parse::<f64>().unwrap_or_default() / step_capacity) * 100.0
         } else {
             0.0
@@ -1222,13 +1230,13 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let s = Some(dt.and_utc());
+        let s = datetime_to_string(Some(dt.and_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = None;
+        let s = datetime_to_string(None);
         assert!(s.is_empty());
     }
 

@@ -922,7 +922,7 @@ pub async fn get_gantt_data(
 mod tests {
     use super::*;
     use chrono::TimeZone;
-    use chrono::{Datelike, NaiveDate, Timelike};
+    use chrono::{Datelike, Timelike};
 
     // ---- naive_to_utc ----
     #[test]
