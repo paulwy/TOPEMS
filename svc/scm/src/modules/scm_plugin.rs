@@ -30,6 +30,13 @@ pub struct PermissionDef {
 }
 
 /// 获取插件信息
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:read"])),
+    path = "/api/plugins/info",
+    responses((status = 200, description = "get_plugin_info OK")),
+    tag = "scm_plugin"
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
@@ -115,6 +122,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 /// 插件健康检查
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:read"])),
+    path = "/api/plugins/health",
+    responses((status = 200, description = "plugin_health_check OK")),
+    tag = "scm_plugin"
+)]
 pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<()>> {
     match sqlx::query("SELECT 1").fetch_one(&state.db).await {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),

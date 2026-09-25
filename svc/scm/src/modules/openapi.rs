@@ -209,7 +209,9 @@ pub struct SupplierDeliveryAppointment {
         crate::modules::price_comparison::list_comparisons,
         crate::modules::price_comparison::get_comparison,
         crate::modules::price_comparison::approve_comparison,
-    ),
+            crate::modules::scm_plugin::get_plugin_info,
+        crate::modules::scm_plugin::plugin_health_check,
+),
     components(
         schemas(
             Supplier,

@@ -1,6 +1,38 @@
 //! TOPEMS Plugin Registry（插件注册、发布、版本、元数据）最小 OpenAPI 文档骨架
 use utoipa::OpenApi;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:read"])),
+    path = "/",
+    tag = "plugin-registry",
+    responses((status = 200, description = "home OK")),
+)]
+fn _home() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:read"])),
+    path = "/health",
+    tag = "plugin-registry",
+    responses((status = 200, description = "health OK")),
+)]
+fn _health() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:read"])),
+    path = "/health/detailed",
+    tag = "plugin-registry",
+    responses((status = 200, description = "detailed_health OK")),
+)]
+fn _detailed_health() {}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -62,7 +94,13 @@ use utoipa::OpenApi;
         crate::modules::plugin::handlers::tenant_plugins::publish_plugin,
         crate::modules::plugin::handlers::tenant_plugins::unpublish_plugin,
         crate::modules::plugin::handlers::tenant_plugins::update_plugin,
-    ),
+            crate::modules::plugin::handlers::marketplace::get_plugin_versions,
+        crate::modules::plugin::handlers::tenant_plugins::install_my_plugin,
+        crate::modules::plugin::handlers::tenant_plugins::list_my_plugins,
+        _home,
+        _health,
+        _detailed_health,
+),
     tags(
         (name = "plugin",      description = "插件注册/发布 API"),
         (name = "plugin_meta", description = "插件元数据与评级 API"),

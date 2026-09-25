@@ -6,6 +6,13 @@ use axum::{extract::State, Router};
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 
 use crate::modules::ApiState;
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:read"])),
+    path = "/health",
+    responses((status = 200, description = "health_check OK")),
+    tag = "health"
+)]
 
 pub async fn health_check(State(state): State<ApiState>) -> ServiceHealth {
     let cfg = SimpleHealthConfig::new("topems-hrm").with_db(state.db);

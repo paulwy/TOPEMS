@@ -38,6 +38,13 @@ pub struct PluginHealth {
     pub status: String,
     pub service_name: String,
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:read"])),
+    path = "/api/plugins/info",
+    responses((status = 200, description = "get_plugin_info OK")),
+    tag = "srm_plugin"
+)]
 
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
@@ -80,6 +87,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:read"])),
+    path = "/api/plugins/health",
+    responses((status = 200, description = "plugin_health_check OK")),
+    tag = "srm_plugin"
+)]
 
 pub async fn plugin_health_check() -> Json<ServiceHealth> {
     Json(build_health_response("topems-srm", true))

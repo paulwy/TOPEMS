@@ -40,6 +40,13 @@ pub struct MobileSyncFailedItem {
 }
 
 /// 上传离线操作记录（批量）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/records",
+    responses((status = 200, description = "sync_records OK")),
+    tag = "offline_records"
+)]
 pub async fn sync_records(
     State(pool): State<PgPool>,
     Json(req): Json<MobileSyncRequest>,
@@ -95,6 +102,13 @@ pub async fn sync_records(
 }
 
 /// 查询待同步的离线记录
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/records/pending",
+    responses((status = 200, description = "get_pending_records OK")),
+    tag = "offline_records"
+)]
 pub async fn get_pending_records(
     State(pool): State<PgPool>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
@@ -141,6 +155,13 @@ pub async fn get_pending_records(
 }
 
 /// 标记单条离线记录为已同步
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/records/{record_id}/synced",
+    responses((status = 200, description = "mark_synced OK")),
+    tag = "offline_records"
+)]
 pub async fn mark_synced(
     State(pool): State<PgPool>,
     axum::extract::Path(record_id): axum::extract::Path<String>,
@@ -171,6 +192,13 @@ pub async fn mark_synced(
 }
 
 /// 清理所有已同步的离线记录
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/records/synced/clear",
+    responses((status = 200, description = "clear_synced OK")),
+    tag = "offline_records"
+)]
 pub async fn clear_synced(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
     match sqlx::query(only_own_schema_query!(
         "mobile",

@@ -155,7 +155,9 @@ use utoipa::OpenApi;
         crate::modules::risk::get_risk_events,
         crate::modules::project_type_config::list_types,
         crate::modules::project_type_config::get_type,
-    ),
+            crate::modules::pm_plugin::get_plugin_info,
+        crate::modules::pm_plugin::plugin_health_check,
+),
     tags(
         (name = "projects", description = "项目管理接口"),
         (name = "project_phases", description = "项目阶段管理接口"),

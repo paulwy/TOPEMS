@@ -11,6 +11,38 @@ use crate::modules::{
     sample::{CreateSampleRequest, Sample},
 };
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:read"])),
+    path = "/",
+    tag = "lims",
+    responses((status = 200, description = "home OK")),
+)]
+fn _home() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:read"])),
+    path = "/health",
+    tag = "lims",
+    responses((status = 200, description = "health OK")),
+)]
+fn _health() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["lims:read"])),
+    path = "/api/health/detailed",
+    tag = "lims",
+    responses((status = 200, description = "detailed_health OK")),
+)]
+fn _detailed_health() {}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -107,7 +139,12 @@ use crate::modules::{
         crate::modules::uncertainty::calculate_combined,
         crate::modules::inspection_record::list_records,
         crate::modules::inspection_record::get_record,
-    ),
+            crate::modules::lims_plugin::get_plugin_info,
+        crate::modules::lims_plugin::plugin_health_check,
+        _home,
+        _health,
+        _detailed_health,
+),
     components(
         schemas(
             Sample,

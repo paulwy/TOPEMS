@@ -237,6 +237,13 @@ pub async fn scan_barcode(
         Json(ApiResponse::success(response, "条形码扫描成功")),
     )
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:scan:write"])),
+    path = "/scan/qrcode",
+    responses((status = 200, description = "scan_qrcode OK")),
+    tag = "scan"
+)]
 
 pub async fn scan_qrcode(
     headers: HeaderMap,

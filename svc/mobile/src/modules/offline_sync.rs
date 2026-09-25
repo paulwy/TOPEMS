@@ -230,6 +230,13 @@ async fn apply_operation(_pool: &PgPool, operation: &OfflineOperation) -> Result
         _ => Err(format!("不支持的操作类型: {}", operation.operation_type)),
     }
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:offline:read"])),
+    path = "/offline/sync-status",
+    responses((status = 200, description = "get_offline_status OK")),
+    tag = "offline_sync"
+)]
 
 pub async fn get_offline_status(
     headers: HeaderMap,

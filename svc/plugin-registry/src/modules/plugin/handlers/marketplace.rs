@@ -266,6 +266,16 @@ pub async fn get_plugin(
 }
 
 /// Get plugin versions
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:read"])),
+    path = "/api/plugin/plugins/{plugin_id}/versions",
+    params(
+        ("plugin_id" = String, Path, description = "plugin_id"),
+    ),
+    responses((status = 200, description = "get_plugin_versions OK")),
+    tag = "marketplace"
+)]
 pub async fn get_plugin_versions(
     State(state): State<AppState>,
     Path(plugin_id): Path<Uuid>,

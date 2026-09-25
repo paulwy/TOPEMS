@@ -176,7 +176,10 @@ use utoipa::OpenApi;
         crate::modules::setup::setup_positions,
         crate::modules::setup::setup_admin_user,
         crate::modules::setup::complete_initialization,
-    ),
+            crate::modules::hrm_plugin::get_plugin_info,
+        crate::modules::hrm_plugin::plugin_health_check,
+        crate::modules::health::health_check,
+),
     components(
         schemas(
             Employee,

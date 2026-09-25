@@ -147,7 +147,9 @@ pub struct SupplierProduct {
         crate::modules::tender::get_tender_bids,
         crate::modules::tender::award_tender,
         crate::modules::tender::list_tender_awards,
-    ),
+            crate::modules::srm_plugin::get_plugin_info,
+        crate::modules::srm_plugin::plugin_health_check,
+),
     components(
         schemas(
             Supplier,

@@ -1,5 +1,28 @@
 use utoipa::OpenApi;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/health",
+    tag = "rd",
+    responses((status = 200, description = "health_check OK")),
+)]
+fn _health_check() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/health/detailed",
+    tag = "rd",
+    responses((status = 200, description = "health_check_detailed OK")),
+)]
+fn _health_check_detailed() {}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -95,7 +118,11 @@ use utoipa::OpenApi;
         crate::modules::experiment::list_scaleup_experiments,
         crate::modules::experiment::advance_phase,
         crate::modules::experiment::trace_batch,
-    ),
+            crate::modules::rs_plugin::get_plugin_info,
+        crate::modules::rs_plugin::plugin_health_check,
+        _health_check,
+        _health_check_detailed,
+),
     components(
         schemas(
             crate::models::Project,

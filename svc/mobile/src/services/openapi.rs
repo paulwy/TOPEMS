@@ -39,6 +39,20 @@ pub struct MobileTask {
     pub updated_at: Option<String>,
 }
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:read"])),
+    path = "/health",
+    tag = "mobile",
+    responses((status = 200, description = "health_check OK")),
+)]
+fn _health_check() {}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -142,7 +156,16 @@ pub struct MobileTask {
         crate::modules::patrol::get_all_patrol_records,
         crate::modules::patrol::get_patrol_record,
         crate::modules::patrol::create_patrol_record,
-    ),
+            crate::modules::offline_records::sync_records,
+        crate::modules::offline_records::get_pending_records,
+        crate::modules::offline_records::mark_synced,
+        crate::modules::offline_records::clear_synced,
+        crate::modules::offline_sync::get_offline_status,
+        crate::modules::scan::scan_qrcode,
+        crate::modules::mobile_plugin::get_plugin_info,
+        crate::modules::mobile_plugin::plugin_health_check,
+        _health_check,
+),
     components(schemas(PatrolRecord, ScanRecord, MobileTask)),
     tags(
         (name = "patrol", description = "巡检管理 API"),
@@ -164,6 +187,9 @@ pub struct MobileTask {
 )]
 pub struct MobileApiDoc;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 #[derive(OpenApi)]
 #[openapi(
     components(schemas(PatrolRecord)),
@@ -172,6 +198,9 @@ pub struct MobileApiDoc;
 )]
 pub struct PatrolApiDoc;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 #[derive(OpenApi)]
 #[openapi(
     components(schemas(ScanRecord)),
@@ -180,6 +209,9 @@ pub struct PatrolApiDoc;
 )]
 pub struct ScanApiDoc;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 #[derive(OpenApi)]
 #[openapi(
     components(schemas(MobileTask)),
@@ -188,6 +220,9 @@ pub struct ScanApiDoc;
 )]
 pub struct TaskApiDoc;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 #[derive(OpenApi)]
 #[openapi(
     tags((name = "device", description = "设备管理 API")),

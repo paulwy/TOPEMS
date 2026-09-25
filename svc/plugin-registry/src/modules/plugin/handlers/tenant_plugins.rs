@@ -145,6 +145,13 @@ pub async fn list_tenant_plugins(
 }
 
 /// Get current user's tenant installed plugins
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:read"])),
+    path = "/api/plugin/tenant/my/plugins",
+    responses((status = 200, description = "list_my_plugins OK")),
+    tag = "tenant_plugins"
+)]
 pub async fn list_my_plugins(
     State(state): State<AppState>,
     Extension(ctx): Extension<TenantContext>,
@@ -324,6 +331,16 @@ pub async fn install_plugin(
 }
 
 /// Install plugin for current user's tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:write"])),
+    path = "/api/plugin/tenant/my/plugins/{plugin_code}/install",
+    params(
+        ("plugin_code" = String, Path, description = "plugin_code"),
+    ),
+    responses((status = 200, description = "install_my_plugin OK")),
+    tag = "tenant_plugins"
+)]
 pub async fn install_my_plugin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
