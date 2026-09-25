@@ -1,6 +1,6 @@
 //! Tenant data models
 
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -446,7 +446,6 @@ pub struct OverageItem {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDateTime;
     use serde_json;
     use uuid::Uuid;
 

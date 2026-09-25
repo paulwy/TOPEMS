@@ -198,7 +198,7 @@ async fn main() -> Result<()> {
                 ) t
                 "#,
             )
-            .bind(&warmup_tenant)
+            .bind(warmup_tenant)
             .fetch_optional(&pool)
             .await
             {

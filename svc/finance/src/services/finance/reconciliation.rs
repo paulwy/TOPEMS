@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc};
+use chrono::Utc;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
@@ -24,9 +24,13 @@ impl ReconciliationService {
     ) -> Result<ReconciliationSession, TopemsError> {
         let session_no = self.generate_session_no(tenant_id).await?;
 
-        let period_start = req.period_start.parse::<chrono::NaiveDate>()
+        let period_start = req
+            .period_start
+            .parse::<chrono::NaiveDate>()
             .map_err(|e| TopemsError::Validation(format!("Invalid period_start: {}", e)))?;
-        let period_end = req.period_end.parse::<chrono::NaiveDate>()
+        let period_end = req
+            .period_end
+            .parse::<chrono::NaiveDate>()
             .map_err(|e| TopemsError::Validation(format!("Invalid period_end: {}", e)))?;
 
         let session = sqlx::query_as::<_, ReconciliationSession>(
@@ -142,7 +146,9 @@ impl ReconciliationService {
 
         let mut imported = 0;
         for item in req.items {
-            let transaction_date = item.transaction_date.parse::<chrono::NaiveDate>()
+            let transaction_date = item
+                .transaction_date
+                .parse::<chrono::NaiveDate>()
                 .map_err(|e| TopemsError::Validation(format!("Invalid transaction_date: {}", e)))?;
 
             sqlx::query(only_own_schema_query!(

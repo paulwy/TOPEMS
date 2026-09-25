@@ -154,7 +154,7 @@ pub async fn forward_traceability(
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    let order_node_id = format!("order_{}", order.id.to_string());
+    let order_node_id = format!("order_{}", order.id);
     nodes.push(TraceNode {
         id: order_node_id.clone(),
         node_type: "order".to_string(),
@@ -170,7 +170,10 @@ pub async fn forward_traceability(
         unit: Some("件".to_string()),
         batch_no: None,
         status: Some(order.status.clone()),
-        timestamp: order.actual_start_date.and_then(|d| d.and_hms_opt(0, 0, 0)).map(|d| d.and_utc()),
+        timestamp: order
+            .actual_start_date
+            .and_then(|d| d.and_hms_opt(0, 0, 0))
+            .map(|d| d.and_utc()),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -194,7 +197,7 @@ pub async fn forward_traceability(
 
     let mut prev_node_id = order_node_id.clone();
     for record in &records {
-        let record_node_id = format!("record_{}", record.id.to_string());
+        let record_node_id = format!("record_{}", record.id);
         let process_name = record.process_name.clone();
         let process_no = record.process_code.clone().unwrap_or_default();
         nodes.push(TraceNode {
@@ -221,7 +224,7 @@ pub async fn forward_traceability(
         prev_node_id = record_node_id.clone();
     }
 
-    let finished_node_id = format!("finished_{}", order.id.to_string());
+    let finished_node_id = format!("finished_{}", order.id);
     nodes.push(TraceNode {
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
@@ -234,7 +237,10 @@ pub async fn forward_traceability(
         unit: Some("件".to_string()),
         batch_no: Some(format!("BATCH{}", order.order_no)),
         status: Some(order.status.clone()),
-        timestamp: order.actual_end_date.and_then(|d| d.and_hms_opt(0, 0, 0)).map(|d| d.and_utc()),
+        timestamp: order
+            .actual_end_date
+            .and_then(|d| d.and_hms_opt(0, 0, 0))
+            .map(|d| d.and_utc()),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -321,7 +327,7 @@ pub async fn backward_traceability(
     let mut nodes = Vec::new();
     let mut links = Vec::new();
 
-    let product_node_id = format!("product_{}", batch.id.to_string());
+    let product_node_id = format!("product_{}", batch.id);
     nodes.push(TraceNode {
         id: product_node_id.clone(),
         node_type: "finished_product".to_string(),
@@ -613,17 +619,17 @@ pub async fn list_quality_records(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             qualified_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("qualified_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             defective_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defective_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             quality_status: r
                 .try_get::<Option<String>, _>("quality_status")
@@ -634,7 +640,7 @@ pub async fn list_quality_records(
             inspection_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             defect_reason: r
                 .try_get::<Option<String>, _>("defect_reason")
@@ -644,12 +650,12 @@ pub async fn list_quality_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
         })
         .collect();

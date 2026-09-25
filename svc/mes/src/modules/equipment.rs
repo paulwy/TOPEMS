@@ -172,16 +172,16 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
                 .flatten(),
         ),
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-        created_at: (
-            r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                .ok()
-                .flatten()
-        ).unwrap_or_default(),
-        updated_at: (
-            r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                .ok()
-                .flatten()
-        ).unwrap_or_default(),
+        created_at: (r
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
+            .ok()
+            .flatten())
+        .unwrap_or_default(),
+        updated_at: (r
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+            .ok()
+            .flatten())
+        .unwrap_or_default(),
     }
 }
 
@@ -796,7 +796,7 @@ pub async fn list_maintenances(
             description: Some(r.description),
             maintainer: r.maintainer,
             start_time: r.start_time,
-            end_time: r.end_time.map(|d| d),
+            end_time: r.end_time,
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
             status: r.status,
@@ -926,19 +926,21 @@ pub async fn create_maintenance(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id: id,
-            equipment_id: equipment_id,
-            equipment_name: Some(equipment_name.unwrap_or_default()),            equipment_no: Some(equipment_no.unwrap_or_default()),            maintenance_type: maintenance_type,
+            id,
+            equipment_id,
+            equipment_name: Some(equipment_name.unwrap_or_default()),
+            equipment_no: Some(equipment_no.unwrap_or_default()),
+            maintenance_type,
             description: Some(description),
-            maintainer: maintainer,
-            start_time: start_time,
-            end_time: end_time.map(|d| d),
+            maintainer,
+            start_time,
+            end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status,
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at,
+            updated_at,
         },
         "维护记录创建成功",
     ))
@@ -1031,19 +1033,21 @@ pub async fn update_maintenance_status(
 
     Json(ApiResponse::success(
         MaintenanceRecord {
-            id: id,
-            equipment_id: equipment_id,
-            equipment_name: Some(equipment_name.unwrap_or_default()),            equipment_no: Some(equipment_no.unwrap_or_default()),            maintenance_type: maintenance_type,
+            id,
+            equipment_id,
+            equipment_name: Some(equipment_name.unwrap_or_default()),
+            equipment_no: Some(equipment_no.unwrap_or_default()),
+            maintenance_type,
             description: Some(description),
-            maintainer: maintainer,
-            start_time: start_time,
-            end_time: end_time.map(|d| d),
+            maintainer,
+            start_time,
+            end_time,
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status,
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at,
+            updated_at,
         },
         "维护状态更新成功",
     ))
@@ -1173,10 +1177,7 @@ pub async fn list_inspections(
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                     equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                     inspector: r.inspector,
-                    inspection_date: r
-                        .inspection_date
-                        
-                        ,
+                    inspection_date: r.inspection_date,
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1306,10 +1307,7 @@ pub async fn create_inspection(
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
                 equipment_name: r.equipment_name.clone().unwrap_or_else(String::new),
                 inspector: r.inspector,
-                inspection_date: r
-                    .inspection_date
-                    
-                    ,
+                inspection_date: r.inspection_date,
                 location: r.location,
                 temperature: r
                     .temperature

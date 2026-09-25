@@ -95,6 +95,16 @@ async fn current_tenant_id(claims: &Claims) -> Option<uuid::Uuid> {
         .and_then(|s| uuid::Uuid::parse_str(s).ok())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:sync:read"])),
+    path = "/sync-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn list_sync_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -168,6 +178,19 @@ pub async fn list_sync_records(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:sync:read"])),
+    path = "/sync-records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn get_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -258,6 +281,19 @@ pub async fn create_sync_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync-records/{id}/retry",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn retry_sync_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -305,6 +341,19 @@ pub async fn retry_sync_record(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:sync:read"])),
+    path = "/sync-records/{id}/details",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn list_sync_details(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -410,6 +459,19 @@ async fn trigger_sync(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/wms/{sync_type}",
+    params(
+("sync_type" = String, Path, description = "sync_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn trigger_wms_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -425,6 +487,19 @@ pub async fn trigger_wms_sync(
     .await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/srm/{sync_type}",
+    params(
+("sync_type" = String, Path, description = "sync_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn trigger_srm_sync(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

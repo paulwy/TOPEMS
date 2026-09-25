@@ -158,16 +158,16 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
             name.filter(|n| !n.is_empty())
         },
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-        created_at: (
-            r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                .ok()
-                .flatten()
-        ).unwrap_or_default(),
-        updated_at: (
-            r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                .ok()
-                .flatten()
-        ).unwrap_or_default(),
+        created_at: (r
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
+            .ok()
+            .flatten())
+        .unwrap_or_default(),
+        updated_at: (r
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+            .ok()
+            .flatten())
+        .unwrap_or_default(),
     }
 }
 

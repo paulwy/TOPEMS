@@ -397,7 +397,7 @@ pub async fn query_audit_logs(
         items,
         total,
         page,
-        page_size: page_size,
+        page_size,
     }))
 }
 

@@ -222,7 +222,7 @@ pub async fn list_wips(
         params.push(serde_json::Value::String(pattern));
     }
 
-    let count_sql = format!("SELECT COUNT(*) as total FROM mes.wips w{}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) as total FROM wips w{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
@@ -248,9 +248,9 @@ pub async fn list_wips(
             w.operator, w.notes, w.created_at, w.updated_at,
             pp.process_name as process_name,
             ws.station_name as work_station_name
-        FROM mes.wips w
-        LEFT JOIN mes.production_processes pp ON w.current_process_id = pp.id
-        LEFT JOIN mes.work_stations ws ON w.current_work_station_id = ws.id
+        FROM wips w
+        LEFT JOIN production_processes pp ON w.current_process_id = pp.id
+        LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
         {}
         ORDER BY w.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -376,7 +376,7 @@ pub async fn create_wip(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&state.pool)
@@ -392,7 +392,7 @@ pub async fn create_wip(
     let order_no_arg = order_no_flat;
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.wips (
+        INSERT INTO wips (
             wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
             status, batch_no, start_time, last_transfer_time, operator, notes,
@@ -414,10 +414,10 @@ pub async fn create_wip(
         req.process_id,
         req.work_station_id,
         req.batch_no,
-        now.naive_utc(),
+        now,
         req.operator,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -445,12 +445,12 @@ pub async fn create_wip(
         current_work_station_name: None,
         status: result.status.unwrap_or_else(|| "in_progress".to_string()),
         batch_no: result.batch_no,
-        start_time: result.start_time.map(|d| d.and_utc()),
-        last_transfer_time: result.last_transfer_time.map(|d| d.and_utc()),
+        start_time: result.start_time,
+        last_transfer_time: result.last_transfer_time,
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -488,9 +488,9 @@ pub async fn get_wip(
             w.operator, w.notes, w.created_at, w.updated_at,
             pp.process_name as process_name,
             ws.station_name as work_station_name
-        FROM mes.wips w
-        LEFT JOIN mes.production_processes pp ON w.current_process_id = pp.id
-        LEFT JOIN mes.work_stations ws ON w.current_work_station_id = ws.id
+        FROM wips w
+        LEFT JOIN production_processes pp ON w.current_process_id = pp.id
+        LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
         WHERE w.id = $1
         "#,
         id,
@@ -523,12 +523,12 @@ pub async fn get_wip(
                 current_work_station_name: Some(r.work_station_name),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time,
+                last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -562,7 +562,7 @@ pub async fn update_wip(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.wips SET
+        UPDATE wips SET
             quantity = COALESCE($2, quantity),
             status = COALESCE($3, status),
             batch_no = COALESCE($4, batch_no),
@@ -581,7 +581,7 @@ pub async fn update_wip(
         req.status,
         req.batch_no,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -611,12 +611,12 @@ pub async fn update_wip(
                 current_work_station_name: None,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time,
+                last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -648,7 +648,7 @@ pub async fn delete_wip(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.wips SET deleted_at = NOW()
+        UPDATE wips SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('completed', 'cancelled')
         "#,
         id,
@@ -707,7 +707,7 @@ pub async fn transfer_wip(
     };
 
     let wip = sqlx::query!(
-        r#"SELECT quantity, status FROM mes.wips WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT quantity, status FROM wips WHERE deleted_at IS NULL AND id = $1"#,
         req.wip_id
     )
     .fetch_optional(&mut *tx)
@@ -734,7 +734,7 @@ pub async fn transfer_wip(
 
     let transfer_result = sqlx::query!(
         r#"
-        INSERT INTO mes.wip_transfers (
+        INSERT INTO wip_transfers (
             transfer_no, wip_id,
             from_process_id, from_work_station_id,
             to_process_id, to_work_station_id,
@@ -753,7 +753,7 @@ pub async fn transfer_wip(
         req.to_process_id,
         req.to_work_station_id,
         BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-        now.naive_utc(),
+        now,
         req.operator.clone(),
         req.transfer_type
             .clone()
@@ -774,7 +774,7 @@ pub async fn transfer_wip(
 
     let _ = sqlx::query!(
         r#"
-        UPDATE mes.wips SET
+        UPDATE wips SET
             current_process_id = COALESCE($2, current_process_id),
             current_work_station_id = COALESCE($3, current_work_station_id),
             last_transfer_time = $4,
@@ -784,7 +784,7 @@ pub async fn transfer_wip(
         req.wip_id,
         req.to_process_id,
         req.to_work_station_id,
-        now.naive_utc(),
+        now,
     )
     .execute(&mut *tx)
     .await;
@@ -796,7 +796,7 @@ pub async fn transfer_wip(
 
     let from_process_name = if let Some(pid) = req.from_process_id {
         sqlx::query!(
-            "SELECT process_name AS name FROM mes.production_processes WHERE id = $1",
+            "SELECT process_name AS name FROM production_processes WHERE id = $1",
             pid
         )
         .fetch_optional(&state.pool)
@@ -810,7 +810,7 @@ pub async fn transfer_wip(
 
     let to_process_name = if let Some(pid) = req.to_process_id {
         sqlx::query!(
-            "SELECT process_name AS name FROM mes.production_processes WHERE id = $1",
+            "SELECT process_name AS name FROM production_processes WHERE id = $1",
             pid
         )
         .fetch_optional(&state.pool)
@@ -824,7 +824,7 @@ pub async fn transfer_wip(
 
     let from_workstation_name = if let Some(wid) = req.from_work_station_id {
         sqlx::query!(
-            "SELECT station_name AS name FROM mes.work_stations WHERE id = $1",
+            "SELECT station_name AS name FROM work_stations WHERE id = $1",
             wid
         )
         .fetch_optional(&state.pool)
@@ -838,7 +838,7 @@ pub async fn transfer_wip(
 
     let to_workstation_name = if let Some(wid) = req.to_work_station_id {
         sqlx::query!(
-            "SELECT station_name AS name FROM mes.work_stations WHERE id = $1",
+            "SELECT station_name AS name FROM work_stations WHERE id = $1",
             wid
         )
         .fetch_optional(&state.pool)
@@ -855,19 +855,15 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: from_process_name,
+        from_process_name: Some(from_process_name.unwrap_or_default()),
         from_work_station_id: transfer.from_work_station_id,
-        from_work_station_name: Some(
-            from_workstation_name
-                .unwrap_or_default()
-                ,
-        ),
+        from_work_station_name: Some(from_workstation_name.unwrap_or_default()),
         to_process_id: transfer.to_process_id,
-        to_process_name: to_process_name,
+        to_process_name: Some(to_process_name.unwrap_or_default()),
         to_work_station_id: transfer.to_work_station_id,
-        to_work_station_name: to_workstation_name,
+        to_work_station_name: Some(to_workstation_name.unwrap_or_default()),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
-        transfer_time: transfer.transfer_time.and_utc(),
+        transfer_time: transfer.transfer_time,
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
@@ -911,11 +907,11 @@ pub async fn list_wip_transfers(
             tp.process_name as to_process_name,
             fws.station_name as from_work_station_name,
             tws.station_name as to_work_station_name
-        FROM mes.wip_transfers wt
-        LEFT JOIN mes.production_processes fp ON wt.from_process_id = fp.id
-        LEFT JOIN mes.production_processes tp ON wt.to_process_id = tp.id
-        LEFT JOIN mes.work_stations fws ON wt.from_work_station_id = fws.id
-        LEFT JOIN mes.work_stations tws ON wt.to_work_station_id = tws.id
+        FROM wip_transfers wt
+        LEFT JOIN production_processes fp ON wt.from_process_id = fp.id
+        LEFT JOIN production_processes tp ON wt.to_process_id = tp.id
+        LEFT JOIN work_stations fws ON wt.from_work_station_id = fws.id
+        LEFT JOIN work_stations tws ON wt.to_work_station_id = tws.id
         WHERE wt.wip_id = $1
         ORDER BY wt.transfer_time DESC
         "#,
@@ -947,7 +943,7 @@ pub async fn list_wip_transfers(
             to_work_station_id: r.to_work_station_id,
             to_work_station_name: Some(r.to_work_station_name),
             quantity: big_decimal_to_f64(Some(r.quantity)),
-            transfer_time: r.transfer_time.and_utc(),
+            transfer_time: r.transfer_time,
             operator: r.operator,
             transfer_type: r
                 .transfer_type
@@ -982,7 +978,7 @@ pub async fn get_wip_statistics(
         SELECT 
             COUNT(*) as total_wip,
             COALESCE(SUM(quantity), 0) as total_quantity
-        FROM mes.wips
+        FROM wips
         WHERE status = 'in_progress'
         "#,
     )
@@ -1008,7 +1004,7 @@ pub async fn get_wip_statistics(
             status,
             COUNT(*) as count,
             COALESCE(SUM(quantity), 0) as quantity
-        FROM mes.wips
+        FROM wips
         GROUP BY status
         ORDER BY status
         "#,
@@ -1041,8 +1037,8 @@ pub async fn get_wip_statistics(
             pp.process_name as process_name,
             COUNT(*) as count,
             COALESCE(SUM(w.quantity), 0) as quantity
-        FROM mes.wips w
-        LEFT JOIN mes.production_processes pp ON w.current_process_id = pp.id
+        FROM wips w
+        LEFT JOIN production_processes pp ON w.current_process_id = pp.id
         WHERE w.status = 'in_progress'
         GROUP BY w.current_process_id, pp.process_name
         ORDER BY quantity DESC

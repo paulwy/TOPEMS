@@ -114,7 +114,7 @@ pub struct ListTeamMembersResponse {
 }
 
 fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
-    dt.into().map(|d| d).unwrap_or_else(Utc::now)
+    dt.into().unwrap_or_else(Utc::now)
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
@@ -244,16 +244,16 @@ pub async fn list_teams(
                 .flatten()
                 .unwrap_or_else(|| "active".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 

@@ -43,6 +43,16 @@ pub struct SupplierRankingItem {
 // ===== API 处理函数 =====
 
 /// 获取采购趋势（最近7天）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:analytics:read"])),
+    path = "/analytics/purchase-trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/analytics"
+)]
 pub async fn get_purchase_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -85,6 +95,16 @@ pub async fn get_purchase_trend(
 }
 
 /// 获取采购状态分布
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:analytics:read"])),
+    path = "/analytics/purchase-status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/analytics"
+)]
 pub async fn get_purchase_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +153,16 @@ pub async fn get_purchase_status(
 }
 
 /// 获取供应商采购排名
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:analytics:read"])),
+    path = "/analytics/supplier-ranking",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/analytics"
+)]
 pub async fn get_supplier_ranking(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

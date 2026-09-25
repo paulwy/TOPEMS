@@ -356,7 +356,7 @@ pub async fn list_sales_invoices(
             } else {
                 0
             },
-            page_size: page_size,
+            page_size,
             pageSize: page_size,
             totalPages: if page_size > 0 {
                 (total + page_size - 1) / page_size
@@ -767,7 +767,7 @@ pub async fn list_collections(
             } else {
                 0
             },
-            page_size: page_size,
+            page_size,
             pageSize: page_size,
             totalPages: if page_size > 0 {
                 (total + page_size - 1) / page_size

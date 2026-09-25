@@ -497,7 +497,6 @@ async fn run_aps_scheduling(
                 // 后向排程：从期望完工时间往前推
                 let desired_end = order
                     .planned_end_date
-                    .map(|d| d)
                     .unwrap_or(schedule_start + Duration::days(7));
                 let start = desired_end - Duration::seconds((processing_time * 3600.0) as i64);
 
@@ -509,7 +508,6 @@ async fn run_aps_scheduling(
                 // 双向排程：先后向，再前向微调
                 let desired_end = order
                     .planned_end_date
-                    .map(|d| d)
                     .unwrap_or(schedule_start + Duration::days(7));
                 let mut start = desired_end - Duration::seconds((processing_time * 3600.0) as i64);
 
@@ -732,7 +730,7 @@ async fn fetch_pending_orders(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             priority: r
                 .try_get::<Option<i32>, _>("priority")
@@ -822,7 +820,7 @@ async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, Equipm
                 maintenance_next_date: r
                     .try_get::<Option<chrono::NaiveDate>, _>("next_maintenance_date")
                     .ok()
-                    .flatten()
+                    .flatten(),
             },
         );
     }
@@ -1079,7 +1077,7 @@ pub async fn check_schedule_constraints(
                     let bom_quantity = big_decimal_to_f64(
                         item.try_get::<Option<BigDecimal>, _>("quantity")
                             .ok()
-                            .flatten()
+                            .flatten(),
                     );
                     let required = bom_quantity * quantity;
 
@@ -1182,8 +1180,7 @@ pub async fn check_schedule_constraints(
         let suggested_start = order
             .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
             .ok()
-            .flatten()
-            .map(|d| d);
+            .flatten();
 
         results.push(ConstraintCheckResult {
             order_id: *order_id,

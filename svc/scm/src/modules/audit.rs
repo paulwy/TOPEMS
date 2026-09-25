@@ -33,6 +33,16 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/audit-logs/{id}", get(get_audit_log))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:audit:read"])),
+    path = "/audit-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/audit"
+)]
 pub async fn list_audit_logs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -120,6 +130,19 @@ pub async fn list_audit_logs(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:audit:read"])),
+    path = "/audit-logs/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/audit"
+)]
 pub async fn get_audit_log(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -1,6 +1,9 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{DateTime, Utc};
-use sqlx::{types::{BigDecimal, Uuid}, Row};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    Row,
+};
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -51,7 +54,7 @@ pub async fn create_material_return(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.and_then(|x| Some(x));
+    let order_no_arg = order_no_flat;
     let return_result = sqlx::query!(
         r#"
         INSERT INTO material_returns (
@@ -126,7 +129,8 @@ pub async fn create_material_return(
         operator_id: return_record.operator_id.map(|u| u.to_string()),
         return_time: return_record.return_time.map(|d| d.to_rfc3339()),
         notes: return_record.notes,
-        created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
+        created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
+        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -243,23 +247,22 @@ pub async fn list_material_returns(
                 .ok()
                 .flatten()
                 .map(|u| u.to_string()),
-            return_time: 
-                r.try_get::<Option<DateTime<Utc>>, _>("return_time")
-                    .ok()
-                    .flatten()
-                    .map(|d| d.to_rfc3339())
-            ,
+            return_time: r
+                .try_get::<Option<DateTime<Utc>>, _>("return_time")
+                .ok()
+                .flatten()
+                .map(|d| d.to_rfc3339()),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 
@@ -335,7 +338,7 @@ pub async fn get_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": return_record.return_time.map(|d| d),
+        "return_time": return_record.return_time,
         "notes": return_record.notes,
         "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
         "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
@@ -411,7 +414,7 @@ pub async fn update_material_return(
         "status": return_record.status.unwrap_or_else(|| "pending".to_string()),
         "warehouse_id": return_record.warehouse_id.map(|u| u.to_string()),
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
-        "return_time": return_record.return_time.map(|d| d),
+        "return_time": return_record.return_time,
         "notes": return_record.notes,
         "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
         "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),

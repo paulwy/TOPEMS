@@ -211,22 +211,22 @@ pub async fn list_records(
             start_time: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             end_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("end_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             quantity_produced: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity_produced")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             quantity_defective: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity_defective")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             status: r
                 .try_get::<Option<String>, _>("status")
@@ -237,12 +237,12 @@ pub async fn list_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
         })
         .collect();

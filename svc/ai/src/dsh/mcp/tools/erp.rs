@@ -127,8 +127,8 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 )
                 .property("remark", SchemaBuilder::string().description("备注"))
                 .required(&["supplier_id", "items"])
-                .build(),            "erp:write",
-
+                .build(),
+            "erp:write",
             move |params| async move {
                 let supplier_id = params["supplier_id"]
                     .as_str()

@@ -506,7 +506,10 @@ fn test_external_agent_calls_business_tools() {
             assert!(code != -32601, "工具 {} 不应是方法不存在: {:?}", name, err);
             if code == -32001 {
                 // 匿名保护（安全设计）：stdio 无认证 → 业务工具被安全层拒绝
-                eprintln!("匿名调用 {} 被安全层拒绝（符合匿名保护设计，防未认证枚举）", name);
+                eprintln!(
+                    "匿名调用 {} 被安全层拒绝（符合匿名保护设计，防未认证枚举）",
+                    name
+                );
                 continue;
             }
             // 其他错误（如服务未启动降级失败）：协议层对接仍正常，记录不阻塞

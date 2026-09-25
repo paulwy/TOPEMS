@@ -476,17 +476,21 @@ mod tests {
         println!("repro initialize status: {}", resp.status());
 
         // 2. initialized 通知
-        let resp = app.clone().oneshot(
-            Request::builder()
-                .method("POST")
-                .uri("/mcp")
-                .header("content-type", "application/json")
+        let resp = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/mcp")
+                    .header("content-type", "application/json")
                     .header("authorization", format!("Bearer {}", TEST_JWT_ADMIN))
-                .body(Body::from(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
+                    .body(Body::from(
+                        r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
         println!("repro notification status: {}", resp.status());
 
         // 3. tools/call system.ping（无权限要求的系统工具）

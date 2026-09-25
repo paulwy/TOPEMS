@@ -293,19 +293,19 @@ pub async fn list_process_flows(
             capacity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("capacity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 

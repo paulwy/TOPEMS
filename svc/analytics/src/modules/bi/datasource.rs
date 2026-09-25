@@ -510,7 +510,7 @@ pub async fn update_datasource(
     info!("Updating datasource: {}", id);
 
     let now = Utc::now();
-    let last_sync_naive = req.last_sync.map(|dt| dt);
+    let last_sync_naive = req.last_sync;
 
     let result = sqlx::query!(
         r#"

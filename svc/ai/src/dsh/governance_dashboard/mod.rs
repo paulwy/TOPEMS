@@ -950,11 +950,7 @@ impl GovernanceDashboardGenerator {
 
         let total_checks = audit_logs.len() as u64;
         let failed_checks = security_events.len() as u64;
-        let passed_checks = if total_checks > failed_checks {
-            total_checks - failed_checks
-        } else {
-            0
-        };
+        let passed_checks = total_checks.saturating_sub(failed_checks);
         let pending_checks = 0;
 
         let overall_compliance_rate = if total_checks > 0 {

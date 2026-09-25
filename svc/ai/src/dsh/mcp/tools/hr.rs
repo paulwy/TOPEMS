@@ -177,8 +177,8 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     SchemaBuilder::string().description("入职日期（YYYY-MM-DD）"),
                 )
                 .required(&["name", "department", "position"])
-                .build(),            "hr:write",
-
+                .build(),
+            "hr:write",
             |params| {
                 let name = params["name"].as_str().unwrap_or("");
                 let department = params["department"].as_str().unwrap_or("");

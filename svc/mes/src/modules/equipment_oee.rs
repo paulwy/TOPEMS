@@ -261,7 +261,7 @@ pub async fn list_oee_records(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN mes.equipment e ON oee.equipment_id = e.id{}",
+        "SELECT COUNT(*) as total FROM equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
         where_clause
     );
 
@@ -288,8 +288,8 @@ pub async fn list_oee_records(
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
-        FROM mes.equipment_oee oee
-        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
+        FROM equipment_oee oee
+        LEFT JOIN equipment e ON oee.equipment_id = e.id
         {}
         ORDER BY oee.record_date DESC
         LIMIT ${} OFFSET ${}
@@ -329,58 +329,58 @@ pub async fn list_oee_records(
             record_date: opt_naive_date_to_utc(
                 r.try_get::<Option<NaiveDate>, _>("record_date")
                     .ok()
-                    .flatten()
+                    .flatten(),
             )
             .unwrap_or_else(Utc::now),
             planned_production_time: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("planned_production_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             run_time: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("actual_run_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             downtime: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("downtime")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             ideal_cycle_time: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("ideal_cycle_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             total_count: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("actual_output")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             good_count: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("good_output")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             reject_count: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defective_output")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             availability: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("availability")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ) * 100.0,
             performance: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("performance")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ) * 100.0,
             quality: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quality_rate")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ) * 100.0,
             oee: big_decimal_to_f64(r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten())
                 * 100.0,
@@ -390,12 +390,12 @@ pub async fn list_oee_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
         })
         .collect();
@@ -445,7 +445,7 @@ pub async fn create_oee_record(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.equipment_oee (
+        INSERT INTO equipment_oee (
             equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
             ideal_cycle_time, actual_output, good_output, defective_output,
@@ -475,7 +475,7 @@ pub async fn create_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -489,7 +489,7 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM mes.equipment WHERE id = $1"#,
+        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1"#,
         req.equipment_id
     )
     .fetch_optional(&state.pool)
@@ -500,8 +500,9 @@ pub async fn create_oee_record(
     let record = OeeRecordResponse {
         id: result.id,
         equipment_id: result.equipment_id,
-        equipment_name: equipment.as_ref().and_then(|e| Some(e.name.clone())),
-        equipment_code: equipment.as_ref().and_then(|e| Some(e.equipment_no.clone())),        record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
+        equipment_name: equipment.as_ref().map(|e| e.name.clone()),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),
         downtime: big_decimal_to_f64(result.downtime),
@@ -516,8 +517,8 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -556,8 +557,8 @@ pub async fn get_oee_record(
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
-        FROM mes.equipment_oee oee
-        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
+        FROM equipment_oee oee
+        LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE oee.id = $1
         "#,
         id,
@@ -595,8 +596,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -634,7 +635,7 @@ pub async fn update_oee_record(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
                ideal_cycle_time, actual_output, good_output, defective_output
-        FROM mes.equipment_oee WHERE id = $1
+        FROM equipment_oee WHERE id = $1
         "#,
         id,
     )
@@ -671,7 +672,7 @@ pub async fn update_oee_record(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.equipment_oee SET
+        UPDATE equipment_oee SET
             planned_production_time = COALESCE($2, planned_production_time),
             actual_run_time = COALESCE($3, actual_run_time),
             downtime = COALESCE($4, downtime),
@@ -717,7 +718,7 @@ pub async fn update_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -752,8 +753,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
@@ -786,7 +787,7 @@ pub async fn delete_oee_record(
     }
 
     let result = sqlx::query!(
-        r#"UPDATE mes.equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
+        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
         id,
     )
     .execute(&state.pool)
@@ -851,8 +852,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as avg_performance,
             COALESCE(AVG(oee.quality_rate), 0) as avg_quality_rate,
             COALESCE(AVG(oee.oee), 0) as avg_oee
-        FROM mes.equipment_oee oee
-        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
+        FROM equipment_oee oee
+        LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
@@ -888,8 +889,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality,
             COALESCE(AVG(oee.oee), 0) as oee
-        FROM mes.equipment_oee oee
-        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
+        FROM equipment_oee oee
+        LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
           AND ($1::uuid IS NULL OR e.id = $1)
         GROUP BY DATE(oee.record_date)
@@ -916,12 +917,12 @@ pub async fn get_oee_statistics(
                     availability: big_decimal_to_f64(
                         r.try_get::<Option<BigDecimal>, _>("availability")
                             .ok()
-                            .flatten()
+                            .flatten(),
                     ) * 100.0,
                     performance: big_decimal_to_f64(
                         r.try_get::<Option<BigDecimal>, _>("performance")
                             .ok()
-                            .flatten()
+                            .flatten(),
                     ) * 100.0,
                     quality: big_decimal_to_f64(
                         r.try_get::<Option<BigDecimal>, _>("quality").ok().flatten(),
@@ -949,8 +950,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
             COALESCE(AVG(oee.oee), 0) as oee
-        FROM mes.equipment e
-        LEFT JOIN mes.equipment_oee oee ON e.id = oee.equipment_id
+        FROM equipment e
+        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
         WHERE ($1::uuid IS NULL OR e.id = $1)
@@ -1037,8 +1038,8 @@ pub async fn get_equipment_efficiency_analysis(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
             e.status
-        FROM mes.equipment e
-        LEFT JOIN mes.equipment_oee oee ON e.id = oee.equipment_id
+        FROM equipment e
+        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
         WHERE e.id = $1
         GROUP BY e.id, e.equipment_name, e.equipment_code, e.status

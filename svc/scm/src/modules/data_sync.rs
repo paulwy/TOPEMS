@@ -89,6 +89,16 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sync/consistency-check", post(check_consistency))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/purchase-to-inbound",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn purchase_to_inbound(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -139,6 +149,19 @@ pub async fn purchase_to_inbound(
     result
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/purchase-order/{id}/to-inbound",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn create_inbound_from_purchase(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -470,6 +493,16 @@ pub async fn get_retry_count(
     Ok(count.unwrap_or(0))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/supplier-from-srm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn sync_supplier_from_srm(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -737,6 +770,16 @@ pub async fn sync_supplier_from_srm(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/suppliers-from-srm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn sync_all_suppliers_from_srm(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -903,6 +946,16 @@ pub struct SyncLogsRequest {
     pub page_size: Option<i64>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/sync-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn get_sync_logs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -980,6 +1033,16 @@ pub async fn get_sync_logs(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/retry-failed",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn retry_failed_syncs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1094,6 +1157,16 @@ pub async fn retry_failed_syncs(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn get_sync_statistics(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1174,6 +1247,16 @@ pub async fn get_sync_statistics(
     Json(ApiResponse::success(statistics, "获取同步统计成功"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/purchase-batch",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn batch_sync_purchase_to_wms(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1444,6 +1527,16 @@ pub struct InconsistencyDetail {
     pub description: String,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:sync:write"])),
+    path = "/sync/consistency-check",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/sync"
+)]
 pub async fn check_consistency(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,

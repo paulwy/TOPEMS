@@ -266,8 +266,8 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                         .items(SchemaBuilder::string()),
                 )
                 .required(&["name", "sample_type", "source", "submitter"])
-                .build(),            "lims:write",
-
+                .build(),
+            "lims:write",
             |params| {
                 let name = params["name"].as_str().unwrap_or("");
                 let sample_type = params["sample_type"].as_str().unwrap_or("");

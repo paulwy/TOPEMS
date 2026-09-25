@@ -10,7 +10,7 @@
 use crate::modules::{
     bom, change_notice, configuration, dashboard, document, document_version, material, pdm_plugin,
     product, production_batch, production_formula, production_process, production_statistics,
-    production_step, project, version, workflow, settings,
+    production_step, project, settings, version, workflow,
 };
 use utoipa::OpenApi;
 

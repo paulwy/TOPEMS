@@ -354,6 +354,16 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/comparisons/{id}/approve", post(approve_comparison))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:inquiry:read"])),
+    path = "/inquiries",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inquiry"
+)]
 pub async fn list_inquiries(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -508,6 +518,19 @@ pub async fn create_inquiry(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:inquiry:read"])),
+    path = "/api/inquiries/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inquiry"
+)]
 pub async fn get_inquiry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -620,6 +643,19 @@ pub async fn delete_inquiry(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:inquiry:write"])),
+    path = "/api/inquiries/{id}/publish",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inquiry"
+)]
 pub async fn publish_inquiry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -666,6 +702,16 @@ pub async fn publish_inquiry(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:quote:read"])),
+    path = "/quotes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/quote"
+)]
 pub async fn list_quotes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -807,6 +853,19 @@ pub async fn create_quote(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:quote:read"])),
+    path = "/api/quotes/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/quote"
+)]
 pub async fn get_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -924,6 +983,19 @@ pub async fn update_quote(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:quote:write"])),
+    path = "/api/quotes/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/quote"
+)]
 pub async fn submit_quote(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -970,6 +1042,16 @@ pub async fn submit_quote(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:comparison:read"])),
+    path = "/comparisons",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/comparison"
+)]
 pub async fn list_comparisons(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1149,6 +1231,19 @@ pub async fn create_comparison(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:comparison:read"])),
+    path = "/api/comparisons/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/comparison"
+)]
 pub async fn get_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1219,6 +1314,19 @@ pub async fn get_comparison(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:comparison:write"])),
+    path = "/api/comparisons/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/comparison"
+)]
 pub async fn approve_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

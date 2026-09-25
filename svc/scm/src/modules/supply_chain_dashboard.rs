@@ -33,6 +33,16 @@ pub struct DashboardQueryParams {
     pub warehouse_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:dashboard:read"])),
+    path = "/dashboard/overview",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/dashboard"
+)]
 pub async fn overview(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -210,6 +220,16 @@ pub async fn overview(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:dashboard:read"])),
+    path = "/dashboard/purchase-inbound-outbound",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/dashboard"
+)]
 pub async fn purchase_inbound_outbound_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -360,6 +380,16 @@ pub struct SupplierPerformanceItem {
     pub level: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:dashboard:read"])),
+    path = "/dashboard/supplier-performance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/dashboard"
+)]
 pub async fn supplier_performance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -544,6 +574,16 @@ pub async fn supplier_performance(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:dashboard:read"])),
+    path = "/dashboard/real-time-status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/dashboard"
+)]
 pub async fn real_time_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

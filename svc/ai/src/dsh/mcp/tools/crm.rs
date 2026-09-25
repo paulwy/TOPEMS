@@ -121,8 +121,8 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                     SchemaBuilder::string().description("客户ID（如 CUST-0001）"),
                 )
                 .required(&["customer_id"])
-                .build(),            "crm:read",
-
+                .build(),
+            "crm:read",
             move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()
@@ -179,8 +179,8 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                         .enum_values(&["lead", "qualified", "proposal", "negotiation", "won"]),
                 )
                 .required(&["customer_id", "name", "amount"])
-                .build(),            "crm:write",
-
+                .build(),
+            "crm:write",
             move |params| async move {
                 let customer_id = params["customer_id"]
                     .as_str()

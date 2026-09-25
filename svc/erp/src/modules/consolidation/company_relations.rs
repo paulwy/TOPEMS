@@ -118,7 +118,9 @@ pub async fn create_company_relation(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
-    let effective_date = req.effective_date.parse::<chrono::NaiveDate>()
+    let effective_date = req
+        .effective_date
+        .parse::<chrono::NaiveDate>()
         .unwrap_or_else(|_| chrono::Utc::now().date_naive());
 
     let result = sqlx::query_as::<_, CompanyRelation>(

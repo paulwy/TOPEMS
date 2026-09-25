@@ -3,11 +3,11 @@ use utoipa::OpenApi;
 
 use crate::models::{
     AddCommentRequest, AutomationRule, CreateAutomationRuleRequest, CreateKnowledgeArticleRequest,
-    CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, SeverityCount, UpdateAutomationRuleRequest,
-    UpdateKnowledgeArticleRequest,
+    CreateSlaPolicyRequest, CreateTicketRequest, KnowledgeArticle, SeverityCount,
     SlaBreachTrendItem, SlaEscalationEvent, SlaSeverityStat, SlaTypeStat, SourceCount, Ticket,
     TicketActivity, TicketComment, TicketListResponse, TicketQuery, TicketSlaInfo, TicketSlaPolicy,
-    TicketSlaStats, TicketStats, TypeCount, UpdateSlaPolicyRequest, UpdateTicketRequest,
+    TicketSlaStats, TicketStats, TypeCount, UpdateAutomationRuleRequest,
+    UpdateKnowledgeArticleRequest, UpdateSlaPolicyRequest, UpdateTicketRequest,
 };
 
 #[derive(OpenApi)]

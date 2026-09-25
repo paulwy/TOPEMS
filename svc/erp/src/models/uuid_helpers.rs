@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use uuid::Uuid;
 
@@ -335,7 +335,7 @@ mod tests {
     fn test_option_date_time_serialize_some_roundtrips_rfc3339() {
         // Build a known UTC timestamp and ensure serialization output matches
         // chrono's default RFC3339 format for DateTime<Utc>.
-        let naive = NaiveDate::from_ymd_opt(2025, 8, 15)
+        let naive = chrono::NaiveDate::from_ymd_opt(2025, 8, 15)
             .unwrap()
             .and_hms_opt(10, 20, 30)
             .unwrap();

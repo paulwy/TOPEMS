@@ -8,7 +8,6 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListPatrolsQuery {
     page: Option<i32>,
@@ -100,7 +99,7 @@ pub async fn list_patrols(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.quality_patrols qp{}",
+        "SELECT COUNT(*) as total FROM quality_patrols qp{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar(&count_sql);
@@ -123,7 +122,7 @@ pub async fn list_patrols(
             qp.workstation_name, qp.inspector, qp.patrol_time,
             qp.status, qp.result, qp.findings, qp.memo,
             qp.created_at, qp.updated_at
-        FROM mes.quality_patrols qp
+        FROM quality_patrols qp
         {}
         ORDER BY qp.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -178,8 +177,16 @@ pub async fn list_patrols(
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             findings: r.try_get::<Option<String>, _>("findings").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
-            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 
@@ -218,7 +225,7 @@ pub async fn get_patrol(
             qp.workstation_name, qp.inspector, qp.patrol_time,
             qp.status, qp.result, qp.findings, qp.memo,
             qp.created_at, qp.updated_at
-        FROM mes.quality_patrols qp
+        FROM quality_patrols qp
         WHERE qp.id = $1
         "#,
         uuid,
@@ -240,8 +247,8 @@ pub async fn get_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "获取巡检记录成功",
         )),
@@ -277,7 +284,7 @@ pub async fn create_patrol(
         .and_then(|id| Uuid::parse_str(id).ok());
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO mes.quality_patrols (
+        INSERT INTO quality_patrols (
             patrol_no, production_line, workstation_id, workstation_name,
             inspector, patrol_time, status, result, findings, memo
         )
@@ -295,7 +302,6 @@ pub async fn create_patrol(
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
             NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-                .map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
@@ -305,7 +311,7 @@ pub async fn create_patrol(
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0))
                 })
         }),
         body.status.unwrap_or_else(|| "pending".to_string()),
@@ -330,8 +336,8 @@ pub async fn create_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "创建巡检记录成功",
         )),
@@ -367,7 +373,7 @@ pub async fn update_patrol(
         .and_then(|id| Uuid::parse_str(id).ok());
     let result = sqlx::query_unchecked!(
         r#"
-        UPDATE mes.quality_patrols
+        UPDATE quality_patrols
         SET
             production_line = COALESCE($1, production_line),
             workstation_id = COALESCE($2, workstation_id),
@@ -392,7 +398,6 @@ pub async fn update_patrol(
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
             NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-                .map(|dt| dt)
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
@@ -402,7 +407,7 @@ pub async fn update_patrol(
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
                         .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                        .and_then(|d| d.and_hms_opt(0, 0, 0))
                 })
         }),
         body.status,
@@ -428,8 +433,8 @@ pub async fn update_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "更新巡检记录成功",
         )),
@@ -461,7 +466,7 @@ pub async fn delete_patrol(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.quality_patrols SET deleted_at = NOW() WHERE id = $1
+        UPDATE quality_patrols SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )
@@ -519,7 +524,7 @@ pub async fn list_patrol_items(
         SELECT
             qpi.id, qpi.patrol_id, qpi.item_name, qpi.standard,
             qpi.actual_value, qpi.status, qpi.remark
-        FROM mes.quality_patrol_items qpi
+        FROM quality_patrol_items qpi
         WHERE qpi.patrol_id = $1
         ORDER BY qpi.created_at ASC
         "#,
@@ -576,7 +581,7 @@ pub async fn add_patrol_item(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO mes.quality_patrol_items (
+        INSERT INTO quality_patrol_items (
             patrol_id, item_name, standard, actual_value, status, remark
         )
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -642,7 +647,7 @@ pub async fn update_patrol_item(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.quality_patrol_items
+        UPDATE quality_patrol_items
         SET
             item_name = COALESCE($1, item_name),
             standard = COALESCE($2, standard),
@@ -703,7 +708,7 @@ pub async fn delete_patrol_item(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.quality_patrol_items SET deleted_at = NOW() WHERE id = $1
+        UPDATE quality_patrol_items SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

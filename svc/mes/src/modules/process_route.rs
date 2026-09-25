@@ -270,16 +270,16 @@ pub async fn list_process_routes(
             estimated_time_minutes: None,
             total_estimated_time_minutes: None,
             process_count: None,
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 

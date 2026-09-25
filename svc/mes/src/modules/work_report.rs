@@ -146,7 +146,8 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 }
 
 fn parse_report_date(s: &str) -> Result<NaiveDate, String> {
-    s.parse::<chrono::NaiveDate>().map_err(|e| format!("无效的 report_date: {}", e))
+    s.parse::<chrono::NaiveDate>()
+        .map_err(|e| format!("无效的 report_date: {}", e))
 }
 
 fn generate_report_no() -> String {
@@ -358,17 +359,17 @@ pub async fn list_work_reports(
             output_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             defect_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defect_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             labor_hours: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("labor_hours")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             status: r
@@ -380,22 +381,22 @@ pub async fn list_work_reports(
             approved_at: opt_datetime_to_string(
                 r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             approval_remark: r
                 .try_get::<Option<String>, _>("approval_remark")
                 .ok()
                 .flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 
@@ -821,7 +822,7 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -961,7 +962,7 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1056,7 +1057,7 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,

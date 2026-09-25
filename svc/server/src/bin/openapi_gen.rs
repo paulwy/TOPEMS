@@ -92,9 +92,10 @@ fn merge_doc(
 
 fn main() {
     let base_path = "docs/api/openapi.json";
-    let base: Value =
-        serde_json::from_str(&std::fs::read_to_string(base_path).expect("读取 base openapi.json 失败"))
-            .expect("base openapi.json 非法 JSON");
+    let base: Value = serde_json::from_str(
+        &std::fs::read_to_string(base_path).expect("读取 base openapi.json 失败"),
+    )
+    .expect("base openapi.json 非法 JSON");
 
     let mut merged = base.clone();
     // 重建 paths：仅保留既有 /api/ 前缀 key（手工精选 + 历史规范化），丢弃相对路径旧 key 防重复膨胀
@@ -311,7 +312,6 @@ fn main() {
             .expect("unified-core ApiDoc 序列化失败"),
         "core",
     );
-
 
     merged["paths"] = Value::Object(merged_paths);
     merged["components"] = Value::Object(merged_components);

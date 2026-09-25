@@ -176,7 +176,7 @@ pub async fn create_contract(
                     .bind(&item_data.unit)
                     .bind(item_data.quantity)
                     .bind(item_data.unit_price)
-                    .bind(&item_data.delivery_date)
+                    .bind(item_data.delivery_date)
                     .bind(&item_data.remarks)
                     .bind(tenant_bind)
                     .execute(&mut **txn)
@@ -352,7 +352,7 @@ pub async fn update_contract(
                     .bind(&item_data.unit)
                     .bind(item_data.quantity)
                     .bind(item_data.unit_price)
-                    .bind(&item_data.delivery_date)
+                    .bind(item_data.delivery_date)
                     .bind(&item_data.remarks)
                     .bind(tenant_bind)
                     .execute(&mut **txn)
@@ -436,6 +436,19 @@ pub async fn delete_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase-contract:write"])),
+    path = "/purchase-contracts/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn submit_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -490,6 +503,19 @@ pub async fn submit_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase-contract:write"])),
+    path = "/purchase-contracts/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn approve_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -552,6 +578,19 @@ pub async fn approve_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase-contract:write"])),
+    path = "/purchase-contracts/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn reject_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -614,6 +653,19 @@ pub async fn reject_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase-contract:write"])),
+    path = "/purchase-contracts/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn cancel_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -668,6 +720,19 @@ pub async fn cancel_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase-contract:write"])),
+    path = "/purchase-contracts/{id}/terminate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn terminate_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -722,6 +787,19 @@ pub async fn terminate_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:purchase-contract:write"])),
+    path = "/purchase-contracts/{id}/renew",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-contract"
+)]
 pub async fn renew_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

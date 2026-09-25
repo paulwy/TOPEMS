@@ -37,6 +37,16 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:supplier:read"])),
+    path = "/supplier-admissions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn list_admissions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -158,6 +168,19 @@ pub async fn create_admission(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:supplier:read"])),
+    path = "/supplier-admissions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn get_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -332,6 +355,19 @@ pub async fn delete_admission(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/supplier-admissions/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn submit_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -386,6 +422,19 @@ pub async fn submit_admission(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/supplier-admissions/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn approve_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -449,6 +498,19 @@ pub async fn approve_admission(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/supplier-admissions/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn reject_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -512,6 +574,19 @@ pub async fn reject_admission(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/supplier-admissions/{id}/audit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn audit_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -594,6 +669,19 @@ pub async fn audit_admission(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/supplier-admissions/{id}/activate-supplier",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn activate_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

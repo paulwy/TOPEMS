@@ -236,17 +236,17 @@ pub async fn list_material_requirements(
             required_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("required_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             available_quantity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("available_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             shortfall_quantity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("shortfall_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             required_date: r.try_get::<String, _>("required_date").unwrap_or_default(),
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
@@ -257,16 +257,16 @@ pub async fn list_material_requirements(
                 .unwrap_or_else(|| "pending".to_string()),
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
+            updated_at: (r
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .ok()
+                .flatten())
+            .unwrap_or_default(),
         })
         .collect();
 
@@ -372,7 +372,6 @@ pub async fn create_material_requirement(
         BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
 
     let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S")
-        .map(|dt| dt)
         .ok()
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
@@ -380,9 +379,10 @@ pub async fn create_material_requirement(
                 .map(|dt| dt.naive_utc())
         })
         .or_else(|| {
-            body.required_date.parse::<chrono::NaiveDate>()
+            body.required_date
+                .parse::<chrono::NaiveDate>()
                 .ok()
-                .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                .and_then(|d| d.and_hms_opt(0, 0, 0))
         });
 
     let result = sqlx::query_unchecked!(
@@ -477,7 +477,6 @@ pub async fn update_material_requirement(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let required_date = body.required_date.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -487,7 +486,7 @@ pub async fn update_material_requirement(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
 
@@ -677,9 +676,7 @@ pub async fn calculate_requirements(
                     item.specification,
                     Some(item.unit),
                     required_quantity_bd,
-                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S")
-                        .map(|dt| dt)
-                        .ok(),
+                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").ok(),
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),

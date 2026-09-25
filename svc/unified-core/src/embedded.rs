@@ -270,7 +270,7 @@ async fn build_router_inner(
     // Build the full application router
     let cors = topems_shared::create_cors_layer();
 
-    let app = crate::routes::create_routes(&state, move || String::new(), embed_mode)
+    let app = crate::routes::create_routes(&state, String::new, embed_mode)
         .layer(axum::middleware::from_fn(
             topems_shared_core::logging::request_context_middleware,
         ))

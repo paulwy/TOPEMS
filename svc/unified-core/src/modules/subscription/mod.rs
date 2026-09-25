@@ -10,10 +10,12 @@ use uuid::Uuid;
 /// 订阅层级
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum PlanTier {
     /// 免费版
     Free,
     /// 基础版
+    #[default]
     Basic,
     /// 高级版
     Advanced,
@@ -51,12 +53,6 @@ impl PlanTier {
     /// 是否包含指定层级（当前层级 >= 目标层级）
     pub fn includes(&self, other: &Self) -> bool {
         self.level() >= other.level()
-    }
-}
-
-impl Default for PlanTier {
-    fn default() -> Self {
-        Self::Basic
     }
 }
 
@@ -403,8 +399,10 @@ pub struct TenantSubscription {
 /// 订阅状态
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
+#[derive(Default)]
 pub enum SubscriptionStatus {
     /// 活跃
+    #[default]
     Active,
     /// 已过期
     Expired,
@@ -412,12 +410,6 @@ pub enum SubscriptionStatus {
     Cancelled,
     /// 试用期
     Trial,
-}
-
-impl Default for SubscriptionStatus {
-    fn default() -> Self {
-        Self::Active
-    }
 }
 
 /// 订阅生命周期服务
@@ -451,7 +443,7 @@ impl SubscriptionLifecycleService {
     /// 检查订阅是否即将到期（7 天内）
     pub fn is_expiring_soon(subscription: &TenantSubscription) -> bool {
         match Self::days_remaining(subscription) {
-            Some(days) => days <= 7 && days >= 0,
+            Some(days) => (0..=7).contains(&days),
             None => false,
         }
     }

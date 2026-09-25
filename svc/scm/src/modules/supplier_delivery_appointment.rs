@@ -336,6 +336,16 @@ pub fn create_routes() -> Router<ApiState> {
 
 const SELECT_COLUMNS: &str = "id, appointment_no, purchase_order_id, purchase_order_no, supplier_id, supplier_name, delivery_date, delivery_time, delivery_method, vehicle_no, driver_name, driver_phone, cargo_description, total_quantity::float8, total_weight::float8, destination_warehouse, expected_arrival_time, actual_arrival_time, status, applicant, approver, approved_at, rejection_reason, remarks, created_by, created_at, updated_at";
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:supplier:read"])),
+    path = "/delivery-appointments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn list_appointments(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -555,6 +565,19 @@ pub async fn create_appointment(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:supplier:read"])),
+    path = "/delivery-appointments/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn get_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -836,6 +859,19 @@ pub struct ApprovalBody {
     pub remarks: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/delivery-appointments/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn approve_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -960,6 +996,19 @@ pub async fn approve_appointment(
     response
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/delivery-appointments/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn reject_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1087,6 +1136,19 @@ pub async fn reject_appointment(
     response
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/delivery-appointments/{id}/confirm-arrival",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn confirm_arrival(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1210,6 +1272,19 @@ pub async fn confirm_arrival(
     response
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/delivery-appointments/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn complete_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1330,6 +1405,19 @@ pub async fn complete_appointment(
     response
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:supplier:write"])),
+    path = "/delivery-appointments/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn cancel_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1447,6 +1535,16 @@ pub async fn cancel_appointment(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:supplier:read"])),
+    path = "/delivery-appointments/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/supplier"
+)]
 pub async fn appointment_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -251,8 +251,8 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                         .enum_values(&["phone", "email", "web", "wechat", "api"]),
                 )
                 .required(&["title", "customer_id", "ticket_type"])
-                .build(),            "cs:write",
-
+                .build(),
+            "cs:write",
             |params| {
                 let title = params["title"].as_str().unwrap_or("");
                 let customer_id = params["customer_id"].as_str().unwrap_or("");

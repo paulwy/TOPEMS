@@ -549,7 +549,8 @@ async fn get_aging_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
 
     let as_of_date = match params.as_of_date {
-        Some(s) => s.parse::<chrono::NaiveDate>()
+        Some(s) => s
+            .parse::<chrono::NaiveDate>()
             .unwrap_or_else(|_| chrono::Utc::now().date_naive()),
         None => chrono::Utc::now().date_naive(),
     };

@@ -294,8 +294,8 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                         .minimum(0.0),
                 )
                 .required(&["name", "project_type", "manager", "start_date"])
-                .build(),            "pm:write",
-
+                .build(),
+            "pm:write",
             |params| {
                 let name = params["name"].as_str().unwrap_or("");
                 let project_type = params["project_type"].as_str().unwrap_or("");

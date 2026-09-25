@@ -39,6 +39,16 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:evaluation:read"])),
+    path = "/evaluations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/evaluation"
+)]
 pub async fn list_evaluations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -219,6 +229,19 @@ pub async fn create_evaluation(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:evaluation:read"])),
+    path = "/evaluations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/evaluation"
+)]
 pub async fn get_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

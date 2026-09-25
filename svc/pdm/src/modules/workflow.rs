@@ -472,7 +472,7 @@ pub async fn start_workflow(
         "timestamp": now.to_rfc3339()
     }]))
     .bind(
-        &req.created_by
+        req.created_by
             .clone()
             .unwrap_or_else(|| "system".to_string()),
     )

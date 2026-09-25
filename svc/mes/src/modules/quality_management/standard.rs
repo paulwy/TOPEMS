@@ -141,7 +141,7 @@ pub async fn list_standards(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM mes.quality_standards qs{}",
+        "SELECT COUNT(*) as total FROM quality_standards qs{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar(&count_sql);
@@ -164,7 +164,7 @@ pub async fn list_standards(
             qs.inspection_type, qs.status, qs.version,
             qs.effective_date, qs.description,
             qs.created_at, qs.updated_at
-        FROM mes.quality_standards qs
+        FROM quality_standards qs
         {}
         ORDER BY qs.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -201,7 +201,7 @@ pub async fn list_standards(
             SELECT
                 qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
-            FROM mes.quality_standard_values qsv
+            FROM quality_standard_values qsv
             WHERE qsv.standard_id = ANY($1)
             "#,
             &standard_ids,
@@ -212,8 +212,10 @@ pub async fn list_standards(
         if let Ok(value_rows) = values_result {
             for v in value_rows {
                 let sid = v.standard_id;
-                values_map.entry(sid).or_default().push(
-                    StandardValueResponse {
+                values_map
+                    .entry(sid)
+                    .or_default()
+                    .push(StandardValueResponse {
                         id: v.id.to_string(),
                         standard_id: sid.to_string(),
                         item_name: v.item_name,
@@ -222,8 +224,7 @@ pub async fn list_standards(
                         unit: v.unit,
                         inspection_method: v.inspection_method,
                         remark: v.remark,
-                    },
-                );
+                    });
             }
         }
     }
@@ -260,8 +261,16 @@ pub async fn list_standards(
                     .ok()
                     .flatten(),
                 description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-                created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
-                updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
+                created_at: (r
+                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .ok()
+                    .flatten())
+                .unwrap_or_default(),
+                updated_at: (r
+                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .ok()
+                    .flatten())
+                .unwrap_or_default(),
             }
         })
         .collect();
@@ -301,7 +310,7 @@ pub async fn get_standard(
             qs.inspection_type, qs.status, qs.version,
             qs.effective_date, qs.description,
             qs.created_at, qs.updated_at
-        FROM mes.quality_standards qs
+        FROM quality_standards qs
         WHERE qs.id = $1
         "#,
         uuid,
@@ -325,7 +334,7 @@ pub async fn get_standard(
         SELECT
             qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
             qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
-        FROM mes.quality_standard_values qsv
+        FROM quality_standard_values qsv
         WHERE qsv.standard_id = $1
         "#,
         uuid,
@@ -366,8 +375,8 @@ pub async fn get_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: standard.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+            created_at: standard.created_at.unwrap_or_default(),
+            updated_at: standard.updated_at.unwrap_or_default(),
         },
         "获取质量标准成功",
     ))
@@ -394,7 +403,6 @@ pub async fn create_standard(
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
         chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -404,12 +412,12 @@ pub async fn create_standard(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let standard_result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO mes.quality_standards (
+        INSERT INTO quality_standards (
             code, name, product_code, product_name, inspection_type,
             status, version, effective_date, description
         )
@@ -455,7 +463,7 @@ pub async fn create_standard(
 
             let value_result = sqlx::query!(
                 r#"
-                INSERT INTO mes.quality_standard_values (
+                INSERT INTO quality_standard_values (
                     standard_id, item_name, lower_limit, upper_limit,
                     unit, inspection_method, remark
                 )
@@ -514,8 +522,8 @@ pub async fn create_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: standard.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+            created_at: standard.created_at.unwrap_or_default(),
+            updated_at: standard.updated_at.unwrap_or_default(),
         },
         "创建质量标准成功",
     ))
@@ -550,7 +558,6 @@ pub async fn update_standard(
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
         chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -560,12 +567,12 @@ pub async fn update_standard(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let standard_result = sqlx::query_unchecked!(
         r#"
-        UPDATE mes.quality_standards
+        UPDATE quality_standards
         SET
             code = COALESCE($1, code),
             name = COALESCE($2, name),
@@ -616,7 +623,7 @@ pub async fn update_standard(
     if let Some(standard_values) = &body.standard_values {
         let delete_result = sqlx::query!(
             r#"
-            UPDATE mes.quality_standard_values SET deleted_at = NOW() WHERE standard_id = $1
+            UPDATE quality_standard_values SET deleted_at = NOW() WHERE standard_id = $1
             "#,
             uuid,
         )
@@ -639,7 +646,7 @@ pub async fn update_standard(
 
             let value_result = sqlx::query!(
                 r#"
-                INSERT INTO mes.quality_standard_values (
+                INSERT INTO quality_standard_values (
                     standard_id, item_name, lower_limit, upper_limit,
                     unit, inspection_method, remark
                 )
@@ -684,7 +691,7 @@ pub async fn update_standard(
             SELECT
                 qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
-            FROM mes.quality_standard_values qsv
+            FROM quality_standard_values qsv
             WHERE qsv.standard_id = $1
             "#,
             uuid,
@@ -726,8 +733,8 @@ pub async fn update_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.map(|d| d.and_utc()).unwrap_or_default(),
-            updated_at: standard.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
+            created_at: standard.created_at.unwrap_or_default(),
+            updated_at: standard.updated_at.unwrap_or_default(),
         },
         "更新质量标准成功",
     ))
@@ -753,7 +760,7 @@ pub async fn delete_standard(
 
     let result = sqlx::query!(
         r#"
-        UPDATE mes.quality_standards SET deleted_at = NOW() WHERE id = $1
+        UPDATE quality_standards SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

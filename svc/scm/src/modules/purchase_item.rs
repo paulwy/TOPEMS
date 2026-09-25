@@ -35,6 +35,16 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:purchase-item:read"])),
+    path = "/purchase-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-item"
+)]
 pub async fn list_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -194,6 +204,19 @@ pub async fn create_item(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:purchase-item:read"])),
+    path = "/purchase-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/purchase-item"
+)]
 pub async fn get_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

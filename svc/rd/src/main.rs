@@ -184,6 +184,16 @@ struct RdServiceMetrics {
     database_pool_idle: usize,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["rd:read"])),
+    path = "/metrics/json",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "main"
+)]
 async fn get_metrics(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<RdServiceMetrics>> {

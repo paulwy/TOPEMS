@@ -241,6 +241,16 @@ pub struct InventoryTurnoverItem {
     pub inventory_value: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:inventory-turnover:read"])),
+    path = "/inventory-turnover",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inventory-turnover"
+)]
 pub async fn calculate_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -409,6 +419,16 @@ pub async fn calculate_turnover(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:inventory-turnover:read"])),
+    path = "/inventory-turnover/days",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inventory-turnover"
+)]
 pub async fn turnover_days(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -523,6 +543,16 @@ pub struct AbcAnalysisResult {
     pub avg_turnover_days: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:inventory-turnover:read"])),
+    path = "/inventory-turnover/abc-analysis",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inventory-turnover"
+)]
 pub async fn abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -644,6 +674,16 @@ pub async fn abc_analysis(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:inventory-turnover:read"])),
+    path = "/inventory-turnover/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/inventory-turnover"
+)]
 pub async fn turnover_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

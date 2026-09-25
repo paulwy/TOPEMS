@@ -230,9 +230,9 @@ pub async fn labor_productivity(
               AND ($3::uuid IS NULL OR warehouse_id = $3)
             "#
     ))
-    .bind(&params.date_from)
-    .bind(&params.date_to)
-    .bind(&params.warehouse_id)
+    .bind(params.date_from)
+    .bind(params.date_to)
+    .bind(params.warehouse_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -331,9 +331,9 @@ pub async fn labor_workload(
             LIMIT 30
             "#
     ))
-    .bind(&params.date_from)
-    .bind(&params.date_to)
-    .bind(&params.warehouse_id)
+    .bind(params.date_from)
+    .bind(params.date_to)
+    .bind(params.warehouse_id)
     .fetch_all(&mut **txn)
     .await;
 
@@ -415,9 +415,9 @@ pub async fn labor_performance_dashboard(
               AND ($3::uuid IS NULL OR warehouse_id = $3)
             "#
     ))
-    .bind(&params.date_from)
-    .bind(&params.date_to)
-    .bind(&params.warehouse_id)
+    .bind(params.date_from)
+    .bind(params.date_to)
+    .bind(params.warehouse_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -613,9 +613,9 @@ pub async fn create_labor_shift(
     .bind(req.user_id)
     .bind(&req.user_name)
     .bind(req.shift_date)
-    .bind(&req.start_time)
-    .bind(&req.end_time)
-    .bind(&req.warehouse_id)
+    .bind(req.start_time)
+    .bind(req.end_time)
+    .bind(req.warehouse_id)
     .bind(&req.zone)
     .bind(req.status.unwrap_or_else(|| "scheduled".into()))
     .fetch_one(&mut **txn)

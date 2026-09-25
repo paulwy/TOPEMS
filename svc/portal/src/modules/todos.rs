@@ -58,9 +58,7 @@ fn row_to_todo(row: &sqlx::postgres::PgRow) -> Todo {
         service_name: row
             .get::<Option<String>, _>("service_name")
             .unwrap_or_else(|| "个人待办".to_string()),
-        due_date: due_date
-            .map(|d| d.to_string())
-            .unwrap_or_default(),
+        due_date: due_date.map(|d| d.to_string()).unwrap_or_default(),
         priority: row.get("priority"),
         completed: row.get("completed"),
         todo_type: row.get("todo_type"),

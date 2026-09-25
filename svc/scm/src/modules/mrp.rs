@@ -225,6 +225,16 @@ fn mrp_suggestion_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value 
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:mrp:read"])),
+    path = "/mrp/suggestions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/mrp"
+)]
 pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -308,6 +318,19 @@ pub async fn list_suggestions(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:mrp:read"])),
+    path = "/mrp/suggestions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/mrp"
+)]
 pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -682,6 +705,16 @@ pub async fn confirm_suggestion(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["scm:mrp:read"])),
+    path = "/mrp/material-summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SCM/mrp"
+)]
 pub async fn material_requirement_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

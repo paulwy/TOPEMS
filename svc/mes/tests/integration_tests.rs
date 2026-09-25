@@ -1857,7 +1857,9 @@ mod tests {
         .map(|c| c >= 6)
         .unwrap_or(false);
         if !cols_ok {
-            eprintln!("⏭ 跳过: mes.material_categories 缺少业务列（迁移仅骨架 id，完整列由线上手工扩展）");
+            eprintln!(
+                "⏭ 跳过: mes.material_categories 缺少业务列（迁移仅骨架 id，完整列由线上手工扩展）"
+            );
             return;
         }
         let cat_id = Uuid::new_v4();
