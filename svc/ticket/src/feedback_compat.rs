@@ -113,6 +113,16 @@ pub struct ListFeedbackParams {
 }
 
 /// 创建反馈（兼容端点，内部创建 customer_feedback 类型的 ticket）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:feedback_compat:write"])),
+    path = "/api/ticket/feedbacks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FeedbackCompat"
+)]
 pub async fn create_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -153,6 +163,19 @@ pub async fn create_feedback(
 }
 
 /// 获取反馈（兼容端点）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:feedback_compat:read"])),
+    path = "/api/ticket/feedbacks/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FeedbackCompat"
+)]
 pub async fn get_feedback(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

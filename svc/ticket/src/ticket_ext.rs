@@ -105,7 +105,17 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
 
 // ==================== 工作流 ====================
 
-async fn get_workflows(State(_pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/workflows",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_workflows(State(_pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let mut transitions: Vec<serde_json::Value> = Vec::new();
     for from in ALL_STATUSES {
         for to in ALL_STATUSES {
@@ -130,7 +140,17 @@ struct WorkflowMatchQuery {
 }
 
 /// 按工单类型匹配工作流：当前为默认状态机（静态配置），后续可扩展为按类型返回不同流程
-async fn get_workflow_for_ticket_type(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/workflows/match",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_workflow_for_ticket_type(
     axum::extract::Query(query): axum::extract::Query<WorkflowMatchQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut transitions: Vec<serde_json::Value> = Vec::new();
@@ -161,7 +181,17 @@ struct WorkflowRuleView {
     is_active: bool,
 }
 
-async fn list_workflow_automation_rules(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/workflows/automation-rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn list_workflow_automation_rules(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     headers: HeaderMap,
@@ -206,7 +236,20 @@ struct WorkflowToggleRequest {
     is_active: bool,
 }
 
-async fn toggle_workflow_automation_rule(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/workflows/automation-rules/{id}/toggle",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn toggle_workflow_automation_rule(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -250,7 +293,20 @@ struct TransitionRequest {
     comment: Option<String>,
 }
 
-async fn get_ticket_transitions(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/transitions",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_ticket_transitions(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -288,7 +344,20 @@ async fn get_ticket_transitions(
     ))
 }
 
-async fn apply_transition(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/{id}/transition",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn apply_transition(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -401,7 +470,20 @@ struct TagRequest {
     tag: String,
 }
 
-async fn get_ticket_tags(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/tags",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_ticket_tags(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -470,7 +552,21 @@ async fn add_ticket_tag(
     Json(ApiResponse::success(json!({"tags": tags}), "标签已添加"))
 }
 
-async fn remove_ticket_tag(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/{id}/tags/{tag}",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("tag" = String, Path, description = "tag")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn remove_ticket_tag(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, tag)): Path<(Uuid, String)>,
@@ -507,7 +603,17 @@ async fn remove_ticket_tag(
     Json(ApiResponse::success(json!({"tags": tags}), "标签已移除"))
 }
 
-async fn list_tag_directory(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/ticket-tags",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn list_tag_directory(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -548,7 +654,20 @@ async fn create_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
     ))
 }
 
-async fn get_tag_stub(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/ticket-tags/{tag}",
+    params(
+        ("tag" = String, Path, description = "tag")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_tag_stub(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(tag): Path<String>,
@@ -613,7 +732,17 @@ fn ids_param(req: &BatchIdsRequest) -> Vec<Uuid> {
     req.ids.clone()
 }
 
-async fn batch_update_tickets(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/batch-update",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_update_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -650,7 +779,17 @@ async fn batch_update_tickets(
     ))
 }
 
-async fn batch_assign_tickets(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/batch-assign",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_assign_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -680,7 +819,17 @@ async fn batch_assign_tickets(
     ))
 }
 
-async fn batch_close_tickets(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/batch-close",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_close_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -705,7 +854,17 @@ async fn batch_close_tickets(
     ))
 }
 
-async fn batch_delete_tickets(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/batch-delete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_delete_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -730,7 +889,17 @@ async fn batch_delete_tickets(
     ))
 }
 
-async fn batch_escalate_tickets(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/batch-escalate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_escalate_tickets(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Json(req): Json<BatchIdsRequest>,
@@ -783,7 +952,20 @@ fn decode_file_data(raw: &str) -> Vec<u8> {
     raw.as_bytes().to_vec()
 }
 
-async fn list_attachments(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/attachments",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn list_attachments(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -868,7 +1050,21 @@ async fn upload_attachment(
     ))
 }
 
-async fn get_attachment(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/attachments/{attachment_id}",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("attachment_id" = String, Path, description = "attachment_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_attachment(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, attachment_id)): Path<(Uuid, Uuid)>,
@@ -974,7 +1170,20 @@ async fn delete_attachment(
     ))
 }
 
-async fn batch_upload_attachments(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/{id}/attachments/batch",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_upload_attachments(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1022,7 +1231,20 @@ async fn batch_upload_attachments(
     ))
 }
 
-async fn batch_delete_attachments(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ticket:ticket_ext:write"])),
+    path = "/api/ticket/tickets/{id}/attachments/batch-delete",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn batch_delete_attachments(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1051,7 +1273,20 @@ async fn batch_delete_attachments(
     ))
 }
 
-async fn get_attachment_stats(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/attachments/stats",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_attachment_stats(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1083,7 +1318,21 @@ async fn get_attachment_stats(
     ))
 }
 
-async fn get_attachments_by_type(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/attachments/type/{file_type}",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("file_type" = String, Path, description = "file_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
+pub async fn get_attachments_by_type(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
     Path((id, file_type)): Path<(Uuid, String)>,
@@ -1127,6 +1376,20 @@ async fn get_attachments_by_type(
 }
 
 // 下载走 bytea 返回（供前端 Blob 消费）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ticket:ticket_ext:read"])),
+    path = "/api/ticket/tickets/{id}/attachments/{attachment_id}/download",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("attachment_id" = String, Path, description = "attachment_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TicketExt"
+)]
 pub async fn download_attachment_handler(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
