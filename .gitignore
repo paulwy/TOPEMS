@@ -193,6 +193,7 @@ database/data/
 
 # User uploaded files (application data)
 storage/files/
+scripts/audit/ts-unused-exports-report.json
 database/*.sql
 database/*.sql.gz
 
