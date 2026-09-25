@@ -1,0 +1,59 @@
+name: Deploy Storybook Docs
+
+# 组件文档站自动构建发布（GitHub Pages）
+# 触发：main 分支上 apps/web / shared-components / tokens 相关变更；也可手动触发
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/src/**'
+      - 'apps/web/.storybook/**'
+      - 'apps/web/package.json'
+      - 'packages/shared-components/**'
+      - 'packages/tokens/**'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-storybook
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      NODE_VERSION: '22'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build storybook static site
+        run: pnpm --filter topems-portal build-storybook
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/web/storybook-static
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
