@@ -825,3 +825,36 @@ D
 - [x] **crm**：补 analytics 3（overview/funnel/scoring）+ crm_plugin 2（info/health）+ 聚合；编译通过（已提交）
 - [x] **ai**：核查无缺口（ai_plugin 2/2，auto_register 非路由）
 - [ ] 累计：75 个新注解（文档待并入，1408 → 1483）
+
+## 🕐 日期时间类型统一治理（2026-09-25 启动，契约见 docs/date_type_convention.md）
+
+**背景**：全项目审计（svc/* 1616 个 .rs，时间字段 3348 处；database/migrations 279 个 .sql，时间列 840 处）确认存在系统性日期类型不统一：
+- DB 层：timestamptz 392 / **timestamp(无时区) 384** / date 58 / numeric·varchar 6
+- Rust 层：DateTime<Utc> 1825 / **String 1201（36%）** / NaiveDate 149 / NaiveDateTime 37 / int 23 / Instant 28 / bool 24
+- 144 个同名字段跨/内服务多类型混用（created_at 在 erp/portal/ai 里 String 与 DateTime 并存）
+- 根因链：DB 无时区 timestamp → 实体被迫 NaiveDateTime → DTO String
+
+### ✅ 已完成（2026-09-25）
+- [x] **契约文档**：docs/date_type_convention.md（分层契约：DB timestamptz/date → 实体 DateTime<Utc>/NaiveDate → DTO RFC3339 String；禁止实体层 String 存时间）
+- [x] **审计工具**：scripts/date-type-audit.py（分层审计：实体层违规检测 / DTO 统计 / SQL 列类型 + 无时区列清单；支持 --service/--sql/--json；实体层违规 exit 1）
+- [x] **mes 试点确认**：实体层（FromRow）0 违规；DTO String 均为 RFC3339 输出——重构收尾已达契约（上轮 f27647794）
+- [x] 全项目基线跑通（首次审计结果入档，可 `python3 scripts/date-type-audit.py` 复跑）
+
+### 🚧 待办（按优先级）
+- [ ] **P1-1 实体层违规修复（14 处）**：
+  - 真 String 违规（2 处，直接改 DateTime<Utc>）：lims instrument.rs MaintenanceRecord.created_at、unified-core flow/monitor.rs TrendData.date
+  - int-timestamp（1 处，确认语义）：ticket models.rs TicketSlaStats.on_time（SLA 秒数，若确为时长可豁免注释）
+  - NaiveDateTime（11 处，DB 迁移前为正确映射，**迁移后统一改 DateTime<Utc>**）：unified-core tenant/iam/backup/migration 系列 8 处、integration external_erp.rs、pdm bom.rs 2 处
+  - 前置条件：相关服务需先确认可在线编译验证（无守卫服务先建验证通道，防止重蹈 MES 当年无守卫大规模改动覆辙）
+- [ ] **P1-2 DB 无时区列迁移（384 列）**：timestamp → timestamptz 逐表迁移
+  - 集中在 core_users/core_tenants/core_plugins/core_workflows 等 unified-core 表 + 各服务迁移
+  - 步骤：逐表评估数据与时区语义 → 编写迁移（ALTER COLUMN TYPE timestamptz USING ...）→ 同步实体层 DateTime<Utc> → mes-guard --prepare（如涉 mes）→ 全量测试
+  - 高风险：384 列跨 28 服务，需分批（先 core_* 核心表，再各服务）
+- [ ] **P2-1 API 约定收敛**：DTO 手动 format 串 185 处 + parse_from_str 自定义格式 64 处 → 统一 RFC3339
+- [ ] **P2-2 144 个冲突字段清理**：同名字段跨服务统一类型（start_date/end_date/expires_at/completed_at 等）
+- [ ] **P2-3 审计工具进 CI**：date-type-audit.py 实体层违规 0 作为门禁（与 mes-online-check 同级）
+
+### 📝 已知风险与边界
+- NaiveDateTime 系列在 DB 迁移完成前**不是错误**（与无时区列正确匹配），勿提前改，否则 sqlx 在线解析类型漂移
+- 无守卫服务（lims/ticket/portal 等）改动前先确认在线编译配方可用（参考 mes_guard 机制推广）
+- DTO 层 String 与 DateTime<Utc> 混用序列化结果等价（均 RFC3339），P2 阶段按风格统一，不影响 API 契约
