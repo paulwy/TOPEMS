@@ -118,6 +118,16 @@ fn format_period(date: NaiveDate, group_by: &str) -> String {
 
 // ===== 库存周转率 =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/analytics/inventory-turnover",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 async fn get_inventory_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -242,6 +252,16 @@ async fn get_inventory_turnover(
 
 // ===== 订单履约率 =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/analytics/order-fulfillment",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 async fn get_order_fulfillment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -584,6 +604,16 @@ pub struct AbcAnalysisResponse {
 }
 
 /// 获取ABC分析（按物料价值分类）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/analytics/abc-analysis",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn get_abc_analysis(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -728,6 +758,16 @@ pub struct AgeParetoResponse {
 }
 
 /// 获取库龄帕累托分析
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/analytics/age-pareto",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn get_age_pareto(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -842,6 +882,16 @@ pub struct LocationUtilizationResponse {
 }
 
 /// 获取库位利用率
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/analytics/location-utilization",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn get_location_utilization(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,

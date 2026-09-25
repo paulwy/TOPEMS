@@ -55,6 +55,16 @@ where
 }
 
 /// 获取差异处理列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/discrepancies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "discrepancy"
+)]
 pub async fn list_discrepancies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -343,6 +353,19 @@ pub async fn create_discrepancy(
 }
 
 /// 审批差异处理
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["wms:write"])),
+    path = "/discrepancies/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "discrepancy"
+)]
 pub async fn approve_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -444,6 +467,19 @@ pub async fn approve_discrepancy(
 }
 
 /// 执行库存调整
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["wms:write"])),
+    path = "/discrepancies/{id}/adjust",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "discrepancy"
+)]
 pub async fn adjust_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -562,6 +598,19 @@ pub async fn adjust_inventory(
 }
 
 /// 批量处理盘点差异（从盘点单自动生成差异记录）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["wms:write"])),
+    path = "/discrepancies/process-stock-take/{stock_take_id}",
+    params(
+("stock_take_id" = String, Path, description = "stock_take_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "discrepancy"
+)]
 pub async fn process_stock_take_discrepancies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

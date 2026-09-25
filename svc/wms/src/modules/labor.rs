@@ -288,6 +288,16 @@ pub struct WorkloadItem {
     active_workers: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/labor/workload",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "labor"
+)]
 pub async fn labor_workload(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -364,6 +374,16 @@ pub struct PerformanceDashboard {
     top_workers: Vec<LaborEfficiencyRow>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/labor/performance-dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "labor"
+)]
 pub async fn labor_performance_dashboard(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -486,6 +506,16 @@ pub struct CreateShiftRequest {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/labor/shifts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "labor"
+)]
 pub async fn list_labor_shifts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

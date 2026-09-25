@@ -36,6 +36,16 @@ pub struct PermissionDef {
 }
 
 /// 获取插件信息
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/api/plugins/info",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "wms_plugin"
+)]
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8041".to_string());
@@ -161,6 +171,16 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 /// 插件健康检查
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/api/plugins/health",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "wms_plugin"
+)]
 pub async fn plugin_health_check(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

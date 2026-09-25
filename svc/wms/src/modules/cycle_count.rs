@@ -222,6 +222,19 @@ pub async fn create_cycle_count_config(
 }
 
 /// 获取循环盘点配置详情
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/cycle-counts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "cycle_count"
+)]
 pub async fn get_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -430,6 +443,19 @@ pub async fn delete_cycle_count_config(
 }
 
 /// 根据配置生成循环盘点
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["wms:write"])),
+    path = "/cycle-counts/{id}/generate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "cycle_count"
+)]
 pub async fn generate_cycle_count(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -560,6 +586,16 @@ pub async fn generate_cycle_count(
 }
 
 /// 生成所有到期的循环盘点
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["wms:write"])),
+    path = "/cycle-counts/generate-all",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "cycle_count"
+)]
 pub async fn generate_all_cycle_counts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

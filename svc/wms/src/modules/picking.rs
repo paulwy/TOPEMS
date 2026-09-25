@@ -116,6 +116,19 @@ pub async fn list_picking_lists(
 
 // ==================== 拣货单详情（含明细） ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/picking/lists/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "picking"
+)]
 pub async fn get_picking_list(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -188,6 +201,16 @@ pub struct PickingStats {
     overdue: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/picking/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "picking"
+)]
 pub async fn picking_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -289,6 +312,16 @@ pub struct PickingStrategy {
     enabled: bool,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["wms:read"])),
+    path = "/picking/strategies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "picking"
+)]
 pub async fn picking_strategies(
     State(_state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
