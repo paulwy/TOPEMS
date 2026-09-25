@@ -868,6 +868,7 @@ D
   - **DTO/内部层 NaiveDateTime 收口 10 处 → DateTime<Utc>**：tenant CreateTenantRequest(2)/TenantStats(1)/TenantInvoice(4) + integration SyncStatistics(2) + scm MrpSuggestion(2)——修复 NaiveDateTime serde 输出非 RFC3339（无 Z）的契约违规；连带修复 naive_utc() 构造点 2 处与 last_sync 查询类型
   - **scm 工作时间窗口函数豁免**：`is_within_working_window` 加 date-type-convention: exempt（内部计算仅取 time/weekday 组件，非序列化边界）
   - 验证：unified-core/integration/scm/portal cargo test 全绿（453+182+75+15+16+1 passed）；mes lib 绿，`test_material_category_crud` 既有失败**已闭环（2026-09-25）**：测试 SQL 引用的业务列（name/description/sort_order/tenant_id/created_at/deleted_at）仅存在于线上手工扩展 schema，迁移链只定义骨架表（id 列，20260918000014 亦未含该表）——测试加环境适配：缺列时跳过（与 ensure_db_available 同类判断），`cargo test -p topems-mes --test integration_tests` 47 passed / 0 failed
+  - **本地库迁移链全量跑通（2026-09-25，commit 1c6b92723）**：修复 P1-2a 误伤 100 处 `timestamptz WITH TIME ZONE`（重复类型语法错误）；补建 2 张无定义真表（communication.core_email_templates / mobile.shortcuts）；20260924110000 949 条索引条件化、20260924150000 24 条无 schema 索引动态 schema 化；aux_accounting 版本号 00016→00017（与 add_name_en 冲突）——`migrate.sh run` 0 错误，`_sqlx_migrations` 276/276 全量应用，CI/新环境不再因缺表/语法错误失败
   - 备注：本轮间发现 **target 目录膨胀 122G 致磁盘满**（cargo clean 失败后 rm -rf target 释放至 82Gi 可用）——后续编译注意 target 增长；剩余冲突字段为列类型决定的合理差异，P2-2 收官（无进一步机械统一必要）
 - [x] **P2-3 审计工具进 CI 门禁 ✅（2026-09-25）**：
   - **CI 新增 `date-type-audit` gate job**（与 mes-online-check 同级）：纯 Python 静态扫描（无需 DB），`python3 scripts/date-type-audit.py` exit 0 即绿——实体层违规 0 + Instant 序列化边界违规 0；触发条件与 cargo-check/mes-online-check 一致（rust/ci 变化）；本地复现命令一致
