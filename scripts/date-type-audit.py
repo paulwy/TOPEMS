@@ -103,7 +103,10 @@ def audit_rust(service=None):
         for fn in sorted(files):
             if not fn.endswith('.rs'):
                 continue
-            svc = root.split(os.sep)[1] if len(root.split(os.sep)) > 1 else 'svc-root'
+            svc = 'svc-root'
+            parts = root.split(os.sep)
+            if 'svc' in parts:
+                svc = parts[parts.index('svc') + 1]
             if service and svc != service:
                 continue
             p = os.path.join(root, fn)
@@ -113,9 +116,12 @@ def audit_rust(service=None):
                 name_m = re.search(r'struct\s+(\w+)', content[sm.start():sm.end()])
                 sname = name_m.group(1) if name_m else '?'
                 block = find_struct_block(content, sm)
-                # 是否实体：struct 定义前 200 字符内是否有 derive(FromRow)
-                head = content[max(0, sm.start() - 400):sm.start()]
-                is_entity = bool(FROMROW.search(head)) or 'FromRow' in head
+                # 是否实体：取 struct 上方最近的 #[derive(...)]（忽略前一个 struct 的 derive）
+                before = content[max(0, sm.start() - 600):sm.start()]
+                derives = re.findall(r'#\[derive\(([^\]]*)\)\]', before)
+                nearest = derives[-1] if derives else ''
+                is_entity = 'FromRow' in nearest
+                exempted = 'date-type-convention: exempt' in before
                 layer = 'entity' if is_entity else 'dto'
                 for line in block.splitlines():
                     fm = FIELD_LINE.match(line)
@@ -129,7 +135,7 @@ def audit_rust(service=None):
                     svc_stats[svc][layer + ':' + t] += 1
                     if is_entity and t in ('String', 'int-timestamp'):
                         violations.append((p, sname, name, t))
-                    elif is_entity and t == 'NaiveDateTime':
+                    elif is_entity and t == 'NaiveDateTime' and not exempted:
                         # 需要豁免注释才算合规；先报告供人工确认
                         violations.append((p, sname, name, t + '(需豁免注释)'))
     return violations, field_stats, svc_stats

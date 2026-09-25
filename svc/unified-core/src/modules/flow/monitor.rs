@@ -3,7 +3,7 @@ use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -120,7 +120,7 @@ pub struct WorkflowEfficiency {
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct TrendData {
-    pub date: String,
+    pub date: NaiveDate,
     pub instances_started: i64,
     pub instances_completed: i64,
     pub avg_duration_seconds: f64,
@@ -600,7 +600,7 @@ pub async fn get_trend_data(
     Query(_params): Query<StatsQueryParams>,
 ) -> Json<ApiResponse<Vec<TrendData>>> {
     let trends: Vec<TrendData> = sqlx::query_as(
-        r#"SELECT d.date::text as date,
+        r#"SELECT d.date as date,
                   COALESCE(s.count, 0) as instances_started,
                   COALESCE(c.count, 0) as instances_completed,
                   COALESCE(c.avg_dur, 0) as avg_duration_seconds

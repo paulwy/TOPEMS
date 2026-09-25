@@ -49,6 +49,7 @@ pub enum LicenseType {
 
 /// Tenant entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct Tenant {
     pub id: uuid::Uuid,
     pub name: String,
@@ -132,6 +133,7 @@ fn default_quota_users() -> i32 {
 
 /// Tenant usage statistics
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct TenantUsage {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
@@ -154,6 +156,7 @@ pub struct TenantUsage {
 
 /// Tenant module (activated plugin/feature)
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct TenantModule {
     pub id: uuid::Uuid,
     #[serde(rename = "tenant_id")]
@@ -253,6 +256,7 @@ pub struct OnboardTenantResponse {
 
 /// Tenant user entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct TenantUser {
     pub id: uuid::Uuid,
     #[serde(rename = "tenant_id")]

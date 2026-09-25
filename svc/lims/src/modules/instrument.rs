@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post, put},
     Extension, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_core::locale::Locale;
@@ -757,11 +758,11 @@ pub struct MaintenanceRecord {
     pub maintenance_type: String,
     pub description: Option<String>,
     pub performed_by: Option<String>,
-    pub performed_at: Option<String>,
-    pub next_maintenance_date: Option<String>,
+    pub performed_at: Option<DateTime<Utc>>,
+    pub next_maintenance_date: Option<DateTime<Utc>>,
     pub cost: Option<f64>,
     pub notes: Option<String>,
-    pub created_at: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
@@ -787,7 +788,7 @@ pub struct UpdateMaintenanceRequest {
     pub notes: Option<String>,
 }
 
-const MAINTENANCE_COLUMNS: &str = "id, instrument_id, maintenance_type, description, performed_by, performed_at::TEXT, next_maintenance_date::TEXT, cost::float8 AS cost, notes, created_at::TEXT";
+const MAINTENANCE_COLUMNS: &str = "id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost::float8 AS cost, notes, created_at";
 
 pub async fn list_maintenance(
     State(state): State<crate::shared::AppState>,
@@ -845,7 +846,7 @@ pub async fn create_maintenance(
     Json(req): Json<CreateMaintenanceRequest>,
 ) -> Json<ApiResponse<MaintenanceRecord>> {
     let row = sqlx::query(
-        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at::TEXT, next_maintenance_date::TEXT, cost::float8 AS cost, notes, created_at::TEXT",
+        "INSERT INTO lims.maintenance_records (tenant_id, organization_id, instrument_id, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost, notes) VALUES ($1, $1, $2, $3, $4, $5, $6::TIMESTAMPTZ, $7::TIMESTAMPTZ, $8, $9) RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost::float8 AS cost, notes, created_at",
     )
     .bind(ctx.tenant_id)
     .bind(req.instrument_id)
@@ -892,7 +893,7 @@ pub async fn update_maintenance(
         Err(_) => return Json(ApiResponse::error(400, "无效的维护记录ID")),
     };
     let row = sqlx::query(
-        "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes), updated_at = now() WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at::TEXT, next_maintenance_date::TEXT, cost::float8 AS cost, notes, created_at::TEXT",
+        "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes), updated_at = now() WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost::float8 AS cost, notes, created_at",
     )
     .bind(ctx.tenant_id)
     .bind(record_id)

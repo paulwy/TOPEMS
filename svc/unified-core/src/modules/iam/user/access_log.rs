@@ -26,6 +26,7 @@ pub struct AccessLogQuery {
 }
 
 #[derive(Debug, sqlx::FromRow)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 struct LoginLogRow {
     id: Uuid,
     ip_address: String,

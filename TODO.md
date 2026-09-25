@@ -841,11 +841,12 @@ D
 - [x] 全项目基线跑通（首次审计结果入档，可 `python3 scripts/date-type-audit.py` 复跑）
 
 ### 🚧 待办（按优先级）
-- [ ] **P1-1 实体层违规修复（14 处）**：
-  - 真 String 违规（2 处，直接改 DateTime<Utc>）：lims instrument.rs MaintenanceRecord.created_at、unified-core flow/monitor.rs TrendData.date
-  - int-timestamp（1 处，确认语义）：ticket models.rs TicketSlaStats.on_time（SLA 秒数，若确为时长可豁免注释）
-  - NaiveDateTime（11 处，DB 迁移前为正确映射，**迁移后统一改 DateTime<Utc>**）：unified-core tenant/iam/backup/migration 系列 8 处、integration external_erp.rs、pdm bom.rs 2 处
-  - 前置条件：相关服务需先确认可在线编译验证（无守卫服务先建验证通道，防止重蹈 MES 当年无守卫大规模改动覆辙）
+- [x] **P1-1 实体层违规修复（2026-09-25 完成）**：
+  - ✅ 真 String 违规 2 处已修复：lims instrument.rs MaintenanceRecord（performed_at/next_maintenance_date/created_at → DateTime<Utc>，SQL 去 ::TEXT）+ unified-core flow/monitor.rs TrendData（date → NaiveDate，SQL 去 ::text）；lims/unified-core/pdm/integration 编译通过
+  - ✅ ticket TicketSlaStats.on_time：审计误报（on_time 是计数 total-breached 非时间戳，且非 FromRow 实体），工具 is_entity 判定已修复（取紧邻 derive）
+  - ✅ NaiveDateTime 11 处已加豁免注释（`date-type-convention: exempt`，映射 DB timestamp 无时区列，**DB 迁移后统一改 DateTime<Utc>**）
+  - ✅ 审计工具修复：--service 服务名解析（取 svc/ 后一项）+ 最近 derive 判定 + 豁免注释识别
+  - ✅ 全项目实体层违规：14 → 0（date-type-audit.py 全绿，可进 CI 门禁）
 - [ ] **P1-2 DB 无时区列迁移（384 列）**：timestamp → timestamptz 逐表迁移
   - 集中在 core_users/core_tenants/core_plugins/core_workflows 等 unified-core 表 + 各服务迁移
   - 步骤：逐表评估数据与时区语义 → 编写迁移（ALTER COLUMN TYPE timestamptz USING ...）→ 同步实体层 DateTime<Utc> → mes-guard --prepare（如涉 mes）→ 全量测试

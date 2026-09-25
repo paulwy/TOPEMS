@@ -436,6 +436,7 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct BomVersion {
     pub id: Uuid,
     pub tenant_id: Uuid,
