@@ -73,3 +73,62 @@ BEGIN
     EXECUTE $x$ALTER TABLE public.core_workflow_tasks ADD COLUMN IF NOT EXISTS claimed_at timestamptz$x$;
   END IF;
 END $$;
+
+-- ============================================================
+-- 3) 空库重建补齐（2026-09-25 空库验证卡点）：000007 已 DROP public 影子表，
+--    flow 骨架影子表在本迁移第 1 部分 DROP 后，空库将无任何实例/版本/审批表可解析；
+--    此处按 20260908000011 同源权威结构 + unified-core flow 模块引用列补齐（幂等）。
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "public"."core_workflow_instances" (
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workflow_id      UUID,
+    title            TEXT,
+    initiator_id     UUID,
+    current_node_id  TEXT,
+    status           TEXT DEFAULT 'pending',
+    variables        JSONB DEFAULT '{}'::jsonb,
+    started_at       TIMESTAMPTZ,
+    completed_at     TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at       TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS "public"."core_workflow_versions" (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workflow_id UUID,
+    version     INTEGER,
+    definition  JSONB,
+    isactive    BOOLEAN DEFAULT TRUE,
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at  TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS "public"."approvals" (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workflow_instance_id UUID,
+    status               TEXT,
+    created_at           TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at           TIMESTAMPTZ,
+    node_id              UUID,
+    task_name            TEXT,
+    assignee_id          UUID,
+    approved_by          UUID,
+    approval_type        TEXT,
+    comment              TEXT,
+    approved_at          TIMESTAMPTZ,
+    timeout_at           TIMESTAMPTZ,
+    tenant_id            UUID
+);
+CREATE TABLE IF NOT EXISTS "public"."approval_records" (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    approval_id     UUID,
+    action          TEXT,
+    actor_name      TEXT,
+    comment         TEXT,
+    previous_status TEXT,
+    new_status      TEXT,
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    actor_id        UUID,
+    tenant_id       UUID,
+    deleted_at      TIMESTAMPTZ
+);

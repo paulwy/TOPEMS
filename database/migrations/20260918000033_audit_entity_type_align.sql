@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS shared.audit_logs (
     details jsonb,
     status character varying,
     error_message text,
-    created_at timestamptz with time zone NOT NULL DEFAULT now(),
-    deleted_at timestamptz with time zone,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    deleted_at timestamptz,
     entity_type text
 );

@@ -40,9 +40,9 @@ BEGIN
             user_name character varying,
             user_email text,
             role character varying,
-            joined_at timestamptz without time zone DEFAULT now(),
-            updated_at timestamptz without time zone DEFAULT now(),
-            deleted_at timestamptz with time zone
+            joined_at timestamptz DEFAULT now(),
+            updated_at timestamptz DEFAULT now(),
+            deleted_at timestamptz
         );
         CREATE INDEX idx_pdm_project_members_project_id ON pdm.pdm_project_members(project_id);
     END IF;

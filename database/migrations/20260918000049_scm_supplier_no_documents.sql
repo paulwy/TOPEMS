@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS erp.documents (
     file_url text,
     file_size bigint,
     uploader uuid,
-    created_at timestamptz with time zone DEFAULT now() NOT NULL,
-    updated_at timestamptz with time zone DEFAULT now() NOT NULL
+    created_at timestamptz DEFAULT now() NOT NULL,
+    updated_at timestamptz DEFAULT now() NOT NULL
 );
 
 DO $$

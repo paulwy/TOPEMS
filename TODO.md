@@ -870,6 +870,17 @@ D
   - 验证：unified-core/integration/scm/portal cargo test 全绿（453+182+75+15+16+1 passed）；mes lib 绿，`test_material_category_crud` 既有失败**已闭环（2026-09-25）**：测试 SQL 引用的业务列（name/description/sort_order/tenant_id/created_at/deleted_at）仅存在于线上手工扩展 schema，迁移链只定义骨架表（id 列，20260918000014 亦未含该表）——测试加环境适配：缺列时跳过（与 ensure_db_available 同类判断），`cargo test -p topems-mes --test integration_tests` 47 passed / 0 failed
   - **本地库迁移链全量跑通（2026-09-25，commit 1c6b92723）**：修复 P1-2a 误伤 100 处 `timestamptz WITH TIME ZONE`（重复类型语法错误）；补建 2 张无定义真表（communication.core_email_templates / mobile.shortcuts）；20260924110000 949 条索引条件化、20260924150000 24 条无 schema 索引动态 schema 化；aux_accounting 版本号 00016→00017（与 add_name_en 冲突）——`migrate.sh run` 0 错误，`_sqlx_migrations` 276/276 全量应用，CI/新环境不再因缺表/语法错误失败
   - 备注：本轮间发现 **target 目录膨胀 122G 致磁盘满**（cargo clean 失败后 rm -rf target 释放至 82Gi 可用）——后续编译注意 target 增长；剩余冲突字段为列类型决定的合理差异，P2-2 收官（无进一步机械统一必要）
+  - **空库全量迁移验证闭环（2026-09-25）**：为证明迁移链在 CI/新环境（无历史脏数据）可用，手动建 `topems_mig_verify` 全新空库循环验证（等价 CI migration-test job），逐项修复后 **276/276 迁移全部应用、0 错误**：
+    - ① P1-2a 误伤第三/四种大小写形态：`timestamptz WITHOUT TIME ZONE`(7处/3文件)、`timestamptz with time zone`(小写)——大小写不敏感正则全量清理 145 处/19 文件；残留 3 行为合法 `USING ... AT TIME ZONE 'UTC'` 转换不动
+    - ② 空库无 `topems_app` 角色（6 迁移 GRANT 但无创建）→ 20260910000001 文件头补幂等 `DO $role$` 建角色
+    - ③ mes.teams / mes.team_members / mes.equipment_oee 无迁移定义（遗留表）→ 20260921000106 按 mes 服务 team.rs / equipment_oee.rs 查询列补建真表
+    - ④ ehs.qa_ehs_hazard_factors / qa_ehs_hazardous_materials / qa_ehs_hazards 无定义（rehome 无 public 源）→ 20260921000107 按 occupational_disease.rs / hazardous_material.rs / hazard.rs 查询列补建
+    - ⑤ 20260923000004 引用的 6 张 integration/finance 同步表为**服务 init_database 自建**（mes_qms_sync 建表含 tenant_id）→ 28 处 ALTER 加 `IF EXISTS`（旧库补列、空库跳过，与 107 影子表模式一致）
+    - ⑥ 20260923000007 mobile.shortcuts 补建外键漏 schema 前缀（REFERENCES mobile_users→mobile.mobile_users）
+    - ⑦ 20260923000009 fixed_assets 生成列依赖 original_value/salvage_value/expected_life 仅由 erp 服务 schema_defense 运行时补齐 → 迁移内按 schema_defense.rs 结构补建基础列（幂等）
+    - ⑧ flow 收敛链空库缺口：20260918000016 第 1 部分 DROP flow 骨架影子表后**只重建 public.core_workflow_tasks，漏 instances/versions/approvals/approval_records**（public 影子已被 000007 drop，011 结构亦被清）→ 按本地权威列补建 4 表（approvals 14 列 / approval_records 11 列，对齐 000005 复制列结果）
+    - ⑨ 20260923150000 / 20260923160000 引用 public.core_workflows（权威已收敛至 flow，public 影子按设计删除）→ ALTER IF EXISTS + DO 块表存在守卫（CREATE POLICY / ENABLE FORCE RLS 条件化）
+    - 收尾：**本地主库 checksum 同步 31 个被修改且已应用迁移的 sha384**，`migrate.sh run` 主库幂等 0 错误、`check-migrations.mjs` 仅既有版本号不连续警告
 - [x] **P2-3 审计工具进 CI 门禁 ✅（2026-09-25）**：
   - **CI 新增 `date-type-audit` gate job**（与 mes-online-check 同级）：纯 Python 静态扫描（无需 DB），`python3 scripts/date-type-audit.py` exit 0 即绿——实体层违规 0 + Instant 序列化边界违规 0；触发条件与 cargo-check/mes-online-check 一致（rust/ci 变化）；本地复现命令一致
   - **工具新增 Instant 序列化检查**：Serialize derive struct 内时间字段为 Instant/Option<Instant> → 违规（契约：Instant 仅限进程内计时，禁止跨序列化边界）；当前 18 处 Instant 全部 non-serde（ApiState/AppState.start_time 进程启动、CacheEntry.expires_at 内存缓存、SseSession/TransportSession 内部会话、ExecutionTimer/ExecutionRecord 性能计时）→ 违规 0，契约已满足，检查作防回归

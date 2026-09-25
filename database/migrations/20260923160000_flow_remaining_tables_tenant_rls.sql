@@ -12,11 +12,16 @@ ALTER TABLE public.core_workflow_versions ADD COLUMN IF NOT EXISTS tenant_id uui
 -- 2) 统一标准策略（nil/空/零值放行 + 租户匹配 + 存量 NULL 行放行）
 DROP POLICY IF EXISTS rls_tenant_isolation ON public.core_workflows;
 DROP POLICY IF EXISTS core_workflows_tenant_policy ON public.core_workflows;
-CREATE POLICY rls_tenant_isolation ON public.core_workflows FOR ALL USING (
-  (current_setting('app.tenant_id', true) IS NULL) OR (current_setting('app.tenant_id', true) = '') OR
-  (current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000') OR
-  (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
-);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='core_workflows') THEN
+    CREATE POLICY rls_tenant_isolation ON public.core_workflows FOR ALL USING (
+      (current_setting('app.tenant_id', true) IS NULL) OR (current_setting('app.tenant_id', true) = '') OR
+      (current_setting('app.tenant_id', true) = '00000000-0000-0000-0000-000000000000') OR
+      (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id', true), ''))::uuid)
+    );
+  END IF;
+END $$;
 
 DROP POLICY IF EXISTS rls_tenant_isolation ON public.core_workflow_versions;
 DROP POLICY IF EXISTS core_workflow_versions_tenant_policy ON public.core_workflow_versions;
@@ -43,8 +48,13 @@ CREATE POLICY rls_tenant_isolation ON public.approval_records FOR ALL USING (
 );
 
 -- 3) ENABLE + FORCE（owner 也受约束）
-ALTER TABLE public.core_workflows ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.core_workflows FORCE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='core_workflows') THEN
+    ALTER TABLE public.core_workflows ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE public.core_workflows FORCE ROW LEVEL SECURITY;
+  END IF;
+END $$;
 ALTER TABLE public.core_workflow_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.core_workflow_versions FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.approvals ENABLE ROW LEVEL SECURITY;

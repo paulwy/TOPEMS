@@ -32,7 +32,79 @@ ALTER TABLE lims.qa_lab_processes ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
 ALTER TABLE lims.qa_lab_processes ADD COLUMN IF NOT EXISTS process_name_en VARCHAR(255);
 
 -- 8. ehs 危害因素
+--    ehs.qa_ehs_hazard_factors / ehs.qa_ehs_hazardous_materials 无任何迁移定义（遗留表），
+--    按 ehs 服务查询列补齐真表（供下方双语列 ALTER 及运行时使用）
+CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazard_factors (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    factor_no VARCHAR(64),
+    name VARCHAR(256) NOT NULL,
+    name_en VARCHAR(256),
+    factor_type VARCHAR(64),
+    category VARCHAR(64),
+    description TEXT,
+    hazard_level VARCHAR(32),
+    exposure_limit VARCHAR(128),
+    unit VARCHAR(32),
+    sources TEXT,
+    affected_positions TEXT,
+    affected_count INTEGER DEFAULT 0,
+    status VARCHAR(32) DEFAULT 'active',
+    remarks TEXT,
+    tenant_id UUID,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    deleted_at timestamptz
+);
+CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazardous_materials (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    material_no VARCHAR(64),
+    name VARCHAR(256) NOT NULL,
+    name_en VARCHAR(256),
+    alias VARCHAR(256),
+    english_name VARCHAR(256),
+    cas_no VARCHAR(64),
+    category VARCHAR(64),
+    hazard_level VARCHAR(32),
+    hazard_class VARCHAR(32),
+    specification VARCHAR(256),
+    unit VARCHAR(32),
+    packaging VARCHAR(128),
+    storage_condition VARCHAR(256),
+    storage_location VARCHAR(256),
+    max_stock NUMERIC(15,3),
+    min_stock NUMERIC(15,3),
+    current_stock NUMERIC(15,3),
+    safety_data_sheet TEXT,
+    emergency_measures TEXT,
+    supplier VARCHAR(256),
+    status VARCHAR(32) DEFAULT 'active',
+    remarks TEXT,
+    tenant_id UUID,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    deleted_at timestamptz
+);
 ALTER TABLE ehs.qa_ehs_hazard_factors ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
+--    ehs.qa_ehs_hazards 无任何迁移定义（遗留表，rehome 也无 public 源），按 ehs 服务 hazard.rs 查询列补齐真表
+CREATE TABLE IF NOT EXISTS ehs.qa_ehs_hazards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hazard_no VARCHAR(64),
+    title VARCHAR(256) NOT NULL,
+    title_en VARCHAR(256),
+    description TEXT,
+    category VARCHAR(64),
+    level VARCHAR(32),
+    source VARCHAR(128),
+    location VARCHAR(256),
+    reported_by VARCHAR(128),
+    reported_at timestamptz,
+    status VARCHAR(32) DEFAULT 'active',
+    inspection_id UUID,
+    tenant_id UUID,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    deleted_at timestamptz
+);
 -- 9. ehs 危险化学品（已有 english_name，此处补 name_en 保持统一）
 ALTER TABLE ehs.qa_ehs_hazardous_materials ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
 -- 10. ehs 危害事件（展示列为 title）

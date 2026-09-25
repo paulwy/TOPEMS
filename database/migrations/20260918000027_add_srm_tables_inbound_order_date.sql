@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS srm.biddings (
     status character varying NOT NULL,
     budget_amount numeric,
     currency character varying,
-    publish_date timestamptz with time zone,
+    publish_date timestamptz,
     bid_deadline timestamp with time zone,
-    open_date timestamptz with time zone,
+    open_date timestamptz,
     winner_supplier_id uuid,
     winner_supplier_name character varying,
     winner_amount numeric,
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS srm.biddings (
     department character varying,
     items jsonb,
     remarks text,
-    created_at timestamptz with time zone NOT NULL DEFAULT now(),
-    updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
     tenant_id uuid
 );
 
@@ -46,9 +46,9 @@ CREATE TABLE IF NOT EXISTS srm.quotations (
     status character varying NOT NULL,
     items jsonb,
     remarks text,
-    submitted_at timestamptz with time zone,
-    created_at timestamptz with time zone NOT NULL DEFAULT now(),
-    updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+    submitted_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
     tenant_id uuid
 );
 

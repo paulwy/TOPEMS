@@ -9,7 +9,56 @@
 ALTER TABLE mes.production_orders ADD COLUMN IF NOT EXISTS order_no VARCHAR(100) NOT NULL DEFAULT '';
 
 -- 2. teams.tenant_id（租户隔离过滤所需）
+--    mes.teams / mes.team_members 无任何迁移定义（遗留表仅存在于运行库），
+--    按 mes 服务 team.rs 实体结构（CreateTeamRequest/TeamResponse/INSERT 列）补齐真表
+CREATE TABLE IF NOT EXISTS mes.teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    team_code VARCHAR(100) NOT NULL,
+    team_name VARCHAR(200) NOT NULL,
+    team_type VARCHAR(50),
+    work_station_id UUID,
+    leader_id VARCHAR(64),
+    leader_name VARCHAR(128),
+    member_count INTEGER NOT NULL DEFAULT 0,
+    status VARCHAR(32) NOT NULL DEFAULT 'active',
+    description TEXT,
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS mes.team_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    team_id UUID NOT NULL REFERENCES mes.teams(id) ON DELETE CASCADE,
+    employee_id VARCHAR(64) NOT NULL,
+    employee_name VARCHAR(128) NOT NULL,
+    employee_code VARCHAR(64),
+    position VARCHAR(128),
+    join_date timestamptz
+);
 ALTER TABLE mes.teams ADD COLUMN IF NOT EXISTS tenant_id UUID;
 
 -- 3. equipment_oee.tenant_id（租户隔离过滤所需）
+--    mes.equipment_oee 无任何迁移定义（遗留表仅存在于运行库），
+--    按 mes 服务 equipment_oee.rs 查询/响应列补齐真表
+CREATE TABLE IF NOT EXISTS mes.equipment_oee (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    equipment_id UUID NOT NULL,
+    record_date timestamptz NOT NULL,
+    planned_production_time DOUBLE PRECISION,
+    actual_run_time DOUBLE PRECISION,
+    downtime DOUBLE PRECISION,
+    ideal_cycle_time DOUBLE PRECISION,
+    actual_output DOUBLE PRECISION,
+    good_output DOUBLE PRECISION,
+    defective_output DOUBLE PRECISION,
+    availability DOUBLE PRECISION,
+    performance DOUBLE PRECISION,
+    quality_rate DOUBLE PRECISION,
+    oee DOUBLE PRECISION,
+    shift VARCHAR(32),
+    operator VARCHAR(128),
+    notes TEXT,
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW(),
+    deleted_at timestamptz
+);
 ALTER TABLE mes.equipment_oee ADD COLUMN IF NOT EXISTS tenant_id UUID;

@@ -15,6 +15,21 @@ BEGIN
         ALTER TABLE erp.fixed_assets DROP COLUMN monthly_depreciation;
     END IF;
 
+    -- 1.5 补建基础列（空库迁移链仅建骨架表，业务列由 erp 服务 schema_defense 运行时补齐；
+    --      此处按 schema_defense.rs fixed_assets 定义补齐，保证生成列表达式可执行、空库自洽）
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='fixed_assets' AND column_name='original_value') THEN
+        ALTER TABLE erp.fixed_assets ADD COLUMN original_value DECIMAL(20,4) NOT NULL DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='fixed_assets' AND column_name='accumulated_depreciation') THEN
+        ALTER TABLE erp.fixed_assets ADD COLUMN accumulated_depreciation DECIMAL(20,4) DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='fixed_assets' AND column_name='salvage_value') THEN
+        ALTER TABLE erp.fixed_assets ADD COLUMN salvage_value DECIMAL(20,4) DEFAULT 0;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='erp' AND table_name='fixed_assets' AND column_name='expected_life') THEN
+        ALTER TABLE erp.fixed_assets ADD COLUMN expected_life INTEGER NOT NULL DEFAULT 36;
+    END IF;
+
     -- 2. NUMERIC → FLOAT8
     FOR c IN
         SELECT column_name FROM information_schema.columns

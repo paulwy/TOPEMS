@@ -2,6 +2,13 @@
 -- 背景：前端 inspectionRecord.ts 调用 /incoming-inspections/{id}/records，
 --       后端 incoming_inspection.rs 无此子资源端点，且无对应表。
 -- 幂等创建，GRANT topems_app。
+-- 空库（CI/新环境）无 topems_app 角色，先幂等补建（PG 无 CREATE ROLE IF NOT EXISTS，用 DO 块检查）
+DO $role$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='topems_app') THEN
+    CREATE ROLE topems_app;
+  END IF;
+END $role$;
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 scm.inspection_records 仅为 business_base_tables 建的 2 列裸骨架
 -- （无 tenant_id 列）则 DROP 重建（骨架无数据）；结构完整或不存在则跳过。

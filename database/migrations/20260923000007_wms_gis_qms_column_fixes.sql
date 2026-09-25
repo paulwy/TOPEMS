@@ -71,7 +71,7 @@ ALTER TABLE core.knowledge_qa_history ADD COLUMN IF NOT EXISTS feedback integer;
 -- 按 init 结构补齐 mobile 真表（REFERENCES mobile_users 依赖迁移链已建），确保 ALTER 可执行且服务运行时解析一致
 CREATE TABLE IF NOT EXISTS mobile.shortcuts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES mobile.mobile_users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     icon VARCHAR(100) NOT NULL,
     action_type VARCHAR(100) NOT NULL,

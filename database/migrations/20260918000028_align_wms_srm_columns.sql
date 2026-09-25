@@ -4,6 +4,6 @@
 -- 5433 缺：inbound_orders.organization_id（对齐 5432 权威结构）
 
 ALTER TABLE wms.inbound_orders ADD COLUMN IF NOT EXISTS approved_by uuid;
-ALTER TABLE wms.inbound_orders ADD COLUMN IF NOT EXISTS approved_at timestamptz with time zone;
+ALTER TABLE wms.inbound_orders ADD COLUMN IF NOT EXISTS approved_at timestamptz;
 ALTER TABLE wms.inbound_orders ADD COLUMN IF NOT EXISTS organization_id uuid;
-ALTER TABLE srm.quotations ADD COLUMN IF NOT EXISTS deleted_at timestamptz with time zone;
+ALTER TABLE srm.quotations ADD COLUMN IF NOT EXISTS deleted_at timestamptz;

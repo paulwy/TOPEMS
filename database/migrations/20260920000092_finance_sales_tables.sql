@@ -16,11 +16,11 @@ CREATE TABLE IF NOT EXISTS finance.sales_invoices (
     invoice_type character varying,
     cancel_reason text,
     red_flush_of uuid,
-    issued_at timestamptz with time zone,
-    cancelled_at timestamptz with time zone,
+    issued_at timestamptz,
+    cancelled_at timestamptz,
     created_by uuid,
-    created_at timestamptz with time zone DEFAULT now() NOT NULL,
-    updated_at timestamptz with time zone DEFAULT now() NOT NULL,
+    created_at timestamptz DEFAULT now() NOT NULL,
+    updated_at timestamptz DEFAULT now() NOT NULL,
     CONSTRAINT sales_invoices_pkey PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_sales_invoices_tenant ON finance.sales_invoices USING btree (tenant_id);
@@ -34,9 +34,9 @@ CREATE TABLE IF NOT EXISTS finance.erp_collection_records (
     amount numeric,
     status text,
     confirmed_by character varying,
-    confirmed_at timestamptz with time zone,
-    deleted_at timestamptz with time zone,
-    created_at timestamptz with time zone DEFAULT now() NOT NULL,
+    confirmed_at timestamptz,
+    deleted_at timestamptz,
+    created_at timestamptz DEFAULT now() NOT NULL,
     CONSTRAINT erp_collection_records_pkey PRIMARY KEY (id)
 );
 -- 5433 该表残缺（仅 id/deleted_at/confirmed_by/confirmed_at），补代码引用列
@@ -44,4 +44,4 @@ ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS tenant_id uu
 ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS invoice_no text;
 ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS amount numeric;
 ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS status text;
-ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS created_at timestamptz with time zone DEFAULT now();
+ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();

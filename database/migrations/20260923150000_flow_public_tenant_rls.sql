@@ -23,7 +23,7 @@ ALTER TABLE public.core_workflow_tasks
 ALTER TABLE public.core_workflow_versions
   ALTER COLUMN created_at TYPE timestamptz USING created_at AT TIME ZONE 'UTC',
   ALTER COLUMN deleted_at TYPE timestamptz USING deleted_at AT TIME ZONE 'UTC';
-ALTER TABLE public.core_workflows
+ALTER TABLE IF EXISTS public.core_workflows
   ALTER COLUMN deleted_at TYPE timestamptz USING deleted_at AT TIME ZONE 'UTC';
 
 -- 3) 统一 RLS 策略（pm 同款：nil/空/零值放行，普通租户仅见本租户 + 存量 NULL 行）
