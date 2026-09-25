@@ -59,6 +59,19 @@ pub fn create_routes(pool: PgPool) -> Router {
 /// issues/status + phase_id/milestone_id/acceptance_standard/result_details/nonconformities/
 /// corrective_actions/follow_up_date。
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/quality-checks",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 async fn get_project_quality_checks(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -82,6 +95,19 @@ async fn get_project_quality_checks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/quality-checks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 async fn get_quality_check(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -208,6 +234,19 @@ async fn update_quality_check(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/defects",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 async fn get_project_defects(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -231,6 +270,19 @@ async fn get_project_defects(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/defects/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 async fn get_defect(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Defect>> {
     let defect = sqlx::query_as::<_, Defect>(
         only_own_schema_query!("pm", "SELECT id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_at, updated_at FROM pm.defects WHERE deleted_at IS NULL AND id = $1"),

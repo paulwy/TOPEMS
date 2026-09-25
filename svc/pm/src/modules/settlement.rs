@@ -63,6 +63,19 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
 /// currency/status/remarks/created_by + settlement_name/settlement_period_start/
 /// settlement_period_end/approved_at。
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/settlements",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settlement"
+)]
 async fn get_project_settlements(
     State(state): State<SettlementState>,
     Path(project_id): Path<Uuid>,
@@ -86,6 +99,19 @@ async fn get_project_settlements(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/settlements/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settlement"
+)]
 async fn get_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
@@ -224,6 +250,19 @@ async fn update_settlement(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/settlements/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settlement"
+)]
 async fn approve_settlement(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
@@ -273,6 +312,19 @@ async fn approve_settlement(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/settlements/{settlement_id}/items",
+    params(
+("settlement_id" = String, Path, description = "settlement_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settlement"
+)]
 async fn get_settlement_items(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
@@ -343,6 +395,19 @@ async fn create_settlement_item(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/settlement-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settlement"
+)]
 async fn update_settlement_item(
     State(state): State<SettlementState>,
     Path(id): Path<Uuid>,
@@ -412,6 +477,19 @@ async fn delete_settlement_item(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/settlements/{settlement_id}/adjustments",
+    params(
+("settlement_id" = String, Path, description = "settlement_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settlement"
+)]
 async fn get_settlement_adjustments(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,

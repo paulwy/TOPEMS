@@ -31,6 +31,16 @@ pub struct ProjectStatusItem {
 // ===== API 处理函数 =====
 
 /// 获取项目创建趋势（最近7天）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/analytics/project-trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn get_project_trend(
     State(pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,
@@ -68,6 +78,16 @@ pub async fn get_project_trend(
 }
 
 /// 获取项目状态分布
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/analytics/project-status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn get_project_status(
     State(pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,

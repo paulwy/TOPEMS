@@ -75,6 +75,16 @@ fn task_return_columns(locale_placeholder: &str) -> String {
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "task"
+)]
 pub async fn list_tasks(
     State(pool): State<PgPool>,
     Query(query): Query<TaskQuery>,
@@ -127,6 +137,19 @@ pub async fn list_tasks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/tasks",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "task"
+)]
 pub async fn list_tasks_by_project(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -236,6 +259,19 @@ pub async fn create_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "task"
+)]
 pub async fn get_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

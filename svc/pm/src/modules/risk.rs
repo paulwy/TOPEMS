@@ -57,6 +57,19 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/risks",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "risk"
+)]
 async fn get_project_risks(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -80,6 +93,19 @@ async fn get_project_risks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/risks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "risk"
+)]
 async fn get_risk(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -292,6 +318,19 @@ async fn update_risk(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/risks/{id}/events",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "risk"
+)]
 async fn get_risk_events(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

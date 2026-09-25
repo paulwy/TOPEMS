@@ -86,6 +86,19 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/budgets",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "budget"
+)]
 async fn get_project_budgets(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -109,6 +122,19 @@ async fn get_project_budgets(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/budgets/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "budget"
+)]
 async fn get_budget(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<Budget>> {
     let budget = sqlx::query_as::<_, Budget>(only_own_schema_query!("pm", "SELECT id, project_id, budget_code, budget_name, budget_type, total_amount, allocated_amount, spent_amount, remaining_amount, status, start_date, end_date, description, created_by, created_at, updated_at FROM pm.budgets WHERE id = $1"))
         .bind(id)
@@ -290,6 +316,19 @@ async fn update_budget(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/budgets/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "budget"
+)]
 async fn submit_budget(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -358,6 +397,19 @@ async fn submit_budget(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/budgets/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "budget"
+)]
 async fn approve_budget(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -426,6 +478,19 @@ async fn approve_budget(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/budgets/{id}/items",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "budget"
+)]
 async fn get_budget_items(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -485,6 +550,20 @@ async fn create_budget_item(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/budgets/{id}/items/{item_id}",
+    params(
+("id" = String, Path, description = "id"),
+("item_id" = String, Path, description = "item_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "budget"
+)]
 async fn update_budget_item(
     State(pool): State<PgPool>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,

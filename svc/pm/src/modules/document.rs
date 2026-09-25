@@ -42,6 +42,19 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/documents",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "document"
+)]
 async fn get_project_documents(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -65,6 +78,19 @@ async fn get_project_documents(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/documents/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "document"
+)]
 async fn get_document(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -201,6 +227,19 @@ async fn delete_document(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/documents/{id}/versions",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "document"
+)]
 async fn get_document_versions(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -295,6 +334,19 @@ async fn create_document_version(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/folders",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "document"
+)]
 async fn get_project_folders(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -318,6 +370,19 @@ async fn get_project_folders(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/folders/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "document"
+)]
 async fn get_folder(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

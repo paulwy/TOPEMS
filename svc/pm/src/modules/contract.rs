@@ -65,6 +65,16 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/contracts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn list_contracts(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Contract>>> {
     let contracts =
         sqlx::query_as::<_, Contract>(only_own_schema_query!("pm", "SELECT id, project_id, contract_no, contract_name, contract_type, party_a, party_b, amount, currency, sign_date, start_date, end_date, status, tax_rate, description, created_by, created_at, updated_at FROM pm.contracts ORDER BY created_at DESC"))
@@ -83,6 +93,19 @@ async fn list_contracts(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Cont
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/contracts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn get_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -355,6 +378,19 @@ async fn delete_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/contracts/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn submit_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -430,6 +466,19 @@ async fn submit_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/contracts/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn approve_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -505,6 +554,19 @@ async fn approve_contract(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/contracts/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn reject_contract(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -580,6 +642,19 @@ async fn reject_contract(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/contracts/{id}/milestones",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn list_contract_milestones(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -643,6 +718,20 @@ async fn create_contract_milestone(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/contracts/{id}/milestones/{milestone_id}",
+    params(
+("id" = String, Path, description = "id"),
+("milestone_id" = String, Path, description = "milestone_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn update_contract_milestone(
     State(pool): State<PgPool>,
     Path((id, milestone_id)): Path<(Uuid, Uuid)>,
@@ -715,6 +804,19 @@ async fn delete_contract_milestone(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/contracts/{id}/payments",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn list_payment_schedule(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -777,6 +879,20 @@ async fn create_payment_schedule(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/contracts/{id}/payments/{payment_id}",
+    params(
+("id" = String, Path, description = "id"),
+("payment_id" = String, Path, description = "payment_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn update_payment_schedule(
     State(pool): State<PgPool>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
@@ -995,6 +1111,19 @@ async fn delete_template(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/contracts",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 async fn get_project_contracts(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,

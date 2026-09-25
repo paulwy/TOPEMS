@@ -33,6 +33,19 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/notifications",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 async fn get_project_notifications(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -97,6 +110,19 @@ async fn create_notification(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/notification-settings",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 async fn get_project_settings(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -155,6 +181,19 @@ async fn create_setting(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/notification-settings/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 async fn update_setting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -193,6 +232,16 @@ async fn update_setting(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/notification-types",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "notification"
+)]
 async fn list_notification_types(
     State(_pool): State<PgPool>,
 ) -> Json<ApiResponse<Vec<NotificationType>>> {

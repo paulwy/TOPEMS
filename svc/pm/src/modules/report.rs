@@ -38,6 +38,19 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/reports",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "report"
+)]
 async fn get_project_reports(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -61,6 +74,19 @@ async fn get_project_reports(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/reports/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "report"
+)]
 async fn get_report(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -123,6 +149,19 @@ async fn create_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/projects/{project_id}/reports/generate",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "report"
+)]
 async fn generate_report(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -272,6 +311,16 @@ fn generate_summary(data: &serde_json::Value) -> Option<String> {
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/report-templates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "report"
+)]
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ReportTemplate>>> {
     let templates = sqlx::query_as::<_, ReportTemplate>(
         only_own_schema_query!("pm", "SELECT id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at FROM pm.report_templates WHERE is_active = true ORDER BY template_name"),
@@ -291,6 +340,19 @@ async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Repo
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/report-templates/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "report"
+)]
 async fn get_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,

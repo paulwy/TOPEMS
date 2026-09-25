@@ -22,6 +22,16 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/service-integrations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "service_integration"
+)]
 async fn list_integrations(State(_pool): State<PgPool>) -> Json<ApiResponse<Vec<()>>> {
     Json(ApiResponse::success(vec![], "获取服务集成列表成功"))
 }
@@ -30,6 +40,19 @@ async fn create_integration(State(_pool): State<PgPool>) -> Json<ApiResponse<()>
     Json(ApiResponse::success((), "创建服务集成成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/service-integrations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "service_integration"
+)]
 async fn get_integration(
     State(_pool): State<PgPool>,
     Path(_id): Path<Uuid>,

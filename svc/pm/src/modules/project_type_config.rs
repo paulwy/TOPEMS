@@ -17,6 +17,16 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/project-types",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_type_config"
+)]
 async fn list_types(State(_pool): State<PgPool>) -> Json<ApiResponse<Vec<()>>> {
     Json(ApiResponse::success(vec![], "获取项目类型列表成功"))
 }
@@ -25,6 +35,19 @@ async fn create_type(State(_pool): State<PgPool>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "创建项目类型成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/project-types/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project_type_config"
+)]
 async fn get_type(State(_pool): State<PgPool>, Path(_id): Path<Uuid>) -> Json<ApiResponse<()>> {
     Json(ApiResponse::success((), "获取项目类型成功"))
 }

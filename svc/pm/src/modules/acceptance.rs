@@ -44,6 +44,19 @@ pub fn create_routes(pool: PgPool) -> Router {
         .with_state(pool)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/acceptance-plans",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn get_project_plans(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -67,6 +80,19 @@ async fn get_project_plans(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/acceptance-plans/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn get_plan(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -262,6 +288,19 @@ async fn update_plan(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/acceptance-plans/{plan_id}/items",
+    params(
+("plan_id" = String, Path, description = "plan_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn get_plan_items(
     State(pool): State<PgPool>,
     Path(plan_id): Path<Uuid>,
@@ -320,6 +359,19 @@ async fn create_plan_item(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/acceptance-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn update_plan_item(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -386,6 +438,19 @@ async fn delete_plan_item(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/{project_id}/acceptance-records",
+    params(
+("project_id" = String, Path, description = "project_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn get_project_records(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
@@ -409,6 +474,19 @@ async fn get_project_records(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/acceptance-records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn get_record(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -436,6 +514,19 @@ async fn get_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["pm:write"])),
+    path = "/acceptance-plans/{plan_id}/records",
+    params(
+("plan_id" = String, Path, description = "plan_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "acceptance"
+)]
 async fn create_record(
     State(pool): State<PgPool>,
     Path(plan_id): Path<Uuid>,

@@ -1254,6 +1254,16 @@ async fn get_kanban_board(State(state): State<AppState>) -> Json<ApiResponse<Kan
 }
 
 /// 项目里程碑时间线：聚合 pm.project_milestones + pm.projects 名称
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["pm:read"])),
+    path = "/projects/milestones/timeline",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "project"
+)]
 async fn get_milestones_timeline(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
