@@ -1,4 +1,4 @@
-  - [x] **P1-2 DB/SQL 层无时区列治理 ✅（2026-09-25）**：实测线上库已全 timestamptz（4201 列，无 timestamp 无时区）→ 工作重心转为**源码 DDL 归一化**：database/migrations 58 文件 384 处 `timestamp` → `timestamptz`（注释行 6 处误改已还原）；实体层 20 处 NaiveDateTime 豁免**收口为 DateTime<Utc>**（tenant 11 / iam 5 / backup 2 / migration 3 / integration 3 / analytics 4 / pdm 2，DTO 层 NaiveDateTime 保持不动）；14 条"DB 无时区列"豁免注释删除（保留 2 条正确豁免：audit 响应耗时 + srm 交货周期文本）；unified-core/analytics/integration/pdm cargo test 全绿（0 failed）；审计：实体违规 0 + SQL 无时区列 0# TOPEMS UI v3 迁移与优化 - 项目状态
+# TOPEMS UI v3 迁移与优化 - 项目状态
 
 ## ✅ 已完成（P0 + P1）
 
@@ -851,10 +851,12 @@ D
     - [x] **P1-1c 散点 3 处 ✅（2026-09-25）**：unified-core ApiVersionConfigRecord.sunset_date → Option<NaiveDate>（SQL 漏查 sunset_date 列 = FromRow 运行时 ColumnNotFound bug，补列修复；load_from_db map format 转 DTO String）；scm SupplierAdmission.application_date → Option<NaiveDate>（date 列，修复 date→String decode 运行时 bug）；srm Quotation.delivery_time 豁免（DB varchar 交货周期文本，非时间列，加 date-type-convention: exempt 注释）
   - 验收 ✅：date-type-audit.py 实体层违规 = 0
   - 备注：unified-core 存在**存量 doctest 失败**（middleware/tier_gate.rs 示例引用独立 crate 不存在的路径，与本次治理无关，待单独修）
-- [ ] **P1-2 DB 无时区列迁移（384 列）**：timestamp → timestamptz 逐表迁移
-  - 集中在 core_users/core_tenants/core_plugins/core_workflows 等 unified-core 表 + 各服务迁移
-  - 步骤：逐表评估数据与时区语义 → 编写迁移（ALTER COLUMN TYPE timestamptz USING ...）→ 同步实体层 DateTime<Utc> → mes-guard --prepare（如涉 mes）→ 全量测试
-  - 高风险：384 列跨 28 服务，需分批（先 core_* 核心表，再各服务）
+- [x] **P1-2 DB/SQL 层无时区列治理 ✅（2026-09-25）**：
+  - **实测推翻假设**：information_schema 确认线上库 4201 个时间列全部 timestamptz，无任何 timestamp without time zone——384"无时区列"仅存在于迁移脚本源码 DDL
+  - **P1-2a 源码 DDL 归一化**：database/migrations 58 文件 384 处 `timestamp` → `timestamptz`（仅类型 token，默认值/表达式不动；注释行 6 处误改已还原）→ 审计 SQL 无时区列 0
+  - **P1-2b 实体层 NaiveDateTime 收口**：20 处豁免字段 → DateTime<Utc>（tenant 11 / iam 5 / backup 2 / migration 3 / integration 3 / analytics 4 / pdm 2）；DTO 层 NaiveDateTime 保持不动（归 P2-1）；14 条"DB 无时区列"豁免注释删除，保留 2 条正确豁免（audit 响应耗时 + srm 交货周期文本）
+  - 顺带修复：NaiveDateTime 映射 timestamptz 列的运行时 decode 类型漂移
+  - 验证：unified-core/integration/analytics/pdm cargo test 全绿（0 failed）；审计：实体违规 0 + SQL 无时区列 0（exit 0）
 - [ ] **P2-1 API 约定收敛**：DTO 手动 format 串 185 处 + parse_from_str 自定义格式 64 处 → 统一 RFC3339
 - [ ] **P2-2 144 个冲突字段清理**：同名字段跨服务统一类型（start_date/end_date/expires_at/completed_at 等）
 - [ ] **P2-3 审计工具进 CI**：date-type-audit.py 实体层违规 0 作为门禁（与 mes-online-check 同级）
