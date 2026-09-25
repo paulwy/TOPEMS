@@ -10,6 +10,7 @@ use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 struct RoleRow {
     id: uuid::Uuid,
     name: String,

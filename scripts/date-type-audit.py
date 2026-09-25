@@ -133,9 +133,9 @@ def audit_rust(service=None):
                     t = norm_type(typ, opt)
                     field_stats[layer][t] += 1
                     svc_stats[svc][layer + ':' + t] += 1
-                    if is_entity and t in ('String', 'int-timestamp'):
+                    if is_entity and t in ('String', 'Option<String>', 'int-timestamp', 'Option<int-timestamp>') and not exempted:
                         violations.append((p, sname, name, t))
-                    elif is_entity and t == 'NaiveDateTime' and not exempted:
+                    elif is_entity and t in ('NaiveDateTime', 'Option<NaiveDateTime>') and not exempted:
                         # 需要豁免注释才算合规；先报告供人工确认
                         violations.append((p, sname, name, t + '(需豁免注释)'))
     return violations, field_stats, svc_stats

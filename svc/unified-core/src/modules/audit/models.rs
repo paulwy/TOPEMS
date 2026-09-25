@@ -99,6 +99,7 @@ pub struct TrendStat {
 }
 
 #[derive(Debug, Serialize, FromRow)]
+// date-type-convention: exempt response_time 为响应耗时（时长，bigint 毫秒），非时间点，契约允许
 pub struct AccessControlLog {
     pub id: Uuid,
     pub user_id: Uuid,
