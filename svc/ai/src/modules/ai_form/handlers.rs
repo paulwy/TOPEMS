@@ -57,6 +57,16 @@ pub fn parse_action(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/assist",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ai_form_assist(
     State(_state): State<AppState>,
     Json(req): Json<AiFormAssistRequest>,
@@ -90,6 +100,16 @@ pub async fn ai_form_assist(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/suggest",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ai_form_suggest(
     State(_state): State<AppState>,
     Json(req): Json<AiFormSuggestRequest>,
@@ -116,6 +136,16 @@ pub async fn ai_form_suggest(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/enhance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ai_form_enhance(
     State(_state): State<AppState>,
     Json(req): Json<AiFormEnhanceRequest>,
@@ -134,6 +164,16 @@ pub async fn ai_form_enhance(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/validate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ai_form_validate(
     State(_state): State<AppState>,
     Json(req): Json<AiFormValidateRequest>,
@@ -161,6 +201,16 @@ pub async fn ai_form_validate(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/translate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ai_form_translate(
     State(_state): State<AppState>,
     Json(req): Json<AiFormTranslateRequest>,
@@ -181,6 +231,16 @@ pub async fn ai_form_translate(
 
 // ==================== 表单注册表 API ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/api/core/ai-form/forms",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_forms(State(_state): State<AppState>) -> Json<ApiResponse<AiFormListResponse>> {
     let registry = topems_shared::form_assistant::default_registry();
     let forms: Vec<FormSummary> = registry.list().into_iter().map(FormSummary::from).collect();
@@ -197,6 +257,19 @@ pub async fn list_forms(State(_state): State<AppState>) -> Json<ApiResponse<AiFo
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/api/core/ai-form/forms/{form_type}",
+    params(
+        ("form_type" = String, Path, description = "form_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,
@@ -214,6 +287,19 @@ pub async fn get_form(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/forms/{form_type}/suggest",
+    params(
+        ("form_type" = String, Path, description = "form_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn suggest_for_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,
@@ -259,6 +345,19 @@ pub async fn suggest_for_form(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/api/core/ai-form/forms/{form_type}/enhance",
+    params(
+        ("form_type" = String, Path, description = "form_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn enhance_for_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,

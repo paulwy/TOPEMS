@@ -98,6 +98,16 @@ pub async fn get_performance_metrics(State(state): State<AppState>) -> impl Into
 /// 导出 Prometheus 格式指标
 ///
 /// GET /dsh/agent/performance/prometheus
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/agent/performance/prometheus",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn export_prometheus_metrics(State(state): State<AppState>) -> impl IntoResponse {
     info!("导出 DSH Agent Prometheus 指标");
 
@@ -130,6 +140,16 @@ pub async fn export_prometheus_metrics(State(state): State<AppState>) -> impl In
 /// 重置性能指标
 ///
 /// POST /dsh/agent/performance/reset
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/agent/performance/reset",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn reset_performance_metrics(State(state): State<AppState>) -> impl IntoResponse {
     info!("重置 DSH Agent 性能指标");
 
@@ -154,6 +174,19 @@ pub async fn reset_performance_metrics(State(state): State<AppState>) -> impl In
 /// 获取工具性能指标
 ///
 /// GET /dsh/agent/performance/tools/{tool_name}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/agent/performance/tools/{tool_name}",
+    params(
+        ("tool_name" = String, Path, description = "tool_name")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_tool_performance(
     State(state): State<AppState>,
     axum::extract::Path(tool_name): axum::extract::Path<String>,

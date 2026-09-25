@@ -8,171 +8,6 @@ use topems_shared_auth::get_tenant_id_from_claims;
 
 pub struct AnalysisApi;
 
-impl AnalysisApi {
-    /// POST /api/analysis/sentiment - 情感分析
-    pub async fn sentiment(
-        State(state): State<AppState>,
-        Extension(claims): Extension<Claims>,
-        headers: HeaderMap,
-        Json(req): Json<SentimentAnalysisRequest>,
-    ) -> Json<ApiResponse<SentimentAnalysisResponse>> {
-        let tenant_id = get_tenant_id_from_claims(&claims);
-        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-        let details = Some(serde_json::json!({"text_length": req.text.len()}));
-        match state
-            .analysis_service
-            .analyze_sentiment(&req.text, tenant_id)
-            .await
-        {
-            Ok(response) => {
-                if let Err(e) = state
-                    .audit
-                    .log_analysis_operation(
-                        "sentiment_analysis",
-                        None,
-                        user_id,
-                        details.clone(),
-                        "success",
-                        None,
-                    )
-                    .await
-                {
-                    tracing::warn!("ai audit failed: {e}");
-                }
-                Json(ApiResponse::success(response, "Success"))
-            }
-            Err(e) => {
-                let err_msg = e.to_string();
-                if let Err(audit_err) = state
-                    .audit
-                    .log_analysis_operation(
-                        "sentiment_analysis",
-                        None,
-                        user_id,
-                        details,
-                        "failed",
-                        Some(&err_msg),
-                    )
-                    .await
-                {
-                    tracing::warn!("ai audit failed: {audit_err}");
-                }
-                Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e))
-            }
-        }
-    }
-
-    /// POST /api/analysis/classify - 文本分类
-    pub async fn classify(
-        State(state): State<AppState>,
-        Extension(claims): Extension<Claims>,
-        headers: HeaderMap,
-        Json(req): Json<ClassifyTextRequest>,
-    ) -> Json<ApiResponse<ClassifyTextResponse>> {
-        let tenant_id = get_tenant_id_from_claims(&claims);
-        let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
-        let details = Some(serde_json::json!({"categories": req.categories}));
-        match state
-            .analysis_service
-            .classify_text(&req.text, req.categories.as_deref(), tenant_id)
-            .await
-        {
-            Ok(response) => {
-                if let Err(e) = state
-                    .audit
-                    .log_analysis_operation(
-                        "classify_text",
-                        None,
-                        user_id,
-                        details.clone(),
-                        "success",
-                        None,
-                    )
-                    .await
-                {
-                    tracing::warn!("ai audit failed: {e}");
-                }
-                Json(ApiResponse::success(response, "Success"))
-            }
-            Err(e) => {
-                let err_msg = e.to_string();
-                if let Err(audit_err) = state
-                    .audit
-                    .log_analysis_operation(
-                        "classify_text",
-                        None,
-                        user_id,
-                        details,
-                        "failed",
-                        Some(&err_msg),
-                    )
-                    .await
-                {
-                    tracing::warn!("ai audit failed: {audit_err}");
-                }
-                Json(ApiResponse::<ClassifyTextResponse>::error(500, &e))
-            }
-        }
-    }
-
-    /// POST /api/analysis/entities - 实体提取
-    pub async fn extract_entities(
-        State(state): State<AppState>,
-        Extension(claims): Extension<Claims>,
-        Json(req): Json<ExtractEntitiesRequest>,
-    ) -> Json<ApiResponse<ExtractEntitiesResponse>> {
-        let tenant_id = get_tenant_id_from_claims(&claims);
-        match state
-            .analysis_service
-            .extract_entities(&req.text, req.entity_types.as_deref(), tenant_id)
-            .await
-        {
-            Ok(response) => Json(ApiResponse::success(response, "Success")),
-            Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e)),
-        }
-    }
-
-    /// POST /api/analysis/extract-keywords - 关键词提取
-    pub async fn extract_keywords(
-        State(state): State<AppState>,
-        Extension(claims): Extension<Claims>,
-        Json(req): Json<ExtractKeywordsRequest>,
-    ) -> Json<ApiResponse<ExtractKeywordsResponse>> {
-        let tenant_id = get_tenant_id_from_claims(&claims);
-        match state
-            .analysis_service
-            .extract_keywords(&req.text, req.max_keywords, tenant_id)
-            .await
-        {
-            Ok(response) => Json(ApiResponse::success(response, "Success")),
-            Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e)),
-        }
-    }
-
-    /// GET /api/analysis/history - 获取分析历史
-    pub async fn history(
-        State(state): State<AppState>,
-        Extension(claims): Extension<Claims>,
-        Json(req): Json<AnalysisHistoryRequest>,
-    ) -> Json<ApiResponse<AnalysisHistoryResponse>> {
-        let tenant_id = get_tenant_id_from_claims(&claims);
-        let limit = req.limit.unwrap_or(50);
-        match state
-            .analysis_service
-            .get_analysis_history(req.analysis_type.as_deref(), limit, tenant_id)
-            .await
-        {
-            Ok(history) => {
-                let total = history.len() as i32;
-                Json(ApiResponse::success(
-                    AnalysisHistoryResponse { history, total },
-                    "Success",
-                ))
-            }
-            Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::error(500, &e)),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -221,5 +56,190 @@ mod tests {
         let claims = sample_claims(Some("invalid-uuid".to_string()));
         let tid = get_tenant_id_from_claims(&claims);
         assert_eq!(tid, Uuid::nil());
+    }
+}
+
+
+/// POST /api/analysis/sentiment - 情感分析
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/analysis/sentiment",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn sentiment(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<SentimentAnalysisRequest>,
+) -> Json<ApiResponse<SentimentAnalysisResponse>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"text_length": req.text.len()}));
+    match state
+        .analysis_service
+        .analyze_sentiment(&req.text, tenant_id)
+        .await
+    {
+        Ok(response) => {
+            if let Err(e) = state
+                .audit
+                .log_analysis_operation(
+                    "sentiment_analysis",
+                    None,
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
+                tracing::warn!("ai audit failed: {e}");
+            }
+            Json(ApiResponse::success(response, "Success"))
+        }
+        Err(e) => {
+            let err_msg = e.to_string();
+            if let Err(audit_err) = state
+                .audit
+                .log_analysis_operation(
+                    "sentiment_analysis",
+                    None,
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&err_msg),
+                )
+                .await
+            {
+                tracing::warn!("ai audit failed: {audit_err}");
+            }
+            Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e))
+        }
+    }
+}
+
+/// POST /api/analysis/classify - 文本分类
+pub async fn classify(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<ClassifyTextRequest>,
+) -> Json<ApiResponse<ClassifyTextResponse>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
+    let details = Some(serde_json::json!({"categories": req.categories}));
+    match state
+        .analysis_service
+        .classify_text(&req.text, req.categories.as_deref(), tenant_id)
+        .await
+    {
+        Ok(response) => {
+            if let Err(e) = state
+                .audit
+                .log_analysis_operation(
+                    "classify_text",
+                    None,
+                    user_id,
+                    details.clone(),
+                    "success",
+                    None,
+                )
+                .await
+            {
+                tracing::warn!("ai audit failed: {e}");
+            }
+            Json(ApiResponse::success(response, "Success"))
+        }
+        Err(e) => {
+            let err_msg = e.to_string();
+            if let Err(audit_err) = state
+                .audit
+                .log_analysis_operation(
+                    "classify_text",
+                    None,
+                    user_id,
+                    details,
+                    "failed",
+                    Some(&err_msg),
+                )
+                .await
+            {
+                tracing::warn!("ai audit failed: {audit_err}");
+            }
+            Json(ApiResponse::<ClassifyTextResponse>::error(500, &e))
+        }
+    }
+}
+
+/// POST /api/analysis/entities - 实体提取
+pub async fn extract_entities(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<ExtractEntitiesRequest>,
+) -> Json<ApiResponse<ExtractEntitiesResponse>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    match state
+        .analysis_service
+        .extract_entities(&req.text, req.entity_types.as_deref(), tenant_id)
+        .await
+    {
+        Ok(response) => Json(ApiResponse::success(response, "Success")),
+        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e)),
+    }
+}
+
+/// POST /api/analysis/extract-keywords - 关键词提取
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/analysis/keywords",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn extract_keywords(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<ExtractKeywordsRequest>,
+) -> Json<ApiResponse<ExtractKeywordsResponse>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    match state
+        .analysis_service
+        .extract_keywords(&req.text, req.max_keywords, tenant_id)
+        .await
+    {
+        Ok(response) => Json(ApiResponse::success(response, "Success")),
+        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e)),
+    }
+}
+
+/// GET /api/analysis/history - 获取分析历史
+pub async fn history(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<AnalysisHistoryRequest>,
+) -> Json<ApiResponse<AnalysisHistoryResponse>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let limit = req.limit.unwrap_or(50);
+    match state
+        .analysis_service
+        .get_analysis_history(req.analysis_type.as_deref(), limit, tenant_id)
+        .await
+    {
+        Ok(history) => {
+            let total = history.len() as i32;
+            Json(ApiResponse::success(
+                AnalysisHistoryResponse { history, total },
+                "Success",
+            ))
+        }
+        Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::error(500, &e)),
     }
 }

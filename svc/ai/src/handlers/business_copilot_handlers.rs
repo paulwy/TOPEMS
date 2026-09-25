@@ -121,6 +121,16 @@ pub struct ApiError {
 // ==================== API Handlers ====================
 
 /// 创建会话
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/copilot/sessions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn create_session(
     State(state): State<CopilotAppState>,
     Json(req): Json<CreateSessionRequest>,
@@ -197,6 +207,19 @@ pub async fn delete_session(
 }
 
 /// 发送消息并获取响应
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/copilot/sessions/{session_id}/messages",
+    params(
+        ("session_id" = String, Path, description = "session_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn send_message(
     State(state): State<CopilotAppState>,
     Path(session_id): Path<String>,
@@ -266,6 +289,16 @@ pub async fn list_active_sessions(State(state): State<CopilotAppState>) -> impl 
 }
 
 /// 意图识别
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/copilot/intent/recognize",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn recognize_intent(Json(req): Json<IntentRecognizeRequest>) -> impl IntoResponse {
     let recognizer = crate::dsh::business_copilot::IntentRecognizer::new();
     let (intent, confidence) = recognizer.recognize(&req.text);
@@ -281,6 +314,16 @@ pub async fn recognize_intent(Json(req): Json<IntentRecognizeRequest>) -> impl I
 }
 
 /// 获取模块列表
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/copilot/modules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_modules() -> impl IntoResponse {
     let modules = vec![
         ModuleConfigResponse {
@@ -312,6 +355,19 @@ pub async fn list_modules() -> impl IntoResponse {
 }
 
 /// 获取模块配置
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/copilot/modules/{module}",
+    params(
+        ("module" = String, Path, description = "module")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_module_config(Path(module): Path<String>) -> impl IntoResponse {
     let business_module = parse_business_module(&module);
     let config = ModuleConfigResponse {

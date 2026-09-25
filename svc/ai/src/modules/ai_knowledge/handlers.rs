@@ -63,6 +63,16 @@ fn make_ai_client() -> Arc<UnifiedAIClient> {
 // ============================================================
 
 /// GET /api/core/ai-knowledge/bases
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/knowledge/bases",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_knowledge_bases(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -79,6 +89,16 @@ pub async fn list_knowledge_bases(
 }
 
 /// POST /api/core/ai-knowledge/bases
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/bases",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn create_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -107,6 +127,19 @@ pub async fn create_knowledge_base(
 }
 
 /// GET /api/core/ai-knowledge/bases/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/knowledge/bases/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -124,6 +157,19 @@ pub async fn get_knowledge_base(
 }
 
 /// PUT /api/core/ai-knowledge/bases/{id}
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/bases/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn update_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -154,6 +200,19 @@ pub async fn update_knowledge_base(
 }
 
 /// DELETE /api/core/ai-knowledge/bases/{id}
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/bases/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn delete_knowledge_base(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -175,6 +234,16 @@ pub async fn delete_knowledge_base(
 // ============================================================
 
 /// GET /api/core/ai-knowledge/documents
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/knowledge/documents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_documents(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -193,6 +262,16 @@ pub async fn list_documents(
 /// POST /api/core/ai-knowledge/documents
 ///
 /// 通过 multipart 上传文档文件，自动解析、分块、向量化（异步）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/documents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn upload_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -321,6 +400,19 @@ pub async fn upload_document(
 }
 
 /// GET /api/core/ai-knowledge/documents/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/knowledge/documents/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -338,6 +430,19 @@ pub async fn get_document(
 }
 
 /// PUT /api/core/ai-knowledge/documents/{id}
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/documents/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn update_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -381,6 +486,19 @@ pub async fn update_document(
 }
 
 /// DELETE /api/core/ai-knowledge/documents/{id}
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/documents/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn delete_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -402,6 +520,19 @@ pub async fn delete_document(
 /// 重新处理文档（向量化）。用于：
 /// - 处理失败的文档重试
 /// - embedding 模型升级后重新生成向量
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/documents/{id}/reprocess",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn reprocess_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -441,6 +572,16 @@ pub async fn reprocess_document(
 /// POST /api/core/ai-knowledge/ask
 ///
 /// 智能问答：基于知识库的 RAG 检索增强生成
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/ask",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ask_question(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -490,6 +631,16 @@ pub async fn ask_question(
 }
 
 /// GET /api/core/ai-knowledge/qa-history
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/knowledge/qa-history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_qa_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -507,6 +658,19 @@ pub async fn list_qa_history(
 }
 
 /// POST /api/core/ai-knowledge/qa/{id}/feedback
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/qa/{id}/feedback",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn submit_feedback(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -535,6 +699,16 @@ pub async fn submit_feedback(
 /// POST /api/core/ai-knowledge/search
 ///
 /// 语义检索：仅返回相关分块，不调用 LLM 生成答案
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/knowledge/search",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn semantic_search(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

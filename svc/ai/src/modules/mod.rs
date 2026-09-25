@@ -16,13 +16,5 @@ pub mod qa;
 pub mod recommendation;
 pub mod vector;
 
-pub use analysis::AnalysisApi;
-pub use code_assistant::CodeAssistantApi;
-pub use document::DocumentApi;
-pub use embedding::EmbeddingApi;
-pub use multimodal::MultimodalApi;
 #[allow(unused_imports)]
 pub use openapi::ApiDoc;
-pub use qa::QaApi;
-pub use recommendation::RecommendationApi;
-pub use vector::VectorApi;

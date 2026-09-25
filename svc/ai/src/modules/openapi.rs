@@ -1,666 +1,160 @@
 //! TOPEMS-AI OpenAPI 文档聚合
 //!
 //! 汇总所有 HTTP handler 的路径信息，生成统一的 OpenAPI 规范。
-//!
-//! 注意：utoipa 4.x 的 `#[utoipa::path]` 宏会生成一个 struct，无法放置在
-//! `impl` 块内部。因此对于 `XxxApi::method` 形式的关联函数 handler，
-//! 在此处使用占位函数承载 `#[utoipa::path]` 注解（仅用于生成 OpenAPI
-//! spec，运行期不会被调用）。自由函数 handler 的注解保留在各自模块中。
+//! 各 handler 的 `#[utoipa::path]` 注解直接挂在模块级函数上。
 
-use crate::handlers::{ai_handlers, connector_handlers, dify_handlers, health};
-use crate::modules::{agent, ai_plugin};
 use utoipa::OpenApi;
-
-// =============================================================================
-// 占位函数：为 impl 块中的关联函数 handler 承载 utoipa::path 注解
-// =============================================================================
-
-// --- AnalysisApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:analysis:read"])),
-    path = "/api/ai/analysis/sentiment",
-    request_body = crate::modules::models::SentimentAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _analysis_sentiment() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:analysis:read"])),
-    path = "/api/ai/analysis/classify",
-    request_body = crate::modules::models::ClassifyTextRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _analysis_classify() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:analysis:read"])),
-    path = "/api/ai/analysis/entities",
-    request_body = crate::modules::models::ExtractEntitiesRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _analysis_entities() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:analysis:read"])),
-    path = "/api/ai/analysis/keywords",
-    request_body = crate::modules::models::ExtractKeywordsRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _analysis_keywords() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:analysis:read"])),
-    path = "/api/ai/analysis/history",
-    request_body = crate::modules::models::AnalysisHistoryRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _analysis_history() {}
-
-// --- CodeAssistantApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:generate:write"])),
-    path = "/api/ai/code/generate",
-    request_body = crate::modules::code_assistant::CodeGenerateRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _code_generate() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:code:write"])),
-    path = "/api/ai/code/explain",
-    request_body = crate::modules::code_assistant::CodeExplainRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _code_explain() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:code:write"])),
-    path = "/api/ai/code/fix",
-    request_body = crate::modules::code_assistant::CodeFixRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _code_fix() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:code:write"])),
-    path = "/api/ai/code/optimize",
-    request_body = crate::modules::code_assistant::CodeOptimizeRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _code_optimize() {}
-
-// gate: admin-only
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:review:admin"])),
-    path = "/api/ai/code/review",
-    request_body = crate::modules::code_assistant::CodeReviewRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _code_review() {}
-
-// --- DocumentApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/upload",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_upload() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}/process",
-    request_body = crate::modules::models::ProcessDocumentRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_process() {}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_get() {}
-
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_delete() {}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_list() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_create() {}
-
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_update() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}/extract",
-    request_body = crate::modules::models::ExtractDocumentRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_extract() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/vectorize-from-file",
-    request_body = crate::modules::models::VectorizeFromFileRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_vectorize_from_file() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}/summarize",
-    request_body = crate::modules::models::SummarizeDocumentRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_summarize() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/{id}/key-points",
-    request_body = crate::modules::models::ExtractKeyPointsRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_key_points() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/documents/qa",
-    request_body = crate::modules::models::DocumentQAQuestionRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _document_qa() {}
-
-// --- EmbeddingApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:generate:write"])),
-    path = "/api/ai/embedding/generate",
-    request_body = crate::modules::embedding::EmbeddingRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _embedding_generate() {}
-
-// --- MultimodalApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/multimodal/image/analyze",
-    request_body = crate::services::multimodal::ImageAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_image_analyze() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/multimodal/image/caption",
-    request_body = crate::services::multimodal::ImageAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_image_caption() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/multimodal/image/objects",
-    request_body = crate::services::multimodal::ImageAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_image_objects() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/multimodal/image/text",
-    request_body = crate::services::multimodal::ImageAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_image_text() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/multimodal/image/describe",
-    request_body = crate::services::multimodal::ImageAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_image_describe() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/multimodal/video/analyze",
-    request_body = crate::services::multimodal::VideoAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_video_analyze() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:summarize:read"])),
-    path = "/api/ai/multimodal/video/summary",
-    request_body = crate::services::multimodal::VideoAnalysisRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _multimodal_video_summary() {}
-
-// --- QaApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/ask",
-    request_body = crate::modules::models::AskRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_ask() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/ask-with-context",
-    request_body = crate::modules::models::AskWithContextRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_ask_with_context() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/ask-structured",
-    request_body = crate::modules::qa::AskStructuredRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_ask_structured() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/ask-conversation",
-    request_body = crate::modules::qa::AskWithConversationRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_ask_conversation() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/classify",
-    request_body = crate::modules::qa::ClassifyRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_classify() {}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/history",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_history() {}
-
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/history/{id}",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_delete_history() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/history/batch-delete",
-    request_body = crate::modules::qa::BatchDeleteRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_batch_delete_history() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:qa:read"])),
-    path = "/api/ai/qa/feedback",
-    request_body = crate::modules::models::FeedbackRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _qa_feedback() {}
-
-// --- RecommendationApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/recommend",
-    request_body = crate::services::recommendation::RecommendationRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _recommend() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/profile/get",
-    request_body = serde_json::Value,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _profile_get() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/profile/update",
-    request_body = serde_json::Value,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _profile_update() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:document:read"])),
-    path = "/api/ai/recommend/documents",
-    request_body = serde_json::Value,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _recommend_documents() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/recommend/opportunities",
-    request_body = serde_json::Value,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _recommend_opportunities() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/recommend/knowledge",
-    request_body = serde_json::Value,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _recommend_knowledge() {}
-
-// --- VectorApi ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/vectors/store",
-    request_body = crate::modules::models::StoreVectorRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_store() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/vectors/search",
-    request_body = crate::modules::models::VectorSearchRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_search() {}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ai:read"])),
-    path = "/api/ai/vectors/{id}",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_get() {}
-
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["ai:delete"])),
-    path = "/api/ai/vectors/{id}",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_delete() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/vectors/batch-store",
-    request_body = crate::modules::models::BatchStoreVectorsRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_batch_store() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/vectors/hybrid-search",
-    request_body = crate::modules::models::HybridSearchRequest,
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_hybrid_search() {}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ai:read"])),
-    path = "/api/ai/vectors/stats",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_stats() {}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ai:write"])),
-    path = "/api/ai/vectors/clear",
-    tag = "ai",
-    responses((status = 200, description = "OK")),
-)]
-fn _vector_clear() {}
-
-// =============================================================================
-// ApiDoc: OpenApi 派生结构体
-// =============================================================================
 
 #[derive(OpenApi)]
 #[openapi(
-    info(
-        title = "TOPEMS-AI API",
-        version = "1.0.0",
-        description = "TOPEMS 人工智能服务 API - 智能问答、文档处理、向量检索、多模态分析",
-    ),
-    servers(
-        (url = "http://localhost:8013", description = "本地开发环境"),
-    ),
     paths(
-        // health (自由函数，注解在 handlers/health.rs)
-        health::home,
-        health::health,
-        health::health_check_detailed,
-        // ai_handlers (自由函数，注解在 handlers/ai_handlers.rs)
-        ai_handlers::generate,
-        ai_handlers::validate,
-        ai_handlers::complete,
-        ai_handlers::summarize,
-        ai_handlers::list_templates,
-        ai_handlers::chat,
-        ai_handlers::ai_search,
-        ai_handlers::report_assistant,
-        ai_handlers::flow_assistant,
-        ai_handlers::anomaly_predict,
-        ai_handlers::knowledge_ask,
-        // dify_handlers (自由函数，注解在 handlers/dify_handlers.rs)
-        dify_handlers::chat,
-        dify_handlers::chat_stream,
-        dify_handlers::info,
-        dify_handlers::parameters,
-        dify_handlers::meta,
-        dify_handlers::list_conversations,
-        dify_handlers::list_messages,
-        dify_handlers::delete_conversation,
-        dify_handlers::feedback,
-        dify_handlers::stop,
-        dify_handlers::health,
-        // ai_plugin (自由函数，注解在 modules/ai_plugin.rs)
-        ai_plugin::get_plugin_info,
-        ai_plugin::plugin_health_check,
-        // agent (自由函数，注解在 modules/agent.rs)
-        agent::agent_run,
-        agent::list_agent_tools,
-        // connectors (自由函数，注解在 handlers/connector_handlers.rs)
-        connector_handlers::list_connectors,
-        connector_handlers::get_connector,
-        connector_handlers::create_connector,
-        connector_handlers::update_connector,
-        connector_handlers::delete_connector,
-        connector_handlers::test_connector,
-        connector_handlers::query_data,
-        // === 以下为 impl 块中的关联函数 handler，通过占位函数注册 ===
-        // analysis
-        _analysis_sentiment,
-        _analysis_classify,
-        _analysis_entities,
-        _analysis_keywords,
-        _analysis_history,
-        // code_assistant
-        _code_generate,
-        _code_explain,
-        _code_fix,
-        _code_optimize,
-        _code_review,
-        // document
-        _document_upload,
-        _document_process,
-        _document_get,
-        _document_delete,
-        _document_update,
-        _document_list,
-        _document_create,
-        _document_extract,
-        _document_vectorize_from_file,
-        _document_summarize,
-        _document_key_points,
-        _document_qa,
-        // embedding
-        _embedding_generate,
-        // multimodal
-        _multimodal_image_analyze,
-        _multimodal_image_caption,
-        _multimodal_image_objects,
-        _multimodal_image_text,
-        _multimodal_image_describe,
-        _multimodal_video_analyze,
-        _multimodal_video_summary,
-        // qa
-        _qa_ask,
-        _qa_ask_with_context,
-        _qa_ask_structured,
-        _qa_ask_conversation,
-        _qa_classify,
-        _qa_history,
-        _qa_delete_history,
-        _qa_batch_delete_history,
-        _qa_feedback,
-        // recommendation
-        _recommend,
-        _profile_get,
-        _profile_update,
-        _recommend_documents,
-        _recommend_opportunities,
-        _recommend_knowledge,
-        // vector
-        _vector_store,
-        _vector_search,
-        _vector_get,
-        _vector_delete,
-        _vector_batch_store,
-        _vector_hybrid_search,
-        _vector_stats,
-        _vector_clear,
+        crate::modules::multimodal::analyze_image,
+        crate::modules::multimodal::generate_caption,
+        crate::modules::multimodal::detect_objects,
+        crate::modules::multimodal::extract_text,
+        crate::modules::multimodal::describe_image,
+        crate::modules::multimodal::analyze_video,
+        crate::modules::multimodal::summarize_video,
+        crate::modules::ai_plugin::get_plugin_info,
+        crate::modules::ai_plugin::plugin_health_check,
+        crate::modules::analysis::sentiment,
+        crate::modules::analysis::extract_keywords,
+        crate::modules::vector::store,
+        crate::modules::vector::search,
+        crate::modules::vector::delete,
+        crate::modules::vector::batch_store,
+        crate::modules::vector::hybrid_search,
+        crate::modules::vector::clear_all,
+        crate::modules::code_assistant::explain,
+        crate::modules::code_assistant::fix,
+        crate::modules::code_assistant::optimize,
+        crate::modules::code_assistant::review,
+        crate::modules::qa::ask,
+        crate::modules::qa::ask_with_context,
+        crate::modules::qa::ask_structured,
+        crate::modules::qa::ask_conversation,
+        crate::modules::qa::delete_history,
+        crate::modules::qa::batch_delete_history,
+        crate::modules::agent::agent_run,
+        crate::modules::agent::list_agent_tools,
+        crate::modules::document::upload,
+        crate::modules::document::process,
+        crate::modules::document::extract,
+        crate::modules::document::vectorize_from_file,
+        crate::modules::document::extract_key_points,
+        crate::modules::document::document_qa,
+        crate::modules::recommendation::recommend,
+        crate::modules::recommendation::get_user_profile,
+        crate::modules::recommendation::update_user_profile,
+        crate::modules::recommendation::recommend_documents,
+        crate::modules::recommendation::recommend_opportunities,
+        crate::modules::recommendation::recommend_knowledge,
+        crate::modules::ai_knowledge::handlers::list_knowledge_bases,
+        crate::modules::ai_knowledge::handlers::create_knowledge_base,
+        crate::modules::ai_knowledge::handlers::get_knowledge_base,
+        crate::modules::ai_knowledge::handlers::update_knowledge_base,
+        crate::modules::ai_knowledge::handlers::delete_knowledge_base,
+        crate::modules::ai_knowledge::handlers::list_documents,
+        crate::modules::ai_knowledge::handlers::upload_document,
+        crate::modules::ai_knowledge::handlers::get_document,
+        crate::modules::ai_knowledge::handlers::update_document,
+        crate::modules::ai_knowledge::handlers::delete_document,
+        crate::modules::ai_knowledge::handlers::reprocess_document,
+        crate::modules::ai_knowledge::handlers::ask_question,
+        crate::modules::ai_knowledge::handlers::list_qa_history,
+        crate::modules::ai_knowledge::handlers::submit_feedback,
+        crate::modules::ai_knowledge::handlers::semantic_search,
+        crate::modules::ai_form::handlers::ai_form_assist,
+        crate::modules::ai_form::handlers::ai_form_suggest,
+        crate::modules::ai_form::handlers::ai_form_enhance,
+        crate::modules::ai_form::handlers::ai_form_validate,
+        crate::modules::ai_form::handlers::ai_form_translate,
+        crate::modules::ai_form::handlers::list_forms,
+        crate::modules::ai_form::handlers::get_form,
+        crate::modules::ai_form::handlers::suggest_for_form,
+        crate::modules::ai_form::handlers::enhance_for_form,
+        crate::handlers::workflow_handlers::list_workflows,
+        crate::handlers::workflow_handlers::get_workflow,
+        crate::handlers::workflow_handlers::execute_workflow,
+        crate::handlers::ai_handlers::generate,
+        crate::handlers::ai_handlers::validate,
+        crate::handlers::ai_handlers::complete,
+        crate::handlers::ai_handlers::summarize,
+        crate::handlers::ai_handlers::list_templates,
+        crate::handlers::ai_handlers::chat,
+        crate::handlers::ai_handlers::ai_search,
+        crate::handlers::ai_handlers::report_assistant,
+        crate::handlers::ai_handlers::flow_assistant,
+        crate::handlers::ai_handlers::anomaly_predict,
+        crate::handlers::ai_handlers::knowledge_ask,
+        crate::handlers::health::home,
+        crate::handlers::health::health,
+        crate::handlers::health::health_check_detailed,
+        crate::handlers::governance_dashboard_handlers::get_dashboard,
+        crate::handlers::governance_dashboard_handlers::get_governance_score,
+        crate::handlers::governance_dashboard_handlers::get_risk_assessment,
+        crate::handlers::governance_dashboard_handlers::get_compliance_status,
+        crate::handlers::governance_dashboard_handlers::get_cost_analysis,
+        crate::handlers::governance_dashboard_handlers::get_security_events,
+        crate::handlers::governance_dashboard_handlers::get_audit_summary,
+        crate::handlers::governance_dashboard_handlers::get_recommendations,
+        crate::handlers::governance_dashboard_handlers::clear_cache,
+        crate::handlers::prompt_handlers::list_prompt_templates,
+        crate::handlers::prompt_handlers::get_prompt_template,
+        crate::handlers::prompt_handlers::toggle_prompt_favorite,
+        crate::handlers::prompt_handlers::get_prompt_categories,
+        crate::handlers::prompt_handlers::use_prompt_template,
+        crate::handlers::smart_forms_handlers::get_template,
+        crate::handlers::smart_forms_handlers::ai_fill,
+        crate::handlers::model_admin_handlers::get_dashboard_stats,
+        crate::handlers::model_admin_handlers::get_activity_trend,
+        crate::handlers::model_admin_handlers::get_feature_usage,
+        crate::handlers::model_admin_handlers::list_models,
+        crate::handlers::model_admin_handlers::get_model_config,
+        crate::handlers::model_admin_handlers::get_model_usage,
+        crate::handlers::dsh_agent_handlers::execute_agent,
+        crate::handlers::dsh_agent_handlers::stream_agent,
+        crate::handlers::dsh_agent_handlers::get_session,
+        crate::handlers::dsh_agent_handlers::clear_session,
+        crate::handlers::dsh_agent_handlers::list_tools,
+        crate::handlers::dsh_agent_handlers::active_sessions,
+        crate::handlers::dsh_ai_enhanced_handlers::add_entity,
+        crate::handlers::dsh_ai_enhanced_handlers::get_entity,
+        crate::handlers::dsh_ai_enhanced_handlers::add_relation,
+        crate::handlers::dsh_ai_enhanced_handlers::get_entity_neighbors,
+        crate::handlers::dsh_ai_enhanced_handlers::shortest_path,
+        crate::handlers::dsh_ai_enhanced_handlers::link_entity,
+        crate::handlers::dsh_ai_enhanced_handlers::detect_communities,
+        crate::handlers::dsh_ai_enhanced_handlers::get_graph_stats,
+        crate::handlers::dsh_ai_enhanced_handlers::rag_retrieve,
+        crate::handlers::dsh_ai_enhanced_handlers::get_rag_stats,
+        crate::handlers::dsh_ai_enhanced_handlers::multi_agent_execute,
+        crate::handlers::dsh_performance_handlers::export_prometheus_metrics,
+        crate::handlers::dsh_performance_handlers::reset_performance_metrics,
+        crate::handlers::dsh_performance_handlers::get_tool_performance,
+        crate::handlers::dify_handlers::chat,
+        crate::handlers::dify_handlers::chat_stream,
+        crate::handlers::dify_handlers::info,
+        crate::handlers::dify_handlers::parameters,
+        crate::handlers::dify_handlers::meta,
+        crate::handlers::dify_handlers::list_conversations,
+        crate::handlers::dify_handlers::list_messages,
+        crate::handlers::dify_handlers::delete_conversation,
+        crate::handlers::dify_handlers::feedback,
+        crate::handlers::dify_handlers::stop,
+        crate::handlers::dify_handlers::health,
+        crate::handlers::connector_handlers::list_connectors,
+        crate::handlers::connector_handlers::get_connector,
+        crate::handlers::connector_handlers::create_connector,
+        crate::handlers::connector_handlers::update_connector,
+        crate::handlers::connector_handlers::delete_connector,
+        crate::handlers::connector_handlers::test_connector,
+        crate::handlers::connector_handlers::query_data,
+        crate::handlers::business_copilot_handlers::create_session,
+        crate::handlers::business_copilot_handlers::send_message,
+        crate::handlers::business_copilot_handlers::recognize_intent,
+        crate::handlers::business_copilot_handlers::list_modules,
+        crate::handlers::business_copilot_handlers::get_module_config,
     ),
     tags(
     ),

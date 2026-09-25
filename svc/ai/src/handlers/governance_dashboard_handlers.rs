@@ -74,6 +74,16 @@ pub struct ApiError {
 // ==================== API Handlers ====================
 
 /// 获取完整仪表盘数据
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_dashboard(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -87,6 +97,16 @@ pub async fn get_dashboard(
 }
 
 /// 获取治理评分（基于关键指标）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/score",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_governance_score(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -115,6 +135,16 @@ pub async fn get_governance_score(
 }
 
 /// 获取风险评估
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/risk",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_risk_assessment(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -128,6 +158,16 @@ pub async fn get_risk_assessment(
 }
 
 /// 获取合规状态
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/compliance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_compliance_status(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -141,6 +181,16 @@ pub async fn get_compliance_status(
 }
 
 /// 获取成本分析
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/cost",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_cost_analysis(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -167,6 +217,16 @@ pub async fn get_performance_metrics(
 }
 
 /// 获取安全事件
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/security-events",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_security_events(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -180,6 +240,16 @@ pub async fn get_security_events(
 }
 
 /// 获取审计摘要
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/audit",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_audit_summary(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -193,6 +263,16 @@ pub async fn get_audit_summary(
 }
 
 /// 获取建议
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/governance/recommendations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_recommendations(
     State(state): State<GovernanceAppState>,
     Query(query): Query<DashboardQuery>,
@@ -217,6 +297,16 @@ pub async fn get_recommendations(
 }
 
 /// 清除缓存
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/governance/cache",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn clear_cache(State(state): State<GovernanceAppState>) -> impl IntoResponse {
     let generator = state.generator.write().await;
     generator.clear_cache();

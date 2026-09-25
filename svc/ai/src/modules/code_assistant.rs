@@ -134,145 +134,6 @@ fn generate_code_template(language: &str, framework: &str, prompt: &str) -> Stri
 
 pub struct CodeAssistantApi;
 
-impl CodeAssistantApi {
-    pub async fn generate(
-        Extension(_claims): Extension<Claims>,
-        Json(req): Json<CodeGenerateRequest>,
-    ) -> Json<ApiResponse<CodeGenerateResponse>> {
-        let language = req.language.unwrap_or_else(|| "typescript".to_string());
-        let framework = req.framework.unwrap_or_else(|| "none".to_string());
-
-        // 生成基础代码模板（当前为模板生成，未来可集成 LLM 进行真实代码生成）
-        // 扩展点：可通过环境变量 AI_CODE_GENERATION_ENABLED=true 启用 LLM 调用
-        let code = generate_code_template(&language, &framework, &req.prompt);
-
-        Json(ApiResponse::success(
-            CodeGenerateResponse {
-                code,
-                language,
-                framework,
-            },
-            "代码生成成功（模板模式，未来可集成 LLM）",
-        ))
-    }
-
-    pub async fn explain(
-        Extension(_claims): Extension<Claims>,
-        Json(req): Json<CodeExplainRequest>,
-    ) -> Json<ApiResponse<CodeExplainResponse>> {
-        let language = req.language.unwrap_or_else(|| "unknown".to_string());
-
-        let lines: Vec<&str> = req.code.lines().collect();
-        let key_points = if lines.is_empty() {
-            vec![]
-        } else {
-            vec![
-                format!("代码共 {} 行", lines.len()),
-                "包含函数定义和逻辑处理".to_string(),
-                "使用标准编程范式".to_string(),
-            ]
-        };
-
-        let explanation = format!(
-            "这段代码使用 {} 语言编写，主要功能如下：\n\n1. **代码结构**：包含 {} 行代码\n2. **主要逻辑**：根据输入执行相应操作\n3. **设计模式**：采用标准的编程范式\n4. **关键点**：{}",
-            language,
-            lines.len(),
-            key_points.join("、")
-        );
-
-        Json(ApiResponse::success(
-            CodeExplainResponse {
-                explanation,
-                language,
-                key_points,
-            },
-            "Success",
-        ))
-    }
-
-    pub async fn fix(
-        Extension(_claims): Extension<Claims>,
-        Json(req): Json<CodeFixRequest>,
-    ) -> Json<ApiResponse<CodeFixResponse>> {
-        let fixes = vec![
-            "添加了类型定义".to_string(),
-            "修复了潜在的空值问题".to_string(),
-            "优化了错误处理".to_string(),
-        ];
-
-        let explanation = "修复了代码中的潜在问题，包括类型安全、空值处理和错误捕获。";
-
-        Json(ApiResponse::success(
-            CodeFixResponse {
-                fixed_code: req.code,
-                fixes,
-                explanation: explanation.to_string(),
-            },
-            "Success",
-        ))
-    }
-
-    pub async fn optimize(
-        Extension(_claims): Extension<Claims>,
-        Json(req): Json<CodeOptimizeRequest>,
-    ) -> Json<ApiResponse<CodeOptimizeResponse>> {
-        let optimizations = vec![
-            "使用更高效的数据结构".to_string(),
-            "减少不必要的重复计算".to_string(),
-            "优化了算法复杂度".to_string(),
-            "提高了代码可读性".to_string(),
-        ];
-
-        let before_size = req.code.len();
-        let optimized_code = format!("// Optimized code\n{}", req.code);
-        let after_size = optimized_code.len();
-
-        Json(ApiResponse::success(
-            CodeOptimizeResponse {
-                optimized_code,
-                optimizations,
-                before_size: Some(before_size),
-                after_size: Some(after_size),
-            },
-            "Success",
-        ))
-    }
-
-    pub async fn review(
-        Extension(_claims): Extension<Claims>,
-        Json(_req): Json<CodeReviewRequest>,
-    ) -> Json<ApiResponse<CodeReviewResponse>> {
-        let issues = vec![
-            CodeReviewIssue {
-                severity: "warning".to_string(),
-                line: 1,
-                description: "缺少类型定义".to_string(),
-                suggestion: "建议添加 TypeScript 类型定义".to_string(),
-            },
-            CodeReviewIssue {
-                severity: "info".to_string(),
-                line: 5,
-                description: "代码可以优化".to_string(),
-                suggestion: "考虑使用更简洁的写法".to_string(),
-            },
-        ];
-
-        let suggestions = vec![
-            "添加单元测试".to_string(),
-            "完善错误处理".to_string(),
-            "添加文档注释".to_string(),
-        ];
-
-        Json(ApiResponse::success(
-            CodeReviewResponse {
-                score: 80,
-                issues,
-                suggestions,
-            },
-            "Success",
-        ))
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -505,4 +366,183 @@ mod tests {
         assert_eq!(body.score, 80);
         assert!(!body.issues.is_empty());
     }
+}
+
+
+pub async fn generate(
+    Extension(_claims): Extension<Claims>,
+    Json(req): Json<CodeGenerateRequest>,
+) -> Json<ApiResponse<CodeGenerateResponse>> {
+    let language = req.language.unwrap_or_else(|| "typescript".to_string());
+    let framework = req.framework.unwrap_or_else(|| "none".to_string());
+
+    // 生成基础代码模板（当前为模板生成，未来可集成 LLM 进行真实代码生成）
+    // 扩展点：可通过环境变量 AI_CODE_GENERATION_ENABLED=true 启用 LLM 调用
+    let code = generate_code_template(&language, &framework, &req.prompt);
+
+    Json(ApiResponse::success(
+        CodeGenerateResponse {
+            code,
+            language,
+            framework,
+        },
+        "代码生成成功（模板模式，未来可集成 LLM）",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/code/explain",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn explain(
+    Extension(_claims): Extension<Claims>,
+    Json(req): Json<CodeExplainRequest>,
+) -> Json<ApiResponse<CodeExplainResponse>> {
+    let language = req.language.unwrap_or_else(|| "unknown".to_string());
+
+    let lines: Vec<&str> = req.code.lines().collect();
+    let key_points = if lines.is_empty() {
+        vec![]
+    } else {
+        vec![
+            format!("代码共 {} 行", lines.len()),
+            "包含函数定义和逻辑处理".to_string(),
+            "使用标准编程范式".to_string(),
+        ]
+    };
+
+    let explanation = format!(
+        "这段代码使用 {} 语言编写，主要功能如下：\n\n1. **代码结构**：包含 {} 行代码\n2. **主要逻辑**：根据输入执行相应操作\n3. **设计模式**：采用标准的编程范式\n4. **关键点**：{}",
+        language,
+        lines.len(),
+        key_points.join("、")
+    );
+
+    Json(ApiResponse::success(
+        CodeExplainResponse {
+            explanation,
+            language,
+            key_points,
+        },
+        "Success",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/code/fix",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn fix(
+    Extension(_claims): Extension<Claims>,
+    Json(req): Json<CodeFixRequest>,
+) -> Json<ApiResponse<CodeFixResponse>> {
+    let fixes = vec![
+        "添加了类型定义".to_string(),
+        "修复了潜在的空值问题".to_string(),
+        "优化了错误处理".to_string(),
+    ];
+
+    let explanation = "修复了代码中的潜在问题，包括类型安全、空值处理和错误捕获。";
+
+    Json(ApiResponse::success(
+        CodeFixResponse {
+            fixed_code: req.code,
+            fixes,
+            explanation: explanation.to_string(),
+        },
+        "Success",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/code/optimize",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn optimize(
+    Extension(_claims): Extension<Claims>,
+    Json(req): Json<CodeOptimizeRequest>,
+) -> Json<ApiResponse<CodeOptimizeResponse>> {
+    let optimizations = vec![
+        "使用更高效的数据结构".to_string(),
+        "减少不必要的重复计算".to_string(),
+        "优化了算法复杂度".to_string(),
+        "提高了代码可读性".to_string(),
+    ];
+
+    let before_size = req.code.len();
+    let optimized_code = format!("// Optimized code\n{}", req.code);
+    let after_size = optimized_code.len();
+
+    Json(ApiResponse::success(
+        CodeOptimizeResponse {
+            optimized_code,
+            optimizations,
+            before_size: Some(before_size),
+            after_size: Some(after_size),
+        },
+        "Success",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/code/review",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
+pub async fn review(
+    Extension(_claims): Extension<Claims>,
+    Json(_req): Json<CodeReviewRequest>,
+) -> Json<ApiResponse<CodeReviewResponse>> {
+    let issues = vec![
+        CodeReviewIssue {
+            severity: "warning".to_string(),
+            line: 1,
+            description: "缺少类型定义".to_string(),
+            suggestion: "建议添加 TypeScript 类型定义".to_string(),
+        },
+        CodeReviewIssue {
+            severity: "info".to_string(),
+            line: 5,
+            description: "代码可以优化".to_string(),
+            suggestion: "考虑使用更简洁的写法".to_string(),
+        },
+    ];
+
+    let suggestions = vec![
+        "添加单元测试".to_string(),
+        "完善错误处理".to_string(),
+        "添加文档注释".to_string(),
+    ];
+
+    Json(ApiResponse::success(
+        CodeReviewResponse {
+            score: 80,
+            issues,
+            suggestions,
+        },
+        "Success",
+    ))
 }

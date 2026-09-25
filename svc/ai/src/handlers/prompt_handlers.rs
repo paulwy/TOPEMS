@@ -127,6 +127,16 @@ fn to_out(row: &sqlx::postgres::PgRow) -> Result<PromptTemplateOut, Box<dyn std:
 }
 
 /// GET /prompts/templates
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/prompts/templates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_prompt_templates(
     State(state): State<AppState>,
     Query(params): Query<PromptTemplateListQuery>,
@@ -224,6 +234,19 @@ pub async fn list_prompt_templates(
 }
 
 /// GET /prompts/templates/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/prompts/templates/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_prompt_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -337,6 +360,19 @@ pub async fn delete_prompt_template(
 }
 
 /// POST /prompts/templates/{id}/favorite
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/prompts/templates/{id}/favorite",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn toggle_prompt_favorite(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -366,6 +402,16 @@ pub async fn toggle_prompt_favorite(
 }
 
 /// GET /prompts/categories
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/prompts/categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_prompt_categories(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -399,6 +445,19 @@ pub async fn get_prompt_categories(
 }
 
 /// POST /prompts/templates/{id}/use — 模板渲染（变量替换），usage_count+1
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/prompts/templates/{id}/use",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn use_prompt_template(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

@@ -4,10 +4,6 @@ use crate::handlers::{
     ai_handlers, connector_handlers, dify_handlers, dsh_agent_handlers, dsh_ai_enhanced_handlers,
     dsh_performance_handlers, health, model_admin_handlers, prompt_handlers, workflow_handlers,
 };
-use crate::modules::{
-    AnalysisApi, CodeAssistantApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi,
-    RecommendationApi, VectorApi,
-};
 use crate::shared::AppState;
 use std::sync::Arc;
 
@@ -234,56 +230,56 @@ pub fn create_routes(
         // 文档处理 API - 使用 DocumentApi 模块
         .route(
             "/documents",
-            get(DocumentApi::list).post(DocumentApi::create),
+            get(crate::modules::document::list).post(crate::modules::document::create),
         )
-        .route("/documents/upload", post(DocumentApi::upload))
+        .route("/documents/upload", post(crate::modules::document::upload))
         .route(
             "/documents/vectorize-from-file",
-            post(DocumentApi::vectorize_from_file),
+            post(crate::modules::document::vectorize_from_file),
         )
         .route(
             "/documents/{id}",
-            get(DocumentApi::get)
-                .put(DocumentApi::update)
-                .delete(DocumentApi::delete),
+            get(crate::modules::document::get)
+                .put(crate::modules::document::update)
+                .delete(crate::modules::document::delete),
         )
-        .route("/documents/{id}/process", post(DocumentApi::process))
-        .route("/documents/{id}/extract", post(DocumentApi::extract))
-        .route("/documents/{id}/summarize", post(DocumentApi::summarize))
+        .route("/documents/{id}/process", post(crate::modules::document::process))
+        .route("/documents/{id}/extract", post(crate::modules::document::extract))
+        .route("/documents/{id}/summarize", post(crate::modules::document::summarize))
         .route(
             "/documents/{id}/key-points",
-            post(DocumentApi::extract_key_points),
+            post(crate::modules::document::extract_key_points),
         )
-        .route("/documents/qa", post(DocumentApi::document_qa))
+        .route("/documents/qa", post(crate::modules::document::document_qa))
         // 代码助手 API - 使用 CodeAssistantApi 模块
-        .route("/code/generate", post(CodeAssistantApi::generate))
-        .route("/code/explain", post(CodeAssistantApi::explain))
-        .route("/code/fix", post(CodeAssistantApi::fix))
-        .route("/code/optimize", post(CodeAssistantApi::optimize))
-        .route("/code/review", post(CodeAssistantApi::review))
+        .route("/code/generate", post(crate::modules::code_assistant::generate))
+        .route("/code/explain", post(crate::modules::code_assistant::explain))
+        .route("/code/fix", post(crate::modules::code_assistant::fix))
+        .route("/code/optimize", post(crate::modules::code_assistant::optimize))
+        .route("/code/review", post(crate::modules::code_assistant::review))
         // 向量检索 API - 使用 VectorApi 模块
-        .route("/vectors/stats", get(VectorApi::stats))
-        .route("/vectors/search", post(VectorApi::search))
-        .route("/vectors/store", post(VectorApi::store))
-        .route("/vectors/{id}", get(VectorApi::get))
-        .route("/vectors/{id}", delete(VectorApi::delete))
-        .route("/vectors/batch-store", post(VectorApi::batch_store))
-        .route("/embedding/generate", post(EmbeddingApi::generate))
-        .route("/vectors/hybrid-search", post(VectorApi::hybrid_search))
-        .route("/vectors/clear", post(VectorApi::clear_all))
+        .route("/vectors/stats", get(crate::modules::vector::stats))
+        .route("/vectors/search", post(crate::modules::vector::search))
+        .route("/vectors/store", post(crate::modules::vector::store))
+        .route("/vectors/{id}", get(crate::modules::vector::get))
+        .route("/vectors/{id}", delete(crate::modules::vector::delete))
+        .route("/vectors/batch-store", post(crate::modules::vector::batch_store))
+        .route("/embedding/generate", post(crate::modules::embedding::generate))
+        .route("/vectors/hybrid-search", post(crate::modules::vector::hybrid_search))
+        .route("/vectors/clear", post(crate::modules::vector::clear_all))
         // 问答 API - 使用 QaApi 模块
-        .route("/qa/ask", post(QaApi::ask))
-        .route("/qa/ask-with-context", post(QaApi::ask_with_context))
-        .route("/qa/ask-structured", post(QaApi::ask_structured))
-        .route("/qa/ask-conversation", post(QaApi::ask_conversation))
-        .route("/qa/classify", post(QaApi::classify))
-        .route("/qa/history", get(QaApi::history))
-        .route("/qa/history/{id}", delete(QaApi::delete_history))
+        .route("/qa/ask", post(crate::modules::qa::ask))
+        .route("/qa/ask-with-context", post(crate::modules::qa::ask_with_context))
+        .route("/qa/ask-structured", post(crate::modules::qa::ask_structured))
+        .route("/qa/ask-conversation", post(crate::modules::qa::ask_conversation))
+        .route("/qa/classify", post(crate::modules::qa::classify))
+        .route("/qa/history", get(crate::modules::qa::history))
+        .route("/qa/history/{id}", delete(crate::modules::qa::delete_history))
         .route(
             "/qa/history/batch-delete",
-            post(QaApi::batch_delete_history),
+            post(crate::modules::qa::batch_delete_history),
         )
-        .route("/qa/feedback", post(QaApi::feedback))
+        .route("/qa/feedback", post(crate::modules::qa::feedback))
         // 数据连接器 API
         .route("/connectors", get(connector_handlers::list_connectors))
         .route("/connectors/get", get(connector_handlers::get_connector))
@@ -316,11 +312,11 @@ pub fn create_routes(
 
     // 分析 API - 使用 AnalysisApi 模块
     let analysis_router = Router::new()
-        .route("/analysis/sentiment", post(AnalysisApi::sentiment))
-        .route("/analysis/classify", post(AnalysisApi::classify))
-        .route("/analysis/entities", post(AnalysisApi::extract_entities))
-        .route("/analysis/keywords", post(AnalysisApi::extract_keywords))
-        .route("/analysis/history", post(AnalysisApi::history))
+        .route("/analysis/sentiment", post(crate::modules::analysis::sentiment))
+        .route("/analysis/classify", post(crate::modules::analysis::classify))
+        .route("/analysis/entities", post(crate::modules::analysis::extract_entities))
+        .route("/analysis/keywords", post(crate::modules::analysis::extract_keywords))
+        .route("/analysis/history", post(crate::modules::analysis::history))
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
@@ -567,23 +563,23 @@ pub fn create_routes(
         .with_state(smart_forms_state);
 
     let recommendation_router = Router::new()
-        .route("/recommend", post(RecommendationApi::recommend))
+        .route("/recommend", post(crate::modules::recommendation::recommend))
         .route(
             "/recommend/documents",
-            post(RecommendationApi::recommend_documents),
+            post(crate::modules::recommendation::recommend_documents),
         )
         .route(
             "/recommend/opportunities",
-            post(RecommendationApi::recommend_opportunities),
+            post(crate::modules::recommendation::recommend_opportunities),
         )
         .route(
             "/recommend/knowledge",
-            post(RecommendationApi::recommend_knowledge),
+            post(crate::modules::recommendation::recommend_knowledge),
         )
-        .route("/profile/get", post(RecommendationApi::get_user_profile))
+        .route("/profile/get", post(crate::modules::recommendation::get_user_profile))
         .route(
             "/profile/update",
-            post(RecommendationApi::update_user_profile),
+            post(crate::modules::recommendation::update_user_profile),
         )
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
@@ -601,28 +597,28 @@ pub fn create_routes(
     let multimodal_router = Router::new()
         .route(
             "/multimodal/image/analyze",
-            post(MultimodalApi::analyze_image),
+            post(crate::modules::multimodal::analyze_image),
         )
         .route(
             "/multimodal/image/caption",
-            post(MultimodalApi::generate_caption),
+            post(crate::modules::multimodal::generate_caption),
         )
         .route(
             "/multimodal/image/objects",
-            post(MultimodalApi::detect_objects),
+            post(crate::modules::multimodal::detect_objects),
         )
-        .route("/multimodal/image/text", post(MultimodalApi::extract_text))
+        .route("/multimodal/image/text", post(crate::modules::multimodal::extract_text))
         .route(
             "/multimodal/image/describe",
-            post(MultimodalApi::describe_image),
+            post(crate::modules::multimodal::describe_image),
         )
         .route(
             "/multimodal/video/analyze",
-            post(MultimodalApi::analyze_video),
+            post(crate::modules::multimodal::analyze_video),
         )
         .route(
             "/multimodal/video/summary",
-            post(MultimodalApi::summarize_video),
+            post(crate::modules::multimodal::summarize_video),
         )
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),

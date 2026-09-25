@@ -51,6 +51,19 @@ pub async fn list_templates() -> impl IntoResponse {
 }
 
 /// 指定模板详情
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/smart-forms/templates/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_template(Path(id): Path<String>) -> impl IntoResponse {
     let templates = builtin_templates::all_templates();
     match templates.into_iter().find(|t| t.id == id) {
@@ -64,6 +77,16 @@ pub async fn get_template(Path(id): Path<String>) -> impl IntoResponse {
 }
 
 /// AI 智能填充
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/smart-forms/ai-fill",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn ai_fill(
     State(state): State<SmartFormsAppState>,
     Json(req): Json<AiFillRequest>,

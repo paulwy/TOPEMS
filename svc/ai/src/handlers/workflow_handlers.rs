@@ -14,6 +14,16 @@ use topems_shared_core::response::ApiResponse;
 type ApiOk<T> = Json<ApiResponse<T>>;
 
 /// GET /api/ai/workflows - list available predefined workflows
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/workflows",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_workflows(State(state): State<AppState>) -> ApiOk<serde_json::Value> {
     let workflows = state.workflow_orchestrator.get_available_workflows();
     Json(ApiResponse::success(
@@ -23,6 +33,19 @@ pub async fn list_workflows(State(state): State<AppState>) -> ApiOk<serde_json::
 }
 
 /// GET /api/ai/workflows/{workflow_id} - get workflow detail
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/workflows/{workflow_id}",
+    params(
+        ("workflow_id" = String, Path, description = "workflow_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_workflow(
     State(state): State<AppState>,
     axum::extract::Path(workflow_id): axum::extract::Path<String>,
@@ -57,6 +80,16 @@ pub async fn get_workflow(
 }
 
 /// POST /api/ai/workflows/execute - execute a workflow by ID
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/workflows/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn execute_workflow(
     State(state): State<AppState>,
     Json(req): Json<WorkflowExecutionRequest>,

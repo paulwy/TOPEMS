@@ -70,6 +70,16 @@ pub struct FeatureUsageItem {
 }
 
 /// GET /dashboard/stats
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dashboard/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_dashboard_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -115,6 +125,16 @@ pub async fn get_dashboard_stats(
 }
 
 /// GET /dashboard/activity-trend?days=7&group_by=day|hour
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dashboard/activity-trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_activity_trend(
     State(state): State<AppState>,
     Query(params): Query<ActivityTrendQuery>,
@@ -172,6 +192,16 @@ pub async fn get_activity_trend(
 }
 
 /// GET /dashboard/feature-usage
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dashboard/feature-usage",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_feature_usage(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -252,6 +282,16 @@ pub struct ModelConfigUpdate {
 }
 
 /// GET /models
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/models",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn list_models(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -316,6 +356,19 @@ pub async fn list_models(
 }
 
 /// GET /models/{id}/config
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/models/{id}/config",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_model_config(
     State(state): State<AppState>,
     Path(model_id): Path<Uuid>,
@@ -432,6 +485,16 @@ pub struct UsageStats {
 
 /// GET /models/usage — 从 ai.model_usage_stats 真实聚合（按租户/日期/模型过滤）
 #[allow(unused_assignments)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/models/usage",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_model_usage(
     State(state): State<AppState>,
     Query(params): Query<UsageStatsQuery>,

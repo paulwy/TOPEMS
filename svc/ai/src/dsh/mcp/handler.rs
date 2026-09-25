@@ -121,6 +121,16 @@ pub struct McpQueryParams {
 /// - 200 OK + JSON-RPC Response（请求有 ID，无 session_id）
 /// - 202 Accepted（通知，无 ID；或有 session_id 时响应通过 SSE 推送）
 /// - 400 Bad Request（无效 JSON）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/mcp",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn handle_mcp_request(
     State(state): State<McpAppState>,
     Query(params): Query<McpQueryParams>,
@@ -173,6 +183,16 @@ pub async fn handle_mcp_request(
 /// - endpoint：包含 POST /mcp?session_id=xxx 的 URL
 /// - message：JSON-RPC 响应或通知
 /// - 心跳注释（: keep-alive）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/mcp/sse",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn handle_mcp_sse(
     State(state): State<McpAppState>,
 ) -> Sse<impl futures::stream::Stream<Item = Result<Event, std::convert::Infallible>>> {

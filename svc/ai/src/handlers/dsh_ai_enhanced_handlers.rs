@@ -98,6 +98,16 @@ impl<T: Serialize> ApiResponse<T> {
 }
 
 /// 添加实体
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/kg/entities",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn add_entity(
     State(state): State<AppState>,
     Json(req): Json<AddEntityRequest>,
@@ -130,6 +140,19 @@ pub async fn add_entity(
 }
 
 /// 获取实体
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/kg/entities/{entity_id}",
+    params(
+        ("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_entity(
     State(state): State<AppState>,
     Path(entity_id): Path<String>,
@@ -178,6 +201,16 @@ pub async fn list_entities(
 }
 
 /// 添加关系
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/kg/relations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn add_relation(
     State(state): State<AppState>,
     Json(req): Json<AddRelationRequest>,
@@ -238,6 +271,19 @@ pub async fn list_relations(
 }
 
 /// 获取实体邻居
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/kg/entities/{entity_id}/neighbors",
+    params(
+        ("entity_id" = String, Path, description = "entity_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_entity_neighbors(
     State(state): State<AppState>,
     Path(entity_id): Path<String>,
@@ -252,6 +298,16 @@ pub async fn get_entity_neighbors(
 }
 
 /// 最短路径查询
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/kg/shortest-path",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn shortest_path(
     State(state): State<AppState>,
     Json(req): Json<ShortestPathRequest>,
@@ -268,6 +324,16 @@ pub async fn shortest_path(
 }
 
 /// 实体链接
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/kg/link-entity",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn link_entity(
     State(state): State<AppState>,
     Json(req): Json<LinkEntityRequest>,
@@ -282,6 +348,16 @@ pub async fn link_entity(
 }
 
 /// 社区发现
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/kg/communities",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn detect_communities(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<crate::dsh::knowledge_graph::CommunityResult>>> {
@@ -295,6 +371,16 @@ pub async fn detect_communities(
 }
 
 /// 获取知识图谱统计
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/kg/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_graph_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<crate::dsh::knowledge_graph::KnowledgeGraphStats>> {
@@ -351,6 +437,16 @@ pub struct RagRetrieveRequest {
 }
 
 /// RAG 检索
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/rag/retrieve",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn rag_retrieve(
     State(state): State<AppState>,
     Json(req): Json<RagRetrieveRequest>,
@@ -390,6 +486,16 @@ pub async fn rag_retrieve(
 }
 
 /// 获取 RAG 统计
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ai:read"])),
+    path = "/dsh/rag/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn get_rag_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<crate::dsh::rag::RagStats>> {
@@ -435,6 +541,16 @@ pub struct MultiAgentResponse {
 }
 
 /// 多 Agent 协作执行
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ai:write"])),
+    path = "/dsh/multi-agent/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ai"
+)]
 pub async fn multi_agent_execute(
     State(state): State<AppState>,
     Json(req): Json<MultiAgentRequest>,
