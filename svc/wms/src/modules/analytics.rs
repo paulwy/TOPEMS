@@ -95,12 +95,12 @@ fn parse_date_range(params: &AnalyticsQueryParams) -> (NaiveDate, NaiveDate) {
     let end = params
         .end_date
         .as_ref()
-        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .and_then(|s| s.parse::<chrono::NaiveDate>().ok())
         .unwrap_or_else(|| chrono::Utc::now().date_naive());
     let start = params
         .start_date
         .as_ref()
-        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok())
+        .and_then(|s| s.parse::<chrono::NaiveDate>().ok())
         .unwrap_or_else(|| end - chrono::Duration::days(90));
     (start, end)
 }

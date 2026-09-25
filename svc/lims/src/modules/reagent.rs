@@ -198,7 +198,7 @@ pub async fn create_reagent(
     .bind(&req.batch_no)
     .bind(req.quantity)
     .bind(&req.unit)
-    .bind(req.expired_at.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.expired_at.as_deref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
     .fetch_one(&state.pool)
     .await;
 
@@ -346,7 +346,7 @@ pub async fn update_reagent(
     .bind(req.quantity)
     .bind(&req.unit)
     .bind(&req.status)
-    .bind(req.expired_at.as_deref().and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.expired_at.as_deref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
     .fetch_one(&state.pool)
     .await;
 

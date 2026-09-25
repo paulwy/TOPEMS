@@ -118,7 +118,7 @@ pub async fn create_company_relation(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let id = Uuid::new_v4();
-    let effective_date = chrono::NaiveDate::parse_from_str(&req.effective_date, "%Y-%m-%d")
+    let effective_date = req.effective_date.parse::<chrono::NaiveDate>()
         .unwrap_or_else(|_| chrono::Utc::now().date_naive());
 
     let result = sqlx::query_as::<_, CompanyRelation>(
@@ -136,7 +136,7 @@ pub async fn create_company_relation(
     .bind(req.ownership_percentage)
     .bind(req.control_percentage.unwrap_or(req.ownership_percentage))
     .bind(effective_date)
-    .bind(req.expiry_date.as_ref().and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()))
+    .bind(req.expiry_date.as_ref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -189,7 +189,7 @@ pub async fn update_company_relation(
     .bind(
         req.expiry_date
             .as_ref()
-            .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok()),
+            .and_then(|s| s.parse::<chrono::NaiveDate>().ok()),
     )
     .bind(&req.status)
     .fetch_one(&mut **txn)

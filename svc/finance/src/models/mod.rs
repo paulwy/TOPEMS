@@ -522,7 +522,7 @@ where
     if let Ok(dt) = DateTime::parse_from_rfc3339(&s) {
         return Ok(dt.with_timezone(&Utc));
     }
-    if let Ok(naive) = chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d") {
+    if let Ok(naive) = s.parse::<chrono::NaiveDate>() {
         let naive_dt = naive
             .and_hms_opt(0, 0, 0)
             .ok_or_else(|| serde::de::Error::custom(format!("Invalid date format: {}", s)))?;
@@ -546,7 +546,7 @@ where
             if let Ok(dt) = DateTime::parse_from_rfc3339(&s) {
                 return Ok(Some(dt.with_timezone(&Utc)));
             }
-            if let Ok(naive) = chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d") {
+            if let Ok(naive) = s.parse::<chrono::NaiveDate>() {
                 let naive_dt = naive.and_hms_opt(0, 0, 0).ok_or_else(|| {
                     serde::de::Error::custom(format!("Invalid date format: {}", s))
                 })?;

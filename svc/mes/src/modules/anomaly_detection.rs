@@ -353,8 +353,8 @@ pub async fn get_anomaly_trend(
     let days = if let Some(ref start) = params.start_date {
         if let Some(ref end) = params.end_date {
             if let (Ok(s), Ok(e)) = (
-                NaiveDate::parse_from_str(start, "%Y-%m-%d"),
-                NaiveDate::parse_from_str(end, "%Y-%m-%d"),
+                start.parse::<chrono::NaiveDate>(),
+                end.parse::<chrono::NaiveDate>(),
             ) {
                 e.signed_duration_since(s).num_days().max(1) as usize
             } else {

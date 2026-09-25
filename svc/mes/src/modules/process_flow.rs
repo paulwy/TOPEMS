@@ -695,7 +695,7 @@ pub async fn add_flow_step(
                     .map(|dt| dt.with_timezone(&Utc))
             })
             .or_else(|| {
-                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                s.parse::<chrono::NaiveDate>()
                     .ok()
                     .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
             })
@@ -824,7 +824,7 @@ pub async fn update_flow_step(
                     .map(|dt| dt.with_timezone(&Utc))
             })
             .or_else(|| {
-                chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                s.parse::<chrono::NaiveDate>()
                     .ok()
                     .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
             })

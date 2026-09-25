@@ -563,7 +563,7 @@ pub async fn setup_admin_user(
     // 创建员工
     let employee_id = Uuid::new_v4();
     let hire_date = if let Some(hd) = &req.hire_date {
-        chrono::NaiveDate::parse_from_str(hd, "%Y-%m-%d").ok()
+        hd.parse::<chrono::NaiveDate>().ok()
     } else {
         Some(now.date_naive())
     };

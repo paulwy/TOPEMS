@@ -97,7 +97,7 @@ fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
 
 fn parse_date(s: &Option<String>) -> Option<NaiveDate> {
     s.as_deref()
-        .and_then(|v| NaiveDate::parse_from_str(v, "%Y-%m-%d").ok())
+        .and_then(|v| v.parse::<chrono::NaiveDate>().ok())
 }
 
 fn order_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {

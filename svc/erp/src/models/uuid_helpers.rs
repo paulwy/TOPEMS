@@ -86,7 +86,7 @@ pub mod option_date_time {
                     )));
                 }
 
-                if let Ok(naive_date) = NaiveDate::parse_from_str(&s, "%Y-%m-%d") {
+                if let Ok(naive_date) = s.parse::<chrono::NaiveDate>() {
                     let naive_dt = naive_date
                         .and_hms_opt(0, 0, 0)
                         .ok_or_else(|| serde::de::Error::custom("无效的日期"))?;

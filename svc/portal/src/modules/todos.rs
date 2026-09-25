@@ -100,7 +100,7 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     let due_date = if todo.due_date.is_empty() {
         None
     } else {
-        chrono::NaiveDate::parse_from_str(&todo.due_date, "%Y-%m-%d").ok()
+        todo.due_date.parse::<chrono::NaiveDate>().ok()
     };
 
     let result = sqlx::query(

@@ -146,7 +146,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 }
 
 fn parse_report_date(s: &str) -> Result<NaiveDate, String> {
-    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|e| format!("无效的 report_date: {}", e))
+    s.parse::<chrono::NaiveDate>().map_err(|e| format!("无效的 report_date: {}", e))
 }
 
 fn generate_report_no() -> String {

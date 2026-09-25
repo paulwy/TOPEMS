@@ -316,7 +316,7 @@ pub async fn db_create_mobile_task(
     let priority = data.priority.unwrap_or_else(|| "medium".to_string());
     let due_date = data
         .due_date
-        .and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
+        .and_then(|s| s.parse::<chrono::NaiveDate>().ok());
 
     sqlx::query(
         only_own_schema_query!("mobile", "INSERT INTO mobile.mobile_tasks (id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)

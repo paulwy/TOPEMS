@@ -131,7 +131,7 @@ fn parse_datetime(value: Option<&str>) -> Option<DateTime<Utc>> {
             Some(dt.with_timezone(&Utc))
         } else if let Ok(naive) = NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S") {
             Some(Utc.from_utc_datetime(&naive))
-        } else if let Ok(date) = chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d") {
+        } else if let Ok(date) = s.parse::<chrono::NaiveDate>() {
             Some(Utc.from_utc_datetime(&date.and_hms_opt(0, 0, 0)?))
         } else {
             None

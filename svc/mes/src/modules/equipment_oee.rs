@@ -836,11 +836,11 @@ pub async fn get_oee_statistics(
     let start_date = req
         .start_date
         .as_ref()
-        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
+        .and_then(|s| s.parse::<chrono::NaiveDate>().ok());
     let end_date = req
         .end_date
         .as_ref()
-        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
+        .and_then(|s| s.parse::<chrono::NaiveDate>().ok());
 
     // 总体统计
     let overall_result = sqlx::query!(

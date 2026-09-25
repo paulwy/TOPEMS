@@ -402,7 +402,7 @@ pub async fn create_inspection(
                         .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
-                    chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    s.parse::<chrono::NaiveDate>()
                         .ok()
                         .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
                 })
@@ -510,7 +510,7 @@ pub async fn update_inspection(
                         .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
-                    chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                    s.parse::<chrono::NaiveDate>()
                         .ok()
                         .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
                 })
