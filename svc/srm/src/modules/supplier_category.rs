@@ -54,6 +54,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Category Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_category:read"])),
+    path = "/supplier-categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_category"
+)]
 pub async fn list_categories(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -292,6 +302,19 @@ pub async fn create_category(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_category:read"])),
+    path = "/supplier-categories/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_category"
+)]
 pub async fn get_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

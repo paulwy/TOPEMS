@@ -828,6 +828,7 @@ D
 - [x] **hrm 全量**：补 49 个注解（attendance/candidates/contracts/renewals/interviews/job-openings/leaves/payroll/performance/salary/setup/training/settings/reports 全模块，模块 tag，bearerAuth 与域内既有模板一致）+ 聚合 105 handler + 6 tag；编译通过；1590 → 1643 端点（+53 路径）0 丢失（已提交）——复用固化注入流程（跨文件 fn 索引/定义文件分组/pos 降序/handler 去重/平衡括号提取聚合），基础设施 3 个（health/plugin health/plugin info）跳过
 - [x] **pm 全量**：补 60 个注解（budgets/contracts/settlements/acceptance/quality/defects/documents/folders/risks/reports/tasks/notifications/analytics/project-types/service-integrations/report-templates 全模块，模块 tag，pm:read/write 权限）+ 聚合 106 handler + 21 tag；编译通过；1643 → 1704 端点（+61 路径）0 丢失（已提交）
 - [x] **rd 全量**：补 66 个注解（experiments/formulas/patents/tests/material/change-requests/ai/ci-cd/research-costs/documents/members/milestones/phases/reports/settings/statistics 全模块，模块 tag，rd:read/write 权限）+ 聚合 79 handler + 16 tag；编译通过；1704 → 端点增量见提交（0 丢失）（已提交）
+- [x] **srm 全量**：补 67 个注解（suppliers/biddings/quotations/tenders/bid-requests/inquiries/purchase-orders/scoring-dimensions/supplier-contracts/supplier-evaluations/supplier-products/supplier-categories/supplier-portal/performance/statistics/sync/tender-awards 全模块，tag=SRM/<模块>，权限 srm:<模块>:read/write）+ 聚合 75 handler + 16 tag；编译通过；1763 → 端点增量见提交（0 丢失）（已提交）
 - [ ] 累计：qms 3 + scm 3 + srm 3 + gis 3 + portal 23 + ticket 6 + communication 9 = 50 个新注解（文档待并入）
 - [x] **wms**：补 5 个注解（labor efficiency/productivity + discrepancy detail + picking lists + cycle-count configs）+ 聚合；编译通过（已提交）
 - [x] **hrm**：补 5 个注解（reports 3 + setup 2）+ 聚合 + reports/setup tags；编译通过（已提交）

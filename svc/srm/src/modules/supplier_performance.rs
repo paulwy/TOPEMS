@@ -65,6 +65,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/reports",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn get_performance_reports(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -254,6 +264,19 @@ pub async fn get_performance_reports(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/reports/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn get_performance_report(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -469,6 +492,16 @@ pub async fn get_performance_report(
     Json(ApiResponse::success(result, "获取供应商绩效详情成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/compare",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn compare_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -609,6 +642,16 @@ pub async fn compare_supplier_performance(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn get_performance_trend(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -725,6 +768,16 @@ pub async fn get_performance_trend(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/top-suppliers",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn get_top_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -849,6 +902,16 @@ pub async fn get_top_suppliers(
     Json(ApiResponse::success(result, "获取TOP供应商成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn export_performance_report(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -985,6 +1048,16 @@ pub async fn export_performance_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/score-level-distribution",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn get_score_level_distribution(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1072,6 +1145,16 @@ pub async fn get_score_level_distribution(
     Json(ApiResponse::success(result, "获取评分等级分布成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_performance:read"])),
+    path = "/performance/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_performance"
+)]
 pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

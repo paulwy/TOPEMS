@@ -167,6 +167,16 @@ pub fn create_routes(db: PgPool) -> Router {
         .with_state(state)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:statistics:read"])),
+    path = "/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/statistics"
+)]
 pub async fn get_statistics(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -270,6 +280,16 @@ pub async fn get_statistics(
     Json(ApiResponse::success(stats, "获取统计数据成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:statistics:read"])),
+    path = "/statistics/detailed",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/statistics"
+)]
 pub async fn get_detailed_statistics(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -525,6 +545,16 @@ pub async fn get_detailed_statistics(
     Json(ApiResponse::success(detailed_stats, "获取详细统计数据成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:statistics:read"])),
+    path = "/suppliers-with-stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/statistics"
+)]
 pub async fn get_suppliers_with_stats(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

@@ -54,6 +54,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Contract Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_contract:read"])),
+    path = "/supplier-contracts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
 pub async fn list_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -320,6 +330,19 @@ pub async fn create_contract(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_contract:read"])),
+    path = "/supplier-contracts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
 pub async fn get_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -586,6 +609,19 @@ pub async fn delete_contract(
 
 // ==================== Contract Terms Handler ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_contract:read"])),
+    path = "/supplier-contracts/{id}/terms",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_contract"
+)]
 pub async fn get_contract_terms(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

@@ -47,6 +47,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bidding:read"])),
+    path = "/biddings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn list_biddings(
     State(_state): State<Arc<AppState>>,
     Query(params): Query<ListBiddingParams>,
@@ -213,6 +223,19 @@ pub async fn create_bidding(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bidding:read"])),
+    path = "/biddings/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn get_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -347,6 +370,19 @@ pub async fn delete_bidding(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}/publish",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn publish_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -390,6 +426,19 @@ pub async fn publish_bidding(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}/open",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn open_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -433,6 +482,19 @@ pub async fn open_bidding(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}/evaluate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn evaluate_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -475,6 +537,19 @@ pub async fn evaluate_bidding(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:bidding:write"])),
+    path = "/biddings/{id}/award",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn award_bidding(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -536,6 +611,19 @@ pub async fn award_bidding(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bidding:read"])),
+    path = "/biddings/{id}/suppliers",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bidding"
+)]
 pub async fn list_bidding_suppliers(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,

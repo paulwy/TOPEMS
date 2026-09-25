@@ -43,6 +43,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:scoring_dimension:read"])),
+    path = "/scoring-dimensions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/scoring_dimension"
+)]
 pub async fn list_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -97,6 +107,16 @@ pub async fn list_dimensions(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:scoring_dimension:read"])),
+    path = "/scoring-dimensions/active",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/scoring_dimension"
+)]
 pub async fn list_active_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -151,6 +171,19 @@ pub async fn list_active_dimensions(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:scoring_dimension:read"])),
+    path = "/scoring-dimensions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/scoring_dimension"
+)]
 pub async fn get_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

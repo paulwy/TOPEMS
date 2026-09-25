@@ -340,6 +340,19 @@ pub async fn delete_inquiry(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:inquiry:write"])),
+    path = "/inquiries/{id}/publish",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn publish_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,
@@ -351,6 +364,19 @@ pub async fn publish_inquiry(
     transition_inquiry(id, "published", &["draft", "closed"], "发布", txn_arc).await
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:inquiry:write"])),
+    path = "/inquiries/{id}/close",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/inquiry"
+)]
 pub async fn close_inquiry(
     State(_state): State<Arc<AppState>>,
     Extension(_claims): Extension<Claims>,

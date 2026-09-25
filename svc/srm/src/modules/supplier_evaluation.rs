@@ -65,6 +65,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Evaluation Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_evaluation:read"])),
+    path = "/supplier-evaluations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn list_evaluations(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -396,6 +406,19 @@ pub async fn create_evaluation(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_evaluation:read"])),
+    path = "/supplier-evaluations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn get_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -664,6 +687,19 @@ pub async fn delete_evaluation(
 
 // ==================== Evaluation History Handler ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_evaluation:read"])),
+    path = "/suppliers/{id}/evaluation-history",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn get_evaluation_history(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -835,6 +871,19 @@ pub async fn get_performance_summary(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_evaluation:read"])),
+    path = "/suppliers/{id}/score-trend",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn get_score_trend(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -966,6 +1015,16 @@ pub async fn get_score_trend(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_evaluation:read"])),
+    path = "/evaluations/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_evaluation"
+)]
 pub async fn get_evaluation_statistics(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

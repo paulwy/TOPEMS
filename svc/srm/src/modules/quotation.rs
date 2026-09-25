@@ -42,6 +42,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:quotation:read"])),
+    path = "/quotations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/quotation"
+)]
 pub async fn list_quotations(
     State(_state): State<Arc<AppState>>,
     Query(params): Query<ListQuotationParams>,
@@ -208,6 +218,19 @@ pub async fn create_quotation(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:quotation:read"])),
+    path = "/quotations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/quotation"
+)]
 pub async fn get_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -328,6 +351,19 @@ pub async fn delete_quotation(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:quotation:write"])),
+    path = "/quotations/{id}/award",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/quotation"
+)]
 pub async fn award_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
@@ -364,6 +400,19 @@ pub async fn award_quotation(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:quotation:write"])),
+    path = "/quotations/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/quotation"
+)]
 pub async fn reject_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,

@@ -80,6 +80,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bid_price:read"])),
+    path = "/bid-requests",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bid_price"
+)]
 pub async fn list_bid_requests(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -243,6 +253,19 @@ pub async fn create_bid_request(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bid_price:read"])),
+    path = "/bid-requests/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bid_price"
+)]
 pub async fn get_bid_request(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -482,6 +505,19 @@ pub async fn delete_bid_request(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bid_price:read"])),
+    path = "/bid-requests/{id}/bids",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bid_price"
+)]
 pub async fn get_bid_request_bids(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -681,6 +717,19 @@ pub async fn create_bid(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bid_price:read"])),
+    path = "/bids/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bid_price"
+)]
 pub async fn get_bid(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -915,6 +964,19 @@ pub async fn delete_bid(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:bid_price:read"])),
+    path = "/bid-comparisons/{request_id}",
+    params(
+("request_id" = String, Path, description = "request_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/bid_price"
+)]
 pub async fn get_bid_comparison(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

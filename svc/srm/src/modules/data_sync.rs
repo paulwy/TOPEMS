@@ -63,6 +63,16 @@ pub async fn create_routes(
     Ok(app)
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:data_sync:write"])),
+    path = "/sync/supplier-from-scm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/data_sync"
+)]
 pub async fn sync_supplier_from_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -309,6 +319,16 @@ pub async fn sync_supplier_from_scm(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:data_sync:write"])),
+    path = "/sync/suppliers-from-scm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/data_sync"
+)]
 pub async fn sync_all_suppliers_from_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -468,6 +488,16 @@ pub async fn sync_all_suppliers_from_scm(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:data_sync:write"])),
+    path = "/sync/supplier-to-scm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/data_sync"
+)]
 pub async fn sync_supplier_to_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -653,6 +683,16 @@ pub async fn sync_supplier_to_scm(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:data_sync:write"])),
+    path = "/sync/suppliers-to-scm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/data_sync"
+)]
 pub async fn sync_all_suppliers_to_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -775,6 +815,16 @@ pub async fn sync_all_suppliers_to_scm(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:data_sync:write"])),
+    path = "/sync/sync-logs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/data_sync"
+)]
 pub async fn get_sync_logs(
     State(_state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

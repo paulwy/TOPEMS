@@ -49,6 +49,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
 // ==================== Product Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_product:read"])),
+    path = "/supplier-products",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_product"
+)]
 pub async fn list_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -300,6 +310,19 @@ pub async fn create_product(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_product:read"])),
+    path = "/supplier-products/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_product"
+)]
 pub async fn get_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

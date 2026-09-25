@@ -94,6 +94,16 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:tender:read"])),
+    path = "/tenders",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn list_tenders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -276,6 +286,19 @@ pub async fn create_tender(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:tender:read"])),
+    path = "/tenders/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn get_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -528,6 +551,19 @@ pub async fn delete_tender(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:tender:read"])),
+    path = "/tenders/{id}/bids",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn get_tender_bids(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -751,6 +787,19 @@ pub async fn create_tender_bid(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:tender:write"])),
+    path = "/tenders/{id}/award",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn award_tender(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -925,6 +974,16 @@ pub async fn award_tender(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:tender:read"])),
+    path = "/tender-awards",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/tender"
+)]
 pub async fn list_tender_awards(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

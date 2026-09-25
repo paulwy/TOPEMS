@@ -881,6 +881,19 @@ pub async fn delete_supplier(
 
 // ==================== Supplier Products Handler ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier:read"])),
+    path = "/suppliers/{id}/products",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier"
+)]
 pub async fn get_supplier_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -935,6 +948,19 @@ pub async fn get_supplier_products(
 
 // ==================== Supplier Contracts Handler ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier:read"])),
+    path = "/suppliers/{id}/contracts",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier"
+)]
 pub async fn get_supplier_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -989,6 +1015,19 @@ pub async fn get_supplier_contracts(
 
 // ==================== Supplier Performance Handler ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier:read"])),
+    path = "/suppliers/{id}/performance",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier"
+)]
 pub async fn get_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1191,6 +1230,19 @@ pub struct ApprovalActionRequest {
     pub comment: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier:write"])),
+    path = "/suppliers/{id}/approval/start",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier"
+)]
 pub async fn start_supplier_approval(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1337,6 +1389,19 @@ pub async fn start_supplier_approval(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier:write"])),
+    path = "/suppliers/{id}/approval/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier"
+)]
 pub async fn approve_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1455,6 +1520,19 @@ pub async fn approve_supplier(
     ))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["srm:supplier:write"])),
+    path = "/suppliers/{id}/approval/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier"
+)]
 pub async fn reject_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

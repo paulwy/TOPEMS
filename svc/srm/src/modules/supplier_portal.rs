@@ -47,6 +47,19 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_portal:read"])),
+    path = "/supplier-portal/{supplier_id}/stats",
+    params(
+("supplier_id" = String, Path, description = "supplier_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_portal"
+)]
 pub async fn get_supplier_portal_stats(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -176,6 +189,19 @@ pub async fn get_supplier_portal_stats(
     Json(ApiResponse::success(stats, "获取供应商门户统计成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_portal:read"])),
+    path = "/supplier-portal/{supplier_id}/orders",
+    params(
+("supplier_id" = String, Path, description = "supplier_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_portal"
+)]
 pub async fn get_supplier_portal_orders(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -238,6 +264,19 @@ pub async fn get_supplier_portal_orders(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_portal:read"])),
+    path = "/supplier-portal/{supplier_id}/invoices",
+    params(
+("supplier_id" = String, Path, description = "supplier_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_portal"
+)]
 pub async fn get_supplier_portal_invoices(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -287,6 +326,19 @@ pub async fn get_supplier_portal_invoices(
     Json(ApiResponse::success(invoices, "获取供应商发票成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_portal:read"])),
+    path = "/supplier-portal/{supplier_id}/deliveries",
+    params(
+("supplier_id" = String, Path, description = "supplier_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_portal"
+)]
 pub async fn get_supplier_portal_deliveries(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -339,6 +391,16 @@ pub async fn get_supplier_portal_deliveries(
     Json(ApiResponse::success(deliveries, "获取供应商交货信息成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["srm:supplier_portal:read"])),
+    path = "/supplier-portal/announcements",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SRM/supplier_portal"
+)]
 pub async fn get_supplier_portal_announcements(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
