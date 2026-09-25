@@ -83,6 +83,12 @@ use utoipa::OpenApi;
         crate::modules::monitor::alerts::get_suppression_rule,
         crate::modules::monitor::alerts::update_suppression_rule,
         crate::modules::monitor::alerts::delete_suppression_rule,
+        crate::modules::monitor::settings::list_settings,
+        crate::modules::monitor::settings::batch_update_settings,
+        crate::modules::monitor::settings::get_setting,
+        crate::modules::monitor::settings::update_setting,
+        crate::modules::monitor::settings::delete_setting,
+        crate::modules::monitor::business_metrics::get_performance_report,
     ),
     tags(
         (name = "health",             description = "健康检查 API"),

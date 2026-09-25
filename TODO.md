@@ -821,6 +821,7 @@ D
 - [x] **communication 第三轮（im 全量）**：补 28 个注解（rooms/messages/members 9 + contacts/groups 10 + online-status/notifications 2 + project-groups 1 + read/mute/pin 3 + search 2 + update/delete room 2，im tag，communication:read/write 权限）+ 聚合；编译通过；1468 → 1484 端点（+16 路径）0 丢失（已提交）
 - [x] **communication 第四轮（notification 全量，域收口）**：补 26 个注解（unread/stats/archived/archive-config 读 4 + templates CRUD 4 + channels CRUD+metrics+test 5 + broadcast/read-all/unread/bulk-read/bulk-delete/archive/unarchive/delete-all/run-auto-archive 写 13，notification tag，communication:notification:read/write 权限）+ 聚合；编译通过；1484 → 1502 端点（+18 路径 +1 method）0 丢失（已提交）——communication 域 65 个缺口 handler 全部闭环
 - [x] **tms analytics**：补 9 个注解（shipment-trend/vehicle-ranking/status-distribution/carrier-performance/route-efficiency/driver-performance/shipment-trend-enhanced/vehicle-utilization/freight-cost-trend，TMS - Analytics tag，tms:analytics:read 权限）+ 聚合 + tag；编译通过；1502 → 1511 端点（+9 路径）0 丢失（已提交）——含 p6 审计 RED 关注的 8 个 tmsAnalytics 方法
+- [x] **monitor settings**：补 6 个注解（list/batch_update/get/update/delete_setting 5 + get_performance_report 1，settings/metrics tag，monitor:read 权限）+ 聚合；编译通过；1511 → 1514 端点（+3 路径）0 丢失（已提交）——monitor 缺口清零
 - [ ] 累计：qms 3 + scm 3 + srm 3 + gis 3 + portal 23 + ticket 6 + communication 9 = 50 个新注解（文档待并入）
 - [x] **wms**：补 5 个注解（labor efficiency/productivity + discrepancy detail + picking lists + cycle-count configs）+ 聚合；编译通过（已提交）
 - [x] **hrm**：补 5 个注解（reports 3 + setup 2）+ 聚合 + reports/setup tags；编译通过（已提交）

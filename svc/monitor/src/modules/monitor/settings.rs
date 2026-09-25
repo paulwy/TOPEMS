@@ -54,6 +54,16 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 /// GET /settings — 获取当前租户所有设置
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/settings",
+    responses(
+        (status = 200, description = "设置列表", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn list_settings(
     State(state): State<AppState>,
     Query(params): Query<SettingsQuery>,
@@ -105,6 +115,16 @@ pub async fn list_settings(
 }
 
 /// PUT /settings — 批量 upsert 设置
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/settings",
+    responses(
+        (status = 200, description = "批量更新设置", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn batch_update_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -140,6 +160,19 @@ pub async fn batch_update_settings(
 }
 
 /// GET /settings/{key} — 获取单个设置
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/settings/{key}",
+    params(
+        ("key" = String, Path, description = "设置键")
+    ),
+    responses(
+        (status = 200, description = "获取设置", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn get_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
@@ -175,6 +208,19 @@ pub async fn get_setting(
 }
 
 /// PUT /settings/{key} — 更新单个设置
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/settings/{key}",
+    params(
+        ("key" = String, Path, description = "设置键")
+    ),
+    responses(
+        (status = 200, description = "更新设置", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn update_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,
@@ -208,6 +254,19 @@ pub async fn update_setting(
 }
 
 /// DELETE /settings/{key} — 删除单个设置
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/settings/{key}",
+    params(
+        ("key" = String, Path, description = "设置键")
+    ),
+    responses(
+        (status = 200, description = "删除设置", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn delete_setting(
     State(state): State<AppState>,
     Path(key): Path<String>,

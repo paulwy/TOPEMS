@@ -1081,6 +1081,16 @@ pub struct PerformanceReport {
     pub uptime_percent: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["monitor:read"])),
+    path = "/api/monitor/reports/performance",
+    responses(
+        (status = 200, description = "性能报告", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "metrics"
+)]
 pub async fn get_performance_report(
     State(_state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
