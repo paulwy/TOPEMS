@@ -11,10 +11,10 @@ CREATE TABLE IF NOT EXISTS core_inter_module_sync (
     retry_count INTEGER DEFAULT 0,
     max_retries INTEGER DEFAULT 3,
     error_message TEXT,
-    next_retry_at TIMESTAMP,
-    executed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    next_retry_at timestamptz,
+    executed_at timestamptz,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_mobile_offline_records (
@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS core_mobile_offline_records (
     retry_count INTEGER DEFAULT 0,
     max_retries INTEGER DEFAULT 3,
     error_message TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_inter_module_sync_status ON core_inter_module_sync(status);

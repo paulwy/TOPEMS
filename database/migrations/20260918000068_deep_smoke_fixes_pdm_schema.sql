@@ -29,7 +29,7 @@ BEGIN
             equipment_requirement character varying,
             quality_check character varying,
             status character varying,
-            deleted_at timestamp without time zone
+            deleted_at timestamptz without time zone
         );
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='pdm' AND table_name='pdm_production_batches') THEN
@@ -41,13 +41,13 @@ BEGIN
             product_name character varying,
             quantity numeric,
             unit character varying,
-            start_date timestamp without time zone,
-            end_date timestamp without time zone,
+            start_date timestamptz without time zone,
+            end_date timestamptz without time zone,
             status character varying,
             notes text,
-            created_at timestamp without time zone NOT NULL DEFAULT now(),
-            updated_at timestamp without time zone NOT NULL DEFAULT now(),
-            deleted_at timestamp without time zone
+            created_at timestamptz without time zone NOT NULL DEFAULT now(),
+            updated_at timestamptz without time zone NOT NULL DEFAULT now(),
+            deleted_at timestamptz without time zone
         );
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='pdm' AND table_name='pdm_projects') THEN
@@ -59,16 +59,16 @@ BEGIN
             description text,
             status character varying,
             phase character varying,
-            start_date timestamp without time zone,
-            end_date timestamp without time zone,
+            start_date timestamptz without time zone,
+            end_date timestamptz without time zone,
             manager_id character varying,
             manager_name character varying,
             budget double precision,
             progress integer,
             created_by character varying,
-            created_at timestamp without time zone NOT NULL DEFAULT now(),
-            updated_at timestamp without time zone NOT NULL DEFAULT now(),
-            deleted_at timestamp without time zone
+            created_at timestamptz without time zone NOT NULL DEFAULT now(),
+            updated_at timestamptz without time zone NOT NULL DEFAULT now(),
+            deleted_at timestamptz without time zone
         );
     END IF;
     -- pdm 表索引
@@ -91,8 +91,8 @@ BEGIN
             location character varying,
             facilities text[],
             status character varying NOT NULL DEFAULT 'active',
-            created_at timestamp without time zone NOT NULL DEFAULT now(),
-            updated_at timestamp without time zone NOT NULL DEFAULT now()
+            created_at timestamptz without time zone NOT NULL DEFAULT now(),
+            updated_at timestamptz without time zone NOT NULL DEFAULT now()
         );
     END IF;
 
@@ -170,9 +170,9 @@ BEGIN
             process_params jsonb,
             properties jsonb,
             created_by character varying,
-            created_at timestamp with time zone NOT NULL DEFAULT now(),
-            updated_at timestamp with time zone NOT NULL DEFAULT now(),
-            deleted_at timestamp with time zone
+            created_at timestamptz with time zone NOT NULL DEFAULT now(),
+            updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+            deleted_at timestamptz with time zone
         );
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='patents') THEN
@@ -191,9 +191,9 @@ BEGIN
             description text,
             abstract text,
             created_by character varying,
-            created_at timestamp with time zone NOT NULL DEFAULT now(),
-            updated_at timestamp with time zone NOT NULL DEFAULT now(),
-            deleted_at timestamp with time zone
+            created_at timestamptz with time zone NOT NULL DEFAULT now(),
+            updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+            deleted_at timestamptz with time zone
         );
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='research_costs') THEN
@@ -212,9 +212,9 @@ BEGIN
             receipt_no character varying,
             status character varying DEFAULT 'active',
             created_by character varying,
-            created_at timestamp with time zone NOT NULL DEFAULT now(),
-            updated_at timestamp with time zone NOT NULL DEFAULT now(),
-            deleted_at timestamp with time zone
+            created_at timestamptz with time zone NOT NULL DEFAULT now(),
+            updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+            deleted_at timestamptz with time zone
         );
     END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='audit_logs') THEN
@@ -227,8 +227,8 @@ BEGIN
             details jsonb,
             ip_address text,
             user_agent text,
-            created_at timestamp with time zone NOT NULL DEFAULT now(),
-            deleted_at timestamp with time zone,
+            created_at timestamptz with time zone NOT NULL DEFAULT now(),
+            deleted_at timestamptz with time zone,
             entity_type text,
             entity_id uuid,
             entity_ids jsonb,

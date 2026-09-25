@@ -7,9 +7,9 @@ CREATE TABLE IF NOT EXISTS core_workflows (
     version INTEGER DEFAULT 1,
     created_by UUID NOT NULL,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    published_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    published_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_workflow_instances (
@@ -21,10 +21,10 @@ CREATE TABLE IF NOT EXISTS core_workflow_instances (
     status VARCHAR(32) DEFAULT 'pending',
     variables JSONB,
     tenant_id UUID NOT NULL,
-    started_at TIMESTAMP DEFAULT NOW(),
-    completed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    started_at timestamptz DEFAULT NOW(),
+    completed_at timestamptz,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_workflow_tasks (
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS core_workflow_tasks (
     status VARCHAR(32) DEFAULT 'pending',
     comment TEXT,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    completed_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    completed_at timestamptz
 );
 
 CREATE INDEX IF NOT EXISTS idx_core_workflows_status ON core_workflows(status);

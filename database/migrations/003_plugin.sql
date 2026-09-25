@@ -6,9 +6,9 @@ CREATE TABLE IF NOT EXISTS core_plugins (
     version VARCHAR(32) NOT NULL,
     plugin_type VARCHAR(32) DEFAULT 'business',
     is_installed BOOLEAN DEFAULT FALSE,
-    installed_at TIMESTAMP,
+    installed_at timestamptz,
     is_active BOOLEAN DEFAULT FALSE,
-    activated_at TIMESTAMP,
+    activated_at timestamptz,
     is_free BOOLEAN DEFAULT TRUE,
     price_cents INTEGER DEFAULT 0,
     remote_url VARCHAR(512),
@@ -28,9 +28,9 @@ CREATE TABLE IF NOT EXISTS core_plugins (
     tags TEXT[],
     category VARCHAR(64),
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    published_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    published_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_plugin_versions (
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS core_plugin_versions (
     checksum VARCHAR(64),
     file_size BIGINT,
     min_app_version VARCHAR(32),
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     UNIQUE(plugin_id, version)
 );
 
@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS core_plugin_reviews (
     is_featured BOOLEAN DEFAULT FALSE,
     helpful_count INTEGER DEFAULT 0,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_tenant_plugins (
@@ -71,13 +71,13 @@ CREATE TABLE IF NOT EXISTS core_tenant_plugins (
     installed_version VARCHAR(32),
     is_active BOOLEAN DEFAULT TRUE,
     license_type VARCHAR(32) DEFAULT 'subscription',
-    license_expires_at TIMESTAMP,
+    license_expires_at timestamptz,
     purchase_order_id VARCHAR(128),
-    activated_at TIMESTAMP DEFAULT NOW(),
-    last_used_at TIMESTAMP,
+    activated_at timestamptz DEFAULT NOW(),
+    last_used_at timestamptz,
     usage_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
     UNIQUE(tenant_id, plugin_id)
 );
 
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS core_plugin_categories (
     plugin_count INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     UNIQUE(code)
 );
 
@@ -102,10 +102,10 @@ CREATE TABLE IF NOT EXISTS core_plugin_instances (
     runtime_status VARCHAR(32) DEFAULT 'stopped',
     base_path VARCHAR(128) DEFAULT '/api/plugins/{code}',
     last_heartbeat TIMESTAMP,
-    started_at TIMESTAMP,
-    stopped_at TIMESTAMP,
+    started_at timestamptz,
+    stopped_at timestamptz,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     UNIQUE(plugin_id)
 );
 
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS core_plugin_permissions (
     resource_type VARCHAR(50),
     action VARCHAR(50),
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     UNIQUE(plugin_code, permission_code)
 );
 

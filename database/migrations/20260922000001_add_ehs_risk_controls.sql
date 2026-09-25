@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_risk_controls (
     description text,
     measure_type varchar(64),
     status varchar(32) DEFAULT 'active',
-    created_at timestamp DEFAULT now(),
-    updated_at timestamp DEFAULT now(),
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
     deleted_at timestamptz,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );

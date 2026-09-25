@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS core_notifications (
     priority INTEGER DEFAULT 0,
     data JSONB,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    read_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    read_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_notification_templates (
@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS core_notification_templates (
     description TEXT,
     created_by UUID,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    deleted_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_chat_rooms (
@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS core_chat_rooms (
     room_type VARCHAR(32) DEFAULT 'private',
     creator_id UUID NOT NULL,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_chat_members (
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS core_chat_members (
     user_id UUID NOT NULL,
     role VARCHAR(32) DEFAULT 'member',
     tenant_id UUID NOT NULL,
-    joined_at TIMESTAMP DEFAULT NOW(),
+    joined_at timestamptz DEFAULT NOW(),
     PRIMARY KEY (room_id, user_id)
 );
 
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS core_chat_messages (
     file_url VARCHAR(512),
     is_recalled BOOLEAN DEFAULT FALSE,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_emails (
@@ -70,10 +70,10 @@ CREATE TABLE IF NOT EXISTS core_emails (
     bcc TEXT[],
     is_read BOOLEAN DEFAULT FALSE,
     tenant_id UUID NOT NULL,
-    sent_at TIMESTAMP,
-    read_at TIMESTAMP,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
+    sent_at timestamptz,
+    read_at timestamptz,
+    deleted_at timestamptz,
+    created_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_email_templates (
@@ -83,9 +83,9 @@ CREATE TABLE IF NOT EXISTS core_email_templates (
     body_template TEXT NOT NULL,
     description TEXT,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    deleted_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_email_queue (
@@ -102,9 +102,9 @@ CREATE TABLE IF NOT EXISTS core_email_queue (
     status VARCHAR(32) DEFAULT 'pending',
     error_message TEXT,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    sent_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    sent_at timestamptz
 );
 
 CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id);

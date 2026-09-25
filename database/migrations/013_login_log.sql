@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS core_login_logs (
     user_agent TEXT,
     status VARCHAR(32) NOT NULL,
     error_message TEXT,
-    login_time TIMESTAMP NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP DEFAULT NOW()
+    login_time timestamptz NOT NULL DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_login_logs_tenant_id ON core_login_logs(tenant_id);

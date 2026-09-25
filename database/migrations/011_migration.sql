@@ -4,12 +4,12 @@ CREATE TABLE IF NOT EXISTS core_migration_history (
     version VARCHAR(64) NOT NULL,
     name VARCHAR(256) NOT NULL,
     description TEXT,
-    applied_at TIMESTAMP,
+    applied_at timestamptz,
     duration_ms BIGINT,
     success BOOLEAN DEFAULT TRUE,
     error_message TEXT,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     UNIQUE (plugin_name, version)
 );
 

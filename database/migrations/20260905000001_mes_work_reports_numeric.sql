@@ -36,11 +36,11 @@ CREATE TABLE IF NOT EXISTS mes.work_reports (
     remark text,
     status character varying(50) DEFAULT 'pending'::character varying,
     tenant_id uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
+    created_at timestamptz with time zone DEFAULT now() NOT NULL,
+    updated_at timestamptz with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamptz with time zone,
     approved_by uuid,
-    approved_at timestamp with time zone,
+    approved_at timestamptz with time zone,
     approval_remark text,
     CONSTRAINT work_reports_pkey PRIMARY KEY (id)
 );

@@ -37,8 +37,8 @@ CREATE TABLE IF NOT EXISTS qms.qa_alert_rules (
     recipients        text,
     description       text,
     created_by        varchar,
-    created_at        timestamp NOT NULL DEFAULT now(),
-    updated_at        timestamp NOT NULL DEFAULT now(),
+    created_at        timestamptz NOT NULL DEFAULT now(),
+    updated_at        timestamptz NOT NULL DEFAULT now(),
     deleted_at        timestamptz,
     tenant_id         uuid,
     PRIMARY KEY (id)

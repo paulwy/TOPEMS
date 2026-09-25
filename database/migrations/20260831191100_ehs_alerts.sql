@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_alerts (
     status        varchar(32)  DEFAULT 'active',
     source_system varchar(64),
     source_id     uuid,
-    created_at    timestamp WITHOUT TIME ZONE DEFAULT NOW(),
-    updated_at    timestamp WITHOUT TIME ZONE DEFAULT NOW(),
+    created_at    timestamptz WITHOUT TIME ZONE DEFAULT NOW(),
+    updated_at    timestamptz WITHOUT TIME ZONE DEFAULT NOW(),
     CONSTRAINT uq_qa_ehs_alerts_no UNIQUE (alert_no)
 );
 

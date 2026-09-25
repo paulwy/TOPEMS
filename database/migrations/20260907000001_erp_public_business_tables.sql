@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS erp.office_supplies (
     price DECIMAL(10, 2),
     location VARCHAR(255),
     status VARCHAR(50) NOT NULL DEFAULT 'in_stock',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_office_supplies_name ON erp.office_supplies(name);
@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS erp.meeting_rooms (
     location VARCHAR(255),
     facilities TEXT[],
     status VARCHAR(50) NOT NULL DEFAULT 'available',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_meeting_rooms_name ON erp.meeting_rooms(name);
@@ -90,11 +90,11 @@ CREATE TABLE IF NOT EXISTS erp.meeting_bookings (
     room_name VARCHAR(255) NOT NULL,
     title VARCHAR(255) NOT NULL,
     organizer VARCHAR(255) NOT NULL,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
+    start_time timestamptz NOT NULL,
+    end_time timestamptz NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'confirmed',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_meeting_bookings_room_id ON erp.meeting_bookings(room_id);
@@ -124,8 +124,8 @@ CREATE TABLE IF NOT EXISTS erp.vehicles (
     last_service TIMESTAMP,
     mileage INTEGER DEFAULT 0,
     fuel_type VARCHAR(50),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vehicles_plate_number ON erp.vehicles(plate_number);
@@ -149,15 +149,15 @@ CREATE TABLE IF NOT EXISTS erp.vehicle_requests (
     vehicle_plate VARCHAR(50) NOT NULL,
     requester VARCHAR(255) NOT NULL,
     purpose TEXT,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
+    start_time timestamptz NOT NULL,
+    end_time timestamptz NOT NULL,
     driver_required BOOLEAN NOT NULL DEFAULT FALSE,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
     approved_by VARCHAR(255),
-    approved_at TIMESTAMP,
+    approved_at timestamptz,
     rejected_reason TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_vehicle_requests_vehicle_id ON erp.vehicle_requests(vehicle_id);
@@ -183,8 +183,8 @@ CREATE TABLE IF NOT EXISTS erp.documents (
     file_url TEXT,
     file_size BIGINT DEFAULT 0,
     uploader VARCHAR(255),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_documents_title ON erp.documents(title);
@@ -239,8 +239,8 @@ CREATE TABLE IF NOT EXISTS production_plans (
     end_date DATE NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     created_by VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Supply Chain Orders Table (SCM Module)
@@ -257,8 +257,8 @@ CREATE TABLE IF NOT EXISTS supply_chain_orders (
     delivery_date DATE,
     status VARCHAR(50) DEFAULT 'pending',
     created_by VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Financial Records Table (Finance Module)
@@ -273,8 +273,8 @@ CREATE TABLE IF NOT EXISTS financial_records (
     payment_method VARCHAR(100),
     status VARCHAR(50) DEFAULT 'pending',
     created_by VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Dashboard Stats (Mobile Dashboard)
@@ -283,7 +283,7 @@ CREATE TABLE IF NOT EXISTS dashboard_stats (
     tenant_id UUID NOT NULL,
     key VARCHAR(100) NOT NULL,
     value VARCHAR(255) NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Inspection Records (QMS)
@@ -294,9 +294,9 @@ CREATE TABLE IF NOT EXISTS inspection_records (
     category VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,
     inspector VARCHAR(255),
-    inspection_time TIMESTAMP NOT NULL,
+    inspection_time timestamptz NOT NULL,
     issues TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tenant ID Indexes (Multi-Tenant Row-Level Security)

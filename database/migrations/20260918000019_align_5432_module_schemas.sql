@@ -287,9 +287,9 @@ CREATE TABLE IF NOT EXISTS ticket.ticket_attachments (
     file_type text,
     file_data bytea,
     created_by uuid,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
+    created_at timestamptz with time zone DEFAULT now(),
+    updated_at timestamptz with time zone DEFAULT now(),
+    deleted_at timestamptz with time zone
 );
 
 -- rd.bugs（5433 权威结构 11 列，5432 无 public 源 → 建空表）
@@ -301,10 +301,10 @@ CREATE TABLE IF NOT EXISTS rd.bugs (
     priority text NOT NULL DEFAULT 'medium'::text,
     status text NOT NULL DEFAULT 'open'::text,
     assignee text,
-    create_time timestamp with time zone NOT NULL DEFAULT now(),
+    create_time timestamptz with time zone NOT NULL DEFAULT now(),
     description text,
-    updated_at timestamp with time zone NOT NULL DEFAULT now(),
-    created_at timestamp with time zone
+    updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+    created_at timestamptz with time zone
 );
 
 -- rd.builds（5433 权威结构 14 列，5432 无 public 源 → 建空表）
@@ -319,10 +319,10 @@ CREATE TABLE IF NOT EXISTS rd.builds (
     trigger_type text DEFAULT 'manual'::text,
     status text NOT NULL DEFAULT 'pending'::text,
     duration integer NOT NULL DEFAULT 0,
-    build_time timestamp with time zone NOT NULL DEFAULT now(),
+    build_time timestamptz with time zone NOT NULL DEFAULT now(),
     logs text,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now()
 );
 
 -- rd.deploys（5433 权威结构 18 列，5432 无 public 源 → 建空表）
@@ -338,13 +338,13 @@ CREATE TABLE IF NOT EXISTS rd.deploys (
     app_name text,
     version text,
     status text NOT NULL DEFAULT 'pending'::text,
-    deploy_time timestamp with time zone NOT NULL DEFAULT now(),
+    deploy_time timestamptz with time zone NOT NULL DEFAULT now(),
     deployer text,
     operator text,
     target_url text,
     logs text,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now()
 );
 
 -- rd.test_cases（5433 权威结构 9 列，5432 无 public 源 → 建空表）
@@ -356,8 +356,8 @@ CREATE TABLE IF NOT EXISTS rd.test_cases (
     priority text NOT NULL DEFAULT 'medium'::text,
     status text NOT NULL DEFAULT 'active'::text,
     related_requirement text,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now()
 );
 
 -- plugin_finance.reconciliation_settlement_links（5433 权威结构 11 列，5432 无 public 源 → 建空表）
@@ -371,8 +371,8 @@ CREATE TABLE IF NOT EXISTS plugin_finance.reconciliation_settlement_links (
     status character varying NOT NULL DEFAULT 'linked'::character varying,
     remark text,
     created_by uuid,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now()
 );
 
 -- plugin_finance.reconciliation_snapshots（5433 权威结构 21 列，5432 无 public 源 → 建空表）
@@ -394,10 +394,10 @@ CREATE TABLE IF NOT EXISTS plugin_finance.reconciliation_snapshots (
     description text,
     created_by character varying,
     approved_by character varying,
-    approved_at timestamp with time zone,
-    synced_at timestamp with time zone NOT NULL DEFAULT now(),
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+    approved_at timestamptz with time zone,
+    synced_at timestamptz with time zone NOT NULL DEFAULT now(),
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now()
 );
 
 -- plugin_finance.settlement_snapshots（5433 权威结构 15 列，5432 无 public 源 → 建空表）
@@ -409,14 +409,14 @@ CREATE TABLE IF NOT EXISTS plugin_finance.settlement_snapshots (
     settlement_type character varying NOT NULL,
     status character varying NOT NULL DEFAULT 'pending'::character varying,
     amount double precision,
-    settlement_date timestamp with time zone,
+    settlement_date timestamptz with time zone,
     remarks text,
     created_by character varying,
     approved_by character varying,
-    approved_at timestamp with time zone,
-    synced_at timestamp with time zone NOT NULL DEFAULT now(),
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now()
+    approved_at timestamptz with time zone,
+    synced_at timestamptz with time zone NOT NULL DEFAULT now(),
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now()
 );
 
 -- lims.maintenance_records：按代码引用列建完整结构（instrument.rs INSERT/UPDATE 列）

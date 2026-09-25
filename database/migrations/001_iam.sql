@@ -9,9 +9,9 @@ CREATE TABLE IF NOT EXISTS core_users (
     status VARCHAR(32) DEFAULT 'active',
     is_superuser BOOLEAN DEFAULT FALSE,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    last_login_at TIMESTAMP
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    last_login_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_roles (
@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS core_roles (
     name VARCHAR(64) NOT NULL UNIQUE,
     description TEXT,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_permissions (
@@ -30,20 +30,20 @@ CREATE TABLE IF NOT EXISTS core_permissions (
     description TEXT,
     resource VARCHAR(64),
     action VARCHAR(32),
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_user_roles (
     user_id UUID NOT NULL REFERENCES core_users(id),
     role_id UUID NOT NULL REFERENCES core_roles(id),
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     PRIMARY KEY (user_id, role_id)
 );
 
 CREATE TABLE IF NOT EXISTS core_role_permissions (
     role_id UUID NOT NULL REFERENCES core_roles(id),
     permission_id UUID NOT NULL REFERENCES core_permissions(id),
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     PRIMARY KEY (role_id, permission_id)
 );
 

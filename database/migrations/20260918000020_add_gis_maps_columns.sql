@@ -15,6 +15,6 @@ ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS center jsonb;
 ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS zoom_level integer DEFAULT 12;
 ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS status character varying NOT NULL DEFAULT 'active';
 ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS created_by uuid;
-ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS created_at timestamp with time zone NOT NULL DEFAULT now();
-ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS updated_at timestamp with time zone NOT NULL DEFAULT now();
+ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS created_at timestamptz with time zone NOT NULL DEFAULT now();
+ALTER TABLE gis.maps ADD COLUMN IF NOT EXISTS updated_at timestamptz with time zone NOT NULL DEFAULT now();
 ALTER TABLE gis.maps ALTER COLUMN id SET DEFAULT gen_random_uuid();

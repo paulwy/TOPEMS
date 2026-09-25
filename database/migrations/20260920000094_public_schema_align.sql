@@ -36,10 +36,10 @@ CREATE TABLE IF NOT EXISTS public.quality_records (
     defective_quantity NUMERIC,
     quality_status VARCHAR,
     inspector VARCHAR,
-    inspection_time TIMESTAMP,
+    inspection_time timestamptz,
     defect_reason TEXT,
     notes TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );

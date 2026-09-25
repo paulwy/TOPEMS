@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS iam.positions (
     name VARCHAR(128) NOT NULL,
     department_id UUID,
     description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamptz WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     tenant_id UUID NOT NULL
 );
 

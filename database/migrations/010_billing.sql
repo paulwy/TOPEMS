@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS core_billing_plans (
     is_active BOOLEAN DEFAULT TRUE,
     is_trial BOOLEAN DEFAULT FALSE,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_subscriptions (
@@ -28,11 +28,11 @@ CREATE TABLE IF NOT EXISTS core_subscriptions (
     current_period_start DATE NOT NULL,
     current_period_end DATE NOT NULL,
     is_trial BOOLEAN DEFAULT FALSE,
-    trial_ends_at TIMESTAMP,
-    cancelled_at TIMESTAMP,
+    trial_ends_at timestamptz,
+    cancelled_at timestamptz,
     cancel_at_period_end BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
     UNIQUE(tenant_id)
 );
 
@@ -48,12 +48,12 @@ CREATE TABLE IF NOT EXISTS core_billing_invoices (
     total_cents INTEGER DEFAULT 0,
     period_start DATE NOT NULL,
     period_end DATE NOT NULL,
-    paid_at TIMESTAMP,
+    paid_at timestamptz,
     payment_method VARCHAR(64),
     payment_reference VARCHAR(256),
     line_items JSONB DEFAULT '[]',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
     UNIQUE(tenant_id, invoice_number)
 );
 
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS core_usage_records (
     period_start TIMESTAMP NOT NULL,
     period_end TIMESTAMP NOT NULL,
     cost_cents INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_plugin_pricing (
@@ -78,8 +78,8 @@ CREATE TABLE IF NOT EXISTS core_plugin_pricing (
     per_user_price_cents INTEGER DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_core_subscriptions_tenant ON core_subscriptions(tenant_id);

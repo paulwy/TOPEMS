@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS integration.external_erp_staging (
     processed BOOLEAN NOT NULL DEFAULT FALSE,
     process_status VARCHAR(20) DEFAULT 'pending',
     process_error TEXT,
-    processed_at TIMESTAMP WITHOUT TIME ZONE,
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
+    processed_at timestamptz WITHOUT TIME ZONE,
+    created_at timestamptz WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 索引

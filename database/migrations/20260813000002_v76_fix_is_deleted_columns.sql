@@ -7,7 +7,7 @@ ALTER TABLE core_emails DROP COLUMN IF EXISTS is_deleted;
 ALTER TABLE core_email_templates DROP COLUMN IF EXISTS is_deleted;
 
 -- 2. Unified-core documents: add deleted_at, then drop is_deleted
-ALTER TABLE unified_core.documents ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE unified_core.documents ADD COLUMN IF NOT EXISTS deleted_at timestamptz WITH TIME ZONE;
 ALTER TABLE unified_core.documents DROP COLUMN IF EXISTS is_deleted;
 
 -- 3. Core files: drop is_deleted (deleted_at already exists)

@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS ai.user_profiles (
     user_id UUID PRIMARY KEY,
     preferences JSONB NOT NULL DEFAULT '{}',
     recent_interactions JSONB NOT NULL DEFAULT '[]',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== core（ai_knowledge 模块，20260908 挂载未建表）==========
@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS core.knowledge_bases (
     status TEXT NOT NULL DEFAULT 'active',
     document_count INTEGER NOT NULL DEFAULT 0,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_documents 仅为 business_base_tables 建的 2 列裸骨架
@@ -73,8 +73,8 @@ CREATE TABLE IF NOT EXISTS core.knowledge_documents (
     status TEXT NOT NULL DEFAULT 'pending',
     error_message TEXT,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_chunks 仅为 business_base_tables 建的 2 列裸骨架
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS core.knowledge_chunks (
     token_count INTEGER NOT NULL DEFAULT 0,
     embedding JSONB,
     metadata JSONB NOT NULL DEFAULT '{}',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 core.knowledge_qa_history 仅为 business_base_tables 建的 2 列裸骨架
@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS core.knowledge_qa_history (
     answer TEXT,
     sources JSONB NOT NULL DEFAULT '[]',
     user_id UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== erp（单据/凭证/库存余额）==========
@@ -144,8 +144,8 @@ CREATE TABLE IF NOT EXISTS erp.documents (
     file_url TEXT,
     file_size BIGINT,
     uploader UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 erp.vouchers 仅为 business_base_tables 建的 2 列裸骨架
@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS erp.vouchers (
     voucher_type TEXT NOT NULL,
     reference_no TEXT,
     status TEXT NOT NULL DEFAULT 'draft',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 erp.account_balances 仅为 business_base_tables 建的 2 列裸骨架
@@ -180,10 +180,10 @@ END $skel$;
 
 CREATE TABLE IF NOT EXISTS erp.account_balances (
     material_code TEXT PRIMARY KEY,
-    last_movement_date TIMESTAMP WITH TIME ZONE,
+    last_movement_date timestamptz WITH TIME ZONE,
     last_movement_type TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== qms（integration 服务集成写入的目标域）==========
@@ -206,8 +206,8 @@ CREATE TABLE IF NOT EXISTS qms.qa_lab_samples (
     sample_type TEXT,
     source TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 qms.qa_lab_tasks 仅为 business_base_tables 建的 2 列裸骨架
@@ -229,8 +229,8 @@ CREATE TABLE IF NOT EXISTS qms.qa_lab_tasks (
     test_items TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
     priority TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 qms.qa_ehs_hazards 仅为 business_base_tables 建的 2 列裸骨架
@@ -255,10 +255,10 @@ CREATE TABLE IF NOT EXISTS qms.qa_ehs_hazards (
     source TEXT,
     location TEXT,
     reported_by UUID,
-    reported_at TIMESTAMP WITH TIME ZONE,
+    reported_at timestamptz WITH TIME ZONE,
     status TEXT NOT NULL DEFAULT 'open',
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== rs（rd 服务）==========
@@ -282,7 +282,7 @@ CREATE TABLE IF NOT EXISTS rs.ai_analyses (
     response TEXT,
     ai_service_url TEXT,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 rs.document_relations 仅为 business_base_tables 建的 2 列裸骨架
@@ -307,8 +307,8 @@ CREATE TABLE IF NOT EXISTS rs.document_relations (
     file_type TEXT,
     description TEXT,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 rs.experiment_records 仅为 business_base_tables 建的 2 列裸骨架
@@ -329,8 +329,8 @@ CREATE TABLE IF NOT EXISTS rs.experiment_records (
     content TEXT,
     attachments JSONB NOT NULL DEFAULT '[]',
     recorded_by UUID,
-    recorded_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    recorded_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 rs.formula_versions 仅为 business_base_tables 建的 2 列裸骨架
@@ -355,8 +355,8 @@ CREATE TABLE IF NOT EXISTS rs.formula_versions (
     properties JSONB NOT NULL DEFAULT '{}',
     changes JSONB NOT NULL DEFAULT '{}',
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 rs.material_tests 仅为 business_base_tables 建的 2 列裸骨架
@@ -380,8 +380,8 @@ CREATE TABLE IF NOT EXISTS rs.material_tests (
     test_results JSONB NOT NULL DEFAULT '{}',
     conclusion TEXT,
     tested_by UUID,
-    tested_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    tested_at timestamptz WITH TIME ZONE,
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 rs.patents 仅为 business_base_tables 建的 2 列裸骨架
@@ -409,8 +409,8 @@ CREATE TABLE IF NOT EXISTS rs.patents (
     description TEXT,
     abstract TEXT,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 rs.research_costs 仅为 business_base_tables 建的 2 列裸骨架
@@ -438,8 +438,8 @@ CREATE TABLE IF NOT EXISTS rs.research_costs (
     receipt_no TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== scm（MRP/质检/供应商产品）==========
@@ -459,8 +459,8 @@ CREATE TABLE IF NOT EXISTS scm.materials (
     material_name TEXT NOT NULL,
     specification TEXT,
     unit TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 scm.demand_forecast 仅为 business_base_tables 建的 2 列裸骨架
@@ -480,7 +480,7 @@ CREATE TABLE IF NOT EXISTS scm.demand_forecast (
     material_code TEXT NOT NULL,
     quantity NUMERIC(15, 3) NOT NULL DEFAULT 0,
     forecast_date DATE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 scm.sales_order_items 仅为 business_base_tables 建的 2 列裸骨架
@@ -499,7 +499,7 @@ CREATE TABLE IF NOT EXISTS scm.sales_order_items (
     tenant_id UUID,
     material_code TEXT NOT NULL,
     quantity NUMERIC(15, 3) NOT NULL DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 scm.supplier_products 仅为 business_base_tables 建的 2 列裸骨架
@@ -530,8 +530,8 @@ CREATE TABLE IF NOT EXISTS scm.supplier_products (
     status TEXT NOT NULL DEFAULT 'active',
     specifications TEXT,
     created_by UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
     UNIQUE (tenant_id, product_no)
 );
 
@@ -560,8 +560,8 @@ CREATE TABLE IF NOT EXISTS scm.incoming_notices (
     total_quantity NUMERIC(15, 3) NOT NULL DEFAULT 0,
     inspection_required BOOLEAN NOT NULL DEFAULT FALSE,
     remarks TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 scm.incoming_inspections 仅为 business_base_tables 建的 2 列裸骨架
@@ -593,8 +593,8 @@ CREATE TABLE IF NOT EXISTS scm.incoming_inspections (
     status TEXT NOT NULL DEFAULT 'pending',
     inspection_items JSONB NOT NULL DEFAULT '[]',
     remarks TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== tms（整个 schema 不存在，先建 schema 再建表）==========
@@ -620,8 +620,8 @@ CREATE TABLE IF NOT EXISTS tms.tms_carriers (
     status TEXT NOT NULL DEFAULT 'active',
     service_area TEXT,
     tenant_id UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_drivers 仅为 business_base_tables 建的 2 列裸骨架
@@ -645,8 +645,8 @@ CREATE TABLE IF NOT EXISTS tms.tms_drivers (
     status TEXT NOT NULL DEFAULT 'active',
     carrier_id UUID,
     tenant_id UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_routes 仅为 business_base_tables 建的 2 列裸骨架
@@ -670,8 +670,8 @@ CREATE TABLE IF NOT EXISTS tms.tms_routes (
     estimated_hours NUMERIC(6, 2),
     status TEXT NOT NULL DEFAULT 'active',
     tenant_id UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_shipments 仅为 business_base_tables 建的 2 列裸骨架
@@ -701,8 +701,8 @@ CREATE TABLE IF NOT EXISTS tms.tms_shipments (
     planned_arrival TIMESTAMP WITH TIME ZONE,
     notes TEXT,
     tenant_id UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 tms.tms_vehicles 仅为 business_base_tables 建的 2 列裸骨架
@@ -726,8 +726,8 @@ CREATE TABLE IF NOT EXISTS tms.tms_vehicles (
     carrier_id UUID,
     notes TEXT,
     tenant_id UUID,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- ========== unified_core（IAM 密码重置）==========
@@ -745,8 +745,8 @@ END $skel$;
 CREATE TABLE IF NOT EXISTS unified_core.password_resets (
     user_id UUID PRIMARY KEY,
     token TEXT NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    expires_at timestamptz WITH TIME ZONE NOT NULL,
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- 索引（高频查询列）

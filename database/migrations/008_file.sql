@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS core_files (
     uploader_id UUID NOT NULL,
     status VARCHAR(32) DEFAULT 'active',
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS core_file_folders (
@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS core_file_folders (
     parent_id UUID,
     owner_id UUID NOT NULL,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_core_files_folder ON core_files(folder_id);

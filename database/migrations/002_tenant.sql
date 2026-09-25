@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS core_tenants (
     tenant_type VARCHAR(32) DEFAULT 'shared',
     plan VARCHAR(32) DEFAULT 'basic',
     license_type VARCHAR(32) DEFAULT 'subscription',
-    license_expires_at TIMESTAMP,
+    license_expires_at timestamptz,
     database_host VARCHAR(256),
     database_port INTEGER DEFAULT 5432,
     database_name VARCHAR(64),
@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS core_tenants (
     quota_plugins TEXT[],
     features JSONB DEFAULT '{}',
     status VARCHAR(32) DEFAULT 'trial',
-    trial_expires_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    activated_at TIMESTAMP,
-    suspended_at TIMESTAMP
+    trial_expires_at timestamptz,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    activated_at timestamptz,
+    suspended_at timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS core_tenant_usage (
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS core_tenant_usage (
     overage_cost DECIMAL(10, 2) DEFAULT 0,
     plugin_cost DECIMAL(10, 2) DEFAULT 0,
     total_cost DECIMAL(10, 2) DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     UNIQUE(tenant_id, period_start)
 );
 
@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS core_tenant_modules (
     module_code VARCHAR(64) NOT NULL,
     module_name VARCHAR(128),
     is_active BOOLEAN DEFAULT TRUE,
-    activated_at TIMESTAMP DEFAULT NOW(),
-    expires_at TIMESTAMP,
+    activated_at timestamptz DEFAULT NOW(),
+    expires_at timestamptz,
     UNIQUE(tenant_id, module_code)
 );
 
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS core_tenant_settings (
     setting_key VARCHAR(128) NOT NULL,
     setting_value TEXT,
     is_public BOOLEAN DEFAULT FALSE,
-    updated_at TIMESTAMP DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
     UNIQUE(tenant_id, setting_key)
 );
 
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS core_tenant_users (
     email VARCHAR(256) NOT NULL,
     role VARCHAR(32) DEFAULT 'member',
     status VARCHAR(32) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at timestamptz DEFAULT NOW(),
     last_login TIMESTAMP,
     UNIQUE(tenant_id, user_id),
     UNIQUE(tenant_id, email)

@@ -32,7 +32,7 @@ BEGIN
     LOOP
         BEGIN
             EXECUTE format(
-                'ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE',
+                'ALTER TABLE %I.%I ADD COLUMN IF NOT EXISTS deleted_at timestamptz WITH TIME ZONE',
                 r.table_schema, r.table_name
             );
             cnt := cnt + 1;

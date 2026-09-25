@@ -24,7 +24,7 @@ BEGIN
 
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='rs' AND table_name='formulas') THEN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='rs' AND table_name='formulas' AND column_name='approved_at') THEN
-            ALTER TABLE rs.formulas ADD COLUMN approved_at timestamp with time zone;
+            ALTER TABLE rs.formulas ADD COLUMN approved_at timestamptz with time zone;
         END IF;
     END IF;
 END $$;

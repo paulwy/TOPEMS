@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS srm.scoring_dimensions (
     is_active boolean NOT NULL DEFAULT true,
     sort_order integer NOT NULL DEFAULT 0,
     created_by uuid,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now(),
-    deleted_at timestamp with time zone
+    created_at timestamptz with time zone NOT NULL DEFAULT now(),
+    updated_at timestamptz with time zone NOT NULL DEFAULT now(),
+    deleted_at timestamptz with time zone
 );

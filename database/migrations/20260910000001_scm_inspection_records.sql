@@ -30,8 +30,8 @@ CREATE TABLE IF NOT EXISTS scm.inspection_records (
     inspection_standard TEXT,
     result TEXT NOT NULL,
     defect_details TEXT,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_scm_inspection_records_inspection ON scm.inspection_records(inspection_id);

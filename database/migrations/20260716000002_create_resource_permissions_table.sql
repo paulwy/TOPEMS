@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS iam.resource_permissions (
     user_id UUID NOT NULL REFERENCES iam.users(id) ON DELETE CASCADE,
     permission VARCHAR(128) NOT NULL,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at timestamptz WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(resource_type, resource_id, user_id, permission)
 );
 
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS iam.data_permissions (
     resource_type VARCHAR(64) NOT NULL,
     conditions JSONB NOT NULL,
     tenant_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_resource_permissions_user_id ON iam.resource_permissions(user_id);

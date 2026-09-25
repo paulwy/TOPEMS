@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS core.core_plugin_navigation (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     plugin_code VARCHAR(64) NOT NULL UNIQUE,
     nav_config JSONB NOT NULL DEFAULT '[]',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_core_plugin_navigation_code

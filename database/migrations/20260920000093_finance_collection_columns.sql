@@ -6,4 +6,4 @@ ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS collection_d
 ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS payment_method text;
 ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS remark text;
 ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS created_by uuid;
-ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS deleted_at timestamp with time zone;
+ALTER TABLE finance.erp_collection_records ADD COLUMN IF NOT EXISTS deleted_at timestamptz with time zone;

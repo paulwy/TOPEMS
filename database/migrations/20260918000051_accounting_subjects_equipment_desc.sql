@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS finance.accounting_subjects (
     description text,
     is_cash_flow boolean DEFAULT false NOT NULL,
     status varchar(32) DEFAULT 'active' NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
+    created_at timestamptz with time zone DEFAULT now() NOT NULL,
+    updated_at timestamptz with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamptz with time zone,
     tenant_id uuid
 );
 
