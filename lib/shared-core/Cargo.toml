@@ -79,3 +79,6 @@ serial_test = "3"
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-machete]
+ignored = ["prost"]
