@@ -1377,6 +1377,16 @@ pub async fn add_kg_edge(
         Err(e) => Json(ApiResponse::error(400, &e)),
     }
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/subgraph/{node_id}",
+    params(
+        ("node_id" = String, Path, description = "node_id"),
+    ),
+    responses((status = 200, description = "get_subgraph OK")),
+    tag = "knowledge_v53"
+)]
 
 pub async fn get_subgraph(
     State(_state): State<AppState>,

@@ -1132,12 +1132,30 @@ pub async fn register_lineage(
         Err(e) => Json(ApiResponse::error(500, &e)),
     }
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/graph",
+    responses((status = 200, description = "get_lineage_graph OK")),
+    tag = "lineage_v52"
+)]
 
 pub async fn get_lineage_graph(State(_state): State<AppState>) -> Json<ApiResponse<LineageGraph>> {
     ensure_initialized().await;
     let graph = LineageTracker::get_graph().await;
     Json(ApiResponse::success(graph, "血缘图谱"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/upstream/{entity_type}/{id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get_upstream OK")),
+    tag = "lineage_v52"
+)]
 
 pub async fn get_upstream(
     State(_state): State<AppState>,
@@ -1162,6 +1180,17 @@ pub async fn get_upstream(
     let upstream = LineageTracker::get_upstream(&target.id, params.depth).await;
     Json(ApiResponse::success(upstream, "上游血缘节点"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/downstream/{entity_type}/{id}",
+    params(
+        ("entity_type" = String, Path, description = "entity_type"),
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get_downstream OK")),
+    tag = "lineage_v52"
+)]
 
 pub async fn get_downstream(
     State(_state): State<AppState>,
@@ -1186,6 +1215,13 @@ pub async fn get_downstream(
     let downstream = LineageTracker::get_downstream(&target.id, params.depth).await;
     Json(ApiResponse::success(downstream, "下游血缘节点"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/export",
+    responses((status = 200, description = "export_lineage OK")),
+    tag = "lineage_v52"
+)]
 
 pub async fn export_lineage(
     State(_state): State<AppState>,

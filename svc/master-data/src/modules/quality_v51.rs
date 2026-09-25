@@ -869,6 +869,16 @@ pub async fn create_quality_rule(
     rules.push(rule.clone());
     Json(ApiResponse::success(rule, "质量规则已创建"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/rules/{id}",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get_quality_rule OK")),
+    tag = "quality_v51"
+)]
 
 pub async fn get_quality_rule(
     State(_state): State<AppState>,
@@ -882,6 +892,16 @@ pub async fn get_quality_rule(
         None => Json(ApiResponse::error(404, "未找到质量规则")),
     }
 }
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["master_data:write"])),
+    path = "/rules/{id}",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "update_quality_rule OK")),
+    tag = "quality_v51"
+)]
 
 pub async fn update_quality_rule(
     State(_state): State<AppState>,
@@ -1113,6 +1133,13 @@ pub async fn apply_auto_fix(
 
     Json(ApiResponse::success(action, "自动修复已应用"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/auto-fix/actions",
+    responses((status = 200, description = "get_fix_actions OK")),
+    tag = "quality_v51"
+)]
 
 pub async fn get_fix_actions(
     State(_state): State<AppState>,
@@ -1358,6 +1385,13 @@ pub async fn generate_suggestions(
 
     Json(ApiResponse::success(suggestions, "治理建议已生成"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/ai/suggestions",
+    responses((status = 200, description = "get_suggestions OK")),
+    tag = "quality_v51"
+)]
 
 pub async fn get_suggestions(
     State(_state): State<AppState>,

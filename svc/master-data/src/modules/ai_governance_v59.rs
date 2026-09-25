@@ -858,6 +858,13 @@ pub async fn analyze(
         .await;
     Json(ApiResponse::success(suggestions, "数据治理分析完成"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/governance/suggestions",
+    responses((status = 200, description = "get_suggestions OK")),
+    tag = "ai_governance_v59"
+)]
 
 pub async fn get_suggestions(
     State(_state): State<AppState>,

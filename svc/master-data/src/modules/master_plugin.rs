@@ -27,6 +27,13 @@ pub struct PermissionDef {
     pub resource_type: String,
     pub action: String,
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/plugins/info",
+    responses((status = 200, description = "get_plugin_info OK")),
+    tag = "master_plugin"
+)]
 
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url =
@@ -99,6 +106,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/api/plugins/health",
+    responses((status = 200, description = "plugin_health_check OK")),
+    tag = "master_plugin"
+)]
 
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
     match sqlx::query("SELECT 1").fetch_one(&state.db).await {

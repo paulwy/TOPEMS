@@ -1194,6 +1194,13 @@ pub async fn find_shortest_path_handler(
         "最短路径",
     ))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/graph/subgraph",
+    responses((status = 200, description = "get_subgraph OK")),
+    tag = "semantic_v57"
+)]
 
 pub async fn get_subgraph(
     State(_state): State<AppState>,

@@ -1394,6 +1394,16 @@ pub async fn build_lineage_graph(
         .await;
     Json(ApiResponse::success(graph, "血缘图谱已构建"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/lineage/graph/{id}",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get_lineage_graph OK")),
+    tag = "metadata_v60"
+)]
 
 pub async fn get_lineage_graph(
     State(_state): State<AppState>,
@@ -1407,6 +1417,16 @@ pub async fn get_lineage_graph(
         None => Json(ApiResponse::error(404, "未找到血缘图谱")),
     }
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/lineage/{id}/upstream",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get_upstream OK")),
+    tag = "metadata_v60"
+)]
 
 pub async fn get_upstream(
     State(_state): State<AppState>,
@@ -1418,6 +1438,16 @@ pub async fn get_upstream(
     let nodes = store.lineage.get_upstream(&id).await;
     Json(ApiResponse::success(nodes, "上游血缘节点"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/lineage/{id}/downstream",
+    params(
+        ("id" = String, Path, description = "id"),
+    ),
+    responses((status = 200, description = "get_downstream OK")),
+    tag = "metadata_v60"
+)]
 
 pub async fn get_downstream(
     State(_state): State<AppState>,
@@ -1495,6 +1525,13 @@ pub async fn get_lineage_dashboard(
     let dashboard = store.lineage.get_lineage_dashboard().await;
     Json(ApiResponse::success(dashboard, "血缘仪表盘"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/lineage/export",
+    responses((status = 200, description = "export_lineage OK")),
+    tag = "metadata_v60"
+)]
 
 pub async fn export_lineage(
     State(_state): State<AppState>,

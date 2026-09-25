@@ -39,6 +39,40 @@ use crate::modules::versioning_v54::{
     VersionQuery, VersionSnapshot,
 };
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// （home / health / detailed_health 定义在 main.rs，lib 无法直接引用，仅用于
+//   生成 OpenAPI spec，运行期不会被调用）
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/",
+    tag = "master-data",
+    responses((status = 200, description = "home OK")),
+)]
+fn _home() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/health",
+    tag = "master-data",
+    responses((status = 200, description = "health OK")),
+)]
+fn _health() {}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["master_data:read"])),
+    path = "/health/detailed",
+    tag = "master-data",
+    responses((status = 200, description = "detailed_health OK")),
+)]
+fn _detailed_health() {}
+
 #[derive(OpenApi)]
 #[openapi(
     components(
@@ -375,7 +409,27 @@ use crate::modules::versioning_v54::{
         crate::modules::versioning_v54::create_role,
         crate::modules::versioning_v54::assign_role,
         crate::modules::versioning_v54::revoke_role,
-    ),
+            crate::modules::ai_governance_v59::get_suggestions,
+        crate::modules::knowledge_v53::get_subgraph,
+        crate::modules::lineage_v52::export_lineage,
+        crate::modules::lineage_v52::get_downstream,
+        crate::modules::lineage_v52::get_lineage_graph,
+        crate::modules::lineage_v52::get_upstream,
+        crate::modules::quality_v51::get_fix_actions,
+        crate::modules::quality_v51::get_quality_rule,
+        crate::modules::quality_v51::update_quality_rule,
+        crate::modules::master_plugin::get_plugin_info,
+        crate::modules::master_plugin::plugin_health_check,
+        _home,
+        _health,
+        _detailed_health,
+        crate::modules::metadata_v60::export_lineage,
+        crate::modules::metadata_v60::get_downstream,
+        crate::modules::metadata_v60::get_lineage_graph,
+        crate::modules::metadata_v60::get_upstream,
+        crate::modules::quality_v51::get_suggestions,
+        crate::modules::semantic_v57::get_subgraph,
+),
     tags(
         (name = "quality_v51", description = "数据质量闭环 + 自动修复 + AI 治理 API"),
         (name = "lineage_v52", description = "数据血缘 + 影响分析 API"),
