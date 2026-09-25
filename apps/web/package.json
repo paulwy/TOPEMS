@@ -168,6 +168,7 @@
     "postcss": "^8.5.15",
     "prettier": "^3.9.1",
     "rollup-plugin-visualizer": "^7.0.1",
+    "sharp": "^0.35.4",
     "storybook": "^10.4.6",
     "typescript": "^6.0.3",
     "vite": "^8.1.5",

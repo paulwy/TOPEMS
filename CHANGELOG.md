@@ -12,6 +12,10 @@
 - **Rust TLS 依赖切换**：`lapin`(AMQP 客户端) 的 TLS feature 从 `rustls`（默认 `aws-lc-rs`，需 CMake/Perl/NASM 等 C 工具链）切换为 `rustls--ring`（纯 Rust ring 加密库），CI/本地编译无需额外 C 工具链即可通过。涉及 `lib/Cargo.toml` 与 `lib/shared-event/Cargo.toml`
 - **审计日志导出三件套**：实现 gzip 压缩导出（`ExportFormat::Gzip`）、NDJSON 流式导出（`stream_export_audit_logs` 端点，分页查询+逐批 yield）、定时增量导出任务（`AuditExportTask`+`AuditExportController`，周期性增量导出+窗口推进）
 - **审计日志导出任务控制 API**：新建 `audit_export_task_api.rs`，提供 6 个 REST 端点（status/start/stop/trigger/config GET+PUT），支持通过 HTTP 控制定时导出任务的启停、手动触发及配置动态更新；AppState 新增 `audit_export_config` + `audit_export_controller` 字段
+- **代码冗余清理**：基于 `cargo-machete` 扫描移除 41 个 `Cargo.toml` 中 257 处未使用 Rust 依赖（tower-http/tracing-subscriber/dotenv/axum-prometheus/prometheus/thiserror 等脚手架模板残留，含 `shared-core` prost 误删恢复）；移除 `apps/web` 26 个零引用 npm 依赖（storybook addon 5、eslint 生态 6、vite/imagemin 插件 9、@axe-core/react 等，均经配置文件引用核对）；补 `@topems/api-client`（workspace 包）与 `sharp`（generate-icons 脚本）依赖声明
+- **重复与遗留清理**：删除重复 hook `useIntersectionObserver`（统一至 `packages/shared-hooks`）；删除 i18n 连字符命名变体死文件 6 个（zh/en × design-system/dev-platform/intelligent-ops）；清理 `leaflet.heat`/`leaflet-3d-tiles` 无效插件引用；归档 svc/_archive(52)、apps/web/_archive(88)、一次性脚本与 UI 迁移文档
+- **Storybook 组件文档站**：启用 Storybook（最小配置 `apps/web/.storybook/main.ts`，framework=react-vite），新增 autodocs 自动文档（`@storybook/addon-docs@10.5.4`，须与主包同版本）；修复 17 个故事文件与组件 API 失配（含 DesignTokens 非法对象简写语法错误、孤儿 import、命名导入等）；当前 51 个组件文档页 + 160 个 stories，51 个组件描述全部补全（≥30 字）
+- **CI：Storybook 文档自动发布**：新增 `.github/workflows/storybook-docs.yml`，main 分支相关变更后自动构建并发布 GitHub Pages（`https://paulwy.github.io/TOPEMS/`）
 
 ### 修复
 
@@ -19,6 +23,9 @@
 - **SQLX 离线缓存**：为 `database_permission_store.rs` 13 个查询手工生成 `.sqlx` 缓存（LF 规范化 + SHA256 hash，无需 DB 环境运行 `cargo sqlx prepare`），`SQLX_OFFLINE=true` 编译通过
 - **MockAuditLogStore 时间过滤缺失**：`MockAuditLogStore::query()` 方法补全 `start_time`/`end_time` RFC3339 字符串比较过滤，修复增量导出窗口测试失败（第二次运行仍返回已导出的旧条目）
 - **单元测试**：audit_export（37 个）+ audit 全量（201 个）测试全部通过
+- **lefthook / pnpm install 修复**：移除本机 git local 遗留 `core.hooksPath=.husky/_`（husky v2 残留，lefthook 不支持自定义 hooksPath 而拒绝 install），`lefthook install` 与完整 `pnpm install` 恢复正常
+- **sccache 缓存重建**：清理误删的 `~/Library/Caches/Mozilla.sccache` 后自动重建，`sccache --stop/--start-server` 重启后 `cargo check` 无需 `RUSTC_WRAPPER` 绕过
+- **Storybook 故事文件修复**：修复 17 个 `*.stories.tsx` 与组件 API 失配（DesignTokens 非法对象简写语法、3 个孤儿 import 改引 shared-components、AlertCard/LoadingSpinner/EmptyState 等 API 适配）
 
 ### 计划中
 

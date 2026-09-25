@@ -58,15 +58,15 @@
 |------|------|------|
 | React | ^19.2.7 | UI 框架 |
 | TypeScript | ^6.0.3 | 类型安全 |
-| Vite | ^8.0.16 | 构建工具 |
-| MUI | ^9.1.1 | UI 组件库 |
-| React Three Fiber | ^8.x | 3D 可视化 |
+| Vite | ^8.1.5 | 构建工具 |
+| MUI | ^9.4.0 | UI 组件库 |
+| React Three Fiber | ^9.6.1 | 3D 可视化 |
 | OpenTelemetry | - | 可观测性 |
 
 ### 后端
 | 技术 | 版本 | 说明 |
 |------|------|------|
-| Rust | 1.75 | 编程语言 |
+| Rust | nightly-2026-07-01 | 编程语言（rust-toolchain.toml 锁定） |
 | Axum | ^0.7 | Web 框架 |
 | SQLx | ^0.8 | 数据库访问 |
 | PostgreSQL | ^16 | 主数据库 |
@@ -186,7 +186,7 @@ topems/
 | **`scripts/topems.sh`** | **主入口**（零依赖 Bash） | 日常开发：服务启停、构建、测试、清理 | `./scripts/topems.sh start all`、`build`、`test`、`clean` |
 | **`cli/` (Python CLI)** | 高级运维工具（需 pip install） | 数据库管理、系统诊断、Schema 防御 | `topems db migrate`、`doctor`、`db backup` |
 | **`Makefile`** | Rust 专项快捷命令 | SQLx 缓存、cargo check、覆盖率基线 | `make sqlx-prepare`、`make check-offline` |
-| **`package.json` scripts** | 前端专属命令 | 前端开发、构建、lint、格式检查、设计系统审计 | `pnpm dev:web`、`build`、`lint`、`format` |
+| **`package.json` scripts** | 前端专属命令 | 前端开发、构建、lint、格式检查、设计系统审计、组件文档 | `pnpm dev:web`、`build`、`lint`、`format`、`storybook` |
 
 > **原则**：日常开发优先用 `topems.sh`；前端专属操作用 `pnpm`；Rust 专项用 `make`；数据库/诊断用 Python CLI。
 
@@ -239,6 +239,7 @@ createdb topems
 启动后访问：
 - **前端**: http://localhost:3000
 - **后端 API**: http://localhost:8000
+- **组件文档（Storybook）**: http://localhost:6006（`cd apps/web && pnpm storybook`；构建产物 `pnpm build-storybook`，CI 自动发布 GitHub Pages）
 - **默认账号**: admin / admin123
 
 > **V64+ 新能力**: build/start 命令支持分层和参数化

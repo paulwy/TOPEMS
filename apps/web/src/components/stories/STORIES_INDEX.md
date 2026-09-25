@@ -1,21 +1,22 @@
 # TOPEMS Frontend Storybook — Components Index
 
 > **启动命令**: `cd apps/web && pnpm storybook` → http://localhost:6006
-> **配置位置**: `apps/web/.storybook/main.ts` + `apps/web/.storybook/preview.tsx`
-> **全局 Provider**: QueryClientProvider + MUI ThemeProvider + Dayjs LocalizationProvider
+> **构建命令**: `cd apps/web && pnpm build-storybook`（产物 `apps/web/storybook-static`，已 gitignore）
+> **配置位置**: `apps/web/.storybook/main.ts`（最小配置：framework=react-vite + addon-docs）
+> **全局 Provider**: 当前最小配置未定义全局 Provider；若组件依赖 QueryClient/MUI Theme 等，需新建 `.storybook/preview.tsx` 补充 decorator
 
 ---
 
-## 📊 覆盖统计
+## 📊 覆盖统计（实测，构建产物 storybook-static/index.json）
 
 | 分类 | Story 文件数 | Story 条目数 |
 |------|-------------|-------------|
-| Charts | 5 | 20 |
-| Common | 38 | ~260 |
-| Templates | 3 | 12 |
-| Mobile | 5 | 20 |
-| Design Tokens | 1 | 5 |
-| **总计** | **51** | **~317** |
+| Charts | 5 | 14 |
+| Common | 37 | 121 |
+| Templates | 3 | 7 |
+| Mobile | 5 | 15 |
+| Design Tokens | 1 | 3 |
+| **总计** | **51** | **160** |
 
 ---
 
@@ -72,11 +73,13 @@ MobileButton, MobileCard, MobileSkeleton, PullToRefresh, SwipeAction
 4. **ActionButton.stories.tsx** — `variant = 'text'`（等号） → 改为 `variant: 'text'`（冒号）
 
 ### 本次创建的 Storybook 配置
-- `.storybook/main.ts` — 零配置 Storybook 10 必需（之前缺失，导致无法启动）
-- `.storybook/preview.tsx` — 全局 decorator（之前缺失）
+- `.storybook/main.ts` — Storybook 10 最小配置（framework=react-vite + addon-docs）；此前缺失导致 storybook 无法启动
+- `.storybook/preview.tsx` — **未创建**（最小配置，无全局 decorator）；组件若需全局 Provider 请补充此文件
 
 ### Storybook 版本
-`storybook@^10.4.6` + `@storybook/react-vite`（Vite builder）
+`storybook@10.5.4` + `@storybook/react-vite`（Vite builder）+ `@storybook/addon-docs@10.5.4`（须与主包同版本）
+- 组件文档页（autodocs）：51 个，随构建自动生成
+- CI：`.github/workflows/storybook-docs.yml` 已配置 GitHub Pages 自动发布
 
 ---
 
