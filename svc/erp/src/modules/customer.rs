@@ -499,7 +499,7 @@ fn customer_select_cols(locale_placeholder: &str) -> String {
     tag = "ERP/customer"
 )]
 
-async fn batch_list_customers(
+pub async fn batch_list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
@@ -553,7 +553,7 @@ async fn batch_list_customers(
     tag = "ERP/customer"
 )]
 
-async fn batch_create_customers(
+pub async fn batch_create_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -690,7 +690,7 @@ async fn batch_delete_customers(
     tag = "ERP/customer"
 )]
 
-async fn change_customer_status(
+pub async fn change_customer_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -734,7 +734,7 @@ async fn change_customer_status(
     tag = "ERP/customer"
 )]
 
-async fn batch_change_status(
+pub async fn batch_change_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
@@ -786,7 +786,7 @@ async fn batch_change_status(
     tag = "ERP/customer"
 )]
 
-async fn batch_change_category(
+pub async fn batch_change_category(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
@@ -838,7 +838,7 @@ async fn batch_change_category(
     tag = "ERP/customer"
 )]
 
-async fn get_customer_stats(
+pub async fn get_customer_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -900,7 +900,7 @@ async fn get_customer_stats(
     tag = "ERP/customer"
 )]
 
-async fn list_recent_customers(
+pub async fn list_recent_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RecentParams>,

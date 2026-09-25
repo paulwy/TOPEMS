@@ -774,7 +774,7 @@ async fn batch_update_status(
     tag = "ERP/sales_order"
 )]
 
-async fn batch_approve_sales_orders(
+pub async fn batch_approve_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -810,7 +810,7 @@ async fn batch_approve_sales_orders(
     tag = "ERP/sales_order"
 )]
 
-async fn batch_ship_sales_orders(
+pub async fn batch_ship_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -846,7 +846,7 @@ async fn batch_ship_sales_orders(
     tag = "ERP/sales_order"
 )]
 
-async fn batch_complete_sales_orders(
+pub async fn batch_complete_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -882,7 +882,7 @@ async fn batch_complete_sales_orders(
     tag = "ERP/sales_order"
 )]
 
-async fn batch_cancel_sales_orders(
+pub async fn batch_cancel_sales_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
@@ -918,7 +918,7 @@ async fn batch_cancel_sales_orders(
     tag = "ERP/sales_order"
 )]
 
-async fn get_sales_order_stats(
+pub async fn get_sales_order_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
