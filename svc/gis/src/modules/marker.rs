@@ -146,6 +146,19 @@ pub async fn get_map_marker(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:marker:write"])),
+    path = "/map-markers/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "marker"
+)]
 pub async fn update_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -187,6 +200,19 @@ pub async fn update_map_marker(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:marker:write"])),
+    path = "/map-markers/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "marker"
+)]
 pub async fn delete_map_marker(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

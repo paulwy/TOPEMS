@@ -22,6 +22,16 @@ pub struct CreateLocationPhoto {
     pub tags: Option<Vec<String>>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:photo:read"])),
+    path = "/location-photos",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photo"
+)]
 pub async fn list_location_photos(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -52,6 +62,19 @@ pub async fn list_location_photos(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:photo:read"])),
+    path = "/location-photos/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photo"
+)]
 pub async fn get_location_photo(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -77,6 +100,16 @@ pub async fn get_location_photo(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:photo:write"])),
+    path = "/location-photos",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photo"
+)]
 pub async fn create_location_photo(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -132,6 +165,19 @@ pub async fn create_location_photo(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:photo:write"])),
+    path = "/location-photos/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photo"
+)]
 pub async fn delete_location_photo(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -165,6 +211,19 @@ pub async fn delete_location_photo(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:photo:read"])),
+    path = "/location-photos/map/{map_id}",
+    params(
+("map_id" = String, Path, description = "map_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photo"
+)]
 pub async fn list_location_photos_by_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

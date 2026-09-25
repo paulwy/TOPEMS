@@ -22,6 +22,16 @@ pub struct GisStatistics {
     pub active_pipelines: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:read"])),
+    path = "/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "stats"
+)]
 pub async fn get_statistics(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

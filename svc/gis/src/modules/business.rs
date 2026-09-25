@@ -23,6 +23,16 @@ pub struct CreateBusinessLocation {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:business:read"])),
+    path = "/business-locations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "business"
+)]
 pub async fn list_business_locations(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -96,6 +106,16 @@ pub async fn list_business_locations(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:business:write"])),
+    path = "/business-locations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "business"
+)]
 pub async fn create_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +153,19 @@ pub async fn create_business_location(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:business:read"])),
+    path = "/business-locations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "business"
+)]
 pub async fn get_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -161,6 +194,19 @@ pub async fn get_business_location(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:business:write"])),
+    path = "/business-locations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "business"
+)]
 pub async fn update_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -202,6 +248,19 @@ pub async fn update_business_location(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:business:write"])),
+    path = "/business-locations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "business"
+)]
 pub async fn delete_business_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -234,6 +293,19 @@ pub async fn delete_business_location(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:business:read"])),
+    path = "/business-locations/type/{business_type}",
+    params(
+("business_type" = String, Path, description = "business_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "business"
+)]
 pub async fn list_business_locations_by_type(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

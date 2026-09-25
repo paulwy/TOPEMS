@@ -16,6 +16,16 @@ pub struct ImportRequest {
     pub csv_content: String,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:write"])),
+    path = "/import",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "import-export"
+)]
 pub async fn import_data(
     State(pool): State<PgPool>,
     Json(payload): Json<ImportRequest>,
@@ -202,6 +212,16 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
     Ok(())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:read"])),
+    path = "/geojson/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "import-export"
+)]
 pub async fn export_geojson(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

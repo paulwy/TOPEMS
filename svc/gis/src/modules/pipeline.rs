@@ -21,6 +21,16 @@ pub struct CreatePipeline {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:pipeline:read"])),
+    path = "/pipelines",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "pipeline"
+)]
 pub async fn list_pipelines(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -71,6 +81,16 @@ pub async fn list_pipelines(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:pipeline:write"])),
+    path = "/pipelines",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "pipeline"
+)]
 pub async fn create_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -107,6 +127,19 @@ pub async fn create_pipeline(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:pipeline:read"])),
+    path = "/pipelines/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "pipeline"
+)]
 pub async fn get_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -134,6 +167,19 @@ pub async fn get_pipeline(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:pipeline:write"])),
+    path = "/pipelines/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "pipeline"
+)]
 pub async fn update_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -168,6 +214,19 @@ pub async fn update_pipeline(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:pipeline:write"])),
+    path = "/pipelines/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "pipeline"
+)]
 pub async fn delete_pipeline(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -201,6 +260,19 @@ pub async fn delete_pipeline(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:pipeline:read"])),
+    path = "/pipelines/map/{map_id}",
+    params(
+("map_id" = String, Path, description = "map_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "pipeline"
+)]
 pub async fn list_pipelines_by_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

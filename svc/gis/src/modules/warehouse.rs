@@ -20,6 +20,16 @@ pub struct CreateWarehouseLocation {
     pub description: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:warehouse:read"])),
+    path = "/warehouse-locations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "warehouse"
+)]
 pub async fn list_warehouse_locations(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -95,6 +105,16 @@ pub async fn list_warehouse_locations(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["gis:warehouse:write"])),
+    path = "/warehouse-locations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "warehouse"
+)]
 pub async fn create_warehouse_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -127,6 +147,19 @@ pub async fn create_warehouse_location(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:warehouse:read"])),
+    path = "/warehouse-locations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "warehouse"
+)]
 pub async fn get_warehouse_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -154,6 +187,19 @@ pub async fn get_warehouse_location(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["gis:warehouse:write"])),
+    path = "/warehouse-locations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "warehouse"
+)]
 pub async fn update_warehouse_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -187,6 +233,19 @@ pub async fn update_warehouse_location(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["gis:warehouse:write"])),
+    path = "/warehouse-locations/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "warehouse"
+)]
 pub async fn delete_warehouse_location(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -220,6 +279,19 @@ pub async fn delete_warehouse_location(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:warehouse:read"])),
+    path = "/warehouse-locations/map/{map_id}",
+    params(
+("map_id" = String, Path, description = "map_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "warehouse"
+)]
 pub async fn list_warehouse_locations_by_map(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

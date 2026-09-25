@@ -8,6 +8,16 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["gis:read"])),
+    path = "/search",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "search"
+)]
 pub async fn search_locations(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
