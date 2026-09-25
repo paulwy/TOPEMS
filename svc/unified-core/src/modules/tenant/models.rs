@@ -192,10 +192,10 @@ pub struct CreateTenantRequest {
     pub license_type: String,
     #[serde(rename = "license_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub license_expires_at: Option<NaiveDateTime>,
+    pub license_expires_at: Option<DateTime<Utc>>,
     #[serde(rename = "trial_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_expires_at: Option<NaiveDateTime>,
+    pub trial_expires_at: Option<DateTime<Utc>>,
 }
 
 /// Request to update tenant
@@ -298,7 +298,7 @@ pub struct UsageMetrics {
     #[serde(rename = "api_requests_today")]
     pub api_requests_today: i64,
     #[serde(rename = "updated_at")]
-    pub updated_at: NaiveDateTime,
+    pub updated_at: DateTime<Utc>,
 }
 
 /// Tenant billing info
@@ -322,13 +322,13 @@ pub struct TenantInvoice {
     pub currency: String,
     pub status: String,
     #[serde(rename = "period_start")]
-    pub period_start: NaiveDateTime,
+    pub period_start: DateTime<Utc>,
     #[serde(rename = "period_end")]
-    pub period_end: NaiveDateTime,
+    pub period_end: DateTime<Utc>,
     #[serde(rename = "created_at")]
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub paid_at: Option<NaiveDateTime>,
+    pub paid_at: Option<DateTime<Utc>>,
 }
 
 /// Tenant context
@@ -582,7 +582,7 @@ mod tests {
             plan: "basic".to_string(),
             license_type: "subscription".to_string(),
             license_expires_at: None,
-            trial_expires_at: Some(chrono::Utc::now().naive_utc()),  // DTO 层保持 NaiveDateTime
+            trial_expires_at: Some(chrono::Utc::now()),
         };
         let json = serde_json::to_string(&ctr).unwrap();
         let de: CreateTenantRequest = serde_json::from_str(&json).unwrap();

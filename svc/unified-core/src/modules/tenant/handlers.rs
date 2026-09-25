@@ -1155,7 +1155,7 @@ pub async fn get_usage_metrics(
         users_count,
         storage_used_gb,
         api_requests_today,
-        updated_at: chrono::Utc::now().naive_utc(),
+        updated_at: chrono::Utc::now(),
     };
 
     Json(CoreResponse::success(metrics, "Usage metrics retrieved"))

@@ -65,6 +65,7 @@ pub fn evaluate_punctuality(
 
 /// 可预约时段检查（工作时间：工作日 8:00 - 18:00）
 /// 使用时间的 `time` 和 `weekday` 组件判断
+// date-type-convention: exempt 内部工作时间窗口计算（仅取 time/weekday 组件，非序列化边界）
 pub fn is_within_working_window(
     appointment: chrono::NaiveDateTime,
     work_start_hour: u32,

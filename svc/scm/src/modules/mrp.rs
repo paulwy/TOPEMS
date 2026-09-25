@@ -183,8 +183,8 @@ pub struct MrpSuggestion {
     pub source_type: String,
     pub source_order_id: Option<Uuid>,
     pub remarks: Option<String>,
-    pub created_at: chrono::NaiveDateTime,
-    pub updated_at: chrono::NaiveDateTime,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

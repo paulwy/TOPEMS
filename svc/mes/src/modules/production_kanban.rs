@@ -364,7 +364,7 @@ pub async fn get_dashboard(
                     .try_get::<Option<NaiveDate>, _>("date")
                     .ok()
                     .flatten()
-                    .map(|d| d.format("%Y-%m-%d").to_string())
+                    .map(|d| d.to_string())
                     .unwrap_or_default();
                 let total = big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("total_quantity")
@@ -677,7 +677,7 @@ pub async fn get_quality_trend(
                 .try_get::<Option<NaiveDate>, _>("date")
                 .ok()
                 .flatten()
-                .map(|d| d.format("%Y-%m-%d").to_string())
+                .map(|d| d.to_string())
                 .unwrap_or_default();
             let total = big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("total_quantity")

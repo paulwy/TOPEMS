@@ -167,7 +167,7 @@ impl VersionConfig {
                     version: config.version,
                     status: config.status.into(),
                     deprecated_since: config.deprecated_since,
-                    sunset_date: config.sunset_date.map(|d| d.format("%Y-%m-%d").to_string()),
+                    sunset_date: config.sunset_date.map(|d| d.to_string()),
                     message: config.message,
                     migration_guide: config.migration_guide,
                     changes: config.changes,

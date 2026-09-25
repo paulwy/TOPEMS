@@ -909,7 +909,7 @@ pub async fn get_oee_statistics(
                     .try_get::<Option<NaiveDate>, _>("date")
                     .ok()
                     .flatten()
-                    .map(|d| d.format("%Y-%m-%d").to_string())
+                    .map(|d| d.to_string())
                     .unwrap_or_default();
                 OeeTrendItem {
                     date,

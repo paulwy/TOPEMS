@@ -123,7 +123,7 @@ fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
 }
 
 fn naive_date_to_string(d: Option<chrono::NaiveDate>) -> Option<String> {
-    d.map(|date| date.format("%Y-%m-%d").to_string())
+    d.map(|date| date.to_string())
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {

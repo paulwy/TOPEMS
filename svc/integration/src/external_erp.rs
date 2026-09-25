@@ -37,7 +37,7 @@ struct SyncStatistics {
     total_syncs: i64,
     successful: i64,
     failed: i64,
-    last_sync_at: Option<chrono::NaiveDateTime>,
+    last_sync_at: Option<chrono::DateTime<chrono::Utc>>,
     by_entity: serde_json::Value,
 }
 
@@ -1029,7 +1029,7 @@ pub async fn sync_statistics(
     .await
     .unwrap_or(None);
 
-    let last_sync: Option<(Option<chrono::NaiveDateTime>,)> =
+    let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
         sqlx::query_as(only_own_schema_query!(
             "integration",
             "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1)"
