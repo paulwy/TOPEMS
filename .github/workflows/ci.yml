@@ -367,6 +367,27 @@ jobs:
             --db-url "postgresql://postgres:postgres@localhost:5432/topems?options=-csearch_path=mes,public"
 
   # ──────────────────────────────────────────────────────────────────────────
+  # date-type-audit：日期时间类型分层审计门禁（契约 docs/date_type_convention.md）
+  # 流程：纯静态 Python 扫描（无需 DB）→ 断言 exit 0（实体违规 0 + Instant 序列化 0）
+  # 规则：任何提交引入实体层 String/NaiveDateTime/int-timestamp 时间字段，或
+  #       Instant 进入 Serialize 边界 → 红（本地复现：python3 scripts/date-type-audit.py）
+  # ──────────────────────────────────────────────────────────────────────────
+  date-type-audit:
+    name: Gate · date-type-audit (date type contract)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run date-type-audit (entity violations = 0, ser-instant = 0)
+        run: python3 scripts/date-type-audit.py
+
+  # ──────────────────────────────────────────────────────────────────────────
   # [V247 D-track NEW] cargo-test baseline job (non-blocking, establishes run baseline)
   # Goal: upgrade from `cargo test --workspace --no-run` (compile-only) to full
   # `cargo test --workspace` execution. V247 keeps continue-on-error: true;

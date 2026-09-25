@@ -96,8 +96,9 @@ def find_struct_block(content, sm):
 
 
 def audit_rust(service=None):
-    """返回 (违规列表, DTO统计, 服务统计)"""
+    """返回 (违规列表, DTO统计, 服务统计, 序列化Instant违规)"""
     violations = []           # (path, struct, field, type)
+    ser_instant_violations = []   # (path, struct, field) — Instant 进入 Serialize 边界 = 契约违规
     field_stats = defaultdict(Counter)   # 层 -> 类型 -> 计数
     svc_stats = defaultdict(Counter)
     for root, dirs, files in os.walk(SVC_DIR):
@@ -122,6 +123,7 @@ def audit_rust(service=None):
                 derives = re.findall(r'#\[derive\(([^\]]*)\)\]', before)
                 nearest = derives[-1] if derives else ''
                 is_entity = 'FromRow' in nearest
+                is_serialize = 'Serialize' in nearest
                 exempted = 'date-type-convention: exempt' in before
                 layer = 'entity' if is_entity else 'dto'
                 for line in block.splitlines():
@@ -139,7 +141,10 @@ def audit_rust(service=None):
                     elif is_entity and t in ('NaiveDateTime', 'Option<NaiveDateTime>') and not exempted:
                         # 需要豁免注释才算合规；先报告供人工确认
                         violations.append((p, sname, name, t + '(需豁免注释)'))
-    return violations, field_stats, svc_stats
+                    # P2-3: Instant 进入 Serialize 边界 = 契约违规（仅限进程内计时）
+                    if is_serialize and t in ('Instant', 'Option<Instant>'):
+                        ser_instant_violations.append((p, sname, name, t))
+    return violations, field_stats, svc_stats, ser_instant_violations
 
 
 # ── P2-1 序列化/解析风格统计（DTO 约定收敛度量）──
@@ -228,7 +233,7 @@ def main():
     exit_code = 0
 
     if not args.sql:
-        violations, field_stats, svc_stats = audit_rust(args.service)
+        violations, field_stats, svc_stats, ser_instant = audit_rust(args.service)
         entity_violations = [v for v in violations]
         if args.service:
             scope = f"服务 {args.service}"
@@ -245,11 +250,20 @@ def main():
             exit_code = 1
         else:
             print("\n=== 实体层违规：0 ✅（契约达标） ===")
+        if ser_instant:
+            print(f"\n=== Instant 序列化边界违规（{len(ser_instant)} 处，须修复——Instant 仅限进程内计时） ===")
+            for p, s, f, t in ser_instant:
+                print(f"  {p}: {s}.{f}: {t}")
+            exit_code = 1
+        else:
+            print("=== Instant 序列化边界违规：0 ✅（18 处 Instant 均为内部状态/缓存/计时，未跨序列化） ===")
         report['rust'] = {
             'entity_stats': dict(field_stats['entity']),
             'dto_stats': dict(field_stats['dto']),
             'entity_violations': [{'file': p, 'struct': s, 'field': f, 'type': t}
                                   for p, s, f, t in entity_violations],
+            'ser_instant_violations': [{'file': p, 'struct': s, 'field': f, 'type': t}
+                                       for p, s, f, t in ser_instant],
             'svc_stats': {k: dict(v) for k, v in svc_stats.items()},
         }
 
