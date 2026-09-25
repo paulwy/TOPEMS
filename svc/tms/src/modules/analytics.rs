@@ -97,6 +97,16 @@ pub struct FreightCostTrendItem {
 // ===== API 处理函数 =====
 
 /// 获取运输趋势（最近7天）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/shipment-trend",
+    responses(
+        (status = 200, description = "运输趋势", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_shipment_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -134,6 +144,16 @@ pub async fn get_shipment_trend(
 }
 
 /// 获取车辆运单排名
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/vehicle-ranking",
+    responses(
+        (status = 200, description = "车辆排行", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_vehicle_ranking(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -168,6 +188,16 @@ pub async fn get_vehicle_ranking(
 }
 
 /// 获取运单状态分布
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/status-distribution",
+    responses(
+        (status = 200, description = "状态分布", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_status_distribution(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -210,6 +240,16 @@ pub async fn get_status_distribution(
 }
 
 /// 获取承运商绩效
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/carrier-performance",
+    responses(
+        (status = 200, description = "承运商绩效", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_carrier_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -265,6 +305,16 @@ pub async fn get_carrier_performance(
 }
 
 /// 获取路线效率
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/route-efficiency",
+    responses(
+        (status = 200, description = "路线效率", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_route_efficiency(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -326,6 +376,16 @@ pub async fn get_route_efficiency(
 }
 
 /// 获取司机绩效
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/driver-performance",
+    responses(
+        (status = 200, description = "司机绩效", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_driver_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -381,6 +441,16 @@ pub async fn get_driver_performance(
 }
 
 /// 获取运单趋势增强版（最近12个月，按状态分组）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/shipment-trend-enhanced",
+    responses(
+        (status = 200, description = "运单趋势增强", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_shipment_trend_enhanced(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -445,6 +515,16 @@ pub async fn get_shipment_trend_enhanced(
 }
 
 /// 获取车辆利用率
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/vehicle-utilization",
+    responses(
+        (status = 200, description = "车辆利用率", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_vehicle_utilization(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -495,6 +575,16 @@ pub async fn get_vehicle_utilization(
 }
 
 /// 获取运费成本趋势
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["tms:analytics:read"])),
+    path = "/analytics/freight-cost-trend",
+    responses(
+        (status = 200, description = "运费成本趋势", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "TMS - Analytics"
+)]
 pub async fn get_freight_cost_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

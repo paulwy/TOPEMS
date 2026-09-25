@@ -32,6 +32,15 @@ use utoipa::OpenApi;
         crate::modules::shipment::dispatch_shipment,
         crate::modules::shipment::arrive_shipment,
         crate::modules::shipment::cancel_shipment,
+        crate::modules::analytics::get_shipment_trend,
+        crate::modules::analytics::get_vehicle_ranking,
+        crate::modules::analytics::get_status_distribution,
+        crate::modules::analytics::get_carrier_performance,
+        crate::modules::analytics::get_route_efficiency,
+        crate::modules::analytics::get_driver_performance,
+        crate::modules::analytics::get_shipment_trend_enhanced,
+        crate::modules::analytics::get_vehicle_utilization,
+        crate::modules::analytics::get_freight_cost_trend,
     ),
     components(schemas(
         crate::modules::vehicle::Vehicle,
@@ -56,6 +65,7 @@ use utoipa::OpenApi;
         (name = "TMS - Carrier", description = "承运商管理 API"),
         (name = "TMS - Route", description = "路线管理 API"),
         (name = "TMS - Shipment", description = "运单管理 API"),
+        (name = "TMS - Analytics", description = "运输分析 API"),
     ),
     info(
         title = "TOPEMS TMS API",
