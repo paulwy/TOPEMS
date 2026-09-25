@@ -312,7 +312,7 @@ mod tests {
             language: Some("rust".into()),
             framework: None,
         };
-        let resp = CodeAssistantApi::generate(Extension(sample_claims()), Json(req)).await;
+        let resp = generate(Extension(sample_claims()), Json(req)).await;
         let body = resp.0.data.expect("response data");
         assert_eq!(body.language, "rust");
         assert_eq!(body.framework, "none");
@@ -325,7 +325,7 @@ mod tests {
             code: "line1\nline2\nline3".into(),
             language: Some("rust".into()),
         };
-        let resp = CodeAssistantApi::explain(Extension(sample_claims()), Json(req)).await;
+        let resp = explain(Extension(sample_claims()), Json(req)).await;
         let body = resp.0.data.expect("response data");
         assert!(body.key_points[0].contains("3 行"));
     }
@@ -337,7 +337,7 @@ mod tests {
             language: Some("rust".into()),
             issue_description: None,
         };
-        let resp = CodeAssistantApi::fix(Extension(sample_claims()), Json(req)).await;
+        let resp = fix(Extension(sample_claims()), Json(req)).await;
         let body = resp.0.data.expect("response data");
         assert_eq!(body.fixed_code, "fn main() {}");
         assert!(!body.fixes.is_empty());
@@ -349,7 +349,7 @@ mod tests {
             code: "x".into(),
             language: None,
         };
-        let resp = CodeAssistantApi::optimize(Extension(sample_claims()), Json(req)).await;
+        let resp = optimize(Extension(sample_claims()), Json(req)).await;
         let body = resp.0.data.expect("response data");
         assert!(body.after_size.unwrap() > body.before_size.unwrap());
     }
@@ -360,7 +360,7 @@ mod tests {
             code: "x".into(),
             language: None,
         };
-        let resp = CodeAssistantApi::review(Extension(sample_claims()), Json(req)).await;
+        let resp = review(Extension(sample_claims()), Json(req)).await;
         let body = resp.0.data.expect("response data");
         assert_eq!(body.score, 80);
         assert!(!body.issues.is_empty());
