@@ -81,6 +81,19 @@ pub async fn create_room(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/rooms/{id}",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn get_room(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -93,6 +106,19 @@ pub async fn get_room(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/rooms/{id}/messages",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn get_messages(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -105,6 +131,19 @@ pub async fn get_messages(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}/messages",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn send_message(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -135,6 +174,16 @@ pub async fn send_message(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/contacts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn list_contacts(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -143,6 +192,16 @@ pub async fn list_contacts(State(_pool): State<PgPool>) -> Json<serde_json::Valu
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/contacts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn add_contact(
     State(_pool): State<PgPool>,
     Json(payload): Json<serde_json::Value>,
@@ -155,6 +214,19 @@ pub async fn add_contact(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/online-status/{user_id}",
+    params(
+        ("user_id" = String, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn get_online_status(
     State(_pool): State<PgPool>,
     Path(user_id): Path<String>,
@@ -179,6 +251,19 @@ pub async fn get_online_status(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn update_room(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -196,6 +281,19 @@ pub async fn update_room(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn delete_room(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -208,6 +306,19 @@ pub async fn delete_room(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}/members",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn add_member(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -225,6 +336,19 @@ pub async fn add_member(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}/members",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn remove_member(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -242,6 +366,19 @@ pub async fn remove_member(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/rooms/{id}/members",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn list_members(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -254,6 +391,19 @@ pub async fn list_members(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/messages/{id}",
+    params(
+        ("id" = String, Path, description = "Message ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn update_message(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -271,6 +421,19 @@ pub async fn update_message(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/messages/{id}",
+    params(
+        ("id" = String, Path, description = "Message ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn delete_message(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -283,6 +446,19 @@ pub async fn delete_message(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}/read",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn mark_messages_read(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -295,6 +471,19 @@ pub async fn mark_messages_read(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/notifications/{user_id}",
+    params(
+        ("user_id" = String, Path, description = "User ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn list_im_notifications(
     State(_pool): State<PgPool>,
     Path(user_id): Path<String>,
@@ -307,6 +496,16 @@ pub async fn list_im_notifications(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/project-groups",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn list_project_groups(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -315,6 +514,16 @@ pub async fn list_project_groups(State(_pool): State<PgPool>) -> Json<serde_json
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/project-groups",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn create_project_group(
     State(_pool): State<PgPool>,
     Json(payload): Json<serde_json::Value>,
@@ -327,6 +536,16 @@ pub async fn create_project_group(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/contact-groups",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn list_contact_groups(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -335,6 +554,16 @@ pub async fn list_contact_groups(State(_pool): State<PgPool>) -> Json<serde_json
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/contact-groups",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn create_contact_group(
     State(_pool): State<PgPool>,
     Json(payload): Json<serde_json::Value>,
@@ -347,6 +576,19 @@ pub async fn create_contact_group(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/contact-groups/{id}",
+    params(
+        ("id" = String, Path, description = "Group ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn update_contact_group(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -364,6 +606,19 @@ pub async fn update_contact_group(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/contact-groups/{id}",
+    params(
+        ("id" = String, Path, description = "Group ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn delete_contact_group(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -376,6 +631,19 @@ pub async fn delete_contact_group(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}/mute",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn mute_room(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -393,6 +661,19 @@ pub async fn mute_room(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/rooms/{id}/pin",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn pin_message(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -410,6 +691,16 @@ pub async fn pin_message(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/rooms/search",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn search_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "success": true,
@@ -418,6 +709,19 @@ pub async fn search_rooms(State(_pool): State<PgPool>) -> Json<serde_json::Value
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/rooms/{id}/messages/search",
+    params(
+        ("id" = String, Path, description = "Room ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn search_messages(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -430,6 +734,19 @@ pub async fn search_messages(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/im/contacts/{id}",
+    params(
+        ("id" = String, Path, description = "Contact ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn get_contact(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -442,6 +759,19 @@ pub async fn get_contact(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/contacts/{id}",
+    params(
+        ("id" = String, Path, description = "Contact ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn remove_contact(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
@@ -454,6 +784,19 @@ pub async fn remove_contact(
     }))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["communication:write"])),
+    path = "/im/contacts/{id}",
+    params(
+        ("id" = String, Path, description = "Contact ID")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "im"
+)]
 pub async fn update_contact(
     State(_pool): State<PgPool>,
     Path(id): Path<String>,
