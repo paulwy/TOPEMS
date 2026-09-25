@@ -922,6 +922,8 @@ D
   - **工具新增 Instant 序列化检查**：Serialize derive struct 内时间字段为 Instant/Option<Instant> → 违规（契约：Instant 仅限进程内计时，禁止跨序列化边界）；当前 18 处 Instant 全部 non-serde（ApiState/AppState.start_time 进程启动、CacheEntry.expires_at 内存缓存、SseSession/TransportSession 内部会话、ExecutionTimer/ExecutionRecord 性能计时）→ 违规 0，契约已满足，检查作防回归
   - 验证：审计 exit 0（实体 0 + Instant 序列化 0）；ci.yml YAML 解析通过
 
+- [x] **10 域缺口收口收官（2026-09-25）**：甄别脚本方法论修正后重扫 10 域（qms/mes/mobile/lims/scm/rd/srm/pm/hrm/plugin-registry），此前 759 缺口系脚本误报（属性块收集中断 + 同名 impl 误定位 + route group 索引 bug），修正后真实缺口 62；逐域收口：mes 16（home 占位 + dashboard_ws/plugin 注解 + 聚合 16 + pub mod inspection，提交 4eef03623）、qms 8（assign_inspection/resolve_issue/start_issue_approval + plugin×2 + 占位×3 + 聚合 8，提交 a85ee4301）、mobile 10（offline 4 真缺口重注入 + offline_sync 位置修正 + scan_qrcode + plugin×2 + health 占位 + 重复占位清理 5→1，0 error）、lims 7、scm/srm/pm/hrm 各 4（plugin×2 双 route 引用 + hrm health 模块注入）、rd 6、plugin-registry 6（marketplace/tenant_plugins 业务 3 + 占位×3）；9 域批量提交 c3b892a8c；各域 cargo check 0 error（mes 仍受 DB schema 阻塞，注解侧已验证）；甄别脚本 /tmp/sweep.py 落盘（fn_annotated 属性块完整收集版）
+- [ ] **阻塞（延续）**：openapi-gen 重生成 docs/api/openapi.json 依赖全 workspace 编译，mes 仍受 DB schema 缺失 + .sqlx 离线缓存缺失阻塞（业务表未建全）——10 域注解增量待重生成纳入（预计 2920 → +~70 端点），DB 基线治理（init/migrations schema 归属）待用户给方向
 ### 📝 已知风险与边界
 - NaiveDateTime 系列在 DB 迁移完成前**不是错误**（与无时区列正确匹配），勿提前改，否则 sqlx 在线解析类型漂移
 - 无守卫服务（lims/ticket/portal 等）改动前先确认在线编译配方可用（参考 mes_guard 机制推广）
