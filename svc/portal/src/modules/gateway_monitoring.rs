@@ -1315,6 +1315,16 @@ pub struct ModelsQuery {
 
 // ==================== API 处理器: 网关监控 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/metric",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn record_metric_handler(
     State(_state): State<AppState>,
     Json(req): Json<RecordMetricRequest>,
@@ -1353,11 +1363,34 @@ pub async fn get_health_handler(
     Json(ApiResponse::success(health, "网关健康状态"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_dashboard_handler(State(_state): State<AppState>) -> Json<ApiResponse<Dashboard>> {
     let dashboard = GatewayMonitor::get_dashboard().await;
     Json(ApiResponse::success(dashboard, "仪表盘数据"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/metric/{metric_name}/history",
+    params(
+        ("metric_name" = String, Path, description = "metric_name")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_metric_history_handler(
     State(_state): State<AppState>,
     Path(metric_name): Path<String>,
@@ -1372,6 +1405,16 @@ pub async fn get_metric_history_handler(
     Json(ApiResponse::success(history, "指标历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/threshold",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn set_threshold_handler(
     State(_state): State<AppState>,
     Json(req): Json<SetThresholdRequest>,
@@ -1389,6 +1432,16 @@ pub async fn set_threshold_handler(
     Json(ApiResponse::success(saved, "告警阈值设置成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/thresholds",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_thresholds_handler(
     State(_state): State<AppState>,
     Query(params): Query<ThresholdsQuery>,
@@ -1399,6 +1452,16 @@ pub async fn get_thresholds_handler(
 
 // ==================== API 处理器: 性能追踪 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/trace/start",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn start_trace_handler(
     State(_state): State<AppState>,
     Json(req): Json<StartTraceRequest>,
@@ -1407,6 +1470,16 @@ pub async fn start_trace_handler(
     Json(ApiResponse::success(trace, "追踪已启动"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/trace/end",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn end_trace_handler(
     State(_state): State<AppState>,
     Json(req): Json<EndTraceRequest>,
@@ -1417,6 +1490,16 @@ pub async fn end_trace_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/trace/resolver",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn add_resolver_timing_handler(
     State(_state): State<AppState>,
     Json(req): Json<AddResolverTimingRequest>,
@@ -1442,6 +1525,19 @@ pub async fn add_resolver_timing_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/trace/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_trace_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1452,6 +1548,16 @@ pub async fn get_trace_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/traces",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn list_traces_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListTracesQuery>,
@@ -1460,6 +1566,16 @@ pub async fn list_traces_handler(
     Json(ApiResponse::success(traces, "追踪列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/slow-queries",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_slow_queries_handler(
     State(_state): State<AppState>,
     Query(params): Query<SlowQueriesQuery>,
@@ -1468,6 +1584,16 @@ pub async fn get_slow_queries_handler(
     Json(ApiResponse::success(slow, "慢查询列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/performance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_performance_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<PerformanceSummary>> {
@@ -1475,6 +1601,16 @@ pub async fn get_performance_handler(
     Json(ApiResponse::success(summary, "性能汇总"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/traces/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn export_traces_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExportTracesRequest>,
@@ -1488,6 +1624,16 @@ pub async fn export_traces_handler(
 
 // ==================== API 处理器: 异常检测 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/anomaly/detect",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn detect_anomalies_handler(
     State(_state): State<AppState>,
     Json(req): Json<DetectAnomaliesRequest>,
@@ -1497,6 +1643,16 @@ pub async fn detect_anomalies_handler(
     Json(ApiResponse::success(anomalies, "异常检测完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/anomalies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_anomalies_handler(
     State(_state): State<AppState>,
     Query(params): Query<AnomaliesQuery>,
@@ -1520,6 +1676,16 @@ pub async fn get_anomalies_handler(
     Json(ApiResponse::success(anomalies, "异常事件列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/anomaly/model",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn create_model_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateModelRequest>,
@@ -1543,6 +1709,19 @@ pub async fn create_model_handler(
     Json(ApiResponse::success(created, "检测模型创建成功"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/anomaly/model/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn update_model_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1578,6 +1757,16 @@ pub async fn update_model_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/anomaly/models",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_models_handler(
     State(_state): State<AppState>,
     Query(params): Query<ModelsQuery>,
@@ -1586,6 +1775,16 @@ pub async fn get_models_handler(
     Json(ApiResponse::success(models, "检测模型列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_monitoring:read"])),
+    path = "/api/portal/gateway-monitoring/anomaly/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn get_anomaly_summary_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<AnomalySummary>> {
@@ -1593,6 +1792,19 @@ pub async fn get_anomaly_summary_handler(
     Json(ApiResponse::success(summary, "异常检测汇总"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_monitoring:write"])),
+    path = "/api/portal/gateway-monitoring/anomaly/model/{id}/train",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewayMonitoring"
+)]
 pub async fn train_model_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,

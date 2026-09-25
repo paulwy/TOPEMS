@@ -154,6 +154,16 @@ fn default_quick_actions() -> Vec<QuickAction> {
     ]
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:quick_actions:read"])),
+    path = "/quick-actions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QuickActions"
+)]
 pub async fn get_quick_actions(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -163,6 +173,16 @@ pub async fn get_quick_actions(
     Json(ApiResponse::success(actions, "快捷操作列表获取成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:quick_actions:read"])),
+    path = "/quick-actions/favorites",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QuickActions"
+)]
 pub async fn get_favorite_actions(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -173,6 +193,19 @@ pub async fn get_favorite_actions(
     Json(ApiResponse::success(favorites, "收藏的快捷操作获取成功"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:quick_actions:write"])),
+    path = "/quick-actions/{id}/favorite",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QuickActions"
+)]
 pub async fn toggle_favorite_action(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

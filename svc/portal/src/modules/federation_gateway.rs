@@ -796,6 +796,16 @@ impl StepStatus {
 
 // ==================== API 处理器：联邦网关 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/subgraphs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn register_subgraph_handler(
     Json(req): Json<SubgraphRegistrationRequest>,
 ) -> Json<ApiResponse<SubgraphConfig>> {
@@ -815,12 +825,35 @@ pub async fn register_subgraph_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:federation_gateway:read"])),
+    path = "/api/portal/federation-gateway/subgraphs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn list_subgraphs_handler() -> Json<ApiResponse<Vec<SubgraphConfig>>> {
     ensure_initialized().await;
     let subgraphs = FederationGatewayV5::list_subgraphs().await;
     Json(ApiResponse::success(subgraphs, "子图列表"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/subgraphs/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn remove_subgraph_handler(Path(id): Path<String>) -> Json<ApiResponse<()>> {
     ensure_initialized().await;
 
@@ -830,6 +863,16 @@ pub async fn remove_subgraph_handler(Path(id): Path<String>) -> Json<ApiResponse
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/query",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn execute_federated_query_handler(
     Json(req): Json<FederatedQueryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -841,6 +884,16 @@ pub async fn execute_federated_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:federation_gateway:read"])),
+    path = "/api/portal/federation-gateway/plan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn get_federation_plan_handler(
     Query(params): Query<QueryPlanRequest>,
 ) -> Json<ApiResponse<FederatedQueryPlan>> {
@@ -849,6 +902,16 @@ pub async fn get_federation_plan_handler(
     Json(ApiResponse::success(plan, "联邦查询计划"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:federation_gateway:read"])),
+    path = "/api/portal/federation-gateway/health",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn federation_health_handler() -> Json<ApiResponse<FederationHealthReport>> {
     ensure_initialized().await;
     let report = FederationGatewayV5::health_check_subgraphs().await;
@@ -857,6 +920,16 @@ pub async fn federation_health_handler() -> Json<ApiResponse<FederationHealthRep
 
 // ==================== API 处理器：跨服务事务补偿 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/transactions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn start_transaction_handler(
     Json(req): Json<StartTransactionRequest>,
 ) -> Json<ApiResponse<TransactionContext>> {
@@ -870,6 +943,19 @@ pub async fn start_transaction_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/transactions/{id}/commit",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn commit_transaction_handler(
     Path(id): Path<String>,
     Json(req): Json<CommitTransactionRequest>,
@@ -882,6 +968,19 @@ pub async fn commit_transaction_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/transactions/{id}/compensate",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn compensate_transaction_handler(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<TransactionContext>> {
@@ -893,6 +992,16 @@ pub async fn compensate_transaction_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:federation_gateway:read"])),
+    path = "/api/portal/federation-gateway/transactions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn list_transactions_handler(
     Query(params): Query<TransactionListQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<TransactionContext>>> {
@@ -916,6 +1025,19 @@ pub async fn list_transactions_handler(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:federation_gateway:read"])),
+    path = "/api/portal/federation-gateway/transactions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn get_transaction_handler(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<TransactionContext>> {
@@ -927,6 +1049,19 @@ pub async fn get_transaction_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:federation_gateway:write"])),
+    path = "/api/portal/federation-gateway/transactions/{id}/recover",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FederationGateway"
+)]
 pub async fn recover_transaction_handler(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<TransactionContext>> {

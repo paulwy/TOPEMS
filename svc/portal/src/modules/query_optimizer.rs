@@ -1053,6 +1053,16 @@ pub struct StrategyQuery {
 
 // ==================== API 处理器: 编译优化 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:query_optimizer:write"])),
+    path = "/api/portal/query-optimizer/compile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn compile_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<CompileQueryRequest>,
@@ -1063,6 +1073,19 @@ pub async fn compile_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/compilation/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_compilation_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1107,6 +1130,16 @@ pub async fn update_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/compilation/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_compilation_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<CompilationStats>> {
@@ -1126,6 +1159,19 @@ pub async fn create_plan_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/plan/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1136,6 +1182,16 @@ pub async fn get_plan_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:query_optimizer:write"])),
+    path = "/api/portal/query-optimizer/plan/compare",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn compare_plans_handler(
     State(_state): State<AppState>,
     Json(req): Json<ComparePlansRequest>,
@@ -1146,6 +1202,16 @@ pub async fn compare_plans_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/plan/cost",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_plan_cost_handler(
     State(_state): State<AppState>,
     Query(params): Query<StrategyQuery>,
@@ -1170,6 +1236,16 @@ pub async fn optimize_plan_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/planner/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_planner_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<PlannerStats>> {
@@ -1179,6 +1255,16 @@ pub async fn get_planner_stats_handler(
 
 // ==================== API 处理器: 执行加速 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:query_optimizer:write"])),
+    path = "/api/portal/query-optimizer/accelerate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn accelerate_handler(
     State(_state): State<AppState>,
     Json(req): Json<AccelerateRequest>,
@@ -1197,6 +1283,16 @@ pub async fn accelerate_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/strategy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_strategy_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<AccelerationConfig>>> {
@@ -1204,6 +1300,16 @@ pub async fn get_strategy_handler(
     Json(ApiResponse::success(configs, "加速策略列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/improvement",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_improvement_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<AccelerationResult>>> {
@@ -1211,6 +1317,16 @@ pub async fn get_improvement_handler(
     Json(ApiResponse::success(improvements, "加速改进详情"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/acceleration/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_acceleration_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<StrategyQuery>,
@@ -1233,6 +1349,16 @@ pub async fn configure_strategy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:query_optimizer:read"])),
+    path = "/api/portal/query-optimizer/performance/profile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "QueryOptimizer"
+)]
 pub async fn get_performance_profile_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<PerformanceProfile>> {

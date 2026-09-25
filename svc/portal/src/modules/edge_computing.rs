@@ -954,6 +954,16 @@ pub struct LatencyBudgetQuery {
 
 // ==================== API 处理器: 边缘渲染 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/render",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn render_at_edge_handler(
     State(_state): State<AppState>,
     Json(req): Json<RenderAtEdgeRequest>,
@@ -977,6 +987,16 @@ pub async fn render_at_edge_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:edge_computing:read"])),
+    path = "/api/portal/edge-computing/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn get_edge_status_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<EdgeStatus>>> {
@@ -996,6 +1016,16 @@ pub async fn invalidate_cache_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:edge_computing:read"])),
+    path = "/api/portal/edge-computing/render-history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn get_render_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<RenderHistoryQuery>,
@@ -1005,6 +1035,16 @@ pub async fn get_render_history_handler(
     Json(ApiResponse::success(history, "渲染历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/functions/deploy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn deploy_function_handler(
     State(_state): State<AppState>,
     Json(req): Json<DeployFunctionRequest>,
@@ -1032,6 +1072,16 @@ pub async fn deploy_function_handler(
 
 // ==================== API 处理器: 全球加速 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/accelerate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn accelerate_request_handler(
     State(_state): State<AppState>,
     Json(req): Json<AccelerateRequest>,
@@ -1046,6 +1096,16 @@ pub async fn accelerate_request_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:edge_computing:read"])),
+    path = "/api/portal/edge-computing/optimal-location",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn get_optimal_location_handler(
     State(_state): State<AppState>,
     Query(params): Query<OptimalLocationQuery>,
@@ -1061,6 +1121,16 @@ pub async fn get_optimal_location_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/config/sync",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn sync_config_handler(
     State(_state): State<AppState>,
     Json(req): Json<SyncConfigRequest>,
@@ -1090,6 +1160,16 @@ pub async fn sync_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:edge_computing:read"])),
+    path = "/api/portal/edge-computing/accel-stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn get_accel_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<AccelStats>> {
@@ -1099,6 +1179,16 @@ pub async fn get_accel_stats_handler(
 
 // ==================== API 处理器: 低延迟响应 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/optimize",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn optimize_response_handler(
     State(_state): State<AppState>,
     Json(req): Json<OptimizeRequest>,
@@ -1109,6 +1199,16 @@ pub async fn optimize_response_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:edge_computing:read"])),
+    path = "/api/portal/edge-computing/latency-budget",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn get_latency_budget_handler(
     State(_state): State<AppState>,
     Query(params): Query<LatencyBudgetQuery>,
@@ -1117,6 +1217,16 @@ pub async fn get_latency_budget_handler(
     Json(ApiResponse::success(budget, "延迟预算"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/precompute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn precompute_handler(
     State(_state): State<AppState>,
     Json(req): Json<PrecomputeRequest>,
@@ -1128,6 +1238,16 @@ pub async fn precompute_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:edge_computing:write"])),
+    path = "/api/portal/edge-computing/coalesce",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn coalesce_requests_handler(
     State(_state): State<AppState>,
     Json(req): Json<CoalesceRequest>,
@@ -1138,6 +1258,16 @@ pub async fn coalesce_requests_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:edge_computing:read"])),
+    path = "/api/portal/edge-computing/latency-stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "EdgeComputing"
+)]
 pub async fn get_latency_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<LatencyStats>> {

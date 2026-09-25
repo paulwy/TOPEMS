@@ -990,6 +990,16 @@ pub struct EdgePolicyRequest {
 
 // ==================== API 处理器: 持久化查询 V2 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/register",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn register_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterQueryRequest>,
@@ -1001,6 +1011,19 @@ pub async fn register_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/{hash}",
+    params(
+        ("hash" = String, Path, description = "hash")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn get_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
@@ -1011,6 +1034,19 @@ pub async fn get_query_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/{hash}/execute",
+    params(
+        ("hash" = String, Path, description = "hash")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn execute_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
@@ -1022,6 +1058,16 @@ pub async fn execute_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/list",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn list_queries_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListQueriesQuery>,
@@ -1034,6 +1080,19 @@ pub async fn list_queries_handler(
     Json(ApiResponse::success(list, "持久化查询列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/{hash}",
+    params(
+        ("hash" = String, Path, description = "hash")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn update_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
@@ -1045,6 +1104,19 @@ pub async fn update_query_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/{hash}",
+    params(
+        ("hash" = String, Path, description = "hash")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn deprecate_query_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
@@ -1062,6 +1134,19 @@ pub async fn deprecate_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/{hash}/versions",
+    params(
+        ("hash" = String, Path, description = "hash")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn get_query_versions_handler(
     State(_state): State<AppState>,
     Path(hash): Path<String>,
@@ -1072,6 +1157,19 @@ pub async fn get_query_versions_handler(
 
 // ==================== API 处理器: 版本化缓存 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/cache/get/{key}",
+    params(
+        ("key" = String, Path, description = "key")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_get_handler(
     State(_state): State<AppState>,
     Path(key): Path<String>,
@@ -1082,6 +1180,16 @@ pub async fn cache_get_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/cache/set",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_set_handler(
     State(_state): State<AppState>,
     Json(req): Json<CacheSetRequest>,
@@ -1092,6 +1200,19 @@ pub async fn cache_set_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/cache/invalidate/{version}",
+    params(
+        ("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_invalidate_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
@@ -1102,6 +1223,16 @@ pub async fn cache_invalidate_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/cache/version",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_create_version_handler(
     State(_state): State<AppState>,
     Json(req): Json<CacheVersionRequest>,
@@ -1112,6 +1243,16 @@ pub async fn cache_create_version_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/cache/versions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_list_versions_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<CacheVersion>>> {
@@ -1119,11 +1260,31 @@ pub async fn cache_list_versions_handler(
     Json(ApiResponse::success(versions, "缓存版本列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/cache/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_stats_handler(State(_state): State<AppState>) -> Json<ApiResponse<CacheStats>> {
     let stats = VersionedCache::get_cache_stats().await;
     Json(ApiResponse::success(stats, "缓存统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/cache/purge",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn cache_purge_expired_handler(State(_state): State<AppState>) -> Json<ApiResponse<u64>> {
     let purged = VersionedCache::purge_expired().await;
     Json(ApiResponse::success(purged, "过期缓存已清理"))
@@ -1131,6 +1292,16 @@ pub async fn cache_purge_expired_handler(State(_state): State<AppState>) -> Json
 
 // ==================== API 处理器: 边缘持久化 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/edge/store",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_store_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeStoreRequest>,
@@ -1147,6 +1318,19 @@ pub async fn edge_store_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/edge/read/{key}",
+    params(
+        ("key" = String, Path, description = "key")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_read_handler(
     State(_state): State<AppState>,
     Path(key): Path<String>,
@@ -1160,6 +1344,16 @@ pub async fn edge_read_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/edge/sync",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_sync_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeSyncRequest>,
@@ -1183,6 +1377,16 @@ pub async fn edge_sync_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/edge/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_status_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<EdgeStatusInfo>>> {
@@ -1190,6 +1394,16 @@ pub async fn edge_status_handler(
     Json(ApiResponse::success(statuses, "边缘节点状态"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/edge/invalidate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_invalidate_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgeInvalidateRequest>,
@@ -1202,6 +1416,16 @@ pub async fn edge_invalidate_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:persisted_query:read"])),
+    path = "/api/portal/persisted-query/edge/replication-stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_replication_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<EdgeReplicationStats>> {
@@ -1209,6 +1433,16 @@ pub async fn edge_replication_stats_handler(
     Json(ApiResponse::success(stats, "边缘复制统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:persisted_query:write"])),
+    path = "/api/portal/persisted-query/edge/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "PersistedQuery"
+)]
 pub async fn edge_set_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<EdgePolicyRequest>,

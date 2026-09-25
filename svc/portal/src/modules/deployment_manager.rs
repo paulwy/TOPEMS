@@ -1437,6 +1437,16 @@ pub struct ConfigureAutoRollbackRequest {
 
 // ==================== API 处理器: 网关部署 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/deployment",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn create_deployment_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateDeploymentRequest>,
@@ -1459,6 +1469,19 @@ pub async fn create_deployment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/deployment/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1469,6 +1492,16 @@ pub async fn get_deployment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/deployments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn list_deployments_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListDeploymentsQuery>,
@@ -1486,6 +1519,19 @@ pub async fn list_deployments_handler(
     Json(ApiResponse::success(list, "部署列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/deployment/{id}/start",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn start_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1496,6 +1542,19 @@ pub async fn start_deployment_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/deployment/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn cancel_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1506,6 +1565,19 @@ pub async fn cancel_deployment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/deployment/{id}/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_deployment_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1527,6 +1599,19 @@ pub async fn promote_canary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/deployment/{id}/rollback",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn rollback_deployment_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1537,6 +1622,16 @@ pub async fn rollback_deployment_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/deployment/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_deployment_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<DeploymentHistoryQuery>,
@@ -1551,6 +1646,16 @@ pub async fn get_deployment_history_handler(
 
 // ==================== API 处理器: 配置管理 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn create_config_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateConfigRequest>,
@@ -1569,6 +1674,19 @@ pub async fn create_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/config/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1579,6 +1697,16 @@ pub async fn get_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/configs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn list_configs_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListConfigsQuery>,
@@ -1592,6 +1720,19 @@ pub async fn list_configs_handler(
     Json(ApiResponse::success(list, "配置列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/config/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn update_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1603,6 +1744,19 @@ pub async fn update_config_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/config/{id}/activate",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn activate_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1613,6 +1767,19 @@ pub async fn activate_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/config/{id}/diff",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_config_diff_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1622,6 +1789,19 @@ pub async fn get_config_diff_handler(
     Json(ApiResponse::success(diffs, "配置差异"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/config/{id}/history",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_config_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<ConfigHistoryQuery>,
@@ -1635,6 +1815,19 @@ pub async fn get_config_history_handler(
     Json(ApiResponse::success(history, "配置历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/config/{id}/rollback",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn rollback_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1646,6 +1839,16 @@ pub async fn rollback_config_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/environment",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn create_environment_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateEnvironmentRequest>,
@@ -1666,6 +1869,16 @@ pub async fn create_environment_handler(
 
 // ==================== API 处理器: 回滚策略 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/rollback/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn create_rollback_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateRollbackPolicyRequest>,
@@ -1690,6 +1903,16 @@ pub async fn create_rollback_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/rollback/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_rollback_policies_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListRollbackPoliciesQuery>,
@@ -1703,6 +1926,16 @@ pub async fn get_rollback_policies_handler(
     Json(ApiResponse::success(list, "回滚策略列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/rollback/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn execute_rollback_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExecuteRollbackRequest>,
@@ -1725,6 +1958,16 @@ pub async fn execute_rollback_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/rollback/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_rollback_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<RollbackHistoryQuery>,
@@ -1734,6 +1977,19 @@ pub async fn get_rollback_history_handler(
     Json(ApiResponse::success(history, "回滚历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/rollback/{id}/test",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn test_rollback_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1744,6 +2000,19 @@ pub async fn test_rollback_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/rollback/{id}/auto",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn configure_auto_rollback_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1757,6 +2026,19 @@ pub async fn configure_auto_rollback_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deployment_manager:write"])),
+    path = "/api/portal/deployment-manager/rollback/{id}/disable",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn disable_rollback_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1767,6 +2049,16 @@ pub async fn disable_rollback_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deployment_manager:read"])),
+    path = "/api/portal/deployment-manager/rollback/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeploymentManager"
+)]
 pub async fn get_rollback_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListRollbackPoliciesQuery>,

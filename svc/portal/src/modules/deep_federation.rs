@@ -1318,6 +1318,16 @@ pub struct UpdateAuthPolicyRequest {
 
 // ==================== API 处理器: 跨服务一致性 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/consistency/check",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn check_consistency_handler(
     State(_state): State<AppState>,
     Json(req): Json<CheckConsistencyRequest>,
@@ -1334,6 +1344,16 @@ pub async fn check_consistency_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/consistency/model",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_consistency_model_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1344,6 +1364,16 @@ pub async fn get_consistency_model_handler(
     ))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/consistency/model",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn set_consistency_model_handler(
     State(_state): State<AppState>,
     Json(req): Json<SetModelRequest>,
@@ -1358,6 +1388,16 @@ pub async fn set_consistency_model_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/consistency/detect",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn detect_conflicts_handler(
     State(_state): State<AppState>,
     Json(req): Json<DetectConflictsRequest>,
@@ -1368,6 +1408,19 @@ pub async fn detect_conflicts_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/consistency/resolve/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn resolve_conflict_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1380,6 +1433,19 @@ pub async fn resolve_conflict_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/consistency/vector/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_version_vector_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1390,6 +1456,16 @@ pub async fn get_version_vector_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/consistency/report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_consistency_report_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<ConsistencyReport>> {
@@ -1399,6 +1475,16 @@ pub async fn get_consistency_report_handler(
 
 // ==================== API 处理器: 分布式查询 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/distributed/query",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn create_distributed_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateDistributedQueryRequest>,
@@ -1422,6 +1508,19 @@ pub async fn create_distributed_query_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/distributed/query/{id}/execute",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn execute_distributed_query_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1432,6 +1531,19 @@ pub async fn execute_distributed_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/distributed/query/{id}/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_query_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1442,6 +1554,19 @@ pub async fn get_query_status_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/distributed/query/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn cancel_query_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1452,6 +1577,16 @@ pub async fn cancel_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/distributed/query/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_query_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<HistoryQuery>,
@@ -1460,6 +1595,16 @@ pub async fn get_query_history_handler(
     Json(ApiResponse::success(history, "查询历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/distributed/query/validate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn validate_query_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateQueryPlanRequest>,
@@ -1472,6 +1617,16 @@ pub async fn validate_query_plan_handler(
 
 // ==================== API 处理器: 联邦认证 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/auth/authenticate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn authenticate_federated_handler(
     State(_state): State<AppState>,
     Json(req): Json<AuthenticateRequest>,
@@ -1483,6 +1638,19 @@ pub async fn authenticate_federated_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/auth/propagate/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn propagate_identity_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1494,6 +1662,16 @@ pub async fn propagate_identity_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/auth/verify",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn verify_token_chain_handler(
     State(_state): State<AppState>,
     Json(req): Json<VerifyTokenChainRequest>,
@@ -1504,6 +1682,19 @@ pub async fn verify_token_chain_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/auth/identity/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_identity_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1514,6 +1705,16 @@ pub async fn get_identity_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/auth/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn create_auth_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateAuthPolicyRequest>,
@@ -1532,6 +1733,19 @@ pub async fn create_auth_policy_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:deep_federation:write"])),
+    path = "/api/portal/deep-federation/auth/policy/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn update_auth_policy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1551,6 +1765,16 @@ pub async fn update_auth_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:deep_federation:read"])),
+    path = "/api/portal/deep-federation/auth/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "DeepFederation"
+)]
 pub async fn get_auth_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<HashMap<String, String>>,

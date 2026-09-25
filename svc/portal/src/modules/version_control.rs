@@ -1097,6 +1097,16 @@ pub struct CompatibilityStatusQuery {
 
 // ==================== API 处理器: API 版本管理 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/versions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn register_version_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterVersionRequest>,
@@ -1108,6 +1118,16 @@ pub async fn register_version_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/versions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn list_versions_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListVersionsQuery>,
@@ -1117,6 +1137,19 @@ pub async fn list_versions_handler(
     Json(ApiResponse::success(versions, "API 版本列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/versions/{version}",
+    params(
+        ("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn get_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
@@ -1127,6 +1160,19 @@ pub async fn get_version_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/versions/{version}",
+    params(
+        ("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn update_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
@@ -1148,6 +1194,19 @@ pub async fn deprecate_version_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/versions/{version}/sunset",
+    params(
+        ("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn sunset_version_handler(
     State(_state): State<AppState>,
     Path(version): Path<String>,
@@ -1158,6 +1217,16 @@ pub async fn sunset_version_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/compatibility",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn check_compatibility_handler(
     State(_state): State<AppState>,
     Query(params): Query<CheckCompatibilityQuery>,
@@ -1172,6 +1241,16 @@ pub async fn check_compatibility_handler(
 
 // ==================== API 处理器: 灰度流量切换 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/canary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn create_canary_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateCanaryRequest>,
@@ -1191,6 +1270,19 @@ pub async fn create_canary_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/canary/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn update_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1217,6 +1309,19 @@ pub async fn update_canary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/canary/{id}/start",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn start_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1227,6 +1332,19 @@ pub async fn start_canary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/canary/{id}/stop",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn stop_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1237,6 +1355,19 @@ pub async fn stop_canary_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/canary/{id}/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn get_canary_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1247,6 +1378,19 @@ pub async fn get_canary_status_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/canary/{id}/results",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn get_canary_results_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1255,6 +1399,16 @@ pub async fn get_canary_results_handler(
     Json(ApiResponse::success(results, "灰度结果列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/canaries",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn list_canaries_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListCanariesQuery>,
@@ -1274,6 +1428,19 @@ pub async fn promote_canary_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/canary/{id}/rollback",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn rollback_canary_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1286,6 +1453,16 @@ pub async fn rollback_canary_handler(
 
 // ==================== API 处理器: 向后兼容保证 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/compatibility/check",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn check_compatibility_report_handler(
     State(_state): State<AppState>,
     Json(req): Json<GenerateReportRequest>,
@@ -1296,6 +1473,16 @@ pub async fn check_compatibility_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/compatibility/report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn get_compatibility_report_handler(
     State(_state): State<AppState>,
     Query(params): Query<CompatibilityReportQuery>,
@@ -1306,6 +1493,16 @@ pub async fn get_compatibility_report_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/compatibility/migration-path",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn get_migration_path_handler(
     State(_state): State<AppState>,
     Query(params): Query<MigrationPathQuery>,
@@ -1316,6 +1513,16 @@ pub async fn get_migration_path_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:version_control:write"])),
+    path = "/api/portal/version-control/compatibility/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn create_compatibility_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateCompatibilityPolicyRequest>,
@@ -1338,6 +1545,16 @@ pub async fn create_compatibility_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:version_control:read"])),
+    path = "/api/portal/version-control/compatibility/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "VersionControl"
+)]
 pub async fn get_compatibility_status_handler(
     State(_state): State<AppState>,
     Query(params): Query<CompatibilityStatusQuery>,

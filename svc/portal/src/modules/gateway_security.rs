@@ -1351,6 +1351,16 @@ pub struct PermissionsUserQuery {
 
 // ==================== API 处理器: Gateway Security V2 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/validate-token",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn validate_token_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateTokenRequest>,
@@ -1370,6 +1380,16 @@ pub async fn validate_token_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/authenticate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn authenticate_handler(
     State(_state): State<AppState>,
     Json(req): Json<AuthenticateRequest>,
@@ -1381,6 +1401,16 @@ pub async fn authenticate_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/incidents",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn get_incidents_handler(
     State(_state): State<AppState>,
     Query(params): Query<IncidentsQuery>,
@@ -1394,6 +1424,16 @@ pub async fn get_incidents_handler(
     Json(ApiResponse::success(incidents, "安全事件列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn create_security_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateSecurityPolicyRequest>,
@@ -1421,6 +1461,16 @@ pub async fn create_security_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn list_security_policies_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<SecurityPolicyV2>>> {
@@ -1428,6 +1478,19 @@ pub async fn list_security_policies_handler(
     Json(ApiResponse::success(policies, "安全策略列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/policies/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn update_security_policy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1467,6 +1530,16 @@ pub async fn update_security_policy_handler(
 
 // ==================== API 处理器: Audit Trail ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/audit/write",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn write_audit_handler(
     State(_state): State<AppState>,
     Json(req): Json<WriteAuditRequest>,
@@ -1495,6 +1568,16 @@ pub async fn write_audit_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/audit/query",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn query_audit_handler(
     State(_state): State<AppState>,
     Query(params): Query<AuditQueryParams>,
@@ -1512,6 +1595,19 @@ pub async fn query_audit_handler(
     Json(ApiResponse::success(entries, "审计查询结果"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/audit/actor/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn get_audit_by_actor_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1520,6 +1616,20 @@ pub async fn get_audit_by_actor_handler(
     Json(ApiResponse::success(entries, "演员审计记录"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/audit/resource/{type}/{id}",
+    params(
+        ("type" = String, Path, description = "type"),
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn get_audit_by_resource_handler(
     State(_state): State<AppState>,
     Path((resource_type, resource_id)): Path<(String, String)>,
@@ -1528,6 +1638,16 @@ pub async fn get_audit_by_resource_handler(
     Json(ApiResponse::success(entries, "资源审计记录"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/audit/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn get_audit_summary_handler(
     State(_state): State<AppState>,
     Query(params): Query<AuditQueryParams>,
@@ -1545,6 +1665,16 @@ pub async fn get_audit_summary_handler(
     Json(ApiResponse::success(summary, "审计汇总"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/audit/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn export_audit_handler(
     State(_state): State<AppState>,
     Json(req): Json<AuditExportRequest>,
@@ -1560,6 +1690,16 @@ pub async fn export_audit_handler(
 
 // ==================== API 处理器: Access Control ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/access/evaluate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn evaluate_access_handler(
     State(_state): State<AppState>,
     Json(req): Json<EvaluateAccessRequest>,
@@ -1569,6 +1709,16 @@ pub async fn evaluate_access_handler(
     Json(ApiResponse::success(decision, "访问决策完成"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/access/grant",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn grant_access_handler(
     State(_state): State<AppState>,
     Json(req): Json<GrantAccessRequest>,
@@ -1581,6 +1731,19 @@ pub async fn grant_access_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/access/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn revoke_access_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1592,6 +1755,16 @@ pub async fn revoke_access_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/access/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn list_access_policies_handler(
     State(_state): State<AppState>,
     Query(params): Query<AccessPoliciesQuery>,
@@ -1600,6 +1773,16 @@ pub async fn list_access_policies_handler(
     Json(ApiResponse::success(policies, "访问策略列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/access/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn create_access_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateAccessPolicyRequest>,
@@ -1626,6 +1809,19 @@ pub async fn create_access_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:gateway_security:read"])),
+    path = "/api/portal/gateway-security/permissions/user/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn get_user_permissions_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1636,6 +1832,16 @@ pub async fn get_user_permissions_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:gateway_security:write"])),
+    path = "/api/portal/gateway-security/access/simulate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "GatewaySecurity"
+)]
 pub async fn simulate_access_handler(
     State(_state): State<AppState>,
     Json(req): Json<SimulateAccessRequest>,

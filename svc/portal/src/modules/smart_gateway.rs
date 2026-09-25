@@ -1030,6 +1030,16 @@ pub fn get_all_health_metrics() -> Vec<HealthMetrics> {
 
 // ==================== API Handlers ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:smart_gateway:read"])),
+    path = "/api/portal/smart-gateway/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn get_gateway_status_handler() -> Json<ApiResult<GatewayStatus>> {
     let protocols = list_protocols();
     let active_protocols: Vec<String> = protocols
@@ -1056,6 +1066,16 @@ pub async fn get_gateway_status_handler() -> Json<ApiResult<GatewayStatus>> {
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:smart_gateway:read"])),
+    path = "/api/portal/smart-gateway/routes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn list_routes_handler(
     Query(params): Query<RouteQueryParams>,
 ) -> Json<ApiResult<Vec<SmartRoute>>> {
@@ -1074,6 +1094,16 @@ pub async fn list_routes_handler(
     Json(ApiResult::ok(routes))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:smart_gateway:write"])),
+    path = "/api/portal/smart-gateway/routes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn create_route_handler(
     Json(req): Json<CreateRouteRequest>,
 ) -> Result<Json<ApiResult<SmartRoute>>, (StatusCode, Json<Value>)> {
@@ -1099,6 +1129,19 @@ pub async fn create_route_handler(
     Ok(Json(ApiResult::ok(created)))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:smart_gateway:write"])),
+    path = "/api/portal/smart-gateway/routes/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn delete_route_handler(
     Path(id): Path<String>,
 ) -> Result<Json<ApiResult<bool>>, (StatusCode, Json<Value>)> {
@@ -1113,10 +1156,33 @@ pub async fn delete_route_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:smart_gateway:read"])),
+    path = "/api/portal/smart-gateway/protocols",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn list_protocols_handler() -> Json<ApiResult<Vec<ProtocolConfig>>> {
     Json(ApiResult::ok(list_protocols()))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:smart_gateway:write"])),
+    path = "/api/portal/smart-gateway/protocols/{name}/enable",
+    params(
+        ("name" = String, Path, description = "name")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn enable_protocol_handler(
     Path(name): Path<String>,
 ) -> Result<Json<ApiResult<bool>>, (StatusCode, Json<Value>)> {
@@ -1131,6 +1197,19 @@ pub async fn enable_protocol_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:smart_gateway:write"])),
+    path = "/api/portal/smart-gateway/protocols/{name}/disable",
+    params(
+        ("name" = String, Path, description = "name")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn disable_protocol_handler(
     Path(name): Path<String>,
 ) -> Result<Json<ApiResult<bool>>, (StatusCode, Json<Value>)> {
@@ -1145,10 +1224,30 @@ pub async fn disable_protocol_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:smart_gateway:read"])),
+    path = "/api/portal/smart-gateway/degradation/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn get_degradation_status_handler() -> Json<ApiResult<DegradationLevel>> {
     Json(ApiResult::ok(get_degradation_status()))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:smart_gateway:write"])),
+    path = "/api/portal/smart-gateway/degradation/level",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn set_degradation_level_handler(
     Json(req): Json<SetDegradationLevelRequest>,
 ) -> Json<ApiResult<DegradationLevel>> {
@@ -1156,6 +1255,16 @@ pub async fn set_degradation_level_handler(
     Json(ApiResult::ok(get_degradation_status()))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:smart_gateway:write"])),
+    path = "/api/portal/smart-gateway/degradation/evaluate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SmartGateway"
+)]
 pub async fn evaluate_degradation_handler() -> Json<ApiResult<DegradationLevel>> {
     let level = evaluate_degradation();
     Json(ApiResult::ok(level))

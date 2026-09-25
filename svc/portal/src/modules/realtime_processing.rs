@@ -1104,6 +1104,16 @@ pub struct SubscribeAggregationRequest {
 
 // ==================== API 处理器: 订阅持久化 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/subscription",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn create_subscription_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateSubscriptionRequest>,
@@ -1116,6 +1126,19 @@ pub async fn create_subscription_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/subscription/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1126,6 +1149,16 @@ pub async fn get_subscription_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/subscriptions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn list_subscriptions_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListSubscriptionsQuery>,
@@ -1140,6 +1173,19 @@ pub async fn list_subscriptions_handler(
     Json(ApiResponse::success(list, "订阅列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/subscription/{id}/pause",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn pause_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1150,6 +1196,19 @@ pub async fn pause_subscription_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/subscription/{id}/resume",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn resume_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1160,6 +1219,19 @@ pub async fn resume_subscription_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/subscription/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn cancel_subscription_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1171,6 +1243,19 @@ pub async fn cancel_subscription_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/subscription/{id}/pending",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_pending_events_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1182,6 +1267,16 @@ pub async fn get_pending_events_handler(
 
 // ==================== API 处理器: 消息重放 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/replay/request",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn request_replay_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateReplayRequest>,
@@ -1206,6 +1301,19 @@ pub async fn request_replay_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/replay/execute/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn execute_replay_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1216,6 +1324,19 @@ pub async fn execute_replay_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/replay/{id}/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_replay_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1226,6 +1347,19 @@ pub async fn get_replay_status_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/replay/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn cancel_replay_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1236,6 +1370,16 @@ pub async fn cancel_replay_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/replay/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_replay_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<ReplayHistoryQuery>,
@@ -1246,6 +1390,19 @@ pub async fn get_replay_history_handler(
     Json(ApiResponse::success(history, "重放历史"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/events/range/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_events_range_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1258,6 +1415,16 @@ pub async fn get_events_range_handler(
 
 // ==================== API 处理器: 实时聚合 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/aggregation",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn create_aggregation_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateAggregationRequest>,
@@ -1289,6 +1456,19 @@ pub async fn create_aggregation_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/aggregation/{id}/start",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn start_aggregation_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1300,6 +1480,19 @@ pub async fn start_aggregation_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:realtime_processing:write"])),
+    path = "/api/portal/realtime-processing/aggregation/{id}/stop",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn stop_aggregation_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1311,6 +1504,19 @@ pub async fn stop_aggregation_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/aggregation/{id}/result",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_aggregation_result_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1324,6 +1530,16 @@ pub async fn get_aggregation_result_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/aggregations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn list_aggregations_handler(
     State(_state): State<AppState>,
     Query(params): Query<ListAggregationsQuery>,
@@ -1333,6 +1549,19 @@ pub async fn list_aggregations_handler(
     Json(ApiResponse::success(list, "聚合配置列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:realtime_processing:read"])),
+    path = "/api/portal/realtime-processing/aggregation/{id}/stats",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "RealtimeProcessing"
+)]
 pub async fn get_aggregation_stats_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,

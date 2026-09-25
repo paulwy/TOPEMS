@@ -56,6 +56,16 @@ pub struct UpdateFaqRequest {
     pub sort_order: Option<i32>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:faq:read"])),
+    path = "/help/faqs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Faq"
+)]
 pub async fn list_faqs(
     State(state): State<AppState>,
     Query(query): Query<FaqQuery>,
@@ -116,6 +126,19 @@ pub async fn list_faqs(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:faq:read"])),
+    path = "/help/faqs/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Faq"
+)]
 pub async fn get_faq(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -149,6 +172,16 @@ pub async fn get_faq(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:faq:write"])),
+    path = "/help/faqs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Faq"
+)]
 pub async fn create_faq(
     State(state): State<AppState>,
     Json(req): Json<CreateFaqRequest>,
@@ -189,6 +222,19 @@ pub async fn create_faq(
     Json(api_success(faq))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:faq:write"])),
+    path = "/help/faqs/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Faq"
+)]
 pub async fn update_faq(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -250,6 +296,16 @@ pub async fn delete_faq(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:faq:read"])),
+    path = "/help/faqs/categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Faq"
+)]
 pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
     let categories: Vec<String> = match sqlx::query_scalar(
         r#"SELECT DISTINCT category FROM core_faqs WHERE is_active = true ORDER BY category"#,

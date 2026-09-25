@@ -791,6 +791,16 @@ pub struct SubscribeQuery {
 
 // ==================== API 处理器: 订阅网关 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/subscribe",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn subscribe_handler(
     State(_state): State<AppState>,
     Json(req): Json<SubscribeRequest>,
@@ -811,6 +821,19 @@ pub async fn subscribe_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/subscribe/{subscriber_id}",
+    params(
+        ("subscriber_id" = String, Path, description = "subscriber_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn unsubscribe_handler(
     State(_state): State<AppState>,
     Path(subscriber_id): Path<String>,
@@ -822,6 +845,16 @@ pub async fn unsubscribe_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:subscription_manager:read"])),
+    path = "/api/portal/subscription-manager/subscribers",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn get_subscribers_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<Subscriber>>> {
@@ -829,6 +862,16 @@ pub async fn get_subscribers_handler(
     Json(ApiResponse::success(subscribers, "活跃订阅者列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:subscription_manager:read"])),
+    path = "/api/portal/subscription-manager/channels",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn get_channels_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ChannelStats>>> {
@@ -836,6 +879,16 @@ pub async fn get_channels_handler(
     Json(ApiResponse::success(stats, "频道统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/publish",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn publish_handler(
     State(_state): State<AppState>,
     Json(req): Json<PublishRequest>,
@@ -853,6 +906,16 @@ pub async fn publish_handler(
 
 // ==================== API 处理器: 消息队列 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/queue/publish",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn publish_to_queue_handler(
     State(_state): State<AppState>,
     Json(req): Json<PublishToQueueRequest>,
@@ -871,6 +934,16 @@ pub async fn publish_to_queue_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:subscription_manager:read"])),
+    path = "/api/portal/subscription-manager/queue/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn get_queue_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<QueueStatsQuery>,
@@ -879,6 +952,16 @@ pub async fn get_queue_stats_handler(
     Json(ApiResponse::success(stats, "队列统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/queue/create",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn create_queue_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateQueueRequest>,
@@ -902,6 +985,16 @@ pub async fn create_queue_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/queue/purge",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn purge_queue_handler(
     State(_state): State<AppState>,
     Json(req): Json<PurgeQueueRequest>,
@@ -912,6 +1005,16 @@ pub async fn purge_queue_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:subscription_manager:read"])),
+    path = "/api/portal/subscription-manager/dlq",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn get_dlq_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<DeadLetterEntry>>> {
@@ -921,6 +1024,16 @@ pub async fn get_dlq_handler(
 
 // ==================== API 处理器: 推送优化 ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:subscription_manager:read"])),
+    path = "/api/portal/subscription-manager/push/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn get_push_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<PushStats>> {
@@ -928,6 +1041,16 @@ pub async fn get_push_stats_handler(
     Json(ApiResponse::success(stats, "推送统计"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:subscription_manager:write"])),
+    path = "/api/portal/subscription-manager/push/batch-window",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn set_batch_window_handler(
     State(_state): State<AppState>,
     Json(req): Json<SetBatchWindowRequest>,
@@ -938,6 +1061,16 @@ pub async fn set_batch_window_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:subscription_manager:read"])),
+    path = "/api/portal/subscription-manager/push/queue-length",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SubscriptionManager"
+)]
 pub async fn get_push_queue_length_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<usize>> {

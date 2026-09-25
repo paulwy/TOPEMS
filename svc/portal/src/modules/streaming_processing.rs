@@ -1257,6 +1257,19 @@ pub async fn list_streams_handler(
     Json(ApiResponse::success(list, "流列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/stream/{id}/publish",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn publish_event_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1292,6 +1305,19 @@ pub async fn unsubscribe_stream_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/stream/{id}/events",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_stream_events_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1301,6 +1327,19 @@ pub async fn get_stream_events_handler(
     Json(ApiResponse::success(list, "流事件列表"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/stream/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn delete_stream_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1314,6 +1353,16 @@ pub async fn delete_stream_handler(
 
 // ==================== API 处理器: 消息去重 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/dedup/rule",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn create_dedup_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateDedupRuleRequest>,
@@ -1333,6 +1382,16 @@ pub async fn create_dedup_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/dedup/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_dedup_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupRulesQuery>,
@@ -1343,6 +1402,16 @@ pub async fn get_dedup_rules_handler(
     Json(ApiResponse::success(list, "去重规则列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/dedup/check",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn check_duplicate_handler(
     State(_state): State<AppState>,
     Json(req): Json<CheckDuplicateRequest>,
@@ -1357,6 +1426,16 @@ pub async fn check_duplicate_handler(
     Json(ApiResponse::success(result, "去重检查完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/dedup/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_dedup_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupStatsQuery>,
@@ -1365,6 +1444,16 @@ pub async fn get_dedup_stats_handler(
     Json(ApiResponse::success(stats, "去重统计"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/dedup/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_dedup_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDedupHistoryQuery>,
@@ -1374,6 +1463,19 @@ pub async fn get_dedup_history_handler(
     Json(ApiResponse::success(history, "去重历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/dedup/rule/{id}/enable",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn enable_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1384,6 +1486,19 @@ pub async fn enable_rule_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/dedup/rule/{id}/disable",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn disable_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1396,6 +1511,19 @@ pub async fn disable_rule_handler(
 
 // ==================== API 处理器: 背压控制 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/backpressure/config/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn set_backpressure_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1420,6 +1548,19 @@ pub async fn set_backpressure_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/backpressure/config/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_backpressure_config_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1430,6 +1571,19 @@ pub async fn get_backpressure_config_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/backpressure/state/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_backpressure_state_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1440,6 +1594,19 @@ pub async fn get_backpressure_state_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/backpressure/apply/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn apply_backpressure_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1452,6 +1619,19 @@ pub async fn apply_backpressure_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/backpressure/drain/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn drain_queue_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1462,6 +1642,16 @@ pub async fn drain_queue_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/backpressure/dropped",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_dropped_events_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetDroppedEventsQuery>,
@@ -1471,6 +1661,16 @@ pub async fn get_dropped_events_handler(
     Json(ApiResponse::success(events, "丢弃事件列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:streaming_processing:read"])),
+    path = "/api/portal/streaming-processing/backpressure/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn get_backpressure_stats_handler(
     State(_state): State<AppState>,
     Query(params): Query<GetBackpressureStatsQuery>,
@@ -1479,6 +1679,19 @@ pub async fn get_backpressure_stats_handler(
     Json(ApiResponse::success(stats, "背压统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:streaming_processing:write"])),
+    path = "/api/portal/streaming-processing/backpressure/reset/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "StreamingProcessing"
+)]
 pub async fn reset_counter_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,

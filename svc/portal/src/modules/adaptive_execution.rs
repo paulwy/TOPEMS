@@ -1125,6 +1125,16 @@ pub fn close_stream(stream_id: &str) -> bool {
 
 // --- 自适应执行 Handlers ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:adaptive_execution:write"])),
+    path = "/api/portal/adaptive-execution/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn execute_adaptive_query_handler(
     Json(req): Json<ExecuteAdaptiveQueryRequest>,
 ) -> Result<Json<ApiResult<ExecutionProfile>>, (StatusCode, Json<Value>)> {
@@ -1137,6 +1147,19 @@ pub async fn execute_adaptive_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:adaptive_execution:read"])),
+    path = "/api/portal/adaptive-execution/execution/profile/{hash}",
+    params(
+        ("hash" = String, Path, description = "hash")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn get_execution_profile_handler(
     Path(hash): Path<String>,
 ) -> Result<Json<ApiResult<ExecutionProfile>>, (StatusCode, Json<Value>)> {
@@ -1153,6 +1176,16 @@ pub async fn get_execution_profile_handler(
         })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:adaptive_execution:read"])),
+    path = "/api/portal/adaptive-execution/execution/metrics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn get_execution_metrics_handler() -> Json<ApiResult<ExecutionMetrics>> {
     Json(ApiResult::ok(get_execution_metrics()))
 }
@@ -1166,6 +1199,16 @@ pub async fn configure_strategy_handler(
 
 // --- AI 查询优化 Handlers ---
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:adaptive_execution:write"])),
+    path = "/api/portal/adaptive-execution/optimize",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn optimize_query_handler(
     Json(req): Json<OptimizeQueryRequest>,
 ) -> Json<ApiResult<OptimizedQueryPlan>> {
@@ -1173,6 +1216,16 @@ pub async fn optimize_query_handler(
     Json(ApiResult::ok(plan))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:adaptive_execution:write"])),
+    path = "/api/portal/adaptive-execution/analyze",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn analyze_query_handler(
     Json(req): Json<AnalyzeQueryRequest>,
 ) -> Json<ApiResult<Vec<OptimizationSuggestion>>> {
@@ -1180,6 +1233,16 @@ pub async fn analyze_query_handler(
     Json(ApiResult::ok(suggestions))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:adaptive_execution:read"])),
+    path = "/api/portal/adaptive-execution/optimization/suggestions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn get_optimization_suggestions_handler(
     Query(params): Query<HashMap<String, String>>,
 ) -> Json<ApiResult<Vec<OptimizationSuggestion>>> {
@@ -1188,6 +1251,16 @@ pub async fn get_optimization_suggestions_handler(
     Json(ApiResult::ok(suggestions))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:adaptive_execution:write"])),
+    path = "/api/portal/adaptive-execution/optimization/batch",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn batch_optimize_handler(
     Json(req): Json<BatchOptimizeRequest>,
 ) -> Json<ApiResult<Vec<OptimizedQueryPlan>>> {
@@ -1230,6 +1303,19 @@ pub async fn get_stream_handler(
         })
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:adaptive_execution:write"])),
+    path = "/api/portal/adaptive-execution/streams/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn close_stream_handler(
     Path(id): Path<String>,
 ) -> Result<Json<ApiResult<bool>>, (StatusCode, Json<Value>)> {
@@ -1272,6 +1358,16 @@ pub async fn unsubscribe_stream_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:adaptive_execution:read"])),
+    path = "/api/portal/adaptive-execution/streams/metrics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AdaptiveExecution"
+)]
 pub async fn stream_metrics_handler() -> Json<ApiResult<StreamMetrics>> {
     Json(ApiResult::ok(stream_metrics()))
 }

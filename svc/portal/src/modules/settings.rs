@@ -80,6 +80,16 @@ fn map_settings_to_iam_prefs(settings: &UserSettings) -> serde_json::Value {
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:settings:read"])),
+    path = "/settings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Settings"
+)]
 pub async fn get_user_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -104,6 +114,16 @@ pub async fn get_user_settings(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:settings:write"])),
+    path = "/settings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Settings"
+)]
 pub async fn update_user_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -159,6 +179,16 @@ pub async fn update_user_settings(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:settings:write"])),
+    path = "/settings/reset",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Settings"
+)]
 pub async fn reset_user_settings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -178,6 +208,16 @@ pub async fn reset_user_settings(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:settings:read"])),
+    path = "/settings/themes",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Settings"
+)]
 pub async fn get_available_themes() -> Json<ApiResponse<Vec<String>>> {
     let themes = vec![
         "light".to_string(),
@@ -188,6 +228,16 @@ pub async fn get_available_themes() -> Json<ApiResponse<Vec<String>>> {
     Json(ApiResponse::success(themes, "可用主题列表获取成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:settings:read"])),
+    path = "/settings/languages",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Settings"
+)]
 pub async fn get_available_languages() -> Json<ApiResponse<Vec<(String, String)>>> {
     let languages = vec![
         ("zh-CN".to_string(), "简体中文".to_string()),

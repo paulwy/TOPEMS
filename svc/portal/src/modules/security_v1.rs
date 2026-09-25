@@ -1059,6 +1059,16 @@ pub struct FieldRulesQuery {
 
 // ==================== API 处理器: Security Gateway ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/validate-query",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn validate_query_handler(
     State(_state): State<AppState>,
     Json(req): Json<ValidateQueryRequest>,
@@ -1084,6 +1094,16 @@ pub async fn validate_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/events",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn get_security_events_handler(
     State(_state): State<AppState>,
     Query(params): Query<SecurityEventsQuery>,
@@ -1096,6 +1116,16 @@ pub async fn get_security_events_handler(
     Json(ApiResponse::success(events, "安全事件列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn create_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreatePolicyRequest>,
@@ -1119,6 +1149,16 @@ pub async fn create_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn list_policies_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<SecurityPolicy>>> {
@@ -1126,6 +1166,19 @@ pub async fn list_policies_handler(
     Json(ApiResponse::success(policies, "安全策略列表"))
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/policies/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn update_policy_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1159,6 +1212,16 @@ pub async fn update_policy_handler(
 
 // ==================== API 处理器: Zero Trust ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/trust/evaluate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn evaluate_trust_handler(
     State(_state): State<AppState>,
     Json(req): Json<EvaluateTrustRequest>,
@@ -1171,6 +1234,19 @@ pub async fn evaluate_trust_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/trust/score/{identity}",
+    params(
+        ("identity" = String, Path, description = "identity")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn get_trust_score_handler(
     State(_state): State<AppState>,
     Path(identity): Path<String>,
@@ -1181,6 +1257,16 @@ pub async fn get_trust_score_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/identity/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn create_identity_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateIdentityPolicyRequest>,
@@ -1202,6 +1288,16 @@ pub async fn create_identity_policy_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/identity/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn list_identity_policies_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<IdentityPolicy>>> {
@@ -1209,6 +1305,19 @@ pub async fn list_identity_policies_handler(
     Json(ApiResponse::success(policies, "身份策略列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/session/{id}/trust",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn get_session_trust_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1221,6 +1330,16 @@ pub async fn get_session_trust_handler(
 
 // ==================== API 处理器: Data Masking ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/masking/mask",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn mask_response_handler(
     State(_state): State<AppState>,
     Json(req): Json<MaskResponseRequest>,
@@ -1233,6 +1352,16 @@ pub async fn mask_response_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/masking/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn add_masking_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<AddMaskingRuleRequest>,
@@ -1257,6 +1386,16 @@ pub async fn add_masking_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/masking/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn list_masking_rules_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MaskingRule>>> {
@@ -1264,6 +1403,19 @@ pub async fn list_masking_rules_handler(
     Json(ApiResponse::success(rules, "脱敏规则列表"))
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/masking/rules/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn remove_masking_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1275,6 +1427,16 @@ pub async fn remove_masking_rule_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:security_v1:write"])),
+    path = "/api/portal/security-v1/masking/preview",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn preview_masking_handler(
     State(_state): State<AppState>,
     Json(req): Json<PreviewMaskingRequest>,
@@ -1285,6 +1447,16 @@ pub async fn preview_masking_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:security_v1:read"])),
+    path = "/api/portal/security-v1/masking/field-rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SecurityV1"
+)]
 pub async fn get_field_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<FieldRulesQuery>,

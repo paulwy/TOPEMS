@@ -1044,6 +1044,19 @@ pub async fn create_plan_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/plan/{id}/execute",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn execute_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1054,6 +1067,19 @@ pub async fn execute_plan_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/plan/{id}/status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn get_plan_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1064,6 +1090,19 @@ pub async fn get_plan_status_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/plan/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn cancel_plan_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1074,6 +1113,16 @@ pub async fn cancel_plan_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn get_execution_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<HistoryQuery>,
@@ -1095,6 +1144,16 @@ pub async fn optimize_plan_handler(
 
 // ==================== API 处理器: 服务发现 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/service/register",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn register_service_handler(
     State(_state): State<AppState>,
     Json(req): Json<RegisterServiceRequest>,
@@ -1113,6 +1172,19 @@ pub async fn register_service_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/service/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn deregister_service_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1124,6 +1196,16 @@ pub async fn deregister_service_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/services",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn discover_services_handler(
     State(_state): State<AppState>,
     Query(params): Query<DiscoverServicesQuery>,
@@ -1133,6 +1215,19 @@ pub async fn discover_services_handler(
     Json(ApiResponse::success(services, "服务列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/service/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn get_service_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1143,6 +1238,19 @@ pub async fn get_service_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/services/capability/{cap}",
+    params(
+        ("cap" = String, Path, description = "cap")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn get_services_by_capability_handler(
     State(_state): State<AppState>,
     Path(cap): Path<String>,
@@ -1151,6 +1259,19 @@ pub async fn get_services_by_capability_handler(
     Json(ApiResponse::success(services, "能力匹配服务列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/health/check/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn check_health_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1161,6 +1282,16 @@ pub async fn check_health_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/registry/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn get_registry_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<RegistryStats>> {
@@ -1170,6 +1301,16 @@ pub async fn get_registry_stats_handler(
 
 // ==================== API 处理器: 动态路由 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/route",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn route_request_handler(
     State(_state): State<AppState>,
     Json(req): Json<RouteRequest>,
@@ -1179,6 +1320,16 @@ pub async fn route_request_handler(
     Json(ApiResponse::success(decision, "路由决策完成"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn add_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<AddRuleRequest>,
@@ -1235,6 +1386,19 @@ pub async fn update_rule_handler(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["portal:orchestration:write"])),
+    path = "/api/portal/orchestration/rules/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn remove_rule_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1246,6 +1410,16 @@ pub async fn remove_rule_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:orchestration:read"])),
+    path = "/api/portal/orchestration/routing/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Orchestration"
+)]
 pub async fn get_routing_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<RoutingStats>> {

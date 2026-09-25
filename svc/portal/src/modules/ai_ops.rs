@@ -1477,6 +1477,16 @@ pub struct CreateRecoveryPlanRequest {
 
 // ==================== API 处理器: 智能查询路由 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/routing/rule",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn create_routing_rule_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateRoutingRuleRequest>,
@@ -1492,6 +1502,16 @@ pub async fn create_routing_rule_handler(
     Json(ApiResponse::success(rule, "路由规则创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/routing/rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_routing_rules_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingRulesQuery>,
@@ -1509,6 +1529,16 @@ pub async fn route_query_handler(
     Json(ApiResponse::success(decision, "查询路由完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/routing/loads",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_service_loads_handler(
     State(_state): State<AppState>,
     Query(params): Query<ServiceLoadQuery>,
@@ -1517,6 +1547,19 @@ pub async fn get_service_loads_handler(
     Json(ApiResponse::success(loads, "服务负载列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/routing/load/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn update_service_load_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1543,6 +1586,16 @@ pub async fn update_service_load_handler(
     Json(ApiResponse::success(updated, "服务负载已更新"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/routing/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_routing_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingHistoryQuery>,
@@ -1552,6 +1605,16 @@ pub async fn get_routing_history_handler(
     Json(ApiResponse::success(history, "路由决策历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/routing/simulate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn simulate_routing_handler(
     State(_state): State<AppState>,
     Json(req): Json<SimulateRoutingRequest>,
@@ -1560,6 +1623,16 @@ pub async fn simulate_routing_handler(
     Json(ApiResponse::success(decision, "路由模拟完成"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/routing/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_route_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<RouteStats>> {
@@ -1569,6 +1642,16 @@ pub async fn get_route_stats_handler(
 
 // ==================== API 处理器: 自动缓存 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/cache/policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn create_cache_policy_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateCachePolicyRequest>,
@@ -1595,6 +1678,16 @@ pub async fn create_cache_policy_handler(
     Json(ApiResponse::success(policy, "缓存策略创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/cache/policies",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_cache_policies_handler(
     State(_state): State<AppState>,
     Query(params): Query<CachePoliciesQuery>,
@@ -1604,6 +1697,19 @@ pub async fn get_cache_policies_handler(
     Json(ApiResponse::success(policies, "缓存策略列表"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/cache/entry/{key}",
+    params(
+        ("key" = String, Path, description = "key")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_cache_entry_handler(
     State(_state): State<AppState>,
     Path(key): Path<String>,
@@ -1636,6 +1742,16 @@ pub async fn invalidate_cache_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/cache/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_cache_stats_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<CacheStats>> {
@@ -1643,6 +1759,16 @@ pub async fn get_cache_stats_handler(
     Json(ApiResponse::success(stats, "缓存统计"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/cache/cleanup",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn cleanup_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<CleanupRequest>,
@@ -1652,11 +1778,31 @@ pub async fn cleanup_cache_handler(
     Json(ApiResponse::success(removed, "过期缓存已清理"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/cache/hit-rate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_cache_hit_rate_handler(State(_state): State<AppState>) -> Json<ApiResponse<f64>> {
     let rate = AutoCacheManager::get_cache_hit_rate().await;
     Json(ApiResponse::success(rate, "缓存命中率"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/cache/evict",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn evict_cache_handler(
     State(_state): State<AppState>,
     Json(req): Json<CleanupRequest>,
@@ -1668,6 +1814,16 @@ pub async fn evict_cache_handler(
 
 // ==================== API 处理器: 自愈机制 ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/health/check",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn create_health_check_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateHealthCheckRequest>,
@@ -1690,6 +1846,16 @@ pub async fn create_health_check_handler(
     Json(ApiResponse::success(check, "健康检查创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/health/checks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_health_checks_handler(
     State(_state): State<AppState>,
     Query(params): Query<HealthChecksQuery>,
@@ -1700,6 +1866,16 @@ pub async fn get_health_checks_handler(
     Json(ApiResponse::success(checks, "健康检查列表"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/health/run",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn run_health_check_handler(
     State(_state): State<AppState>,
     Json(req): Json<RouteQueryRequest>,
@@ -1711,6 +1887,16 @@ pub async fn run_health_check_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/healing/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn execute_healing_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExecuteHealingRequest>,
@@ -1730,6 +1916,16 @@ pub async fn execute_healing_handler(
     Json(ApiResponse::success(action, "自愈动作已执行"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/healing/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_healing_history_handler(
     State(_state): State<AppState>,
     Query(params): Query<HealingHistoryQuery>,
@@ -1740,6 +1936,16 @@ pub async fn get_healing_history_handler(
     Json(ApiResponse::success(history, "自愈历史"))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:ai_ops:write"])),
+    path = "/api/portal/ai-ops/recovery/plan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn create_recovery_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<CreateRecoveryPlanRequest>,
@@ -1753,6 +1959,19 @@ pub async fn create_recovery_plan_handler(
     Json(ApiResponse::success(plan, "恢复计划创建成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/recovery/status/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_recovery_status_handler(
     State(_state): State<AppState>,
     Path(id): Path<String>,
@@ -1763,6 +1982,16 @@ pub async fn get_recovery_status_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:ai_ops:read"])),
+    path = "/api/portal/ai-ops/health/summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "AiOps"
+)]
 pub async fn get_health_summary_handler(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<HealthSummary>> {

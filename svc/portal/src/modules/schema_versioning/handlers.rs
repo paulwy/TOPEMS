@@ -11,6 +11,16 @@ use super::types::*;
 
 // ==================== Schema Version Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:handlers:write"])),
+    path = "/api/portal/schema-versioning/schema/versions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn publish_schema_version_handler(
     Json(req): Json<PublishSchemaVersionRequest>,
 ) -> Result<Json<SchemaVersion>, (StatusCode, Json<Value>)> {
@@ -24,12 +34,35 @@ pub async fn publish_schema_version_handler(
     Ok(Json(version))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:handlers:read"])),
+    path = "/api/portal/schema-versioning/schema/versions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn list_schema_versions_handler(
 ) -> Result<Json<Vec<SchemaVersion>>, (StatusCode, Json<Value>)> {
     let versions = list_schema_versions();
     Ok(Json(versions))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:handlers:read"])),
+    path = "/api/portal/schema-versioning/schema/versions/{version}",
+    params(
+        ("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn get_schema_version_handler(
     Path(version): Path<String>,
 ) -> Result<Json<SchemaVersion>, (StatusCode, Json<Value>)> {
@@ -43,6 +76,19 @@ pub async fn get_schema_version_handler(
     })
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:handlers:write"])),
+    path = "/api/portal/schema-versioning/schema/versions/{version}/rollback",
+    params(
+        ("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn rollback_schema_handler(
     Path(version): Path<String>,
     Json(req): Json<RollbackSchemaRequest>,
@@ -61,6 +107,16 @@ pub async fn rollback_schema_handler(
 
 // ==================== Breaking Change Detection Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:handlers:write"])),
+    path = "/api/portal/schema-versioning/schema/compare",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn compare_schemas_handler(
     Json(req): Json<CompareSchemasRequest>,
 ) -> Result<Json<SchemaCompareResult>, (StatusCode, Json<Value>)> {
@@ -68,6 +124,16 @@ pub async fn compare_schemas_handler(
     Ok(Json(result))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:handlers:write"])),
+    path = "/api/portal/schema-versioning/schema/detect-breaking",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn detect_breaking_changes_handler(
     Json(req): Json<DetectBreakingChangesRequest>,
 ) -> Result<Json<BreakingChangeReport>, (StatusCode, Json<Value>)> {
@@ -77,6 +143,16 @@ pub async fn detect_breaking_changes_handler(
 
 // ==================== Version Negotiation Handlers ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:handlers:write"])),
+    path = "/api/portal/schema-versioning/negotiate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn negotiate_version_handler(
     Json(req): Json<NegotiateVersionRequest>,
 ) -> Result<Json<NegotiatedVersion>, (StatusCode, Json<Value>)> {
@@ -84,6 +160,16 @@ pub async fn negotiate_version_handler(
     Ok(Json(result))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:handlers:read"])),
+    path = "/api/portal/schema-versioning/versions/supported",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn get_supported_versions_handler(
 ) -> Result<Json<Vec<SupportedVersion>>, (StatusCode, Json<Value>)> {
     let versions = get_supported_versions();
@@ -106,6 +192,16 @@ pub async fn deprecate_version_handler(
         })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:handlers:read"])),
+    path = "/api/portal/schema-versioning/schema/current",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Handlers"
+)]
 pub async fn get_current_schema_handler() -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let current = get_current_schema();
     match current {

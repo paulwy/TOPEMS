@@ -93,6 +93,16 @@ pub struct CompleteLessonRequest {
     pub lesson_id: Uuid,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:guide:read"])),
+    path = "/help/guides",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Guide"
+)]
 pub async fn list_guides(
     State(state): State<AppState>,
     Query(query): Query<GuideQuery>,
@@ -153,6 +163,19 @@ pub async fn list_guides(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:guide:read"])),
+    path = "/help/guides/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Guide"
+)]
 pub async fn get_guide(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -199,6 +222,16 @@ pub async fn get_guide(
     }))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:guide:write"])),
+    path = "/help/guides",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Guide"
+)]
 pub async fn create_guide(
     State(state): State<AppState>,
     Json(req): Json<CreateGuideRequest>,
@@ -238,6 +271,19 @@ pub async fn create_guide(
     Json(api_success(guide))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:guide:write"])),
+    path = "/help/guides/{guide_id}/lessons",
+    params(
+        ("guide_id" = String, Path, description = "guide_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Guide"
+)]
 pub async fn add_lesson(
     State(state): State<AppState>,
     Path(guide_id): Path<Uuid>,
@@ -283,6 +329,16 @@ pub async fn add_lesson(
     Json(api_success(lesson))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:guide:read"])),
+    path = "/help/guides/categories",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Guide"
+)]
 pub async fn get_guide_categories(State(state): State<AppState>) -> Json<ApiResponse<Vec<String>>> {
     let categories: Vec<String> = match sqlx::query_scalar(
         r#"SELECT DISTINCT category FROM core_guides WHERE is_active = true ORDER BY category"#,

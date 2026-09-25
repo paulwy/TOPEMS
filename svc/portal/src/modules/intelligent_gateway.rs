@@ -1293,6 +1293,16 @@ pub async fn route_query_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:intelligent_gateway:read"])),
+    path = "/api/portal/intelligent-gateway/routing/table",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn get_routing_table_handler(
     State(_state): State<AppState>,
     Query(params): Query<RoutingTableQuery>,
@@ -1317,6 +1327,19 @@ pub async fn get_routing_table_handler(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:intelligent_gateway:read"])),
+    path = "/api/portal/intelligent-gateway/affinity/{service_id}",
+    params(
+        ("service_id" = String, Path, description = "service_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn get_affinity_handler(
     State(_state): State<AppState>,
     Path(service_id): Path<String>,
@@ -1329,6 +1352,19 @@ pub async fn get_affinity_handler(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["portal:intelligent_gateway:write"])),
+    path = "/api/portal/intelligent-gateway/affinity/{service_id}",
+    params(
+        ("service_id" = String, Path, description = "service_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn update_affinity_handler(
     State(_state): State<AppState>,
     Path(service_id): Path<String>,
@@ -1342,6 +1378,16 @@ pub async fn update_affinity_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:intelligent_gateway:write"])),
+    path = "/api/portal/intelligent-gateway/routing/warmup",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn warm_up_routing_handler(
     State(_state): State<AppState>,
     Json(req): Json<WarmupRequest>,
@@ -1372,6 +1418,16 @@ pub async fn warm_up_routing_handler(
 
 // ==================== API 处理器：自动 Schema Stitching ====================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:intelligent_gateway:write"])),
+    path = "/api/portal/intelligent-gateway/stitch/discover",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn discover_subgraphs_handler(
     State(_state): State<AppState>,
     Json(req): Json<DiscoverSubgraphsRequest>,
@@ -1384,6 +1440,16 @@ pub async fn discover_subgraphs_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:intelligent_gateway:write"])),
+    path = "/api/portal/intelligent-gateway/stitch/plan",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn generate_stitch_plan_handler(
     State(_state): State<AppState>,
     Json(req): Json<GenerateStitchPlanRequest>,
@@ -1397,6 +1463,16 @@ pub async fn generate_stitch_plan_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:intelligent_gateway:write"])),
+    path = "/api/portal/intelligent-gateway/stitch/execute",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn execute_stitch_handler(
     State(_state): State<AppState>,
     Json(req): Json<ExecuteStitchRequest>,
@@ -1409,6 +1485,19 @@ pub async fn execute_stitch_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:intelligent_gateway:read"])),
+    path = "/api/portal/intelligent-gateway/stitch/status/{plan_id}",
+    params(
+        ("plan_id" = String, Path, description = "plan_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn get_stitch_status_handler(
     State(_state): State<AppState>,
     Path(plan_id): Path<String>,
@@ -1421,6 +1510,19 @@ pub async fn get_stitch_status_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:intelligent_gateway:read"])),
+    path = "/api/portal/intelligent-gateway/stitch/validate/{plan_id}",
+    params(
+        ("plan_id" = String, Path, description = "plan_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn validate_stitch_handler(
     State(_state): State<AppState>,
     Path(plan_id): Path<String>,
@@ -1433,6 +1535,16 @@ pub async fn validate_stitch_handler(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["portal:intelligent_gateway:write"])),
+    path = "/api/portal/intelligent-gateway/stitch/rollback",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn rollback_stitch_handler(
     State(_state): State<AppState>,
     Json(req): Json<RollbackStitchRequest>,
@@ -1445,6 +1557,16 @@ pub async fn rollback_stitch_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["portal:intelligent_gateway:read"])),
+    path = "/api/portal/intelligent-gateway/stitch/conflicts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "IntelligentGateway"
+)]
 pub async fn list_conflicts_handler(
     State(_state): State<AppState>,
     Query(params): Query<ConflictListQuery>,
