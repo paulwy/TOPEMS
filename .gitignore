@@ -185,6 +185,7 @@ backup/
 # Storybook
 *storybook.log
 storybook-static
+storybook-docs.zip
 
 # Database data
 database/postgres_data/
