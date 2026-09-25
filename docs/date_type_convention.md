@@ -44,8 +44,11 @@ interval     →   chrono::Duration → 秒数/ISO8601 时长
 
 ### 2.3 Rust DTO / API 层
 
-- 输出：时间一律 RFC3339 字符串（`DateTime<Utc>` serde 默认即可；手动转换用 `to_rfc3339()`）。
+- 输出：时间一律 RFC3339 字符串（`DateTime<Utc>` serde 默认即可；手动转换用 `to_rfc3339()`；**禁止** `DateTime::format` 做序列化——`format("%Y-%m-%d")` 输出的是日期 key，不是 RFC3339）。
+- NaiveDate（日期语义，无时刻）序列化用 **Display**（`to_string()` = ISO `YYYY-MM-DD`，与 `format("%Y-%m-%d")` 等价）；解析用 **FromStr**（`s.parse::<NaiveDate>()`，同样 ISO）。禁止 `NaiveDate::parse_from_str(s,"%Y-%m-%d")` 旧写法（已由 P2-1 收敛）。
 - 输入：一律接受 RFC3339，解析用 `DateTime::parse_from_rfc3339` / `from_rfc3339`；**禁止** `parse_from_str` 自定义格式（如 `%Y-%m-%d %H:%M:%S`）作为公共 API 入口。
+- **兼容解析例外**（P2-1 保留，改 RFC3339 会破坏 API 输入契约）：查询参数/老数据解析 `parse_from_str(s,"%Y-%m-%d %H:%M:%S")` 17 处 + `%Y-%m-%dT%H:%M:%S[%.f]` 3 处 + NaiveDateTime/DateTime 的 date-only 解析 2 处，维持现状，新增代码不得再引入。
+- **业务派生串豁免**：`format("%Y%m%d")` 等紧凑格式（批次号/编号/文件名/统计 key，如 `format!("ID-{}", now.format("%Y%m%d%H%M%S"))`）不是时间序列化，允许且不改；审计工具标为"业务派生豁免"。
 - DTO 内部 String 与 DateTime 字段混用可接受（序列化结果一致），但**同一 DTO 内同类语义字段应保持同一种声明风格**（推荐一律 `DateTime<Utc>`，序列化交给 serde）。
 
 ### 2.4 边界与豁免
@@ -73,4 +76,4 @@ python3 scripts/date-type-audit.py --sql      # 仅 SQL 列类型分布
 | DB 时间列 | timestamptz 392 / timestamp(无时区) 384 / date 58 / numeric·varchar 6 | 待迁移 384 列 |
 | Rust 时间字段 | DateTime<Utc> 1825 / String 1201 / NaiveDate 149 / NaiveDateTime 37 / int 23 / Instant 28 / bool 24 | 实体层违规按服务待清理 |
 | mes 试点 | 实体层 0 违规；DTO String 均为 RFC3339 输出 | ✅ 达标（重构收尾已达成） |
-| API 约定 | to_rfc3339 1220 / parse_from_rfc3339 203 / 手动 format 185 / parse_from_str 64 | 手动 format 与自定义 parse 待收敛 |
+| API 约定 | to_rfc3339 1220 / parse_from_rfc3339 203 / NaiveDate FromStr 40 / parse_from_str 22（17 兼容 + 2 date-only + 3 T 格式） | P2-1 parse 收敛完成；format 侧 %Y-%m-%d 64 处待类型感知逐点处理（P2-2），紧凑格式 121 处业务派生豁免 |

@@ -857,7 +857,11 @@ D
   - **P1-2b 实体层 NaiveDateTime 收口**：20 处豁免字段 → DateTime<Utc>（tenant 11 / iam 5 / backup 2 / migration 3 / integration 3 / analytics 4 / pdm 2）；DTO 层 NaiveDateTime 保持不动（归 P2-1）；14 条"DB 无时区列"豁免注释删除，保留 2 条正确豁免（audit 响应耗时 + srm 交货周期文本）
   - 顺带修复：NaiveDateTime 映射 timestamptz 列的运行时 decode 类型漂移
   - 验证：unified-core/integration/analytics/pdm cargo test 全绿（0 failed）；审计：实体违规 0 + SQL 无时区列 0（exit 0）
-- [ ] **P2-1 API 约定收敛**：DTO 手动 format 串 185 处 + parse_from_str 自定义格式 64 处 → 统一 RFC3339
+- [x] **P2-1 API 约定收敛 ✅（2026-09-25）**：
+  - **parse 侧收敛**：40 处 `NaiveDate::parse_from_str(s,"%Y-%m-%d")` → `s.parse::<NaiveDate>()`（FromStr，ISO 日期等价；21 文件：lims 2 / unified-core 1 / wms 1 / portal 2 / mes 9 / hrm 1 / mobile 1 / finance 4 / erp 2 等）；保留 2 处 NaiveDateTime/DateTime date-only 解析 + 17 处 `%Y-%m-%d %H:%M:%S` 兼容解析 + 3 处 T 格式（查询参数/老数据兼容，改 RFC3339 会破坏 API 输入契约）
+  - **format 侧决策**：64 处 `format("%Y-%m-%d")` 首次批量收敛 to_string() 时发现 **DateTime receiver 误伤**（`Utc::now().format("%Y-%m-%d")` 是日期 key 语义，to_string 输出 RFC3339 行为不同，cost_metering/mcp_security 每日重置 key 被破坏）→ **全部回退**，format 收敛须类型感知，推迟到 P2-2 逐点处理；审计工具将 `%Y-%m-%d` 标为"序列化风格待收敛"、紧凑格式（%Y%m%d 批次号/文件名/统计 key）标为"业务派生豁免"
+  - 验证：14 crate `cargo check` 全过；`cargo test` lib 1171 passed / 0 failed（ai 曾 2 失败为 format 误伤，回退后修复）；ai `test_external_agent_calls_business_tools` 失败经 git stash 验证为**既有失败**（Anonymous session 认证缺失，与日期治理无关）
+  - 度量基线（审计工具新增 serialization 统计）：parse_from_str 62 → 22；FromStr_parse 40；to_rfc3339 1220 / parse_from_rfc3339 203 不变
 - [ ] **P2-2 144 个冲突字段清理**：同名字段跨服务统一类型（start_date/end_date/expires_at/completed_at 等）
 - [ ] **P2-3 审计工具进 CI**：date-type-audit.py 实体层违规 0 作为门禁（与 mes-online-check 同级）
 
