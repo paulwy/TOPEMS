@@ -1,5 +1,6 @@
 //! Quality Standard DTOs
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use sqlx::FromRow;
@@ -35,8 +36,8 @@ pub struct QualityStandard {
     pub version: Option<String>,
     pub status: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -74,7 +75,7 @@ pub struct StandardRevision {
     pub description: Option<String>,
     pub status: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[cfg(test)]
@@ -189,8 +190,8 @@ mod tests {
             version: Some("2015".to_string()),
             status: Some("active".to_string()),
             created_by: Some("u1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let s2 = s.clone();
         assert_eq!(s.id, s2.id);

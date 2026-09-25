@@ -1,5 +1,6 @@
 //! Quality Issue DTOs
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use sqlx::FromRow;
@@ -25,9 +26,9 @@ pub struct QualityIssue {
     pub source: Option<String>,
     pub related_inspection_id: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub resolved_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub resolved_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -161,9 +162,9 @@ mod tests {
             source: Some("line1".to_string()),
             related_inspection_id: Some("insp-1".to_string()),
             created_by: Some("user1".to_string()),
-            created_at: Some("2025-01-01".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
             resolved_at: None,
-            updated_at: Some("2025-01-02".to_string()),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let issue2 = issue.clone();
         assert_eq!(issue.id, issue2.id);
@@ -197,9 +198,9 @@ mod tests {
                 source: Some("inspection".to_string()),
                 related_inspection_id: Some("i1".to_string()),
                 created_by: Some("u1".to_string()),
-                created_at: Some("c".to_string()),
-                resolved_at: Some("r".to_string()),
-                updated_at: Some("u".to_string()),
+                created_at: DateTime::from_timestamp(1704067200, 0),
+                resolved_at: DateTime::from_timestamp(1704067200, 0),
+                updated_at: DateTime::from_timestamp(1704067200, 0),
             },
             approval_workflow_id: Some("wf1".to_string()),
             approval_status: Some("pending".to_string()),

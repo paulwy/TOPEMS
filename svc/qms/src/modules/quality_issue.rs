@@ -577,7 +577,7 @@ pub struct IssueApprovalRequest {
 /// locale_placeholder 形如 "$3"，由调用方按当前 SQL 的参数序号决定。
 fn issue_select_cols(locale_placeholder: &str) -> String {
     format!(
-        r#"id, tenant_id::TEXT, issue_no, CASE WHEN {p} = 'en' THEN COALESCE(title_en, title) ELSE title END AS title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#,
+        r#"id, tenant_id::TEXT, issue_no, CASE WHEN {p} = 'en' THEN COALESCE(title_en, title) ELSE title END AS title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at, resolved_at, updated_at"#,
         p = locale_placeholder
     )
 }

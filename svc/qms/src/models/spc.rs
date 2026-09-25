@@ -1,5 +1,6 @@
 //! SPC (Statistical Process Control) DTOs
 
+use chrono::{DateTime, Utc};
 use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -32,8 +33,8 @@ pub struct SpcChart {
     pub sample_count: Option<i32>,
     pub status: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -68,8 +69,8 @@ pub struct SpcDataPoint {
     pub subgroup_size: Option<i32>,
     pub is_out_of_control: Option<bool>,
     pub trend_flag: Option<String>,
-    pub measured_at: Option<String>,
-    pub created_at: Option<String>,
+    pub measured_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -284,8 +285,8 @@ mod tests {
             sample_count: Some(25),
             status: Some("active".to_string()),
             created_by: Some("u1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let c2 = c.clone();
         assert_eq!(c.id, c2.id);
@@ -306,8 +307,8 @@ mod tests {
             subgroup_size: Some(5),
             is_out_of_control: Some(false),
             trend_flag: Some("stable".to_string()),
-            measured_at: Some("2025-01-15T08:30:00Z".to_string()),
-            created_at: Some("c".to_string()),
+            measured_at: DateTime::from_timestamp(1704067200, 0),
+            created_at: DateTime::from_timestamp(1704067200, 0),
         });
     }
 

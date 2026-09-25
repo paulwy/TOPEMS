@@ -94,7 +94,7 @@ pub async fn list_quality_costs(
     };
 
     let fetch_sql = format!(
-        r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_costs{} ORDER BY incurred_date DESC LIMIT ${} OFFSET ${}"#,
+        r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs{} ORDER BY incurred_date DESC LIMIT ${} OFFSET ${}"#,
         where_clause,
         params.len() + 1,
         params.len() + 2
@@ -154,7 +154,7 @@ pub async fn create_quality_cost(
         .incurred_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_costs (tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_quality_costs (tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id::TEXT, tenant_id::TEXT, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at"#)).bind(tenant_id).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -201,7 +201,7 @@ pub async fn get_quality_cost(
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at FROM qms.qa_quality_costs WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -252,7 +252,7 @@ pub async fn update_quality_cost(
         .incurred_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(tenant_id)
+    let cost = sqlx::query_as::<_, QualityCost>(only_own_schema_query!("qms", r#"UPDATE qms.qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date, created_by, created_at, updated_at"#)).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

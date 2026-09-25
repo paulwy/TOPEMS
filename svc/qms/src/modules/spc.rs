@@ -146,16 +146,16 @@ pub async fn list_spc_charts(
     let offset = (page - 1) * page_size;
 
     let charts = match (query.chart_type.as_ref(), query.product_id.as_ref()) {
-        (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(ct).bind(pid).bind(page_size).bind(offset)
+        (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#)).bind(tenant_opt).bind(ct).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(ct), None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(ct).bind(page_size).bind(offset)
+        (Some(ct), None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND chart_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(ct).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(pid).bind(page_size).bind(offset)
+        (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#)).bind(tenant_opt).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3"#)).bind(tenant_opt).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -186,7 +186,7 @@ pub async fn create_spc_chart(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_charts (tenant_id, chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10) RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_charts (tenant_id, chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10) RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(tenant_id).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -219,7 +219,7 @@ pub async fn get_spc_chart(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -247,7 +247,7 @@ pub async fn update_spc_chart(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), ucl = COALESCE($4, ucl), cl = COALESCE($5, cl), lcl = COALESCE($6, lcl), status = COALESCE($7, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), ucl = COALESCE($4, ucl), cl = COALESCE($5, cl), lcl = COALESCE($6, lcl), status = COALESCE($7, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -312,7 +312,7 @@ pub async fn get_spc_data_points(
 
     let limit = query.limit.unwrap_or(100);
 
-    let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT FROM qms.qa_spc_data_points WHERE chart_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no DESC LIMIT $3"#)).bind(chart_id).bind(tenant_opt).bind(limit)
+    let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at, created_at FROM qms.qa_spc_data_points WHERE chart_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no DESC LIMIT $3"#)).bind(chart_id).bind(tenant_opt).bind(limit)
     .fetch_all(&state.pool)
     .await;
 
@@ -348,7 +348,7 @@ pub async fn add_spc_data_point(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id).bind(tenant_opt)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -365,7 +365,7 @@ pub async fn add_spc_data_point(
     let value_f64 = req.value.to_f64().unwrap_or(0.0);
     let is_out_of_control = Some(value_f64 > ucl || value_f64 < lcl);
 
-    let point = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_data_points (tenant_id, chart_id, sample_no, value, subgroup_size, is_out_of_control) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT"#)).bind(tenant_id).bind(chart_id).bind(req.sample_no).bind(req.value).bind(req.subgroup_size).bind(is_out_of_control)
+    let point = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_data_points (tenant_id, chart_id, sample_no, value, subgroup_size, is_out_of_control) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at, created_at"#)).bind(tenant_id).bind(chart_id).bind(req.sample_no).bind(req.value).bind(req.subgroup_size).bind(is_out_of_control)
     .fetch_one(&state.pool)
     .await;
 

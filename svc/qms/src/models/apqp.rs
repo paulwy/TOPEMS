@@ -1,6 +1,6 @@
 //! APQP (Advanced Product Quality Planning) DTOs
 
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -27,14 +27,14 @@ pub struct ApqpProject {
     pub current_phase: Option<String>,
     pub leader: Option<String>,
     pub team: Option<String>,
-    pub start_date: Option<String>,
-    pub target_date: Option<String>,
-    pub actual_end_date: Option<String>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub target_date: Option<DateTime<Utc>>,
+    pub actual_end_date: Option<DateTime<Utc>>,
     pub progress: Option<i32>,
     pub risk_level: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -78,14 +78,14 @@ pub struct ApqpPhase {
     pub phase_name: String,
     pub description: Option<String>,
     pub status: Option<String>,
-    pub start_date: Option<String>,
-    pub end_date: Option<String>,
-    pub actual_start_date: Option<String>,
-    pub actual_end_date: Option<String>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub end_date: Option<DateTime<Utc>>,
+    pub actual_start_date: Option<DateTime<Utc>>,
+    pub actual_end_date: Option<DateTime<Utc>>,
     pub progress: Option<i32>,
     pub sort_order: Option<i32>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -124,11 +124,11 @@ pub struct ApqpTask {
     pub deliverable: Option<String>,
     pub status: Option<String>,
     pub assignee: Option<String>,
-    pub due_date: Option<String>,
-    pub completed_at: Option<String>,
+    pub due_date: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub sort_order: Option<i32>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -180,9 +180,9 @@ pub struct ApqpRisk {
     pub status: Option<String>,
     pub mitigation_plan: Option<String>,
     pub responsible: Option<String>,
-    pub target_date: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub target_date: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -258,9 +258,9 @@ pub struct ApqpApproval {
     pub applicant: Option<String>,
     pub approver: Option<String>,
     pub comment: Option<String>,
-    pub submitted_at: Option<String>,
-    pub approved_at: Option<String>,
-    pub created_at: Option<String>,
+    pub submitted_at: Option<DateTime<Utc>>,
+    pub approved_at: Option<DateTime<Utc>>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -617,14 +617,14 @@ mod tests {
             current_phase: Some("Phase 2".to_string()),
             leader: Some("pm1".to_string()),
             team: Some("team list".to_string()),
-            start_date: Some("2025-01-01".to_string()),
-            target_date: Some("2025-12-31".to_string()),
+            start_date: DateTime::from_timestamp(1704067200, 0),
+            target_date: DateTime::from_timestamp(1704067200, 0),
             actual_end_date: None,
             progress: Some(25),
             risk_level: Some("medium".to_string()),
             created_by: Some("admin".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let p2 = p.clone();
         assert_eq!(p.id, p2.id);
@@ -650,9 +650,9 @@ mod tests {
             status: Some("mitigating".to_string()),
             mitigation_plan: Some("dual source".to_string()),
             responsible: Some("mgr1".to_string()),
-            target_date: Some("2025-06-30".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            target_date: DateTime::from_timestamp(1704067200, 0),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let r2 = r.clone();
         assert_eq!(r.id, r2.id);
@@ -675,11 +675,11 @@ mod tests {
             deliverable: Some("FMEA report".to_string()),
             status: Some("in_progress".to_string()),
             assignee: Some("eng1".to_string()),
-            due_date: Some("2025-04-30".to_string()),
+            due_date: DateTime::from_timestamp(1704067200, 0),
             completed_at: None,
             sort_order: Some(3),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         });
     }
 
@@ -693,14 +693,14 @@ mod tests {
             phase_name: "Product Design".to_string(),
             description: Some("phase desc".to_string()),
             status: Some("in_progress".to_string()),
-            start_date: Some("2025-02-01".to_string()),
-            end_date: Some("2025-05-31".to_string()),
-            actual_start_date: Some("2025-02-05".to_string()),
+            start_date: DateTime::from_timestamp(1704067200, 0),
+            end_date: DateTime::from_timestamp(1704067200, 0),
+            actual_start_date: DateTime::from_timestamp(1704067200, 0),
             actual_end_date: None,
             progress: Some(40),
             sort_order: Some(2),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         });
     }
 

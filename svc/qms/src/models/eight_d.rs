@@ -1,6 +1,6 @@
 //! 8D Report DTOs
 
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -37,20 +37,20 @@ pub struct EightDReport {
     pub d1_leader: Option<String>,
     pub d2_problem_description: Option<String>,
     pub d3_containment_action: Option<String>,
-    pub d3_implemented_at: Option<String>,
+    pub d3_implemented_at: Option<DateTime<Utc>>,
     pub d4_root_cause: Option<String>,
     pub d4_cause_analysis: Option<String>,
     pub d5_permanent_action: Option<String>,
     pub d6_verification_result: Option<String>,
-    pub d6_verified_at: Option<String>,
+    pub d6_verified_at: Option<DateTime<Utc>>,
     pub d7_preventive_action: Option<String>,
     pub d8_congratulations: Option<String>,
-    pub d8_closed_at: Option<String>,
+    pub d8_closed_at: Option<DateTime<Utc>>,
     pub assignee: Option<String>,
-    pub due_date: Option<String>,
+    pub due_date: Option<DateTime<Utc>>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -99,7 +99,7 @@ pub struct EightDAuditLog {
     pub step: Option<String>,
     pub operator: Option<String>,
     pub comment: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[cfg(test)]
@@ -240,7 +240,7 @@ mod tests {
             d1_leader: Some("leader1".to_string()),
             d2_problem_description: Some("desc".to_string()),
             d3_containment_action: Some("ca".to_string()),
-            d3_implemented_at: Some("2025-02-01".to_string()),
+            d3_implemented_at: DateTime::from_timestamp(1738368000, 0),
             d4_root_cause: Some("rc".to_string()),
             d4_cause_analysis: Some("ana".to_string()),
             d5_permanent_action: Some("pa".to_string()),
@@ -250,10 +250,10 @@ mod tests {
             d8_congratulations: None,
             d8_closed_at: None,
             assignee: Some("e1".to_string()),
-            due_date: Some("2025-06-30".to_string()),
+            due_date: DateTime::from_timestamp(1704067200, 0),
             created_by: Some("u1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let r2 = r.clone();
         assert_eq!(r.id, r2.id);

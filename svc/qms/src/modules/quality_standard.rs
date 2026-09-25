@@ -115,7 +115,7 @@ pub async fn list_standards(
         r#"
         SELECT id, tenant_id::TEXT, code, name, category, level, specification,
             description, version, status, created_by,
-            created_at::TEXT, updated_at::TEXT
+            created_at, updated_at
         FROM qms.qa_standards
         {}
         ORDER BY created_at DESC
@@ -183,7 +183,7 @@ pub async fn create_standard(
     let version = req.version.unwrap_or_else(|| "1.0".to_string());
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standards (tenant_id, code, name, category, level, specification, description, version, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(tenant_id).bind(code).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(version).bind(req.created_by)
+    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_standards (tenant_id, code, name, category, level, specification, description, version, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(tenant_id).bind(code).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(version).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -258,7 +258,7 @@ pub async fn get_standard(
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
-    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -309,7 +309,7 @@ pub async fn update_standard(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -321,7 +321,7 @@ pub async fn update_standard(
         }
     }
 
-    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = COALESCE($7, version), status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(req.version).bind(req.status).bind(tenant_id)
+    let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = COALESCE($7, version), status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(req.version).bind(req.status).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -442,7 +442,7 @@ pub async fn list_revisions(
     };
     let _tenant_id = get_tenant_id(&claims, &headers);
 
-    let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at::TEXT FROM qms.qa_standard_revisions WHERE standard_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
+    let revisions = sqlx::query_as::<_, StandardRevision>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, standard_id, version, name, category, level, specification, description, status, created_by, created_at FROM qms.qa_standard_revisions WHERE standard_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"#)).bind(id).bind(tenant_opt)
     .fetch_all(&state.pool)
     .await;
 
@@ -476,7 +476,7 @@ pub async fn create_revision(
     };
     let tenant_id = get_tenant_id(&claims, &headers);
 
-    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let current = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"SELECT id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at FROM qms.qa_standards WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -511,7 +511,7 @@ pub async fn create_revision(
                 }
             });
 
-            let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = $7, status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(new_version).bind(req.status).bind(tenant_id)
+            let standard = sqlx::query_as::<_, QualityStandard>(only_own_schema_query!("qms", r#"UPDATE qms.qa_standards SET name = COALESCE($2, name), category = COALESCE($3, category), level = COALESCE($4, level), specification = COALESCE($5, specification), description = COALESCE($6, description), version = $7, status = COALESCE($8, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id::TEXT, code, name, category, level, specification, description, version, status, created_by, created_at, updated_at"#)).bind(id).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(new_version).bind(req.status).bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 

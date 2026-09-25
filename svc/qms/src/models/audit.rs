@@ -1,5 +1,6 @@
 //! Audit DTOs (AuditPlan, AuditTask, AuditFinding)
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -44,8 +45,8 @@ pub struct AuditPlan {
     pub actual_start: Option<String>,
     pub actual_end: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -58,10 +59,10 @@ pub struct AuditTask {
     pub description: Option<String>,
     pub auditor: Option<String>,
     pub status: Option<String>,
-    pub completed_at: Option<String>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub finding_count: Option<i32>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -78,11 +79,11 @@ pub struct AuditFinding {
     pub status: Option<String>,
     pub recommendation: Option<String>,
     pub responsible: Option<String>,
-    pub target_date: Option<String>,
-    pub verified_at: Option<String>,
+    pub target_date: Option<DateTime<Utc>>,
+    pub verified_at: Option<DateTime<Utc>>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -274,8 +275,8 @@ mod tests {
             actual_start: None,
             actual_end: None,
             created_by: Some("auditor1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let p2 = p.clone();
         assert_eq!(p.id, p2.id);
@@ -300,11 +301,11 @@ mod tests {
             status: Some("open".to_string()),
             recommendation: Some("rec".to_string()),
             responsible: Some("mgr1".to_string()),
-            target_date: Some("2025-06-30".to_string()),
+            target_date: DateTime::from_timestamp(1704067200, 0),
             verified_at: None,
             created_by: Some("u1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let f2 = f.clone();
         assert_eq!(f.id, f2.id);
@@ -345,10 +346,10 @@ mod tests {
             description: Some("desc".to_string()),
             auditor: Some("auditor-x".to_string()),
             status: Some("in_progress".to_string()),
-            completed_at: Some("2025-04-01".to_string()),
+            completed_at: DateTime::from_timestamp(1704067200, 0),
             finding_count: Some(3),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         });
     }
 }

@@ -41,6 +41,7 @@ TIME_NAME = re.compile(
     rf"^{_TIME_PREFIX}[a-z_]*_(?:at|on|date|time|ts|timestamp)$"
     rf"|^{_TIME_PREFIX}(?:date|time|ts|timestamp)$"
     rf"|^[a-z_]+_(?:at|on|date|time|ts|timestamp)$"
+    rf"|^[a-z][a-z0-9_]+_(?:at|on|date|time|ts|timestamp)$"
     rf"|^(?:date|time|timestamp|datetime|start_time|end_time|start_date|end_date)$",
     re.I)
 

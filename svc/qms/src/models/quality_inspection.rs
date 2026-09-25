@@ -1,5 +1,6 @@
 //! Quality Inspection DTOs
 
+use chrono::{DateTime, Utc};
 use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
@@ -39,12 +40,12 @@ pub struct Inspection {
     pub status: Option<String>,
     pub inspector: Option<String>,
     pub assignee: Option<String>,
-    pub inspected_at: Option<String>,
+    pub inspected_at: Option<DateTime<Utc>>,
     pub result: Option<String>,
     pub memo: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -111,7 +112,7 @@ pub struct InspectionAudit {
     pub action: String,
     pub operator: String,
     pub comment: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -124,7 +125,7 @@ pub struct InspectionResult {
     pub measured_value: Option<String>,
     pub is_qualified: bool,
     pub remark: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[cfg(test)]
@@ -311,12 +312,12 @@ mod tests {
             status: Some("pending".to_string()),
             inspector: Some("inspector_a".to_string()),
             assignee: Some("assignee_b".to_string()),
-            inspected_at: Some("2025-01-01T00:00:00Z".to_string()),
+            inspected_at: DateTime::from_timestamp(1704067200, 0),
             result: Some("pass".to_string()),
             memo: Some("memo text".to_string()),
             created_by: Some("creator".to_string()),
-            created_at: Some("2025-01-01T00:00:00Z".to_string()),
-            updated_at: Some("2025-01-02T00:00:00Z".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let i2 = i1.clone();
         assert_eq!(i1.id, i2.id);

@@ -1,6 +1,6 @@
 //! FMEA (Failure Mode and Effects Analysis) DTOs
 
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -32,8 +32,8 @@ pub struct FmeaAnalysis {
     pub leader: Option<String>,
     pub description: Option<String>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -81,15 +81,15 @@ pub struct FmeaItem {
     pub current_controls: Option<String>,
     pub recommended_actions: Option<String>,
     pub responsible: Option<String>,
-    pub target_date: Option<String>,
+    pub target_date: Option<DateTime<Utc>>,
     pub action_status: Option<String>,
     pub revised_severity: Option<i32>,
     pub revised_occurrence: Option<i32>,
     pub revised_detection: Option<i32>,
     pub revised_rpn: Option<i32>,
     pub sort_order: Option<i32>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -346,8 +346,8 @@ mod tests {
             leader: Some("l1".to_string()),
             description: Some("full desc".to_string()),
             created_by: Some("u1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let f2 = f.clone();
         assert_eq!(f.id, f2.id);
@@ -375,15 +375,15 @@ mod tests {
             current_controls: Some("torque wrench".to_string()),
             recommended_actions: Some("specify torque".to_string()),
             responsible: Some("eng A".to_string()),
-            target_date: Some("2025-12-31".to_string()),
+            target_date: DateTime::from_timestamp(1704067200, 0),
             action_status: Some("open".to_string()),
             revised_severity: Some(8),
             revised_occurrence: Some(2),
             revised_detection: Some(3),
             revised_rpn: Some(48),
             sort_order: Some(1),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let item2 = item.clone();
         assert_eq!(item.id, item2.id);

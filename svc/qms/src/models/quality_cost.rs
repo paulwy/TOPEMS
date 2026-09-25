@@ -1,7 +1,7 @@
 //! Quality Cost DTOs
 
 use bigdecimal::BigDecimal;
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -27,10 +27,10 @@ pub struct QualityCost {
     pub department: Option<String>,
     pub description: Option<String>,
     pub related_issue_id: Option<String>,
-    pub incurred_date: Option<String>,
+    pub incurred_date: Option<DateTime<Utc>>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -237,10 +237,10 @@ mod tests {
             department: Some("QA".to_string()),
             description: Some("training cost".to_string()),
             related_issue_id: Some("i1".to_string()),
-            incurred_date: Some("2025-01-15".to_string()),
+            incurred_date: DateTime::from_timestamp(1704067200, 0),
             created_by: Some("admin".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let c2 = c.clone();
         assert_eq!(c.id, c2.id);
@@ -258,7 +258,7 @@ mod tests {
             cost_category: Some("external_failure".to_string()),
             department: Some("Production".to_string()),
             start_date: Some("2025-01-01".to_string()),
-            end_date: Some("2025-12-31".to_string()),
+            end_date: Some("2025-01-01".to_string()),
         });
     }
 

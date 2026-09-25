@@ -1,5 +1,6 @@
 //! Corrective Action DTOs
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -35,11 +36,11 @@ pub struct CorrectiveAction {
     pub status: Option<String>,
     pub priority: Option<String>,
     pub assignee: Option<String>,
-    pub target_date: Option<String>,
-    pub completed_at: Option<String>,
+    pub target_date: Option<DateTime<Utc>>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub created_by: Option<String>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
@@ -49,11 +50,11 @@ pub struct ActionItem {
     pub action_id: String,
     pub item_name: String,
     pub responsible: Option<String>,
-    pub due_date: Option<String>,
+    pub due_date: Option<DateTime<Utc>>,
     pub status: Option<String>,
-    pub completed_at: Option<String>,
+    pub completed_at: Option<DateTime<Utc>>,
     pub remark: Option<String>,
-    pub created_at: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -223,11 +224,11 @@ mod tests {
             status: Some("in_progress".to_string()),
             priority: Some("high".to_string()),
             assignee: Some("eng1".to_string()),
-            target_date: Some("2025-06-30".to_string()),
+            target_date: DateTime::from_timestamp(1704067200, 0),
             completed_at: None,
             created_by: Some("u1".to_string()),
-            created_at: Some("c".to_string()),
-            updated_at: Some("u".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
+            updated_at: DateTime::from_timestamp(1704067200, 0),
         };
         let a2 = a.clone();
         assert_eq!(a.id, a2.id);
@@ -257,11 +258,11 @@ mod tests {
             action_id: "a".to_string(),
             item_name: "task 1".to_string(),
             responsible: Some("resp".to_string()),
-            due_date: Some("2025-12-31".to_string()),
+            due_date: DateTime::from_timestamp(1704067200, 0),
             status: Some("completed".to_string()),
-            completed_at: Some("2025-10-01".to_string()),
+            completed_at: DateTime::from_timestamp(1704067200, 0),
             remark: Some("ok".to_string()),
-            created_at: Some("c".to_string()),
+            created_at: DateTime::from_timestamp(1704067200, 0),
         });
     }
 
@@ -275,13 +276,13 @@ mod tests {
             action_type: Some("correction".to_string()),
             priority: Some("medium".to_string()),
             assignee: Some("a1".to_string()),
-            target_date: Some("2025-12-31".to_string()),
+            target_date: Some("2025-01-01".to_string()),
             created_by: Some("u1".to_string()),
             items: Some(vec![
                 CreateActionItemRequest {
                     item_name: "i1".to_string(),
                     responsible: Some("r1".to_string()),
-                    due_date: Some("2025-06-01".to_string()),
+                    due_date: Some("2025-01-01".to_string()),
                     remark: Some("ok".to_string()),
                 },
                 CreateActionItemRequest {
