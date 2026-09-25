@@ -31,6 +31,13 @@ pub struct PermissionDef {
 fn get_runtime_url() -> String {
     std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8030".to_string())
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:read"])),
+    path = "/api/plugins/info",
+    responses((status = 200, description = "get_plugin_info OK")),
+    tag = "mes_plugin"
+)]
 
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
@@ -131,6 +138,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:read"])),
+    path = "/api/plugins/health",
+    responses((status = 200, description = "plugin_health_check OK")),
+    tag = "mes_plugin"
+)]
 
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
     match sqlx::query("SELECT 1").fetch_one(&state.pool).await {

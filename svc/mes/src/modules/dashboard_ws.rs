@@ -23,6 +23,13 @@ lazy_static::lazy_static! {
     static ref ACTIVE_CONNECTIONS: Arc<RwLock<Vec<Uuid>>> = Arc::new(RwLock::new(Vec::new()));
     static ref TOTAL_CONNECTIONS: Arc<RwLock<u64>> = Arc::new(RwLock::new(0));
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:read"])),
+    path = "/ws/mes/dashboard",
+    responses((status = 200, description = "dashboard_websocket OK")),
+    tag = "dashboard_ws"
+)]
 
 pub async fn dashboard_websocket(
     State(auth_state): State<AuthState>,

@@ -34,6 +34,21 @@ use crate::modules::work_report::{
     CreateWorkReportRequest, RejectWorkReportRequest, UpdateWorkReportRequest, WorkReportResponse,
 };
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// （home 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec）
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mes:read"])),
+    path = "/",
+    tag = "mes",
+    responses((status = 200, description = "home OK")),
+)]
+fn _home() {}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -284,7 +299,23 @@ use crate::modules::work_report::{
         crate::modules::production_kanban::get_workstation_status,
         crate::modules::production_kanban::get_quality_trend,
         crate::modules::production_kanban::get_equipment_status,
-    ),
+            crate::modules::anomaly_detection::approve_anomaly_handling,
+        crate::modules::anomaly_detection::reject_anomaly_handling,
+        crate::modules::anomaly_detection::start_anomaly_handling_approval,
+        crate::modules::quality_management::inspection::approve_concession,
+        crate::modules::quality_management::inspection::reject_concession,
+        crate::modules::quality_management::inspection::start_concession_approval,
+        crate::modules::production_order::approve_order,
+        crate::modules::production_order::reject_order,
+        crate::modules::production_order::start_order_approval,
+        crate::modules::work_report::approve_rework,
+        crate::modules::work_report::reject_rework,
+        crate::modules::work_report::start_rework_approval,
+        crate::modules::dashboard_ws::dashboard_websocket,
+        crate::modules::mes_plugin::get_plugin_info,
+        crate::modules::mes_plugin::plugin_health_check,
+        _home,
+),
     components(
         schemas(
             // Work Order

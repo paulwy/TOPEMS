@@ -11,7 +11,7 @@ use sqlx::types::BigDecimal;
 
 use crate::AppState;
 
-mod inspection;
+pub mod inspection;
 mod patrol;
 mod standard;
 
