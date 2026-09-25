@@ -537,7 +537,16 @@ async fn list_report_templates(report_type: Option<&str>) -> Vec<ReportTemplate>
 }
 
 /// 生成报告
-async fn generate_report(req: &GenerateReportRequest) -> Option<GeneratedReport> {
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/consolidation/reports/generate",
+    responses(
+        (status = 200, description = "generate_report OK")
+    ),
+    tag = "ERP/master_data_report_automation"
+)]
+pub async fn generate_report(req: &GenerateReportRequest) -> Option<GeneratedReport> {
     ensure_report_initialized().await;
     let store = get_report_store();
     let template_clone = {

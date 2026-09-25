@@ -83,6 +83,15 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "updated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
     })
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/asset-categories",
+    responses(
+        (status = 200, description = "list_asset_categories OK")
+    ),
+    tag = "ERP/asset_category"
+)]
 
 pub async fn list_asset_categories(
     State(_state): State<ApiState>,
@@ -154,6 +163,18 @@ pub async fn list_asset_categories(
         "获取资产分类列表成功",
     )))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/asset-categories/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_asset_category OK")
+    ),
+    tag = "ERP/asset_category"
+)]
 
 pub async fn get_asset_category(
     State(_state): State<ApiState>,

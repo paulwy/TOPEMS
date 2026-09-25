@@ -49,6 +49,15 @@ pub struct CreateVoucherResponse {
     pub voucher_id: Uuid,
     pub voucher_number: String,
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/vouchers",
+    responses(
+        (status = 200, description = "create_voucher OK")
+    ),
+    tag = "ERP/finance"
+)]
 
 pub async fn create_voucher(
     State(_state): State<ApiState>,

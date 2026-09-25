@@ -70,6 +70,15 @@ pub struct BatchUpdateRequest {
 }
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/system/settings",
+    responses(
+        (status = 200, description = "list_settings OK")
+    ),
+    tag = "ERP/settings"
+)]
 
 pub async fn list_settings(
     State(pool): State<PgPool>,
@@ -92,6 +101,18 @@ pub async fn list_settings(
 
     Json(ApiResponse::success(items, "查询成功"))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/system/settings/{key}",
+    params(
+        ("key" = String, Path, description = "key")
+    ),
+    responses(
+        (status = 200, description = "get_setting OK")
+    ),
+    tag = "ERP/settings"
+)]
 
 pub async fn get_setting(
     State(pool): State<PgPool>,
@@ -194,6 +215,15 @@ pub async fn delete_setting(
         }
     }
 }
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/system/settings/batch",
+    responses(
+        (status = 200, description = "batch_update_settings OK")
+    ),
+    tag = "ERP/settings"
+)]
 
 pub async fn batch_update_settings(
     State(pool): State<PgPool>,

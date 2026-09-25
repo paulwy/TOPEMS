@@ -764,6 +764,15 @@ async fn batch_update_status(
     }
     query.fetch_all(&mut **txn).await.map_err(|e| e.to_string())
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/sales-orders/batch/approve",
+    responses(
+        (status = 200, description = "batch_approve_sales_orders OK")
+    ),
+    tag = "ERP/sales_order"
+)]
 
 async fn batch_approve_sales_orders(
     State(state): State<ApiState>,
@@ -791,6 +800,15 @@ async fn batch_approve_sales_orders(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/sales-orders/batch/ship",
+    responses(
+        (status = 200, description = "batch_ship_sales_orders OK")
+    ),
+    tag = "ERP/sales_order"
+)]
 
 async fn batch_ship_sales_orders(
     State(state): State<ApiState>,
@@ -818,6 +836,15 @@ async fn batch_ship_sales_orders(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/sales-orders/batch/complete",
+    responses(
+        (status = 200, description = "batch_complete_sales_orders OK")
+    ),
+    tag = "ERP/sales_order"
+)]
 
 async fn batch_complete_sales_orders(
     State(state): State<ApiState>,
@@ -845,6 +872,15 @@ async fn batch_complete_sales_orders(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/sales-orders/batch/cancel",
+    responses(
+        (status = 200, description = "batch_cancel_sales_orders OK")
+    ),
+    tag = "ERP/sales_order"
+)]
 
 async fn batch_cancel_sales_orders(
     State(state): State<ApiState>,
@@ -872,6 +908,15 @@ async fn batch_cancel_sales_orders(
         }
     }
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/sales-orders/stats",
+    responses(
+        (status = 200, description = "get_sales_order_stats OK")
+    ),
+    tag = "ERP/sales_order"
+)]
 
 async fn get_sales_order_stats(
     State(state): State<ApiState>,

@@ -489,6 +489,15 @@ fn customer_select_cols(locale_placeholder: &str) -> String {
         "id, code, CASE WHEN {locale_placeholder} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
     )
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/batch-list",
+    responses(
+        (status = 200, description = "batch_list_customers OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn batch_list_customers(
     State(state): State<ApiState>,
@@ -534,6 +543,15 @@ async fn batch_list_customers(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/batch",
+    responses(
+        (status = 200, description = "batch_create_customers OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn batch_create_customers(
     State(state): State<ApiState>,
@@ -659,6 +677,18 @@ async fn batch_delete_customers(
         }
     }
 }
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/{id}/status",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "change_customer_status OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn change_customer_status(
     State(state): State<ApiState>,
@@ -694,6 +724,15 @@ async fn change_customer_status(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/batch/status",
+    responses(
+        (status = 200, description = "batch_change_status OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn batch_change_status(
     State(state): State<ApiState>,
@@ -737,6 +776,15 @@ async fn batch_change_status(
         }
     }
 }
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/batch/category",
+    responses(
+        (status = 200, description = "batch_change_category OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn batch_change_category(
     State(state): State<ApiState>,
@@ -780,6 +828,15 @@ async fn batch_change_category(
         }
     }
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/stats",
+    responses(
+        (status = 200, description = "get_customer_stats OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn get_customer_stats(
     State(state): State<ApiState>,
@@ -833,6 +890,15 @@ async fn get_customer_stats(
         "获取客户统计成功",
     ))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/customers/recent",
+    responses(
+        (status = 200, description = "list_recent_customers OK")
+    ),
+    tag = "ERP/customer"
+)]
 
 async fn list_recent_customers(
     State(state): State<ApiState>,

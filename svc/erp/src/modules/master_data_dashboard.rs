@@ -304,7 +304,16 @@ async fn create_dashboard(req: &DashboardRequest) -> DashboardLayout {
 }
 
 /// 获取仪表盘
-async fn get_dashboard(dashboard_id: &str) -> Option<DashboardLayout> {
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/dashboard",
+    responses(
+        (status = 200, description = "get_dashboard OK")
+    ),
+    tag = "ERP/master_data_dashboard"
+)]
+pub async fn get_dashboard(dashboard_id: &str) -> Option<DashboardLayout> {
     ensure_dashboard_initialized().await;
     let store = get_dashboard_store();
     let dashboards = store.dashboards.lock().await;

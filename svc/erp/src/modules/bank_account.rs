@@ -86,6 +86,15 @@ fn row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "updated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
     })
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/bank-accounts",
+    responses(
+        (status = 200, description = "list_bank_accounts OK")
+    ),
+    tag = "ERP/bank_account"
+)]
 
 pub async fn list_bank_accounts(
     State(_state): State<ApiState>,
@@ -154,6 +163,18 @@ pub async fn list_bank_accounts(
         "获取银行账户列表成功",
     )))
 }
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/bank-accounts/{id}",
+    params(
+        ("id" = Uuid, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "get_bank_account OK")
+    ),
+    tag = "ERP/bank_account"
+)]
 
 pub async fn get_bank_account(
     State(_state): State<ApiState>,
