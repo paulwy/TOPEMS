@@ -1281,7 +1281,7 @@ impl LiquidityOptimizer {
     operation_id = "create_pool_handler",
 )]
 
-async fn create_pool_handler(
+pub async fn create_pool_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePoolRequest>,
@@ -1304,7 +1304,7 @@ async fn create_pool_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_pool_handler(
+pub async fn get_pool_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1331,7 +1331,7 @@ async fn get_pool_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_pools_handler(
+pub async fn list_pools_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<CashPool>>> {
@@ -1357,7 +1357,7 @@ async fn list_pools_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn allocate_funds_handler(
+pub async fn allocate_funds_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AllocateFundsRequest>,
@@ -1385,7 +1385,7 @@ async fn allocate_funds_handler(
     operation_id = "transfer_handler",
 )]
 
-async fn transfer_handler(
+pub async fn transfer_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<TransferRequest>,
@@ -1408,7 +1408,7 @@ async fn transfer_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_pool_balance_handler(
+pub async fn get_pool_balance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1435,7 +1435,7 @@ async fn get_pool_balance_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_pool_history_handler(
+pub async fn get_pool_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1462,7 +1462,7 @@ async fn get_pool_history_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn consolidate_cash_handler(
+pub async fn consolidate_cash_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConsolidateRequest>,
@@ -1515,7 +1515,7 @@ async fn create_scenario_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn run_forecast_handler(
+pub async fn run_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunForecastRequest>,
@@ -1538,7 +1538,7 @@ async fn run_forecast_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_forecast_handler(
+pub async fn get_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1619,7 +1619,7 @@ async fn compare_scenarios_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_forecast_summary_handler(
+pub async fn get_forecast_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1645,7 +1645,7 @@ async fn get_forecast_summary_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn update_assumptions_handler(
+pub async fn update_assumptions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1671,7 +1671,7 @@ async fn update_assumptions_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_liquidity_snapshot_handler(
+pub async fn get_liquidity_snapshot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -1702,7 +1702,7 @@ async fn get_liquidity_snapshot_handler(
     operation_id = "optimize_liquidity_handler",
 )]
 
-async fn optimize_liquidity_handler(
+pub async fn optimize_liquidity_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<OptimizeRequest>,
@@ -1725,7 +1725,7 @@ async fn optimize_liquidity_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_recommendations_handler(
+pub async fn get_recommendations_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {
@@ -1751,7 +1751,7 @@ async fn get_recommendations_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn execute_action_handler(
+pub async fn execute_action_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExecuteActionRequest>,
@@ -1774,7 +1774,7 @@ async fn execute_action_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_targets_handler(
+pub async fn get_targets_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<LiquidityTarget>>> {
@@ -1807,7 +1807,7 @@ async fn get_targets_handler(
     operation_id = "set_target_handler",
 )]
 
-async fn set_target_handler(
+pub async fn set_target_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1831,7 +1831,7 @@ async fn set_target_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_optimization_history_handler(
+pub async fn get_optimization_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<OptimizationResult>>> {

@@ -959,7 +959,7 @@ impl ProjectAccountingAnalyzer {
     operation_id = "get_cost_center_report_handler",
 )]
 
-async fn get_cost_center_report_handler(
+pub async fn get_cost_center_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -980,7 +980,7 @@ async fn get_cost_center_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_cost_center_trend_handler(
+pub async fn get_cost_center_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1001,7 +1001,7 @@ async fn get_cost_center_trend_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_cost_center_efficiency_handler(
+pub async fn get_cost_center_efficiency_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1022,7 +1022,7 @@ async fn get_cost_center_efficiency_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_profit_center_report_handler(
+pub async fn get_profit_center_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1043,7 +1043,7 @@ async fn get_profit_center_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_profit_center_trend_handler(
+pub async fn get_profit_center_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1072,7 +1072,7 @@ async fn get_profit_center_trend_handler(
     operation_id = "get_profit_center_ranking_handler",
 )]
 
-async fn get_profit_center_ranking_handler(
+pub async fn get_profit_center_ranking_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1094,7 +1094,7 @@ async fn get_profit_center_ranking_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_project_account_report_handler(
+pub async fn get_project_account_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1115,7 +1115,7 @@ async fn get_project_account_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_project_progress_handler(
+pub async fn get_project_progress_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1136,7 +1136,7 @@ async fn get_project_progress_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_project_profitability_handler(
+pub async fn get_project_profitability_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1157,7 +1157,7 @@ async fn get_project_profitability_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_project_summary_handler(
+pub async fn get_project_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ProjectSummary>> {

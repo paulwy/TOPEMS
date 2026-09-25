@@ -1558,7 +1558,7 @@ pub struct TaxSummaryQueryParams {
     operation_id = "generate_tax_form_handler",
 )]
 
-async fn generate_tax_form_handler(
+pub async fn generate_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateTaxFormRequest>,
@@ -1581,7 +1581,7 @@ async fn generate_tax_form_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_tax_forms_handler(
+pub async fn get_tax_forms_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaxFormsQueryParams>,
@@ -1608,7 +1608,7 @@ async fn get_tax_forms_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_tax_form_by_id_handler(
+pub async fn get_tax_form_by_id_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1635,7 +1635,7 @@ async fn get_tax_form_by_id_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn submit_tax_form_handler(
+pub async fn submit_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1666,7 +1666,7 @@ async fn submit_tax_form_handler(
     operation_id = "amend_tax_form_handler",
 )]
 
-async fn amend_tax_form_handler(
+pub async fn amend_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1690,7 +1690,7 @@ async fn amend_tax_form_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_tax_summary_handler(
+pub async fn get_tax_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaxSummaryQueryParams>,
@@ -1717,7 +1717,7 @@ async fn get_tax_summary_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_tax_schedule_handler(
+pub async fn get_tax_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
@@ -1747,7 +1747,7 @@ pub struct RateScheduleQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn calculate_tax_handler(
+pub async fn calculate_tax_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateTaxRequest>,
@@ -1814,7 +1814,7 @@ async fn calculate_tax_handler(
     operation_id = "get_rate_schedule_handler",
 )]
 
-async fn get_rate_schedule_handler(
+pub async fn get_rate_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RateScheduleQueryParams>,
@@ -1848,7 +1848,7 @@ async fn get_rate_schedule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn lookup_rate_handler(
+pub async fn lookup_rate_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LookupRateParams>,
@@ -1887,7 +1887,7 @@ async fn lookup_rate_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_tax_breakdown_handler(
+pub async fn get_tax_breakdown_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BreakdownParams>,
@@ -1929,7 +1929,7 @@ async fn get_tax_breakdown_handler(
     operation_id = "validate_rate_handler",
 )]
 
-async fn validate_rate_handler(
+pub async fn validate_rate_handler(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<ValidateRateParams>,
@@ -1968,7 +1968,7 @@ pub struct ComplianceQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_plan_handler(
+pub async fn create_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePlanRequest>,
@@ -1991,7 +1991,7 @@ async fn create_plan_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn analyze_scenario_handler(
+pub async fn analyze_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeScenarioRequest>,
@@ -2021,7 +2021,7 @@ async fn analyze_scenario_handler(
     operation_id = "get_suggestions_handler",
 )]
 
-async fn get_suggestions_handler(
+pub async fn get_suggestions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SuggestionsQueryParams>,
@@ -2075,7 +2075,7 @@ async fn compare_scenarios_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_plans_handler(
+pub async fn list_plans_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PlansQueryParams>,
@@ -2102,7 +2102,7 @@ async fn list_plans_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn approve_plan_handler(
+pub async fn approve_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2132,7 +2132,7 @@ async fn approve_plan_handler(
     operation_id = "get_compliance_handler",
 )]
 
-async fn get_compliance_handler(
+pub async fn get_compliance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceQueryParams>,

@@ -83,7 +83,7 @@ pub fn create_routes() -> Router<AppState> {
     operation_id = "create_session_handler",
 )]
 
-async fn create_session_handler(
+pub async fn create_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReconciliationSessionRequest>,
@@ -108,7 +108,7 @@ async fn create_session_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_session_handler(
+pub async fn get_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -132,7 +132,7 @@ async fn get_session_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_sessions_handler(
+pub async fn list_sessions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconciliationSessionListQuery>,
@@ -177,7 +177,7 @@ async fn list_sessions_handler(
     operation_id = "import_items_handler",
 )]
 
-async fn import_items_handler(
+pub async fn import_items_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -203,7 +203,7 @@ async fn import_items_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn auto_match_handler(
+pub async fn auto_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -227,7 +227,7 @@ async fn auto_match_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn complete_session_handler(
+pub async fn complete_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -259,7 +259,7 @@ async fn complete_session_handler(
     operation_id = "get_items_handler",
 )]
 #[axum::debug_handler]
-async fn get_items_handler(
+pub async fn get_items_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -300,7 +300,7 @@ async fn get_items_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_summary_handler(
+pub async fn get_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -331,7 +331,7 @@ async fn get_summary_handler(
     operation_id = "update_diff_handler",
 )]
 
-async fn update_diff_handler(
+pub async fn update_diff_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(item_id): Path<Uuid>,
@@ -371,7 +371,7 @@ pub struct AgingQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_report_handler(
+pub async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -492,7 +492,7 @@ async fn create_ticket_for_reconciliation(
     operation_id = "batch_update_diff_handler",
 )]
 
-async fn batch_update_diff_handler(
+pub async fn batch_update_diff_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchDiffRequest>,
@@ -516,7 +516,7 @@ async fn batch_update_diff_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_diff_statistics_handler(
+pub async fn get_diff_statistics_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(session_id): Path<Uuid>,
@@ -540,7 +540,7 @@ async fn get_diff_statistics_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_aging_handler(
+pub async fn get_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,

@@ -1479,7 +1479,7 @@ async fn create_scenario_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn evaluate_scenario_handler(
+pub async fn evaluate_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1503,7 +1503,7 @@ async fn evaluate_scenario_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_decision_handler(
+pub async fn get_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1563,7 +1563,7 @@ async fn list_scenarios_handler(
     operation_id = "get_alternatives_handler",
 )]
 
-async fn get_alternatives_handler(
+pub async fn get_alternatives_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1613,7 +1613,7 @@ async fn compare_scenarios_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_decision_history_handler(
+pub async fn get_decision_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DecisionResult>>> {
@@ -1639,7 +1639,7 @@ async fn get_decision_history_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn sensitivity_analysis_handler(
+pub async fn sensitivity_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1670,7 +1670,7 @@ async fn sensitivity_analysis_handler(
     operation_id = "create_alert_rule_handler",
 )]
 
-async fn create_alert_rule_handler(
+pub async fn create_alert_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertRuleRequest>,
@@ -1693,7 +1693,7 @@ async fn create_alert_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_alert_rules_handler(
+pub async fn get_alert_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertRule>>> {
@@ -1719,7 +1719,7 @@ async fn get_alert_rules_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn evaluate_alerts_handler(
+pub async fn evaluate_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<EvaluateAlertsRequest>,
@@ -1742,7 +1742,7 @@ async fn evaluate_alerts_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_active_alerts_handler(
+pub async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
@@ -1800,7 +1800,7 @@ async fn acknowledge_alert_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn resolve_alert_handler(
+pub async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1823,7 +1823,7 @@ async fn resolve_alert_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_alert_history_handler(
+pub async fn get_alert_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertV60>>> {
@@ -1849,7 +1849,7 @@ async fn get_alert_history_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn configure_channel_handler(
+pub async fn configure_channel_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ConfigureChannelRequest>,
@@ -1879,7 +1879,7 @@ async fn configure_channel_handler(
     operation_id = "create_task_handler",
 )]
 
-async fn create_task_handler(
+pub async fn create_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTaskRequest>,
@@ -1902,7 +1902,7 @@ async fn create_task_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_tasks_handler(
+pub async fn get_tasks_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TaskQueryParams>,
@@ -1942,7 +1942,7 @@ async fn schedule_task_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn execute_task_handler(
+pub async fn execute_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1972,7 +1972,7 @@ async fn execute_task_handler(
     operation_id = "get_execution_handler",
 )]
 
-async fn get_execution_handler(
+pub async fn get_execution_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2004,7 +2004,7 @@ pub struct ExecutionQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_executions_handler(
+pub async fn list_executions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ExecutionQueryParams>,
@@ -2031,7 +2031,7 @@ async fn list_executions_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn update_task_handler(
+pub async fn update_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2055,7 +2055,7 @@ async fn update_task_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn pause_task_handler(
+pub async fn pause_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2086,7 +2086,7 @@ async fn pause_task_handler(
     operation_id = "resume_task_handler",
 )]
 
-async fn resume_task_handler(
+pub async fn resume_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

@@ -1669,7 +1669,7 @@ pub async fn auto_audit_scheduler(pool: PgPool) {
     operation_id = "create_audit_rule_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn create_audit_rule_handler(
+pub async fn create_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAuditRuleRequest>,
@@ -1692,7 +1692,7 @@ async fn create_audit_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_audit_rules_handler(
+pub async fn list_audit_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditRuleQueryParams>,
@@ -1720,7 +1720,7 @@ async fn list_audit_rules_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn update_audit_rule_handler(
+pub async fn update_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1743,7 +1743,7 @@ async fn update_audit_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn delete_audit_rule_handler(
+pub async fn delete_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1765,7 +1765,7 @@ async fn delete_audit_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_audit_findings_handler(
+pub async fn get_audit_findings_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuditFindingQueryParams>,
@@ -1809,7 +1809,7 @@ async fn get_audit_findings_handler(
     operation_id = "resolve_finding_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn resolve_finding_handler(
+pub async fn resolve_finding_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1841,7 +1841,7 @@ async fn resolve_finding_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn run_audit_handler(
+pub async fn run_audit_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunAuditRequest>,
@@ -1885,7 +1885,7 @@ async fn detect_anomalies_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_anomaly_alerts_handler(
+pub async fn get_anomaly_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AnomalyAlertQueryParams>,
@@ -1929,7 +1929,7 @@ async fn get_anomaly_alerts_handler(
     operation_id = "get_detection_summary_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn get_detection_summary_handler(
+pub async fn get_detection_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<DetectionSummary>> {
@@ -1954,7 +1954,7 @@ async fn get_detection_summary_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn configure_detection_handler(
+pub async fn configure_detection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1991,7 +1991,7 @@ async fn configure_detection_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_alerts_handler(
+pub async fn get_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertHistoryQueryParams>,
@@ -2035,7 +2035,7 @@ async fn get_alerts_handler(
     operation_id = "create_alert_config_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn create_alert_config_handler(
+pub async fn create_alert_config_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAlertConfigRequest>,
@@ -2057,7 +2057,7 @@ async fn create_alert_config_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_alert_configs_handler(
+pub async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AlertConfig>>> {
@@ -2082,7 +2082,7 @@ async fn list_alert_configs_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn acknowledge_alert_handler(
+pub async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

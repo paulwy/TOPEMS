@@ -1314,7 +1314,7 @@ pub struct ReportListQueryParams {
     operation_id = "create_template_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn create_template_handler(
+pub async fn create_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
@@ -1337,7 +1337,7 @@ async fn create_template_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_templates_handler(
+pub async fn get_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReportTemplate>>> {
@@ -1365,7 +1365,7 @@ async fn get_templates_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn generate_report_handler(
+pub async fn generate_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateReportRequest>,
@@ -1388,7 +1388,7 @@ async fn generate_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_reports_handler(
+pub async fn list_reports_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportListQueryParams>,
@@ -1440,7 +1440,7 @@ async fn get_report_handler(
     operation_id = "download_report_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn download_report_handler(
+pub async fn download_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1467,7 +1467,7 @@ async fn download_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn delete_report_handler(
+pub async fn delete_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1490,7 +1490,7 @@ async fn delete_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn schedule_report_handler(
+pub async fn schedule_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScheduleReportRequest>,
@@ -1520,7 +1520,7 @@ pub struct AnalysisHistoryQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn analyze_handler(
+pub async fn analyze_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeRequest>,
@@ -1543,7 +1543,7 @@ async fn analyze_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn pivot_handler(
+pub async fn pivot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PivotRequest>,
@@ -1564,7 +1564,7 @@ async fn pivot_handler(
     operation_id = "drill_down_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn drill_down_handler(
+pub async fn drill_down_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DrillDownRequest>,
@@ -1587,7 +1587,7 @@ async fn drill_down_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn roll_up_handler(
+pub async fn roll_up_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RollUpRequest>,
@@ -1610,7 +1610,7 @@ async fn roll_up_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn slice_handler(
+pub async fn slice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SliceRequest>,
@@ -1633,7 +1633,7 @@ async fn slice_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn dice_handler(
+pub async fn dice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<DiceRequest>,
@@ -1656,7 +1656,7 @@ async fn dice_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_analysis_history_handler(
+pub async fn get_analysis_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<AnalysisResult>>> {
@@ -1692,7 +1692,7 @@ pub struct TrendQueryParams {
     operation_id = "generate_forecast_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn generate_forecast_handler(
+pub async fn generate_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateForecastRequest>,
@@ -1738,7 +1738,7 @@ async fn detect_anomalies_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_insights_handler(
+pub async fn get_insights_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InsightsQueryParams>,
@@ -1765,7 +1765,7 @@ async fn get_insights_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn train_model_handler(
+pub async fn train_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<TrainModelRequest>,
@@ -1788,7 +1788,7 @@ async fn train_model_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_models_handler(
+pub async fn list_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ForecastModel>>> {
@@ -1821,7 +1821,7 @@ async fn list_models_handler(
     operation_id = "get_trend_handler",
 )]
 
-async fn get_trend_handler(
+pub async fn get_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TrendQueryParams>,

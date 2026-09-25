@@ -1984,7 +1984,7 @@ pub struct ReconRuleQueryParams {
     operation_id = "reconcile_batch_handler",
 )]
 
-async fn reconcile_batch_handler(
+pub async fn reconcile_batch_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileBatchRequest>,
@@ -2031,7 +2031,7 @@ async fn reconcile_batch_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn reconcile_single_handler(
+pub async fn reconcile_single_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReconcileSingleRequest>,
@@ -2059,7 +2059,7 @@ async fn reconcile_single_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_recon_results_handler(
+pub async fn get_recon_results_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReconResultQueryParams>,
@@ -2086,7 +2086,7 @@ async fn get_recon_results_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_recon_rule_handler(
+pub async fn create_recon_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRuleRequest>,
@@ -2113,7 +2113,7 @@ async fn create_recon_rule_handler(
     operation_id = "list_recon_rules_handler",
 )]
 
-async fn list_recon_rules_handler(
+pub async fn list_recon_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ReconciliationRule>>> {
@@ -2139,7 +2139,7 @@ async fn list_recon_rules_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn approve_match_handler(
+pub async fn approve_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2162,7 +2162,7 @@ async fn approve_match_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn dispute_match_handler(
+pub async fn dispute_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2197,7 +2197,7 @@ pub struct MatchInvoiceRequest {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn recognize_invoice_handler(
+pub async fn recognize_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RecognizeInvoiceRequest>,
@@ -2239,7 +2239,7 @@ async fn recognize_invoice_handler(
     operation_id = "get_invoice_handler",
 )]
 
-async fn get_invoice_handler(
+pub async fn get_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2266,7 +2266,7 @@ async fn get_invoice_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_invoices_handler(
+pub async fn list_invoices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InvoiceListQueryParams>,
@@ -2293,7 +2293,7 @@ async fn list_invoices_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn validate_invoice_handler(
+pub async fn validate_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2322,7 +2322,7 @@ async fn validate_invoice_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn post_invoice_handler(
+pub async fn post_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2353,7 +2353,7 @@ async fn post_invoice_handler(
     operation_id = "match_invoice_handler",
 )]
 
-async fn match_invoice_handler(
+pub async fn match_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2405,7 +2405,7 @@ impl SchedulePaymentRequest {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn initiate_payment_handler(
+pub async fn initiate_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<InitiatePaymentRequest>,
@@ -2443,7 +2443,7 @@ async fn initiate_payment_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_payment_status_handler(
+pub async fn get_payment_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2478,7 +2478,7 @@ async fn get_payment_status_handler(
     operation_id = "reverse_payment_handler",
 )]
 
-async fn reverse_payment_handler(
+pub async fn reverse_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2531,7 +2531,7 @@ pub async fn list_payments_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn schedule_payment_handler(
+pub async fn schedule_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<SchedulePaymentRequest>,
@@ -2587,7 +2587,7 @@ async fn schedule_payment_handler(
     operation_id = "get_supported_methods_handler",
 )]
 
-async fn get_supported_methods_handler(
+pub async fn get_supported_methods_handler(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {

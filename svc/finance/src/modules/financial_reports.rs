@@ -2332,6 +2332,16 @@ pub async fn get_project_summary(
 }
 
 /// 月度趋势报表：最近 12 个月的凭证金额趋势
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:financial_reports:read"])),
+    path = "/api/finance/reports/monthly-trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FinancialReports"
+)]
 pub async fn get_monthly_trend(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -2370,6 +2380,16 @@ pub async fn get_monthly_trend(
 }
 
 /// 部门汇总报表：按部门维度汇总凭证金额
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:financial_reports:read"])),
+    path = "/api/finance/reports/department-summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FinancialReports"
+)]
 pub async fn get_department_summary(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
@@ -2690,6 +2710,16 @@ pub async fn get_profit_analysis(
 }
 
 /// 财务概览报表：核心财务指标一览
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:financial_reports:read"])),
+    path = "/api/finance/reports/financial-overview",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "FinancialReports"
+)]
 pub async fn get_financial_overview(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,

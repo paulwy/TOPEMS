@@ -1246,7 +1246,7 @@ impl BudgetAnalyzer {
     operation_id = "predict_cash_flow_handler",
 )]
 
-async fn predict_cash_flow_handler(
+pub async fn predict_cash_flow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PredictCashFlowRequest>,
@@ -1270,7 +1270,7 @@ async fn predict_cash_flow_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_predictions_handler(
+pub async fn get_predictions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PredictionsQueryParams>,
@@ -1305,7 +1305,7 @@ async fn get_predictions_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn retrain_model_handler(
+pub async fn retrain_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1339,7 +1339,7 @@ async fn retrain_model_handler(
     operation_id = "get_accuracy_handler",
 )]
 
-async fn get_accuracy_handler(
+pub async fn get_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
@@ -1370,7 +1370,7 @@ async fn get_accuracy_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn analyze_budget_handler(
+pub async fn analyze_budget_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeBudgetRequest>,
@@ -1394,7 +1394,7 @@ async fn analyze_budget_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_variance_handler(
+pub async fn get_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VarianceQueryParams>,
@@ -1432,7 +1432,7 @@ async fn get_variance_handler(
     operation_id = "get_variance_report_handler",
 )]
 
-async fn get_variance_report_handler(
+pub async fn get_variance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VarianceQueryParams>,
@@ -1456,7 +1456,7 @@ async fn get_variance_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn detect_anomalies_handler(
+pub async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1486,7 +1486,7 @@ async fn detect_anomalies_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_variance_trends_handler(
+pub async fn get_variance_trends_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,

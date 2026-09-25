@@ -66,7 +66,7 @@ pub struct PaginatedEventsResponse {
     operation_id = "handle_create_voucher",
 )]
 
-async fn handle_create_voucher(
+pub async fn handle_create_voucher(
     Json(req): Json<CreateVoucherCommand>,
 ) -> Json<ApiResponse<CommandResult>> {
     let context = get_cqrs_context();
@@ -95,7 +95,7 @@ async fn handle_create_voucher(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn handle_post_voucher(
+pub async fn handle_post_voucher(
     Path(id): Path<String>,
     Json(req): Json<PostVoucherCommand>,
 ) -> Json<ApiResponse<CommandResult>> {
@@ -125,7 +125,7 @@ async fn handle_post_voucher(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn handle_reverse_voucher(
+pub async fn handle_reverse_voucher(
     Path(id): Path<String>,
     Json(req): Json<ReverseVoucherCommand>,
 ) -> Json<ApiResponse<CommandResult>> {
@@ -162,7 +162,7 @@ async fn handle_reverse_voucher(
     operation_id = "list_voucher_summary",
 )]
 
-async fn list_voucher_summary(
+pub async fn list_voucher_summary(
     Query(params): Query<VoucherSummaryQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<VoucherSummaryView>>> {
     let context = get_cqrs_context();
@@ -192,7 +192,7 @@ async fn list_voucher_summary(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_voucher_summary_by_id(
+pub async fn get_voucher_summary_by_id(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Option<VoucherSummaryView>>> {
     let context = get_cqrs_context();
@@ -212,7 +212,7 @@ async fn get_voucher_summary_by_id(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_receivable_aging(
+pub async fn list_receivable_aging(
     Query(params): Query<ReceivableAgingQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ReceivableAgingView>>> {
     let context = get_cqrs_context();
@@ -249,7 +249,7 @@ async fn list_receivable_aging(
     operation_id = "get_events",
 )]
 
-async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<EventRecord>>> {
+pub async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<EventRecord>>> {
     let context = get_cqrs_context();
     match context
         .event_store
@@ -271,7 +271,7 @@ async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Vec<Ev
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn rebuild_views() -> Json<ApiResponse<()>> {
+pub async fn rebuild_views() -> Json<ApiResponse<()>> {
     let context = get_cqrs_context();
     match context.projector.rebuild_all().await {
         Ok(()) => Json(ApiResponse::success((), "重建成功")),
@@ -289,7 +289,7 @@ async fn rebuild_views() -> Json<ApiResponse<()>> {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
+pub async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
     let context = get_cqrs_context();
     let view_names: Vec<String> = context
         .projector
@@ -337,7 +337,7 @@ async fn get_stats() -> Json<ApiResponse<CqrsStatsResponse>> {
     operation_id = "get_projection_progress",
 )]
 
-async fn get_projection_progress(
+pub async fn get_projection_progress(
     State(_pool): State<PgPool>,
 ) -> Json<ApiResponse<Vec<ProjectionProgress>>> {
     match get_pg_cqrs_context() {
@@ -359,7 +359,7 @@ async fn get_projection_progress(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_events_paginated(
+pub async fn list_events_paginated(
     Query(params): Query<EventsQueryParams>,
 ) -> Json<ApiResponse<PaginatedEventsResponse>> {
     let page = params.page.unwrap_or(1);
@@ -399,7 +399,7 @@ async fn list_events_paginated(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>> {
+pub async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>> {
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.replay_view(&view_name).await {
             Ok(()) => Json(ApiResponse::success((), "重放成功")),

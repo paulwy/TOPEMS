@@ -1285,7 +1285,7 @@ impl AutoComplianceReviewer {
     operation_id = "get_risk_dashboard_handler",
 )]
 
-async fn get_risk_dashboard_handler(
+pub async fn get_risk_dashboard_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskDashboard>> {
@@ -1318,7 +1318,7 @@ pub struct AlertQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_risk_alerts_handler(
+pub async fn get_risk_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
@@ -1417,7 +1417,7 @@ async fn resolve_alert_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn score_transaction_handler(
+pub async fn score_transaction_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ScoreTransactionRequest>,
@@ -1441,7 +1441,7 @@ async fn score_transaction_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_fraud_rules_handler(
+pub async fn get_fraud_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
@@ -1483,7 +1483,7 @@ pub struct UpdateFraudRuleRequest {
     operation_id = "update_fraud_rule_handler",
 )]
 
-async fn update_fraud_rule_handler(
+pub async fn update_fraud_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,
@@ -1518,7 +1518,7 @@ async fn update_fraud_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_fraud_score_handler(
+pub async fn get_fraud_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(transaction_id): Path<String>,
@@ -1544,7 +1544,7 @@ async fn get_fraud_score_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn review_entity_handler(
+pub async fn review_entity_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ReviewEntityRequest>,
@@ -1582,7 +1582,7 @@ pub struct ReviewResultQueryParams {
     operation_id = "get_review_results_handler",
 )]
 
-async fn get_review_results_handler(
+pub async fn get_review_results_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReviewResultQueryParams>,
@@ -1617,7 +1617,7 @@ async fn get_review_results_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_compliance_status_handler(
+pub async fn get_compliance_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -1647,7 +1647,7 @@ async fn get_compliance_status_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_workflow_handler(
+pub async fn create_workflow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkflowRequest>,
@@ -1678,7 +1678,7 @@ async fn create_workflow_handler(
     operation_id = "advance_workflow_handler",
 )]
 
-async fn advance_workflow_handler(
+pub async fn advance_workflow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(workflow_id): Path<Uuid>,
@@ -1708,7 +1708,7 @@ pub struct ComplianceReportQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn generate_compliance_report_handler(
+pub async fn generate_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceReportQueryParams>,

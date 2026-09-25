@@ -1402,7 +1402,7 @@ impl StressTestEngine {
     operation_id = "analyze_transaction_handler",
 )]
 
-async fn analyze_transaction_handler(
+pub async fn analyze_transaction_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AnalyzeTransactionRequest>,
@@ -1425,7 +1425,7 @@ async fn analyze_transaction_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_fraud_decision_handler(
+pub async fn get_fraud_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1457,7 +1457,7 @@ pub struct SignalQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_signals_handler(
+pub async fn get_signals_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SignalQueryParams>,
@@ -1484,7 +1484,7 @@ async fn get_signals_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_device_handler(
+pub async fn create_device_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDeviceRequest>,
@@ -1514,7 +1514,7 @@ async fn create_device_handler(
     operation_id = "get_device_handler",
 )]
 
-async fn get_device_handler(
+pub async fn get_device_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1549,7 +1549,7 @@ async fn get_device_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_blocked_devices_handler(
+pub async fn list_blocked_devices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<DeviceProfile>>> {
@@ -1575,7 +1575,7 @@ async fn list_blocked_devices_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn add_rule_handler(
+pub async fn add_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AddRuleRequest>,
@@ -1598,7 +1598,7 @@ async fn add_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_rules_handler(
+pub async fn get_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<FraudRule>>> {
@@ -1631,7 +1631,7 @@ async fn get_rules_handler(
     operation_id = "calculate_score_handler",
 )]
 
-async fn calculate_score_handler(
+pub async fn calculate_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateScoreRequest>,
@@ -1654,7 +1654,7 @@ async fn calculate_score_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_credit_profile_handler(
+pub async fn get_credit_profile_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -1677,7 +1677,7 @@ async fn get_credit_profile_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_scoring_models_handler(
+pub async fn get_scoring_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ScoringModel>>> {
@@ -1703,7 +1703,7 @@ async fn get_scoring_models_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_model_handler(
+pub async fn create_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateModelRequest>,
@@ -1733,7 +1733,7 @@ async fn create_model_handler(
     operation_id = "update_model_handler",
 )]
 
-async fn update_model_handler(
+pub async fn update_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1762,7 +1762,7 @@ pub struct FactorQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_score_factors_handler(
+pub async fn get_score_factors_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FactorQueryParams>,
@@ -1785,7 +1785,7 @@ async fn get_score_factors_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_model_comparison_handler(
+pub async fn get_model_comparison_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareModelsRequest>,
@@ -1812,7 +1812,7 @@ async fn get_model_comparison_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn bulk_score_handler(
+pub async fn bulk_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BulkScoreRequest>,
@@ -1842,7 +1842,7 @@ async fn bulk_score_handler(
     operation_id = "create_scenario_handler",
 )]
 
-async fn create_scenario_handler(
+pub async fn create_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateScenarioRequest>,
@@ -1865,7 +1865,7 @@ async fn create_scenario_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn run_stress_test_handler(
+pub async fn run_stress_test_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<RunStressTestRequest>,
@@ -1888,7 +1888,7 @@ async fn run_stress_test_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_test_result_handler(
+pub async fn get_test_result_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1915,7 +1915,7 @@ async fn get_test_result_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_scenarios_handler(
+pub async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<StressScenario>>> {
@@ -1946,7 +1946,7 @@ async fn list_scenarios_handler(
     operation_id = "compare_scenarios_handler",
 )]
 
-async fn compare_scenarios_handler(
+pub async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CompareScenariosRequest>,
@@ -1974,7 +1974,7 @@ pub struct GetParamsQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_scenario_parameters_handler(
+pub async fn get_scenario_parameters_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GetParamsQueryParams>,
@@ -2001,7 +2001,7 @@ async fn get_scenario_parameters_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_test_summary_handler(
+pub async fn get_test_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {

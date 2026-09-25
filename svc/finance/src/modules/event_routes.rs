@@ -107,7 +107,7 @@ pub struct ProcessEventsRequest {
     operation_id = "list_published_events",
 )]
 
-async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
+pub async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
     let pipeline = get_event_pipeline();
     Json(ApiResponse::success(
         pipeline.get_published_events(),
@@ -125,7 +125,7 @@ async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
+pub async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
     let pipeline = get_event_pipeline();
     let handlers = pipeline.get_router().list_handlers();
     let count = handlers.len();
@@ -145,7 +145,7 @@ async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn route_event(Json(req): Json<RouteEventRequest>) -> Json<ApiResponse<RouteEventResponse>> {
+pub async fn route_event(Json(req): Json<RouteEventRequest>) -> Json<ApiResponse<RouteEventResponse>> {
     let pipeline = get_event_pipeline();
     let results = pipeline
         .get_router()
@@ -172,7 +172,7 @@ async fn route_event(Json(req): Json<RouteEventRequest>) -> Json<ApiResponse<Rou
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn process_events(
+pub async fn process_events(
     Json(req): Json<ProcessEventsRequest>,
 ) -> Json<ApiResponse<PipelineResult>> {
     let pipeline = get_event_pipeline();
@@ -190,7 +190,7 @@ async fn process_events(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
+pub async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
     let pipeline = get_event_pipeline();
     let items = pipeline.get_saga_coordinator().list_sagas(None).await;
     let total = items.len();
@@ -217,7 +217,7 @@ async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
     operation_id = "get_saga",
 )]
 
-async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInstance>> {
+pub async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInstance>> {
     let pipeline = get_event_pipeline();
     match pipeline.get_saga_coordinator().get_saga(&saga_id).await {
         Some(instance) => Json(ApiResponse::success(instance, "查询成功")),
@@ -235,7 +235,7 @@ async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInstance>
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<StartSagaResponse>> {
+pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<StartSagaResponse>> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()
@@ -270,7 +270,7 @@ async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<Start
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn compensate_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<CompensateSagaResponse>> {
+pub async fn compensate_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<CompensateSagaResponse>> {
     let pipeline = get_event_pipeline();
     match pipeline
         .get_saga_coordinator()
@@ -295,7 +295,7 @@ async fn compensate_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<Compen
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
+pub async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
     let pipeline = get_event_pipeline();
     Json(ApiResponse::success(
         pipeline.get_saga_coordinator().get_stats(),
@@ -317,7 +317,7 @@ async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
     operation_id = "pipeline_stats",
 )]
 
-async fn pipeline_stats() -> Json<ApiResponse<PipelineStats>> {
+pub async fn pipeline_stats() -> Json<ApiResponse<PipelineStats>> {
     Json(ApiResponse::success(get_pipeline_stats(), "查询成功"))
 }
 

@@ -158,7 +158,7 @@ async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Op
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn create_account(
+pub async fn create_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAccountRequest>,
@@ -231,7 +231,7 @@ pub async fn get_account_by_code(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_account_balances(
+pub async fn get_account_balances(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountBalanceQueryParams>,
@@ -572,7 +572,7 @@ pub async fn get_ledger(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_trial_balance(
+pub async fn get_trial_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -641,7 +641,7 @@ async fn get_income_statement(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn close_period(
+pub async fn close_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((year, month)): Path<(i32, i32)>,
@@ -677,7 +677,7 @@ async fn close_period(
     operation_id = "open_period",
 )]
 
-async fn open_period(
+pub async fn open_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path((year, month)): Path<(i32, i32)>,
@@ -700,7 +700,7 @@ async fn open_period(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn create_aux_account(
+pub async fn create_aux_account(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAuxiliaryAccountRequest>,
@@ -766,7 +766,7 @@ async fn list_aux_accounts(
     operation_id = "get_aux_ledger",
 )]
 
-async fn get_aux_ledger(
+pub async fn get_aux_ledger(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
@@ -810,7 +810,7 @@ async fn get_aux_ledger(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_aux_balance(
+pub async fn get_aux_balance(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AuxQueryParams>,
@@ -961,7 +961,7 @@ pub async fn batch_post_vouchers(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn export_vouchers(
+pub async fn export_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportVoucherRequest>,
@@ -984,7 +984,7 @@ async fn export_vouchers(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn year_end_close(
+pub async fn year_end_close(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -1568,7 +1568,7 @@ pub async fn delete_approval_config_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn submit_approval(
+pub async fn submit_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1629,7 +1629,7 @@ async fn submit_approval(
     operation_id = "approve_approval",
 )]
 
-async fn approve_approval(
+pub async fn approve_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1690,7 +1690,7 @@ async fn approve_approval(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn reject_approval(
+pub async fn reject_approval(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1746,7 +1746,7 @@ async fn reject_approval(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn cancel_approval(
+pub async fn cancel_approval(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1855,7 +1855,7 @@ pub struct VoucherTemplateQueryParams {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn list_voucher_templates_handler(
+pub async fn list_voucher_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherTemplateQueryParams>,
@@ -2044,7 +2044,7 @@ pub async fn set_default_template_handler(
     operation_id = "apply_template_handler",
 )]
 
-async fn apply_template_handler(
+pub async fn apply_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -2122,7 +2122,20 @@ pub struct ToggleTemplateRequest {
     pub isactive: bool,
 }
 
-async fn toggle_template_handler(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["finance:mod:write"])),
+    path = "/api/finance/voucher-templates/{template_id}/toggle",
+    params(
+        ("template_id" = String, Path, description = "template_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Mod"
+)]
+pub async fn toggle_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -2170,7 +2183,17 @@ pub struct MatchTemplateRequest {
     pub extra_data: Option<serde_json::Value>,
 }
 
-async fn match_template_handler(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:mod:write"])),
+    path = "/api/finance/voucher-templates/match",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Mod"
+)]
+pub async fn match_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<MatchTemplateRequest>,
@@ -2234,7 +2257,20 @@ pub struct UsageStatsQueryParams {
     pub end_date: Option<String>,
 }
 
-async fn get_template_usage_stats_handler(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:mod:read"])),
+    path = "/api/finance/voucher-templates/{template_id}/usage-stats",
+    params(
+        ("template_id" = String, Path, description = "template_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Mod"
+)]
+pub async fn get_template_usage_stats_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -2453,7 +2489,20 @@ pub struct ReorderEntriesRequest {
     pub entry_ids: Vec<Uuid>,
 }
 
-async fn reorder_template_entries_handler(
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["finance:mod:write"])),
+    path = "/api/finance/voucher-templates/{template_id}/entries/reorder",
+    params(
+        ("template_id" = String, Path, description = "template_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Mod"
+)]
+pub async fn reorder_template_entries_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -2517,7 +2566,20 @@ pub struct ExportQueryParams {
     pub format: Option<String>,
 }
 
-async fn export_template_handler(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:mod:read"])),
+    path = "/api/finance/voucher-templates/{template_id}/export",
+    params(
+        ("template_id" = String, Path, description = "template_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Mod"
+)]
+pub async fn export_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -2544,7 +2606,17 @@ async fn export_template_handler(
         .into_response()
 }
 
-async fn import_template_handler(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:mod:write"])),
+    path = "/api/finance/voucher-templates/import",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Mod"
+)]
+pub async fn import_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
@@ -2837,7 +2909,7 @@ pub async fn toggle_generation_rule_handler(
     operation_id = "test_rule_handler",
 )]
 
-async fn test_rule_handler(
+pub async fn test_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -2868,7 +2940,7 @@ async fn test_rule_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn generate_vouchers_handler(
+pub async fn generate_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -2916,7 +2988,7 @@ pub struct U8ImportQueryParams {
     operation_id = "import_vouchers_handler",
 )]
 
-async fn import_vouchers_handler(
+pub async fn import_vouchers_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -2948,7 +3020,7 @@ async fn import_vouchers_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_import_status_handler(
+pub async fn get_import_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
@@ -2974,7 +3046,7 @@ async fn get_import_status_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_import_records_handler(
+pub async fn list_import_records_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<U8ImportQueryParams>,
@@ -3016,7 +3088,7 @@ async fn list_import_records_handler(
     operation_id = "get_import_record_handler",
 )]
 
-async fn get_import_record_handler(
+pub async fn get_import_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
@@ -3042,7 +3114,7 @@ async fn get_import_record_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn rollback_import_handler(
+pub async fn rollback_import_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(import_id): Path<Uuid>,
@@ -3168,7 +3240,7 @@ async fn delete_receivable_handler(
     operation_id = "get_receivable_aging_handler",
 )]
 
-async fn get_receivable_aging_handler(
+pub async fn get_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -3322,7 +3394,7 @@ async fn delete_payable_handler(
     operation_id = "get_payable_aging_handler",
 )]
 
-async fn get_payable_aging_handler(
+pub async fn get_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -3425,7 +3497,7 @@ pub async fn list_collections_handler(
     operation_id = "get_collection_handler",
 )]
 
-async fn get_collection_handler(
+pub async fn get_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(collection_id): Path<uuid::Uuid>,
@@ -3578,7 +3650,7 @@ async fn delete_collection_handler(
     operation_id = "write_off_collection_handler",
 )]
 
-async fn write_off_collection_handler(
+pub async fn write_off_collection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -3622,7 +3694,7 @@ async fn write_off_collection_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn batch_write_off_collections_handler(
+pub async fn batch_write_off_collections_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -3697,7 +3769,7 @@ pub async fn list_payment_records_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_payment_record_handler(
+pub async fn get_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(payment_id): Path<uuid::Uuid>,
@@ -3863,7 +3935,7 @@ async fn delete_payment_record_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn write_off_payment_record_handler(
+pub async fn write_off_payment_record_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -3901,7 +3973,7 @@ async fn write_off_payment_record_handler(
     operation_id = "batch_write_off_payments_handler",
 )]
 
-async fn batch_write_off_payments_handler(
+pub async fn batch_write_off_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -3938,7 +4010,7 @@ pub struct AgingQueryParams {
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn calculate_receivable_aging_handler(
+pub async fn calculate_receivable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -3960,7 +4032,7 @@ async fn calculate_receivable_aging_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn calculate_payable_aging_handler(
+pub async fn calculate_payable_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -3982,7 +4054,7 @@ async fn calculate_payable_aging_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_aging_summary_handler(
+pub async fn get_aging_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -4011,7 +4083,7 @@ async fn get_aging_summary_handler(
     operation_id = "get_aging_detail_handler",
 )]
 
-async fn get_aging_detail_handler(
+pub async fn get_aging_detail_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,
@@ -4038,7 +4110,7 @@ async fn get_aging_detail_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_aging_trend_handler(
+pub async fn get_aging_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingQueryParams>,

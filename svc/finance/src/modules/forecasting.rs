@@ -1001,7 +1001,7 @@ impl SmartAlertSystem {
     operation_id = "get_cash_flow_forecast_handler",
 )]
 
-async fn get_cash_flow_forecast_handler(
+pub async fn get_cash_flow_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1026,7 +1026,7 @@ async fn get_cash_flow_forecast_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_forecast_scenarios_handler(
+pub async fn get_forecast_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1047,7 +1047,7 @@ async fn get_forecast_scenarios_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_forecast_accuracy_handler(
+pub async fn get_forecast_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ForecastAccuracy>> {
@@ -1067,7 +1067,7 @@ async fn get_forecast_accuracy_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_budget_variance_handler(
+pub async fn get_budget_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1095,7 +1095,7 @@ async fn get_budget_variance_handler(
     operation_id = "get_variance_trend_handler",
 )]
 
-async fn get_variance_trend_handler(
+pub async fn get_variance_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -1116,7 +1116,7 @@ async fn get_variance_trend_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_significant_variances_handler(
+pub async fn get_significant_variances_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<BudgetVarianceItem>>> {
@@ -1156,7 +1156,7 @@ async fn get_active_alerts_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_alert_summary_handler(
+pub async fn get_alert_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<AlertSummary>> {
@@ -1204,7 +1204,7 @@ async fn create_alert_rule_handler(
     operation_id = "update_alert_rule_handler",
 )]
 
-async fn update_alert_rule_handler(
+pub async fn update_alert_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(rule_id): Path<Uuid>,

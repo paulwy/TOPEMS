@@ -138,6 +138,16 @@ fn item_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:reconcile_orders:read"])),
+    path = "/api/finance/reconcile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn list_reconcile_orders(
     State(state): State<AppState>,
     Query(params): Query<ListReconcileQuery>,
@@ -206,6 +216,19 @@ pub async fn list_reconcile_orders(
     )))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:reconcile_orders:read"])),
+    path = "/api/finance/reconcile/{order_id}",
+    params(
+        ("order_id" = String, Path, description = "order_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn get_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
@@ -260,6 +283,19 @@ pub async fn get_reconcile_order(
     )))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:reconcile_orders:read"])),
+    path = "/api/finance/reconcile/{order_id}/items",
+    params(
+        ("order_id" = String, Path, description = "order_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn get_reconcile_items(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
@@ -408,6 +444,19 @@ pub async fn auto_reconcile(
     )))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:reconcile_orders:write"])),
+    path = "/api/finance/reconcile/{order_id}/confirm",
+    params(
+        ("order_id" = String, Path, description = "order_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn confirm_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
@@ -438,6 +487,19 @@ pub async fn confirm_reconcile_order(
     )))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:reconcile_orders:write"])),
+    path = "/api/finance/reconcile/{order_id}/dispute",
+    params(
+        ("order_id" = String, Path, description = "order_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn dispute_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
@@ -470,6 +532,19 @@ pub async fn dispute_reconcile_order(
     )))
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:reconcile_orders:write"])),
+    path = "/api/finance/reconcile/{order_id}/cancel",
+    params(
+        ("order_id" = String, Path, description = "order_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn cancel_reconcile_order(
     State(state): State<AppState>,
     Path(order_id): Path<Uuid>,
@@ -501,6 +576,20 @@ pub async fn cancel_reconcile_order(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["finance:reconcile_orders:write"])),
+    path = "/api/finance/reconcile/{order_id}/items/{item_id}",
+    params(
+        ("order_id" = String, Path, description = "order_id"),
+        ("item_id" = String, Path, description = "item_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReconcileOrders"
+)]
 pub async fn update_reconcile_item(
     State(state): State<AppState>,
     Path((order_id, item_id)): Path<(Uuid, Uuid)>,

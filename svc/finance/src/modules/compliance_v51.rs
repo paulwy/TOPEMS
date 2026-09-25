@@ -1152,7 +1152,7 @@ impl ComplianceReportV51 {
     operation_id = "create_control_point_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn create_control_point_handler(
+pub async fn create_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateControlPointRequest>,
@@ -1175,7 +1175,7 @@ async fn create_control_point_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_control_points_handler(
+pub async fn list_control_points_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ControlPointQueryParams>,
@@ -1209,7 +1209,7 @@ async fn list_control_points_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_control_point_handler(
+pub async fn get_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1235,7 +1235,7 @@ async fn get_control_point_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn update_control_point_handler(
+pub async fn update_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1258,7 +1258,7 @@ async fn update_control_point_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn delete_control_point_handler(
+pub async fn delete_control_point_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1278,7 +1278,7 @@ async fn delete_control_point_handler(
     operation_id = "generate_control_matrix_handler",
     responses((status = 200, description = "OK")),
 )]
-async fn generate_control_matrix_handler(
+pub async fn generate_control_matrix_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateControlMatrixRequest>,
@@ -1301,7 +1301,7 @@ async fn generate_control_matrix_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_control_matrix_handler(
+pub async fn get_control_matrix_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1327,7 +1327,7 @@ async fn get_control_matrix_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn list_control_matrices_handler(
+pub async fn list_control_matrices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ControlMatrixQueryParams>,
@@ -1353,7 +1353,7 @@ async fn list_control_matrices_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn assess_risk_handler(
+pub async fn assess_risk_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskAssessmentRequest>,
@@ -1376,7 +1376,7 @@ async fn assess_risk_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_risk_assessment_handler(
+pub async fn get_risk_assessment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1409,7 +1409,7 @@ async fn get_risk_assessment_handler(
     operation_id = "list_risk_assessments_handler",
 )]
 
-async fn list_risk_assessments_handler(
+pub async fn list_risk_assessments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<RiskAssessmentQueryParams>,
@@ -1442,7 +1442,7 @@ async fn list_risk_assessments_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_risk_summary_handler(
+pub async fn get_risk_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<RiskSummary>> {
@@ -1490,7 +1490,7 @@ async fn generate_compliance_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_compliance_report_handler(
+pub async fn get_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1523,7 +1523,7 @@ async fn get_compliance_report_handler(
     operation_id = "list_compliance_reports_handler",
 )]
 
-async fn list_compliance_reports_handler(
+pub async fn list_compliance_reports_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ComplianceReportQueryParams>,
@@ -1549,7 +1549,7 @@ async fn list_compliance_reports_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn export_compliance_report_handler(
+pub async fn export_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

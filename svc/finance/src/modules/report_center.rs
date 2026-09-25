@@ -862,7 +862,7 @@ pub struct ExportReportResponse {
     operation_id = "get_enhanced_balance_sheet_handler",
 )]
 
-async fn get_enhanced_balance_sheet_handler(
+pub async fn get_enhanced_balance_sheet_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -884,7 +884,7 @@ async fn get_enhanced_balance_sheet_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_enhanced_income_statement_handler(
+pub async fn get_enhanced_income_statement_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -906,7 +906,7 @@ async fn get_enhanced_income_statement_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_enhanced_cash_flow_handler(
+pub async fn get_enhanced_cash_flow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -927,7 +927,7 @@ async fn get_enhanced_cash_flow_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn get_financial_analysis_handler(
+pub async fn get_financial_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -961,7 +961,7 @@ async fn get_financial_analysis_handler(
     operation_id = "get_comparative_report_handler",
 )]
 
-async fn get_comparative_report_handler(
+pub async fn get_comparative_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
@@ -982,7 +982,7 @@ async fn get_comparative_report_handler(
         (status = 200, description = "操作成功"),
     ),
 )]
-async fn export_report_handler(
+pub async fn export_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportReportRequest>,

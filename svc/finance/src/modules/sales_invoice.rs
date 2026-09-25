@@ -265,6 +265,16 @@ async fn fetch_invoice(
 }
 
 /// GET /sales-invoices
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/sales-invoices",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn list_sales_invoices(
     State(state): State<AppState>,
     Query(params): Query<InvoiceListQuery>,
@@ -372,6 +382,19 @@ pub async fn list_sales_invoices(
 }
 
 /// GET /sales-invoices/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/sales-invoices/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn get_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -505,6 +528,19 @@ pub async fn delete_sales_invoice(
 }
 
 /// POST /sales-invoices/{id}/issue（draft→issued）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:sales_invoice:write"])),
+    path = "/api/finance/sales-invoices/{id}/issue",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn issue_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -534,6 +570,19 @@ pub async fn issue_sales_invoice(
 }
 
 /// POST /sales-invoices/{id}/cancel
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:sales_invoice:write"])),
+    path = "/api/finance/sales-invoices/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn cancel_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -566,6 +615,19 @@ pub async fn cancel_sales_invoice(
 }
 
 /// POST /sales-invoices/{id}/red-flush（红冲：取消原票 + 生成负数发票）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:sales_invoice:write"])),
+    path = "/api/finance/sales-invoices/{id}/red-flush",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn red_flush_sales_invoice(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -677,6 +739,16 @@ async fn fetch_collection(
 }
 
 /// GET /sales-collections
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/sales-collections",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn list_collections(
     State(state): State<AppState>,
     Query(params): Query<CollectionListQuery>,
@@ -783,6 +855,19 @@ pub async fn list_collections(
 }
 
 /// GET /sales-collections/{id}
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/sales-collections/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn get_collection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -865,6 +950,19 @@ pub async fn create_collection(
 }
 
 /// POST /sales-collections/{id}/confirm（回款确认：回写发票 paid_amount）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:sales_invoice:write"])),
+    path = "/api/finance/sales-collections/{id}/confirm",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn confirm_collection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -938,6 +1036,16 @@ pub async fn confirm_collection(
 }
 
 /// POST /sales-collections/batch-confirm
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["finance:sales_invoice:write"])),
+    path = "/api/finance/sales-collections/batch-confirm",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn batch_confirm_collections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -979,6 +1087,16 @@ fn aging_bucket(days: i64) -> &'static str {
 }
 
 /// GET /reports/receivable-aging
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/reports/receivable-aging",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn get_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1030,6 +1148,16 @@ pub async fn get_receivable_aging(
 }
 
 /// GET /reports/receivable-summary
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/reports/receivable-summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn get_receivable_summary(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1083,6 +1211,16 @@ pub async fn get_receivable_summary(
 }
 
 /// GET /reports/overdue-receivables
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/reports/overdue-receivables",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn get_overdue_receivables(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1148,6 +1286,16 @@ fn csv_escape(v: &str) -> String {
 }
 
 /// GET /sales-invoices/export
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/sales-invoices/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn export_sales_invoices(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1187,6 +1335,16 @@ pub async fn export_sales_invoices(
 }
 
 /// GET /sales-collections/export
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/sales-collections/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn export_collections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1227,6 +1385,16 @@ pub async fn export_collections(
 }
 
 /// GET /reports/receivable-aging/export
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["finance:sales_invoice:read"])),
+    path = "/api/finance/reports/receivable-aging/export",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "SalesInvoice"
+)]
 pub async fn export_receivable_aging(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
