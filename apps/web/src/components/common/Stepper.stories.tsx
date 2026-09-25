@@ -22,7 +22,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '步骤条组件，支持横向/纵向布局、多种变体和自定义步骤状态。',
+        component: '步骤条组件，引导用户分步完成流程，适合表单提交、审批流转等分步操作场景。',
       },
     },
   },

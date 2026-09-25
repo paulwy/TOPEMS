@@ -12,7 +12,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '时间线组件，支持垂直/水平方向、填充/轮廓/柔和变体、多种状态以及加载骨架屏。',
+        component:
+          '时间线组件，展示事件序列，支持方向、样式变体与节点点击，适合流程记录与进度展示。',
       },
     },
   },

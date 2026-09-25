@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '折线图组件，支持单系列和多系列数据展示，适合趋势数据可视化。',
+        component: '折线图组件，支持单/多系列趋势展示与标题配置，适合时间序列与趋势变化分析。',
       },
     },
   },

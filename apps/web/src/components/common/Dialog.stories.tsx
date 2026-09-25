@@ -11,7 +11,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '统一对话框组件，支持自定义标题、内容、操作按钮和多种尺寸。',
+        component:
+          '对话框组件，支持标题、动作按钮、最大宽度与关闭方式（关闭按钮/点击遮罩）配置，适合确认、表单等弹窗场景。',
       },
     },
   },

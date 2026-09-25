@@ -9,7 +9,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '加载状态组件，支持尺寸定制。',
+        component: '加载指示器组件，提供统一的加载中反馈，适合异步请求与页面过渡场景。',
       },
     },
   },

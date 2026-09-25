@@ -11,7 +11,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '移动端卡片组件，支持标题、副标题、图标、箭头、徽章等多种展示形态。',
+        component: '移动端卡片组件，支持标题、副标题、图标、徽标与点击事件，适合移动端列表展示。',
       },
     },
   },

@@ -10,7 +10,8 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '分页组件，支持首页、末页、上一页、下一页、页码跳转和每页条数选择。',
+        component:
+          '分页组件，用于长列表数据分页浏览，支持页码切换、总量展示与样式定制，适合表格与列表分页场景。',
       },
     },
   },

@@ -10,7 +10,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '文件上传组件，支持拖拽上传、多文件、进度显示和文件类型限制。',
+        component: '文件上传组件，支持多文件、格式/单文件/总量大小限制，适合附件收集场景。',
       },
     },
   },

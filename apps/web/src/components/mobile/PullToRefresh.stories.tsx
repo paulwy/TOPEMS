@@ -11,7 +11,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '下拉刷新组件，包裹内容区域后支持触摸下拉刷新操作，带有加载动画和提示文案。',
+        component: '移动端下拉刷新组件，支持触发阈值与最大拉动距离配置，适合移动端列表刷新场景。',
       },
     },
   },

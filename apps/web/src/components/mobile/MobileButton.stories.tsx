@@ -10,7 +10,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '移动端按钮组件，在 MUI Button 基础上优化了触摸目标尺寸和视觉样式。',
+        component: '移动端按钮组件，基于 MUI Button 适配移动端尺寸，适合移动端操作场景。',
       },
     },
   },

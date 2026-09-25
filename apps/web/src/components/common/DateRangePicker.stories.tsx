@@ -10,7 +10,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '日期范围选择组件，支持预设快捷选项和自定义日期范围。',
+        component: '日期范围选择组件，支持起止日期选择与变更回调，适合时间段筛选场景。',
       },
     },
   },

@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '移动端骨架屏组件，提供列表、卡片、详情页和仪表盘四种预加载占位形态。',
+        component: '移动端骨架屏组件，按类型生成占位区块，支持数量与头像配置，适合移动端加载场景。',
       },
     },
   },

@@ -10,7 +10,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '统一的状态徽章组件，支持动态颜色映射、图标集成、多种尺寸和变体。',
+        component: '状态徽标组件，以颜色区分业务状态，适合列表与详情中的状态标识。',
       },
     },
   },

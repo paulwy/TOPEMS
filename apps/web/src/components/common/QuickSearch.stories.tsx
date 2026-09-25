@@ -19,7 +19,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '快速搜索组件，支持键盘快捷键触发、搜索建议和搜索历史功能。',
+        component: '快捷搜索组件，支持建议项、历史记录与键盘快捷键，适合全局搜索与命令面板场景。',
       },
     },
   },

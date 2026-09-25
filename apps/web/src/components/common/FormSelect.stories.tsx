@@ -19,7 +19,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '统一的下拉选择组件，封装 MUI Select，支持单选、多选、清空等功能。',
+        component: '下拉选择组件，支持多选、占位、校验与尺寸配置，适合表单枚举选择场景。',
       },
     },
   },

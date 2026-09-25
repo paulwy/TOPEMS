@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '雷达图组件，支持多系列数据对比，适合展示多维度的能力评估和对比分析。',
+        component: '雷达图组件，支持单/多系列多维度指标对比，适合能力评估、多维绩效分析等场景。',
       },
     },
   },

@@ -18,7 +18,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '用户选择组件，支持单选、多选、搜索和头像展示。',
+        component: '用户选择器组件，支持按用户搜索与多选，适合人员分配、任务指派等场景。',
       },
     },
   },

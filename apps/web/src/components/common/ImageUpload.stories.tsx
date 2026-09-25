@@ -10,7 +10,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '图片上传组件，支持拖拽上传、预览、裁剪和多图上传。',
+        component:
+          '图片上传组件，支持多图上传、格式与大小限制、裁剪及比例配置，适合表单图片收集场景。',
       },
     },
   },

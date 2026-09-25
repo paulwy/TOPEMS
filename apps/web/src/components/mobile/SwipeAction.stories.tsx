@@ -13,7 +13,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '滑动操作组件，支持左滑和右滑触发自定义操作按钮，适用于移动端列表项快捷操作。',
+        component: '移动端滑动操作组件，支持左右两侧动作按钮与开合回调，适合列表项快捷操作场景。',
       },
     },
   },

@@ -10,7 +10,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '统一的表单字段组件，封装 MUI TextField，提供紧凑尺寸和统一样式。',
+        component:
+          '表单字段组件，统一字段标签、校验信息与布局样式，配合 FormFieldGroup 使用，适合表单系统化、规范化开发场景。',
       },
     },
   },

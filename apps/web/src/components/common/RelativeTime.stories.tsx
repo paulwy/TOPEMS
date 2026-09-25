@@ -16,7 +16,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '相对时间显示组件，自动将时间转换为相对格式（如"3分钟前"）。',
+        component:
+          '相对时间组件，将时间戳展示为“3分钟前”等友好格式，适合动态、日志等时间展示场景。',
       },
     },
   },

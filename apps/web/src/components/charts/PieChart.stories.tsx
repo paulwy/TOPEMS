@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '饼图组件，支持环形饼图展示，每个数据项可自定义颜色。',
+        component: '饼图组件，展示分类占比构成，支持自定义数据，适合份额分布与结构分析。',
       },
     },
   },

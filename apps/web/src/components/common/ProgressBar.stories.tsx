@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '进度条组件，支持线性、圆形、分段三种变体，带动画和渐变支持。',
+        component: '进度条组件，展示任务完成度，适合加载、上传、步骤进度等场景。',
       },
     },
   },

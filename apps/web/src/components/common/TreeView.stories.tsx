@@ -64,7 +64,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '树形视图组件，支持展开/折叠、选择、徽章标记和多种密度。',
+        component:
+          '树形视图组件，支持选中与展开状态管理及密度调节，适合组织架构、目录等层级数据展示。',
       },
     },
   },

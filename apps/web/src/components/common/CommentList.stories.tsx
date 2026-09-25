@@ -60,7 +60,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '评论列表组件，支持添加评论、回复、点赞和嵌套显示。',
+        component:
+          '评论列表组件，支持点赞、回复、添加评论及权限开关（allowLike/allowReply/allowAdd），适合内容社区互动场景。',
       },
     },
   },

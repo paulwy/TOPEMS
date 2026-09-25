@@ -10,7 +10,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '表单字段分组组件，支持标题、描述、工具提示、可折叠、多列网格布局和必填标记。',
+        component:
+          '表单字段分组组件，支持标题、描述、提示、折叠与多列布局，适合复杂表单的结构化组织。',
       },
     },
   },

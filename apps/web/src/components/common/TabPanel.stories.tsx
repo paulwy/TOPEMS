@@ -12,7 +12,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '标签页面板组件，配合 MUI Tabs 使用，支持加载骨架屏和空消息显示。',
+        component: '标签面板组件，按索引切换内容，支持加载态与空态占位，适合页签式内容布局。',
       },
     },
   },

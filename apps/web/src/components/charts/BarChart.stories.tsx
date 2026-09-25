@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '柱状图组件，支持单系列和多系列数据展示，可配置圆角、高度等属性。',
+        component: '柱状图组件，支持单/多系列柱形展示与标题配置，适合分类数据对比与排行分析。',
       },
     },
   },

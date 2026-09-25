@@ -32,7 +32,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '部门选择组件，支持树形结构展示、搜索和多选。',
+        component: '部门选择器组件，支持单选/多选、远程搜索与加载态，适合组织架构相关表单场景。',
       },
     },
   },

@@ -9,7 +9,7 @@ const meta = {
     layout: 'padded',
     docs: {
       description: {
-        component: '面积图组件，支持渐变填充、多系列叠加、虚线样式等，适合展示数据趋势和总量。',
+        component: '面积图组件，展示数据趋势与累积量，支持多系列对比，适合趋势叠加分析场景。',
       },
     },
   },

@@ -24,7 +24,7 @@ const meta = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: '仪表盘模板，提供统计卡片、图表卡片、最近事项和快捷操作的完整仪表盘布局。',
+        component: '仪表盘页面模板，提供标题、副标题与面包屑导航，适合作为数据分析页面骨架。',
       },
     },
   },
