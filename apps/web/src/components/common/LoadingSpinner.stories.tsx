@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
-import { LoadingSpinner } from './LoadingSpinner';
+import LoadingSpinner from './LoadingSpinner';
 
 const meta = {
   title: 'Common/Loading',
@@ -26,13 +26,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const SpinnerDefault: Story = {
+export const SpinnerDefault: Story = {
   args: {
     size: 'md',
   },
 };
 
-const SpinnerSizes: Story = {
+export const SpinnerSizes: Story = {
   render: () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
       <LoadingSpinner size='sm' />

@@ -21,7 +21,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const MetricCardBasic: Story = {
+export const MetricCardBasic: Story = {
   render: () => (
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, width: '100%' }}>
       <MetricCard
@@ -68,7 +68,7 @@ const MetricCardBasic: Story = {
   ),
 };
 
-const MetricCardStable: Story = {
+export const MetricCardStable: Story = {
   render: () => (
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, width: '100%' }}>
       <MetricCard
@@ -99,7 +99,7 @@ const MetricCardStable: Story = {
   ),
 };
 
-const BaseCard: Story = {
+export const BaseCard: Story = {
   render: () => (
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, width: '100%' }}>
       <StatCardBase
@@ -123,7 +123,7 @@ const BaseCard: Story = {
   ),
 };
 
-const ChartCardPlaceholder: Story = {
+export const ChartCardPlaceholder: Story = {
   render: () => (
     <ChartCard
       title='营收趋势'
@@ -147,7 +147,7 @@ const ChartCardPlaceholder: Story = {
   ),
 };
 
-const ChartCardLoading: Story = {
+export const ChartCardLoading: Story = {
   render: () => (
     <ChartCard
       title='销售占比'
