@@ -7,9 +7,14 @@
 //!
 //! ```rust,no_run
 //! use axum::Router;
-//! use crate::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
+//! use axum::routing::get;
+//! use std::sync::Arc;
+//! use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
 //!
-//! let app = Router::new()
+//! async fn handler() {}
+//!
+//! let state = Arc::new(TierGateConfig::default());
+//! let app: axum::Router<Arc<TierGateConfig>> = Router::new()
 //!     .route("/api/mes/*path", get(handler))
 //!     .layer(axum::middleware::from_fn_with_state(
 //!         state.clone(),
