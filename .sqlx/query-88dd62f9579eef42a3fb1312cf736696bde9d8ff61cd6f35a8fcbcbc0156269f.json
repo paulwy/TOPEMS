@@ -41,12 +41,12 @@
       {
         "ordinal": 7,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 8,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -55,7 +55,7 @@
         "Text",
         "Jsonb",
         "Jsonb",
-        "Timestamptz",
+        "Timestamp",
         "Uuid"
       ]
     },
@@ -67,8 +67,8 @@
       true,
       true,
       false,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "88dd62f9579eef42a3fb1312cf736696bde9d8ff61cd6f35a8fcbcbc0156269f"

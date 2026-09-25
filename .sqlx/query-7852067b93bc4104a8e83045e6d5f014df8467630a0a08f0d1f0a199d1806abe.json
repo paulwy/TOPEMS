@@ -46,12 +46,12 @@
       {
         "ordinal": 8,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 9,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -64,8 +64,8 @@
         "Varchar",
         "TextArray",
         "Bool",
-        "Timestamptz",
-        "Timestamptz",
+        "Timestamp",
+        "Timestamp",
         "Uuid"
       ]
     },
@@ -78,8 +78,8 @@
       true,
       true,
       true,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "7852067b93bc4104a8e83045e6d5f014df8467630a0a08f0d1f0a199d1806abe"

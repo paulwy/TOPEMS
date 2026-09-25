@@ -132,7 +132,7 @@ pub async fn list_inspections(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM quality_inspections qi{}",
+        "SELECT COUNT(*) as total FROM mes.quality_inspections qi{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar(&count_sql);
@@ -157,7 +157,7 @@ pub async fn list_inspections(
             qi.unqualified_quantity, qi.qualification_rate,
             qi.inspector, qi.inspection_time, qi.status, qi.result, qi.memo,
             qi.created_at, qi.updated_at
-        FROM quality_inspections qi
+        FROM mes.quality_inspections qi
         {}
         ORDER BY qi.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -245,16 +245,8 @@ pub async fn list_inspections(
                 .unwrap_or_else(|| "pending".to_string()),
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
+            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
         })
         .collect();
 
@@ -295,7 +287,7 @@ pub async fn get_inspection(
             qi.unqualified_quantity, qi.qualification_rate,
             qi.inspector, qi.inspection_time, qi.status, qi.result, qi.memo,
             qi.created_at, qi.updated_at
-        FROM quality_inspections qi
+        FROM mes.quality_inspections qi
         WHERE qi.id = $1
         "#,
         uuid,
@@ -324,8 +316,8 @@ pub async fn get_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "获取检验记录成功",
         )),
@@ -372,7 +364,7 @@ pub async fn create_inspection(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let result = sqlx::query_unchecked!(
         r#"
-            INSERT INTO quality_inspections (
+            INSERT INTO mes.quality_inspections (
             inspection_no, order_id, order_number, product_code, product_name,
             process_id, process_name, inspection_type, quantity,
             qualified_quantity, unqualified_quantity, qualification_rate,
@@ -443,8 +435,8 @@ pub async fn create_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "创建检验记录成功",
         )),
@@ -482,7 +474,7 @@ pub async fn update_inspection(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let result = sqlx::query_unchecked!(
         r#"
-            UPDATE quality_inspections
+            UPDATE mes.quality_inspections
         SET
             qualified_quantity = COALESCE($1, qualified_quantity),
             unqualified_quantity = COALESCE($2, unqualified_quantity),
@@ -552,8 +544,8 @@ pub async fn update_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "更新检验记录成功",
         )),
@@ -585,7 +577,7 @@ pub async fn delete_inspection(
 
     let result = sqlx::query!(
         r#"
-        UPDATE quality_inspections SET deleted_at = NOW() WHERE id = $1
+        UPDATE mes.quality_inspections SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )

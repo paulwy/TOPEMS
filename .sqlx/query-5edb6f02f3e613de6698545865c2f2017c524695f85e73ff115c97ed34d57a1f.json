@@ -26,12 +26,12 @@
       {
         "ordinal": 4,
         "name": "expires_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 5,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -45,7 +45,7 @@
       true,
       false,
       true,
-      false
+      true
     ]
   },
   "hash": "5edb6f02f3e613de6698545865c2f2017c524695f85e73ff115c97ed34d57a1f"

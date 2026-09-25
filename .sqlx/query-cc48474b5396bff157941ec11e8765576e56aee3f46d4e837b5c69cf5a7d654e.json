@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT bi.material_code, bi.material_name, bi.specification, bi.unit, bi.quantity\n        FROM mes.bom_items bi\n        JOIN mes.material_boms mb ON bi.bom_id = mb.id\n        WHERE mb.product_code = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "material_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "material_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "specification",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "quantity",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "cc48474b5396bff157941ec11e8765576e56aee3f46d4e837b5c69cf5a7d654e"
+}

@@ -117,8 +117,8 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     dt.into().map(|d| d).unwrap_or_else(Utc::now)
 }
 
-fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn dt(input: Option<DateTime<Utc>>) -> String {
+    input.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 pub async fn list_teams(
@@ -157,7 +157,7 @@ pub async fn list_teams(
         params.push(serde_json::Value::String(pattern));
     }
 
-    let count_sql = format!("SELECT COUNT(*) as total FROM teams t{}", where_clause);
+    let count_sql = format!("SELECT COUNT(*) as total FROM mes.teams t{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
@@ -180,8 +180,8 @@ pub async fn list_teams(
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
             t.created_at, t.updated_at,
             COALESCE(ws.station_name, '') as work_station_name
-        FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
+        FROM mes.teams t
+        LEFT JOIN mes.work_stations ws ON t.work_station_id = ws.id
         {}
         ORDER BY t.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -244,16 +244,8 @@ pub async fn list_teams(
                 .flatten()
                 .unwrap_or_else(|| "active".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
+            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
         })
         .collect();
 
@@ -285,8 +277,8 @@ pub async fn get_team(
             t.leader_id, t.leader_name, t.member_count, t.status, t.description,
             t.created_at, t.updated_at,
             ws.station_name as work_station_name
-        FROM teams t
-        LEFT JOIN work_stations ws ON t.work_station_id = ws.id
+        FROM mes.teams t
+        LEFT JOIN mes.work_stations ws ON t.work_station_id = ws.id
         WHERE t.id = $1
         "#,
         id,
@@ -320,8 +312,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -350,7 +342,7 @@ pub async fn create_team(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO teams (
+        INSERT INTO mes.teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at
@@ -367,7 +359,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -386,16 +378,16 @@ pub async fn create_team(
             let emp_uuid_arg = emp_uuid.as_ref().map(|u| u.to_string());
             let _ = sqlx::query!(
                 r#"
-                    INSERT INTO team_members (
+                    INSERT INTO mes.team_members (
                         team_id, employee_id, employee_name, employee_code, position, join_date
                     ) VALUES ($1, $2, $3, $4, $5, $6)
                     "#,
                 result.id,
-                emp_uuid_arg.and_then(|s| s.parse::<Uuid>().ok()),
+                emp_uuid_arg,
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now,
+                now.naive_utc(),
             )
             .execute(&state.pool)
             .await;
@@ -403,12 +395,12 @@ pub async fn create_team(
 
         let _ = sqlx::query!(
             r#"
-            UPDATE teams SET member_count = (
-                SELECT COUNT(*) FROM team_members WHERE team_id = $1
+            UPDATE mes.teams SET member_count = (
+                SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now,
+            now.naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -426,8 +418,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: result.created_at.unwrap_or_default(),
-        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+        updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -453,7 +445,7 @@ pub async fn update_team(
 
     let result = sqlx::query!(
         r#"
-        UPDATE teams SET
+        UPDATE mes.teams SET
             team_name = COALESCE($2, team_name),
             team_type = COALESCE($3, team_type),
             work_station_id = COALESCE($4, work_station_id),
@@ -476,7 +468,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -503,8 +495,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -525,7 +517,7 @@ pub async fn delete_team(
 
     let result = sqlx::query!(
         r#"
-        UPDATE teams SET deleted_at = NOW()
+        UPDATE mes.teams SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -563,7 +555,7 @@ pub async fn get_team_members(
         SELECT 
             id, team_id, employee_id, employee_name, employee_code,
             position, join_date, status
-        FROM team_members
+        FROM mes.team_members
         WHERE team_id = $1 AND status = 'active'
         ORDER BY join_date DESC
         "#,
@@ -589,7 +581,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| d.to_rfc3339()),
+            join_date: r.join_date.map(|d| d.and_utc().to_rfc3339()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -619,7 +611,7 @@ pub async fn add_team_member(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO team_members (
+        INSERT INTO mes.team_members (
             team_id, employee_id, employee_name, employee_code, position, join_date
         ) VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING 
@@ -627,11 +619,11 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        employee_uuid_arg.and_then(|s| s.parse::<Uuid>().ok()),
+        employee_uuid_arg,
         req.employee_name,
         req.employee_code,
         req.position,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -646,12 +638,12 @@ pub async fn add_team_member(
 
     let _ = sqlx::query!(
         r#"
-        UPDATE teams SET member_count = (
-            SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
+        UPDATE mes.teams SET member_count = (
+            SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1 AND status = 'active'
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now,
+        now.naive_utc(),
     )
     .execute(&state.pool)
     .await;
@@ -663,7 +655,7 @@ pub async fn add_team_member(
         employee_name: result.employee_name,
         employee_code: result.employee_code,
         position: result.position,
-        join_date: result.join_date.map(|d| d.to_rfc3339()),
+        join_date: result.join_date.map(|d| d.and_utc().to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
@@ -683,7 +675,7 @@ pub async fn remove_team_member(
 
     let result = sqlx::query!(
         r#"
-        UPDATE team_members SET status = 'inactive'
+        UPDATE mes.team_members SET status = 'inactive'
         WHERE id = $1 AND team_id = $2
         "#,
         member_id,
@@ -703,12 +695,12 @@ pub async fn remove_team_member(
     if result.rows_affected() > 0 {
         let _ = sqlx::query!(
             r#"
-            UPDATE teams SET member_count = (
-                SELECT COUNT(*) FROM team_members WHERE team_id = $1 AND status = 'active'
+            UPDATE mes.teams SET member_count = (
+                SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1 AND status = 'active'
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now(),
+            Utc::now().naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -744,13 +736,13 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = (Some(dt)).unwrap_or_default();
+        let s = Some(dt);
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = (None).unwrap_or_default();
+        let s = None;
         assert!(s.is_empty());
     }
 }

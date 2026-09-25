@@ -147,7 +147,7 @@ pub async fn list_records(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM production_records{}",
+        "SELECT COUNT(*) as total FROM mes.production_records{}",
         where_clause
     );
 
@@ -172,7 +172,7 @@ pub async fn list_records(
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
-        FROM production_records
+        FROM mes.production_records
         {}
         ORDER BY start_time DESC
         LIMIT ${} OFFSET ${}
@@ -271,7 +271,7 @@ pub async fn create_record(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO production_records (
+        INSERT INTO mes.production_records (
             order_id, process_id, work_station_id,
             operator_id, start_time, end_time,
             completed_quantity, status, notes,
@@ -288,7 +288,7 @@ pub async fn create_record(
         req.work_station_id,
         req.operator_id,
         req.start_time,
-        req.quantity_produced.map(|v| v as f64),
+        req.quantity_produced.map(|v| v as i32),
         req.notes,
         now,
     )
@@ -311,7 +311,7 @@ pub async fn create_record(
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
         start_time: result.start_time,
-        end_time: result.end_time.map(|d| d),
+        end_time: result.end_time,
         quantity_produced: result.quantity_produced as f64,
         quantity_defective: result
             .quantity_defective
@@ -342,7 +342,7 @@ pub async fn get_record(
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
             created_at, updated_at
-        FROM production_records
+        FROM mes.production_records
         WHERE id = $1
         "#,
         id,
@@ -368,7 +368,7 @@ pub async fn get_record(
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 operator_id: r.operator_id,
                 start_time: r.start_time,
-                end_time: r.end_time.map(|d| d),
+                end_time: r.end_time,
                 quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
@@ -401,7 +401,7 @@ pub async fn update_record(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_records SET
+        UPDATE mes.production_records SET
             process_id = COALESCE($2, process_id),
             work_station_id = COALESCE($3, work_station_id),
             operator_id = COALESCE($4, operator_id),
@@ -422,7 +422,7 @@ pub async fn update_record(
         req.work_station_id,
         req.operator_id,
         req.end_time,
-        req.quantity_produced.map(|v| v as f64),
+        req.quantity_produced.map(|v| v as i32),
         status,
         req.notes,
         now,
@@ -448,7 +448,7 @@ pub async fn update_record(
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 operator_id: r.operator_id,
                 start_time: r.start_time,
-                end_time: r.end_time.map(|d| d),
+                end_time: r.end_time,
                 quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
@@ -473,7 +473,7 @@ pub async fn delete_record(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_records SET deleted_at = NOW()
+        UPDATE mes.production_records SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -509,7 +509,7 @@ pub async fn complete_record(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_records SET
+        UPDATE mes.production_records SET
             end_time = $2,
             status = 'completed',
             updated_at = $2
@@ -544,7 +544,7 @@ pub async fn complete_record(
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 operator_id: r.operator_id,
                 start_time: r.start_time,
-                end_time: r.end_time.map(|d| d),
+                end_time: r.end_time,
                 quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,

@@ -158,7 +158,7 @@ pub async fn list_processes(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM production_processes{}",
+        "SELECT COUNT(*) as total FROM mes.production_processes{}",
         where_clause
     );
 
@@ -183,7 +183,7 @@ pub async fn list_processes(
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
             created_at, updated_at
-        FROM production_processes
+        FROM mes.production_processes
         {}
         ORDER BY sequence ASC, created_at DESC
         LIMIT ${} OFFSET ${}
@@ -286,7 +286,7 @@ pub async fn create_process(
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
-        INSERT INTO production_processes (
+        INSERT INTO mes.production_processes (
             process_code, process_name, description, version, status,
             sequence, equipment_required, standard_time_minutes,
             organization_id, tenant_id, created_at, updated_at
@@ -342,7 +342,7 @@ pub async fn get_process(
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
             created_at, updated_at
-        FROM production_processes
+        FROM mes.production_processes
         WHERE id = $1 AND deleted_at IS NULL
         "#,
     )
@@ -383,7 +383,7 @@ pub async fn update_process(
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
-        UPDATE production_processes SET
+        UPDATE mes.production_processes SET
             process_name = COALESCE($2, process_name),
             description = COALESCE($3, description),
             version = COALESCE($4, version),
@@ -437,7 +437,7 @@ pub async fn delete_process(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_processes SET deleted_at = NOW()
+        UPDATE mes.production_processes SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -471,7 +471,7 @@ pub async fn deactivate_process(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_processes SET
+        UPDATE mes.production_processes SET
             status = 'inactive',
             updated_at = $2
         WHERE id = $1 AND status = 'active'

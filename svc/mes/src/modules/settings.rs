@@ -86,7 +86,7 @@ pub async fn update_settings(
             INSERT INTO mes.module_settings (tenant_id, category, key, value, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $5)
             ON CONFLICT (tenant_id, category, key)
-            DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at.unwrap_or_default()
+            DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
             "#,
         )
         .bind(tenant_id)

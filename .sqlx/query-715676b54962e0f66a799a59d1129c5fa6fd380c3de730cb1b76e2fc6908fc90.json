@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE mes.material_boms SET deleted_at = NOW()\n        WHERE id = $1 AND status = 'draft'\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "715676b54962e0f66a799a59d1129c5fa6fd380c3de730cb1b76e2fc6908fc90"
+}

@@ -110,8 +110,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     }
 }
 
-fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn dt(input: Option<DateTime<Utc>>) -> String {
+    input.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -161,7 +161,7 @@ pub async fn list_material_requirements(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM material_requirements{}",
+        "SELECT COUNT(*) as total FROM mes.material_requirements{}",
         where_clause
     );
 
@@ -186,7 +186,7 @@ pub async fn list_material_requirements(
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
             status, source_type, remark, created_at, updated_at
-        FROM material_requirements
+        FROM mes.material_requirements
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -236,17 +236,17 @@ pub async fn list_material_requirements(
             required_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("required_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             available_quantity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("available_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             shortfall_quantity: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("shortfall_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             required_date: r.try_get::<String, _>("required_date").unwrap_or_default(),
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
@@ -257,16 +257,8 @@ pub async fn list_material_requirements(
                 .unwrap_or_else(|| "pending".to_string()),
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
+            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
         })
         .collect();
 
@@ -305,7 +297,7 @@ pub async fn get_material_requirement(
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
             status, source_type, remark, created_at, updated_at
-        FROM material_requirements
+        FROM mes.material_requirements
         WHERE id = $1
         "#,
         uuid,
@@ -338,8 +330,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "获取物料需求成功",
         )),
@@ -387,7 +379,7 @@ pub async fn create_material_requirement(
 
     let result = sqlx::query_unchecked!(
         r#"
-        INSERT INTO material_requirements (
+        INSERT INTO mes.material_requirements (
             mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
             required_date, priority, source_type, remark
@@ -438,8 +430,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "创建物料需求成功",
         )),
@@ -493,7 +485,7 @@ pub async fn update_material_requirement(
 
     let result = sqlx::query_unchecked!(
         r#"
-        UPDATE material_requirements
+        UPDATE mes.material_requirements
         SET 
             required_quantity = COALESCE($1, required_quantity),
             available_quantity = COALESCE($2, available_quantity),
@@ -542,8 +534,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "更新物料需求成功",
         )),
@@ -575,7 +567,7 @@ pub async fn delete_material_requirement(
 
     let result = sqlx::query!(
         r#"
-        DELETE FROM material_requirements WHERE id = $1
+        DELETE FROM mes.material_requirements WHERE id = $1
         "#,
         uuid,
     )
@@ -617,7 +609,7 @@ pub async fn calculate_requirements(
     let order_result = sqlx::query!(
         r#"
         SELECT order_number AS order_no, product_code, product_name, quantity
-        FROM production_orders
+        FROM mes.production_orders
         WHERE id = $1
         "#,
         order_uuid,
@@ -639,8 +631,8 @@ pub async fn calculate_requirements(
     let bom_items_result = sqlx::query!(
         r#"
         SELECT bi.material_code, bi.material_name, bi.specification, bi.unit, bi.quantity
-        FROM bom_items bi
-        JOIN material_boms mb ON bi.bom_id = mb.id
+        FROM mes.bom_items bi
+        JOIN mes.material_boms mb ON bi.bom_id = mb.id
         WHERE mb.product_code = $1
         "#,
         order.product_code,
@@ -659,7 +651,7 @@ pub async fn calculate_requirements(
 
                 let insert_result = sqlx::query_unchecked!(
                     r#"
-                    INSERT INTO material_requirements (
+                    INSERT INTO mes.material_requirements (
                         mrp_no, order_id, order_number, product_code, product_name,
                         material_code, material_name, specification, unit, required_quantity,
                         required_date, priority, source_type, status
@@ -707,8 +699,8 @@ pub async fn calculate_requirements(
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.unwrap_or_default(),
-                        updated_at: r.updated_at.unwrap_or_default(),
+                        created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                        updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
                     });
                 }
             }
@@ -741,7 +733,7 @@ pub async fn confirm_requirement(
 
     let result = sqlx::query!(
         r#"
-        UPDATE material_requirements
+        UPDATE mes.material_requirements
         SET status = 'confirmed', updated_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -776,8 +768,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "确认物料需求成功",
         )),
@@ -809,7 +801,7 @@ pub async fn release_requirement(
 
     let result = sqlx::query!(
         r#"
-        UPDATE material_requirements
+        UPDATE mes.material_requirements
         SET status = 'released', updated_at = NOW()
         WHERE id = $1
         RETURNING *
@@ -844,8 +836,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             },
             "下发物料需求成功",
         )),
@@ -882,13 +874,13 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = (Some(dt)).unwrap_or_default();
+        let s = Some(dt);
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_valid() {
-        let s = (None).unwrap_or_default();
+        let s = None;
         assert!(s.is_empty());
     }
 

@@ -261,7 +261,7 @@ pub async fn list_oee_records(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
+        "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN mes.equipment e ON oee.equipment_id = e.id{}",
         where_clause
     );
 
@@ -288,8 +288,8 @@ pub async fn list_oee_records(
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
-        FROM equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        FROM mes.equipment_oee oee
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
         {}
         ORDER BY oee.record_date DESC
         LIMIT ${} OFFSET ${}
@@ -445,7 +445,7 @@ pub async fn create_oee_record(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO equipment_oee (
+        INSERT INTO mes.equipment_oee (
             equipment_id, record_date,
             planned_production_time, actual_run_time, downtime,
             ideal_cycle_time, actual_output, good_output, defective_output,
@@ -475,7 +475,7 @@ pub async fn create_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -489,7 +489,7 @@ pub async fn create_oee_record(
     };
 
     let equipment = sqlx::query!(
-        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM equipment WHERE id = $1"#,
+        r#"SELECT equipment_name AS name, equipment_code AS equipment_no FROM mes.equipment WHERE id = $1"#,
         req.equipment_id
     )
     .fetch_optional(&state.pool)
@@ -516,7 +516,8 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default(),        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+            updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -555,8 +556,8 @@ pub async fn get_oee_record(
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
-        FROM equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        FROM mes.equipment_oee oee
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
         WHERE oee.id = $1
         "#,
         id,
@@ -594,8 +595,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -633,7 +634,7 @@ pub async fn update_oee_record(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
                ideal_cycle_time, actual_output, good_output, defective_output
-        FROM equipment_oee WHERE id = $1
+        FROM mes.equipment_oee WHERE id = $1
         "#,
         id,
     )
@@ -670,7 +671,7 @@ pub async fn update_oee_record(
 
     let result = sqlx::query!(
         r#"
-        UPDATE equipment_oee SET
+        UPDATE mes.equipment_oee SET
             planned_production_time = COALESCE($2, planned_production_time),
             actual_run_time = COALESCE($3, actual_run_time),
             downtime = COALESCE($4, downtime),
@@ -716,7 +717,7 @@ pub async fn update_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -751,8 +752,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
@@ -785,7 +786,7 @@ pub async fn delete_oee_record(
     }
 
     let result = sqlx::query!(
-        r#"UPDATE equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
+        r#"UPDATE mes.equipment_oee SET deleted_at = NOW() WHERE id = $1"#,
         id,
     )
     .execute(&state.pool)
@@ -850,8 +851,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as avg_performance,
             COALESCE(AVG(oee.quality_rate), 0) as avg_quality_rate,
             COALESCE(AVG(oee.oee), 0) as avg_oee
-        FROM equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        FROM mes.equipment_oee oee
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
@@ -887,8 +888,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality,
             COALESCE(AVG(oee.oee), 0) as oee
-        FROM equipment_oee oee
-        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        FROM mes.equipment_oee oee
+        LEFT JOIN mes.equipment e ON oee.equipment_id = e.id
         WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
           AND ($1::uuid IS NULL OR e.id = $1)
         GROUP BY DATE(oee.record_date)
@@ -948,8 +949,8 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
             COALESCE(AVG(oee.oee), 0) as oee
-        FROM equipment e
-        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
+        FROM mes.equipment e
+        LEFT JOIN mes.equipment_oee oee ON e.id = oee.equipment_id
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
         WHERE ($1::uuid IS NULL OR e.id = $1)
@@ -1036,8 +1037,8 @@ pub async fn get_equipment_efficiency_analysis(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
             e.status
-        FROM equipment e
-        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
+        FROM mes.equipment e
+        LEFT JOIN mes.equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
         WHERE e.id = $1
         GROUP BY e.id, e.equipment_name, e.equipment_code, e.status

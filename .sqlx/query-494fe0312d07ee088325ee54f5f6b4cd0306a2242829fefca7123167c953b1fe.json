@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE mes.material_issues SET deleted_at = NOW() WHERE id = $1 AND status = 'pending'",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "494fe0312d07ee088325ee54f5f6b4cd0306a2242829fefca7123167c953b1fe"
+}

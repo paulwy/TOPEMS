@@ -570,7 +570,7 @@ async fn run_aps_scheduling(
         // 6.9 计算风险等级
         let risk = calculate_risk_level(
             end_time,
-            order.planned_end_date.map(|d| d),
+            order.planned_end_date,
             material_ready,
             selected_station.status == "active",
         );
@@ -693,7 +693,7 @@ async fn fetch_pending_orders(
             r#"
             SELECT id, order_number AS order_no, product_name, product_code, quantity,
                    planned_start_date, planned_end_date, status, priority, product_id
-            FROM production_orders
+            FROM mes.production_orders
             WHERE id IN ({}) AND status IN ('pending', 'released')
             ORDER BY priority DESC, planned_start_date ASC
             "#,
@@ -703,7 +703,7 @@ async fn fetch_pending_orders(
         r#"
         SELECT id, order_number AS order_no, product_name, product_code, quantity,
                planned_start_date, planned_end_date, status, priority, product_id
-        FROM production_orders
+        FROM mes.production_orders
         WHERE status IN ('pending', 'released')
         ORDER BY priority DESC, planned_start_date ASC
         "#
@@ -765,7 +765,7 @@ async fn fetch_available_work_stations(
     let rows = sqlx::query(
         r#"
         SELECT id, name, capacity, status, equipment_id, process_id
-        FROM work_stations
+        FROM mes.work_stations
         WHERE status = 'active'
         ORDER BY capacity DESC
         "#,
@@ -799,7 +799,7 @@ async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, Equipm
     let rows = sqlx::query(
         r#"
         SELECT id, name, status, next_maintenance_date
-        FROM equipment
+        FROM mes.equipment
         "#,
     )
     .fetch_all(pool)
@@ -837,7 +837,7 @@ async fn check_material_availability(
 ) -> Result<bool, String> {
     // 获取订单关联的 BOM（简化逻辑：通过产品编码匹配）
     // 实际场景需要更复杂的物料需求计算
-    let product = sqlx::query(r#"SELECT product_code FROM production_orders WHERE id = $1"#)
+    let product = sqlx::query(r#"SELECT product_code FROM mes.production_orders WHERE id = $1"#)
         .bind(order_id)
         .fetch_optional(pool)
         .await
@@ -857,7 +857,7 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
 
     let result = sqlx::query(
         r#"
-        INSERT INTO production_schedules (
+        INSERT INTO mes.production_schedules (
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
@@ -1015,7 +1015,7 @@ pub async fn check_schedule_constraints(
             r#"
             SELECT id, order_number AS order_no, product_name, product_code, quantity,
                    planned_start_date, planned_end_date
-            FROM production_orders
+            FROM mes.production_orders
             WHERE id = $1
             "#,
         )
@@ -1062,9 +1062,9 @@ pub async fn check_schedule_constraints(
             let bom_items = sqlx::query(
                 r#"
                 SELECT bi.material_code, bi.material_name, bi.quantity, bi.unit
-                FROM bom_items bi
-                JOIN material_boms b ON bi.bom_id = b.id
-                JOIN production_orders po ON po.product_code = b.product_code
+                FROM mes.bom_items bi
+                JOIN mes.material_boms b ON bi.bom_id = b.id
+                JOIN mes.production_orders po ON po.product_code = b.product_code
                 WHERE po.id = $1
                 "#,
             )
@@ -1101,7 +1101,7 @@ pub async fn check_schedule_constraints(
             let equipment = sqlx::query(
                 r#"
                 SELECT id, name, status, next_maintenance_date
-                FROM equipment
+                FROM mes.equipment
                 WHERE status = 'normal'
                 LIMIT 5
                 "#,
@@ -1145,7 +1145,7 @@ pub async fn check_schedule_constraints(
             let teams = sqlx::query(
                 r#"
                 SELECT id, team_name, member_count
-                FROM teams
+                FROM mes.teams
                 WHERE status = 'active'
                 LIMIT 5
                 "#,
@@ -1214,19 +1214,19 @@ pub async fn get_optimization_report(
     }
 
     // 统计订单状态
-    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM production_orders")
+    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let scheduled_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'scheduled'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'scheduled'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let completed_orders: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'completed'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -1235,7 +1235,7 @@ pub async fn get_optimization_report(
     let avg_lead_time: Option<f64> = sqlx::query_scalar(
         r#"
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - created_at)) / 3600)
-        FROM production_orders
+        FROM mes.production_orders
         WHERE status IN ('completed', 'in_progress')
         "#,
     )
@@ -1258,8 +1258,8 @@ pub async fn get_optimization_report(
         r#"
         SELECT ws.station_name, COUNT(ps.id) as task_count,
                SUM(EXTRACT(EPOCH FROM (ps.planned_end_time - ps.planned_start_time)) / 3600) as total_hours
-        FROM work_stations ws
-        LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
+        FROM mes.work_stations ws
+        LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
         WHERE ws.status = 'active'
         GROUP BY ws.id, ws.station_name
@@ -1359,25 +1359,25 @@ pub async fn get_bottleneck_analysis(
         .unwrap_or_else(|| "7d".to_string());
 
     // 吞吐量分析
-    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM production_orders")
+    let total_orders: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders")
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0);
 
     let completed: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'completed'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'completed'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let in_progress: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'in_progress'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'in_progress'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
     let pending: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM production_orders WHERE status = 'pending'")
+        sqlx::query_scalar("SELECT COUNT(*) FROM mes.production_orders WHERE status = 'pending'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -1385,7 +1385,7 @@ pub async fn get_bottleneck_analysis(
     let avg_cycle: Option<f64> = sqlx::query_scalar(
         r#"
         SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(actual_end_date, NOW()) - actual_start_date)) / 3600)
-        FROM production_orders
+        FROM mes.production_orders
         WHERE status = 'completed' AND actual_start_date IS NOT NULL
         "#
     )
@@ -1398,7 +1398,7 @@ pub async fn get_bottleneck_analysis(
     let total_capacity = sqlx::query_scalar::<_, f64>(
         r#"
         SELECT COUNT(*) * 8.0 * 5.0 as capacity_hours
-        FROM work_stations
+        FROM mes.work_stations
         WHERE status = 'active'
         "#,
     )
@@ -1409,7 +1409,7 @@ pub async fn get_bottleneck_analysis(
     let total_demand = sqlx::query_scalar::<_, f64>(
         r#"
         SELECT COALESCE(SUM(quantity * 0.1), 0) as demand_hours
-        FROM production_orders
+        FROM mes.production_orders
         WHERE status IN ('pending', 'released')
         "#,
     )
@@ -1430,8 +1430,8 @@ pub async fn get_bottleneck_analysis(
         SELECT ws.station_name,
                COUNT(ps.id) as scheduled_tasks,
                COUNT(DISTINCT ps.order_id) as unique_orders
-        FROM work_stations ws
-        LEFT JOIN production_schedules ps ON ps.work_station_id = ws.id
+        FROM mes.work_stations ws
+        LEFT JOIN mes.production_schedules ps ON ps.work_station_id = ws.id
             AND ps.status IN ('scheduled', 'in_progress')
         WHERE ws.status = 'active'
         GROUP BY ws.id, ws.station_name

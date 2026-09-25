@@ -391,8 +391,8 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         SELECT e.id, e.equipment_code AS equipment_no, e.equipment_name AS name,
                ei.temperature, ei.vibration, ei.noiselevel, ei.inspection_date,
                ei.status
-        FROM equipment_inspections ei
-        JOIN equipment e ON e.id = ei.equipment_id
+        FROM mes.equipment_inspections ei
+        JOIN mes.equipment e ON e.id = ei.equipment_id
         WHERE ei.inspection_date::date >= CURRENT_DATE - INTERVAL '7 days'
         ORDER BY ei.inspection_date DESC
         LIMIT 100
@@ -578,8 +578,8 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
                MAX(eo.oee) as max_oee,
                MIN(eo.oee) as min_oee,
                COUNT(eo.id) as record_count
-        FROM equipment_oee eo
-        JOIN equipment e ON e.id = eo.equipment_id
+        FROM mes.equipment_oee eo
+        JOIN mes.equipment e ON e.id = eo.equipment_id
         WHERE eo.record_date >= CURRENT_DATE - INTERVAL '30 days'
         GROUP BY e.id, e.equipment_code, e.equipment_name
         HAVING AVG(eo.oee) < 0.60
@@ -632,7 +632,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         r#"
         SELECT id, equipment_code AS equipment_no, equipment_name AS name, maintenance_frequency_days AS maintenance_cycle,
                last_maintenance_date, next_maintenance_date
-        FROM equipment
+        FROM mes.equipment
         WHERE status != 'scrapped'
           AND (next_maintenance_date IS NOT NULL AND next_maintenance_date < CURRENT_DATE
                OR (last_maintenance_date IS NULL AND purchase_date < CURRENT_DATE - INTERVAL '90 days'))
@@ -689,7 +689,7 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
                SUM(quantity) as total_qty,
                SUM(defective_quantity) as total_defective,
                COUNT(*) as record_count
-        FROM quality_records
+        FROM mes.quality_records
         WHERE created_at >= NOW() - INTERVAL '7 days'
         GROUP BY order_no, product_name
         HAVING SUM(quantity) > 0 AND SUM(defective_quantity)::float / SUM(quantity) > 0.05
@@ -762,7 +762,7 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         SELECT order_no, product_name, batch_no,
                quantity, qualified_quantity, defective_quantity,
                quality_status, defect_reason
-        FROM quality_records
+        FROM mes.quality_records
         WHERE quality_status = 'rejected'
           AND created_at >= NOW() - INTERVAL '24 hours'
         "#,
@@ -823,7 +823,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         SELECT id, order_number AS order_no, product_name, status,
                planned_end_date, actual_end_date,
                quantity, completed_quantity
-        FROM production_orders
+        FROM mes.production_orders
         WHERE status NOT IN ('completed', 'cancelled')
           AND planned_end_date IS NOT NULL
           AND planned_end_date < NOW()
@@ -891,8 +891,8 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
         SELECT w.order_no, w.product_name, w.wip_no, w.status,
                w.quantity, w.start_time,
                ws.station_name as station_name
-        FROM wips w
-        LEFT JOIN work_stations ws ON ws.id = w.current_work_station_id
+        FROM mes.wips w
+        LEFT JOIN mes.work_stations ws ON ws.id = w.current_work_station_id
         WHERE w.status = 'in_progress'
           AND w.start_time IS NOT NULL
           AND w.start_time < NOW() - INTERVAL '48 hours'
@@ -986,7 +986,7 @@ async fn get_recent_anomaly_trend_days(pool: &sqlx::PgPool, days: usize) -> Vec<
         SELECT DATE(created_at) as date,
                COUNT(*) as count,
                COUNT(*) FILTER (WHERE quality_status = 'rejected') as critical
-        FROM quality_records
+        FROM mes.quality_records
         WHERE created_at >= NOW() - INTERVAL '90 days'
         GROUP BY DATE(created_at)
         ORDER BY DATE(created_at) DESC

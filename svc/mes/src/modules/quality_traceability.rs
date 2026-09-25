@@ -134,7 +134,7 @@ pub async fn forward_traceability(
         r#"
         SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
                quantity, completed_quantity, status, actual_start_date, actual_end_date
-        FROM production_orders
+        FROM mes.production_orders
         WHERE id = $1
         "#,
         order_id,
@@ -170,7 +170,7 @@ pub async fn forward_traceability(
         unit: Some("件".to_string()),
         batch_no: None,
         status: Some(order.status.clone()),
-        timestamp: order.actual_start_date.and_then(|d| d.and_hms_opt(0, 0, 0)).map(|d| d.and_utc()),
+        timestamp: order.actual_start_date.map(|d| d.and_hms_opt(0,0,0).unwrap().and_utc()),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -181,8 +181,8 @@ pub async fn forward_traceability(
                pr.operator_id, pr.start_time, pr.end_time,
                pr.completed_quantity AS quantity_produced, NULL::int AS quantity_defective, pr.status,
                pp.process_name as process_name, pp.process_code
-        FROM production_records pr
-        LEFT JOIN production_processes pp ON pr.process_id = pp.id
+        FROM mes.production_records pr
+        LEFT JOIN mes.production_processes pp ON pr.process_id = pp.id
         WHERE pr.order_id = $1
         ORDER BY pr.start_time ASC
         "#,
@@ -234,7 +234,7 @@ pub async fn forward_traceability(
         unit: Some("件".to_string()),
         batch_no: Some(format!("BATCH{}", order.order_no)),
         status: Some(order.status.clone()),
-        timestamp: order.actual_end_date.map(|d| d),
+        timestamp: order.actual_end_date.map(|d| d.and_hms_opt(0,0,0).unwrap().and_utc()),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -278,7 +278,7 @@ pub async fn backward_traceability(
         r#"
         SELECT id, batch_no, product_id, product_name, product_code,
                quantity, unit, production_date, status, notes
-        FROM batch_records
+        FROM mes.batch_records
         WHERE batch_no = $1
         LIMIT 1
         "#,
@@ -431,7 +431,7 @@ pub async fn get_trace_chain(
         r#"
         SELECT id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
                quantity, completed_quantity, status
-        FROM production_orders
+        FROM mes.production_orders
         WHERE id = $1
         "#,
         id,
@@ -540,7 +540,7 @@ pub async fn list_quality_records(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM quality_records{}",
+        "SELECT COUNT(*) as total FROM mes.quality_records{}",
         where_clause
     );
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
@@ -563,7 +563,7 @@ pub async fn list_quality_records(
             quantity, qualified_quantity, defective_quantity,
             quality_status, inspector, inspection_time,
             defect_reason, notes, created_at, updated_at
-        FROM quality_records
+        FROM mes.quality_records
         {}
         ORDER BY created_at DESC
         LIMIT ${} OFFSET ${}
@@ -613,17 +613,17 @@ pub async fn list_quality_records(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             qualified_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("qualified_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             defective_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defective_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             quality_status: r
                 .try_get::<Option<String>, _>("quality_status")
@@ -634,7 +634,7 @@ pub async fn list_quality_records(
             inspection_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             defect_reason: r
                 .try_get::<Option<String>, _>("defect_reason")
@@ -644,12 +644,12 @@ pub async fn list_quality_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
         })
         .collect();

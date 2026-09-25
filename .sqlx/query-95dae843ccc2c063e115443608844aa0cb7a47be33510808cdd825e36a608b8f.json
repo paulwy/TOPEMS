@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE mes.work_reports SET deleted_at = NOW() WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "95dae843ccc2c063e115443608844aa0cb7a47be33510808cdd825e36a608b8f"
+}

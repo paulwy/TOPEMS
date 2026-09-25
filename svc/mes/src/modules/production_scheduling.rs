@@ -228,7 +228,7 @@ pub async fn list_production_schedules(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM production_schedules ps{}",
+        "SELECT COUNT(*) as total FROM mes.production_schedules ps{}",
         where_clause
     );
 
@@ -255,14 +255,14 @@ pub async fn list_production_schedules(
             ps.process_id, ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
-            ps.created_at.unwrap_or_default(), ps.updated_at.unwrap_or_default(),
+            ps.created_at, ps.updated_at,
             ws.station_name as work_station_name,
             e.equipment_name as equipment_name,
             pp.process_name as process_name
-        FROM production_schedules ps
-        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
-        LEFT JOIN equipment e ON ps.equipment_id = e.id
-        LEFT JOIN production_processes pp ON ps.process_id = pp.id
+        FROM mes.production_schedules ps
+        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
+        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
+        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
         {}
         ORDER BY ps.planned_start_time DESC, ps.priority DESC
         LIMIT ${} OFFSET ${}
@@ -299,7 +299,7 @@ pub async fn list_production_schedules(
             quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             work_station_id: r
                 .try_get::<Option<Uuid>, _>("work_station_id")
@@ -322,22 +322,22 @@ pub async fn list_production_schedules(
             planned_start_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("planned_start_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             planned_end_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("planned_end_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             actual_start_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_start_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             actual_end_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("actual_end_time")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             status: r
                 .try_get::<Option<String>, _>("status")
@@ -358,12 +358,12 @@ pub async fn list_production_schedules(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
         })
         .collect();
@@ -414,7 +414,7 @@ pub async fn create_production_schedule(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
+            r#"SELECT order_number AS order_no FROM mes.production_orders WHERE id = $1"#,
             order_id
         )
         .fetch_optional(&state.pool)
@@ -427,10 +427,10 @@ pub async fn create_production_schedule(
     };
 
     let order_no_flat = order_no;
-    let order_no_arg = order_no_flat.and_then(|x| Some(x));
+    let order_no_arg = order_no_flat;
     let result = sqlx::query!(
         r#"
-        INSERT INTO production_schedules (
+        INSERT INTO mes.production_schedules (
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
@@ -455,12 +455,12 @@ pub async fn create_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time,
-        req.planned_end_time,
+        req.planned_start_time.map(|d| d.naive_utc()),
+        req.planned_end_time.map(|d| d.naive_utc()),
         req.priority.unwrap_or(0),
         req.sequence.unwrap_or(0),
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -488,15 +488,16 @@ pub async fn create_production_schedule(
         equipment_name: None,
         process_id: result.process_id,
         process_name: None,
-        planned_start_time: result.planned_start_time.map(|d| d),
-        planned_end_time: result.planned_end_time.map(|d| d),
-        actual_start_time: result.actual_start_time.map(|d| d),
-        actual_end_time: result.actual_end_time.map(|d| d),
+        planned_start_time: result.planned_start_time.map(|d| d.and_utc()),
+        planned_end_time: result.planned_end_time.map(|d| d.and_utc()),
+        actual_start_time: result.actual_start_time.map(|d| d.and_utc()),
+        actual_end_time: result.actual_end_time.map(|d| d.and_utc()),
         status: result.status.unwrap_or_else(|| "pending".to_string()),
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default(),        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+            updated_at: result.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -539,14 +540,14 @@ pub async fn get_production_schedule(
             ps.process_id, ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
-            ps.created_at.unwrap_or_default(), ps.updated_at.unwrap_or_default(),
+            ps.created_at, ps.updated_at,
             ws.station_name as work_station_name,
             e.equipment_name as equipment_name,
             pp.process_name as process_name
-        FROM production_schedules ps
-        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
-        LEFT JOIN equipment e ON ps.equipment_id = e.id
-        LEFT JOIN production_processes pp ON ps.process_id = pp.id
+        FROM mes.production_schedules ps
+        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
+        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
+        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
         WHERE ps.id = $1
         "#,
         id,
@@ -571,7 +572,7 @@ pub async fn get_production_schedule(
                 order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code.unwrap_or_default(),
+                product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: Some(r.work_station_name),
@@ -579,16 +580,16 @@ pub async fn get_production_schedule(
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
                 process_name: Some(r.process_name),
-                planned_start_time: r.planned_start_time.map(|d| d),
-                planned_end_time: r.planned_end_time.map(|d| d),
-                actual_start_time: r.actual_start_time.map(|d| d),
-                actual_end_time: r.actual_end_time.map(|d| d),
+                planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
+                planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
+                actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
+                actual_end_time: r.actual_end_time.map(|d| d.and_utc()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -628,7 +629,7 @@ pub async fn update_production_schedule(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_schedules SET
+        UPDATE mes.production_schedules SET
             work_station_id = COALESCE($2, work_station_id),
             equipment_id = COALESCE($3, equipment_id),
             process_id = COALESCE($4, process_id),
@@ -653,13 +654,13 @@ pub async fn update_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time,
-        req.planned_end_time,
+        req.planned_start_time.map(|d| d.naive_utc()),
+        req.planned_end_time.map(|d| d.naive_utc()),
         req.priority,
         req.sequence,
         req.status,
         req.notes,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -689,16 +690,16 @@ pub async fn update_production_schedule(
                 equipment_name: None,
                 process_id: r.process_id,
                 process_name: None,
-                planned_start_time: r.planned_start_time.map(|d| d),
-                planned_end_time: r.planned_end_time.map(|d| d),
-                actual_start_time: r.actual_start_time.map(|d| d),
-                actual_end_time: r.actual_end_time.map(|d| d),
+                planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
+                planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
+                actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
+                actual_end_time: r.actual_end_time.map(|d| d.and_utc()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_default(),
+            updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_default(),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
@@ -736,7 +737,7 @@ pub async fn delete_production_schedule(
 
     let result = sqlx::query!(
         r#"
-        UPDATE production_schedules SET deleted_at = NOW()
+        UPDATE mes.production_schedules SET deleted_at = NOW()
         WHERE id = $1 AND status IN ('pending', 'cancelled')
         "#,
         id,
@@ -794,7 +795,7 @@ pub async fn adjust_schedule(
     for schedule_id in &req.schedule_ids {
         let result = sqlx::query!(
             r#"
-            UPDATE production_schedules SET
+            UPDATE mes.production_schedules SET
                 work_station_id = COALESCE($2, work_station_id),
                 planned_start_time = COALESCE($3, planned_start_time),
                 updated_at = $4
@@ -802,8 +803,8 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-            req.new_start_time,
-            now,
+            req.new_start_time.map(|d| d.naive_utc()),
+            now.naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -849,8 +850,8 @@ pub async fn get_gantt_data(
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.quantity, ps.completed_quantity,
             ws.station_name as work_station_name
-        FROM production_schedules ps
-        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
+        FROM mes.production_schedules ps
+        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
         WHERE ps.planned_start_time IS NOT NULL
           AND ps.planned_end_time IS NOT NULL
         ORDER BY ps.planned_start_time ASC
@@ -872,11 +873,11 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-        let start = s.planned_start_time.map(|d| d).unwrap_or_else(Utc::now);
+        let start = s.planned_start_time.map(|d| d).unwrap_or_else(|| Utc::now().naive_utc());
         let end = s
             .planned_end_time
             .map(|d| d)
-            .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
+            .unwrap_or_else(|| Utc::now().naive_utc() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
@@ -902,8 +903,8 @@ pub async fn get_gantt_data(
                 s.schedule_no.clone().to_string(),
                 s.product_name.clone().to_string()
             ),
-            start,
-            end,
+            start: start.and_utc(),
+            end: end.and_utc(),
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
             resource: Some(resource_name),
@@ -1012,7 +1013,7 @@ async fn transition_schedule(
     let tenant_id = get_schedule_tenant_id(claims);
 
     let existing: Option<(String,)> = match sqlx::query_as(
-        "SELECT status FROM production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)
@@ -1040,7 +1041,7 @@ async fn transition_schedule(
 
     let now = Utc::now();
     let updated = sqlx::query(
-        "UPDATE production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
+        "UPDATE mes.production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
     )
     .bind(to_status)
     .bind(&comment)
@@ -1055,7 +1056,7 @@ async fn transition_schedule(
             ScheduleActionResponse {
                 success: true,
                 message: format!("排产单已{}", to_status),
-                id: id,
+                id: Some(id),
             },
             "操作成功",
         )),

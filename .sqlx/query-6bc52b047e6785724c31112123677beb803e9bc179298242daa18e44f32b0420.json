@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO mes.quality_standard_values (\n                    standard_id, item_name, lower_limit, upper_limit,\n                    unit, inspection_method, remark\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, $7)\n                RETURNING id, standard_id, item_name, lower_limit, upper_limit,\n                    unit, inspection_method, remark\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "standard_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "item_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "lower_limit",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 4,
+        "name": "upper_limit",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 5,
+        "name": "unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "inspection_method",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "remark",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Numeric",
+        "Numeric",
+        "Varchar",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "6bc52b047e6785724c31112123677beb803e9bc179298242daa18e44f32b0420"
+}

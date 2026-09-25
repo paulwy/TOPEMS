@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            pfs.id, pfs.sequence, pfs.standard_time,\n            pp.process_name as process_name\n        FROM mes.process_flow_steps pfs\n        LEFT JOIN mes.production_processes pp ON pfs.process_id = pp.id\n        WHERE pfs.flow_id = $1\n        ORDER BY pfs.sequence ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "sequence",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "standard_time",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "process_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "546af83caa98a024635ddce5fb98b4bc9294bec7dd1700addc9bc1ace8fe32ff"
+}

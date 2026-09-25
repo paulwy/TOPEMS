@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "last_sync",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 10,
@@ -76,12 +76,12 @@
       {
         "ordinal": 14,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 15,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -104,8 +104,8 @@
       true,
       true,
       true,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "2dc295f622235a64d54fa0b88a89fe4fa8c6f7447c3eb99485e0745bf0d32aee"

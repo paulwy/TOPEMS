@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE mes.teams SET member_count = (\n                SELECT COUNT(*) FROM mes.team_members WHERE team_id = $1 AND status = 'active'\n            ), updated_at = $2 WHERE id = $1\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "bfaa0f02e23c4959bf17ba0919222a91a46ca9c518bdc7d6f80cc25f69d24a35"
+}

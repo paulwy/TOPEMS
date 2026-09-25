@@ -128,7 +128,7 @@ pub async fn get_dashboard(
             COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_orders,
             COUNT(*) FILTER (WHERE status = 'completed') as completed_orders,
             COALESCE(SUM(completed_quantity), 0) as total_output
-        FROM production_orders
+        FROM mes.production_orders
         "#
     )
     .fetch_one(&state.pool)
@@ -146,7 +146,7 @@ pub async fn get_dashboard(
     let today_output = sqlx::query!(
         r#"
         SELECT COALESCE(SUM(completed_quantity), 0) as today_output
-        FROM production_records
+        FROM mes.production_records
         WHERE start_time::date = CURRENT_DATE
         "#
     )
@@ -167,7 +167,7 @@ pub async fn get_dashboard(
         SELECT
             COALESCE(SUM(quantity), 0) as total_quantity,
             COALESCE(SUM(qualified_quantity), 0) as good_quantity
-        FROM quality_records
+        FROM mes.quality_records
         WHERE quality_status IN ('qualified', 'rejected')
         "#
     )
@@ -196,7 +196,7 @@ pub async fn get_dashboard(
         SELECT COALESCE(AVG(oee), 0) as avg_oee
         FROM (
             SELECT DISTINCT ON (equipment_id) oee
-            FROM equipment_oee
+            FROM mes.equipment_oee
             ORDER BY equipment_id, record_date DESC
         ) latest
         "#
@@ -226,7 +226,7 @@ pub async fn get_dashboard(
         r#"
         SELECT
             id, order_number AS order_no, product_name, quantity, completed_quantity, status
-        FROM production_orders
+        FROM mes.production_orders
         ORDER BY created_at DESC
         LIMIT 10
         "#
@@ -276,18 +276,18 @@ pub async fn get_dashboard(
             po.product_name AS current_product,
             today_stats.output_today AS output_today,
             pr.operator_id  AS operator
-        FROM work_stations ws
+        FROM mes.work_stations ws
         LEFT JOIN LATERAL (
             SELECT order_id, operator_id
-            FROM production_records
+            FROM mes.production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
             ORDER BY start_time DESC
             LIMIT 1
         ) pr ON true
-        LEFT JOIN production_orders po ON pr.order_id = po.id
+        LEFT JOIN mes.production_orders po ON pr.order_id = po.id
         LEFT JOIN LATERAL (
             SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
-            FROM production_records
+            FROM mes.production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
         ) today_stats ON true
@@ -316,11 +316,11 @@ pub async fn get_dashboard(
                 current_order: r
                     .try_get::<Option<String>, _>("current_order")
                     .ok()
-                    .flatten()
+                    .flatten(),
                 current_product: r
                     .try_get::<Option<String>, _>("current_product")
                     .ok()
-                    .flatten()
+                    .flatten(),
                 output_today: opt_big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("output_today")
                         .ok()
@@ -346,7 +346,7 @@ pub async fn get_dashboard(
             DATE(created_at) AS date,
             COALESCE(SUM(quantity), 0) AS total_quantity,
             COALESCE(SUM(qualified_quantity), 0) AS good_quantity
-        FROM quality_records
+        FROM mes.quality_records
         WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
         GROUP BY DATE(created_at)
         ORDER BY date DESC
@@ -404,10 +404,10 @@ pub async fn get_dashboard(
             e.equipment_no   AS equipment_code,
             e.status        AS status,
             latest_oee.oee  AS oee
-        FROM equipment e
+        FROM mes.equipment e
         LEFT JOIN LATERAL (
             SELECT oee
-            FROM equipment_oee
+            FROM mes.equipment_oee
             WHERE equipment_id = e.id
             ORDER BY record_date DESC
             LIMIT 1
@@ -482,7 +482,7 @@ pub async fn get_order_progress(
         r#"
         SELECT
             id, order_number AS order_no, product_name, quantity, completed_quantity, status
-        FROM production_orders
+        FROM mes.production_orders
         ORDER BY created_at DESC
         "#
     )
@@ -557,18 +557,18 @@ pub async fn get_workstation_status(
             po.product_name AS current_product,
             today_stats.output_today AS output_today,
             pr.operator_id  AS operator
-        FROM work_stations ws
+        FROM mes.work_stations ws
         LEFT JOIN LATERAL (
             SELECT order_id, operator_id
-            FROM production_records
+            FROM mes.production_records
             WHERE work_station_id = ws.id AND status = 'in_progress'
             ORDER BY start_time DESC
             LIMIT 1
         ) pr ON true
-        LEFT JOIN production_orders po ON pr.order_id = po.id
+        LEFT JOIN mes.production_orders po ON pr.order_id = po.id
         LEFT JOIN LATERAL (
             SELECT COALESCE(SUM(completed_quantity), 0) AS output_today
-            FROM production_records
+            FROM mes.production_records
             WHERE work_station_id = ws.id
               AND start_time::date = CURRENT_DATE
         ) today_stats ON true
@@ -604,11 +604,11 @@ pub async fn get_workstation_status(
             current_order: r
                 .try_get::<Option<String>, _>("current_order")
                 .ok()
-                .flatten()
+                .flatten(),
             current_product: r
                 .try_get::<Option<String>, _>("current_product")
                 .ok()
-                .flatten()
+                .flatten(),
             output_today: opt_big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_today")
                     .ok()
@@ -653,7 +653,7 @@ pub async fn get_quality_trend(
             DATE(created_at) AS date,
             COALESCE(SUM(quantity), 0) AS total_quantity,
             COALESCE(SUM(qualified_quantity), 0) AS good_quantity
-        FROM quality_records
+        FROM mes.quality_records
         GROUP BY DATE(created_at)
         ORDER BY date DESC
         LIMIT 30
@@ -736,10 +736,10 @@ pub async fn get_equipment_status(
             e.equipment_no   AS equipment_code,
             e.status        AS status,
             latest_oee.oee  AS oee
-        FROM equipment e
+        FROM mes.equipment e
         LEFT JOIN LATERAL (
             SELECT oee
-            FROM equipment_oee
+            FROM mes.equipment_oee
             WHERE equipment_id = e.id
             ORDER BY record_date DESC
             LIMIT 1

@@ -253,7 +253,7 @@ async fn calculate_work_order_cost_detail_db(
         SELECT wo.id, wo.work_order_no, wo.order_no, wo.product_code, wo.product_name,
                wo.planned_quantity, wo.completed_quantity, wo.actual_start_date, wo.actual_end_date,
                wo.work_station_id, wo.team_id, wo.operator
-        FROM work_orders wo
+        FROM mes.work_orders wo
         WHERE wo.id = $1
         "#,
     )
@@ -306,8 +306,8 @@ async fn calculate_work_order_cost_detail_db(
     let bom_items = sqlx::query(
         r#"
         SELECT bi.material_code, bi.material_name, bi.quantity, bi.unit
-        FROM bom_items bi
-        JOIN material_boms b ON bi.bom_id = b.id
+        FROM mes.bom_items bi
+        JOIN mes.material_boms b ON bi.bom_id = b.id
         WHERE b.product_code = $1
         "#,
     )
@@ -461,7 +461,7 @@ pub async fn calculate_production_order_cost(
     let order = sqlx::query(
         r#"
         SELECT id, order_number AS order_no, product_code, product_name, quantity, status
-        FROM production_orders
+        FROM mes.production_orders
         WHERE id = $1
         "#,
     )
@@ -493,7 +493,7 @@ pub async fn calculate_production_order_cost(
 
     let work_order_ids = sqlx::query(
         r#"
-        SELECT id FROM work_orders WHERE order_id = $1
+        SELECT id FROM mes.work_orders WHERE order_id = $1
         "#,
     )
     .bind(id)
@@ -588,7 +588,7 @@ pub async fn get_period_cost_report(
         r#"
         SELECT wo.id, wo.product_code, wo.product_name, wo.completed_quantity,
                wo.actual_start_time, wo.actual_end_time, wo.work_station_id
-        FROM work_orders wo
+        FROM mes.work_orders wo
         WHERE wo.actual_start_time IS NOT NULL
         AND wo.actual_start_time >= $1 AND wo.actual_start_time <= $2
         "#,
@@ -723,7 +723,7 @@ pub async fn get_cost_trend(
 
         let week_cost = sqlx::query(
             r#"
-            SELECT COUNT(*) as cnt FROM work_orders
+            SELECT COUNT(*) as cnt FROM mes.work_orders
             WHERE actual_start_time >= $1 AND actual_start_time <= $2
             "#,
         )

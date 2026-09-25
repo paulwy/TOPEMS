@@ -75,7 +75,7 @@ pub fn create_routes() -> Router<AppState> {
 
 // ==================== Helper Functions ====================
 
-fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
+pub fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     match dt.into() {
         Some(d) => d,
         None => Utc::now(),
@@ -86,11 +86,11 @@ pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+pub fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
-fn big_decimal_to_f64<T: Into<Option<BigDecimal>>>(bd: T) -> f64 {
+pub fn big_decimal_to_f64<T: Into<Option<BigDecimal>>>(bd: T) -> f64 {
     bd.into()
         .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0))
         .unwrap_or(0.0)

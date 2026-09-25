@@ -132,12 +132,12 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn dt(input: Option<DateTime<Utc>>) -> String {
+    input.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d.to_rfc3339())
+fn opt_dt(input: Option<DateTime<Utc>>) -> Option<String> {
+    input.map(|d| d.to_rfc3339())
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -195,7 +195,7 @@ pub async fn get_today_production_output(
     };
 
     let output: Option<BigDecimal> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(output_quantity), 0) FROM work_reports WHERE reporter_name = $1 AND created_at >= CURRENT_DATE",
+        "SELECT COALESCE(SUM(output_quantity), 0) FROM mes.work_reports WHERE reporter_name = $1 AND created_at >= CURRENT_DATE",
     )
     .bind(&operator)
     .fetch_one(&state.pool)
@@ -267,7 +267,7 @@ pub async fn list_work_reports(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM work_reports wr{}",
+        "SELECT COUNT(*) as total FROM mes.work_reports wr{}",
         where_clause
     );
 
@@ -293,10 +293,10 @@ pub async fn list_work_reports(
             wr.reporter_name, wr.report_date, wr.shift,
             wr.output_quantity, wr.defect_quantity, wr.labor_hours, wr.remark,
             wr.status, wr.approved_by, wr.approved_at, wr.approval_remark,
-            wr.created_at.unwrap_or_default(), wr.updated_at.unwrap_or_default()
-        FROM work_reports wr
+            wr.created_at, wr.updated_at
+        FROM mes.work_reports wr
         {}
-        ORDER BY wr.created_at.unwrap_or_default() DESC
+        ORDER BY wr.created_at DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
@@ -358,17 +358,17 @@ pub async fn list_work_reports(
             output_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             defect_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("defect_quantity")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             labor_hours: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("labor_hours")
                     .ok()
-                    .flatten()
+                    .flatten(),
             ),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             status: r
@@ -377,25 +377,13 @@ pub async fn list_work_reports(
                 .flatten()
                 .unwrap_or_else(|| "pending".to_string()),
             approved_by: r.try_get::<Option<String>, _>("approved_by").ok().flatten(),
-            approved_at: 
-                r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
-                    .ok()
-                    .flatten()
-            ,
+            approved_at: r.try_get::<Option<DateTime<Utc>>, _>("approved_at").ok().flatten().map(|d| d.to_rfc3339()),
             approval_remark: r
                 .try_get::<Option<String>, _>("approval_remark")
                 .ok()
                 .flatten(),
-            created_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
-            updated_at: (
-                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
-                    .ok()
-                    .flatten()
-            ).unwrap_or_default(),
+            created_at: r.try_get::<Option<DateTime<Utc>>, _>("created_at").ok().flatten().unwrap_or_default(),
+            updated_at: r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok().flatten().unwrap_or_default(),
         })
         .collect();
 
@@ -448,8 +436,8 @@ pub async fn get_work_report(
             wr.reporter_name, wr.report_date, wr.shift,
             wr.output_quantity, wr.defect_quantity, wr.labor_hours, wr.remark,
             wr.status, wr.approved_by, wr.approved_at, wr.approval_remark,
-            wr.created_at.unwrap_or_default(), wr.updated_at.unwrap_or_default()
-        FROM work_reports wr
+            wr.created_at, wr.updated_at
+        FROM mes.work_reports wr
         WHERE wr.id = $1
         "#,
         uuid,
@@ -477,7 +465,7 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: r.approved_at.map(|d| d),
+                approved_at: r.approved_at.map(|d| d.to_rfc3339()),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -568,7 +556,7 @@ pub async fn create_work_report(
 
     let result = sqlx::query!(
         r#"
-        INSERT INTO work_reports (
+        INSERT INTO mes.work_reports (
             report_no, work_order_id, work_order_no, order_id, order_no,
             work_station_id, work_station_name,
             reporter_name, report_date, shift,
@@ -628,7 +616,7 @@ pub async fn create_work_report(
                         .execute(&mut *conn)
                         .await;
                     let erp_order_id: Option<Uuid> = sqlx::query_scalar(
-                        "SELECT source_order_id FROM production_orders WHERE id = $1",
+                        "SELECT source_order_id FROM mes.production_orders WHERE id = $1",
                     )
                     .bind(mes_order_id)
                     .fetch_optional(&mut *conn)
@@ -675,7 +663,7 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: r.approved_at.map(|d| d),
+                    approved_at: r.approved_at.map(|d| d.to_rfc3339()),
                     approval_remark: r.approval_remark,
                     created_at: r.created_at,
                     updated_at: r.updated_at,
@@ -756,7 +744,7 @@ pub async fn update_work_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_reports
+        UPDATE mes.work_reports
         SET
             work_order_id = COALESCE($1, work_order_id),
             work_order_no = COALESCE($2, work_order_no),
@@ -821,7 +809,7 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: r.approved_at.map(|d| d),
+                approved_at: r.approved_at.map(|d| d.to_rfc3339()),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -869,7 +857,7 @@ pub async fn delete_work_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_reports SET deleted_at = NOW() WHERE id = $1
+        UPDATE mes.work_reports SET deleted_at = NOW() WHERE id = $1
         "#,
         uuid,
     )
@@ -920,7 +908,7 @@ pub async fn approve_work_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_reports
+        UPDATE mes.work_reports
         SET
             status = 'approved',
             approved_by = $1::uuid,
@@ -961,7 +949,7 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: r.approved_at.map(|d| d),
+                approved_at: r.approved_at.map(|d| d.to_rfc3339()),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1014,7 +1002,7 @@ pub async fn reject_work_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE work_reports
+        UPDATE mes.work_reports
         SET
             status = 'rejected',
             approved_by = $1::uuid,
@@ -1056,7 +1044,7 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: r.approved_at.map(|d| d),
+                approved_at: r.approved_at.map(|d| d.to_rfc3339()),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at,
                 updated_at: r.updated_at,
@@ -1267,13 +1255,13 @@ mod tests {
     #[test]
     fn datetime_to_string_some_produces_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 1, 2, 3, 4, 5).unwrap();
-        let s = (Some(dt)).unwrap_or_default();
+        let s = Some(dt);
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
     #[test]
     fn datetime_to_string_none_returns_empty() {
-        let s = (None).unwrap_or_default();
+        let s = None;
         assert!(s.is_empty(), "got {}", s);
     }
 
@@ -1281,14 +1269,14 @@ mod tests {
     #[test]
     fn opt_datetime_to_string_some_returns_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = Some(dt);
+        let r = opt_Some(dt);
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }
 
     #[test]
     fn opt_datetime_to_string_none_returns_none() {
-        assert!(None.is_none());
+        assert!(opt_None.is_none());
     }
 
     // ---- big_decimal_to_f64 ----
