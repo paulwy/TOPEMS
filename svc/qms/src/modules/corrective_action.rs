@@ -12,6 +12,16 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:action:read"])),
+    path = "/actions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn list_actions(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -119,6 +129,16 @@ pub async fn list_actions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:action:write"])),
+    path = "/actions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn create_action(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -157,6 +177,19 @@ pub async fn create_action(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:action:read"])),
+    path = "/actions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn get_action(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -192,6 +225,19 @@ pub async fn get_action(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:action:read"])),
+    path = "/actions/{id}/items",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn get_action_items(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -225,6 +271,19 @@ pub async fn get_action_items(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:action:write"])),
+    path = "/actions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn update_action(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -251,6 +310,19 @@ pub async fn update_action(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:action:write"])),
+    path = "/actions/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn complete_action(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -276,6 +348,19 @@ pub async fn complete_action(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:action:write"])),
+    path = "/actions/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_action"
+)]
 pub async fn delete_action(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

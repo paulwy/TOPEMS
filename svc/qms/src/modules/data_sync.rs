@@ -53,6 +53,16 @@ pub struct SyncIssueToEhsRequest {
 
 // ==================== Handler Functions ====================
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:sync:read"])),
+    path = "/sync-records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sync"
+)]
 pub async fn list_sync_records(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -133,6 +143,19 @@ pub async fn list_sync_records(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:sync:read"])),
+    path = "/sync-records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sync"
+)]
 pub async fn get_sync_record(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -189,6 +212,16 @@ pub async fn get_sync_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:sync:write"])),
+    path = "/sync/inspection-to-lims",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sync"
+)]
 pub async fn sync_inspection_to_lims(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -298,6 +331,16 @@ pub async fn sync_inspection_to_lims(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:sync:write"])),
+    path = "/sync/issue-to-ehs",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sync"
+)]
 pub async fn sync_issue_to_ehs(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -396,6 +439,19 @@ pub async fn sync_issue_to_ehs(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:sync:write"])),
+    path = "/sync-records/{id}/retry",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sync"
+)]
 pub async fn retry_sync(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -442,6 +498,19 @@ pub async fn retry_sync(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:sync:write"])),
+    path = "/sync-records/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sync"
+)]
 pub async fn delete_sync_record(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

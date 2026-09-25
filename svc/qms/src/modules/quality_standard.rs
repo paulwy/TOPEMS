@@ -422,6 +422,19 @@ pub async fn delete_standard(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:standard:read"])),
+    path = "/standards/{id}/revisions",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_standard"
+)]
 pub async fn list_revisions(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -455,6 +468,19 @@ pub async fn list_revisions(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:standard:write"])),
+    path = "/standards/{id}/revisions",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_standard"
+)]
 pub async fn create_revision(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

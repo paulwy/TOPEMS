@@ -18,6 +18,16 @@ const STATUS_CANCELLED: &str = "cancelled";
 
 const APQP_SELECT_COLS: &str = r#"id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/projects",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn list_apqp_projects(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ApqpProjectQuery>,
@@ -78,6 +88,16 @@ pub async fn list_apqp_projects(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn create_apqp_project(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateApqpProjectRequest>,
@@ -159,6 +179,19 @@ async fn init_default_phases(pool: &sqlx::PgPool, project_id: &str) -> Result<()
     Ok(())
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/projects/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn get_apqp_project(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -186,6 +219,19 @@ pub async fn get_apqp_project(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn update_apqp_project(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -240,6 +286,19 @@ pub async fn update_apqp_project(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn delete_apqp_project(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -266,6 +325,19 @@ pub async fn delete_apqp_project(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects/{id}/transition",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn transition_project_status(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -299,6 +371,16 @@ pub async fn transition_project_status(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/phases",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn list_apqp_phases(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
@@ -335,6 +417,16 @@ pub async fn list_apqp_phases(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/phases",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn create_apqp_phase(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateApqpPhaseRequest>,
@@ -374,6 +466,19 @@ pub async fn create_apqp_phase(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/phases/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn get_apqp_phase(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -401,6 +506,19 @@ pub async fn get_apqp_phase(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/phases/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn update_apqp_phase(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -449,6 +567,19 @@ pub async fn update_apqp_phase(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/phases/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn delete_apqp_phase(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -475,6 +606,16 @@ pub async fn delete_apqp_phase(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn list_apqp_tasks(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ApqpTaskQuery>,
@@ -532,6 +673,16 @@ pub async fn list_apqp_tasks(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn create_apqp_task(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateApqpTaskRequest>,
@@ -574,6 +725,19 @@ pub async fn create_apqp_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn get_apqp_task(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -601,6 +765,19 @@ pub async fn get_apqp_task(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn update_apqp_task(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -643,6 +820,19 @@ pub async fn update_apqp_task(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn delete_apqp_task(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -669,6 +859,16 @@ pub async fn delete_apqp_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/risks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn list_apqp_risks(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ApqpRiskQuery>,
@@ -722,6 +922,16 @@ pub async fn list_apqp_risks(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/risks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn create_apqp_risk(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateApqpRiskRequest>,
@@ -763,6 +973,19 @@ pub async fn create_apqp_risk(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/risks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn get_apqp_risk(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -790,6 +1013,19 @@ pub async fn get_apqp_risk(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/risks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn update_apqp_risk(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -831,6 +1067,19 @@ pub async fn update_apqp_risk(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/risks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn delete_apqp_risk(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -857,6 +1106,19 @@ pub async fn delete_apqp_risk(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/projects/{id}/progress",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn get_apqp_progress(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -972,6 +1234,16 @@ pub async fn get_apqp_progress(
     Json(ApiResponse::success(stats, "获取APQP进度统计成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:apqp:read"])),
+    path = "/apqp/approvals",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn list_apqp_approvals(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
@@ -1004,6 +1276,16 @@ pub async fn list_apqp_approvals(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/approvals",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn create_apqp_approval(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateApqpApprovalRequest>,
@@ -1033,6 +1315,19 @@ pub async fn create_apqp_approval(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/approvals/{id}/process",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn process_apqp_approval(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -1073,6 +1368,19 @@ pub struct ApqpApprovalRequest {
 }
 
 /// APV-4: 审批通过 (in_pilot → in_production, requires_approval)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn approve_apqp(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1137,6 +1445,19 @@ pub async fn approve_apqp(
 }
 
 /// APV-4: 完成审批 (in_production → completed, requires_approval)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn complete_apqp(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1201,6 +1522,19 @@ pub async fn complete_apqp(
 }
 
 /// APV-4: 取消 (任意非终态 → cancelled)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:apqp:write"])),
+    path = "/apqp/projects/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "apqp"
+)]
 pub async fn cancel_apqp(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

@@ -375,6 +375,19 @@ pub async fn assign_inspection(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection:write"])),
+    path = "/checks/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn submit_result(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -454,6 +467,19 @@ pub async fn submit_result(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection:write"])),
+    path = "/checks/{id}/audit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn audit_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -531,6 +557,19 @@ pub async fn audit_inspection(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection:write"])),
+    path = "/checks/{id}/rework",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn rework_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -604,6 +643,19 @@ pub async fn rework_inspection(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection:read"])),
+    path = "/checks/{id}/results",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn get_inspection_results(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -637,6 +689,19 @@ pub async fn get_inspection_results(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:inspection:read"])),
+    path = "/checks/{id}/audits",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn get_inspection_audits(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -695,6 +760,19 @@ pub struct ApprovalRequest {
 }
 
 /// APV-1: 审批通过 (pending_audit → completed)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection:write"])),
+    path = "/checks/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn approve_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -760,6 +838,19 @@ pub async fn approve_inspection(
 }
 
 /// APV-1: 审批驳回 (pending_audit → rejected)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:inspection:write"])),
+    path = "/checks/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_inspection"
+)]
 pub async fn reject_inspection(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

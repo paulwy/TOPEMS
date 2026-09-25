@@ -126,6 +126,16 @@ fn detect_trend(values: &[f64]) -> Option<String> {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:spc:read"])),
+    path = "/spc/charts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn list_spc_charts(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -169,6 +179,16 @@ pub async fn list_spc_charts(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:spc:write"])),
+    path = "/spc/charts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn create_spc_chart(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -199,6 +219,19 @@ pub async fn create_spc_chart(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:spc:read"])),
+    path = "/spc/charts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn get_spc_chart(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -234,6 +267,19 @@ pub async fn get_spc_chart(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:spc:write"])),
+    path = "/spc/charts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn update_spc_chart(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -260,6 +306,19 @@ pub async fn update_spc_chart(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:spc:write"])),
+    path = "/spc/charts/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn delete_spc_chart(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -290,6 +349,16 @@ pub async fn delete_spc_chart(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:spc:read"])),
+    path = "/spc/data-points",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn get_spc_data_points(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -328,6 +397,16 @@ pub async fn get_spc_data_points(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:spc:write"])),
+    path = "/spc/data-points",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn add_spc_data_point(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -383,6 +462,16 @@ pub async fn add_spc_data_point(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:spc:write"])),
+    path = "/spc/calculate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "spc"
+)]
 pub async fn calculate_control_limits(
     State(_state): State<crate::AppState>,
     Json(req): Json<CalculateControlLimitRequest>,

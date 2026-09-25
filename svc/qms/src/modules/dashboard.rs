@@ -21,6 +21,16 @@ pub struct DashboardStats {
     pub in_progress_plans: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:task:read"])),
+    path = "/quality-tasks/today-pass-rate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_task"
+)]
 pub async fn get_today_quality_pass_rate(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -62,6 +72,16 @@ pub async fn get_today_quality_pass_rate(
     ))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:dashboard:read"])),
+    path = "/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_dashboard"
+)]
 pub async fn get_dashboard_stats(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<DashboardStats>> {

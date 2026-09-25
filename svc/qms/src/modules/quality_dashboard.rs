@@ -146,6 +146,16 @@ pub struct CreateAlertMessageRequest {
     pub threshold: Option<BigDecimal>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:dashboard:read"])),
+    path = "/quality-dashboard/overview",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_dashboard"
+)]
 pub async fn get_quality_overview(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<QualityOverview>> {
@@ -240,6 +250,16 @@ pub async fn get_quality_overview(
     Json(ApiResponse::success(overview, "获取质量概览成功"))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:dashboard:read"])),
+    path = "/quality-dashboard/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_dashboard"
+)]
 pub async fn get_quality_trend(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<TrendQuery>,
@@ -288,6 +308,16 @@ pub async fn get_quality_trend(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:dashboard:read"])),
+    path = "/quality-dashboard/defect-distribution",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_dashboard"
+)]
 pub async fn get_defect_distribution(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<QualityDefectDistribution>>> {
@@ -343,6 +373,16 @@ pub async fn get_defect_distribution(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:alert:read"])),
+    path = "/alert-rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn list_alert_rules(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<AlertRuleQuery>,
@@ -375,6 +415,16 @@ pub async fn list_alert_rules(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:alert:write"])),
+    path = "/alert-rules",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn create_alert_rule(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateAlertRuleRequest>,
@@ -392,6 +442,19 @@ pub async fn create_alert_rule(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:alert:read"])),
+    path = "/alert-rules/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn get_alert_rule(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -416,6 +479,19 @@ pub async fn get_alert_rule(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:alert:write"])),
+    path = "/alert-rules/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn update_alert_rule(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -439,6 +515,19 @@ pub async fn update_alert_rule(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:alert:write"])),
+    path = "/alert-rules/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn delete_alert_rule(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -465,6 +554,16 @@ pub async fn delete_alert_rule(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:alert:read"])),
+    path = "/alert-messages",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn list_alert_messages(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<AlertMessageQuery>,
@@ -497,6 +596,16 @@ pub async fn list_alert_messages(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:alert:write"])),
+    path = "/alert-messages",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn create_alert_message(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateAlertMessageRequest>,
@@ -516,6 +625,19 @@ pub async fn create_alert_message(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:alert:write"])),
+    path = "/alert-messages/{id}/acknowledge",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_alert"
+)]
 pub async fn acknowledge_alert(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

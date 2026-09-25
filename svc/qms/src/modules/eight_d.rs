@@ -19,6 +19,16 @@ const STATUS_CANCELLED: &str = "cancelled";
 
 const EIGHTD_SELECT_COLS: &str = r#"id, tenant_id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at, d7_preventive_action, d8_congratulations, d8_closed_at, assignee, due_date, created_by, created_at, updated_at"#;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:eightd:read"])),
+    path = "/eightd",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn list_eightd_reports(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -125,6 +135,16 @@ pub async fn list_eightd_reports(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn create_eightd_report(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -167,6 +187,19 @@ pub async fn create_eightd_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:eightd:read"])),
+    path = "/eightd/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn get_eightd_report(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -202,6 +235,19 @@ pub async fn get_eightd_report(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn update_eightd_report(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -232,6 +278,19 @@ pub async fn update_eightd_report(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn delete_eightd_report(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -262,6 +321,19 @@ pub async fn delete_eightd_report(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/d1-team",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn update_d1_team(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -293,6 +365,19 @@ pub async fn update_d1_team(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/d3-containment",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn submit_d3_containment(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -324,6 +409,19 @@ pub async fn submit_d3_containment(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/d4-root-cause",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn submit_d4_root_cause(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -355,6 +453,19 @@ pub async fn submit_d4_root_cause(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/d5-permanent-action",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn submit_d5_permanent_action(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -386,6 +497,19 @@ pub async fn submit_d5_permanent_action(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/d6-verify",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn verify_d6_effectiveness(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -417,6 +541,19 @@ pub async fn verify_d6_effectiveness(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/d7-preventive",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn submit_d7_preventive(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -448,6 +585,19 @@ pub async fn submit_d7_preventive(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/close",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn close_eightd_report(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -479,6 +629,19 @@ pub async fn close_eightd_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:eightd:read"])),
+    path = "/eightd/{id}/audit-logs",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn get_eightd_audit_logs(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -520,6 +683,19 @@ pub struct EightDApprovalRequest {
 }
 
 /// APV-3: 审批通过 (permanent_action → verified, requires_approval)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn approve_eightd(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -588,6 +764,19 @@ pub async fn approve_eightd(
 }
 
 /// APV-3: 关闭审批 (verified → closed, requires_approval)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/close-approval",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn close_eightd_approval(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -656,6 +845,19 @@ pub async fn close_eightd_approval(
 }
 
 /// APV-3: 取消 (任意非终态 → cancelled)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:eightd:write"])),
+    path = "/eightd/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "eightd"
+)]
 pub async fn cancel_eightd(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

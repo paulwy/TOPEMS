@@ -43,6 +43,16 @@ pub struct CreateIntegrationActionRequest {
     pub issue_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:internal:write"])),
+    path = "/api/internal/qms/actions/integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "internal"
+)]
 pub async fn create_integration_action(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationActionRequest>,
@@ -99,6 +109,19 @@ pub struct UpdateInspectionResultRequest {
     pub memo: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:internal:write"])),
+    path = "/api/internal/qms/inspections/{inspection_no}/result",
+    params(
+("inspection_no" = String, Path, description = "inspection_no")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "internal"
+)]
 pub async fn update_integration_inspection_result(
     State(state): State<AppState>,
     Json(req): Json<UpdateInspectionResultRequest>,

@@ -12,6 +12,16 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:audit:read"])),
+    path = "/audit-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn list_audit_plans(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -55,6 +65,16 @@ pub async fn list_audit_plans(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-plans",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn create_audit_plan(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -84,6 +104,19 @@ pub async fn create_audit_plan(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:audit:read"])),
+    path = "/audit-plans/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn get_audit_plan(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -119,6 +152,19 @@ pub async fn get_audit_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-plans/{id}/start",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn start_audit_plan(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -144,6 +190,19 @@ pub async fn start_audit_plan(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-plans/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn complete_audit_plan(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -169,6 +228,16 @@ pub async fn complete_audit_plan(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:audit:read"])),
+    path = "/audit-tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn list_audit_tasks(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -214,6 +283,19 @@ pub async fn list_audit_tasks(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-plans/{plan_id}/tasks",
+    params(
+("plan_id" = String, Path, description = "plan_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn create_audit_task(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -245,6 +327,19 @@ pub async fn create_audit_task(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-tasks/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn complete_audit_task(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -270,6 +365,16 @@ pub async fn complete_audit_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:audit:read"])),
+    path = "/audit-findings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn list_audit_findings(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -327,6 +432,19 @@ pub async fn list_audit_findings(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-tasks/{task_id}/findings",
+    params(
+("task_id" = String, Path, description = "task_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn create_audit_finding(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -393,6 +511,19 @@ pub async fn create_audit_finding(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:audit:write"])),
+    path = "/audit-findings/{id}/verify",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_audit"
+)]
 pub async fn verify_audit_finding(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

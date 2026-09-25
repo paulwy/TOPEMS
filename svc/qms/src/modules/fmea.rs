@@ -13,6 +13,16 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:fmea:read"])),
+    path = "/fmea",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn list_fmea_analyses(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -56,6 +66,16 @@ pub async fn list_fmea_analyses(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:fmea:write"])),
+    path = "/fmea",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn create_fmea_analysis(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -90,6 +110,19 @@ pub async fn create_fmea_analysis(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:fmea:read"])),
+    path = "/fmea/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn get_fmea_analysis(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -125,6 +158,19 @@ pub async fn get_fmea_analysis(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:fmea:write"])),
+    path = "/fmea/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn update_fmea_analysis(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -151,6 +197,19 @@ pub async fn update_fmea_analysis(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:fmea:write"])),
+    path = "/fmea/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn delete_fmea_analysis(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -181,6 +240,16 @@ pub async fn delete_fmea_analysis(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:fmea:read"])),
+    path = "/fmea-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn list_fmea_items(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -223,6 +292,16 @@ pub async fn list_fmea_items(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:fmea:write"])),
+    path = "/fmea-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn create_fmea_item(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -253,6 +332,19 @@ pub async fn create_fmea_item(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:fmea:read"])),
+    path = "/fmea-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn get_fmea_item(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -288,6 +380,19 @@ pub async fn get_fmea_item(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["qms:fmea:write"])),
+    path = "/fmea-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn update_fmea_item(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -327,6 +432,19 @@ pub async fn update_fmea_item(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["qms:fmea:write"])),
+    path = "/fmea-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn delete_fmea_item(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -357,6 +475,19 @@ pub async fn delete_fmea_item(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["qms:fmea:read"])),
+    path = "/fmea/{id}/statistics",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "fmea"
+)]
 pub async fn get_fmea_statistics(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

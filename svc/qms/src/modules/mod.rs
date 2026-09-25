@@ -1006,3 +1006,5 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     Ok(())
 }
+
+pub mod integration;

@@ -480,6 +480,19 @@ pub async fn start_issue_approval(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:issue:write"])),
+    path = "/issues/{id}/approval/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_issue"
+)]
 pub async fn approve_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -523,6 +536,19 @@ pub async fn approve_issue(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:issue:write"])),
+    path = "/issues/{id}/approval/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_issue"
+)]
 pub async fn reject_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -583,6 +609,19 @@ fn issue_select_cols(locale_placeholder: &str) -> String {
 }
 
 /// APV-2: 审批通过 (resolved → closed, requires_approval)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:issue:write"])),
+    path = "/issues/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_issue"
+)]
 pub async fn approve_issue_status(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -652,6 +691,19 @@ pub async fn approve_issue_status(
 }
 
 /// APV-2: 审批驳回 (resolved → in_progress)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:issue:write"])),
+    path = "/issues/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_issue"
+)]
 pub async fn reject_issue_status(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
@@ -716,6 +768,19 @@ pub async fn reject_issue_status(
 }
 
 /// APV-2: 取消 (open/in_progress → cancelled)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["qms:issue:write"])),
+    path = "/issues/{id}/cancel",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality_issue"
+)]
 pub async fn cancel_issue(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,
