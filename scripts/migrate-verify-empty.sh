@@ -56,7 +56,7 @@ if [[ -z "$PG_DB" ]]; then
   exit 2
 fi
 ADMIN_URL="postgres://$PG_USER:$PG_PASS@$PG_HOST:$PG_PORT/postgres"
-PSQL="psql \"$ADMIN_URL\""
+PSQL="psql $ADMIN_URL"
 
 # 解析 sqlx 可执行文件（CI 用 PATH 内 sqlx；本地默认 ~/.cargo/bin/sqlx）
 SQLX="$(command -v sqlx || echo "$HOME/.cargo/bin/sqlx")"
@@ -80,7 +80,9 @@ $PSQL -v ON_ERROR_STOP=1 -q \
 
 # --- 2. 全量应用迁移链 ----------------------------------------------------------
 echo "== 全量应用 database/migrations =="
-MIGRATE_URL="postgres://$PG_USER:$PG_PASS@$PG_HOST:$PG_PORT/$PG_DB"
+DB_URL2="postgres://$PG_USER:$PG_PASS@$PG_HOST:$PG_PORT/$PG_DB"
+DB_CONN="psql $DB_URL2"
+MIGRATE_URL="$DB_URL2"
 OUT="$("$SQLX" migrate run --source database/migrations --database-url "$MIGRATE_URL" 2>&1)"
 RC=$?
 echo "$OUT" | tail -8
@@ -92,8 +94,8 @@ if [[ $RC -ne 0 ]]; then
 fi
 
 # --- 3. 断言 _sqlx_migrations 全量 success=true --------------------------------
-TOTAL="$($PSQL -d "$PG_DB" -t -A -c "SELECT count(*) FROM _sqlx_migrations WHERE success=true;" 2>/dev/null || echo 0)"
-PENDING="$($PSQL -d "$PG_DB" -t -A -c "SELECT count(*) FROM _sqlx_migrations WHERE success=false;" 2>/dev/null || echo 0)"
+TOTAL="$($DB_CONN -t -A -c "SELECT count(*) FROM _sqlx_migrations WHERE success=true;" 2>/dev/null || echo 0)"
+PENDING="$($DB_CONN -t -A -c "SELECT count(*) FROM _sqlx_migrations WHERE success=false;" 2>/dev/null || echo 0)"
 echo "  已应用迁移: $TOTAL 条，失败: $PENDING 条"
 if [[ "$PENDING" != "0" ]]; then
   echo "❌ 存在失败迁移记录" >&2
