@@ -295,6 +295,16 @@ fn match_barcode(
     (Some(mock_item), Some("view_detail".to_string()), None)
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:scan:read"])),
+    path = "/barcode/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "scan"
+)]
 pub async fn get_scan_history(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -355,6 +365,19 @@ pub struct ScanHistoryQuery {
     pub barcode_type: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:scan:read"])),
+    path = "/barcode/history/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "scan"
+)]
 pub async fn get_scan_by_id(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -401,6 +424,16 @@ pub async fn get_scan_by_id(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:scan:read"])),
+    path = "/barcode/types",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "scan"
+)]
 pub async fn get_supported_barcode_types(
     _headers: HeaderMap,
     State(_auth_state): State<AuthState>,

@@ -161,6 +161,16 @@ pub async fn get_dashboard_stats(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:stats:read"])),
+    path = "/stats/patrol",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "stats"
+)]
 pub async fn get_patrol_stats(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
@@ -236,6 +246,16 @@ pub async fn get_patrol_stats(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:stats:read"])),
+    path = "/stats/task",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "stats"
+)]
 pub async fn get_task_stats(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,

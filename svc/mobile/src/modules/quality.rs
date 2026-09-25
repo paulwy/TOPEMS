@@ -20,6 +20,16 @@ pub struct UpdateTaskStatusRequest {
     pub result: Option<serde_json::Value>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:quality:read"])),
+    path = "/quality/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 pub async fn list_quality_tasks(
     State(client): State<TypedServiceClient<QmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -35,6 +45,19 @@ pub async fn list_quality_tasks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:quality:read"])),
+    path = "/quality/tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 pub async fn get_quality_task(
     State(client): State<TypedServiceClient<QmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -48,6 +71,16 @@ pub async fn get_quality_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:quality:read"])),
+    path = "/quality/defects",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 pub async fn list_defect_records(
     State(client): State<TypedServiceClient<QmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -85,6 +118,19 @@ pub async fn report_defect(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mobile:quality:write"])),
+    path = "/quality/tasks/{id}/status",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "quality"
+)]
 pub async fn update_quality_task_status(
     State(client): State<TypedServiceClient<QmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,

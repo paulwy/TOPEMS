@@ -65,6 +65,16 @@ fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:approvals:read"])),
+    path = "/approvals",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn list_approval_tasks(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
@@ -101,6 +111,16 @@ pub async fn list_approval_tasks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:approvals:read"])),
+    path = "/approvals/pending",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn get_pending_approval_tasks(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
@@ -132,6 +152,19 @@ pub async fn get_pending_approval_tasks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:approvals:read"])),
+    path = "/approvals/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn get_approval_task(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
@@ -164,6 +197,19 @@ pub async fn get_approval_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:approvals:write"])),
+    path = "/approvals/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn approve_approval_task(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
@@ -206,6 +252,19 @@ pub async fn approve_approval_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:approvals:write"])),
+    path = "/approvals/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn reject_approval_task(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
@@ -248,6 +307,19 @@ pub async fn reject_approval_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:approvals:write"])),
+    path = "/approvals/{id}/delegate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn delegate_approval_task(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,
@@ -303,6 +375,16 @@ pub async fn delegate_approval_task(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:approvals:read"])),
+    path = "/approvals/history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "approvals"
+)]
 pub async fn get_approval_history(
     State(auth_state): State<AuthState>,
     State(workflow_client): State<TypedServiceClient<WorkflowApi>>,

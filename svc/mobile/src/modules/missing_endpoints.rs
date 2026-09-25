@@ -30,6 +30,16 @@ CREATE TABLE IF NOT EXISTS mobile.push_config (
     PRIMARY KEY (tenant_id, user_id)
 )"#;
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:inspection:read"])),
+    path = "/inspection/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inspection"
+)]
 pub async fn list_inspection_tasks(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
@@ -75,6 +85,16 @@ pub async fn list_inspection_tasks(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:analytics:read"])),
+    path = "/analytics/usage",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn get_usage_stats(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
@@ -107,6 +127,16 @@ pub async fn get_usage_stats(
     (StatusCode::OK, Json(ApiResponse::success(v, "使用量统计")))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:user:read"])),
+    path = "/user/settings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "user"
+)]
 pub async fn get_user_settings(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
@@ -125,6 +155,16 @@ pub async fn get_user_settings(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:push:read"])),
+    path = "/push/config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn get_push_config(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,
@@ -192,6 +232,19 @@ pub async fn update_push_config(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mobile:push:write"])),
+    path = "/push/templates/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn update_push_template(
     headers: HeaderMap,
     State(auth_state): State<topems_shared::AuthState>,

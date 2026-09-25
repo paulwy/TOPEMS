@@ -110,6 +110,16 @@ pub async fn register_device(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:push:read"])),
+    path = "/push/devices",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn get_devices(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -152,6 +162,16 @@ pub async fn get_devices(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:push:write"])),
+    path = "/push/notifications",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn send_notification(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -240,6 +260,16 @@ fn render_template(template: &str, params: &serde_json::Value) -> String {
     result
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:push:write"])),
+    path = "/push/notifications/broadcast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn send_broadcast(
     headers: HeaderMap,
     State(_auth_state): State<AuthState>,
@@ -385,6 +415,16 @@ pub struct NotificationListQuery {
     pub size: Option<i64>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:push:read"])),
+    path = "/push/notifications/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn get_notification_stats(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -449,6 +489,16 @@ pub async fn get_notification_stats(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:push:read"])),
+    path = "/push/templates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn get_templates(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -509,6 +559,19 @@ pub async fn create_template(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:push:read"])),
+    path = "/push/notifications/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "push"
+)]
 pub async fn get_notification_by_id(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

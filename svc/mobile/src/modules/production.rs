@@ -16,6 +16,16 @@ pub struct CreateWorkReportRequest {
     pub end_time: String,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:production:read"])),
+    path = "/production/orders",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "production"
+)]
 pub async fn list_production_orders(
     State(client): State<TypedServiceClient<MesApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -31,6 +41,19 @@ pub async fn list_production_orders(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:production:read"])),
+    path = "/production/orders/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "production"
+)]
 pub async fn get_production_order(
     State(client): State<TypedServiceClient<MesApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -44,6 +67,16 @@ pub async fn get_production_order(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:production:read"])),
+    path = "/production/work-reports",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "production"
+)]
 pub async fn list_work_reports(
     State(client): State<TypedServiceClient<MesApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -83,6 +116,16 @@ pub async fn submit_work_report(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:production:read"])),
+    path = "/production/equipment",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "production"
+)]
 pub async fn list_equipment(
     State(client): State<TypedServiceClient<MesApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {

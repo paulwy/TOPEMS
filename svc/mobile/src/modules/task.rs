@@ -407,6 +407,19 @@ pub async fn update_task(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:task:write"])),
+    path = "/mobile-tasks/{id}/status",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "task"
+)]
 pub async fn update_task_status(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

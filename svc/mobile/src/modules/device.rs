@@ -115,6 +115,16 @@ pub fn normalize_os_type(os_type: &str) -> String {
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:devices:write"])),
+    path = "/devices/register",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "devices"
+)]
 pub async fn register_device(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -208,6 +218,16 @@ pub async fn register_device(
     )
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mobile:devices:write"])),
+    path = "/devices/token",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "devices"
+)]
 pub async fn update_push_token(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

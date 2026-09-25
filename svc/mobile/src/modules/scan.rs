@@ -296,6 +296,16 @@ pub async fn scan_qrcode(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:scan:write"])),
+    path = "/scan/image-ocr",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "scan"
+)]
 pub async fn image_ocr(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

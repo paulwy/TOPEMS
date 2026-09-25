@@ -86,6 +86,16 @@ impl UserSettings {
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:user:read"])),
+    path = "/user/profile",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "user"
+)]
 pub async fn get_profile(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -198,6 +208,16 @@ pub struct UploadAvatarRequest {
     pub avatar_base64: String,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:user:write"])),
+    path = "/user/avatar",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "user"
+)]
 pub async fn upload_avatar(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

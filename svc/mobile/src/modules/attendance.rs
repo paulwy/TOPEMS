@@ -85,6 +85,16 @@ pub struct MobileCreateLeaveRequest {
     pub reason: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:attendance:read"])),
+    path = "/attendance",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn get_attendance_overview(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,
@@ -115,6 +125,16 @@ pub async fn get_attendance_overview(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:attendance:read"])),
+    path = "/attendance/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn get_attendance_stats(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,
@@ -145,6 +165,16 @@ pub async fn get_attendance_stats(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:attendance:read"])),
+    path = "/attendance/records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn list_attendance_records(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,
@@ -182,6 +212,16 @@ pub async fn list_attendance_records(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:attendance:write"])),
+    path = "/attendance/check-in",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn check_in(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,
@@ -220,6 +260,16 @@ pub async fn check_in(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:attendance:write"])),
+    path = "/attendance/check-out",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn check_out(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,
@@ -258,6 +308,16 @@ pub async fn check_out(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:attendance:read"])),
+    path = "/attendance/leaves",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn list_leave_applications(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,

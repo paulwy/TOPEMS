@@ -36,6 +36,16 @@ pub struct MediaStats {
     pub video_count: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:media:read"])),
+    path = "/media/photos",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "media"
+)]
 pub async fn get_photos(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -74,6 +84,16 @@ pub async fn get_photos(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:media:read"])),
+    path = "/media/audio",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "media"
+)]
 pub async fn get_audio(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -112,6 +132,16 @@ pub async fn get_audio(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:media:read"])),
+    path = "/media/video",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "media"
+)]
 pub async fn get_video(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -150,6 +180,19 @@ pub async fn get_video(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:media:write"])),
+    path = "/media/upload/{file_type}",
+    params(
+("file_type" = String, Path, description = "file_type")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "media"
+)]
 pub async fn upload_media(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -271,6 +314,20 @@ pub async fn upload_media(
     )
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["mobile:media:write"])),
+    path = "/media/{file_type}/{id}",
+    params(
+("file_type" = String, Path, description = "file_type"),
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "media"
+)]
 pub async fn delete_media(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

@@ -53,6 +53,16 @@ pub struct CreateShortcutRequest {
     pub sort_order: Option<i32>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:shortcuts:read"])),
+    path = "/shortcuts",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "shortcuts"
+)]
 pub async fn get_shortcuts(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

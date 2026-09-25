@@ -159,6 +159,16 @@ pub struct AnnouncementQuery {
 
 // ===== Meetings =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:meetings:read"])),
+    path = "/meetings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "meetings"
+)]
 pub async fn list_meetings(
     State(pool): State<PgPool>,
     Query(q): Query<MeetingQuery>,
@@ -198,6 +208,19 @@ pub async fn list_meetings(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:meetings:read"])),
+    path = "/meetings/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "meetings"
+)]
 pub async fn get_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -310,6 +333,19 @@ pub async fn delete_meeting(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:meetings:write"])),
+    path = "/meetings/{id}/join",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "meetings"
+)]
 pub async fn join_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -328,6 +364,19 @@ pub async fn join_meeting(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:meetings:write"])),
+    path = "/meetings/{id}/leave",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "meetings"
+)]
 pub async fn leave_meeting(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -348,6 +397,16 @@ pub async fn leave_meeting(
 
 // ===== Calendar Events =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:calendar:read"])),
+    path = "/calendar/events",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "calendar"
+)]
 pub async fn list_calendar_events(
     State(pool): State<PgPool>,
     Query(_q): Query<CalendarEventQuery>,
@@ -403,6 +462,19 @@ pub async fn create_calendar_event(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["mobile:calendar:write"])),
+    path = "/calendar/events/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "calendar"
+)]
 pub async fn update_calendar_event(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -455,6 +527,16 @@ pub async fn delete_calendar_event(
 
 // ===== Tasks =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:tasks:read"])),
+    path = "/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tasks"
+)]
 pub async fn list_oa_tasks(
     State(pool): State<PgPool>,
     Query(q): Query<OaTaskQuery>,
@@ -496,6 +578,19 @@ pub async fn list_oa_tasks(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:tasks:read"])),
+    path = "/tasks/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tasks"
+)]
 pub async fn get_oa_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -606,6 +701,19 @@ pub async fn delete_oa_task(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:tasks:write"])),
+    path = "/tasks/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tasks"
+)]
 pub async fn complete_oa_task(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -626,6 +734,16 @@ pub async fn complete_oa_task(
 
 // ===== Announcements =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:announcements:read"])),
+    path = "/announcements",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "announcements"
+)]
 pub async fn list_announcements(
     State(pool): State<PgPool>,
     Query(q): Query<AnnouncementQuery>,
@@ -665,6 +783,19 @@ pub async fn list_announcements(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:announcements:read"])),
+    path = "/announcements/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "announcements"
+)]
 pub async fn get_announcement(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -683,6 +814,19 @@ pub async fn get_announcement(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:announcements:write"])),
+    path = "/announcements/{id}/read",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "announcements"
+)]
 pub async fn mark_announcement_read(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -701,6 +845,16 @@ pub async fn mark_announcement_read(
 
 // ===== OA Stats =====
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:task:read"])),
+    path = "/oa/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "task"
+)]
 pub async fn get_oa_stats(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
     let tid = tenant_id();
     let meetings_today = sqlx::query_scalar::<_, i64>(only_own_schema_query!(

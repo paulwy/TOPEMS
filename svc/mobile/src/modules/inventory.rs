@@ -10,6 +10,16 @@ pub struct CreateStocktakeRecordRequest {
     pub actual_quantity: i32,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:inventory:read"])),
+    path = "/inventory/items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
 pub async fn list_inventory_items(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -22,6 +32,19 @@ pub async fn list_inventory_items(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:inventory:read"])),
+    path = "/inventory/items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
 pub async fn get_inventory_item(
     State(client): State<TypedServiceClient<WmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -35,6 +58,16 @@ pub async fn get_inventory_item(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:inventory:read"])),
+    path = "/inventory/stocktake",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
 pub async fn list_stocktake_tasks(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -47,6 +80,19 @@ pub async fn list_stocktake_tasks(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:inventory:write"])),
+    path = "/inventory/stocktake/{task_id}/records",
+    params(
+("task_id" = String, Path, description = "task_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
 pub async fn create_stocktake_record(
     State(client): State<TypedServiceClient<WmsApi>>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
@@ -66,6 +112,16 @@ pub async fn create_stocktake_record(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:inventory:read"])),
+    path = "/inventory/inbound",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
 pub async fn list_inbound_orders(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -81,6 +137,16 @@ pub async fn list_inbound_orders(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:inventory:read"])),
+    path = "/inventory/outbound",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
 pub async fn list_outbound_orders(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {

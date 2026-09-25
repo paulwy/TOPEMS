@@ -64,6 +64,16 @@ pub struct UploadProgressResponse {
     pub file_url: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:photos:write"])),
+    path = "/photos/upload",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photos"
+)]
 pub async fn upload_photo(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -204,6 +214,16 @@ pub async fn upload_photo(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:photos:write"])),
+    path = "/photos/batch-upload",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photos"
+)]
 pub async fn batch_upload_photos(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -296,6 +316,16 @@ pub async fn batch_upload_photos(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:photos:read"])),
+    path = "/photos",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photos"
+)]
 pub async fn get_photo_list(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -356,6 +386,19 @@ pub struct PhotoListQuery {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:photos:read"])),
+    path = "/photos/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photos"
+)]
 pub async fn get_photo_by_id(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -402,6 +445,19 @@ pub async fn get_photo_by_id(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:photos:read"])),
+    path = "/photos/{id}/progress",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "photos"
+)]
 pub async fn get_upload_progress(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

@@ -69,6 +69,16 @@ impl OfflineSyncRecord {
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/sync",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "offline"
+)]
 pub async fn sync_offline_data(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -143,6 +153,16 @@ pub async fn sync_offline_data(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:offline:read"])),
+    path = "/offline/status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "offline"
+)]
 pub async fn get_offline_status(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

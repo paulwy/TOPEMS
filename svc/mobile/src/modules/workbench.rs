@@ -35,6 +35,16 @@ pub struct Shortcut {
     pub color: String,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:workbench:read"])),
+    path = "/workbench",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "workbench"
+)]
 pub async fn get_workbench_data(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,

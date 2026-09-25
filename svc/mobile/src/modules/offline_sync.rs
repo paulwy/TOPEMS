@@ -113,6 +113,16 @@ pub fn compute_pagination_offset(page: i64, size: i64) -> i64 {
     (page - 1) * size
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/sync-data",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "offline"
+)]
 pub async fn sync_data(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -321,6 +331,16 @@ pub async fn get_offline_status(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:offline:read"])),
+    path = "/offline/sync-history",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "offline"
+)]
 pub async fn get_sync_history(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -409,6 +429,16 @@ pub struct SyncHistoryQuery {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["mobile:offline:read"])),
+    path = "/offline/sync-policy",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "offline"
+)]
 pub async fn get_sync_policy(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -502,6 +532,16 @@ pub async fn update_sync_policy(
     )
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:offline:write"])),
+    path = "/offline/retry-failed",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "offline"
+)]
 pub async fn retry_failed_sync(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
