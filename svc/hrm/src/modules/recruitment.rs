@@ -363,6 +363,19 @@ pub async fn create_job_opening(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/job-openings/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn get_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -508,6 +521,19 @@ pub async fn delete_job_opening(
     response
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/job-openings/{id}/publish",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn publish_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -545,6 +571,19 @@ pub async fn publish_job_opening(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/job-openings/{id}/close",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn close_job_opening(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -582,6 +621,16 @@ pub async fn close_job_opening(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/candidates",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn list_candidates(
     State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
@@ -738,6 +787,19 @@ pub async fn create_candidate(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/candidates/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn get_candidate(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -880,6 +942,16 @@ pub async fn delete_candidate(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/interviews",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn list_interviews(
     State(_state): State<ApiState>,
     Query(params): Query<JobOpeningQueryParams>,
@@ -1001,6 +1073,19 @@ pub async fn create_interview(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/interviews/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn get_interview(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -1107,6 +1192,19 @@ pub async fn delete_interview(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/interviews/{id}/complete",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "recruitment"
+)]
 pub async fn complete_interview(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

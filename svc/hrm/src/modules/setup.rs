@@ -317,6 +317,16 @@ pub struct Company {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[utoipa::path(
+    post,
+    security(("bearerAuth" = [])),
+    path = "/setup/departments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "setup"
+)]
 pub async fn setup_departments(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -430,6 +440,16 @@ pub struct Department {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[utoipa::path(
+    post,
+    security(("bearerAuth" = [])),
+    path = "/setup/positions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "setup"
+)]
 pub async fn setup_positions(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -537,6 +557,16 @@ pub struct Position {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[utoipa::path(
+    post,
+    security(("bearerAuth" = [])),
+    path = "/setup/admin",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "setup"
+)]
 pub async fn setup_admin_user(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -653,6 +683,16 @@ pub struct Employee {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[utoipa::path(
+    post,
+    security(("bearerAuth" = [])),
+    path = "/setup/complete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "setup"
+)]
 pub async fn complete_initialization(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

@@ -291,6 +291,19 @@ pub async fn create_payroll_run(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/payroll-runs/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn get_payroll_run(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -403,6 +416,19 @@ pub async fn delete_payroll_run(
     response
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/payroll-runs/{id}/calculate",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn calculate_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -490,6 +516,19 @@ pub async fn create_payroll_items(
     Ok(())
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/payroll-runs/{id}/pay",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn pay_payroll_run(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -540,6 +579,16 @@ pub async fn pay_payroll_run(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/payroll-items",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn list_payroll_items(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
@@ -615,6 +664,19 @@ pub async fn list_payroll_items(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/payroll-items/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn get_payroll_item(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -663,6 +725,16 @@ pub async fn get_payroll_item(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/payroll-details",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn list_payroll_details(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
@@ -772,6 +844,19 @@ pub async fn create_payroll_detail(
 
 /// 生成薪资凭证
 /// 根据薪资发放记录生成财务凭证
+#[utoipa::path(
+    post,
+    security(("bearerAuth" = [])),
+    path = "/payroll-runs/{id}/generate-voucher",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn generate_payroll_voucher(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -993,6 +1078,16 @@ pub struct PayrollSlip {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/payroll-slips",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "payroll"
+)]
 pub async fn list_payroll_slips(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,

@@ -25,6 +25,19 @@ pub struct UpdateSettingsRequest {
     pub settings: HashMap<String, String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/settings/{category}",
+    params(
+("category" = String, Path, description = "category")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "settings"
+)]
 pub async fn get_settings(
     State(_state): State<ApiState>,
     Path(category): Path<String>,

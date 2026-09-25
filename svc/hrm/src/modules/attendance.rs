@@ -37,6 +37,16 @@ pub struct TodayStatusParams {
     pub employee_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/attendance/today-status",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
 pub async fn get_today_status(
     State(_state): State<ApiState>,
     Query(params): Query<TodayStatusParams>,

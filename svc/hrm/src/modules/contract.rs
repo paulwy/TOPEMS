@@ -134,6 +134,16 @@ pub async fn list_contracts(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/contracts/expiring",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn list_expiring_contracts(
     State(_state): State<ApiState>,
     Query(params): Query<ExpiringParams>,
@@ -623,6 +633,19 @@ pub async fn delete_contract(
     response
 }
 
+#[utoipa::path(
+    post,
+    security(("bearerAuth" = [])),
+    path = "/contracts/{id}/renew",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn create_renewal(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -687,6 +710,16 @@ pub async fn create_renewal(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/contract-renewals",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn list_renewals(
     State(_state): State<ApiState>,
     Query(params): Query<RenewalParams>,
@@ -769,6 +802,19 @@ pub struct RenewalParams {
     pub status: Option<String>,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/contract-renewals/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn get_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -890,6 +936,19 @@ pub async fn delete_renewal(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/contract-renewals/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn approve_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -935,6 +994,19 @@ pub async fn approve_renewal(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/contract-renewals/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn reject_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -987,6 +1059,19 @@ pub struct RejectRequest {
     pub reason: String,
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/contract-renewals/{id}/execute",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contract"
+)]
 pub async fn execute_renewal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

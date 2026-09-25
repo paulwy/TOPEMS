@@ -297,6 +297,19 @@ pub async fn create_review(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/performance-reviews/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn get_review(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -449,6 +462,19 @@ pub async fn delete_review(
     response
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/performance-reviews/{id}/submit",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn submit_review(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -489,6 +515,19 @@ pub async fn submit_review(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/performance-reviews/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn approve_review(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -529,6 +568,16 @@ pub async fn approve_review(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/performance-goals",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn list_goals(
     State(_state): State<ApiState>,
     Query(params): Query<QueryParams>,
@@ -688,6 +737,19 @@ pub async fn create_goal(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/performance-goals/{id}",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn get_goal(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -834,6 +896,19 @@ pub async fn delete_goal(
     response
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/employees/{id}/performance-reviews",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn get_employee_reviews(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -868,6 +943,19 @@ pub async fn get_employee_reviews(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/employees/{id}/performance-goals",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "performance"
+)]
 pub async fn get_employee_goals(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

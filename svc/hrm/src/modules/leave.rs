@@ -457,6 +457,19 @@ pub async fn delete_leave(
     response
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/leaves/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "leave"
+)]
 pub async fn approve_leave(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -500,6 +513,19 @@ pub async fn approve_leave(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/leaves/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "leave"
+)]
 pub async fn reject_leave(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

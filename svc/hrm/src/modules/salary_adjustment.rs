@@ -402,6 +402,19 @@ pub async fn update_salary_adjustment(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/salary-adjustments/{id}/approve",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "salary_adjustment"
+)]
 pub async fn approve_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -451,6 +464,19 @@ pub async fn approve_salary_adjustment(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("bearerAuth" = [])),
+    path = "/salary-adjustments/{id}/reject",
+    params(
+("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "salary_adjustment"
+)]
 pub async fn reject_salary_adjustment(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

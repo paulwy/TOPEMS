@@ -309,6 +309,16 @@ pub struct ContractSummaryResponse {
     pub expiring_next_month: i64,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/reports/contract-summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "reports"
+)]
 pub async fn contract_summary(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -397,6 +407,16 @@ pub struct TrainingSummaryResponse {
     pub avg_completion_rate: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/reports/training-summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "reports"
+)]
 pub async fn training_summary(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -605,6 +625,16 @@ pub struct PayrollSummaryResponse {
     pub bonus_total: f64,
 }
 
+#[utoipa::path(
+    get,
+    security(("bearerAuth" = [])),
+    path = "/reports/payroll-summary",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "reports"
+)]
 pub async fn payroll_summary(
     State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,
