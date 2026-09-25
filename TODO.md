@@ -854,6 +854,8 @@ D
 - [x] **crm**：补 analytics 3（overview/funnel/scoring）+ crm_plugin 2（info/health）+ 聚合；编译通过（已提交）
 - [x] **ai**：核查无缺口（ai_plugin 2/2，auto_register 非路由）
 - [ ] 累计：75 个新注解（文档待并入，1408 → 1483）
+- [x] **ehs/analytics/wms 小域收口（2026-09-25 commit 40e73da54）**：ehs 补 3 注解（integration 2 + dashboard 1）+ 聚合 3；analytics 补 2 注解（report/schedule）+ 聚合 2 + **附带修复 bi 模块 P1-2b 遗留类型错误**（and_utc/naive_utc/DateTime.map 恒等误用，10 文件，compile-check 暴露）；wms 补 1 注解（replenishment_logic）+ 聚合 1（transfer.rs 未注册死代码误报已甄别排除）；3 域 cargo check 0 error
+- [ ] **阻塞（openapi.json 未重生成，2920 端点不变）**：topems-server 编译依赖 mes 域，当前 mes 154 编译错误（sqlx query 连 DB 报 relation/column 不存在——equipment 等表缺列，本地库 schema 与代码失配，疑被重置未跑最新迁移）；sqlx prepare 在线亦失败（mes check 154 errors）；需先恢复 mes 编译（应用 database/migrations 迁移或确认 DB 状态）→ prepare 补缓存 → 重跑 openapi-gen 验证 ehs/analytics/wms 增量（6 路径）；**迁移尝试（2026-09-25）**：`cargo sqlx migrate run --source database/migrations`（DATABASE_URL 加 `options=-csearch_path%3Dmes,public` 解决 search_path 不被 sqlx 宏解析）——部分应用（11/12/13/20260716000000 成功）后失败：`20260716000001: column "code" does not exist`（DB 已有旧表，IF NOT EXISTS 跳过建表致缺列）——**本地库需重建（drop + 全量迁移）或手动补列，待用户拍板**（开发库 topems@localhost:5432）——**重建执行（用户确认后）**：drop + CREATE EXTENSION uuid-ossp + init(03/05 过、04/07 部分失败 49 错) + 全量迁移（应用至 20260924150000，success 记录完整）——**但 mes 业务表仍大量缺失**（work_orders/material_boms/wips 等任何 schema 均无，equipment_inspections 在 rs schema 而非 mes）——mes 编译仍 193 错（在线 options search_path=mes,public,rs）；**结论**：init 旧基线已与迁移链漂移（04/07 内部依赖断裂），迁移链部分建表落 rs schema，DB 基线需项目维护者梳理（非 P4-3 任务范围）；**openapi-gen 重生成继续阻塞**
 
 ## 🕐 日期时间类型统一治理（2026-09-25 启动，契约见 docs/date_type_convention.md）
 
