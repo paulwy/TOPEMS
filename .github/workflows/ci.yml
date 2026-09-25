@@ -1837,6 +1837,12 @@ jobs:
           done
           echo "✅ All migration tests passed" >> $GITHUB_STEP_SUMMARY
 
+      - name: Verify top-level migration chain on empty database
+        # 2026-09-25: 空库验证闭环（commit 498c274de）后固化——
+        # 顶层 database/migrations 在全新空库全量应用 0 错误（等价 CI 新环境可用性）。
+        # 防迁移链依赖线上遗留表/列/角色（本地半迁移库会掩盖，svc up-down-up 不覆盖顶层链）。
+        run: bash scripts/migrate-verify-empty.sh
+
   # ==========================================================================
   # Desktop Build (P2-5: merged from desktop-build.yml)
   #   - Cross-platform Tauri desktop app build (ubuntu, windows, macos)

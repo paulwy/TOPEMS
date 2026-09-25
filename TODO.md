@@ -881,6 +881,7 @@ D
     - ⑧ flow 收敛链空库缺口：20260918000016 第 1 部分 DROP flow 骨架影子表后**只重建 public.core_workflow_tasks，漏 instances/versions/approvals/approval_records**（public 影子已被 000007 drop，011 结构亦被清）→ 按本地权威列补建 4 表（approvals 14 列 / approval_records 11 列，对齐 000005 复制列结果）
     - ⑨ 20260923150000 / 20260923160000 引用 public.core_workflows（权威已收敛至 flow，public 影子按设计删除）→ ALTER IF EXISTS + DO 块表存在守卫（CREATE POLICY / ENABLE FORCE RLS 条件化）
     - 收尾：**本地主库 checksum 同步 31 个被修改且已应用迁移的 sha384**，`migrate.sh run` 主库幂等 0 错误、`check-migrations.mjs` 仅既有版本号不连续警告
+    - **空库验证固化 CI 门禁**：新增 `scripts/migrate-verify-empty.sh`（DROP/CREATE 验证库 → sqlx migrate run → 断言 _sqlx_migrations 全量 success=true → 自动清理），本地跑通 276/276；CI migration-test job 追加 `Verify top-level migration chain on empty database` step——顶层迁移链新环境可用性正式纳入门禁（此前仅静态检查 + svc 子迁移 up-down-up，顶层链无真库验证）
 - [x] **P2-3 审计工具进 CI 门禁 ✅（2026-09-25）**：
   - **CI 新增 `date-type-audit` gate job**（与 mes-online-check 同级）：纯 Python 静态扫描（无需 DB），`python3 scripts/date-type-audit.py` exit 0 即绿——实体层违规 0 + Instant 序列化边界违规 0；触发条件与 cargo-check/mes-online-check 一致（rust/ci 变化）；本地复现命令一致
   - **工具新增 Instant 序列化检查**：Serialize derive struct 内时间字段为 Instant/Option<Instant> → 违规（契约：Instant 仅限进程内计时，禁止跨序列化边界）；当前 18 处 Instant 全部 non-serde（ApiState/AppState.start_time 进程启动、CacheEntry.expires_at 内存缓存、SseSession/TransportSession 内部会话、ExecutionTimer/ExecutionRecord 性能计时）→ 违规 0，契约已满足，检查作防回归
