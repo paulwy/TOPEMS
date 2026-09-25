@@ -862,7 +862,13 @@ D
   - **format 侧决策**：64 处 `format("%Y-%m-%d")` 首次批量收敛 to_string() 时发现 **DateTime receiver 误伤**（`Utc::now().format("%Y-%m-%d")` 是日期 key 语义，to_string 输出 RFC3339 行为不同，cost_metering/mcp_security 每日重置 key 被破坏）→ **全部回退**，format 收敛须类型感知，推迟到 P2-2 逐点处理；审计工具将 `%Y-%m-%d` 标为"序列化风格待收敛"、紧凑格式（%Y%m%d 批次号/文件名/统计 key）标为"业务派生豁免"
   - 验证：14 crate `cargo check` 全过；`cargo test` lib 1171 passed / 0 failed（ai 曾 2 失败为 format 误伤，回退后修复）；ai `test_external_agent_calls_business_tools` 失败经 git stash 验证为**既有失败**（Anonymous session 认证缺失，与日期治理无关）
   - 度量基线（审计工具新增 serialization 统计）：parse_from_str 62 → 22；FromStr_parse 40；to_rfc3339 1220 / parse_from_rfc3339 203 不变
-- [ ] **P2-2 144 个冲突字段清理**：同名字段跨服务统一类型（start_date/end_date/expires_at/completed_at 等）
+- [x] **P2-2 冲突字段治理 · 第一波 ✅（2026-09-25）**：
+  - **勘察结论**：153 个同名字段中 69 个存在类型冲突，但**绝大多数是分层/列类型的正常差异**（实体 DateTime<Utc>/NaiveDate + DTO String RFC3339；date 列 → NaiveDate、timestamptz → DateTime<Utc>），无需机械统一
+  - **NaiveDate format 类型感知收敛 6 处**：仅收敛 receiver 明确为 NaiveDate 的（unified-core sunset_date、portal due_date、mes equipment naive_date_to_string / equipment_oee / production_kanban 2 处）→ `.to_string()`；DateTime/NaiveDateTime receiver 的 58 处（查询起止边界、统计 key、日志、默认值）确认为**日期 key 业务派生**，契约豁免
+  - **DTO/内部层 NaiveDateTime 收口 10 处 → DateTime<Utc>**：tenant CreateTenantRequest(2)/TenantStats(1)/TenantInvoice(4) + integration SyncStatistics(2) + scm MrpSuggestion(2)——修复 NaiveDateTime serde 输出非 RFC3339（无 Z）的契约违规；连带修复 naive_utc() 构造点 2 处与 last_sync 查询类型
+  - **scm 工作时间窗口函数豁免**：`is_within_working_window` 加 date-type-convention: exempt（内部计算仅取 time/weekday 组件，非序列化边界）
+  - 验证：unified-core/integration/scm/portal cargo test 全绿（453+182+75+15+16+1 passed）；mes lib 绿，`test_material_category_crud` 集成失败经 git stash 验证为**既有失败**（material_category 不在改动列表，DB/环境类）
+  - 备注：本轮间发现 **target 目录膨胀 122G 致磁盘满**（cargo clean 失败后 rm -rf target 释放至 82Gi 可用）——后续编译注意 target 增长；剩余冲突字段为列类型决定的合理差异，P2-2 收官（无进一步机械统一必要）
 - [ ] **P2-3 审计工具进 CI**：date-type-audit.py 实体层违规 0 作为门禁（与 mes-online-check 同级）
 
 ### 📝 已知风险与边界
