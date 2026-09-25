@@ -824,6 +824,7 @@ D
 - [x] **monitor settings**：补 6 个注解（list/batch_update/get/update/delete_setting 5 + get_performance_report 1，settings/metrics tag，monitor:read 权限）+ 聚合；编译通过；1511 → 1514 端点（+3 路径）0 丢失（已提交）——monitor 缺口清零
 - [x] **gis 全量**：补 29 个注解（business 6 + photo 5 + pipeline 6 + warehouse 6 + marker update/delete 2 + import/export 2 + search 1 + stats 1，模块 tag，gis:xxx:read/write 权限）+ 聚合 + 8 tag；编译通过；1514 → 1530 端点（+16 路径）0 丢失（已提交）——脚本化注入（route→注解生成），websocket 3 个 ws 端点跳过
 - [x] **wms 全量**：补 20 个注解（analytics 6 + cycle_count 3 + discrepancy 4 + labor 3 + picking 3 + wms_plugin 2，剔除 transfer.rs 非模块文件与已注解 handler 16 个）+ 聚合 + 7 tag；编译通过；1530 → 1548 端点（+18 路径）0 丢失（已提交）——脚本化注入坑：检测窗口 400→2000 字符防重复注入、行首插入防 pub 后属性、非模块文件（transfer.rs）甄别
+- [x] **plugin-registry 全量**：补 46 个注解（marketplace/runtime/tenant_plugins/dev/upgrade_workflow/versioning/automated_upgrade/simple_api/reviews_stats 全模块，plugin tag，plugin-registry:plugin:read/write 权限）+ 聚合 52 handler；编译通过；1548 → 1590 端点（+42 路径）0 丢失（已提交）——脚本化注入坑：跨文件 handler 定义定位（route 在多行 mod.rs、定义在 handlers/）、按定义文件分组 + pos 降序防行号漂移、同 handler 多 route 去重、register_plugin dev 别名路径修正（注解用正式 /api/plugin/runtime/{code}/register + base 残留清理）
 - [ ] 累计：qms 3 + scm 3 + srm 3 + gis 3 + portal 23 + ticket 6 + communication 9 = 50 个新注解（文档待并入）
 - [x] **wms**：补 5 个注解（labor efficiency/productivity + discrepancy detail + picking lists + cycle-count configs）+ 聚合；编译通过（已提交）
 - [x] **hrm**：补 5 个注解（reports 3 + setup 2）+ 聚合 + reports/setup tags；编译通过（已提交）

@@ -51,6 +51,21 @@ pub fn is_breaking_change(old_major: u32, new_major: u32) -> bool {
 }
 
 /// Compare two plugin versions
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/versions/compare/{from_version}/{to_version}",
+    params(
+("plugin_code" = String, Path, description = "plugin_code"),
+("from_version" = String, Path, description = "from_version"),
+("to_version" = String, Path, description = "to_version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn compare_plugin_versions(
     State(_state): State<AppState>,
     Path((plugin_code, from_version, to_version)): Path<(String, String, String)>,
@@ -122,6 +137,19 @@ fn parse_release_notes(from_version: String, to_version: String) -> Vec<VersionC
 }
 
 /// Check for plugin updates
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/updates",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn check_plugin_updates(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -197,6 +225,20 @@ fn compare_version_levels(current: &str, latest: &str) -> (bool, bool) {
 }
 
 /// Rollback plugin version
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/plugins/{plugin_code}/rollback/{target_version}",
+    params(
+("plugin_code" = String, Path, description = "plugin_code"),
+("target_version" = String, Path, description = "target_version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn rollback_plugin_version(
     State(state): State<AppState>,
     Path((plugin_code, target_version)): Path<(String, String)>,
@@ -271,6 +313,16 @@ pub async fn rollback_plugin_version(
 }
 
 /// Check updates for all installed plugins
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/updates/check-all",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn check_all_updates(
     State(state): State<AppState>,
     headers: HeaderMap,

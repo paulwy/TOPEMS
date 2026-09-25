@@ -284,6 +284,19 @@ pub async fn get_plugin_versions(
 }
 
 /// Get plugin reviews
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_id}/reviews",
+    params(
+("plugin_id" = String, Path, description = "plugin_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_plugin_reviews(
     State(state): State<AppState>,
     Path(plugin_id): Path<Uuid>,
@@ -302,6 +315,19 @@ pub async fn get_plugin_reviews(
 }
 
 /// Create plugin review
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/plugins/{plugin_id}/reviews",
+    params(
+("plugin_id" = String, Path, description = "plugin_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn create_review(
     State(state): State<AppState>,
     Path(plugin_id): Path<Uuid>,

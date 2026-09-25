@@ -555,6 +555,20 @@ async fn uninstall_plugin_inner(
 }
 
 /// Uninstall plugin for tenant (with three-tier strategy)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/uninstall",
+    params(
+("tenant_id" = String, Path, description = "tenant_id"),
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn uninstall_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
@@ -565,6 +579,19 @@ pub async fn uninstall_plugin(
 }
 
 /// Uninstall plugin for current user's tenant (with three-tier strategy)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/tenant/my/plugins/{plugin_code}/uninstall",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn uninstall_my_plugin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -628,6 +655,20 @@ async fn activate_plugin_inner(
 }
 
 /// Activate plugin for tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/activate",
+    params(
+("tenant_id" = String, Path, description = "tenant_id"),
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn activate_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
@@ -636,6 +677,19 @@ pub async fn activate_plugin(
 }
 
 /// Activate plugin for current user's tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/tenant/my/plugins/{plugin_code}/activate",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn activate_my_plugin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -696,6 +750,20 @@ async fn deactivate_plugin_inner(
 }
 
 /// Deactivate plugin for tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/tenant/{tenant_id}/plugins/{plugin_code}/deactivate",
+    params(
+("tenant_id" = String, Path, description = "tenant_id"),
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn deactivate_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
@@ -704,6 +772,19 @@ pub async fn deactivate_plugin(
 }
 
 /// Deactivate plugin for current user's tenant
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/tenant/my/plugins/{plugin_code}/deactivate",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn deactivate_my_plugin(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -733,6 +814,19 @@ pub async fn deactivate_my_plugin(
 }
 
 /// Get available plugins for tenant (with ownership status)
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/tenant/{tenant_id}/available",
+    params(
+("tenant_id" = String, Path, description = "tenant_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_available_plugins(
     State(state): State<AppState>,
     Path(tenant_id): Path<Uuid>,
@@ -795,6 +889,16 @@ pub async fn get_available_plugins(
 }
 
 /// Upload a new plugin (developer submission)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/dev/plugins",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn upload_plugin(
     State(state): State<AppState>,
     Json(req): Json<UploadPluginRequest>,
@@ -851,6 +955,19 @@ pub async fn upload_plugin(
 }
 
 /// Upload a new plugin version
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/dev/plugins/{plugin_code}/versions",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn upload_plugin_version(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -925,6 +1042,19 @@ pub async fn upload_plugin_version(
 }
 
 /// Publish a plugin (make it available in marketplace)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/dev/plugins/{code}/publish",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn publish_plugin(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -954,6 +1084,19 @@ pub async fn publish_plugin(
 }
 
 /// Unpublish a plugin (remove from marketplace)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/dev/plugins/{code}/unpublish",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn unpublish_plugin(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -983,6 +1126,19 @@ pub async fn unpublish_plugin(
 }
 
 /// Update plugin (developer edit)
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/dev/plugins/{code}",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn update_plugin(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,

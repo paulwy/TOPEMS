@@ -63,6 +63,19 @@ pub fn is_safe_upgrade(current: &str, target: &str) -> bool {
 }
 
 /// Start plugin upgrade
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/plugins/{plugin_code}/upgrade",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn start_plugin_upgrade(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -193,6 +206,20 @@ async fn execute_upgrade(
 }
 
 /// Verify plugin version before upgrade
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/plugins/{plugin_code}/verify/{version}",
+    params(
+("plugin_code" = String, Path, description = "plugin_code"),
+("version" = String, Path, description = "version")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn verify_plugin_version(
     State(state): State<AppState>,
     Path((plugin_code, version)): Path<(String, String)>,
@@ -289,6 +316,19 @@ pub async fn verify_plugin_version(
 }
 
 /// Get upgrade task status
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/upgrade/tasks/{task_id}",
+    params(
+("task_id" = String, Path, description = "task_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_upgrade_task_status(
     State(_state): State<AppState>,
     Path(task_id): Path<uuid::Uuid>,
@@ -316,6 +356,16 @@ pub async fn get_upgrade_task_status(
 }
 
 /// List upgrade tasks
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/upgrade/tasks",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn list_upgrade_tasks(
     State(_state): State<AppState>,
 ) -> Json<CoreResponse<Vec<UpgradeTask>>> {

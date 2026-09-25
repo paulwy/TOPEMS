@@ -17,6 +17,16 @@ pub struct PluginDetailsResponse {
 }
 
 /// Simplified: List installed plugins with runtime status
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugins/installed",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn list_installed_plugins(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -44,6 +54,19 @@ pub async fn list_installed_plugins(
 }
 
 /// Simplified: Get plugin details with permissions
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugins/{plugin_code}/details",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_plugin_details(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -84,6 +107,19 @@ pub async fn get_plugin_details(
 }
 
 /// Simplified: Install plugin (uses X-Tenant-ID header)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugins/{plugin_code}/install",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn install_plugin_simple(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -156,6 +192,19 @@ pub async fn install_plugin_simple(
 }
 
 /// Simplified: Uninstall plugin with three-tier strategy (uses X-Tenant-ID header)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugins/{plugin_code}/uninstall",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn uninstall_plugin_simple(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -353,6 +402,16 @@ pub async fn uninstall_plugin_simple(
 }
 
 /// Get list of plugins installed for current tenant (uses X-Tenant-ID header)
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugins/tenant-installed",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn list_tenant_installed_plugins(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
@@ -401,6 +460,19 @@ pub async fn list_tenant_installed_plugins(
 }
 
 /// Simplified: Enable plugin (uses X-Tenant-ID header)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugins/{plugin_code}/enable",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn enable_plugin_simple(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -446,6 +518,19 @@ pub async fn enable_plugin_simple(
 }
 
 /// Simplified: Disable plugin (uses X-Tenant-ID header)
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugins/{plugin_code}/disable",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn disable_plugin_simple(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,

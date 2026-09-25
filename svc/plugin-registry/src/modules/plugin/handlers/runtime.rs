@@ -45,6 +45,19 @@ fn verify_registration_token(headers: &HeaderMap) -> bool {
 }
 
 /// 注册插件（开发者接口）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/runtime/{code}/register",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn register_plugin(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -187,6 +200,19 @@ pub async fn register_plugin(
 }
 
 /// 更新插件运行时状态（心跳）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/runtime/{code}/status",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn update_plugin_status(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -220,6 +246,19 @@ pub async fn update_plugin_status(
 }
 
 /// 获取插件运行时状态
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/runtime/{code}/status",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_plugin_status(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -245,6 +284,19 @@ pub async fn get_plugin_status(
 }
 
 /// 注销插件
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/runtime/{code}/unregister",
+    params(
+("code" = String, Path, description = "code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn unregister_plugin(
     State(state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -268,6 +320,16 @@ pub async fn unregister_plugin(
 }
 
 /// 获取插件列表（包含运行时状态）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/runtime/list",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn list_plugins_with_status(
     State(state): State<AppState>,
 ) -> Json<CoreResponse<Vec<PluginWithRuntimeStatus>>> {
@@ -292,6 +354,16 @@ pub async fn list_plugins_with_status(
 }
 
 /// 获取所有已激活插件的导航配置（供前端动态加载菜单）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/navigation-config",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_navigation_config(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

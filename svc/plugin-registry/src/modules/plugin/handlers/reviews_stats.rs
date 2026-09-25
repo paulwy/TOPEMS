@@ -56,6 +56,19 @@ pub fn arithmetic_rating_mean(ratings: &[u32]) -> f64 {
 }
 
 /// Get plugin reviews by code with sorting and filtering
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/reviews-by-code",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_plugin_reviews_by_code(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -252,6 +265,19 @@ pub async fn create_plugin_review(
 }
 
 /// Get plugin statistics
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/statistics",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_plugin_statistics(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -282,6 +308,16 @@ pub async fn get_plugin_statistics(
 }
 
 /// Get review statistics
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/reviews/statistics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_review_statistics(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -306,6 +342,19 @@ pub async fn get_review_statistics(
 }
 
 /// Get download history
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/download-history",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_download_history(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,

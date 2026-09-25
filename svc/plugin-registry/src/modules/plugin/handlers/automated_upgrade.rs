@@ -79,6 +79,19 @@ pub fn normalize_priority(priority: i32) -> i32 {
 }
 
 /// Get upgrade schedule for a plugin
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/upgrade-schedule",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_upgrade_schedule(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -107,6 +120,19 @@ pub async fn get_upgrade_schedule(
 }
 
 /// Configure upgrade schedule
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/plugins/{plugin_code}/upgrade-schedule",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn configure_upgrade_schedule(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
@@ -138,6 +164,16 @@ pub async fn configure_upgrade_schedule(
 }
 
 /// Get upgrade queue
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/upgrade/queue",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_upgrade_queue(
     State(_state): State<AppState>,
 ) -> Json<CoreResponse<Vec<UpgradeQueueItem>>> {
@@ -174,6 +210,16 @@ pub async fn get_upgrade_queue(
 }
 
 /// Add to upgrade queue
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/upgrade/queue",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn add_to_upgrade_queue(
     State(_state): State<AppState>,
     Json(req): Json<serde_json::Value>,
@@ -205,6 +251,19 @@ pub async fn add_to_upgrade_queue(
 }
 
 /// Cancel queued upgrade
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/upgrade/queue/{item_id}",
+    params(
+("item_id" = String, Path, description = "item_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn cancel_upgrade_queue_item(
     State(_state): State<AppState>,
     Path(item_id): Path<uuid::Uuid>,
@@ -218,6 +277,16 @@ pub async fn cancel_upgrade_queue_item(
 }
 
 /// Batch upgrade
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["plugin-registry:plugin:write"])),
+    path = "/api/plugin/upgrade/batch",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn batch_upgrade(
     State(_state): State<AppState>,
     Json(req): Json<BatchUpgradeRequest>,
@@ -256,6 +325,19 @@ pub async fn batch_upgrade(
 }
 
 /// Get upgrade history
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
+    path = "/api/plugin/plugins/{plugin_code}/upgrade-history",
+    params(
+("plugin_code" = String, Path, description = "plugin_code")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "plugin"
+)]
 pub async fn get_upgrade_history(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
