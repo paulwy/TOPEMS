@@ -55,7 +55,6 @@ business-utils = ["auth", "database"]
 # 基础设施
 infra = []
 
-pgvector = ["vector-store"]
 # V24.0 模块 C: gRPC 微服务基础特性开关
 # 启用后激活 tonic/prost 依赖与 grpc 模块；服务可基于此构建 gRPC server/client
 grpc = ["topems-shared-core/grpc"]

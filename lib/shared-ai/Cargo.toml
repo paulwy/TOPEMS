@@ -26,7 +26,6 @@ sqlx.workspace = true
 
 [features]
 default = []
-pgvector = []
 
 [dev-dependencies]
 serial_test = "3"
