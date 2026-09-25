@@ -3,6 +3,22 @@
 //! V71 A1 仅需提取合法的 openapi 3.x JSON，paths/schemas 后续在 V71.5 补充。
 use utoipa::OpenApi;
 
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// （health_handler 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec，
+//   运行期不会被调用）
+// =============================================================================
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["communication:read"])),
+    path = "/health",
+    tag = "communication",
+    responses((status = 200, description = "OK")),
+)]
+fn _health() {}
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -91,7 +107,8 @@ use utoipa::OpenApi;
         crate::notification::update_channel,
         crate::notification::delete_channel,
         crate::notification::test_channel,
-    ),
+            _health,
+),
     tags(
         (name = "notification", description = "站内通知消息 API"),
         (name = "location", description = "位置消息与地理围栏 API"),
@@ -105,6 +122,11 @@ use utoipa::OpenApi;
         description = "通讯渠道网关服务 API - 包含邮件、短信、IM、站内消息等多渠道发送能力"
     )
 )]
+
+// =============================================================================
+// 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
+// （health_handler 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec，
+//   运行期不会被调用）
 pub struct CommunicationApiDoc;
 
 #[cfg(test)]
