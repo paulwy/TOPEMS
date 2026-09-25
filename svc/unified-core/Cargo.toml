@@ -17,10 +17,7 @@ serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-dotenv.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
-tower-http.workspace = true
 thiserror.workspace = true
 sqlx = { workspace = true, features = ["rust_decimal"] }
 topems-shared-bootstrap = { workspace = true }
@@ -40,8 +37,6 @@ base64 = "0.22"
 url.workspace = true
 reqwest.workspace = true
 lettre.workspace = true
-handlebars.workspace = true
-dashmap.workspace = true
 lazy_static = "1"
 regex.workspace = true
 
@@ -49,7 +44,6 @@ rand = "0.8"
 async-trait = "0.1"
 trust-dns-resolver = "0.23"
 async-stream = "0.3"
-ipnetwork = "0.20"
 
 [dev-dependencies]
 serde_urlencoded = "0.7"

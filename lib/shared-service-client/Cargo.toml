@@ -19,9 +19,6 @@ chrono.workspace = true
 uuid.workspace = true
 tracing.workspace = true
 tokio.workspace = true
-async-trait.workspace = true
-thiserror.workspace = true
-axum.workspace = true
 
 # 链路追踪依赖（base_client 注入 trace context）
 opentelemetry = { version = "0.32", features = ["trace"] }

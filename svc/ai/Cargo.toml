@@ -13,7 +13,6 @@ serde_json.workspace = true
 sqlx.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-dotenv.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 thiserror.workspace = true
@@ -35,9 +34,6 @@ topems-shared-mcp = { path = "../../lib/shared-mcp" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 walkdir.workspace = true
-tower-http.workspace = true
-mime.workspace = true
-once_cell.workspace = true
 regex.workspace = true
 tokio-stream.workspace = true
 parking_lot = "0.12"

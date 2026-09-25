@@ -11,7 +11,6 @@ topems-shared-core = { workspace = true }
 topems-shared-ai = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-event = { workspace = true }
-topems-shared-observability = { workspace = true }
 topems-shared-service-client = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
@@ -55,12 +54,8 @@ sqlx.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
-dotenv.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
-futures.workspace = true
-prometheus.workspace = true
 reqwest.workspace = true
 axum-prometheus.workspace = true
 

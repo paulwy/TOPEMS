@@ -7,15 +7,12 @@ description = "TOPEMS Search Service - 全局搜索服务"
 
 [dependencies]
 axum.workspace = true
-chrono.workspace = true
 sqlx.workspace = true
 uuid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
 tokio.workspace = true
-dotenv.workspace = true
 
 topems-shared = { workspace = true }
 topems-shared-auth = { workspace = true }

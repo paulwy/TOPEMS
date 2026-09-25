@@ -10,11 +10,12 @@ export { useDebounce, useDebouncedCallback } from '@topems/shared-hooks';
 
 // Throttle
 
-// IntersectionObserver
+// IntersectionObserver — 来自 shared-hooks（原本地副本已删除，统一引用共享实现）
+export { useIntersectionObserver, useInView } from '@topems/shared-hooks';
 export type {
   UseIntersectionObserverOptions,
   UseIntersectionObserverResult,
-} from '../useIntersectionObserver';
+} from '@topems/shared-hooks';
 
 // CountUp
 export { useCountUp, countUpEasings } from '../useCountUp';

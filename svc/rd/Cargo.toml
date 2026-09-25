@@ -13,28 +13,22 @@ topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 axum.workspace = true
 tokio.workspace = true
-tower-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sqlx.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
 dotenv.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
-bcrypt.workspace = true
 reqwest.workspace = true
 topems-shared-bootstrap = { workspace = true }
 utoipa.workspace = true
 csv.workspace = true
 once_cell.workspace = true
 dashmap.workspace = true
-futures.workspace = true
 prometheus.workspace = true
-axum-prometheus.workspace = true
-jsonwebtoken.workspace = true
 
 [dev-dependencies]
 tower = { workspace = true }

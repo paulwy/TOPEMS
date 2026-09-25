@@ -6,7 +6,6 @@ authors.workspace = true
 description = "TOPEMS Communication Service - 通知/邮件/即时消息通信服务"
 
 [dependencies]
-topems-shared = { workspace = true }
 axum.workspace = true
 chrono.workspace = true
 sqlx.workspace = true
@@ -14,23 +13,17 @@ uuid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
 tokio.workspace = true
-dotenv.workspace = true
-tower-http.workspace = true
 
 # 通信相关依赖
 lettre.workspace = true
 handlebars.workspace = true
 dashmap.workspace = true
 lazy_static = "1"
-futures-util.workspace = true
 
 topems-shared-bootstrap = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 topems-shared-db = { workspace = true }
-topems-shared-service-client = { workspace = true }
-topems-shared-event = { workspace = true }
 topems-shared-auth = { workspace = true }
 topems-shared-core = { workspace = true }
 utoipa.workspace = true

@@ -6,7 +6,6 @@ authors.workspace = true
 description = "TOPEMS-LIMS"
 
 [dependencies]
-topems-shared = { workspace = true }
 topems-shared-event = { workspace = true }
 topems-shared-core = { workspace = true }
 topems-shared-auth = { workspace = true }
@@ -16,16 +15,10 @@ serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 chrono.workspace = true
-dotenv.workspace = true
 tracing.workspace = true
-tracing-subscriber.workspace = true
-tower-http.workspace = true
-thiserror.workspace = true
 sqlx.workspace = true
 topems-shared-bootstrap = { workspace = true }
 utoipa.workspace = true
-axum-prometheus.workspace = true
-prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
 csv.workspace = true

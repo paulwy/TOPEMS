@@ -69,68 +69,21 @@ topems-shared-service-client = { path = "shared-service-client" }
 topems-shared-ai = { path = "shared-ai" }
 topems-shared-observability = { path = "shared-observability" }
 topems-shared-bootstrap = { path = "shared-bootstrap" }
-dotenv.workspace = true
-envy = "0.4"
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
-tracing.workspace = true
-tracing-subscriber.workspace = true
-thiserror.workspace = true
 anyhow.workspace = true
 axum.workspace = true
 async-trait = "0.1"
 jsonwebtoken.workspace = true
 chrono.workspace = true
 uuid.workspace = true
-rand = "0.8"
-tower.workspace = true
-tower-http.workspace = true
-reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
 sqlx.workspace = true
-md5 = "0.7"
-sha2 = "0.10"
-hex = "0.4"
-aes-gcm = "0.10"
-base64 = "0.22"
-hmac = "0.12"
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
-regex.workspace = true
-url = "2.5"
-urlencoding = "2.1"
-serde_urlencoded = "0.7"
-futures-util = "0.3"
-futures = "0.3"
-async-stream = "0.3"
-futures-lite = "2.3"
-parking_lot = "0.12"
-dashmap.workspace = true
-amqprs = { version = "1.1.0-rc.2", features = ["tokio-rustls"] }
-lapin = { version = "4.10", default-features = false, features = ["rustls--ring", "default-runtime"] }
-etcd-client = { version = "0.19", features = ["tls"] }
-event-listener = "2.5"
-flate2 = "1.0"
-brotli = "3.5"
-hyper = { version = "1.4", features = ["full"] }
-bytes = "1.6"
-hostname = "0.4"
-serde_yaml = "0.9"
 
-opentelemetry = { version = "0.32", features = ["trace"] }
-opentelemetry_sdk = { version = "0.32", features = ["rt-tokio", "trace"] }
-opentelemetry-otlp = { version = "0.32", features = ["tonic", "trace"] }
-opentelemetry-stdout = { version = "0.32", features = ["trace"] }
-opentelemetry-semantic-conventions = "0.32"
-tracing-opentelemetry = "0.33"
-prometheus = "0.13"
-axum-prometheus.workspace = true
-tracing-appender = "0.2"
-utoipa.workspace = true
 
 # gRPC 微服务基础（V24.0 模块 C）
 # tonic 工作区已锁定 0.14，与 axum 0.8 兼容
-tonic = { workspace = true, optional = true }
-prost = { version = "0.13", optional = true }
 http = "1"
 
 [dev-dependencies]

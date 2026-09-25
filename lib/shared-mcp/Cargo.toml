@@ -6,15 +6,11 @@ authors.workspace = true
 description = "TOPEMS shared MCP (Model Context Protocol) library - JSON-RPC 2.0, transport, schema"
 
 [dependencies]
-topems-shared-core = { path = "../shared-core" }
 
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
-tracing.workspace = true
-tokio.workspace = true
 async-trait.workspace = true
-futures = "0.3"
 
 [dev-dependencies]
 serial_test = "3"

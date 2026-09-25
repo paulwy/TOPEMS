@@ -14,5 +14,3 @@ topems-shared-core = { path = "../../lib/shared-core" }
 axum.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-serde.workspace = true
-serde_json.workspace = true

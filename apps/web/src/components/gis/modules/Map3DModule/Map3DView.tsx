@@ -5,8 +5,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { MapContainer, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet.heat';
-import 'leaflet-3d-tiles';
 import i18n from '@/i18n';
 // 3D地图类型定义
 export interface ViewState3D {
