@@ -142,6 +142,43 @@ def audit_rust(service=None):
     return violations, field_stats, svc_stats
 
 
+# ── P2-1 序列化/解析风格统计（DTO 约定收敛度量）──
+# 合规：DateTime → to_rfc3339()；NaiveDate → Display(parse::<NaiveDate>)
+# 豁免（业务派生串，非时间序列化）：紧凑格式 format（%Y%m%d 批次号/文件名/统计key 等）
+FORMAT_EXEMPT = re.compile(r'%Y%m%d|%Y-%m|%Y-W%U|%Y%m%d_%H%M%S|%Y%m%d%H%M|%Y%m%d%H%M%S%3f|%Y%m|%Y|%m')
+
+
+def audit_serialization(service=None):
+    """返回风格统计 Counter：to_rfc3339 / parse_from_rfc3339 / format(按串) / parse_from_str(按串) / FromStr"""
+    styles = Counter()
+    fmt_by = Counter()
+    parse_by = Counter()
+    for root, dirs, files in os.walk(SVC_DIR):
+        for fn in sorted(files):
+            if not fn.endswith('.rs'):
+                continue
+            svc = 'svc-root'
+            parts = root.split(os.sep)
+            if 'svc' in parts:
+                svc = parts[parts.index('svc') + 1]
+            if service and svc != service:
+                continue
+            p = os.path.join(root, fn)
+            with io.open(p, 'r', encoding='utf-8', errors='replace') as f:
+                c = f.read()
+            styles['to_rfc3339'] += len(re.findall(r'\.to_rfc3339\(\)', c))
+            styles['parse_from_rfc3339'] += len(re.findall(r'parse_from_rfc3339\(', c))
+            styles['format_calls'] += len(re.findall(r'\.format\(\s*"', c))
+            styles['parse_from_str'] += len(re.findall(r'parse_from_str\(', c))
+            styles['FromStr_parse'] += len(re.findall(r'\.parse::<(?:chrono::)?NaiveDate>\(\)', c))
+            for m in re.finditer(r'\.format\(\s*"([^"]*)"\s*\)', c):
+                frmt = m.group(1)
+                fmt_by[frmt] += 1
+            for m in re.finditer(r'parse_from_str\(\s*[^,]+,\s*"([^"]*)"\s*\)', c):
+                parse_by[m.group(1)] += 1
+    return styles, fmt_by, parse_by
+
+
 def audit_sql():
     """返回 (列类型分布, 无时区列清单)"""
     col_type = Counter()
@@ -214,6 +251,32 @@ def main():
             'entity_violations': [{'file': p, 'struct': s, 'field': f, 'type': t}
                                   for p, s, f, t in entity_violations],
             'svc_stats': {k: dict(v) for k, v in svc_stats.items()},
+        }
+
+        # P2-1 序列化风格
+        styles, fmt_by, parse_by = audit_serialization(args.service)
+        print(f"\n=== [序列化风格] P2-1 约定收敛度量 ===")
+        print(f"  合规: to_rfc3339 {styles['to_rfc3339']} / parse_from_rfc3339 {styles['parse_from_rfc3339']} / NaiveDate FromStr {styles['FromStr_parse']}")
+        print(f"  待收敛: parse_from_str 总调用 {styles['parse_from_str']}")
+        print(f"  豁免(业务派生): format 总调用 {styles['format_calls']}")
+        for frmt, n in fmt_by.most_common(12):
+            if frmt == '%Y-%m-%d':
+                kind = '序列化风格(ISO Display, NaiveDate 应收敛 to_string)'
+            elif FORMAT_EXEMPT.search(frmt):
+                kind = '豁免(业务派生串)'
+            else:
+                kind = '人工可读/保留'
+            print(f"    format {frmt!r}: {n}（{kind}）")
+        for frmt, n in parse_by.most_common(8):
+            print(f"    parse {frmt!r}: {n}")
+        report['serialization'] = {
+            'to_rfc3339': styles['to_rfc3339'],
+            'parse_from_rfc3339': styles['parse_from_rfc3339'],
+            'fromstr_naivedate': styles['FromStr_parse'],
+            'parse_from_str_total': styles['parse_from_str'],
+            'format_calls': styles['format_calls'],
+            'format_by': dict(fmt_by),
+            'parse_by': dict(parse_by),
         }
 
     if args.sql or not args.service:
