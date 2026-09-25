@@ -40,7 +40,7 @@ use crate::models::{
         crate::handlers::get_knowledge_article_handler,
         crate::handlers::update_knowledge_article_handler,
         crate::handlers::delete_knowledge_article_handler,
-    
+
         crate::feedback_compat::create_feedback,
         crate::feedback_compat::get_feedback,
         crate::ticket_ext::get_workflows,

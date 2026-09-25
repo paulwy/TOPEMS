@@ -39,7 +39,6 @@ use crate::modules::versioning_v54::{
     VersionQuery, VersionSnapshot,
 };
 
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // （home / health / detailed_health 定义在 main.rs，lib 无法直接引用，仅用于

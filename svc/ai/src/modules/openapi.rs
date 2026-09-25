@@ -156,7 +156,6 @@ use utoipa::OpenApi;
         crate::handlers::business_copilot_handlers::list_modules,
         crate::handlers::business_copilot_handlers::get_module_config,
     ),
-    tags(
-    ),
+    tags()
 )]
 pub struct ApiDoc;

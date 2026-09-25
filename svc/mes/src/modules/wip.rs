@@ -445,12 +445,12 @@ now.naive_utc(),
         current_work_station_name: None,
         status: result.status.unwrap_or_else(|| "in_progress".to_string()),
         batch_no: result.batch_no,
-start_time: result.start_time.map(|t| t.and_utc()),
-last_transfer_time: result.last_transfer_time.map(|t| t.and_utc()),
+        start_time: result.start_time.map(|t| t.and_utc()),
+        last_transfer_time: result.last_transfer_time.map(|t| t.and_utc()),
         operator: result.operator,
         notes: result.notes,
-created_at: result.created_at.unwrap_or_default().and_utc(),
-updated_at: result.updated_at.unwrap_or_default().and_utc(),
+        created_at: result.created_at.unwrap_or_default().and_utc(),
+        updated_at: result.updated_at.unwrap_or_default().and_utc(),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -523,12 +523,12 @@ pub async fn get_wip(
                 current_work_station_name: Some(r.work_station_name),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-start_time: r.start_time.map(|t| t.and_utc()),
-last_transfer_time: r.last_transfer_time.map(|t| t.and_utc()),
+                start_time: r.start_time.map(|t| t.and_utc()),
+                last_transfer_time: r.last_transfer_time.map(|t| t.and_utc()),
                 operator: r.operator,
                 notes: r.notes,
-created_at: r.created_at.unwrap_or_default().and_utc(),
-updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -581,7 +581,7 @@ pub async fn update_wip(
         req.status,
         req.batch_no,
         req.notes,
-Utc::now().naive_utc(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -611,12 +611,12 @@ Utc::now().naive_utc(),
                 current_work_station_name: None,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-start_time: r.start_time.map(|t| t.and_utc()),
-last_transfer_time: r.last_transfer_time.map(|t| t.and_utc()),
+                start_time: r.start_time.map(|t| t.and_utc()),
+                last_transfer_time: r.last_transfer_time.map(|t| t.and_utc()),
                 operator: r.operator,
                 notes: r.notes,
-created_at: r.created_at.unwrap_or_default().and_utc(),
-updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -753,7 +753,7 @@ pub async fn transfer_wip(
         req.to_process_id,
         req.to_work_station_id,
         BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-now.naive_utc(),
+        now.naive_utc(),
         req.operator.clone(),
         req.transfer_type
             .clone()
@@ -784,7 +784,7 @@ now.naive_utc(),
         req.wip_id,
         req.to_process_id,
         req.to_work_station_id,
-now.naive_utc(),
+        now.naive_utc(),
     )
     .execute(&mut *tx)
     .await;
@@ -863,7 +863,7 @@ now.naive_utc(),
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: Some(to_workstation_name.unwrap_or_default()),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
-transfer_time: transfer.transfer_time.and_utc(),
+        transfer_time: transfer.transfer_time.and_utc(),
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
@@ -943,7 +943,7 @@ pub async fn list_wip_transfers(
             to_work_station_id: r.to_work_station_id,
             to_work_station_name: Some(r.to_work_station_name),
             quantity: big_decimal_to_f64(Some(r.quantity)),
-transfer_time: r.transfer_time.and_utc(),
+            transfer_time: r.transfer_time.and_utc(),
             operator: r.operator,
             transfer_type: r
                 .transfer_type

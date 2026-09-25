@@ -60,7 +60,7 @@ use utoipa::OpenApi;
         crate::handlers::conversion_rules::execute_conversion_rule_api,
         crate::handlers::conversion_rules::enable_conversion_rule_api,
         crate::handlers::conversion_rules::disable_conversion_rule_api,
-    
+
         crate::external_erp::create_connection,
         crate::external_erp::update_connection,
         crate::external_erp::delete_connection,

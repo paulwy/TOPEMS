@@ -39,7 +39,6 @@ pub struct MobileTask {
     pub updated_at: Option<String>,
 }
 
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // =============================================================================
@@ -187,7 +186,6 @@ fn _health_check() {}
 )]
 pub struct MobileApiDoc;
 
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 #[derive(OpenApi)]
@@ -197,7 +195,6 @@ pub struct MobileApiDoc;
     info(title = "TOPEMS Mobile Patrol API", version = "1.0.0", description = "移动巡检 API")
 )]
 pub struct PatrolApiDoc;
-
 
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
@@ -209,7 +206,6 @@ pub struct PatrolApiDoc;
 )]
 pub struct ScanApiDoc;
 
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 #[derive(OpenApi)]
@@ -219,7 +215,6 @@ pub struct ScanApiDoc;
     info(title = "TOPEMS Mobile Task API", version = "1.0.0", description = "移动任务管理 API")
 )]
 pub struct TaskApiDoc;
-
 
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解

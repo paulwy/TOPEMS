@@ -3,7 +3,6 @@
 //! V71 A1 仅需提取合法的 openapi 3.x JSON，paths/schemas 后续在 V71.5 补充。
 use utoipa::OpenApi;
 
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // （health_handler 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec，

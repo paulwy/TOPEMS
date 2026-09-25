@@ -201,7 +201,7 @@ pub struct OutboundOrder {
         crate::modules::picking::picking_strategies,
         crate::modules::wms_plugin::get_plugin_info,
         crate::modules::wms_plugin::plugin_health_check,
-    
+
         crate::modules::replenishment_logic::calculate_safety_stock,
 ),
     components(

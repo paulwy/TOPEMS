@@ -119,8 +119,14 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
             levels: row.levels.unwrap_or(serde_json::json!([])),
             measures: row.measures.unwrap_or(serde_json::json!([])),
             owner_id: row.owner_id,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
+            updated_at: row
+                .updated_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 
@@ -175,20 +181,20 @@ now.naive_utc(),
 
     match result {
         Ok(row) => Json(serde_json::json!({
-            "success": true,
-            "message": "Create drilldown path",
-            "data": DrilldownPathResponse {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                datasource_id: row.datasource_id,
-                levels: row.levels.unwrap_or(serde_json::json!([])),
-                measures: row.measures.unwrap_or(serde_json::json!([])),
-                owner_id: row.owner_id,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            }
-        })),
+                    "success": true,
+                    "message": "Create drilldown path",
+                    "data": DrilldownPathResponse {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        datasource_id: row.datasource_id,
+                        levels: row.levels.unwrap_or(serde_json::json!([])),
+                        measures: row.measures.unwrap_or(serde_json::json!([])),
+                        owner_id: row.owner_id,
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                    }
+                })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create drilldown path: {}", e),
@@ -229,20 +235,20 @@ pub async fn get_drilldown_path(
 
     match row {
         Some(row) => Json(serde_json::json!({
-            "success": true,
-            "message": "Get drilldown path",
-            "data": DrilldownPathResponse {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                datasource_id: row.datasource_id,
-                levels: row.levels.unwrap_or(serde_json::json!([])),
-                measures: row.measures.unwrap_or(serde_json::json!([])),
-                owner_id: row.owner_id,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            }
-        })),
+                    "success": true,
+                    "message": "Get drilldown path",
+                    "data": DrilldownPathResponse {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        datasource_id: row.datasource_id,
+                        levels: row.levels.unwrap_or(serde_json::json!([])),
+                        measures: row.measures.unwrap_or(serde_json::json!([])),
+                        owner_id: row.owner_id,
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                    }
+                })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Drilldown path not found",
@@ -290,20 +296,20 @@ now.naive_utc(),
 
     match result {
         Ok(Some(row)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Update drilldown path",
-            "data": DrilldownPathResponse {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                datasource_id: row.datasource_id,
-                levels: row.levels.unwrap_or(serde_json::json!([])),
-                measures: row.measures.unwrap_or(serde_json::json!([])),
-                owner_id: row.owner_id,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            }
-        })),
+                    "success": true,
+                    "message": "Update drilldown path",
+                    "data": DrilldownPathResponse {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        datasource_id: row.datasource_id,
+                        levels: row.levels.unwrap_or(serde_json::json!([])),
+                        measures: row.measures.unwrap_or(serde_json::json!([])),
+                        owner_id: row.owner_id,
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                    }
+                })),
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,
             "Drilldown path not found",
@@ -589,7 +595,10 @@ pub async fn get_drilldown_history(
             drill_dimension: row.drill_dimension,
             drill_value: row.drill_value,
             filters: row.filters,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 

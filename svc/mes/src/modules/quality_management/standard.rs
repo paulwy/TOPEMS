@@ -398,8 +398,8 @@ pub async fn get_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-created_at: standard.created_at.unwrap_or_default().and_utc(),
-updated_at: standard.updated_at.unwrap_or_default().and_utc(),
+            created_at: standard.created_at.unwrap_or_default().and_utc(),
+            updated_at: standard.updated_at.unwrap_or_default().and_utc(),
         },
         "获取质量标准成功",
     ))
@@ -545,8 +545,8 @@ pub async fn create_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-created_at: standard.created_at.unwrap_or_default().and_utc(),
-updated_at: standard.updated_at.unwrap_or_default().and_utc(),
+            created_at: standard.created_at.unwrap_or_default().and_utc(),
+            updated_at: standard.updated_at.unwrap_or_default().and_utc(),
         },
         "创建质量标准成功",
     ))
@@ -756,8 +756,8 @@ pub async fn update_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-created_at: standard.created_at.unwrap_or_default().and_utc(),
-updated_at: standard.updated_at.unwrap_or_default().and_utc(),
+            created_at: standard.created_at.unwrap_or_default().and_utc(),
+            updated_at: standard.updated_at.unwrap_or_default().and_utc(),
         },
         "更新质量标准成功",
     ))

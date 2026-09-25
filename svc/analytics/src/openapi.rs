@@ -117,7 +117,7 @@ use utoipa::OpenApi;
         // === RC4a gaps: schedules ===
         // === RC4a gaps: subscriptions ===
         // === RC4a gaps: health & reports-center ===
-    
+
         crate::modules::report::schedule::toggle_schedule,
         crate::modules::report::report::download_export,
 ),

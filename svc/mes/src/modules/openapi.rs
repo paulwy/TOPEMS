@@ -34,7 +34,6 @@ use crate::modules::work_report::{
     CreateWorkReportRequest, RejectWorkReportRequest, UpdateWorkReportRequest, WorkReportResponse,
 };
 
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // （home 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec）

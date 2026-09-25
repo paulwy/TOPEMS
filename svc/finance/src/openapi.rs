@@ -622,7 +622,7 @@ use crate::modules::*;
         crate::modules::write_off_collection_handler,
         crate::modules::write_off_payment_record_handler,
         crate::modules::year_end_close,
-    
+
         crate::modules::financial_reports::get_monthly_trend,
         crate::modules::financial_reports::get_department_summary,
         crate::modules::financial_reports::get_financial_overview,

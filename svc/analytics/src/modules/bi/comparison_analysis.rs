@@ -199,10 +199,16 @@ pub async fn list_comparisons(
             indicators: row.indicators.unwrap_or(serde_json::json!([])),
             filters: row.filters,
             status: row.status,
-last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+            last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
             created_by: row.created_by,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
+            updated_at: row
+                .updated_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 
@@ -268,24 +274,24 @@ pub async fn get_comparison(
 
     match row {
         Some(row) => Json(serde_json::json!({
-            "success": true,
-            "message": "Get comparison analysis",
-            "data": ComparisonAnalysisResponse {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                comparison_type: row.comparison_type,
-                dimension_a: row.dimension_a,
-                dimension_b: row.dimension_b,
-                indicators: row.indicators.unwrap_or(serde_json::json!([])),
-                filters: row.filters,
-                status: row.status,
-last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
-                created_by: row.created_by,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            }
-        })),
+                    "success": true,
+                    "message": "Get comparison analysis",
+                    "data": ComparisonAnalysisResponse {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        comparison_type: row.comparison_type,
+                        dimension_a: row.dimension_a,
+                        dimension_b: row.dimension_b,
+                        indicators: row.indicators.unwrap_or(serde_json::json!([])),
+                        filters: row.filters,
+                        status: row.status,
+        last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+                        created_by: row.created_by,
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                    }
+                })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Comparison analysis not found",
@@ -328,8 +334,8 @@ pub async fn create_comparison(
         req.indicators,
         req.filters,
         req.created_by,
-now.naive_utc(),
-now.naive_utc(),
+        now.naive_utc(),
+        now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -337,24 +343,24 @@ now.naive_utc(),
 
     match result {
         Ok(row) => Json(serde_json::json!({
-            "success": true,
-            "message": "Create comparison analysis",
-            "data": ComparisonAnalysisResponse {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                comparison_type: row.comparison_type,
-                dimension_a: row.dimension_a,
-                dimension_b: row.dimension_b,
-                indicators: row.indicators.unwrap_or(serde_json::json!([])),
-                filters: row.filters,
-                status: row.status,
-last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
-                created_by: row.created_by,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            }
-        })),
+                    "success": true,
+                    "message": "Create comparison analysis",
+                    "data": ComparisonAnalysisResponse {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        comparison_type: row.comparison_type,
+                        dimension_a: row.dimension_a,
+                        dimension_b: row.dimension_b,
+                        indicators: row.indicators.unwrap_or(serde_json::json!([])),
+                        filters: row.filters,
+                        status: row.status,
+        last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+                        created_by: row.created_by,
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                    }
+                })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create comparison analysis: {}", e),
@@ -413,7 +419,7 @@ pub async fn update_comparison(
         req.indicators,
         req.filters,
         req.status,
-now.naive_utc(),
+        now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -421,24 +427,24 @@ now.naive_utc(),
 
     match result {
         Ok(Some(row)) => Json(serde_json::json!({
-            "success": true,
-            "message": "Update comparison analysis",
-            "data": ComparisonAnalysisResponse {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                comparison_type: row.comparison_type,
-                dimension_a: row.dimension_a,
-                dimension_b: row.dimension_b,
-                indicators: row.indicators.unwrap_or(serde_json::json!([])),
-                filters: row.filters,
-                status: row.status,
-last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
-                created_by: row.created_by,
-created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            }
-        })),
+                    "success": true,
+                    "message": "Update comparison analysis",
+                    "data": ComparisonAnalysisResponse {
+                        id: row.id,
+                        name: row.name,
+                        description: row.description,
+                        comparison_type: row.comparison_type,
+                        dimension_a: row.dimension_a,
+                        dimension_b: row.dimension_b,
+                        indicators: row.indicators.unwrap_or(serde_json::json!([])),
+                        filters: row.filters,
+                        status: row.status,
+        last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+                        created_by: row.created_by,
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                    }
+                })),
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,
             "Comparison analysis not found",
@@ -567,7 +573,7 @@ pub async fn run_comparison(
         SET status = 'running', updated_at = $1
         WHERE id = $2
         "#,
-Utc::now().naive_utc(),
+        Utc::now().naive_utc(),
         id,
     )
     .execute(&state.pool)
@@ -616,7 +622,7 @@ Utc::now().naive_utc(),
         id,
         data_json,
         summary,
-generated_at.naive_utc(),
+        generated_at.naive_utc(),
         Uuid::nil(),
     )
     .execute(&state.pool)
@@ -630,7 +636,7 @@ generated_at.naive_utc(),
             SET status = 'failed', updated_at = $1
             WHERE id = $2
             "#,
-Utc::now().naive_utc(),
+            Utc::now().naive_utc(),
             id,
         )
         .execute(&state.pool)
@@ -650,7 +656,7 @@ Utc::now().naive_utc(),
             updated_at = $1
         WHERE id = $2
         "#,
-completed_at.naive_utc(),
+        completed_at.naive_utc(),
         id,
     )
     .execute(&state.pool)
@@ -756,17 +762,17 @@ pub async fn get_comparison_result(
         .unwrap_or_default();
 
     Json(serde_json::json!({
-        "success": true,
-        "message": "Get comparison result",
-        "data": ComparisonResultResponse {
-            id: row.id,
-            comparison_id: row.comparison_id,
-            status: row.status,
-            data: data_points,
-            summary: row.summary,
-generated_at: row.generated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
-        }
-    }))
+            "success": true,
+            "message": "Get comparison result",
+            "data": ComparisonResultResponse {
+                id: row.id,
+                comparison_id: row.comparison_id,
+                status: row.status,
+                data: data_points,
+                summary: row.summary,
+    generated_at: row.generated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+            }
+        }))
 }
 
 // ============================================================================

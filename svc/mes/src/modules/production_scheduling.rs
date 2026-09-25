@@ -488,16 +488,16 @@ now.naive_utc(),
         equipment_name: None,
         process_id: result.process_id,
         process_name: None,
-planned_start_time: result.planned_start_time.map(|t| t.and_utc()),
-planned_end_time: result.planned_end_time.map(|t| t.and_utc()),
-actual_start_time: result.actual_start_time.map(|t| t.and_utc()),
-actual_end_time: result.actual_end_time.map(|t| t.and_utc()),
+        planned_start_time: result.planned_start_time.map(|t| t.and_utc()),
+        planned_end_time: result.planned_end_time.map(|t| t.and_utc()),
+        actual_start_time: result.actual_start_time.map(|t| t.and_utc()),
+        actual_end_time: result.actual_end_time.map(|t| t.and_utc()),
         status: result.status.unwrap_or_else(|| "pending".to_string()),
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
-created_at: result.created_at.unwrap_or_default().and_utc(),
-updated_at: result.updated_at.unwrap_or_default().and_utc(),
+        created_at: result.created_at.unwrap_or_default().and_utc(),
+        updated_at: result.updated_at.unwrap_or_default().and_utc(),
     };
 
     Json(ApiResponse::success(schedule, "生产排产创建成功"))
@@ -580,16 +580,16 @@ pub async fn get_production_schedule(
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
                 process_name: Some(r.process_name),
-planned_start_time: r.planned_start_time.map(|t| t.and_utc()),
-planned_end_time: r.planned_end_time.map(|t| t.and_utc()),
-actual_start_time: r.actual_start_time.map(|t| t.and_utc()),
-actual_end_time: r.actual_end_time.map(|t| t.and_utc()),
+                planned_start_time: r.planned_start_time.map(|t| t.and_utc()),
+                planned_end_time: r.planned_end_time.map(|t| t.and_utc()),
+                actual_start_time: r.actual_start_time.map(|t| t.and_utc()),
+                actual_end_time: r.actual_end_time.map(|t| t.and_utc()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-created_at: r.created_at.unwrap_or_default().and_utc(),
-updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -654,13 +654,13 @@ pub async fn update_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-req.planned_start_time.map(|t| t.naive_utc()),
-req.planned_end_time.map(|t| t.naive_utc()),
+        req.planned_start_time.map(|t| t.naive_utc()),
+        req.planned_end_time.map(|t| t.naive_utc()),
         req.priority,
         req.sequence,
         req.status,
         req.notes,
-Utc::now().naive_utc(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -690,16 +690,16 @@ Utc::now().naive_utc(),
                 equipment_name: None,
                 process_id: r.process_id,
                 process_name: None,
-planned_start_time: r.planned_start_time.map(|t| t.and_utc()),
-planned_end_time: r.planned_end_time.map(|t| t.and_utc()),
-actual_start_time: r.actual_start_time.map(|t| t.and_utc()),
-actual_end_time: r.actual_end_time.map(|t| t.and_utc()),
+                planned_start_time: r.planned_start_time.map(|t| t.and_utc()),
+                planned_end_time: r.planned_end_time.map(|t| t.and_utc()),
+                actual_start_time: r.actual_start_time.map(|t| t.and_utc()),
+                actual_end_time: r.actual_end_time.map(|t| t.and_utc()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-created_at: r.created_at.unwrap_or_default().and_utc(),
-updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
@@ -803,8 +803,8 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-req.new_start_time.map(|t| t.naive_utc()),
-now.naive_utc(),
+            req.new_start_time.map(|t| t.naive_utc()),
+            now.naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -873,10 +873,12 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-let start = s.planned_start_time.unwrap_or_else(|| Utc::now().naive_utc());
+        let start = s
+            .planned_start_time
+            .unwrap_or_else(|| Utc::now().naive_utc());
         let end = s
             .planned_end_time
-.unwrap_or_else(|| Utc::now().naive_utc() + chrono::Duration::hours(1));
+            .unwrap_or_else(|| Utc::now().naive_utc() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
@@ -898,8 +900,8 @@ let start = s.planned_start_time.unwrap_or_else(|| Utc::now().naive_utc());
         tasks.push(GanttTask {
             id: s.id.to_string(),
             name: format!("{} - {}", s.schedule_no.clone(), s.product_name.clone()),
-start: start.and_utc(),
-end: end.and_utc(),
+            start: start.and_utc(),
+            end: end.and_utc(),
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
             resource: Some(resource_name),
