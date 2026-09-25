@@ -673,7 +673,7 @@ pub async fn get_tenant_quota(
                 overage_cost_cents: None,
                 plugin_cost_cents: None,
                 total_cost_cents: None,
-                created_at: chrono::Utc::now().naive_utc(),
+                created_at: chrono::Utc::now(),
             });
 
             let quota = TenantQuotaResponse {
@@ -959,7 +959,7 @@ pub async fn invite_member(
         email: req.email.clone(),
         role: req.role.clone(),
         status: "invited".to_string(),
-        created_at: chrono::Utc::now().naive_utc(),
+        created_at: chrono::Utc::now(),
         last_login: None,
     };
 

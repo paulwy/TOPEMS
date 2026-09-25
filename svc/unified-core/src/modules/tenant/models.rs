@@ -49,7 +49,6 @@ pub enum LicenseType {
 
 /// Tenant entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct Tenant {
     pub id: uuid::Uuid,
     pub name: String,
@@ -68,7 +67,7 @@ pub struct Tenant {
 
     #[serde(rename = "license_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub license_expires_at: Option<NaiveDateTime>,
+    pub license_expires_at: Option<DateTime<Utc>>,
 
     // Database config (for independent mode)
     #[serde(rename = "database_host")]
@@ -105,22 +104,22 @@ pub struct Tenant {
 
     #[serde(rename = "trial_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub trial_expires_at: Option<NaiveDateTime>,
+    pub trial_expires_at: Option<DateTime<Utc>>,
 
     // Metadata
     #[serde(rename = "created_at")]
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 
     #[serde(rename = "updated_at")]
-    pub updated_at: NaiveDateTime,
+    pub updated_at: DateTime<Utc>,
 
     #[serde(rename = "activated_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub activated_at: Option<NaiveDateTime>,
+    pub activated_at: Option<DateTime<Utc>>,
 
     #[serde(rename = "suspended_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub suspended_at: Option<NaiveDateTime>,
+    pub suspended_at: Option<DateTime<Utc>>,
 }
 
 fn default_plan() -> String {
@@ -133,7 +132,6 @@ fn default_quota_users() -> i32 {
 
 /// Tenant usage statistics
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct TenantUsage {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
@@ -151,12 +149,11 @@ pub struct TenantUsage {
     pub plugin_cost_cents: Option<i64>,
     pub total_cost_cents: Option<i64>,
 
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 /// Tenant module (activated plugin/feature)
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct TenantModule {
     pub id: uuid::Uuid,
     #[serde(rename = "tenant_id")]
@@ -172,10 +169,10 @@ pub struct TenantModule {
     #[serde(rename = "is_active")]
     pub is_active: bool,
     #[serde(rename = "activated_at")]
-    pub activated_at: NaiveDateTime,
+    pub activated_at: DateTime<Utc>,
     #[serde(rename = "expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expires_at: Option<NaiveDateTime>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 fn default_module_tier() -> String {
@@ -256,7 +253,6 @@ pub struct OnboardTenantResponse {
 
 /// Tenant user entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct TenantUser {
     pub id: uuid::Uuid,
     #[serde(rename = "tenant_id")]
@@ -267,10 +263,10 @@ pub struct TenantUser {
     pub role: String,
     pub status: String,
     #[serde(rename = "created_at")]
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
     #[serde(rename = "last_login")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub last_login: Option<NaiveDateTime>,
+    pub last_login: Option<DateTime<Utc>>,
 }
 
 /// Tenant stats response
@@ -454,8 +450,8 @@ mod tests {
     use serde_json;
     use uuid::Uuid;
 
-    fn sample_naive_dt() -> NaiveDateTime {
-        NaiveDateTime::parse_from_str("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S").unwrap()
+    fn sample_naive_dt() -> chrono::DateTime<Utc> {
+        chrono::DateTime::from_timestamp(1705314600, 0).unwrap() // 2024-01-15T10:30:00Z
     }
 
     #[test]
@@ -586,7 +582,7 @@ mod tests {
             plan: "basic".to_string(),
             license_type: "subscription".to_string(),
             license_expires_at: None,
-            trial_expires_at: Some(sample_naive_dt()),
+            trial_expires_at: Some(chrono::Utc::now().naive_utc()),  // DTO 层保持 NaiveDateTime
         };
         let json = serde_json::to_string(&ctr).unwrap();
         let de: CreateTenantRequest = serde_json::from_str(&json).unwrap();

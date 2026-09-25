@@ -4,7 +4,7 @@ use axum::{
     Extension, Json, Router,
 };
 use bigdecimal::BigDecimal;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::collections::{HashMap, HashSet};
@@ -436,7 +436,6 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct BomVersion {
     pub id: Uuid,
     pub tenant_id: Uuid,
@@ -448,8 +447,8 @@ pub struct BomVersion {
     pub version: String,
     pub status: String,
     pub description: Option<String>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]

@@ -14,12 +14,11 @@ use super::models::{record_audit_log, UserResponse, UserRow};
 
 #[derive(Debug, Serialize, ToSchema, sqlx::FromRow)]
 #[schema(as = UserRoleRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 struct UserRoleRow {
     id: Uuid,
     name: String,
     description: Option<String>,
-    created_at: Option<chrono::NaiveDateTime>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Serialize, ToSchema, sqlx::FromRow)]

@@ -1,4 +1,4 @@
-# TOPEMS UI v3 迁移与优化 - 项目状态
+  - [x] **P1-2 DB/SQL 层无时区列治理 ✅（2026-09-25）**：实测线上库已全 timestamptz（4201 列，无 timestamp 无时区）→ 工作重心转为**源码 DDL 归一化**：database/migrations 58 文件 384 处 `timestamp` → `timestamptz`（注释行 6 处误改已还原）；实体层 20 处 NaiveDateTime 豁免**收口为 DateTime<Utc>**（tenant 11 / iam 5 / backup 2 / migration 3 / integration 3 / analytics 4 / pdm 2，DTO 层 NaiveDateTime 保持不动）；14 条"DB 无时区列"豁免注释删除（保留 2 条正确豁免：audit 响应耗时 + srm 交货周期文本）；unified-core/analytics/integration/pdm cargo test 全绿（0 failed）；审计：实体违规 0 + SQL 无时区列 0# TOPEMS UI v3 迁移与优化 - 项目状态
 
 ## ✅ 已完成（P0 + P1）
 

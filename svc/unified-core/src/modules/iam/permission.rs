@@ -2,11 +2,10 @@
 
 use crate::AppState;
 use axum::{extract::State, Json};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 struct PermissionRow {
     id: uuid::Uuid,
     code: String,
@@ -14,7 +13,7 @@ struct PermissionRow {
     description: Option<String>,
     resource: Option<String>,
     action: Option<String>,
-    created_at: Option<NaiveDateTime>,
+    created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize)]

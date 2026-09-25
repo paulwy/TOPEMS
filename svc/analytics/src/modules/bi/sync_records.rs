@@ -562,7 +562,6 @@ pub async fn retry_sync(
 // ==================== Internal helpers ====================
 
 #[derive(sqlx::FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 struct SyncRecordRow {
     id: Uuid,
     data_source_id: Uuid,
@@ -572,11 +571,11 @@ struct SyncRecordRow {
     records_count: Option<i64>,
     affected_records: Option<i64>,
     error_message: Option<String>,
-    started_at: Option<chrono::NaiveDateTime>,
-    completed_at: Option<chrono::NaiveDateTime>,
+    started_at: Option<chrono::DateTime<Utc>>,
+    completed_at: Option<chrono::DateTime<Utc>>,
     duration_ms: Option<i64>,
-    created_at: Option<chrono::NaiveDateTime>,
-    updated_at: Option<chrono::NaiveDateTime>,
+    created_at: Option<chrono::DateTime<Utc>>,
+    updated_at: Option<chrono::DateTime<Utc>>,
 }
 
 impl From<SyncRecordRow> for SyncRecordResponse {
@@ -599,8 +598,8 @@ impl From<SyncRecordRow> for SyncRecordResponse {
     }
 }
 
-fn format_dt(t: chrono::NaiveDateTime) -> String {
-    chrono::DateTime::<Utc>::from_naive_utc_and_offset(t, Utc).to_rfc3339()
+fn format_dt(t: chrono::DateTime<Utc>) -> String {
+    t.to_rfc3339()
 }
 
 #[cfg(test)]
@@ -610,19 +609,13 @@ mod tests {
     // ---- format_dt ----
     #[test]
     fn format_dt_rfc3339() {
-        let dt = chrono::NaiveDate::from_ymd_opt(2024, 1, 2)
-            .unwrap()
-            .and_hms_opt(3, 4, 5)
-            .unwrap();
+        let dt = chrono::DateTime::from_timestamp(1704164645, 0).unwrap(); // 2024-01-02T03:04:05Z
         assert_eq!(format_dt(dt), "2024-01-02T03:04:05+00:00");
     }
 
     #[test]
     fn format_dt_zero_time() {
-        let dt = chrono::NaiveDate::from_ymd_opt(2024, 12, 31)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap();
+        let dt = chrono::DateTime::from_timestamp(1735603200, 0).unwrap(); // 2024-12-31T00:00:00Z
         assert_eq!(format_dt(dt), "2024-12-31T00:00:00+00:00");
     }
 }

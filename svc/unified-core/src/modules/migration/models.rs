@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -12,11 +12,10 @@ pub struct MigrationService {
 }
 
 #[derive(Serialize, FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct AppliedMigration {
     pub version: String,
     pub name: String,
-    pub applied_at: Option<NaiveDateTime>,
+    pub applied_at: Option<DateTime<Utc>>,
     pub duration_ms: Option<i64>,
 }
 
@@ -45,18 +44,17 @@ pub struct RollbackResult {
 }
 
 #[derive(Serialize, FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 pub struct MigrationHistory {
     pub id: uuid::Uuid,
     pub plugin_name: String,
     pub version: String,
     pub name: String,
     pub description: Option<String>,
-    pub applied_at: Option<NaiveDateTime>,
+    pub applied_at: Option<DateTime<Utc>>,
     pub duration_ms: Option<i64>,
     pub success: bool,
     pub error_message: Option<String>,
-    pub created_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize)]

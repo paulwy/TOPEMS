@@ -16,7 +16,6 @@ const TENANT_ID: &str = "default";
 // ===== 同步日志模型 =====
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
-// date-type-convention: exempt 实体映射 DB timestamp(无时区) 列，DB 迁移 timestamptz 后统一改 DateTime<Utc>
 struct ExternalErpSyncLog {
     id: Uuid,
     tenant_id: String,
@@ -28,9 +27,9 @@ struct ExternalErpSyncLog {
     success_count: i32,
     failed_count: i32,
     error_message: Option<String>,
-    started_at: Option<chrono::NaiveDateTime>,
-    completed_at: Option<chrono::NaiveDateTime>,
-    created_at: chrono::NaiveDateTime,
+    started_at: Option<chrono::DateTime<chrono::Utc>>,
+    completed_at: Option<chrono::DateTime<chrono::Utc>>,
+    created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
