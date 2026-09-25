@@ -12,11 +12,11 @@
 | 分类 | Story 文件数 | Story 条目数 |
 |------|-------------|-------------|
 | Charts | 5 | 14 |
-| Common | 37 | 121 |
+| Common | 43 | 138 |
 | Templates | 3 | 7 |
 | Mobile | 5 | 15 |
 | Design Tokens | 1 | 3 |
-| **总计** | **51** | **160** |
+| **总计** | **57** | **177** |
 
 ---
 
@@ -78,7 +78,7 @@ MobileButton, MobileCard, MobileSkeleton, PullToRefresh, SwipeAction
 
 ### Storybook 版本
 `storybook@10.5.4` + `@storybook/react-vite`（Vite builder）+ `@storybook/addon-docs@10.5.4`（须与主包同版本）
-- 组件文档页（autodocs）：51 个，随构建自动生成
+- 组件文档页（autodocs）：57 个，随构建自动生成
 - CI：`.github/workflows/storybook-docs.yml` 已配置 GitHub Pages 自动发布
 
 ---
