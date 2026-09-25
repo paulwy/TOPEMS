@@ -1,24 +1,26 @@
 # TOPEMS 前端门户
 
-统一的企业数字化平台前端门户，基于 React + TypeScript + Vite + Module Federation。
+统一的企业级数字化平台前端门户，基于 React + TypeScript + Vite + Module Federation，采用 pnpm workspace 多包管理。
 
 ## 快速开始
 
 ### 环境要求
 
-- Node.js >= 18
-- npm 或 yarn
+- Node.js 20+（CI 使用 Node 22）
+- pnpm 8+（workspace 根执行）
 
 ### 安装依赖
 
+在仓库根目录执行（本包为 pnpm workspace 成员）：
+
 ```bash
-npm install
+pnpm install
 ```
 
 ### 启动开发服务器
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 访问 http://localhost:3000
@@ -26,71 +28,71 @@ npm run dev
 ### 构建生产版本
 
 ```bash
-npm run build
+pnpm build
+```
+
+### 类型检查
+
+```bash
+pnpm typecheck
+```
+
+### 组件文档（Storybook）
+
+```bash
+pnpm storybook          # 开发模式 → http://localhost:6006
+pnpm build-storybook    # 构建静态站点（apps/web/storybook-static，已 gitignore）
 ```
 
 ## 技术栈
 
-- **框架**: React 18/19
-- **语言**: TypeScript 6
-- **构建工具**: Vite 6
-- **样式**: Tailwind CSS 4 + MUI 6
-- **路由**: React Router 7
-- **HTTP 客户端**: Axios
-- **状态管理**: Zustand
-- **国际化**: i18next
-- **微前端**: Module Federation
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| React | ^19.2.7 | UI 框架 |
+| TypeScript | ^6.0.3 | 类型安全 |
+| Vite | ^8.1.5 | 构建工具 |
+| MUI | ^9.4.0 | UI 组件库（material + icons） |
+| React Router | ^7.18.3 | 路由 |
+| Axios | ^1.6.8 | HTTP 客户端 |
+| Zustand | ^5.0.14 | 状态管理 |
+| i18next | ^26.3.1 | 国际化（react-i18next ^17.0.8） |
+| Module Federation | @module-federation/vite ^1.16.8 | 微前端（Remote） |
+| Storybook | 10.5.4 | 组件文档（autodocs） |
+| Vitest | - | 单元/组件测试（5 shards） |
+| Playwright | - | E2E 测试 |
+
+## Storybook 组件文档
+
+- **配置**：`apps/web/.storybook/main.ts`（framework=react-vite + addon-docs，addon-docs 须与主包同版本 10.5.4）
+- **覆盖**：51 个组件文档页 + 160 个 stories（Charts/Common/Mobile/Templates/Design Tokens）
+- **文档生成**：autodocs 自动从源码生成 Props 表格与示例，组件描述在 `*.stories.tsx` 的 `meta.component` 中维护
+- **CI 发布**：`.github/workflows/storybook-docs.yml` 在 main 分支相关变更后自动构建并发布 GitHub Pages（`https://paulwy.github.io/TOPEMS/`）
 
 ## 项目结构
 
 ```
-TOPEMS/
-├── apps/
-│   ├── web/                    # 主应用（Host）
-│   │   └── src/
-│   │       ├── api/            # API 客户端
-│   │       ├── components/      # 通用组件
-│   │       ├── hooks/          # React Hooks
-│   │       ├── pages/          # 页面组件
-│   │       ├── store/          # Zustand Store
-│   │       └── utils/          # 工具函数
-│   └── core/                   # 核心模块（Remote）
-│       └── src/
-│           ├── api/            # Core API
-│           ├── components/      # Core UI 组件
-│           ├── hooks/          # Core Hooks
-│           ├── pages/          # Core 页面
-│           └── store/          # Core Store
-│
-└── packages/                   # 共享包
-    ├── shared-utils/           # 工具函数
-    │   └── src/
-    │       ├── date.ts         # 日期处理
-    │       ├── string.ts       # 字符串处理
-    │       ├── number.ts       # 数字/货币/文件大小
-    │       ├── function.ts     # debounce/throttle
-    │       ├── clone.ts        # deepClone
-    │       ├── id.ts           # generateId
-    │       ├── validate.ts     # 验证函数
-    │       ├── storage.ts      # localStorage 封装
-    │       ├── i18n.ts         # 国际化工具
-    │       └── request.ts      # Axios 封装
-    │
-    ├── shared-types/           # 类型定义
-    │   └── src/
-    │       ├── api.ts          # ApiResponse
-    │       ├── auth.ts         # User/Role/Permission
-    │       ├── org.ts          # Department/Position
-    │       ├── workflow.ts      # 工作流类型
-    │       ├── ui.ts           # MenuItem
-    │       ├── notification.ts # Notification
-    │       ├── file.ts         # FileRecord
-    │       └── dict.ts         # DictType/DictData
-    │
-    └── shared-components/      # 共享组件
-        └── src/
-            ├── OrgTree.tsx     # 组织架构树
-            └── UserSelect.tsx  # 用户选择器
+apps/
+├── web/                       # 前端门户（Host + Module Federation Remote）
+│   └── src/
+│       ├── api/               # API 客户端（基于 @topems/api-client）
+│       ├── components/        # 通用组件（Charts/Common/Mobile/Templates）
+│       ├── hooks/             # React Hooks
+│       ├── pages/             # 页面组件
+│       ├── store/             # Zustand Store
+│       ├── utils/             # 工具函数
+│       └── .storybook/        # Storybook 配置
+├── mobile/                    # 移动端
+└── desktop/                   # 桌面端（Tauri）
+
+packages/
+├── api-client/                # API 客户端包（@topems/api-client）
+├── app-shell/                 # 应用外壳
+├── business-tools-sdk/        # 业务工具 SDK
+├── shared-components/         # 共享 React 组件库
+├── shared-hooks/              # 共享 Hooks（useIntersectionObserver 等）
+├── shared-types/              # 共享类型定义
+├── shared-utils/              # 共享工具函数
+└── tokens/                    # 设计令牌
 ```
 
 ## 共享包说明
