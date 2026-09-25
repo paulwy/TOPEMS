@@ -166,16 +166,6 @@ export { PercentField, type PercentFieldProps } from './NumberFields';
 // TouchButton - 触控按钮组件
 export { TouchButton } from './TouchButton';
 
-// TouchComponents - 触控交互组件扩展
-export {
-  TouchIconButton,
-  TouchCard,
-  TouchListItem,
-  TouchChip,
-  TouchSwitch,
-  type TouchFeedbackOptions,
-} from './TouchComponents';
-
 // Drawer - 抽屉组件
 export { Drawer } from './Drawer';
 export type { DrawerAnchor } from './Drawer';
