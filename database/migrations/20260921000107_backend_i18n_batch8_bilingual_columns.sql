@@ -57,6 +57,19 @@ ALTER TABLE ai.ai_models ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
 ALTER TABLE ai.ai_prompt_templates ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
 
 -- 18. communication 邮件模板
+--   真表 communication.core_email_templates 无任何迁移定义（007_communication.sql 仅建 public 影子表）；
+--   补齐真表（结构对齐 007 public 版本），确保 ALTER 可执行且服务运行时 SEARCH_PATH 解析一致
+CREATE TABLE IF NOT EXISTS communication.core_email_templates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL,
+    subject_template VARCHAR(512) NOT NULL,
+    body_template TEXT NOT NULL,
+    description TEXT,
+    tenant_id UUID NOT NULL,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW(),
+    deleted_at timestamptz
+);
 ALTER TABLE communication.core_email_templates ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);
 -- 19. communication 通知渠道
 ALTER TABLE communication.notification_channels ADD COLUMN IF NOT EXISTS name_en VARCHAR(255);

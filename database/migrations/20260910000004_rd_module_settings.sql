@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS rs.module_settings (
     category TEXT NOT NULL,
     key TEXT NOT NULL,
     value TEXT NOT NULL DEFAULT '',
-    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW(),
     UNIQUE(tenant_id, category, key)
 );
 

@@ -35,11 +35,11 @@ CREATE TABLE IF NOT EXISTS unified_core.inter_module_sync (
     error_message TEXT,
     retry_count INT DEFAULT 0,
     max_retries INT DEFAULT 3,
-    next_retry_at timestamptz WITH TIME ZONE,
+    next_retry_at timestamptz,
     sync_data JSONB,
-    executed_at timestamptz WITH TIME ZONE,
-    created_at timestamptz WITH TIME ZONE DEFAULT NOW(),
-    updated_at timestamptz WITH TIME ZONE DEFAULT NOW()
+    executed_at timestamptz,
+    created_at timestamptz DEFAULT NOW(),
+    updated_at timestamptz DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_inter_module_sync_status ON unified_core.inter_module_sync(status);

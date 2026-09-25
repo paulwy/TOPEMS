@@ -33,11 +33,11 @@ CREATE TABLE IF NOT EXISTS finance.sales_invoices (
         CHECK (invoice_type IN ('tax', '普通发票', '专用发票')),
     cancel_reason TEXT,
     red_flush_of UUID,
-    issued_at timestamptz WITH TIME ZONE,
-    cancelled_at timestamptz WITH TIME ZONE,
+    issued_at timestamptz,
+    cancelled_at timestamptz,
     created_by UUID,
-    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_sales_invoices_tenant ON finance.sales_invoices (tenant_id);
@@ -48,7 +48,7 @@ CREATE INDEX IF NOT EXISTS idx_sales_invoices_due_date ON finance.sales_invoices
 -- 回款确认人/时间列（对齐前端 CollectionRecord.confirmed_by/confirmed_at）
 ALTER TABLE finance.erp_collection_records
     ADD COLUMN IF NOT EXISTS confirmed_by VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS confirmed_at timestamptz WITH TIME ZONE;
+    ADD COLUMN IF NOT EXISTS confirmed_at timestamptz;
 
 -- ========== RLS：启用 + 租户隔离策略（对齐 20260908000016 现有模式）+ FORCE ==========
 ALTER TABLE finance.sales_invoices ENABLE ROW LEVEL SECURITY;

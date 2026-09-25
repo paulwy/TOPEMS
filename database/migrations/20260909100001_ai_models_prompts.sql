@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS ai.ai_models (
     frequency_penalty NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
     presence_penalty NUMERIC(4, 2) NOT NULL DEFAULT 0.00,
     system_prompt TEXT,
-    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW()
 );
 
 -- 2026-09-18 防御化（空库重建链卡点）：若 ai.ai_prompt_templates 仅为 business_base_tables 建的 2 列裸骨架
@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS ai.ai_prompt_templates (
     prompt_template TEXT NOT NULL,
     is_favorite BOOLEAN NOT NULL DEFAULT FALSE,
     usage_count INTEGER NOT NULL DEFAULT 0,
-    created_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at timestamptz WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_ai_models_tenant ON ai.ai_models (tenant_id);

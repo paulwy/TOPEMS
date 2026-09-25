@@ -4,4 +4,4 @@
 --      改码至 mobile.push_notifications 后需补列兼容（repository.rs 群发统计查询不受影响）。
 ALTER TABLE mobile.push_notifications
     ADD COLUMN IF NOT EXISTS user_id UUID,
-    ADD COLUMN IF NOT EXISTS read_at timestamptz WITH TIME ZONE;
+    ADD COLUMN IF NOT EXISTS read_at timestamptz;

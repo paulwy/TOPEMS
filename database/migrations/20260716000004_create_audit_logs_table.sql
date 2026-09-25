@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS iam.permission_audit_logs (
     after JSONB,
     reason TEXT,
     tenant_id UUID NOT NULL,
-    created_at timestamptz WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_permission_audit_logs_user_id ON iam.permission_audit_logs(user_id);

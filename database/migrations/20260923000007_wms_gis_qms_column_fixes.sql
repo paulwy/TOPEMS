@@ -67,5 +67,19 @@ ALTER TABLE public.core_notification_templates ADD COLUMN IF NOT EXISTS data jso
 ALTER TABLE core.knowledge_qa_history ADD COLUMN IF NOT EXISTS feedback integer;
 
 -- ============ mobile.shortcuts ============
+-- 真表 mobile.shortcuts 无迁移定义（仅 database/init/05_mobile_init.sql 建 public 版本，init 不归迁移链管理）；
+-- 按 init 结构补齐 mobile 真表（REFERENCES mobile_users 依赖迁移链已建），确保 ALTER 可执行且服务运行时解析一致
+CREATE TABLE IF NOT EXISTS mobile.shortcuts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES mobile_users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    icon VARCHAR(100) NOT NULL,
+    action_type VARCHAR(100) NOT NULL,
+    action_params JSONB,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at timestamptz NOT NULL DEFAULT NOW(),
+    updated_at timestamptz NOT NULL DEFAULT NOW()
+);
 -- 代码：INSERT ... tenant_id，表无此列；补 uuid NOT NULL，给存量行零值默认。
 ALTER TABLE mobile.shortcuts ADD COLUMN IF NOT EXISTS tenant_id uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000';

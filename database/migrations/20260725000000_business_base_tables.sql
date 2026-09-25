@@ -2986,7 +2986,7 @@ CREATE TABLE IF NOT EXISTS "public"."audit_logs" (
     error_message TEXT,
     ip_address VARCHAR(45),
     user_agent TEXT,
-    created_at timestamptz WITH TIME ZONE DEFAULT NOW()
+    created_at timestamptz DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON "public"."audit_logs"(action);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_type ON "public"."audit_logs"(entity_type);
