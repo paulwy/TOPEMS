@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -21,8 +21,8 @@ pub struct TransferOrder {
     pub status: String,
     pub total_quantity: Option<i64>,
     pub total_amount: Option<f64>,
-    pub planned_date: Option<String>,
-    pub actual_date: Option<String>,
+    pub planned_date: Option<NaiveDate>,
+    pub actual_date: Option<NaiveDate>,
     pub transporter: Option<String>,
     pub tracking_number: Option<String>,
     pub priority: Option<String>,
@@ -122,7 +122,7 @@ mod tests {
             status: "pending".into(),
             total_quantity: Some(100),
             total_amount: Some(5000.0),
-            planned_date: Some("2026-08-15".into()),
+            planned_date: NaiveDate::from_ymd_opt(2026, 8, 15),
             actual_date: None,
             transporter: Some("Logistics Co".into()),
             tracking_number: Some("TRK-123".into()),

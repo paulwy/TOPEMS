@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -21,12 +21,12 @@ pub struct Batch {
     pub location_code: Option<String>,
     pub supplier_id: Option<String>,
     pub supplier_name: Option<String>,
-    pub production_date: Option<String>,
-    pub expiry_date: Option<String>,
-    pub receipt_date: Option<String>,
+    pub production_date: Option<NaiveDate>,
+    pub expiry_date: Option<NaiveDate>,
+    pub receipt_date: Option<NaiveDate>,
     pub quality_status: String,
     pub status: String,
-    pub manufacture_date: Option<String>,
+    pub manufacture_date: Option<NaiveDate>,
     pub shelf_life_days: Option<i32>,
     pub remaining_days: Option<i32>,
     pub unit_price: Option<f64>,
@@ -124,12 +124,12 @@ mod tests {
             location_code: Some("A-01".into()),
             supplier_id: Some("sup-1".into()),
             supplier_name: Some("Supplier Co".into()),
-            production_date: Some("2026-01-01".into()),
-            expiry_date: Some("2027-01-01".into()),
-            receipt_date: Some("2026-02-01".into()),
+            production_date: NaiveDate::from_ymd_opt(2026, 1, 1),
+            expiry_date: NaiveDate::from_ymd_opt(2027, 1, 1),
+            receipt_date: NaiveDate::from_ymd_opt(2026, 2, 1),
             quality_status: "qualified".into(),
             status: "active".into(),
-            manufacture_date: Some("2026-01-01".into()),
+            manufacture_date: NaiveDate::from_ymd_opt(2026, 1, 1),
             shelf_life_days: Some(365),
             remaining_days: Some(180),
             unit_price: Some(9.99),

@@ -845,11 +845,11 @@ D
   - ✅ 裸 String 违规 2 处已修复：lims instrument.rs MaintenanceRecord（performed_at/next_maintenance_date/created_at → DateTime<Utc>，SQL 去 ::TEXT）+ unified-core flow/monitor.rs TrendData（date → NaiveDate，SQL 去 ::text）；lims/unified-core/pdm/integration 编译通过
   - ✅ 审计工具修复（暴露完整真实违规）：--service 服务名解析（取 svc/ 后一项）+ is_entity 取最近 derive（消除 ticket on_time 误报）+ 违规判定纳入 Option<String>/Option<NaiveDateTime>/Option<int> + 豁免注释识别全类型生效——初版工具只查裸 String，曾误报"14 处"，修复后暴露真实 91 处
   - ✅ 豁免注释 21 处（`date-type-convention: exempt`）：NaiveDateTime 11 + Option<NaiveDateTime> 9（映射 DB timestamp 无时区列，**DB 迁移后统一改 DateTime<Utc>**）+ unified-core audit AccessControlLog.response_time（响应耗时 bigint，非时间点）
-  - 🚧 **剩余 13 处 Option<String> 实体层违规**（81 → 13）：
+  - 🚧 **剩余 3 处 Option<String> 实体层违规**（13 → 3）：
     - [x] **P1-1a qms 68 处 ✅（2026-09-25 完成）**：24 struct 时间字段全改 Option<DateTime<Utc>>（DB 列实测全 timestamptz，含 d3/d6/d8_*_at 数字前缀字段）；SQL ::TEXT 适配全去除（16+3 列名，data_sync.rs DTO 适配保留）；测试构造 62 处改 DateTime::from_timestamp（含 4 处 DTO 误伤恢复）；cargo check + cargo test 全绿（262+224+13+13+12+1 passed / 0 failed）；审计工具 TIME_NAME 补数字中缀支持（d3_implemented_at 类）
-    - [ ] P1-1b **wms 10 处 / 3 struct**：batch(4) serial_number(4) transfer_order(2)
+    - [x] **P1-1b wms 10 处 ✅（2026-09-25 完成）**：3 struct（Batch 4 / SerialNumber 4 / TransferOrder 2）字段改 Option<NaiveDate>（DB 列实测全 date，非 timestamptz）；SQL 无 ::TEXT 适配、请求层 String bind 保持不动；顺带修复存量运行时 bug（date 列 decode 到 Option<String> 必败）；测试构造 9 处改 NaiveDate::from_ymd_opt（含 5 处请求层测试误伤恢复）；cargo test 全绿（550+551+12+12+1 passed / 0 failed）
     - [ ] P1-1c **散点 3 处**：unified-core versioning ApiVersionConfigRecord.sunset_date、scm SupplierAdmission.application_date、srm Quotation.delivery_time
-  - 验收：date-type-audit.py 实体层违规 = 0（当前 13）
+  - 验收：date-type-audit.py 实体层违规 = 0（当前 3）
 - [ ] **P1-2 DB 无时区列迁移（384 列）**：timestamp → timestamptz 逐表迁移
   - 集中在 core_users/core_tenants/core_plugins/core_workflows 等 unified-core 表 + 各服务迁移
   - 步骤：逐表评估数据与时区语义 → 编写迁移（ALTER COLUMN TYPE timestamptz USING ...）→ 同步实体层 DateTime<Utc> → mes-guard --prepare（如涉 mes）→ 全量测试

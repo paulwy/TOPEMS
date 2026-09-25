@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
@@ -20,12 +20,12 @@ pub struct SerialNumber {
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
     pub batch_no: Option<String>,
-    pub production_date: Option<String>,
-    pub expiry_date: Option<String>,
+    pub production_date: Option<NaiveDate>,
+    pub expiry_date: Option<NaiveDate>,
     pub quality_status: String,
     pub status: String,
-    pub warranty_start_date: Option<String>,
-    pub warranty_end_date: Option<String>,
+    pub warranty_start_date: Option<NaiveDate>,
+    pub warranty_end_date: Option<NaiveDate>,
     pub inbound_order_no: Option<String>,
     pub outbound_order_no: Option<String>,
     pub current_owner: Option<String>,
@@ -123,12 +123,12 @@ mod tests {
             supplier_id: Some(Uuid::new_v4()),
             supplier_name: Some("Sup".into()),
             batch_no: Some("BAT-1".into()),
-            production_date: Some("2026-01-01".into()),
-            expiry_date: Some("2028-01-01".into()),
+            production_date: NaiveDate::from_ymd_opt(2026, 1, 1),
+            expiry_date: NaiveDate::from_ymd_opt(2028, 1, 1),
             quality_status: "qualified".into(),
             status: "pending".into(),
-            warranty_start_date: Some("2026-01-01".into()),
-            warranty_end_date: Some("2028-01-01".into()),
+            warranty_start_date: NaiveDate::from_ymd_opt(2026, 1, 1),
+            warranty_end_date: NaiveDate::from_ymd_opt(2028, 1, 1),
             inbound_order_no: Some("INB-1".into()),
             outbound_order_no: None,
             current_owner: None,
