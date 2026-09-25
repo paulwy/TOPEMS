@@ -826,6 +826,7 @@ D
 - [x] **analytics**：核查已全覆盖（54 handler/54 注解，无缺口）
 - [ ] 累计：60 + 5 = 65 个新注解（文档待并入，1408 → 1473）
 - [x] **openapi.json 重生成 1408 → 1458 端点（2026-09-25）**：此前阻塞（mes 编译 76 个 E0308）已解除——`cargo run -p topems-server --bin openapi-gen` 成功，1458 端点全带 /api/ 前缀，0 丢失（新增 50：communication geofences/mail/notification/pois 等）；剩余 portal 733/ticket 43/communication 78 等域注解分轮推进
+- [x] **openapi-gen merge_paths bug 修复（2026-09-25）**：生成器"base 优先"逻辑在同路径已存在时**整体跳过**，吞掉所有给已有路径补的新 method（历史轮次补的 POST 全部丢失）——改为 **method 级合并**（base 已有 method 保留、新增 method 并入）→ 重生成恢复 **17 个被吞 POST**（bi/crm/ehs/erp/finance/hrm/integration/mes/pdm/pm/portal/qms/scm/srm/ticket/tms/wms 17 域，含 POST /api/tickets/{id}/sla）——1462 端点 0 丢失
 - [x] **erp**：补 settings 2 个（list/get）+ 聚合；编译通过（已提交）
 - [x] **crm**：补 analytics 3（overview/funnel/scoring）+ crm_plugin 2（info/health）+ 聚合；编译通过（已提交）
 - [x] **ai**：核查无缺口（ai_plugin 2/2，auto_register 非路由）

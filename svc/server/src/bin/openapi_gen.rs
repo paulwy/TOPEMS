@@ -38,8 +38,17 @@ fn merge_paths(
     if let Some(dp) = doc_paths {
         for (path, ops) in dp {
             let final_path = normalize_path(path, domain);
-            // base 优先：同路径已有则不覆盖（保留手工精选）
-            base.entry(final_path).or_insert_with(|| ops.clone());
+            // 同路径按 method 合并（base 已有 method 保留，新增 method 并入）：
+            // 此前"base 优先整体跳过"会吞掉给已有路径补的新 method（如 POST /tickets/{id}/sla）
+            base.entry(final_path)
+                .and_modify(|v| {
+                    if let (Some(b), Some(d)) = (v.as_object_mut(), ops.as_object()) {
+                        for (m, op) in d {
+                            b.entry(m.clone()).or_insert_with(|| op.clone());
+                        }
+                    }
+                })
+                .or_insert_with(|| ops.clone());
         }
     }
 }
