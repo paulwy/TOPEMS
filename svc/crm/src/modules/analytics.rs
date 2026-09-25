@@ -58,6 +58,16 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/analytics/recommendation", get(analytics_recommendation))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/dashboard/overview",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn dashboard_overview(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,
@@ -87,6 +97,16 @@ pub struct NameValue {
 }
 
 /// GET /dashboard — CRM 仪表盘聚合统计（真实数据）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResponse {
     let db = &state.db;
 
@@ -157,6 +177,16 @@ pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResp
     (StatusCode::OK, Json(json!(stats))).into_response()
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/analytics/funnel",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn analytics_funnel(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,
@@ -166,6 +196,16 @@ pub async fn analytics_funnel(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/analytics/scoring",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn analytics_scoring(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,
@@ -175,6 +215,16 @@ pub async fn analytics_scoring(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/analytics/forecast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn analytics_forecast(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,
@@ -184,6 +234,16 @@ pub async fn analytics_forecast(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/analytics/segmentation",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn analytics_segmentation(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,
@@ -193,6 +253,16 @@ pub async fn analytics_segmentation(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/analytics/billing",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn analytics_billing(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,
@@ -202,6 +272,16 @@ pub async fn analytics_billing(
     )
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:analytics:read"])),
+    path = "/analytics/recommendation",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "analytics"
+)]
 pub async fn analytics_recommendation(
     Query(_p): Query<PeriodParam>,
     _state: State<ApiState>,

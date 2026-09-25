@@ -320,7 +320,17 @@ pub fn create_routes() -> Router<ApiState> {
 // ---------------------------------------------------------------------------
 
 /// POST /rfm/analyze — 执行 RFM 分析
-async fn analyze_rfm(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:rfm:write"])),
+    path = "/rfm/analyze",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rfm"
+)]
+pub async fn analyze_rfm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -430,7 +440,17 @@ async fn analyze_rfm(
 }
 
 /// GET /rfm/segments — 获取所有分群及统计
-async fn get_segments(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:rfm:read"])),
+    path = "/rfm/segments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rfm"
+)]
+pub async fn get_segments(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -522,6 +542,19 @@ async fn get_segments(
 }
 
 /// GET /rfm/customer/{id} — 获取单个客户的 RFM 记录
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:rfm:read"])),
+    path = "/rfm/customer/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "rfm"
+)]
 async fn get_customer_rfm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<

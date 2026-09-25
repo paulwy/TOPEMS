@@ -106,7 +106,20 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/customer-profiles", get(list_customer_profiles))
 }
 
-async fn get_customer_profile(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_profile:read"])),
+    path = "/customers/{id}/profile",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_profile"
+)]
+pub async fn get_customer_profile(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -349,7 +362,20 @@ fn generate_profile_tags(
     tags
 }
 
-async fn add_profile_tags(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:customer_profile:write"])),
+    path = "/customers/{id}/profile/tags",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_profile"
+)]
+pub async fn add_profile_tags(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -395,7 +421,20 @@ async fn add_profile_tags(
     Json(ApiResponse::success("".to_string(), "标签添加成功"))
 }
 
-async fn remove_profile_tags(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:customer_profile:write"])),
+    path = "/customers/{id}/profile/tags",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_profile"
+)]
+pub async fn remove_profile_tags(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -434,7 +473,17 @@ async fn remove_profile_tags(
     Json(ApiResponse::success("".to_string(), "标签删除成功"))
 }
 
-async fn list_customer_profiles(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_profile:read"])),
+    path = "/customer-profiles",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_profile"
+)]
+pub async fn list_customer_profiles(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

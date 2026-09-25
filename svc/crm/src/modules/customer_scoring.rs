@@ -45,7 +45,17 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_customer_scores(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_scoring:read"])),
+    path = "/customer-scoring",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_scoring"
+)]
+pub async fn list_customer_scores(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -132,7 +142,20 @@ async fn list_customer_scores(
     }
 }
 
-async fn get_customer_score(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_scoring:read"])),
+    path = "/customer-scoring/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_scoring"
+)]
+pub async fn get_customer_score(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -524,7 +547,17 @@ async fn delete_customer_score(
     response
 }
 
-async fn batch_calculate(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:customer_scoring:write"])),
+    path = "/customer-scoring/calculate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_scoring"
+)]
+pub async fn batch_calculate(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

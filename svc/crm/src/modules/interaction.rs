@@ -45,7 +45,17 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_interactions(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:interaction:read"])),
+    path = "/interactions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "interaction"
+)]
+pub async fn list_interactions(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -141,7 +151,20 @@ async fn list_interactions(
     }
 }
 
-async fn get_interaction(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:interaction:read"])),
+    path = "/interactions/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "interaction"
+)]
+pub async fn get_interaction(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -377,7 +400,17 @@ async fn delete_interaction(
     }
 }
 
-async fn batch_delete_interactions(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:interaction:write"])),
+    path = "/interactions/batch-delete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "interaction"
+)]
+pub async fn batch_delete_interactions(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

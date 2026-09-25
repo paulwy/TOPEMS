@@ -67,7 +67,17 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sales-funnel/stage/{stage}", get(get_stage_opportunities))
 }
 
-async fn get_funnel_data(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_funnel:read"])),
+    path = "/sales-funnel",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_funnel"
+)]
+pub async fn get_funnel_data(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -133,7 +143,17 @@ async fn get_funnel_data(
     ))
 }
 
-async fn get_funnel_metrics(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_funnel:read"])),
+    path = "/sales-funnel/metrics",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_funnel"
+)]
+pub async fn get_funnel_metrics(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -202,7 +222,17 @@ async fn get_funnel_metrics(
     }
 }
 
-async fn get_funnel_conversion(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_funnel:read"])),
+    path = "/sales-funnel/conversion",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_funnel"
+)]
+pub async fn get_funnel_conversion(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -254,7 +284,17 @@ async fn get_funnel_conversion(
     Json(ApiResponse::success(conversions, "获取销售漏斗转化率成功"))
 }
 
-async fn get_funnel_trend(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_funnel:read"])),
+    path = "/sales-funnel/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_funnel"
+)]
+pub async fn get_funnel_trend(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -316,7 +356,20 @@ async fn get_funnel_trend(
     }
 }
 
-async fn get_stage_opportunities(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_funnel:read"])),
+    path = "/sales-funnel/stage/{stage}",
+    params(
+        ("stage" = String, Path, description = "stage")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_funnel"
+)]
+pub async fn get_stage_opportunities(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

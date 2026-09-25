@@ -35,7 +35,17 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_billing_records(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:billing:read"])),
+    path = "/billing",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "billing"
+)]
+pub async fn list_billing_records(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -122,7 +132,20 @@ async fn list_billing_records(
     }
 }
 
-async fn get_billing_record(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:billing:read"])),
+    path = "/billing/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "billing"
+)]
+pub async fn get_billing_record(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -375,7 +398,20 @@ async fn delete_billing_record(
     }
 }
 
-async fn mark_billing_paid(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:billing:write"])),
+    path = "/billing/{id}/paid",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "billing"
+)]
+pub async fn mark_billing_paid(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -428,7 +464,20 @@ async fn mark_billing_paid(
     }
 }
 
-async fn send_billing_notification(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:billing:write"])),
+    path = "/billing/{id}/notify",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "billing"
+)]
+pub async fn send_billing_notification(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

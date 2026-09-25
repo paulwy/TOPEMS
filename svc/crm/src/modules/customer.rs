@@ -226,7 +226,7 @@ pub async fn list_customers(
     security(("bearer_auth" = ["crm:customer:write"])),
     tag = "customer"
 )]
-async fn create_customer(
+pub async fn create_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -340,7 +340,7 @@ async fn create_customer(
     security(("bearer_auth" = ["crm:customer:read"])),
     tag = "customer"
 )]
-async fn get_customer(
+pub async fn get_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -418,7 +418,7 @@ async fn get_customer(
     security(("bearer_auth" = ["crm:customer:write"])),
     tag = "customer"
 )]
-async fn update_customer(
+pub async fn update_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -543,7 +543,7 @@ async fn update_customer(
     security(("bearer_auth" = ["crm:customer:write"])),
     tag = "customer"
 )]
-async fn delete_customer(
+pub async fn delete_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -630,7 +630,7 @@ async fn delete_customer(
     tag = "customer"
 )]
 #[axum::debug_handler]
-async fn batch_delete_customers(
+pub async fn batch_delete_customers(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -737,7 +737,7 @@ pub struct ApprovalActionRequest {
     security(("bearer_auth" = ["crm:customer:write"])),
     tag = "customer"
 )]
-async fn start_customer_approval(
+pub async fn start_customer_approval(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -870,7 +870,7 @@ async fn start_customer_approval(
     security(("bearer_auth" = ["crm:customer:write"])),
     tag = "customer"
 )]
-async fn approve_customer(
+pub async fn approve_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -979,7 +979,7 @@ async fn approve_customer(
     security(("bearer_auth" = ["crm:customer:write"])),
     tag = "customer"
 )]
-async fn reject_customer(
+pub async fn reject_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1202,7 +1202,7 @@ fn to_bd(v: f64) -> sqlx::types::BigDecimal {
     responses((status = 200, body = CustomerFinanceInfo)),
     tag = "customer"
 )]
-async fn get_customer_finance(
+pub async fn get_customer_finance(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1310,7 +1310,7 @@ async fn get_customer_finance(
     responses((status = 200, body = CustomerFinanceInfo)),
     tag = "customer"
 )]
-async fn update_customer_finance(
+pub async fn update_customer_finance(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

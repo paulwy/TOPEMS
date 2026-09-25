@@ -201,7 +201,17 @@ async fn recalculate_refund_amount(
     Ok(total)
 }
 
-async fn list_returns(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:aftersales:read"])),
+    path = "/returns",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn list_returns(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -422,7 +432,20 @@ async fn create_return(
     response
 }
 
-async fn get_return(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:aftersales:read"])),
+    path = "/returns/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn get_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -732,7 +755,20 @@ async fn delete_return(
     response
 }
 
-async fn approve_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/approve",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn approve_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -834,7 +870,20 @@ async fn approve_return(
     }
 }
 
-async fn reject_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/reject",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn reject_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -936,7 +985,20 @@ async fn reject_return(
     }
 }
 
-async fn receive_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/receive",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn receive_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1045,7 +1107,20 @@ async fn receive_return(
     }
 }
 
-async fn complete_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/complete",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn complete_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1240,7 +1315,20 @@ async fn complete_return(
     }
 }
 
-async fn cancel_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/cancel",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn cancel_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1338,7 +1426,20 @@ async fn cancel_return(
     }
 }
 
-async fn list_return_items(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:aftersales:read"])),
+    path = "/returns/{id}/items",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn list_return_items(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1752,7 +1853,20 @@ pub async fn sync_return_to_inventory(
 }
 
 /// 查询退换货的财务对账状态
-async fn get_return_finance_status(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:aftersales:read"])),
+    path = "/returns/{id}/finance-status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn get_return_finance_status(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1837,7 +1951,20 @@ async fn get_return_finance_status(
 }
 
 /// 查询退换货的库存联动状态（已记录的库存移动流水）
-async fn get_return_inventory_status(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:aftersales:read"])),
+    path = "/returns/{id}/inventory-status",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn get_return_inventory_status(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1929,6 +2056,19 @@ async fn get_return_inventory_status(
 //  终态：Done / Rejected / Cancelled
 // ============================================================
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/accept",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
 async fn accept_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -2027,7 +2167,20 @@ async fn accept_return(
     }
 }
 
-async fn process_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/process",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn process_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -2131,7 +2284,20 @@ async fn process_return(
     }
 }
 
-async fn resolve_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/resolve",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn resolve_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -2244,7 +2410,20 @@ async fn resolve_return(
     }
 }
 
-async fn confirm_return(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:aftersales:write"])),
+    path = "/returns/{id}/confirm",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "aftersales"
+)]
+pub async fn confirm_return(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

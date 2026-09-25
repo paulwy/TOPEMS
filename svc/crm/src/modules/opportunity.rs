@@ -228,7 +228,7 @@ async fn invalidate_opportunity_cache(state: &ApiState, reason: &str) {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn list_opportunities(
+pub async fn list_opportunities(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -354,7 +354,7 @@ async fn list_opportunities(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn create_opportunity(
+pub async fn create_opportunity(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -486,7 +486,20 @@ async fn create_opportunity(
     response
 }
 
-async fn get_opportunity(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:opportunity:read"])),
+    path = "/opportunities/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "opportunity"
+)]
+pub async fn get_opportunity(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -798,7 +811,17 @@ async fn delete_opportunity(
     response
 }
 
-async fn batch_delete_opportunities(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:opportunity:write"])),
+    path = "/opportunities/batch-delete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "opportunity"
+)]
+pub async fn batch_delete_opportunities(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -972,7 +995,17 @@ async fn get_sales_funnel(
     Json(ApiResponse::success(funnel_stages, "获取销售漏斗成功"))
 }
 
-async fn get_opportunity_stats(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:opportunity:read"])),
+    path = "/opportunities/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "opportunity"
+)]
+pub async fn get_opportunity_stats(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1067,7 +1100,17 @@ async fn get_opportunity_stats(
     Json(ApiResponse::success(stats, "获取商机统计成功"))
 }
 
-async fn get_opportunity_forecast(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:opportunity:read"])),
+    path = "/opportunities/forecast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "opportunity"
+)]
+pub async fn get_opportunity_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1166,7 +1209,17 @@ async fn get_opportunity_forecast(
     Json(ApiResponse::success(forecasts, "获取商机预测成功"))
 }
 
-async fn get_stage_transitions(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:opportunity:read"])),
+    path = "/opportunities/stage-transitions",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "opportunity"
+)]
+pub async fn get_stage_transitions(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1257,7 +1310,7 @@ fn prev_stage(from: OppStage) -> OppStage {
     security(("bearer_auth" = ["crm:opportunity:write"])),
     tag = "opportunity"
 )]
-async fn advance_opportunity(
+pub async fn advance_opportunity(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -1433,7 +1486,7 @@ async fn advance_opportunity(
     security(("bearer_auth" = ["crm:opportunity:write"])),
     tag = "opportunity"
 )]
-async fn rollback_opportunity(
+pub async fn rollback_opportunity(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

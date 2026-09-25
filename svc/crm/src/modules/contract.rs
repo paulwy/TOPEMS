@@ -43,7 +43,7 @@ pub fn create_routes() -> Router<ApiState> {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn list_contracts(
+pub async fn list_contracts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -152,7 +152,7 @@ async fn list_contracts(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn create_contract(
+pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -285,7 +285,7 @@ async fn create_contract(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn get_contract(
+pub async fn get_contract(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -351,7 +351,7 @@ async fn get_contract(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn update_contract(
+pub async fn update_contract(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -454,7 +454,7 @@ async fn update_contract(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn delete_contract(
+pub async fn delete_contract(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

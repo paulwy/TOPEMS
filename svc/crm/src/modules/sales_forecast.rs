@@ -35,7 +35,17 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sales-forecast/accuracy-report", get(get_accuracy_report))
 }
 
-async fn list_sales_forecasts(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_forecast:read"])),
+    path = "/sales-forecast",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_forecast"
+)]
+pub async fn list_sales_forecasts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -280,7 +290,17 @@ async fn create_sales_forecast(
     response
 }
 
-async fn generate_forecast(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:sales_forecast:write"])),
+    path = "/sales-forecast/generate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_forecast"
+)]
+pub async fn generate_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -603,7 +623,17 @@ pub struct SalesTrendQuery {
     pub end_period: Option<String>,
 }
 
-async fn get_sales_trend(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_forecast:read"])),
+    path = "/sales-forecast/trend",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_forecast"
+)]
+pub async fn get_sales_trend(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -711,7 +741,17 @@ pub struct CompareForecastQuery {
     pub period_type: Option<String>,
 }
 
-async fn compare_sales_forecasts(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_forecast:read"])),
+    path = "/sales-forecast/compare",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_forecast"
+)]
+pub async fn compare_sales_forecasts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -834,7 +874,17 @@ async fn compare_sales_forecasts(
     }
 }
 
-async fn get_accuracy_report(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:sales_forecast:read"])),
+    path = "/sales-forecast/accuracy-report",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "sales_forecast"
+)]
+pub async fn get_accuracy_report(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

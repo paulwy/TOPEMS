@@ -440,7 +440,17 @@ pub fn create_routes() -> Router<ApiState> {
 // ---------------------------------------------------------------------------
 
 /// POST /forecast/predict — 执行预测
-async fn predict_handler(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastResult>> {
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:forecast:write"])),
+    path = "/forecast/predict",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "forecast"
+)]
+pub async fn predict_handler(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastResult>> {
     if req.history_data.is_empty() {
         return Json(api_error(400, "历史数据不能为空"));
     }
@@ -453,7 +463,17 @@ async fn predict_handler(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<Fo
 }
 
 /// GET /forecast/methods — 获取支持的预测方法列表
-async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:forecast:read"])),
+    path = "/forecast/methods",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "forecast"
+)]
+pub async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
     let methods: Vec<ForecastMethodInfo> = ForecastMethod::all()
         .iter()
         .map(|&m| ForecastMethodInfo {
@@ -466,6 +486,16 @@ async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
 }
 
 /// POST /forecast/evaluate — 评估多个方法的预测效果
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:forecast:write"])),
+    path = "/forecast/evaluate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "forecast"
+)]
 async fn evaluate(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastEvaluation>> {
     if req.history_data.len() < 3 {
         return Json(api_error(400, "评估至少需要 3 个历史数据点"));

@@ -67,7 +67,17 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/recommendations/{id}", get(get_recommendation))
 }
 
-async fn list_recommendations(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_recommendation:read"])),
+    path = "/recommendations",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_recommendation"
+)]
+pub async fn list_recommendations(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -153,7 +163,20 @@ async fn list_recommendations(
     }
 }
 
-async fn get_recommendation(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_recommendation:read"])),
+    path = "/recommendations/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_recommendation"
+)]
+pub async fn get_recommendation(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -299,7 +322,20 @@ async fn create_recommendation(
     }
 }
 
-async fn get_customer_recommendations(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_recommendation:read"])),
+    path = "/customers/{id}/recommendations",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_recommendation"
+)]
+pub async fn get_customer_recommendations(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

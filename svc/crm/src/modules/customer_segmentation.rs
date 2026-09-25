@@ -85,7 +85,17 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/segments/auto", get(auto_segment))
 }
 
-async fn list_segments(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_segmentation:read"])),
+    path = "/segments",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_segmentation"
+)]
+pub async fn list_segments(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -148,7 +158,20 @@ async fn list_segments(
     }
 }
 
-async fn get_segment(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_segmentation:read"])),
+    path = "/segments/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_segmentation"
+)]
+pub async fn get_segment(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -251,7 +274,20 @@ async fn create_segment(
     }
 }
 
-async fn delete_segment(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:customer_segmentation:write"])),
+    path = "/segments/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_segmentation"
+)]
+pub async fn delete_segment(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -291,7 +327,20 @@ async fn delete_segment(
     }
 }
 
-async fn get_segment_customers(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_segmentation:read"])),
+    path = "/segments/{id}/customers",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_segmentation"
+)]
+pub async fn get_segment_customers(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -345,7 +394,17 @@ async fn get_segment_customers(
     ))
 }
 
-async fn auto_segment(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:customer_segmentation:read"])),
+    path = "/segments/auto",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "customer_segmentation"
+)]
+pub async fn auto_segment(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

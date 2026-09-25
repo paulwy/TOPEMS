@@ -45,7 +45,17 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_tags(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:tag:read"])),
+    path = "/tags",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tag"
+)]
+pub async fn list_tags(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -232,7 +242,20 @@ async fn create_tag(
     response
 }
 
-async fn get_tag(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:tag:read"])),
+    path = "/tags/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tag"
+)]
+pub async fn get_tag(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -488,7 +511,20 @@ async fn delete_tag(
     response
 }
 
-async fn get_customer_tags(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:tag:read"])),
+    path = "/customers/{id}/tags",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tag"
+)]
+pub async fn get_customer_tags(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -640,7 +676,21 @@ async fn add_tag_to_customer(
     response
 }
 
-async fn remove_tag_from_customer(
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["crm:tag:write"])),
+    path = "/customers/{id}/tags/{tag_id}",
+    params(
+        ("id" = String, Path, description = "id"),
+        ("tag_id" = String, Path, description = "tag_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tag"
+)]
+pub async fn remove_tag_from_customer(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -726,7 +776,20 @@ async fn remove_tag_from_customer(
     response
 }
 
-async fn get_tagged_customers(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:tag:read"])),
+    path = "/tags/{id}/customers",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "tag"
+)]
+pub async fn get_tagged_customers(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,

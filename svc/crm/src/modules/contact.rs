@@ -63,7 +63,7 @@ pub fn create_routes() -> Router<ApiState> {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn list_contacts(
+pub async fn list_contacts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -167,7 +167,7 @@ async fn list_contacts(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
-async fn create_contact(
+pub async fn create_contact(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -269,7 +269,20 @@ async fn create_contact(
     response
 }
 
-async fn get_contact(
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["crm:contact:read"])),
+    path = "/contacts/{id}",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contact"
+)]
+pub async fn get_contact(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -528,7 +541,17 @@ async fn delete_contact(
     response
 }
 
-async fn batch_delete_contacts(
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["crm:contact:write"])),
+    path = "/contacts/batch-delete",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "contact"
+)]
+pub async fn batch_delete_contacts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -645,7 +668,7 @@ pub struct ContactApprovalActionRequest {
     security(("bearer_auth" = ["crm:contact:write"])),
     tag = "contact"
 )]
-async fn start_contact_approval(
+pub async fn start_contact_approval(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -780,7 +803,7 @@ async fn start_contact_approval(
     security(("bearer_auth" = ["crm:contact:write"])),
     tag = "contact"
 )]
-async fn approve_contact(
+pub async fn approve_contact(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -891,7 +914,7 @@ async fn approve_contact(
     security(("bearer_auth" = ["crm:contact:write"])),
     tag = "contact"
 )]
-async fn reject_contact(
+pub async fn reject_contact(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
