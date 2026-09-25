@@ -34,6 +34,16 @@ pub struct EhsDashboardStats {
     pub training_trend: Vec<NameValue>,
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/dashboard",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Dashboard"
+)]
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

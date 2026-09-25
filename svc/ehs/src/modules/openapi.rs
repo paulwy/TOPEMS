@@ -282,6 +282,10 @@ fn _detailed_health() {}
         environmental_compliance::update_incident,
         environmental_compliance::delete_incident,
         environmental_compliance::get_compliance_statistics,
-    ),
+    
+        crate::modules::integration::create_integration_alert,
+        crate::modules::dashboard::get_dashboard,
+        crate::modules::integration::create_integration_hazard,
+),
 )]
 pub struct ApiDoc;

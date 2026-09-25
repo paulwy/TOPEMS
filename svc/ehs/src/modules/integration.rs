@@ -43,6 +43,16 @@ pub struct CreateIntegrationHazardRequest {
     pub source: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/api/internal/ehs/hazards/integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Integration"
+)]
 pub async fn create_integration_hazard(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationHazardRequest>,
@@ -102,6 +112,16 @@ pub struct CreateIntegrationAlertRequest {
     pub source_id: Option<Uuid>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/api/internal/ehs/alerts/integration",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Integration"
+)]
 pub async fn create_integration_alert(
     State(state): State<AppState>,
     Json(req): Json<CreateIntegrationAlertRequest>,

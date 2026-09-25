@@ -33,6 +33,16 @@ pub fn calculate_trigger_type(rule_id_exists: bool) -> String {
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["wms:write"])),
+    path = "/api/wms/smart-replenishment/safety-stock/calculate",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "ReplenishmentLogic"
+)]
 pub fn calculate_safety_stock(
     avg_daily_consumption: f64,
     lead_time_days: i32,

@@ -459,6 +459,19 @@ pub async fn get_export_job(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["analytics:read"])),
+    path = "/api/bi/reports/exports/{job_id}/download",
+    params(
+        ("job_id" = String, Path, description = "job_id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Report"
+)]
 pub async fn download_export(
     State(_state): State<AppState>,
     Path(_job_id): Path<Uuid>,

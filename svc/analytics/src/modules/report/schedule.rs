@@ -507,6 +507,19 @@ pub async fn run_schedule(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["analytics:write"])),
+    path = "/api/bi/schedules/{id}/toggle",
+    params(
+        ("id" = String, Path, description = "id")
+    ),
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "Report"
+)]
 pub async fn toggle_schedule(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
