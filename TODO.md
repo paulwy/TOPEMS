@@ -869,7 +869,10 @@ D
   - **scm 工作时间窗口函数豁免**：`is_within_working_window` 加 date-type-convention: exempt（内部计算仅取 time/weekday 组件，非序列化边界）
   - 验证：unified-core/integration/scm/portal cargo test 全绿（453+182+75+15+16+1 passed）；mes lib 绿，`test_material_category_crud` 集成失败经 git stash 验证为**既有失败**（material_category 不在改动列表，DB/环境类）
   - 备注：本轮间发现 **target 目录膨胀 122G 致磁盘满**（cargo clean 失败后 rm -rf target 释放至 82Gi 可用）——后续编译注意 target 增长；剩余冲突字段为列类型决定的合理差异，P2-2 收官（无进一步机械统一必要）
-- [ ] **P2-3 审计工具进 CI**：date-type-audit.py 实体层违规 0 作为门禁（与 mes-online-check 同级）
+- [x] **P2-3 审计工具进 CI 门禁 ✅（2026-09-25）**：
+  - **CI 新增 `date-type-audit` gate job**（与 mes-online-check 同级）：纯 Python 静态扫描（无需 DB），`python3 scripts/date-type-audit.py` exit 0 即绿——实体层违规 0 + Instant 序列化边界违规 0；触发条件与 cargo-check/mes-online-check 一致（rust/ci 变化）；本地复现命令一致
+  - **工具新增 Instant 序列化检查**：Serialize derive struct 内时间字段为 Instant/Option<Instant> → 违规（契约：Instant 仅限进程内计时，禁止跨序列化边界）；当前 18 处 Instant 全部 non-serde（ApiState/AppState.start_time 进程启动、CacheEntry.expires_at 内存缓存、SseSession/TransportSession 内部会话、ExecutionTimer/ExecutionRecord 性能计时）→ 违规 0，契约已满足，检查作防回归
+  - 验证：审计 exit 0（实体 0 + Instant 序列化 0）；ci.yml YAML 解析通过
 
 ### 📝 已知风险与边界
 - NaiveDateTime 系列在 DB 迁移完成前**不是错误**（与无时区列正确匹配），勿提前改，否则 sqlx 在线解析类型漂移
