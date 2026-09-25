@@ -57,7 +57,7 @@ scripts/mes_guard.sh --db-url "postgresql://..."  # 指定编译库（CI 传 ser
 ### 3.1 日常开发改 mes 代码
 
 ```bash
-cd /Users/air/TOPEMS
+cd /Users/xingzhai/TOPEMS
 scripts/mes_guard.sh          # 改完代码先跑守卫，0 error 再提交
 ```
 
@@ -144,6 +144,35 @@ scripts/mes_guard.sh                        # 在线 0 error（含遮蔽检查�
 - 修改 mes 代码时保持既有类型契约：字段是 `Option` 就用 `Option` 方法（`unwrap_or_default`/`map`），是裸值就直接用，不混用。
 - chrono 时间转换：`DateTime<Utc>` 已是 UTC 直接使用；`NaiveDateTime` → UTC 用 `.and_utc()`；任意时区 → UTC 用 `.with_timezone(&Utc)`。
 - 大规模修复优先按**编译错误行号精确处置**（提取 `--> file:line` 批量处理），避免整文件正则替换破坏合法调用（本次曾误删 101 处 `NaiveDateTime::and_utc` 导致 E0308 反增，回滚后按行重做）。
+
+### 3.7 2026-09-25 事件复盘：统一时间类型重构收尾（38 错 → 0，含 SQL 字符串污染）
+
+**事件**：重构提交（2d62501ec 等）用脚本批量替换把时间字段 `String→DateTime<Utc>`、删除 `.to_rfc3339()`，脚本误伤了**函数定义、SQL 字符串、测试代码**，遗留 38 个离线编译错误；按在线配方进一步暴露 SQL 污染与缓存陈旧类型错误。
+
+**修复账目**（离线 38 → 0，加 3 轮在线暴露、1 轮测试暴露）：
+
+| 阶段 | 错误 | 处理 |
+|---|---|---|
+| 离线 20 | 8 处 `fn (dt: Option<DateTime<Utc>>).unwrap_or_default() -> String` 函数定义被改坏 | 恢复为 `fn datetime_to_string(...)`；补 struct 初始化缺失逗号 |
+| 离线 74 | E0308：时间字段 Option 映射 / `.map(…to_rfc3339())` / 缺 `Some` 包装 / 直传 | 按编译器行号批量修（8 模块） |
+| 离线 4 | E0599：括号内尾逗号成 1 元组 `.flatten(),` | 去尾逗号 |
+| 离线 17 | sqlx 缓存缺失 | `topems.sh mes-guard --prepare` 在线生成（+165 缓存，根 .sqlx 306） |
+| 在线 7 | 6 处 SQL 字符串内 Rust 表达式 + equipment.rs:1198 类型不符 | 见下方教训 1/2 |
+| 在线 3 | 2 处非 Option 上 `.unwrap_or_default()` + 1 处 `Option<DateTime<Utc>>` → `Option<String>` | 按在线行号修 |
+| 测试 23 | cfg(test) 中 `datetime_to_string(Some(dt))` 被替换成 `(Some(dt)).unwrap_or_default()` 等 | 还原函数调用（9 文件） |
+
+**新教训（在 §3.6 之外新增）**：
+
+1. **脚本替换误伤 SQL 字符串（重构前遗留的潜在 bug，仅在线暴露）**：批量替换把 `alias.created_at` 变成 `alias.created_at.unwrap_or_default()` 混进 `r#"..."#` SQL（8 模块 30 处，如 `SELECT pr.created_at.unwrap_or_default(), …`）。离线被缓存掩盖（缓存命中即不解析 SQL）；在线解析报 **`cross-database references are not implemented: pr.created_at.unwrap_or_default`**。修复只作用于 SQL 原始字符串块内、模式 `别名.created_at/updated_at.unwrap_or_default()` → 还原为纯列名；**别名可能大写**（`EXCLUDED.updated_at`，小写正则会漏，需大小写不敏感扫描）。运行时查询（`sqlx::query`）不参与 prepare，污染会潜伏到接口调用才 500，必须全量扫描所有 SQL 块清除（含 settings.rs 的 `ON CONFLICT … DO UPDATE SET updated_at = EXCLUDED.updated_at` 这类）。
+2. **离线缓存类型陈旧 → 仅在线错误**：离线 0 错不代表在线 0 错——根 `.sqlx` 缓存可能把列类型缓存错（如 `product_code` 缓存为 `Option<String>` 而真库 NOT NULL → 在线报 `unwrap_or_default on String`；`approved_at` 缓存为 `Option<String>` 而真库 `Option<DateTime<Utc>>` → 在线 E0308）。**修完离线错误必须跑 prepare 暴露并修复在线错误**，再跑守卫。
+3. **sqlx 连接串 search_path 形态**：直接调 `mes_guard.sh` 若传 `?search_path=mes,public`（libpq 形态）sqlx 不认 → 在线编译报 169 个 `relation "equipment" does not exist`（曾误以为 `--clean` 删坏了库）。**必须用 `?options=-csearch_path=mes,public`**；规范入口 `scripts/topems.sh mes-guard` 已内置，勿绕过。
+4. **`--clean` 与 169 错无关**：public 遮蔽表（本次 38 张）清理后 mes schema 自身完整（40 表齐全），169 错是 URL 形态问题。遮蔽表是查询的"兜底"而非唯一来源，search_path 生效时不会命中它们。
+5. **`cargo check --lib` 通过 ≠ `cargo test --lib` 能编译**：重构脚本同样改坏了 cfg(test) 测试代码（23 错），收尾必须跑 `cargo test -p topems-mes --lib`（本次 453 passed / 0 failed）。
+6. **编译失败时的 unused import 警告不可信**：在线编译失败（169 错）状态下 rustc 会把实际被用的 import 报为 unused（如 `BigDecimal`/`NaiveDateTime`/`FromStr`），按警告删除会引入 E0425/E0599 倒退。**只在 0 error 后处理警告，逐条按编译器点名的名字删除、改完复跑**。
+
+**收尾顺序（本次实测，建议固化）**：修离线错 → `topems.sh mes-guard --prepare`（暴露在线错）→ 修在线错 → 守卫 PASS → 0 error 后清理 warnings → `cargo test -p topems-mes --lib` → 提交（源码 + 根 .sqlx；结构变更时快照同批或紧随提交）。
+
+**提交**：`f27647794`（修复 + 缓存 + 测试代码）；快照另行同步提交。
 
 ---
 
