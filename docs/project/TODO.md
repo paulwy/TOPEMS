@@ -584,6 +584,28 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
   - 测试：新增 2 个（mock 本地 HTTP server 收 webhook 验证告警消息送达 / 无 runtime·无 webhook 时跳过不 panic）；shared-auth 全量 227 tests 全过
   - 配置文档：`config/env/_template.env.example` 补 SERVICE_ALERT_* + FEISHU_ALERT_WEBHOOK 段（含已知服务白名单覆盖说明）
 
+### 补充：2026-09-26 mes/wms/analytics 三域 DB 基线治理 + openapi 全链重生成（V518）
+
+> 用户主线"修完 38 个错误并跑 mes_guard.sh 验证"延伸至三域 DB 基线治理收口（方案 C 归单一权威 → 方案 B 先修 wms/analytics 再统一提交）。全部验收通过并提交，HEAD `15ba39806`。
+
+### ✅ 已完成（2026-09-26）
+- [x] **mes 侧 C 方案落地**：31 表 init_database 单一权威 + DROP 骨架迁移 `20260925090000_drop_mes_skeleton_tables.sql`（psql 直执）；遮蔽治理——DROP public 29 张 core_* 死表（无代码引用，含 CASCADE 连带删除引用死表的坏 FK）、白名单 +6 张 unified-core 显式 `public.` 业务权威表（core_users/core_roles/core_permissions/core_user_roles/core_role_permissions/core_login_logs，双份共存非遮蔽）；mes_guard 完整 PASS（遮蔽 0 + 在线编译 0 error）
+- [x] **wms 域 0 error**（15→0）：新写迁移 `20260926090000_align_wms_core_tables.sql`（DROP 8 骨架 + 重建 8 表 25/14/31/25/22/14/12/28 列）；代码层修 3 处（inventory_alert 去 7 处 Some 双包 / batch 3 处 Uuid parse / discrepancy 2 处 as_deref）
+- [x] **analytics 域 0 error**（102→0）：新写迁移 `20260926100000_create_analytics_schema_tables.sql`（18 表，schema 原本完全不存在）；多轮列类型对齐（data_volume DOUBLE PRECISION→BIGINT、tags/shared_with→TEXT[]（DROP+ADD）、owner_id→TEXT、condition→JSONB 可空、created_by SET NOT NULL 等）
+- [x] **openapi-gen 全链重生成**：3010 端点（完整前缀 3010），docs/api/openapi.json 已提交
+- [x] **CI 门禁同步**：sqlx-prepare.sh 刷新 wms/analytics 离线缓存（analytics 91 queries，根 .sqlx 450）——Gate L 离线 check 0 error 等价验证；--sync-snapshot 重生成快照（旧 43 表严重不完整 → 新 105 表）+ 临时库导入 + mes_guard 编译 PASS（CI mes-online-check 等价）
+- [x] **提交链**：`458452c00`（主提交：3 迁移 + mes 21 文件 + wms 3 文件 + openapi.json + mes_guard 白名单）→ `71ea079e6`（sqlx 缓存 85 项）→ `15ba39806`（CI 快照）；lefthook pre-commit 全过；`svc/mobile/src/shared/mod.rs`（用户工作区）未提交
+
+### 🚧 待办（按优先级）
+- [ ] **RLS 受限用户切换端到端回归**（V521 遗留）：5433 topems_app 全服务回归（登录/业务流/服务间调用），切换就绪态已具备，待运行环境
+- [ ] **配置单一真相源 CI 校验**（P0-3）：ports/services.yaml/Cargo.toml/vite.config 一致性门禁
+- [ ] **拆分前置治理深化**（P2）：integration 直写改 API 编排剩余、跨域白名单设计性保留复核
+- [ ] **事件通道选型规则**（P1-1）：Redis Pub/Sub vs RabbitMQ 决策矩阵
+
+### 备注
+- 32 表 DROP 迁移未入 `_sqlx_migrations` 记录（psql 直执），CI 新环境 migrate 门禁方案按现状（迁移链幂等 + mes_guard 快照编译双保险）运行
+- 根 `.env` search_path 扩为 `mes,public,analytics`（gitignore 不入库，CI 用自身环境变量）
+
 ### 补充：2026-09-25 日期类型与域收口
 
 ### ✅ 已完成（2026-09-25）
@@ -641,7 +663,7 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
   - 验证：审计 exit 0（实体 0 + Instant 序列化 0）；ci.yml YAML 解析通过
 
 - [x] **10 域缺口收口收官（2026-09-25）**：甄别脚本方法论修正后重扫 10 域（qms/mes/mobile/lims/scm/rd/srm/pm/hrm/plugin-registry），此前 759 缺口系脚本误报（属性块收集中断 + 同名 impl 误定位 + route group 索引 bug），修正后真实缺口 62；逐域收口：mes 16（home 占位 + dashboard_ws/plugin 注解 + 聚合 16 + pub mod inspection，提交 4eef03623）、qms 8（assign_inspection/resolve_issue/start_issue_approval + plugin×2 + 占位×3 + 聚合 8，提交 a85ee4301）、mobile 10（offline 4 真缺口重注入 + offline_sync 位置修正 + scan_qrcode + plugin×2 + health 占位 + 重复占位清理 5→1，0 error）、lims 7、scm/srm/pm/hrm 各 4（plugin×2 双 route 引用 + hrm health 模块注入）、rd 6、plugin-registry 6（marketplace/tenant_plugins 业务 3 + 占位×3）；9 域批量提交 c3b892a8c；各域 cargo check 0 error（mes 仍受 DB schema 阻塞，注解侧已验证）；甄别脚本 /tmp/sweep.py 落盘（fn_annotated 属性块完整收集版）
-- [ ] **阻塞（延续）**：openapi-gen 重生成 docs/api/openapi.json 依赖全 workspace 编译，mes 仍受 DB schema 缺失 + .sqlx 离线缓存缺失阻塞（业务表未建全）——10 域注解增量待重生成纳入（预计 2920 → +~70 端点），DB 基线治理（init/migrations schema 归属）待用户给方向
+- [x] **阻塞（延续）已闭环（2026-09-26）**：openapi-gen 重生成依赖的 DB schema 阻塞由三域基线治理解除（详见下方 V518 章节）——mes/wms/analytics 0 error、openapi.json 全量重生成 **3010 端点**（含 10 域注解增量）
 ### 📝 已知风险与边界
 - NaiveDateTime 系列在 DB 迁移完成前**不是错误**（与无时区列正确匹配），勿提前改，否则 sqlx 在线解析类型漂移
 - 无守卫服务（lims/ticket/portal 等）改动前先确认在线编译配方可用（参考 mes_guard 机制推广）
