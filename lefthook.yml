@@ -111,6 +111,16 @@ pre-commit:
           node scripts/ci/check-error-handling.cjs
         fi
 
+    # [Gate Q] 端口单一真相源一致性校验（ports.env ↔ ports.ts）
+    ports-consistency:
+      tags: config ports
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^(config/ports.env|apps/web/src/config/ports.ts|config/services.yaml)$" || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/ci/check-ports-consistency.cjs" ]; then
+          node scripts/ci/check-ports-consistency.cjs
+        fi
+
     # [Gate N] Large files check (>1MB) — migrated from husky #1
     # 外部脚本避免 lefthook sh -c 内联引号冲突（Windows 兼容）
     large-files:
