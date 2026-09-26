@@ -399,7 +399,7 @@ pub async fn create_material_requirement(
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
                 .ok()
-                .map(|dt| dt.naive_utc())
+                .map(|dt| dt)
         })
         .or_else(|| {
             body.required_date
@@ -504,7 +504,7 @@ pub async fn update_material_requirement(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.naive_utc())
+                    .map(|dt| dt)
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -922,8 +922,8 @@ mod tests {
     fn naive_to_utc_some_keeps_value() {
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

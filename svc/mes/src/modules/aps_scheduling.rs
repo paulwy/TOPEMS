@@ -851,7 +851,7 @@ async fn check_material_availability(
 }
 
 async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Result<(), String> {
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query(
         r#"
@@ -885,8 +885,8 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
     .bind(item.work_station_id)
     .bind(item.equipment_id)
     .bind(item.process_id)
-    .bind(item.planned_start.naive_utc())
-    .bind(item.planned_end.naive_utc())
+    .bind(item.planned_start)
+    .bind(item.planned_end)
     .bind(item.priority)
     .bind(format!("APS排程，可行性: {:.0}%", item.feasibility_score))
     .bind(now)
@@ -1764,8 +1764,8 @@ mod tests {
         use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 8, 1, 6, 0, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

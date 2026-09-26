@@ -413,10 +413,10 @@ pub async fn create_wip(
         req.process_id,
         req.work_station_id,
         req.batch_no,
-now.naive_utc(),
+now,
         req.operator,
         req.notes,
-now.naive_utc(),
+now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -580,7 +580,7 @@ pub async fn update_wip(
         req.status,
         req.batch_no,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -752,7 +752,7 @@ pub async fn transfer_wip(
         req.to_process_id,
         req.to_work_station_id,
         BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-        now.naive_utc(),
+        now,
         req.operator.clone(),
         req.transfer_type
             .clone()
@@ -783,7 +783,7 @@ pub async fn transfer_wip(
         req.wip_id,
         req.to_process_id,
         req.to_work_station_id,
-        now.naive_utc(),
+        now,
     )
     .execute(&mut *tx)
     .await;
@@ -1086,8 +1086,8 @@ mod tests {
     fn naive_to_utc_some_keeps_value() {
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

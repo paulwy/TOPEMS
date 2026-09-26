@@ -1298,8 +1298,8 @@ mod tests {
             .and_hms_opt(9, 45, 0)
             .unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.date());
-        assert_eq!(utc.naive_utc().time(), dt.time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

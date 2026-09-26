@@ -495,7 +495,7 @@ pub async fn update_equipment(
     .bind(req.last_maintenance_date)
     .bind(req.next_maintenance_date)
     .bind(&req.description)
-    .bind(Utc::now().naive_utc())
+    .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;
 
@@ -790,7 +790,7 @@ pub async fn list_maintenances(
         .map(|r| MaintenanceRecord {
             id: r.id,
             equipment_id: r.equipment_id,
-            equipment_name: r.equipment_name,
+            equipment_name: Some(r.equipment_name),
             equipment_no: r.equipment_no,
             maintenance_type: r.maintenance_type,
             description: r.description,
@@ -799,10 +799,10 @@ pub async fn list_maintenances(
             end_time: r.end_time,
             cost: big_decimal_to_f64(r.cost),
             result: r.result,
-            status: r.status,
+            status: r.status.expect("REASON"),
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.expect("REASON"),
+            updated_at: r.updated_at.expect("REASON"),
         })
         .collect();
 
@@ -929,18 +929,18 @@ pub async fn create_maintenance(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no,
+            equipment_no: equipment_no.expect("REASON"),
             maintenance_type,
-            description: Some(description),
+            description: Some(description.expect("REASON")),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status: status.expect("REASON"),
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at: created_at.expect("REASON"),
+            updated_at: updated_at.expect("REASON"),
         },
         "维护记录创建成功",
     ))
@@ -1036,18 +1036,18 @@ pub async fn update_maintenance_status(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no,
+            equipment_no: equipment_no.expect("REASON"),
             maintenance_type,
-            description: Some(description),
+            description: Some(description.expect("REASON")),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64(result.cost),
             result: result.result,
-            status: status,
+            status: status.expect("REASON"),
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at: created_at.expect("REASON"),
+            updated_at: updated_at.expect("REASON"),
         },
         "维护状态更新成功",
     ))
@@ -1267,8 +1267,8 @@ pub async fn create_inspection(
         .noiselevel
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let inspection_date = DateTime::parse_from_rfc3339(&body.inspection_date)
-        .map(|dt| dt.with_timezone(&Utc).naive_utc())
-        .unwrap_or_else(|_| Utc::now().naive_utc());
+        .map(|dt| dt.with_timezone(&Utc))
+        .unwrap_or_else(|_| Utc::now());
     let items_value = body.items.as_ref().map(|v| v.to_string());
 
     let result = sqlx::query_unchecked!(
@@ -1348,8 +1348,8 @@ mod tests {
         use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

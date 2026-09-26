@@ -454,12 +454,12 @@ pub async fn create_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-req.planned_start_time.map(|v| v.naive_utc()),
-req.planned_end_time.map(|v| v.naive_utc()),
+req.planned_start_time.map(|v| v),
+req.planned_end_time.map(|v| v),
         req.priority.unwrap_or(0),
         req.sequence.unwrap_or(0),
         req.notes,
-now.naive_utc(),
+now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -653,13 +653,13 @@ pub async fn update_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time.map(|v| v.naive_utc()),
-        req.planned_end_time.map(|v| v.naive_utc()),
+        req.planned_start_time.map(|v| v),
+        req.planned_end_time.map(|v| v),
         req.priority,
         req.sequence,
         req.status,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -802,8 +802,8 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-            req.new_start_time.map(|v| v.naive_utc()),
-            now.naive_utc(),
+            req.new_start_time.map(|v| v),
+            now,
         )
         .execute(&state.pool)
         .await;
@@ -874,10 +874,10 @@ pub async fn get_gantt_data(
     for s in &schedules {
         let start = s
             .planned_start_time
-            .unwrap_or_else(|| Utc::now().naive_utc());
+            .unwrap_or_else(|| Utc::now());
         let end = s
             .planned_end_time
-            .unwrap_or_else(|| Utc::now().naive_utc() + chrono::Duration::hours(1));
+            .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
         let completed = big_decimal_to_f64(s.completed_quantity.clone());

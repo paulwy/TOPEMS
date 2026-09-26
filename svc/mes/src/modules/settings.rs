@@ -90,7 +90,7 @@ pub async fn update_settings(
     Json(req): Json<UpdateSettingsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id(&claims, &headers);
-    let now = chrono::Utc::now().naive_utc();
+    let now = chrono::Utc::now();
 
     let mut updated = 0;
     for (key, value) in &req.settings {

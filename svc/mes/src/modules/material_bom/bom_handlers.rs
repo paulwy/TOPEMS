@@ -197,7 +197,7 @@ pub async fn create_material_bom(
         req.product_code,
         req.version.unwrap_or_else(|| "1.0".to_string()),
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -441,7 +441,7 @@ pub async fn update_material_bom(
         req.version,
         req.status,
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&mut *tx)
     .await;

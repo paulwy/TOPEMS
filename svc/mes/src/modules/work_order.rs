@@ -512,8 +512,8 @@ pub async fn create_work_order(
         work_station_id,
         process_id,
         planned_quantity,
-        plan_start_date.map(|v| v.naive_utc()),
-        plan_end_date.map(|v| v.naive_utc()),
+        plan_start_date.map(|v| v),
+        plan_end_date.map(|v| v),
         team_id,
         body.operator,
         priority,
@@ -644,8 +644,8 @@ pub async fn update_work_order(
         process_id,
         planned_quantity,
         completed_quantity,
-        plan_start_date.map(|v| v.naive_utc()),
-        plan_end_date.map(|v| v.naive_utc()),
+        plan_start_date.map(|v| v),
+        plan_end_date.map(|v| v),
         team_id,
         body.operator,
         body.priority.map(|v| v.parse::<i32>().unwrap_or(0)),
@@ -1307,7 +1307,7 @@ mod tests {
             .map(|dt| dt)
             .ok();
         let result = naive_to_utc(naive);
-        assert_eq!(result.naive_utc().date().year(), 2024);
+        assert_eq!(result.date().year(), 2024);
     }
 
     #[test]

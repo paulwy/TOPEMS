@@ -430,7 +430,7 @@ pub async fn create_standard(
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.naive_utc())
+                    .map(|dt| dt)
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -585,7 +585,7 @@ pub async fn update_standard(
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.naive_utc())
+                    .map(|dt| dt)
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()

@@ -642,8 +642,8 @@ pub async fn get_period_cost_report(
         AND wo.actual_start_time >= $1 AND wo.actual_start_time <= $2
         "#,
     )
-    .bind(start_date.naive_utc())
-    .bind(end_date.naive_utc())
+    .bind(start_date)
+    .bind(end_date)
     .fetch_all(&state.pool)
     .await;
 
@@ -786,8 +786,8 @@ pub async fn get_cost_trend(
             WHERE actual_start_time >= $1 AND actual_start_time <= $2
             "#,
         )
-        .bind(period_start.naive_utc())
-        .bind(period_end.naive_utc())
+        .bind(period_start)
+        .bind(period_end)
         .fetch_one(&state.pool)
         .await;
 
@@ -957,8 +957,8 @@ mod tests {
     fn naive_to_utc_some_keeps_value() {
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

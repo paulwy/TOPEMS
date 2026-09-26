@@ -460,7 +460,7 @@ pub async fn create_oee_record(
             shift, operator, notes, created_at, updated_at
         "#,
         req.equipment_id,
-        req.record_date.naive_utc().date(),
+        req.record_date.date(),
         BigDecimal::from_str(&req.planned_production_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.actual_run_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.downtime.to_string()).unwrap_or_default(),
@@ -475,7 +475,7 @@ pub async fn create_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -501,7 +501,7 @@ pub async fn create_oee_record(
         id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()),
-        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).expect("REASON"),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),
@@ -579,7 +579,7 @@ pub async fn get_oee_record(
             let record = OeeRecordResponse {
                 id: r.id,
                 equipment_id: r.equipment_id,
-                equipment_name: r.equipment_name,
+                equipment_name: Some(r.equipment_name),
                 equipment_code: r.equipment_no,
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
@@ -718,7 +718,7 @@ pub async fn update_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -971,7 +971,7 @@ pub async fn get_oee_statistics(
             .map(|r| OeeEquipmentStat {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_code: r.equipment_code,
+                equipment_code: r.equipment_code.expect("REASON"),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
@@ -1076,7 +1076,7 @@ pub async fn get_equipment_efficiency_analysis(
             EquipmentEfficiencyAnalysis {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_no: r.equipment_no,
+                equipment_no: r.equipment_no.expect("REASON"),
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),

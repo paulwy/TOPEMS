@@ -386,7 +386,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -414,7 +414,7 @@ pub async fn create_team(
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -427,7 +427,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now.naive_utc(),
+            now,
         )
         .execute(&state.pool)
         .await;
@@ -495,7 +495,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -663,7 +663,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -683,7 +683,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now.naive_utc(),
+        now,
     )
     .execute(&state.pool)
     .await;
@@ -754,7 +754,7 @@ pub async fn remove_team_member(
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now().naive_utc(),
+            Utc::now(),
         )
         .execute(&state.pool)
         .await;
@@ -774,8 +774,8 @@ mod tests {
     fn naive_to_utc_some_keeps_value() {
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

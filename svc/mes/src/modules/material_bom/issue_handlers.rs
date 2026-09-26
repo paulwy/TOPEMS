@@ -73,7 +73,7 @@ pub async fn create_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -424,7 +424,7 @@ pub async fn update_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-now.naive_utc(),
+now,
     )
     .fetch_optional(&state.pool)
     .await;

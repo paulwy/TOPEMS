@@ -343,7 +343,7 @@ pub async fn create_work_station(
     .bind(equipment_id)
     .bind(process_id)
     .bind(&req.description)
-    .bind(now.naive_utc())
+    .bind(now)
     .fetch_one(&state.pool)
     .await;
 
@@ -473,7 +473,7 @@ pub async fn update_work_station(
     .bind(equipment_id)
     .bind(process_id)
     .bind(&req.description)
-    .bind(Utc::now().naive_utc())
+    .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;
 
@@ -567,7 +567,7 @@ pub async fn activate_work_station(
         "#,
     )
     .bind(id)
-    .bind(Utc::now().naive_utc())
+    .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;
 
@@ -625,7 +625,7 @@ pub async fn deactivate_work_station(
         "#,
     )
     .bind(id)
-    .bind(Utc::now().naive_utc())
+    .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;
 
@@ -655,8 +655,8 @@ mod tests {
     fn naive_to_utc_some_keeps_value() {
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.naive_utc().date(), dt.naive_utc().date());
-        assert_eq!(utc.naive_utc().time(), dt.naive_utc().time());
+        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.time(), dt.time());
     }
 
     #[test]

@@ -723,7 +723,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let next_maint: Option<chrono::NaiveDate> = row.get("next_maintenance_date");
 
             let days_overdue = if let Some(nm) = next_maint {
-                Utc::now().naive_utc().signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap()).num_days()
+                Utc::now().signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap()).num_days()
             } else {
                 90
             };
@@ -918,7 +918,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 
             let days_delay = if let Some(pe) = planned_end {
                 Utc::now()
-                    .naive_utc()
+                    
                     .date()
                     .signed_duration_since(pe)
                     .num_days()
@@ -986,8 +986,8 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 
             let hours_stuck = if let Some(st) = start_time {
                 Utc::now()
-                    .naive_utc()
-                    .signed_duration_since(st.naive_utc())
+                    
+                    .signed_duration_since(st)
                     .num_hours()
             } else {
                 0
@@ -1088,7 +1088,7 @@ async fn get_recent_anomaly_trend_days(pool: &sqlx::PgPool, days: usize) -> Vec<
     // 如果没有历史数据，生成空趋势
     if result.is_empty() {
         for i in 0..days.min(7) {
-            let date = Utc::now().naive_utc() - Duration::days(i as i64);
+            let date = Utc::now() - Duration::days(i as i64);
             result.push(DailyAnomalyCount {
                 date: date.to_string(),
                 count: 0,
