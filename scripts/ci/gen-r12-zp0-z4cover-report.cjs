@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // R12 Z-P0 Phase-4: Coverage 3 threshold Report generator (fallback, no tarpaulin)
 //
-// Output 4 files to docs/roadmap/artifacts/:
+// Output 4 files to docs/archive/roadmap-history/:
 //   r12-zp0-z4cover-erp.json
 //   r12-zp0-z4cover-finance.json
 //   r12-zp0-z4cover-shared-core.json

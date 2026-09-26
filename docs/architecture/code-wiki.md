@@ -1151,7 +1151,7 @@ bash scripts/ci/coverage-baseline.sh
   - **P6-P7**：Mobile 组件两批 41 用例（MobileProductionAndApproval + MobileApprovalQualityLists + ApprovalCard HTML 嵌套修复）
   - **总覆盖率提升**：共享包 100% 测试 · Host Shell 核心模块组件渲染 >230 用例 · typecheck/prettier/pre-commit 全部通过
 
-**TODO.md 版本**: V203（[docs/roadmap/TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md)，根 TODO.md 仅为快捷入口）
+**TODO.md 版本**: V203（[docs/project/TODO.md](file:///Users/xingzhai/TOPEMS/docs/project/TODO.md)，根 TODO.md 仅为快捷入口）
 **项目版本**: v5.15.0（`package.json` + `CHANGELOG.md` 已同步）
 
 ### 12.2 V204 阶段：推荐下一步优先级
@@ -1298,7 +1298,7 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 | 文件 | 说明 |
 |------|------|
 | [README.md](file:///Users/xingzhai/TOPEMS/README.md) | 项目总览 + 快速开始 |
-| [TODO.md](file:///Users/xingzhai/TOPEMS/docs/roadmap/TODO.md) | 任务路线图真相源（V182） |
+| [TODO.md](file:///Users/xingzhai/TOPEMS/docs/project/TODO.md) | 任务路线图真相源（V182） |
 | [Cargo.toml](file:///Users/xingzhai/TOPEMS/Cargo.toml) | Rust Workspace + 共享依赖版本 |
 | [package.json](file:///Users/xingzhai/TOPEMS/package.json) | pnpm Monorepo 脚本入口 |
 | [config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) | 端口单一信源（后端 + MF） |

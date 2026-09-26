@@ -21,7 +21,7 @@
 | 5.14.0 | V66.7 | — | 第三轮审计 31/31 闭环、Shared Bootstrap V2 |
 | — | V66.2 | — | Shared Bootstrap V2 五批次迁移 28/28 |
 
-> 产品版本通过 `package.json` 的 `version` 字段管理，架构版本记录在 `docs/architecture/overview.md` 顶部，任务版本记录在 `docs/roadmap/TODO.md` 顶部。
+> 产品版本通过 `package.json` 的 `version` 字段管理，架构版本记录在 `docs/architecture/overview.md` 顶部，任务版本记录在 `docs/project/TODO.md` 顶部。
 
 ---
 

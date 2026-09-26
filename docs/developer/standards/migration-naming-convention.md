@@ -29,7 +29,7 @@ YYYYMMDDHHMMSS_description.sql
 
 1. **必须**使用 `YYYYMMDDHHMMSS_description.sql` 格式
 2. **必须**同时在 `database/checksums.txt` 追加 SHA-256 校验和
-3. **建议**在 `docs/development/migration-inventory.md` 补充条目
+3. **建议**在 该清单已归档（2026-07-24 快照），当前迁移主链见 database/migrations（278 个）
 4. CI 门禁：`git diff --name-only -- '*migrations*.sql'` 非空时，检查 `checksums.txt` 是否同步更新
 
 ## 种子数据时序

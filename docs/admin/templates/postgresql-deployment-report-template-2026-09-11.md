@@ -435,11 +435,11 @@ sudo /tmp/postgresql-production-config-tuning.sh --rollback
 
 ### 9.4 相关文档和资源
 
-- 生产环境配置实施指南：`docs/assessments/production-environment-setup-guide-2026-09-11.md`
-- PostgreSQL 配置调优建议：`docs/assessments/postgresql-production-config-tuning-2026-09-11.md`
-- 数据库性能优化报告：`docs/assessments/database-performance-optimization-report-2026-09-11.md`
-- 生产环境应用检查清单：`docs/assessments/postgresql-production-config-checklist-2026-09-11.md`
-- 部署操作手册：`docs/assessments/postgresql-production-deployment-runbook-2026-09-11.md`
+- 生产环境配置实施指南：`docs/admin/production-environment-setup-guide-2026-09-11.md`
+- PostgreSQL 配置调优建议：`docs/admin/postgresql-production-config-tuning-2026-09-11.md`
+- 数据库性能优化报告：`docs/reports/archive/database-performance-optimization-report-2026-09-11.md`
+- 生产环境应用检查清单：`docs/admin/postgresql-production-config-checklist-2026-09-11.md`
+- 部署操作手册：`docs/admin/postgresql-deployment-runbook.md`
 - 部署前检查脚本：`scripts/postgresql-pre-deployment-check.sh`
 - 主部署脚本：`scripts/postgresql-production-config-tuning.sh`
 - 部署后验证脚本：`scripts/postgresql-post-deployment-verify.sh`

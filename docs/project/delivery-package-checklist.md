@@ -47,7 +47,7 @@
 |------|---------|------|------|------|
 | 2.2.1 | API 文档 | `docs/api/` | OpenAPI 规范和 API 说明 | ✅ |
 | 2.2.2 | 数据库设计文档 | `docs/database/` | 数据库表结构和关系图 | ✅ |
-| 2.2.3 | 部署指南 | `docs/deployment/deployment-guide.md` | 详细的部署步骤 | ✅ |
+| 2.2.3 | 部署指南 | `docs/admin/deployment-guide-overview.md` | 详细的部署步骤 | ✅ |
 | 2.2.4 | 配置说明 | `docs/configuration/` | 配置项说明和示例 | ✅ |
 | 2.2.5 | 架构设计文档 | `docs/architecture/` | 系统架构设计说明 | ✅ |
 
@@ -55,11 +55,11 @@
 
 | 序号 | 文档名称 | 位置 | 说明 | 状态 |
 |------|---------|------|------|------|
-| 2.3.1 | 运维手册 | `docs/operations/operations-manual.md` | 完整的运维操作指南 | ✅ |
-| 2.3.2 | 故障排查速查表 | `docs/operations/troubleshooting-cheatsheet.md` | 常见问题快速排查 | ✅ |
-| 2.3.3 | 服务稳定性最佳实践 | `docs/operations/service-stability-best-practices.md` | 服务稳定性优化指南 | ✅ |
-| 2.3.4 | 监控配置指南 | `docs/operations/monitoring-guide.md` | 监控系统配置说明 | ✅ |
-| 2.3.5 | AI 服务告警 Runbook | `docs/runbooks/ai-alerts-runbook.md` | AI 服务告警处理手册 | ✅ |
+| 2.3.1 | 运维手册 | `docs/admin/operations-manual.md` | 完整的运维操作指南 | ✅ |
+| 2.3.2 | 故障排查速查表 | `docs/admin/troubleshooting-cheatsheet.md` | 常见问题快速排查 | ✅ |
+| 2.3.3 | 服务稳定性最佳实践 | `docs/admin/service-stability-best-practices.md` | 服务稳定性优化指南 | ✅ |
+| 2.3.4 | 监控配置指南 | `docs/admin/cache-monitoring-prometheus-guide-2026-09-11.md` | 监控系统配置说明 | ✅ |
+| 2.3.5 | AI 服务告警 Runbook | `docs/admin/ai-alerts-runbook.md` | AI 服务告警处理手册 | ✅ |
 | 2.3.6 | 性能测试最佳实践 | `docs/performance/performance-testing-best-practices.md` | 性能测试方法论 | ✅ |
 
 ### 2.4 用户文档

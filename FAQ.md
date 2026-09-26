@@ -142,7 +142,7 @@ A: 升级步骤：
 6. 重启服务：`./scripts/topems.sh restart-all`
 7. 验证功能正常
 
-详见 [发布策略](docs/deployment/release-strategies.md)。
+详见 [发布策略](docs/admin/release-strategies.md)。
 
 ---
 
@@ -310,7 +310,7 @@ A: 开发环境搭建步骤：
 5. 初始化数据库：`python3 -m topems_cli db init && migrate`
 6. 启动开发服务：`./scripts/topems.sh start-all`
 
-详见 [开发环境搭建](docs/development/backend/environment-setup.md)。
+详见 [开发环境搭建](docs/developer/backend/environment-setup.md)。
 
 ### Q29: 如何编译项目？
 
@@ -380,7 +380,7 @@ A: 添加新服务的步骤：
 6. 创建 API 文档
 7. 编写测试
 
-详见 [微服务开发指南](docs/development/backend/backend-services.md)。
+详见 [微服务开发指南](docs/developer/backend/backend-services.md)。
 
 ### Q33: 代码规范是什么？
 
@@ -389,7 +389,7 @@ A: TOPEMS 有严格的代码规范：
 - **TypeScript/React**：遵循 ESLint 和 Prettier 配置
 - **提交规范**：使用 Conventional Commits 格式
 
-详见 [代码规范](docs/development/backend/code-standards.md) 和 [贡献指南](CONTRIBUTING.md)。
+详见 [代码规范](docs/developer/backend/code-standards.md) 和 [贡献指南](CONTRIBUTING.md)。
 
 ### Q34: 如何贡献代码？
 
@@ -516,7 +516,7 @@ A: 生产环境必须启用 HTTPS：
 4. 强制 HTTP 重定向到 HTTPS
 5. 配置 HSTS 头
 
-示例 Nginx 配置详见 [部署指南](docs/deployment/deployment-guide-overview.md)。
+示例 Nginx 配置详见 [部署指南](docs/admin/deployment-guide-overview.md)。
 
 ### Q45: 如何备份数据？
 
@@ -548,7 +548,7 @@ A: TOPEMS 采用 Rust 后端，具有极高的性能：
 - 缓存：Redis 缓存热点数据
 - 静态资源：CDN 加速和浏览器缓存
 
-具体性能数据详见 [性能基准报告](docs/benchmarks/)。
+具体性能数据详见 [性能基准报告](docs/performance/benchmarks/)。
 
 ### Q47: 如何优化性能？
 
@@ -584,7 +584,7 @@ A: 是的，TOPEMS 支持水平扩展：
 - 支持负载均衡（Nginx、HAProxy 等）
 - 数据库支持读写分离和主从复制
 
-详见 [部署指南](docs/deployment/deployment-guide-overview.md)。
+详见 [部署指南](docs/admin/deployment-guide-overview.md)。
 
 ### Q49: 如何监控系统性能？
 
@@ -739,7 +739,7 @@ A: 如果本文档没有解答您的问题，可以：
 2. 在 [GitHub Discussions](../../discussions) 提问
 3. 查看 [完整文档](docs/)
 4. 查看 [用户操作手册](docs/user-guide/UserManual.md)
-5. 查看 [故障排查手册](docs/deployment/troubleshooting.md)
+5. 查看 [故障排查手册](docs/admin/troubleshooting.md)
 6. 联系 [商业支持](SUPPORT.md#商业支持)
 
 ---

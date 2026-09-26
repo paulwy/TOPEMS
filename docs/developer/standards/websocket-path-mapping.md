@@ -175,7 +175,7 @@ location /ws/ {
 
 ## 七、验收 & 调试
 
-- `/docs/deployment/README.md §5 合规表 #7`：本规范文档与 Nginx 配置保持一致时打勾。
+- `/docs/admin/README.md §5 合规表 #7`：本规范文档与 Nginx 配置保持一致时打勾。
 - 自测：打开 `/ws/healthz`（非 Upgrade HTTP GET）返回 JSON：
   ```json
   {"ok":true,"version":"v65.0","clients":1234,"channels":{"workflow:approvals":411}}

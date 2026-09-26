@@ -145,7 +145,7 @@ EMBEDDING_MODEL=nomic-embed-text
 # 启用后：L1=moka 进程内 + L2=Redis 跨实例共享
 # 未配置：自动降级为纯 L1 模式（moka），不影响服务启动
 # REDIS_URL=redis://localhost:6379
-# 详见：docs/development/backend/code-standards.md 缓存章节
+# 详见：docs/developer/backend/code-standards.md 缓存章节
 ```
 
 ## 开发环境配置

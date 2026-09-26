@@ -252,9 +252,9 @@ state.event_publisher
 | `lib/shared-event/src/event/publisher.rs` | EventPublisher::publish_cache_invalidated 方法 |
 | `lib/shared-event/src/event/subscriber.rs` | EventSubscriber 事件订阅器 |
 | `lib/shared-core/src/cache.rs` | CacheInvalidationListener、CacheInvalidationHandler、InMemoryCacheInvalidationHandler |
-| `docs/assessments/cache-deep-optimization-plan-2026-09-11.md` | 缓存深化优化计划 |
-| `docs/assessments/cache-key-naming-standard-2026-09-11.md` | 缓存 Key 命名规范 |
-| `docs/assessments/cache-monitoring-prometheus-guide-2026-09-11.md` | 缓存命中率监控指南 |
+| `docs/reports/archive/cache-deep-optimization-plan-2026-09-11.md` | 缓存深化优化计划 |
+| `docs/developer/standards/cache-key-naming-standard.md` | 缓存 Key 命名规范 |
+| `docs/admin/cache-monitoring-prometheus-guide-2026-09-11.md` | 缓存命中率监控指南 |
 
 ---
 

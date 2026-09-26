@@ -252,6 +252,6 @@ node scripts/patch-react-transition-group.js --check
 
 - [完整脚本索引](./MAP.md)
 - [Python CLI](../cli/README.md)
-- [部署文档](../docs/deployment/README.md)
+- [部署文档](../docs/admin/README.md)
 - [Windows 部署](./windows/README_WINDOWS.md)
 - [Code Wiki](../docs/architecture/code-wiki.md)

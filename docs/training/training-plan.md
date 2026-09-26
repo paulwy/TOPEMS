@@ -242,8 +242,8 @@
 |---------|------|------|
 | 用户操作手册 | `docs/user/user-manual.md` | ✅ |
 | 管理员指南 | `docs/user/admin-guide.md` | ✅ |
-| 运维手册 | `docs/operations/operations-manual.md` | ✅ |
-| 故障排查速查表 | `docs/operations/troubleshooting-cheatsheet.md` | ✅ |
+| 运维手册 | `docs/admin/operations-manual.md` | ✅ |
+| 故障排查速查表 | `docs/admin/troubleshooting-cheatsheet.md` | ✅ |
 | 快速入门指南 | `README.md` | ✅ |
 | FAQ | `docs/user/faq.md` | ✅ |
 

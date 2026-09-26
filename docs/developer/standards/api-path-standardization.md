@@ -1,7 +1,7 @@
 # TOPEMS API 路径规范与渐进式统一方案（P32-5）
 
 > 生效版本：V65.0+ · 单一信源：`config/services.yaml` + `config/ports.env`
-> 负责人：架构组 · 上线前合规模板：`docs/deployment/README.md §5 合规表 #7`
+> 负责人：架构组 · 上线前合规模板：`docs/admin/README.md §5 合规表 #7`
 
 ---
 

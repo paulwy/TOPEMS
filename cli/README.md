@@ -280,6 +280,6 @@ export REDIS_PORT=6379
 
 ## 文档
 
-- [部署文档](../docs/deployment/README.md)
+- [部署文档](../docs/admin/README.md)
 - [端口规划](../docs/architecture/port-planning.md)
-- [Windows 部署](../docs/deployment/windows-deployment.md)
+- Windows 部署（待补充）

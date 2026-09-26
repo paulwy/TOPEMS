@@ -327,7 +327,7 @@
    - 或者实现您自己的功能建议
 
 3. **环境搭建**
-   - 按照 [开发指南](docs/development/development-guide.md) 搭建开发环境
+   - 按照 [开发指南](docs/developer/README.md) 搭建开发环境
    - 确保可以本地运行和测试
 
 ### 贡献流程
@@ -455,9 +455,9 @@
 - **快速入门**：[Quick Start Guide](docs/user/quick-start.md)
 - **用户手册**：[User Manual](docs/user/user-manual.md)
 - **管理员指南**：[Admin Guide](docs/user/admin-guide.md)
-- **开发指南**：[Development Guide](docs/development/development-guide.md)
+- **开发指南**：[Development Guide](docs/developer/README.md)
 - **API 文档**：[API Reference](docs/api/api-reference.md)
-- **最佳实践**：[Best Practices](docs/development/best-practices.md)
+- **最佳实践**：[Best Practices](docs/developer/README.md)
 
 ---
 
@@ -484,7 +484,7 @@ A: TOPEMS 支持以下关系型数据库：
 
 ### Q4: 如何升级到最新版本？
 
-A: 请参考 [升级指南](docs/deployment/upgrade-guide.md)。一般步骤包括：
+A: 请参考 [升级指南](docs/admin/README.md（待补充升级指南）)。一般步骤包括：
 1. 备份数据和配置
 2. 下载最新版本
 3. 执行数据库迁移

@@ -2,7 +2,7 @@
 
 > 文档状态：已归档  
 > 关联规划：`/Users/air/TOPEMS/design-system-implementation-plan.md`  
-> 关联 TODO：`docs/roadmap/TODO.md` V280 最后 4 例外清零，模板覆盖率 100%  
+> 关联 TODO：`docs/project/TODO.md` V280 最后 4 例外清零，模板覆盖率 100%  
 > 更新日期：2026-08-23
 
 ---

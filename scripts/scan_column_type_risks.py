@@ -9,7 +9,7 @@
 用法：
   python3 scripts/scan_column_type_risks.py            # 默认容器库 5433
   DATABASE_URL=postgres://... python3 scripts/scan_column_type_risks.py
-输出：stdout 报告 + docs/architecture/column-type-risk-report.md
+输出：stdout 报告 + docs/database/column-type-risk-report.md
 """
 import os
 import re
@@ -105,7 +105,7 @@ def main() -> int:
 
     report = "\n".join(lines)
     print(report)
-    out = "docs/architecture/column-type-risk-report.md"
+    out = "docs/database/column-type-risk-report.md"
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.write(report)

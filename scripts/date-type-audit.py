@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-date-type-audit.py — TOPEMS 日期时间类型分层审计（契约 docs/date_type_convention.md）
+date-type-audit.py — TOPEMS 日期时间类型分层审计（契约 docs/developer/standards/date-type-convention.md）
 
 检查三层：
   1. 实体层（#[derive(FromRow)] DB 映射 struct）：String/NaiveDateTime/int 时间字段 = 违规

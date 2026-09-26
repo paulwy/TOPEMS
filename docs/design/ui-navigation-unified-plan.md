@@ -11,11 +11,11 @@
 
 本次统一方案对项目内所有 UI 设计与导航相关文档进行归纳、去重与评估，制定以「代码即文档、单一真值源」为核心的新方案。方案明确：
 
-- **导航唯一真值源**：`docs/navigation-architecture.md` + `apps/web/src/lib/navigation/types.ts` + `NavigationRegistryV2.ts`
-- **设计系统唯一真值源**：`docs/development/frontend/design-system.md`
+- **导航唯一真值源**：`docs/design/navigation-architecture.md` + `apps/web/src/lib/navigation/types.ts` + `NavigationRegistryV2.ts`
+- **设计系统唯一真值源**：`docs/developer/frontend/design-system.md`
 - **共享组件唯一真值源**：`docs/design/shared-component-guidelines.md`
 - **页面模板唯一真值源**：`docs/design/page-template-selection-guide.md`
-- **无障碍唯一真值源**：`docs/development/frontend/accessibility.md`
+- **无障碍唯一真值源**：`docs/developer/frontend/accessibility.md`
 
 已清理 11 份冗余/过时文档，保留 7 份权威文档，建立统一的文档入口与质量门禁。
 
@@ -687,13 +687,13 @@ node scripts/ci/check-design-tokens.cjs --changed-only
 
 | 文档 | 用途 | 状态 |
 |------|------|------|
-| [`docs/navigation-architecture.md`](../navigation-architecture.md) | 四层导航架构唯一规范 | 已生效 |
-| [`docs/development/frontend/design-system.md`](../development/frontend/design-system.md) | MUI 设计系统基础 | 已生效 |
+| [`docs/design/navigation-architecture.md`](./navigation-architecture.md) | 四层导航架构唯一规范 | 已生效 |
+| [`docs/developer/frontend/design-system.md`](../developer/frontend/design-system.md) | MUI 设计系统基础 | 已生效 |
 | [`docs/design/shared-component-guidelines.md`](./shared-component-guidelines.md) | 共享组件使用规范 | 已生效 |
 | [`docs/design/page-template-selection-guide.md`](./page-template-selection-guide.md) | 页面模板选型规范 | 已生效 |
 | [`docs/design/template-exceptions.md`](./template-exceptions.md) | 模板例外历史（已清零） | 已归档 |
-| [`docs/development/frontend/accessibility.md`](../development/frontend/accessibility.md) | 无障碍规范 | 已生效 |
-| [`docs/development/frontend/component-migration-guide.md`](../development/frontend/component-migration-guide.md) | shadcn → MUI 迁移参考 | 已生效 |
+| [`docs/developer/frontend/accessibility.md`](../developer/frontend/accessibility.md) | 无障碍规范 | 已生效 |
+| [`do../developer/frontend/component-migration-guide.md`](../developer/frontend/component-migration-guide.md) | shadcn → MUI 迁移参考 | 已生效 |
 
 ### 10.2 已删除文档
 

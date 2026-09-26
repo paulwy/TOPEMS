@@ -309,9 +309,9 @@ annotations:
 
 ### 7.2 相关文档
 
-- 缓存深化优化计划: `docs/assessments/cache-deep-optimization-plan-2026-09-11.md`
-- 缓存 Key 命名规范: `docs/assessments/cache-key-naming-standard-2026-09-11.md`
-- 生产环境配置实施指南: `docs/assessments/production-environment-setup-guide-2026-09-11.md`
+- 缓存深化优化计划: `docs/reports/archive/cache-deep-optimization-plan-2026-09-11.md`
+- 缓存 Key 命名规范: `docs/developer/standards/cache-key-naming-standard.md`
+- 生产环境配置实施指南: `docs/admin/production-environment-setup-guide-2026-09-11.md`
 
 ### 7.3 版本历史
 

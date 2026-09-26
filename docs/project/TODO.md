@@ -41,7 +41,7 @@
 
 ### 1. 全模块前后端重评估报告
 
-- **报告**：`docs/assessments/module-completeness-reassessment-2026-09-09.html`（49 模块×5 维，156KB）+ group a–f 原始取证 md
+- **报告**：`docs/reports/archive/module-completeness-reassessment-2026-09-09.html`（49 模块×5 维，156KB）+ group a–f 原始取证 md
 - **关键指标**：后端路由 4,519 条 / 前端 API 5,404 个 / 真实缺口 32 项 / 预埋悬空 43 组 / 冗余 64 项
 - Commit：`59bb09c71`
 
@@ -67,7 +67,7 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 | 项 | 内容 | Commit |
 |---|---|---|
-| 版本化生命周期登记表⑪ | `docs/assessments/version-lifecycle-registry-2026-09-09.md`（§1-§5 完整） | `88e1373a2` |
+| 版本化生命周期登记表⑪ | `docs/reports/registries/version-lifecycle-registry-2026-09-09.md`（§1-§5 完整） | `88e1373a2` |
 | dict 分裂（主题四④） | 删除名不副实的 `master/dictionary.ts`（走 apiClient.erp，与 erp/core/dict.ts 重复，零消费）+ 从 master/index.ts 移除三处悬空引用 | `975fee50b` |
 | MES/RD 前缀（主题四⑥⑦） | 验证已闭环：MES energyManagement/productionCost 前端与后端路由完全匹配；RD material.ts 走 apiClient.erp（非 rd），后端 svc/erp/modules/material.rs 有完整 CRUD | 无需改动 |
 | RLS 覆盖率专项 | 精确盘点含 tenant_id/org_id 列但未启用 RLS 的表 12 张，创建迁移 `20260910000007_rls_missing_tables.sql` 补 RLS+policy，验证全库覆盖率 100% | `129d7cc62` |
@@ -437,7 +437,7 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 ## V515 评估报告 32 项真实缺口全量闭环（2026-09-10）
 
-> 状态：✅ 全部闭环（32/32）｜基于 `docs/assessments/module-completeness-reassessment-2026-09-09.html` 4.1 节 32 项真实缺口清单，6 组并行子代理逐项补齐，每闭环一个独立 commit + push。
+> 状态：✅ 全部闭环（32/32）｜基于 `docs/reports/archive/module-completeness-reassessment-2026-09-09.html` 4.1 节 32 项真实缺口清单，6 组并行子代理逐项补齐，每闭环一个独立 commit + push。
 
 ### 闭环总览
 
@@ -582,3 +582,66 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
   - 推送实现：`tokio::runtime::Handle::try_current()` 取当前 runtime spawn 异步 reqwest POST（无 runtime 静默跳过，非阻塞语义）；复用现有冷却去重
   - 测试：新增 2 个（mock 本地 HTTP server 收 webhook 验证告警消息送达 / 无 runtime·无 webhook 时跳过不 panic）；shared-auth 全量 227 tests 全过
   - 配置文档：`config/env/_template.env.example` 补 SERVICE_ALERT_* + FEISHU_ALERT_WEBHOOK 段（含已知服务白名单覆盖说明）
+
+### 补充：2026-09-25 日期类型与域收口
+
+### ✅ 已完成（2026-09-25）
+- [x] **契约文档**：docs/developer/standards/date-type-convention.md（分层契约：DB timestamptz/date → 实体 DateTime<Utc>/NaiveDate → DTO RFC3339 String；禁止实体层 String 存时间）
+- [x] **审计工具**：scripts/date-type-audit.py（分层审计：实体层违规检测 / DTO 统计 / SQL 列类型 + 无时区列清单；支持 --service/--sql/--json；实体层违规 exit 1）
+- [x] **mes 试点确认**：实体层（FromRow）0 违规；DTO String 均为 RFC3339 输出——重构收尾已达契约（上轮 f27647794）
+- [x] 全项目基线跑通（首次审计结果入档，可 `python3 scripts/date-type-audit.py` 复跑）
+
+### 🚧 待办（按优先级）
+- [ ] **P1-1 实体层违规修复（进行中，2026-09-25 两轮）**：
+  - ✅ 裸 String 违规 2 处已修复：lims instrument.rs MaintenanceRecord（performed_at/next_maintenance_date/created_at → DateTime<Utc>，SQL 去 ::TEXT）+ unified-core flow/monitor.rs TrendData（date → NaiveDate，SQL 去 ::text）；lims/unified-core/pdm/integration 编译通过
+  - ✅ 审计工具修复（暴露完整真实违规）：--service 服务名解析（取 svc/ 后一项）+ is_entity 取最近 derive（消除 ticket on_time 误报）+ 违规判定纳入 Option<String>/Option<NaiveDateTime>/Option<int> + 豁免注释识别全类型生效——初版工具只查裸 String，曾误报"14 处"，修复后暴露真实 91 处
+  - ✅ 豁免注释 21 处（`date-type-convention: exempt`）：NaiveDateTime 11 + Option<NaiveDateTime> 9（映射 DB timestamp 无时区列，**DB 迁移后统一改 DateTime<Utc>**）+ unified-core audit AccessControlLog.response_time（响应耗时 bigint，非时间点）
+  - ✅ **P1-1 实体层违规清零（2026-09-25 达成验收）**：date-type-audit.py 实体层违规 = 0（exit 0）
+    - [x] **P1-1a qms 68 处 ✅（2026-09-25）**：24 struct 时间字段全改 Option<DateTime<Utc>>（DB 列实测全 timestamptz，含 d3/d6/d8_*_at 数字前缀字段）；SQL ::TEXT 适配全去除（16+3 列名，data_sync.rs DTO 适配保留）；测试构造 62 处改 DateTime::from_timestamp（含 4 处 DTO 误伤恢复）；cargo check + cargo test 全绿（262+224+13+13+12+1 passed / 0 failed）；审计工具 TIME_NAME 补数字中缀支持（d3_implemented_at 类）
+    - [x] **P1-1b wms 10 处 ✅（2026-09-25）**：3 struct（Batch 4 / SerialNumber 4 / TransferOrder 2）字段改 Option<NaiveDate>（DB 列实测全 date）；SQL 无 ::TEXT 适配、请求层 String bind 保持不动；顺带修复存量运行时 bug（date 列 decode 到 Option<String> 必败）；测试构造 9 处改 NaiveDate::from_ymd_opt（含 5 处请求层测试误伤恢复）；cargo test 全绿（550+551+12+12+1 passed / 0 failed）
+    - [x] **P1-1c 散点 3 处 ✅（2026-09-25）**：unified-core ApiVersionConfigRecord.sunset_date → Option<NaiveDate>（SQL 漏查 sunset_date 列 = FromRow 运行时 ColumnNotFound bug，补列修复；load_from_db map format 转 DTO String）；scm SupplierAdmission.application_date → Option<NaiveDate>（date 列，修复 date→String decode 运行时 bug）；srm Quotation.delivery_time 豁免（DB varchar 交货周期文本，非时间列，加 date-type-convention: exempt 注释）
+  - 验收 ✅：date-type-audit.py 实体层违规 = 0
+  - 备注：unified-core 存量 doctest 失败**已闭环（2026-09-25）**：middleware/tier_gate.rs 示例改为自包含（topems_unified_core 全路径 + handler 定义 + Router 类型注解），`cargo test -p topems-unified-core --doc` 10 passed / 0 failed
+- [x] **P1-2 DB/SQL 层无时区列治理 ✅（2026-09-25）**：
+  - **实测推翻假设**：information_schema 确认线上库 4201 个时间列全部 timestamptz，无任何 timestamp without time zone——384"无时区列"仅存在于迁移脚本源码 DDL
+  - **P1-2a 源码 DDL 归一化**：database/migrations 58 文件 384 处 `timestamp` → `timestamptz`（仅类型 token，默认值/表达式不动；注释行 6 处误改已还原）→ 审计 SQL 无时区列 0
+  - **P1-2b 实体层 NaiveDateTime 收口**：20 处豁免字段 → DateTime<Utc>（tenant 11 / iam 5 / backup 2 / migration 3 / integration 3 / analytics 4 / pdm 2）；DTO 层 NaiveDateTime 保持不动（归 P2-1）；14 条"DB 无时区列"豁免注释删除，保留 2 条正确豁免（audit 响应耗时 + srm 交货周期文本）
+  - 顺带修复：NaiveDateTime 映射 timestamptz 列的运行时 decode 类型漂移
+  - 验证：unified-core/integration/analytics/pdm cargo test 全绿（0 failed）；审计：实体违规 0 + SQL 无时区列 0（exit 0）
+- [x] **P2-1 API 约定收敛 ✅（2026-09-25）**：
+  - **parse 侧收敛**：40 处 `NaiveDate::parse_from_str(s,"%Y-%m-%d")` → `s.parse::<NaiveDate>()`（FromStr，ISO 日期等价；21 文件：lims 2 / unified-core 1 / wms 1 / portal 2 / mes 9 / hrm 1 / mobile 1 / finance 4 / erp 2 等）；保留 2 处 NaiveDateTime/DateTime date-only 解析 + 17 处 `%Y-%m-%d %H:%M:%S` 兼容解析 + 3 处 T 格式（查询参数/老数据兼容，改 RFC3339 会破坏 API 输入契约）
+  - **format 侧决策**：64 处 `format("%Y-%m-%d")` 首次批量收敛 to_string() 时发现 **DateTime receiver 误伤**（`Utc::now().format("%Y-%m-%d")` 是日期 key 语义，to_string 输出 RFC3339 行为不同，cost_metering/mcp_security 每日重置 key 被破坏）→ **全部回退**，format 收敛须类型感知，推迟到 P2-2 逐点处理；审计工具将 `%Y-%m-%d` 标为"序列化风格待收敛"、紧凑格式（%Y%m%d 批次号/文件名/统计 key）标为"业务派生豁免"
+  - 验证：14 crate `cargo check` 全过；`cargo test` lib 1171 passed / 0 failed（ai 曾 2 失败为 format 误伤，回退后修复）；ai `test_external_agent_calls_business_tools` 既有失败**已闭环（2026-09-25）**：Anonymous session 调业务工具被安全层拒绝（-32001）是安全设计（stdio 无认证通道，防未认证枚举）；测试断言改为验证「协议层对接正常 + 匿名保护生效」（id 回显/error 结构完整、-32601 仍为缺陷、-32001 为预期），`cargo test -p topems-ai --test mcp_stdio_integration` 8 passed / 0 failed
+  - 度量基线（审计工具新增 serialization 统计）：parse_from_str 62 → 22；FromStr_parse 40；to_rfc3339 1220 / parse_from_rfc3339 203 不变
+- [x] **P2-2 冲突字段治理 · 第一波 ✅（2026-09-25）**：
+  - **勘察结论**：153 个同名字段中 69 个存在类型冲突，但**绝大多数是分层/列类型的正常差异**（实体 DateTime<Utc>/NaiveDate + DTO String RFC3339；date 列 → NaiveDate、timestamptz → DateTime<Utc>），无需机械统一
+  - **NaiveDate format 类型感知收敛 6 处**：仅收敛 receiver 明确为 NaiveDate 的（unified-core sunset_date、portal due_date、mes equipment naive_date_to_string / equipment_oee / production_kanban 2 处）→ `.to_string()`；DateTime/NaiveDateTime receiver 的 58 处（查询起止边界、统计 key、日志、默认值）确认为**日期 key 业务派生**，契约豁免
+  - **DTO/内部层 NaiveDateTime 收口 10 处 → DateTime<Utc>**：tenant CreateTenantRequest(2)/TenantStats(1)/TenantInvoice(4) + integration SyncStatistics(2) + scm MrpSuggestion(2)——修复 NaiveDateTime serde 输出非 RFC3339（无 Z）的契约违规；连带修复 naive_utc() 构造点 2 处与 last_sync 查询类型
+  - **scm 工作时间窗口函数豁免**：`is_within_working_window` 加 date-type-convention: exempt（内部计算仅取 time/weekday 组件，非序列化边界）
+  - 验证：unified-core/integration/scm/portal cargo test 全绿（453+182+75+15+16+1 passed）；mes lib 绿，`test_material_category_crud` 既有失败**已闭环（2026-09-25）**：测试 SQL 引用的业务列（name/description/sort_order/tenant_id/created_at/deleted_at）仅存在于线上手工扩展 schema，迁移链只定义骨架表（id 列，20260918000014 亦未含该表）——测试加环境适配：缺列时跳过（与 ensure_db_available 同类判断），`cargo test -p topems-mes --test integration_tests` 47 passed / 0 failed
+  - **本地库迁移链全量跑通（2026-09-25，commit 1c6b92723）**：修复 P1-2a 误伤 100 处 `timestamptz WITH TIME ZONE`（重复类型语法错误）；补建 2 张无定义真表（communication.core_email_templates / mobile.shortcuts）；20260924110000 949 条索引条件化、20260924150000 24 条无 schema 索引动态 schema 化；aux_accounting 版本号 00016→00017（与 add_name_en 冲突）——`migrate.sh run` 0 错误，`_sqlx_migrations` 276/276 全量应用，CI/新环境不再因缺表/语法错误失败
+  - 备注：本轮间发现 **target 目录膨胀 122G 致磁盘满**（cargo clean 失败后 rm -rf target 释放至 82Gi 可用）——后续编译注意 target 增长；剩余冲突字段为列类型决定的合理差异，P2-2 收官（无进一步机械统一必要）
+  - **空库全量迁移验证闭环（2026-09-25）**：为证明迁移链在 CI/新环境（无历史脏数据）可用，手动建 `topems_mig_verify` 全新空库循环验证（等价 CI migration-test job），逐项修复后 **276/276 迁移全部应用、0 错误**：
+    - ① P1-2a 误伤第三/四种大小写形态：`timestamptz WITHOUT TIME ZONE`(7处/3文件)、`timestamptz with time zone`(小写)——大小写不敏感正则全量清理 145 处/19 文件；残留 3 行为合法 `USING ... AT TIME ZONE 'UTC'` 转换不动
+    - ② 空库无 `topems_app` 角色（6 迁移 GRANT 但无创建）→ 20260910000001 文件头补幂等 `DO $role$` 建角色
+    - ③ mes.teams / mes.team_members / mes.equipment_oee 无迁移定义（遗留表）→ 20260921000106 按 mes 服务 team.rs / equipment_oee.rs 查询列补建真表
+    - ④ ehs.qa_ehs_hazard_factors / qa_ehs_hazardous_materials / qa_ehs_hazards 无定义（rehome 无 public 源）→ 20260921000107 按 occupational_disease.rs / hazardous_material.rs / hazard.rs 查询列补建
+    - ⑤ 20260923000004 引用的 6 张 integration/finance 同步表为**服务 init_database 自建**（mes_qms_sync 建表含 tenant_id）→ 28 处 ALTER 加 `IF EXISTS`（旧库补列、空库跳过，与 107 影子表模式一致）
+    - ⑥ 20260923000007 mobile.shortcuts 补建外键漏 schema 前缀（REFERENCES mobile_users→mobile.mobile_users）
+    - ⑦ 20260923000009 fixed_assets 生成列依赖 original_value/salvage_value/expected_life 仅由 erp 服务 schema_defense 运行时补齐 → 迁移内按 schema_defense.rs 结构补建基础列（幂等）
+    - ⑧ flow 收敛链空库缺口：20260918000016 第 1 部分 DROP flow 骨架影子表后**只重建 public.core_workflow_tasks，漏 instances/versions/approvals/approval_records**（public 影子已被 000007 drop，011 结构亦被清）→ 按本地权威列补建 4 表（approvals 14 列 / approval_records 11 列，对齐 000005 复制列结果）
+    - ⑨ 20260923150000 / 20260923160000 引用 public.core_workflows（权威已收敛至 flow，public 影子按设计删除）→ ALTER IF EXISTS + DO 块表存在守卫（CREATE POLICY / ENABLE FORCE RLS 条件化）
+    - 收尾：**本地主库 checksum 同步 31 个被修改且已应用迁移的 sha384**，`migrate.sh run` 主库幂等 0 错误、`check-migrations.mjs` 仅既有版本号不连续警告
+    - **空库验证固化 CI 门禁**：新增 `scripts/migrate-verify-empty.sh`（DROP/CREATE 验证库 → sqlx migrate run → 断言 _sqlx_migrations 全量 success=true → 自动清理），本地跑通 276/276；CI migration-test job 追加 `Verify top-level migration chain on empty database` step——顶层迁移链新环境可用性正式纳入门禁（此前仅静态检查 + svc 子迁移 up-down-up，顶层链无真库验证）
+    - **mes 运行时端到端冒烟（2026-09-25）**：空库 + 迁移链 276/276 后启动 topems-mes（MES_PORT=8031）→ health 200（degraded=IAM/core 未起，环境依赖）→ init_database 自建 25 表与迁移链表幂等共存（mes schema 43 表：wips/work_orders/production_schedules/batch_records 等由服务建，teams/equipment_oee 由迁移链建、服务 IF NOT EXISTS 跳过）→ 业务端点 /api/mes/orders、/teams、/equipment-oee、/work-orders 均 401（路由挂载正确，认证拦截）——迁移链 + 服务自建表运行时一致性验证通过
+- [x] **P2-3 审计工具进 CI 门禁 ✅（2026-09-25）**：
+  - **CI 新增 `date-type-audit` gate job**（与 mes-online-check 同级）：纯 Python 静态扫描（无需 DB），`python3 scripts/date-type-audit.py` exit 0 即绿——实体层违规 0 + Instant 序列化边界违规 0；触发条件与 cargo-check/mes-online-check 一致（rust/ci 变化）；本地复现命令一致
+  - **工具新增 Instant 序列化检查**：Serialize derive struct 内时间字段为 Instant/Option<Instant> → 违规（契约：Instant 仅限进程内计时，禁止跨序列化边界）；当前 18 处 Instant 全部 non-serde（ApiState/AppState.start_time 进程启动、CacheEntry.expires_at 内存缓存、SseSession/TransportSession 内部会话、ExecutionTimer/ExecutionRecord 性能计时）→ 违规 0，契约已满足，检查作防回归
+  - 验证：审计 exit 0（实体 0 + Instant 序列化 0）；ci.yml YAML 解析通过
+
+- [x] **10 域缺口收口收官（2026-09-25）**：甄别脚本方法论修正后重扫 10 域（qms/mes/mobile/lims/scm/rd/srm/pm/hrm/plugin-registry），此前 759 缺口系脚本误报（属性块收集中断 + 同名 impl 误定位 + route group 索引 bug），修正后真实缺口 62；逐域收口：mes 16（home 占位 + dashboard_ws/plugin 注解 + 聚合 16 + pub mod inspection，提交 4eef03623）、qms 8（assign_inspection/resolve_issue/start_issue_approval + plugin×2 + 占位×3 + 聚合 8，提交 a85ee4301）、mobile 10（offline 4 真缺口重注入 + offline_sync 位置修正 + scan_qrcode + plugin×2 + health 占位 + 重复占位清理 5→1，0 error）、lims 7、scm/srm/pm/hrm 各 4（plugin×2 双 route 引用 + hrm health 模块注入）、rd 6、plugin-registry 6（marketplace/tenant_plugins 业务 3 + 占位×3）；9 域批量提交 c3b892a8c；各域 cargo check 0 error（mes 仍受 DB schema 阻塞，注解侧已验证）；甄别脚本 /tmp/sweep.py 落盘（fn_annotated 属性块完整收集版）
+- [ ] **阻塞（延续）**：openapi-gen 重生成 docs/api/openapi.json 依赖全 workspace 编译，mes 仍受 DB schema 缺失 + .sqlx 离线缓存缺失阻塞（业务表未建全）——10 域注解增量待重生成纳入（预计 2920 → +~70 端点），DB 基线治理（init/migrations schema 归属）待用户给方向
+### 📝 已知风险与边界
+- NaiveDateTime 系列在 DB 迁移完成前**不是错误**（与无时区列正确匹配），勿提前改，否则 sqlx 在线解析类型漂移
+- 无守卫服务（lims/ticket/portal 等）改动前先确认在线编译配方可用（参考 mes_guard 机制推广）
+- DTO 层 String 与 DateTime<Utc> 混用序列化结果等价（均 RFC3339），P2 阶段按风格统一，不影响 API 契约

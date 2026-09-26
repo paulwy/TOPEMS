@@ -3,7 +3,7 @@
 > 目的：把 P1-P3 审计中判定"预埋/待立项"且需产品决策的能力项，收敛为**可直接评审拍板**的立项卡。
 > 状态：**DECIDED（2026-09-10 产品分析拍板）**——3 张卡全部拍板，卡 2/3 已执行上线，卡 1 维持预埋观察。
 > 判定口径：页面零消费 + 后端（或前端）实现存在但不承接；与"真实消费缺口"（P0/P1 已闭环）严格区分。
-> 配套：版本化生命周期登记表 `docs/assessments/version-lifecycle-registry-2026-09-09.md`；主报告 `frontend-backend-mapping-assessment-2026-09-08.html`。
+> 配套：版本化生命周期登记表 `docs/reports/registries/version-lifecycle-registry-2026-09-09.md`；主报告 `frontend-backend-mapping-assessment-2026-09-08.html`。
 
 ## 拍板结果（TL;DR · 2026-09-10）
 

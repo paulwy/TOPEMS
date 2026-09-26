@@ -73,4 +73,4 @@
 
 - [lib/docs/service_client_guide.md](docs/service_client_guide.md) — 服务客户端使用指南
 - [config/services.yaml](../config/services.yaml) — 服务配置（端口、schema、依赖）
-- [docs/development/backend/code-standards.md](../docs/development/backend/code-standards.md) — 后端代码规范
+- [docs/developer/backend/code-standards.md](../docs/developer/backend/code-standards.md) — 后端代码规范

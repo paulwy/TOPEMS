@@ -222,7 +222,7 @@ pnpm install
 # 首次编译：先刷新 sqlx 离线缓存（需要本地 PostgreSQL 在线）
 ./scripts/topems.sh sqlx prepare --all
 # 注意：mes 的缓存刷新必须走专用入口（search_path=mes,public）：
-./scripts/topems.sh mes-guard --prepare      # 迁移/改表后也必跑，见 docs/mes_compile_mechanism.md
+./scripts/topems.sh mes-guard --prepare      # 迁移/改表后也必跑，见 docs/developer/backend/mes-compile-mechanism.md
 # 或直接编译（离线优先，失败自动切换在线编译）
 ./scripts/topems.sh build-all --only-core          # 只编核心服务（约 3-5 分钟）
 ./scripts/topems.sh build-all                       # 全量编译（后端+前端）
@@ -429,7 +429,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | GIS | `/ws/gis/device/{device_code}` | `/ws/gis/device/{device_code}` | 8071 |
 | BI | `/ws/bi/dashboard/{id}` | `/ws/bi/dashboard/{id}` | 8060 |
 
-详细说明请参考 [WebSocket 路径映射规范](docs/architecture/websocket-path-mapping.md)
+详细说明请参考 [WebSocket 路径映射规范](docs/developer/standards/websocket-path-mapping.md)
 
 ## 🔒 安全配置
 
@@ -825,14 +825,14 @@ docs/
 | 文档 | 路径 | 说明 |
 |------|------|------|
 | **Code Wiki 百科** | [docs/architecture/code-wiki.md](docs/architecture/code-wiki.md) | **核心文档** — 全面的项目百科，架构/模块/依赖/部署全覆盖 |
-| **当前任务 TODO** | [docs/roadmap/TODO.md](docs/roadmap/TODO.md) | **唯一真相源** — 版本基线、待办进度、验收数字 |
+| **当前任务 TODO** | [docs/project/TODO.md](docs/project/TODO.md) | **唯一真相源** — 版本基线、待办进度、验收数字 |
 | **系统架构总览** | [docs/architecture/overview.md](docs/architecture/overview.md) | 分层架构、服务配置表（28/28）、技术栈 |
 | **OpenAPI 规范** | [docs/api/openapi.yaml](docs/api/openapi.yaml) | 完整 OpenAPI 3.0 规范 |
 | **用户操作手册** | [docs/user-guide/UserManual.md](docs/user-guide/UserManual.md) | 16 模块用户操作指南 |
 | **数据库设计** | [docs/architecture/database.md](docs/architecture/database.md) | Schema 划分、表结构规范 |
 | **标准端口分配** | [docs/architecture/ports.md](docs/architecture/ports.md) | 28 服务端口唯一真相源 |
-| **WebSocket 规范** | [docs/architecture/websocket-path-mapping.md](docs/architecture/websocket-path-mapping.md) | WebSocket 连接路径映射规范 |
-| **导航架构规范** | [docs/navigation-architecture.md](docs/navigation-architecture.md) | 四层导航模型、12 类导航元素、UI 视觉标准 |
+| **WebSocket 规范** | [docs/developer/standards/websocket-path-mapping.md](docs/developer/standards/websocket-path-mapping.md) | WebSocket 连接路径映射规范 |
+| **导航架构规范** | [docs/design/navigation-architecture.md](docs/design/navigation-architecture.md) | 四层导航模型、12 类导航元素、UI 视觉标准 |
 
 #### API 文档索引
 | 文档 | 路径 | 说明 |
@@ -845,27 +845,27 @@ docs/
 #### 架构与设计
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| 架构规范标准 | [docs/architecture/standards.md](docs/architecture/standards.md) | 命名规范、目录结构标准 |
+| 架构规范标准 | [docs/developer/standards/architecture-standards.md](docs/developer/standards/architecture-standards.md) | 命名规范、目录结构标准 |
 | 事件驱动架构 | [docs/architecture/event-driven.md](docs/architecture/event-driven.md) | 事件总线、发布订阅机制 |
-| API 路径标准化 | [docs/architecture/api-path-standardization.md](docs/architecture/api-path-standardization.md) | 统一路径前缀规范 |
+| API 路径标准化 | [docs/developer/standards/api-path-standardization.md](docs/developer/standards/api-path-standardization.md) | 统一路径前缀规范 |
 | 微前端架构决策 | [docs/architecture/microfrontend-architecture-decision.md](docs/architecture/microfrontend-architecture-decision.md) | Module Federation 选型决策 |
 
 #### 部署与运维
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| 运维文档索引 | [docs/deployment/README.md](docs/deployment/README.md) | DevOps 文档总入口 |
-| 部署指南总览 | [docs/deployment/deployment-guide-overview.md](docs/deployment/deployment-guide-overview.md) | 部署方式选型对比 |
-| 故障排查手册 | [docs/deployment/troubleshooting.md](docs/deployment/troubleshooting.md) | 常见问题与解决方案 |
-| 发布策略 | [docs/deployment/release-strategies.md](docs/deployment/release-strategies.md) | 灰度、蓝绿、金丝雀发布 |
+| 运维文档索引 | [docs/admin/README.md](docs/admin/README.md) | DevOps 文档总入口 |
+| 部署指南总览 | [docs/admin/deployment-guide-overview.md](docs/admin/deployment-guide-overview.md) | 部署方式选型对比 |
+| 故障排查手册 | [docs/admin/troubleshooting.md](docs/admin/troubleshooting.md) | 常见问题与解决方案 |
+| 发布策略 | [docs/admin/release-strategies.md](docs/admin/release-strategies.md) | 灰度、蓝绿、金丝雀发布 |
 
 #### 开发指南
 | 文档 | 路径 | 说明 |
 |------|------|------|
-| 后端代码规范 | [docs/development/backend/code-standards.md](docs/development/backend/code-standards.md) | Rust 代码规范与最佳实践 |
-| 后端服务开发 | [docs/development/backend/backend-services.md](docs/development/backend/backend-services.md) | 微服务开发指南 |
-| 后端 API 设计 | [docs/development/backend/api-design.md](docs/development/backend/api-design.md) | REST API 设计原则 |
-| 前端设计系统 | [docs/development/frontend/design-system.md](docs/development/frontend/design-system.md) | Design Tokens、主题系统 |
-| 前端微前端架构 | [docs/development/frontend/module-federation-architecture.md](docs/development/frontend/module-federation-architecture.md) | Module Federation 架构 |
+| 后端代码规范 | [docs/developer/backend/code-standards.md](docs/developer/backend/code-standards.md) | Rust 代码规范与最佳实践 |
+| 后端服务开发 | [docs/developer/backend/backend-services.md](docs/developer/backend/backend-services.md) | 微服务开发指南 |
+| 后端 API 设计 | [docs/developer/backend/api-design.md](docs/developer/backend/api-design.md) | REST API 设计原则 |
+| 前端设计系统 | [docs/developer/frontend/design-system.md](docs/developer/frontend/design-system.md) | Design Tokens、主题系统 |
+| 前端微前端架构 | [docs/developer/frontend/module-federation-architecture.md](docs/developer/frontend/module-federation-architecture.md) | Module Federation 架构 |
 
 #### 业务模块技术文档
 | 模块 | 技术文档 | 用户手册 | 说明 |
@@ -890,7 +890,7 @@ docs/
 
 ### 快速参考
 
-- **安装部署**: 查看 [部署指南总览](docs/deployment/deployment-guide-overview.md)
+- **安装部署**: 查看 [部署指南总览](docs/admin/deployment-guide-overview.md)
 - **API 调用**: 查看 [API 文档索引](docs/api/README.md) 或 [OpenAPI 规范](docs/api/openapi.yaml)
 - **系统使用**: 查看 [用户操作手册](docs/user-guide/UserManual.md)
 - **插件开发**: 查看 [插件 API](docs/api/plugins-api.md) 与 [Code Wiki 插件架构章节](docs/architecture/code-wiki.md)
@@ -1005,5 +1005,5 @@ MIT License
 
 **最后更新**: 2026-09-05
 **版本**: v5.15.0 (正式版)
-**内部迭代**: V478（见 [docs/roadmap/TODO.md](docs/roadmap/TODO.md) 版本章节）
+**内部迭代**: V478（见 [docs/project/TODO.md](docs/project/TODO.md) 版本章节）
 **文档版本**: v5.2

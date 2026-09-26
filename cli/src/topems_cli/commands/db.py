@@ -331,7 +331,7 @@ def db_drop():
 
 @db.group(name="schema-defense")
 def schema_defense():
-    """Schema 防御体系：增量迁移 + 一致性自检（对应 docs/development/backend/database-development.md）"""
+    """Schema 防御体系：增量迁移 + 一致性自检（对应 docs/developer/backend/database-development.md）"""
     pass
 
 
@@ -408,7 +408,7 @@ def schema_defense_status():
     if done == total and total == 26:
         console.print("[bold green]🎯 26/26 = 100% 全量覆盖目标已达成（V69.3 + V69.4）[/bold green]")
     console.print(
-        "[dim]规范文档: docs/development/backend/database-development.md[/dim]"
+        "[dim]规范文档: docs/developer/backend/database-development.md[/dim]"
     )
 
 

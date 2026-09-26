@@ -1794,7 +1794,7 @@ ws_check() {
     
     echo ""
     detail "路径规范: /ws/{module}/{feature}"
-    detail "详细文档: docs/guides/devops/websocket-path-mapping.md"
+    detail "详细文档: docs/developer/standards/websocket-path-mapping.md"
 }
 
 # =============================================

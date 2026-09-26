@@ -34,7 +34,7 @@ Step 5 E（V24N 文档 + 提交推送） ←  Step 4 端到端复现验收 ← S
 **目标**：不要拍脑袋定任务，用「数据 + 历史清单」选 4 条高价值、可独立验证、无交叉依赖的子任务。
 
 **并发扫描清单（一次 Run/Grep 全部）**：
-1. 读 `docs/roadmap/TODO.md`，搜索 `后续扩展`，取最近一个版本（如 V245 后续扩展）的未勾条目作为优先候选
+1. 读 `docs/project/TODO.md`，搜索 `后续扩展`，取最近一个版本（如 V245 后续扩展）的未勾条目作为优先候选
 2. `git log --oneline -n 6`：确认上一版本号末尾两位，本次 V24N 末位 +1（例如 `0d58325 feat(v245)` → 新版本 = V246）
 3. 质量门禁基线复测（跑 dry-run 或 short 输出）：
    - `node scripts/ci/check-axum-layer-order.cjs 2>&1 | grep -E "R[123]:|Integrity conclusion"`  → 记录 R1/R2/R3 实际数值
@@ -148,7 +148,7 @@ ruby -ryaml -e "puts YAML.load_file('.github/workflows/ci.yml').class"
 
 ### 5.1 写入模板
 
-写入位置：`docs/roadmap/TODO.md`，在 V24(N-1) 后续扩展段下方，紧邻标题 `## 🎯 V24N — ...（并行推进 · ✅ 完成）`。
+写入位置：`docs/project/TODO.md`，在 V24(N-1) 后续扩展段下方，紧邻标题 `## 🎯 V24N — ...（并行推进 · ✅ 完成）`。
 
 **必须包含 7 个小节**（每个 A/B/C/D 轨各一节 + 变更文件清单 + 最终验收矩阵 + 后续扩展）：
 
@@ -208,7 +208,7 @@ feat(v24<n>): <A 轨 1 句>, <B 轨 1 句>, <C 轨 1 句>, <D 轨 1 句>
 
 <V24N 概要 body 3-5 段，每轨 1 段，不用列完整变更清单（详细在 TODO.md）>
 
-文档：docs/roadmap/TODO.md 新增 V24<n> 章节 + V24<n-1> 后续扩展 <数量> 条勾 ✓
+文档：docs/project/TODO.md 新增 V24<n> 章节 + V24<n-1> 后续扩展 <数量> 条勾 ✓
 ```
 
 ⚠️ **提交消息中不要包含 `$`、反引号 3 连、嵌套 shell 展开字符**（避免 git commit 多参数的 pathspec 陷阱）。若消息中必须有 `$FAIL` 这类 shell 变量名，用 `-F <msg_file>` 方式：

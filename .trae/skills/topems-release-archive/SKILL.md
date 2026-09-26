@@ -27,11 +27,11 @@ description: "TOPEMS 版本发布与归档：SHA 回填双 docs 修正、main �
 在动手前 30s 跑完以下命令，若任一红就先解决再走发布链：
 
 ```bash
-# 1. 工作区无未暂存改动（除 docs/roadmap/TODO.md 占位段未 SHA 回填外）
+# 1. 工作区无未暂存改动（除 docs/project/TODO.md 占位段未 SHA 回填外）
 git status --short
 
 # 2. TODO.md 含 "<待提交回填>" 或 "{FINAL}" 占位符（预期在 V25N 章标题下方一行）
-grep -n "待提交回填\|{FINAL}" docs/roadmap/TODO.md | tail -4
+grep -n "待提交回填\|{FINAL}" docs/project/TODO.md | tail -4
 
 # 3. 最新 commit msg 是 feat(v25n)（尚未推送的主改动 commit）
 git log --oneline -n 1
@@ -71,7 +71,7 @@ D 轨(...):
   ...
 
 全门禁通过: perm / axum / cargo / tsc / i18n
-文档: docs/roadmap/TODO.md 新增 V25<n> 章节 + V25<n-1> 后续扩展 X 条打勾 ✓"
+文档: docs/project/TODO.md 新增 V25<n> 章节 + V25<n-1> 后续扩展 X 条打勾 ✓"
 
 AFTER=$(git rev-parse --short HEAD)
 echo "After feat SHA: $AFTER"
@@ -99,13 +99,13 @@ git commit -F _tmp_v25<n>_msg.txt ; rm _tmp_v25<n>_msg.txt
 ```bash
 # docs #1: Baseline SHA → AFTER
 #   （用 Edit 工具直接替换 "Baseline SHA: \`<待提交回填>\`"，避免 sed 对 unicode 正则错误）
-git add docs/roadmap/TODO.md
+git add docs/project/TODO.md
 git commit -m "docs(roadmap): V25<n> baseline SHA $AFTER 回填"
 FINAL1=$(git rev-parse --short HEAD)
 
 # docs #2: Archive path {FINAL} → FINAL1
 #   （Edit 替换 "TOPEMS-V25<n>-{FINAL}.tar.gz" → "TOPEMS-V25<n>-$FINAL1.tar.gz"）
-git add docs/roadmap/TODO.md
+git add docs/project/TODO.md
 git commit -m "docs(roadmap): V25<n> tgz archive path releases/archives/TOPEMS-V25<n>-$FINAL1.tar.gz"
 FINAL2=$(git rev-parse --short HEAD)
 
@@ -172,7 +172,7 @@ ls -lh "$TGZ"   # 期望 -rw-r--r-- ... 38~48M
 #   **Tag**: `TOPEMS-V255` · Baseline SHA: `$AFTER` · Status: **全门禁通过** ✅ · 归档: `releases/archives/TOPEMS-V255-$FINAL2.tar.gz` (41M · .gitignore 排除 · 最终 commit $FINAL2)
 
 # F2. 第 3 次 docs commit
-git add docs/roadmap/TODO.md
+git add docs/project/TODO.md
 git commit -m "docs(roadmap): V25<n> tgz archive SHA corrected ($FINAL2)"
 
 # F3. 再 push main（tag V25<n> 不动，tag 指向 FINAL2 是稳定可复现的代码节点，
@@ -199,7 +199,7 @@ echo "=== 4. 最新 5 条 commits ==="
 git log --oneline -n 5
 echo ""
 echo "=== 5. TODO.md V25<n> 章标题行核对 ==="
-grep -n "### V25<n>" docs/roadmap/TODO.md -A 1 | head -4
+grep -n "### V25<n>" docs/project/TODO.md -A 1 | head -4
 ```
 
 ✅ 校验通过输出特征：

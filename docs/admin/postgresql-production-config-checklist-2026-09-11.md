@@ -369,9 +369,9 @@ pgbench -c 10 -j 2 -T 60 topems  # 运行测试
 
 ## 六、相关文档
 
-- 生产环境配置实施指南：`docs/assessments/production-environment-setup-guide-2026-09-11.md`
-- PostgreSQL 配置调优建议：`docs/assessments/postgresql-production-config-tuning-2026-09-11.md`
-- 数据库性能优化报告：`docs/assessments/database-performance-optimization-report-2026-09-11.md`
+- 生产环境配置实施指南：`docs/admin/production-environment-setup-guide-2026-09-11.md`
+- PostgreSQL 配置调优建议：`docs/admin/postgresql-production-config-tuning-2026-09-11.md`
+- 数据库性能优化报告：`docs/reports/archive/database-performance-optimization-report-2026-09-11.md`
 - 自动化配置脚本：`scripts/postgresql-production-config-tuning.sh`
 
 ---

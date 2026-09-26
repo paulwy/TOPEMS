@@ -31,6 +31,17 @@
 - **sccache 缓存重建**：清理误删的 `~/Library/Caches/Mozilla.sccache` 后自动重建，`sccache --stop/--start-server` 重启后 `cargo check` 无需 `RUSTC_WRAPPER` 绕过
 - **Storybook 故事文件修复**：修复 17 个 `*.stories.tsx` 与组件 API 失配（DesignTokens 非法对象简写语法、3 个孤儿 import 改引 shared-components、AlertCard/LoadingSpinner/EmptyState 等 API 适配）
 
+
+### 文档重构
+
+- 全面重构 docs/ 目录结构：30 个一级目录精简为 20 个，按读者角色分层（developer/admin/project/reports/design 等）
+- 归档 150+ 一次性报告/历史快照/UI v3 迁移文档到 docs/archive/
+- 合并重复规范：development-guide/code-quality-guide 有效内容并入 developer/README.md
+- 合并 USER_GUIDE.md 到 user-guide/UserManual.md（v2.2）
+- 重建 docs/README.md、developer/README.md、admin/README.md、reports/README.md 索引
+- 修复 scripts/topems.sh 中断链的 websocket 文档路径
+- 同步更新 scripts/、cli/、根 README 中所有文档路径引用
+
 ### 计划中
 
 - v1.1.0 功能增强版本开发
@@ -285,7 +296,7 @@ TOPEMS 1.0.0 是项目的首个正式版本，实现了企业级 AI 赋能平台
 ### 升级说明
 
 从无到 1.0.0：
-- 全新安装，请参考 [部署文档](docs/deployment/deployment-guide.md)
+- 全新安装，请参考 [部署文档](docs/admin/deployment-guide-overview.md)
 - 数据库初始化，请参考 [数据库设计文档](docs/database/database-design.md)
 
 ---

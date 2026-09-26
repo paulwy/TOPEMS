@@ -2,7 +2,7 @@
 
 > 范围：TOPEMS 全仓带版本化命名（V{n} / v{n}）或历史遗留并存的前端封装与后端模块。
 > 口径：以"页面真实消费"为权威判定（与 P0-P3 审计矩阵一致）；状态、路由规模、消费方均来自 2026-09-08/09 审计实测，非估算。
-> 配套报告：`docs/assessments/frontend-backend-mapping-assessment-2026-09-08.html`（P3 #5 治理项落地）。
+> 配套报告：`docs/reports/archive/frontend-backend-mapping-assessment-2026-09-08.html`（P3 #5 治理项落地）。
 
 ## 1. 生命周期状态定义
 
