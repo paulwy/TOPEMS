@@ -63,10 +63,10 @@ pub async fn list_batches(
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
-        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
-          AND ($4::uuid IS NULL OR supplier_id = $4)
+          AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
           AND ($5::text IS NULL OR quality_status = $5)
           AND ($6::text IS NULL OR status = $6)
         ORDER BY created_at DESC
@@ -90,10 +90,10 @@ pub async fn list_batches(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.batches
-                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
                   AND ($2::text IS NULL OR sku ILIKE $2)
                   AND ($3::text IS NULL OR batch_no ILIKE $3)
-                  AND ($4::uuid IS NULL OR supplier_id = $4)
+                  AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
                   AND ($5::text IS NULL OR quality_status = $5)
                   AND ($6::text IS NULL OR status = $6)
                 "#
@@ -438,7 +438,7 @@ pub async fn get_batch_statistics(
             SUM(CASE WHEN remaining_days <= 0 THEN 1 ELSE 0 END) as expired_count,
             SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END) as quality_pending_count
         FROM wms.batches
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid)
+        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid::uuid)
         "#,
         warehouse_id
     )
@@ -551,7 +551,7 @@ pub async fn get_expired(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
         WHERE deleted_at IS NULL AND remaining_days <= 0
-          AND (warehouse_id = $1 OR $1 IS NULL)
+          AND (warehouse_id = $1::uuid OR $1 IS NULL)
         ORDER BY remaining_days ASC
         "#),
     )
