@@ -17,7 +17,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-use super::{big_decimal_to_f64, big_decimal_to_f64};
+use super::big_decimal_to_f64;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {

@@ -92,9 +92,6 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-}
 
 // ==================== Handlers ====================
 
