@@ -198,6 +198,7 @@ pub mod audit_soft_delete;
 pub mod backup;
 pub mod data_governance;
 pub mod database;
+pub mod decimal;
 pub mod master_data_refs;
 pub mod query_optimizer;
 pub mod reconciliation_log;

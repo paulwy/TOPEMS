@@ -8,7 +8,7 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
 
-use crate::shared::utils::big_decimal_to_f64;
+use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
 
 pub mod inspection;

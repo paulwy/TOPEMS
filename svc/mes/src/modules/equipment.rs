@@ -1,6 +1,6 @@
 //! Equipment handlers
 
-use crate::shared::utils::big_decimal_to_f64_opt;
+use topems_shared_db::decimal::big_decimal_to_f64_opt;
 use axum::{
     extract::Extension,
     extract::Path,

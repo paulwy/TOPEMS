@@ -4,7 +4,6 @@ pub mod permission;
 pub mod tenant;
 #[cfg(test)]
 pub mod tenant_test;
-pub mod utils;
 
 use axum::extract::FromRef;
 use sqlx::PgPool;

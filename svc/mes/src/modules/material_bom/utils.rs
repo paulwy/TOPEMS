@@ -21,7 +21,7 @@ mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};
     use sqlx::types::BigDecimal;
-    use crate::shared::utils::big_decimal_to_f64;
+    use topems_shared_db::decimal::big_decimal_to_f64;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

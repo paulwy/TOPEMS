@@ -16,7 +16,7 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
-use crate::shared::utils::big_decimal_to_f64;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()

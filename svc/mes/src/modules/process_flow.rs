@@ -16,7 +16,7 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::utils::big_decimal_to_f64_opt;
+use topems_shared_db::decimal::big_decimal_to_f64_opt;
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
