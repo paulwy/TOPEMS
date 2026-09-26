@@ -1243,8 +1243,8 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.clone().unwrap_or(0.0);
-        let step_capacity = if step_time > 0.0 {
+        let step_time = step.standard_time.clone().unwrap_or(0);
+        let step_capacity = if step_time > 0 {
             480.0 / step_time.to_string().parse::<f64>().unwrap_or_default()
         } else {
             0.0
