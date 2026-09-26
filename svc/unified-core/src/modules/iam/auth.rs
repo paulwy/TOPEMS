@@ -181,7 +181,7 @@ pub async fn login(
                     JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
                     JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
           u.created_at AS created_at
-        FROM public.core_users u
+        FROM iam.users u
         WHERE (u.username = $1 OR u.email = $1) AND u.deleted_at IS NULL
         "#,
     )
@@ -496,7 +496,7 @@ pub async fn register(
     }
 
     // 检查用户名是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM public.core_users WHERE username = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE username = $1")
         .bind(username)
         .fetch_one(&state.pool)
         .await
@@ -518,7 +518,7 @@ pub async fn register(
     }
 
     // 检查邮箱是否已存在
-    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM public.core_users WHERE email = $1")
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM iam.users WHERE email = $1")
         .bind(email)
         .fetch_one(&state.pool)
         .await
@@ -555,7 +555,7 @@ pub async fn register(
     let user_id = Uuid::new_v4();
     let write_core = sqlx::query(
         r#"
-        INSERT INTO public.core_users (id, username, email, password_hash, full_name, full_name_en, status, is_superuser, created_at)
+        INSERT INTO iam.users (id, username, email, password_hash, full_name, full_name_en, status, is_superuser, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'active', false, NOW())
         ON CONFLICT (username) DO NOTHING
         "#,
@@ -619,7 +619,7 @@ pub async fn refresh_token(
                      JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
            rt.id as refresh_token_id
          FROM public.core_refresh_tokens rt
-         JOIN public.core_users u ON rt.user_id = u.id
+         JOIN iam.users u ON rt.user_id = u.id
          WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
     )
     .bind(&refresh_token_hash)
@@ -957,7 +957,7 @@ pub async fn forgot_password(
                     JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
                     JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
           u.created_at AS created_at
-        FROM public.core_users u
+        FROM iam.users u
         WHERE u.email = $1 AND u.status = 'active' AND u.deleted_at IS NULL
         "#,
     )
@@ -1145,7 +1145,7 @@ pub async fn reset_password(
 
     // 更新密码
     match sqlx::query(
-        "UPDATE public.core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
+        "UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
     )
     .bind(&password_hash)
     .bind(user_id)

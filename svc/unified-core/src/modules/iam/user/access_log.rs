@@ -142,7 +142,7 @@ pub async fn list_access_logs(
         SELECT a.id, a.user_id, u.username, a.action, a.resource_type, a.resource_id,
                a.ip_address::text, a.user_agent, a.status, a.created_at
         FROM public.audit_logs a
-        LEFT JOIN public.core_users u ON a.user_id = u.id
+        LEFT JOIN iam.users u ON a.user_id = u.id
         ORDER BY a.created_at DESC
         LIMIT $1 OFFSET $2
         "#,
@@ -222,7 +222,7 @@ pub async fn get_user_access_logs(
         SELECT a.id, a.user_id, u.username, a.action, a.resource_type, a.resource_id,
                a.ip_address::text, a.user_agent, a.status, a.created_at
         FROM public.audit_logs a
-        LEFT JOIN public.core_users u ON a.user_id = u.id
+        LEFT JOIN iam.users u ON a.user_id = u.id
         WHERE a.user_id = $1
         ORDER BY a.created_at DESC
         LIMIT $2 OFFSET $3

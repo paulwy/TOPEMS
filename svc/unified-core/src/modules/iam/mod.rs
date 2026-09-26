@@ -17,7 +17,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // Create users table
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS public.core_users (
+        CREATE TABLE IF NOT EXISTS iam.users (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             username VARCHAR(64) NOT NULL UNIQUE,
             email TEXT NOT NULL UNIQUE,
@@ -447,7 +447,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     };
     sqlx::query(
         r#"
-        INSERT INTO public.core_users (username, email, password_hash, full_name, is_superuser)
+        INSERT INTO iam.users (username, email, password_hash, full_name, is_superuser)
         VALUES ('admin', 'admin@topems.com', $1, '系统管理员', true)
         ON CONFLICT (username) DO NOTHING
         "#,
@@ -460,7 +460,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         INSERT INTO public.core_user_roles (user_id, role_id)
-        SELECT u.id, r.id FROM public.core_users u, core_roles r
+        SELECT u.id, r.id FROM iam.users u, core_roles r
         WHERE u.username = 'admin' AND r.name = 'superadmin'
         ON CONFLICT DO NOTHING
         "#,

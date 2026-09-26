@@ -44,13 +44,13 @@ pub async fn list_users(
 
     let total_result = if claims.is_superuser {
         sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL",
+            "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL",
         )
         .fetch_one(&state.pool)
         .await
     } else {
         sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
+            "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .fetch_one(&state.pool)
@@ -70,7 +70,7 @@ pub async fn list_users(
 
     let result = if claims.is_superuser {
         sqlx::query_as::<_, UserRow>(
-            "SELECT id, username, email, CASE WHEN $3 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+            "SELECT id, username, email, CASE WHEN $3 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
         )
         .bind(page_size)
         .bind(offset)
@@ -79,7 +79,7 @@ pub async fn list_users(
         .await
     } else {
         sqlx::query_as::<_, UserRow>(
-            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+            "SELECT id, username, email, CASE WHEN $4 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
         )
         .bind(tenant_id.unwrap_or_else(Uuid::nil))
         .bind(page_size)
@@ -250,7 +250,7 @@ pub async fn create_user(
     }
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND username = $1",
+        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1",
     )
     .bind(username)
     .fetch_one(&state.pool)
@@ -281,7 +281,7 @@ pub async fn create_user(
     }
 
     let existing_email_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND email = $1",
+        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND email = $1",
     )
     .bind(email)
     .fetch_one(&state.pool)
@@ -326,7 +326,7 @@ pub async fn create_user(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO public.core_users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
+        INSERT INTO iam.users (id, username, email, password_hash, full_name, status, is_superuser, created_at)
         VALUES ($1, $2, $3, $4, $5, 'active', false, NOW())
         "#
     )
@@ -429,7 +429,7 @@ pub async fn get_user(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
@@ -523,7 +523,7 @@ pub async fn update_user(
     };
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND id = $1::UUID",
+        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1::UUID",
     )
     .bind(&id)
     .fetch_one(&state.pool)
@@ -551,7 +551,7 @@ pub async fn update_user(
 
     if let Some(username) = payload.get("username").and_then(|v| v.as_str()) {
         let existing_count: i64 = match sqlx::query_scalar(
-            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND username = $1 AND id != $2",
+            "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND username = $1 AND id != $2",
         )
         .bind(username)
         .bind(user_id)
@@ -581,7 +581,7 @@ pub async fn update_user(
 
     if let Some(email) = payload.get("email").and_then(|v| v.as_str()) {
         let existing_email_count: i64 = match sqlx::query_scalar(
-            "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND email = $1 AND id != $2",
+            "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND email = $1 AND id != $2",
         )
         .bind(email)
         .bind(user_id)
@@ -611,7 +611,7 @@ pub async fn update_user(
 
     let update_result = sqlx::query(
         r#"
-        UPDATE public.core_users
+        UPDATE iam.users
         SET 
             username = COALESCE($1, username),
             email = COALESCE($2, email),
@@ -709,7 +709,7 @@ pub async fn delete_user(
     }
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND id = $1::UUID",
+        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1::UUID",
     )
     .bind(&id)
     .fetch_one(&state.pool)
@@ -736,7 +736,7 @@ pub async fn delete_user(
     }
 
     let delete_result =
-        sqlx::query("UPDATE public.core_users SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE iam.users SET deleted_at = NOW() WHERE id = $1")
             .bind(user_id)
             .execute(&state.pool)
             .await;

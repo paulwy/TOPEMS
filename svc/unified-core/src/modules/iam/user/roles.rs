@@ -71,7 +71,7 @@ pub async fn get_user_permissions(
     };
 
     let user: Option<UserRow> = sqlx::query_as(
-        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, username, email, CASE WHEN $2 = 'en' THEN COALESCE(full_name_en, full_name) ELSE full_name END AS full_name, status, is_superuser, created_at FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .bind(topems_shared_core::locale::Locale::from_headers(&headers).as_sql())
@@ -226,7 +226,7 @@ pub async fn get_user_roles(
     };
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_one(&state.pool)
@@ -335,7 +335,7 @@ pub async fn assign_user_role(
     };
 
     let existing_user_count: i64 = match sqlx::query_scalar(
-        "SELECT COUNT(*) FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT COUNT(*) FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_one(&state.pool)

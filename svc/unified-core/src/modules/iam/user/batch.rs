@@ -49,7 +49,7 @@ pub async fn get_effective_permissions(
     };
 
     let is_superuser: bool = match sqlx::query_scalar(
-        "SELECT is_superuser FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT is_superuser FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_optional(&state.pool)
@@ -192,7 +192,7 @@ pub async fn batch_delete_users(
             }
         };
 
-        let result = sqlx::query("UPDATE public.core_users SET deleted_at = NOW() WHERE id = $1")
+        let result = sqlx::query("UPDATE iam.users SET deleted_at = NOW() WHERE id = $1")
             .bind(user_uuid)
             .execute(&state.pool)
             .await;
@@ -296,7 +296,7 @@ pub async fn batch_update_users(
 
         let result = if let Some(status) = &new_status {
             sqlx::query(
-                "UPDATE public.core_users SET status = $1, updated_at = NOW() WHERE id = $2",
+                "UPDATE iam.users SET status = $1, updated_at = NOW() WHERE id = $2",
             )
             .bind(status)
             .bind(user_uuid)
@@ -306,7 +306,7 @@ pub async fn batch_update_users(
             // 没有提供 isactive，尝试更新 full_name / email（兼容任务描述中的 updates 形态）
             sqlx::query(
                 r#"
-                UPDATE public.core_users
+                UPDATE iam.users
                 SET
                     full_name = COALESCE($1, full_name),
                     email = COALESCE($2, email),

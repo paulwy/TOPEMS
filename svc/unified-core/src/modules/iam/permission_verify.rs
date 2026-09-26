@@ -128,7 +128,7 @@ pub async fn verify_multiple_permissions(
 async fn verify_user_permission(pool: &PgPool, user_id: &Uuid, permission_code: &str) -> bool {
     // 超级管理员拥有所有权限
     let is_superuser: Option<bool> = sqlx::query_scalar(
-        "SELECT is_superuser FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT is_superuser FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_id)
     .fetch_optional(pool)

@@ -50,7 +50,7 @@ pub async fn get_user_permissions(
 
     // 检查用户是否是超级管理员
     let is_superuser: bool = match sqlx::query_scalar(
-        "SELECT is_superuser FROM public.core_users WHERE deleted_at IS NULL AND id = $1",
+        "SELECT is_superuser FROM iam.users WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(user_uuid)
     .fetch_optional(&state.pool)
@@ -195,7 +195,7 @@ pub async fn update_user_permissions(
 
     // 检查用户是否存在
     let user_exists: bool = match sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM public.core_users WHERE deleted_at IS NULL AND id = $1)",
+        "SELECT EXISTS(SELECT 1 FROM iam.users WHERE deleted_at IS NULL AND id = $1)",
     )
     .bind(user_uuid)
     .fetch_one(&state.pool)
