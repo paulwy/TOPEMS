@@ -121,11 +121,11 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+    dt.map(|d| d).unwrap_or_default()
 }
 
 fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d.to_rfc3339())
+    dt.map(|d| d)
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -139,12 +139,12 @@ fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
         .map(|dt| dt.with_timezone(&Utc))
         .or_else(|| {
             NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f")
-                .map(|dt| dt.and_utc())
+                .map(|dt| dt)
                 .ok()
         })
         .or_else(|| {
             NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-                .map(|dt| dt.and_utc())
+                .map(|dt| dt)
                 .ok()
         })
 }
@@ -424,17 +424,17 @@ pub async fn get_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "获取工单成功",
         )),
@@ -535,17 +535,17 @@ pub async fn create_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "创建工单成功",
         )),
@@ -668,17 +668,17 @@ pub async fn update_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "更新工单成功",
         )),
@@ -816,17 +816,17 @@ pub async fn start_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "开始工单成功",
         )),
@@ -906,17 +906,17 @@ pub async fn complete_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "完成工单成功",
         )),
@@ -996,17 +996,17 @@ pub async fn cancel_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "取消工单成功",
         )),
@@ -1086,17 +1086,17 @@ pub async fn pause_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "暂停工单成功",
         )),
@@ -1176,17 +1176,17 @@ pub async fn resume_work_order(
                 process_id: r.process_id.map(|u| u.to_string()),
                 planned_quantity: big_decimal_to_f64(r.planned_quantity),
                 completed_quantity: big_decimal_to_f64(r.completed_quantity),
-                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t.and_utc())),
-                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t.and_utc())),
-                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t.and_utc())),
-                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t.and_utc())),
+                plan_start_date: opt_datetime_to_string(r.plan_start_date.map(|t| t)),
+                plan_end_date: opt_datetime_to_string(r.plan_end_date.map(|t| t)),
+                actual_start_date: opt_datetime_to_string(r.actual_start_date.map(|t| t)),
+                actual_end_date: opt_datetime_to_string(r.actual_end_date.map(|t| t)),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "恢复工单成功",
         )),
@@ -1304,7 +1304,7 @@ mod tests {
     #[test]
     fn test_naive_to_utc_some() {
         let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok();
         let result = naive_to_utc(naive);
         assert_eq!(result.naive_utc().date().year(), 2024);
@@ -1319,7 +1319,7 @@ mod tests {
     #[test]
     fn test_datetime_to_string_returns_nonempty() {
         let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok();
         let s = datetime_to_string(naive);
         assert!(!s.is_empty());
@@ -1329,7 +1329,7 @@ mod tests {
     #[test]
     fn test_opt_datetime_to_string_some_and_none() {
         let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok();
         let some_result = opt_datetime_to_string(naive);
         assert!(some_result.is_some());

@@ -173,7 +173,7 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+    dt.map(|d| d).unwrap_or_default()
 }
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -392,8 +392,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "获取工艺流程成功",
         )),
@@ -464,8 +464,8 @@ pub async fn create_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "创建工艺流程成功",
         )),
@@ -551,8 +551,8 @@ pub async fn update_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "更新工艺流程成功",
         )),
@@ -675,7 +675,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().and_utc(),
+                    created_at: s.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -729,7 +729,7 @@ pub async fn add_flow_step(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -739,7 +739,7 @@ pub async fn add_flow_step(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -815,7 +815,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().and_utc(),
+                    created_at: s.created_at.unwrap_or_default(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -872,7 +872,7 @@ pub async fn update_flow_step(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -882,7 +882,7 @@ pub async fn update_flow_step(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -962,7 +962,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().and_utc(),
+                    created_at: s.created_at.unwrap_or_default(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1120,7 +1120,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().and_utc(),
+                    created_at: s.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -1297,7 +1297,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 45, 0)
             .unwrap();
-        let utc = naive_to_utc(Some(dt.and_utc()));
+        let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.naive_utc().date(), dt.date());
         assert_eq!(utc.naive_utc().time(), dt.time());
     }
@@ -1316,7 +1316,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
-        let s = datetime_to_string(Some(dt.and_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

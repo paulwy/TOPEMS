@@ -284,8 +284,8 @@ pub async fn create_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: (Some(bom.created_at.unwrap_or_default().and_utc())).unwrap_or_default(),
-        updated_at: (Some(bom.updated_at.unwrap_or_default().and_utc())).unwrap_or_default(),
+        created_at: (Some(bom.created_at.unwrap_or_default())).unwrap_or_default(),
+        updated_at: (Some(bom.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(
@@ -373,8 +373,8 @@ pub async fn get_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: (Some(bom.created_at.unwrap_or_default().and_utc())).unwrap_or_default(),
-        updated_at: (Some(bom.updated_at.unwrap_or_default().and_utc())).unwrap_or_default(),
+        created_at: (Some(bom.created_at.unwrap_or_default())).unwrap_or_default(),
+        updated_at: (Some(bom.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     let item_responses: Vec<BomItemResponse> = items

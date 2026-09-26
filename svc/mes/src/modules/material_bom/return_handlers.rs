@@ -127,11 +127,11 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
+        return_time: return_record.return_time.map(|d| d),
         notes: return_record.notes,
-        created_at: (Some(return_record.created_at.unwrap_or_default().and_utc()))
+        created_at: (Some(return_record.created_at.unwrap_or_default()))
             .unwrap_or_default(),
-        updated_at: (Some(return_record.updated_at.unwrap_or_default().and_utc()))
+        updated_at: (Some(return_record.updated_at.unwrap_or_default()))
             .unwrap_or_default(),
     };
 
@@ -263,7 +263,7 @@ pub async fn list_material_returns(
                 .try_get::<Option<DateTime<Utc>>, _>("return_time")
                 .ok()
                 .flatten()
-                .map(|d| d.to_rfc3339()),
+                .map(|d| d),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")

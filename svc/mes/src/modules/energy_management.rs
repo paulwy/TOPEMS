@@ -541,7 +541,7 @@ async fn export_energy_report(
         serde_json::json!({
             "export_url": "/api/mes/v1/energy/export/download/report.xlsx",
             "export_format": "xlsx",
-            "export_time": Utc::now().to_rfc3339(),
+            "export_time": Utc::now(),
             "message": "报告已生成，正在准备下载"
         }),
         "能耗报表导出成功",

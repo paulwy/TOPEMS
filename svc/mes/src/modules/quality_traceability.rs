@@ -186,7 +186,7 @@ pub async fn forward_traceability(
         timestamp: order
             .actual_start_date
             .and_then(|d| d.and_hms_opt(0, 0, 0))
-            .map(|d| d.and_utc()),
+            .map(|d| d),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -253,7 +253,7 @@ pub async fn forward_traceability(
         timestamp: order
             .actual_end_date
             .and_then(|d| d.and_hms_opt(0, 0, 0))
-            .map(|d| d.and_utc()),
+            .map(|d| d),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -365,7 +365,7 @@ pub async fn backward_traceability(
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+            .map(|d| d.and_hms_opt(0, 0, 0).unwrap()),
         operator: None,
         description: Some("成品批次".to_string()),
     });

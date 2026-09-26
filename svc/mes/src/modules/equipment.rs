@@ -127,7 +127,7 @@ fn naive_date_to_string(d: Option<chrono::NaiveDate>) -> Option<String> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+    dt.map(|d| d).unwrap_or_default()
 }
 
 fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
@@ -1196,7 +1196,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
+                    created_at: r.created_at.unwrap_or_default(),
                 })
                 .collect();
 
@@ -1326,7 +1326,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default(),
             },
             "创建点检记录成功",
         )),

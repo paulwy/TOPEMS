@@ -131,10 +131,10 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: issue.issue_time.map(|t| t.and_utc()),
+        issue_time: issue.issue_time.map(|t| t),
         notes: issue.notes,
-        created_at: (Some(issue.created_at.unwrap_or_default().and_utc())).unwrap_or_default(),
-        updated_at: (Some(issue.updated_at.unwrap_or_default().and_utc())).unwrap_or_default(),
+        created_at: (Some(issue.created_at.unwrap_or_default())).unwrap_or_default(),
+        updated_at: (Some(issue.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(response, "物料领用单创建成功"))

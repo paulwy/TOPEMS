@@ -83,7 +83,7 @@ pub fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
 }
 
 pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+    dt.map(|d| d).unwrap_or_default()
 }
 
 pub fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
@@ -100,7 +100,7 @@ pub fn big_decimal_to_f64<T: Into<Option<BigDecimal>>>(bd: T) -> f64 {
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
         NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok()
     })
 }
@@ -109,7 +109,7 @@ fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
 fn parse_opt_date(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
         NaiveDateTime::parse_from_str(&s, "%Y-%m-%d")
-            .map(|dt| dt.and_utc())
+            .map(|dt| dt)
             .ok()
     })
 }

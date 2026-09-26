@@ -118,7 +118,7 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+    dt.map(|d| d).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -343,8 +343,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -449,8 +449,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: result.created_at.unwrap_or_default().and_utc(),
-        updated_at: result.updated_at.unwrap_or_default().and_utc(),
+        created_at: result.created_at.unwrap_or_default(),
+        updated_at: result.updated_at.unwrap_or_default(),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -526,8 +526,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -625,7 +625,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| d.and_utc().to_rfc3339()),
+            join_date: r.join_date.map(|d| d),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -699,7 +699,7 @@ pub async fn add_team_member(
         employee_name: result.employee_name,
         employee_code: result.employee_code,
         position: result.position,
-        join_date: result.join_date.map(|d| d.and_utc().to_rfc3339()),
+        join_date: result.join_date.map(|d| d),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
