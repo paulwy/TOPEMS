@@ -438,9 +438,9 @@ pub async fn get_batch_statistics(
             SUM(CASE WHEN remaining_days <= 0 THEN 1 ELSE 0 END) as expired_count,
             SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END) as quality_pending_count
         FROM wms.batches
-        WHERE ($1::text IS NULL OR warehouse_id = $1::text)
+        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid)
         "#,
-        warehouse_id.map(|v| v.to_string())
+        warehouse_id
     )
     .fetch_one(&mut **txn)
     .await;
