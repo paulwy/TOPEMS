@@ -475,7 +475,7 @@ pub async fn create_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -501,7 +501,7 @@ pub async fn create_oee_record(
         id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()),
-        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),
@@ -517,8 +517,14 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default().and_utc(),
-        updated_at: result.updated_at.unwrap_or_default().and_utc(),
+        created_at: result
+            .created_at
+            .unwrap_or_default()
+            .with_timezone(&chrono::Utc),
+        updated_at: result
+            .updated_at
+            .unwrap_or_default()
+            .with_timezone(&chrono::Utc),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -580,7 +586,7 @@ pub async fn get_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
-                equipment_code: Some(r.equipment_no),
+                equipment_code: r.equipment_no,
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
                 run_time: big_decimal_to_f64(Some(r.actual_run_time)),
@@ -596,8 +602,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -718,7 +724,7 @@ pub async fn update_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -753,8 +759,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
@@ -971,7 +977,7 @@ pub async fn get_oee_statistics(
             .map(|r| OeeEquipmentStat {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_code: r.equipment_code,
+                equipment_code: r.equipment_code.unwrap_or_default(),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
@@ -1076,7 +1082,7 @@ pub async fn get_equipment_efficiency_analysis(
             EquipmentEfficiencyAnalysis {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_no: r.equipment_no,
+                equipment_no: r.equipment_no.unwrap_or_default(),
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),

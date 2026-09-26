@@ -1,0 +1,155 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO work_reports (\n            report_no, work_order_id, work_order_no, order_id, order_no,\n            work_station_id, work_station_name,\n            reporter_name, report_date, shift,\n            output_quantity, defect_quantity, labor_hours, remark,\n            status\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending')\n        RETURNING\n            id, report_no, work_order_id, work_order_no,\n            order_id, order_no, work_station_id, work_station_name,\n            reporter_name, report_date, shift,\n            output_quantity, defect_quantity, labor_hours, remark,\n            status, approved_by, approved_at, approval_remark,\n            created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "report_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "work_order_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "work_order_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "order_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 5,
+        "name": "order_no",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "work_station_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "work_station_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "reporter_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "report_date",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "shift",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "output_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 12,
+        "name": "defect_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 13,
+        "name": "labor_hours",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 14,
+        "name": "remark",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 15,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 16,
+        "name": "approved_by",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 17,
+        "name": "approved_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 18,
+        "name": "approval_remark",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 19,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 20,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Uuid",
+        "Varchar",
+        "Uuid",
+        "Varchar",
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Timestamptz",
+        "Varchar",
+        "Numeric",
+        "Numeric",
+        "Numeric",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "3b39109176255d9b3e6c125ae3d34c5ee4d60fcfc3cdb1a62583bf920a4b94be"
+}

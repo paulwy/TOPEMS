@@ -11,27 +11,27 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "source_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "host",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "database",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -41,12 +41,12 @@
       {
         "ordinal": 7,
         "name": "username",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
         "name": "password",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,

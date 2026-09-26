@@ -9,7 +9,7 @@
         "Uuid",
         "Jsonb",
         "Jsonb",
-        "Timestamp",
+        "Timestamptz",
         "Uuid"
       ]
     },

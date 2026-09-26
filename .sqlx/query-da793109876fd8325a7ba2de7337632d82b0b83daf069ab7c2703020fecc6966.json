@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -21,17 +21,17 @@
       {
         "ordinal": 3,
         "name": "comparison_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "dimension_a",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "dimension_b",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -46,40 +46,40 @@
       {
         "ordinal": 8,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,
         "name": "last_run_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
         "name": "created_by",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 11,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 12,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Varchar",
         "Text",
-        "Varchar",
-        "Varchar",
-        "Varchar",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
         "Jsonb",
         "Jsonb",
-        "Varchar",
-        "Timestamp",
+        "Text",
+        "Timestamptz",
         "Uuid"
       ]
     },
@@ -95,8 +95,8 @@
       false,
       true,
       true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "da793109876fd8325a7ba2de7337632d82b0b83daf069ab7c2703020fecc6966"

@@ -21,12 +21,12 @@
       {
         "ordinal": 3,
         "name": "quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 4,
         "name": "completed_quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 5,
@@ -39,7 +39,7 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       false,
       false,
       true,

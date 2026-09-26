@@ -41,12 +41,12 @@
       {
         "ordinal": 7,
         "name": "version",
-        "type_info": "Varchar"
+        "type_info": "Int4"
       },
       {
         "ordinal": 8,
         "name": "effective_date",
-        "type_info": "Varchar"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 9,
@@ -71,11 +71,11 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       false,
       true,
       true,
-      false,
+      true,
       true,
       true,
       true,

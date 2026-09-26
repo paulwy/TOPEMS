@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "quantity_produced",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 9,
@@ -81,7 +81,7 @@
         "Uuid",
         "Uuid",
         "Timestamptz",
-        "Int4",
+        "Numeric",
         "Varchar",
         "Text",
         "Timestamptz"
@@ -94,14 +94,14 @@
       true,
       null,
       true,
-      false,
       true,
-      false,
+      true,
+      true,
       null,
       false,
       true,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "02fcd2a627d2bdbf298ce6796b339ec4dacd4e5128ad330a3231e468f964cf2e"

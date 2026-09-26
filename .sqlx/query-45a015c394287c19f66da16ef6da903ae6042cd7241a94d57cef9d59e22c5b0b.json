@@ -6,13 +6,13 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Varchar",
+        "Text",
         "Text",
         "Jsonb",
-        "Varchar",
+        "Text",
         "Bool",
-        "Timestamp",
-        "Timestamp",
+        "Timestamptz",
+        "Timestamptz",
         "Uuid"
       ]
     },

@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "user_id",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -21,7 +21,7 @@
       {
         "ordinal": 3,
         "name": "action",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
@@ -36,12 +36,12 @@
       {
         "ordinal": 6,
         "name": "drill_dimension",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 7,
         "name": "drill_value",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -71,7 +71,7 @@
       true,
       true,
       true,
-      true
+      false
     ]
   },
   "hash": "1dd9eaf179f18f2657ebe7af4b77a415eebefcc8ea48480ee13504f5aa6a49d1"

@@ -16,17 +16,17 @@
       {
         "ordinal": 2,
         "name": "permission",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
         "name": "expires_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 4,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -34,9 +34,9 @@
         "Uuid",
         "Uuid",
         "TextArray",
-        "Varchar",
-        "Timestamp",
-        "Timestamp",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
         "Uuid"
       ]
     },
@@ -45,7 +45,7 @@
       false,
       false,
       true,
-      true
+      false
     ]
   },
   "hash": "3a05416e6fd2b9baa0467b2580ca9e768bc206e125f0df1ac59f03946e8d2948"

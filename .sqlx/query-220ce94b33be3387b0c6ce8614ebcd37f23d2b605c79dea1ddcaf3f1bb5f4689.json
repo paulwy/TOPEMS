@@ -56,7 +56,7 @@
       {
         "ordinal": 10,
         "name": "result",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 11,
@@ -90,18 +90,18 @@
       false,
       false,
       false,
+      true,
       false,
-      false,
-      false,
+      true,
       false,
       false,
       true,
       true,
       true,
-      false,
       true,
-      false,
-      false
+      true,
+      true,
+      true
     ]
   },
   "hash": "220ce94b33be3387b0c6ce8614ebcd37f23d2b605c79dea1ddcaf3f1bb5f4689"

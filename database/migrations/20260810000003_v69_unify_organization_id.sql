@@ -26,8 +26,15 @@ BEGIN
           AND table_schema IN ('crm', 'wms')
           AND table_schema NOT IN ('information_schema', 'pg_catalog')
     LOOP
-        EXECUTE format('ALTER TABLE %I.%I RENAME COLUMN organization_id TO org_id', t.table_schema, t.table_name);
-        RAISE NOTICE 'Renamed %.%.organization_id → org_id', t.table_schema, t.table_name;
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = t.table_schema AND table_name = t.table_name AND column_name = 'org_id'
+        ) THEN
+            EXECUTE format('ALTER TABLE %I.%I RENAME COLUMN organization_id TO org_id', t.table_schema, t.table_name);
+            RAISE NOTICE 'Renamed %.%.organization_id → org_id', t.table_schema, t.table_name;
+        ELSE
+            RAISE NOTICE 'Skip %.%.organization_id (org_id already exists)', t.table_schema, t.table_name;
+        END IF;
     END LOOP;
 END $$;
 

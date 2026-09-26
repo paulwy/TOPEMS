@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "quantity_produced",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 9,
@@ -86,14 +86,14 @@
       true,
       null,
       true,
-      false,
       true,
-      false,
+      true,
+      true,
       null,
       false,
       true,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "b633f2fbfebb32afc195f623f9482e1663ca02ad09054ea887b2c72c212b1348"

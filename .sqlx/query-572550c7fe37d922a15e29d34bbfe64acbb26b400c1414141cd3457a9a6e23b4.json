@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -26,12 +26,12 @@
       {
         "ordinal": 4,
         "name": "table_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "rule_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -56,17 +56,17 @@
       {
         "ordinal": 10,
         "name": "created_by",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 11,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 12,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -86,8 +86,8 @@
       true,
       true,
       false,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "572550c7fe37d922a15e29d34bbfe64acbb26b400c1414141cd3457a9a6e23b4"

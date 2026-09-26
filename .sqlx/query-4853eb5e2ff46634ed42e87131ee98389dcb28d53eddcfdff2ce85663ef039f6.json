@@ -26,7 +26,7 @@
       {
         "ordinal": 4,
         "name": "warehouse_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
@@ -36,7 +36,7 @@
       {
         "ordinal": 6,
         "name": "location_code",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 7,
@@ -88,9 +88,9 @@
       false,
       false,
       false,
-      false,
       true,
-      false,
+      true,
+      true,
       null,
       false,
       null,

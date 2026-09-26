@@ -1,5 +1,6 @@
 // MES 服务集成测试
 
+use sqlx::types::BigDecimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -217,7 +218,10 @@ mod tests {
             "更新后的产品名称"
         );
         assert_eq!(updated_order.get::<String, _>("status"), "released");
-        assert_eq!(updated_order.get::<i32, _>("completed_quantity"), 500);
+        assert_eq!(
+            updated_order.get::<BigDecimal, _>("completed_quantity"),
+            BigDecimal::from(500)
+        );
 
         let delete_result = sqlx::query(
             r#"
@@ -721,7 +725,10 @@ mod tests {
         assert!(create_result.is_ok(), "生产记录创建应该成功");
 
         let created = create_result.unwrap();
-        assert_eq!(created.get::<i32, _>("completed_quantity"), 100);
+        assert_eq!(
+            created.get::<BigDecimal, _>("completed_quantity"),
+            BigDecimal::from(100)
+        );
         assert_eq!(created.get::<i32, _>("rejected_quantity"), 5);
 
         let update_result = sqlx::query(
@@ -742,7 +749,10 @@ mod tests {
         assert!(update_result.is_ok(), "生产记录更新应该成功");
 
         let updated = update_result.unwrap();
-        assert_eq!(updated.get::<i32, _>("completed_quantity"), 200);
+        assert_eq!(
+            updated.get::<BigDecimal, _>("completed_quantity"),
+            BigDecimal::from(200)
+        );
         assert_eq!(updated.get::<i32, _>("rejected_quantity"), 10);
         assert_eq!(updated.get::<String, _>("status"), "completed");
 
@@ -1190,7 +1200,7 @@ mod tests {
 
         let create = sqlx::query(
             r#"INSERT INTO mes.quality_standards (id, code, name, product_code, product_name, inspection_type, status, version, description, created_at, updated_at)
-               VALUES ($1, $2, '外观检验标准', 'PROD-001', '测试产品', 'visual', 'active', '1.0', '表面无划痕', NOW(), NOW())
+               VALUES ($1, $2, '外观检验标准', 'PROD-001', '测试产品', 'visual', 'active', 1, '表面无划痕', NOW(), NOW())
                RETURNING id, code, name, inspection_type, status"#,
         )
         .bind(qs_id).bind(&code).fetch_one(&pool).await;
@@ -1204,10 +1214,10 @@ mod tests {
         .await;
         assert!(read.is_ok(), "质量标准读取应该成功");
 
-        let update = sqlx::query("UPDATE mes.quality_standards SET version = '2.0', description = '表面无划痕、无气泡', updated_at = NOW() WHERE id = $1 RETURNING version")
+        let update = sqlx::query("UPDATE mes.quality_standards SET version = 2, description = '表面无划痕、无气泡', updated_at = NOW() WHERE id = $1 RETURNING version")
             .bind(qs_id).fetch_one(&pool).await;
         assert!(update.is_ok(), "质量标准更新应该成功");
-        assert_eq!(update.unwrap().get::<String, _>("version"), "2.0");
+        assert_eq!(update.unwrap().get::<i32, _>("version"), 2);
 
         let deactivate = sqlx::query("UPDATE mes.quality_standards SET status = 'inactive', updated_at = NOW() WHERE id = $1 RETURNING status")
             .bind(qs_id).fetch_one(&pool).await;
@@ -1445,7 +1455,7 @@ mod tests {
 
         let create = sqlx::query(
             r#"INSERT INTO mes.process_flows (id, code, name, description, version, status, production_line, capacity, unit, created_at, updated_at)
-               VALUES ($1, $2, '测试工艺流程', '产品A工艺流程', '1.0', 'active', '一号生产线', 1000.0, '件/小时', NOW(), NOW())
+               VALUES ($1, $2, '测试工艺流程', '产品A工艺流程', 1, 'active', '一号生产线', 1000.0, '件/小时', NOW(), NOW())
                RETURNING id, code, name, version, status"#,
         )
         .bind(pf_id).bind(&code).fetch_one(&pool).await;
@@ -1460,10 +1470,10 @@ mod tests {
         .await;
         assert!(read.is_ok(), "工艺流程读取应该成功");
 
-        let update = sqlx::query("UPDATE mes.process_flows SET version = '2.0', capacity = 1200.0, updated_at = NOW() WHERE id = $1 RETURNING version, capacity")
+        let update = sqlx::query("UPDATE mes.process_flows SET version = 2, capacity = 1200.0, updated_at = NOW() WHERE id = $1 RETURNING version, capacity")
             .bind(pf_id).fetch_one(&pool).await;
         assert!(update.is_ok(), "工艺流程更新应该成功");
-        assert_eq!(update.unwrap().get::<String, _>("version"), "2.0");
+        assert_eq!(update.unwrap().get::<i32, _>("version"), 2);
 
         let deactivate = sqlx::query("UPDATE mes.process_flows SET status = 'inactive', updated_at = NOW() WHERE id = $1 RETURNING status")
             .bind(pf_id).fetch_one(&pool).await;
@@ -1535,7 +1545,7 @@ mod tests {
 
         let create = sqlx::query(
             r#"INSERT INTO mes.quality_patrols (id, patrol_no, production_line, workstation_name, inspector, patrol_time, status, findings, created_at, updated_at)
-               VALUES ($1, $2, '一号生产线', '冲压工位', '巡检员王五', 'morning', 'pending', '待巡检', NOW(), NOW())
+               VALUES ($1, $2, '一号生产线', '冲压工位', '巡检员王五', NOW(), 'pending', '待巡检', NOW(), NOW())
                RETURNING id, patrol_no, inspector, status"#,
         )
         .bind(qp_id).bind(&patrol_no).fetch_one(&pool).await;

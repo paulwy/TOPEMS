@@ -11,27 +11,27 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "source_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "host",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "database",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -41,7 +41,7 @@
       {
         "ordinal": 7,
         "name": "username",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "last_sync",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
@@ -61,7 +61,7 @@
       {
         "ordinal": 11,
         "name": "sync_frequency",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 12,
@@ -76,12 +76,12 @@
       {
         "ordinal": 14,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 15,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -108,8 +108,8 @@
       true,
       true,
       true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "049db13ec6937223952444b105b8b0aacec58c6b1817b5de03fdc98ed341a794"

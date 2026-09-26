@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -41,7 +41,7 @@
       {
         "ordinal": 7,
         "name": "owner_id",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
@@ -51,24 +51,24 @@
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Varchar",
+        "Text",
         "Text",
         "Uuid",
         "Jsonb",
         "Jsonb",
         "Jsonb",
         "Bool",
-        "Timestamp",
+        "Timestamptz",
         "Uuid"
       ]
     },
@@ -82,8 +82,8 @@
       true,
       false,
       true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "70eb65f9a52f4eacecb7878552f3472e4cc1afcf070cbd2d714af6e21eeb4c2f"

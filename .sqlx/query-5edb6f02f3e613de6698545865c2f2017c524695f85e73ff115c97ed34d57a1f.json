@@ -21,17 +21,17 @@
       {
         "ordinal": 3,
         "name": "permission",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "expires_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 5,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -45,7 +45,7 @@
       true,
       false,
       true,
-      true
+      false
     ]
   },
   "hash": "5edb6f02f3e613de6698545865c2f2017c524695f85e73ff115c97ed34d57a1f"

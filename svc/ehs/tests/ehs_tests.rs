@@ -11,7 +11,7 @@ async fn create_test_pool() -> PgPool {
     PgPoolOptions::new()
         .after_connect(|conn, _meta| {
             Box::pin(async move {
-                sqlx::query("SET search_path TO ehs, public")
+                sqlx::query("SET search_path TO ehs, public, mes")
                     .execute(&mut *conn)
                     .await?;
                 Ok(())

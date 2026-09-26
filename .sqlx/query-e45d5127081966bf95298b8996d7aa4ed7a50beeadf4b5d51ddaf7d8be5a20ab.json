@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -26,12 +26,12 @@
       {
         "ordinal": 4,
         "name": "table_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "rule_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -56,28 +56,28 @@
       {
         "ordinal": 10,
         "name": "created_by",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 11,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 12,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Varchar",
+        "Text",
         "Text",
         "Jsonb",
         "TextArray",
         "TextArray",
         "Bool",
-        "Timestamp",
+        "Timestamptz",
         "Uuid"
       ]
     },
@@ -93,8 +93,8 @@
       true,
       true,
       false,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "e45d5127081966bf95298b8996d7aa4ed7a50beeadf4b5d51ddaf7d8be5a20ab"

@@ -423,7 +423,10 @@ pub async fn get_batch_statistics(
         Err(e) => return e,
     }
 
-    let warehouse_id = params.get("warehouse_id").and_then(|v| v.as_str());
+    let warehouse_id = params
+        .get("warehouse_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query!(
         r#"
@@ -491,7 +494,10 @@ pub async fn get_expiring_soon(
     }
 
     let days: i32 = params.get("days").and_then(|v| v.as_i64()).unwrap_or(30) as i32;
-    let warehouse_id = params.get("warehouse_id").and_then(|v| v.as_str());
+    let warehouse_id = params
+        .get("warehouse_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
@@ -540,7 +546,10 @@ pub async fn get_expired(
         Err(e) => return e,
     }
 
-    let warehouse_id = params.get("warehouse_id").and_then(|v| v.as_str());
+    let warehouse_id = params
+        .get("warehouse_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"

@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -21,17 +21,17 @@
       {
         "ordinal": 3,
         "name": "comparison_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
         "name": "dimension_a",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
         "name": "dimension_b",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 6,
@@ -46,27 +46,27 @@
       {
         "ordinal": 8,
         "name": "status",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,
         "name": "last_run_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
         "name": "created_by",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 11,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 12,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -86,8 +86,8 @@
       false,
       true,
       true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "6d1124415aa218f0ec0cb4eb1203049e4c9e035c330e74f890b031d460f9561e"

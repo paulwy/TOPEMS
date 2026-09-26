@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "warehouse_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
@@ -24,7 +24,7 @@
     },
     "nullable": [
       false,
-      false,
+      true,
       null
     ]
   },

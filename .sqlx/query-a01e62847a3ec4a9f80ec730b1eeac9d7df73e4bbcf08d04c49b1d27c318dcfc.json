@@ -11,12 +11,12 @@
       {
         "ordinal": 1,
         "name": "permission",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 2,
         "name": "expires_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 3,
@@ -26,7 +26,7 @@
       {
         "ordinal": 4,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 5,
@@ -41,17 +41,17 @@
       {
         "ordinal": 7,
         "name": "owner_id",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 8,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 9,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -68,8 +68,8 @@
       true,
       true,
       false,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "a01e62847a3ec4a9f80ec730b1eeac9d7df73e4bbcf08d04c49b1d27c318dcfc"

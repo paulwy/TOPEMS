@@ -270,8 +270,8 @@ pub async fn get_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
             },
             "获取巡检记录成功",
         )),
@@ -359,8 +359,8 @@ pub async fn create_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
             },
             "创建巡检记录成功",
         )),
@@ -456,8 +456,8 @@ pub async fn update_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default().and_utc(),
-                updated_at: r.updated_at.unwrap_or_default().and_utc(),
+                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
             },
             "更新巡检记录成功",
         )),
@@ -575,7 +575,7 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.to_string(),
+                    patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
@@ -637,7 +637,7 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
+                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
@@ -720,7 +720,7 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
+                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),

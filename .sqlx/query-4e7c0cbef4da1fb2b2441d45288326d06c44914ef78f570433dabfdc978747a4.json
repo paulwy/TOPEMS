@@ -11,12 +11,12 @@
       {
         "ordinal": 1,
         "name": "total_quantity",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 2,
         "name": "total_value",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 3,
@@ -36,7 +36,7 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [

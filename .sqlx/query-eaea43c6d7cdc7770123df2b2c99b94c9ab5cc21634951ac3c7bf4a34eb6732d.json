@@ -16,12 +16,12 @@
       {
         "ordinal": 2,
         "name": "name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 3,
         "name": "widget_type",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 4,
@@ -51,12 +51,12 @@
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -74,8 +74,8 @@
       true,
       true,
       true,
-      true,
-      true
+      false,
+      false
     ]
   },
   "hash": "eaea43c6d7cdc7770123df2b2c99b94c9ab5cc21634951ac3c7bf4a34eb6732d"
