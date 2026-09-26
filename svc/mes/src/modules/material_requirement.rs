@@ -245,16 +245,16 @@ pub async fn list_material_requirements(
                     .ok()
                     .flatten(),
             ),
-            available_quantity: big_decimal_to_f64(
+            available_quantity: Some(big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("available_quantity")
                     .ok()
                     .flatten(),
-            ),
-            shortfall_quantity: big_decimal_to_f64(
+            )),
+            shortfall_quantity: Some(big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("shortfall_quantity")
                     .ok()
                     .flatten(),
-            ),
+            )),
             required_date: r.try_get::<String, _>("required_date").unwrap_or_default(),
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             status: r
