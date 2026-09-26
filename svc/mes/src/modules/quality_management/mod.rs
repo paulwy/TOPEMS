@@ -86,7 +86,7 @@ pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d).unwrap_or_default()
 }
 
-pub fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+pub fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 

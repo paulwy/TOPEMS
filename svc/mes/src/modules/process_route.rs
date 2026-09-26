@@ -134,7 +134,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d).unwrap_or_default()
 }
 
-fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
@@ -1102,13 +1102,13 @@ mod tests {
     }
 
     #[test]
-    fn opt_big_decimal_to_f64_some() {
+    fn big_decimal_to_f64_some() {
         let bd: BigDecimal = "12.5".parse().unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(12.5));
     }
 
     #[test]
-    fn opt_big_decimal_to_f64_none() {
-        assert_eq!(opt_big_decimal_to_f64(None), None);
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), None);
     }
 }

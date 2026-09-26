@@ -17,7 +17,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-use super::{big_decimal_to_f64, opt_big_decimal_to_f64};
+use super::{big_decimal_to_f64, big_decimal_to_f64};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
@@ -331,7 +331,7 @@ pub async fn get_inspection(
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
-                qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
+                qualification_rate: big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -449,7 +449,7 @@ pub async fn create_inspection(
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
-                qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
+                qualification_rate: big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -557,7 +557,7 @@ pub async fn update_inspection(
                 quantity: big_decimal_to_f64(r.quantity),
                 qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
                 unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
-                qualification_rate: opt_big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
+                qualification_rate: big_decimal_to_f64(r.qualification_rate).unwrap_or(0.0),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),

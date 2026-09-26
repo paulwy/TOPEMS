@@ -119,7 +119,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
@@ -248,12 +248,12 @@ pub async fn list_material_requirements(
                     .ok()
                     .flatten(),
             ),
-            available_quantity: opt_big_decimal_to_f64(
+            available_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("available_quantity")
                     .ok()
                     .flatten(),
             ),
-            shortfall_quantity: opt_big_decimal_to_f64(
+            shortfall_quantity: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("shortfall_quantity")
                     .ok()
                     .flatten(),
@@ -350,8 +350,8 @@ pub async fn get_material_requirement(
                 specification: r.specification,
                 unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
-                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                available_quantity: big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
                 required_date: r.required_date,
                 priority: r.priority,
                 status: r
@@ -450,8 +450,8 @@ pub async fn create_material_requirement(
                 specification: r.specification,
                 unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
-                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                available_quantity: big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
                 required_date: r.required_date,
                 priority: r.priority,
                 status: r
@@ -553,8 +553,8 @@ pub async fn update_material_requirement(
                 specification: r.specification,
                 unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
-                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                available_quantity: big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
                 required_date: r.required_date,
                 priority: r.priority,
                 status: r
@@ -730,8 +730,8 @@ pub async fn calculate_requirements(
                         specification: r.specification,
                         unit: r.unit,
                         required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                        available_quantity: opt_big_decimal_to_f64(r.available_quantity),
-                        shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                        available_quantity: big_decimal_to_f64(r.available_quantity),
+                        shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
                         required_date: r.required_date,
                         priority: r.priority,
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
@@ -808,8 +808,8 @@ pub async fn confirm_requirement(
                 specification: r.specification,
                 unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
-                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                available_quantity: big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
                 required_date: r.required_date,
                 priority: r.priority,
                 status: r
@@ -889,8 +889,8 @@ pub async fn release_requirement(
                 specification: r.specification,
                 unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
-                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                available_quantity: big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
                 required_date: r.required_date,
                 priority: r.priority,
                 status: r
@@ -965,14 +965,14 @@ mod tests {
     }
 
     #[test]
-    fn opt_big_decimal_to_f64_some() {
+    fn big_decimal_to_f64_some() {
         let bd: BigDecimal = "12.5".parse().unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(12.5));
     }
 
     #[test]
-    fn opt_big_decimal_to_f64_none() {
-        assert_eq!(opt_big_decimal_to_f64(None), None);
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), None);
     }
 
     #[test]

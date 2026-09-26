@@ -114,7 +114,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
 }
 
-fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
@@ -797,7 +797,7 @@ pub async fn list_maintenances(
             maintainer: r.maintainer,
             start_time: r.start_time,
             end_time: r.end_time,
-            cost: opt_big_decimal_to_f64(r.cost),
+            cost: big_decimal_to_f64(r.cost),
             result: r.result,
             status: r.status,
             remarks: r.remarks,
@@ -935,7 +935,7 @@ pub async fn create_maintenance(
             maintainer,
             start_time,
             end_time,
-            cost: opt_big_decimal_to_f64(result.cost),
+            cost: big_decimal_to_f64(result.cost),
             result: result.result,
             status: status,
             remarks: result.remarks,
@@ -1042,7 +1042,7 @@ pub async fn update_maintenance_status(
             maintainer,
             start_time,
             end_time,
-            cost: opt_big_decimal_to_f64(result.cost),
+            cost: big_decimal_to_f64(result.cost),
             result: result.result,
             status: status,
             remarks: result.remarks,
@@ -1360,22 +1360,22 @@ mod tests {
         assert!(out >= before && out <= after);
     }
 
-    // ---- opt_big_decimal_to_f64 ----
+    // ---- big_decimal_to_f64 ----
     #[test]
-    fn opt_big_decimal_to_f64_some() {
+    fn big_decimal_to_f64_some() {
         let bd: BigDecimal = "12.5".parse().unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(12.5));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(12.5));
     }
 
     #[test]
-    fn opt_big_decimal_to_f64_none() {
-        assert_eq!(opt_big_decimal_to_f64(None), None);
+    fn big_decimal_to_f64_none() {
+        assert_eq!(big_decimal_to_f64(None), None);
     }
 
     #[test]
-    fn opt_big_decimal_to_f64_zero() {
+    fn big_decimal_to_f64_zero() {
         let bd: BigDecimal = "0".parse().unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(0.0));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(0.0));
     }
 
     // ---- f64_to_big_decimal ----
@@ -1383,7 +1383,7 @@ mod tests {
     fn f64_to_big_decimal_roundtrip() {
         let f = Some(3.5);
         let bd = f64_to_big_decimal(f).unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(3.5));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(3.5));
     }
 
     #[test]
@@ -1394,13 +1394,13 @@ mod tests {
     #[test]
     fn f64_to_big_decimal_zero() {
         let bd = f64_to_big_decimal(Some(0.0)).unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(0.0));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(0.0));
     }
 
     #[test]
     fn f64_to_big_decimal_integer_value() {
         let bd = f64_to_big_decimal(Some(100.0)).unwrap();
-        assert_eq!(opt_big_decimal_to_f64(Some(bd)), Some(100.0));
+        assert_eq!(big_decimal_to_f64(Some(bd)), Some(100.0));
     }
 
     // ---- naive_date_to_string ----

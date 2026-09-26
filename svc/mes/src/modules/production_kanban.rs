@@ -92,7 +92,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
 }
 
@@ -326,7 +326,7 @@ pub async fn get_dashboard(
                     .try_get::<Option<String>, _>("current_product")
                     .ok()
                     .flatten(),
-                output_today: opt_big_decimal_to_f64(
+                output_today: big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("output_today")
                         .ok()
                         .flatten(),
@@ -438,7 +438,7 @@ pub async fn get_dashboard(
                     .ok()
                     .flatten()
                     .unwrap_or_else(|| "normal".to_string()),
-                oee: opt_big_decimal_to_f64(
+                oee: big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten(),
                 ),
             })
@@ -614,7 +614,7 @@ pub async fn get_workstation_status(
                 .try_get::<Option<String>, _>("current_product")
                 .ok()
                 .flatten(),
-            output_today: opt_big_decimal_to_f64(
+            output_today: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_today")
                     .ok()
                     .flatten(),
@@ -777,7 +777,7 @@ pub async fn get_equipment_status(
                 .ok()
                 .flatten()
                 .unwrap_or_else(|| "normal".to_string()),
-            oee: opt_big_decimal_to_f64(r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten()),
+            oee: big_decimal_to_f64(r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten()),
         })
         .collect();
 

@@ -13,7 +13,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
-use super::opt_big_decimal_to_f64;
+use super::big_decimal_to_f64;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListStandardsQuery {
@@ -229,8 +229,8 @@ pub async fn list_standards(
                         id: v.id.to_string(),
                         standard_id: sid.to_string(),
                         item_name: v.item_name,
-                        lower_limit: opt_big_decimal_to_f64(v.lower_limit),
-                        upper_limit: opt_big_decimal_to_f64(v.upper_limit),
+                        lower_limit: big_decimal_to_f64(v.lower_limit),
+                        upper_limit: big_decimal_to_f64(v.upper_limit),
                         unit: v.unit,
                         inspection_method: v.inspection_method,
                         remark: v.remark,
@@ -372,8 +372,8 @@ pub async fn get_standard(
                 id: v.id.to_string(),
                 standard_id: v.standard_id.map(|v| v.to_string()),
                 item_name: v.item_name,
-                lower_limit: opt_big_decimal_to_f64(v.lower_limit),
-                upper_limit: opt_big_decimal_to_f64(v.upper_limit),
+                lower_limit: big_decimal_to_f64(v.lower_limit),
+                upper_limit: big_decimal_to_f64(v.upper_limit),
                 unit: v.unit,
                 inspection_method: v.inspection_method,
                 remark: v.remark,
@@ -511,8 +511,8 @@ pub async fn create_standard(
                         id: r.id.to_string(),
                         standard_id: r.standard_id.map(|v| v.to_string()),
                         item_name: r.item_name,
-                        lower_limit: opt_big_decimal_to_f64(r.lower_limit),
-                        upper_limit: opt_big_decimal_to_f64(r.upper_limit),
+                        lower_limit: big_decimal_to_f64(r.lower_limit),
+                        upper_limit: big_decimal_to_f64(r.upper_limit),
                         unit: r.unit,
                         inspection_method: r.inspection_method,
                         remark: r.remark,
@@ -694,8 +694,8 @@ pub async fn update_standard(
                         id: r.id.to_string(),
                         standard_id: r.standard_id.map(|v| v.to_string()),
                         item_name: r.item_name,
-                        lower_limit: opt_big_decimal_to_f64(r.lower_limit),
-                        upper_limit: opt_big_decimal_to_f64(r.upper_limit),
+                        lower_limit: big_decimal_to_f64(r.lower_limit),
+                        upper_limit: big_decimal_to_f64(r.upper_limit),
                         unit: r.unit,
                         inspection_method: r.inspection_method,
                         remark: r.remark,
@@ -728,8 +728,8 @@ pub async fn update_standard(
                     id: v.id.to_string(),
                     standard_id: v.standard_id.map(|v| v.to_string()),
                     item_name: v.item_name,
-                    lower_limit: opt_big_decimal_to_f64(v.lower_limit),
-                    upper_limit: opt_big_decimal_to_f64(v.upper_limit),
+                    lower_limit: big_decimal_to_f64(v.lower_limit),
+                    upper_limit: big_decimal_to_f64(v.upper_limit),
                     unit: v.unit,
                     inspection_method: v.inspection_method,
                     remark: v.remark,
