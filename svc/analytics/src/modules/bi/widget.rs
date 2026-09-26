@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use axum::{extract::Path, extract::State, Json};
+use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
@@ -171,10 +171,8 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -232,10 +230,8 @@ pub async fn get_widgets_by_dashboard(
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

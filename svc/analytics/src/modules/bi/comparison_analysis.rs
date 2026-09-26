@@ -12,11 +12,11 @@
 //! - POST   /api/bi/comparison-analysis/{id}/run
 //! - GET    /api/bi/comparison-analysis/{id}/result
 
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Path, Query, State},
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -201,10 +201,8 @@ pub async fn list_comparisons(
             status: row.status,
             last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
             created_by: row.created_by,
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

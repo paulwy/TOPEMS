@@ -51,10 +51,8 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
             category: row.category,
             tags: row.tags,
             is_active: row.is_active.unwrap_or(true),
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

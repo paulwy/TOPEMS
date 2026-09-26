@@ -295,13 +295,11 @@ pub async fn batch_update_users(
         };
 
         let result = if let Some(status) = &new_status {
-            sqlx::query(
-                "UPDATE iam.users SET status = $1, updated_at = NOW() WHERE id = $2",
-            )
-            .bind(status)
-            .bind(user_uuid)
-            .execute(&state.pool)
-            .await
+            sqlx::query("UPDATE iam.users SET status = $1, updated_at = NOW() WHERE id = $2")
+                .bind(status)
+                .bind(user_uuid)
+                .execute(&state.pool)
+                .await
         } else {
             // 没有提供 isactive，尝试更新 full_name / email（兼容任务描述中的 updates 形态）
             sqlx::query(

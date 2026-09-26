@@ -1,8 +1,8 @@
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Path, Query, State},
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -182,10 +182,8 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -705,10 +703,8 @@ pub async fn get_user_permissions(
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

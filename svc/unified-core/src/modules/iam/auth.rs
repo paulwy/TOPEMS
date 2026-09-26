@@ -972,7 +972,10 @@ pub async fn forgot_password(
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -1138,13 +1141,11 @@ pub async fn reset_password(
     };
 
     // 更新密码
-    match sqlx::query(
-        "UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
-    )
-    .bind(&password_hash)
-    .bind(user_id)
-    .execute(&mut *tx)
-    .await
+    match sqlx::query("UPDATE iam.users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+        .bind(&password_hash)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
     {
         Ok(_) => {}
         Err(e) => {

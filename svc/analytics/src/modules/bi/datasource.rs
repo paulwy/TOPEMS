@@ -144,12 +144,8 @@ fn row_to_response(
         sync_frequency,
         description,
         is_enabled: is_enabled.unwrap_or(true),
-        created_at: created_at
-            
-            .unwrap_or_else(Utc::now),
-        updated_at: updated_at
-            
-            .unwrap_or_else(Utc::now),
+        created_at: created_at.unwrap_or_else(Utc::now),
+        updated_at: updated_at.unwrap_or_else(Utc::now),
     }
 }
 

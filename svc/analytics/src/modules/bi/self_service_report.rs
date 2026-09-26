@@ -1,10 +1,10 @@
-use chrono::{DateTime, Utc};
 use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -128,10 +128,8 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
             config: row.config,
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
-            created_at: row
-                .created_at,
-            updated_at: row
-                .updated_at,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use chrono::{Utc, TimeZone};
+use chrono::{TimeZone, Utc};
 use sqlx::types::Uuid;
 use tracing::info;
 
@@ -168,8 +168,7 @@ pub async fn list_share_links(
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
             expires_at: row.expires_at,
-            created_at: row
-                .created_at,
+            created_at: row.created_at,
         })
         .collect();
 
