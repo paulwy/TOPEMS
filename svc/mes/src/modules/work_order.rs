@@ -121,11 +121,11 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d).unwrap_or_default()
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d)
+    dt.map(|d| d.to_rfc3339())
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -139,12 +139,12 @@ fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
         .map(|dt| dt.with_timezone(&Utc))
         .or_else(|| {
             NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f")
-                .map(|dt| dt)
+                .map(|dt| dt.and_utc())
                 .ok()
         })
         .or_else(|| {
             NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-                .map(|dt| dt)
+                .map(|dt| dt.and_utc())
                 .ok()
         })
 }
@@ -418,7 +418,7 @@ pub async fn get_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -529,7 +529,7 @@ pub async fn create_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -662,7 +662,7 @@ pub async fn update_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -810,7 +810,7 @@ pub async fn start_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -900,7 +900,7 @@ pub async fn complete_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -990,7 +990,7 @@ pub async fn cancel_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -1080,7 +1080,7 @@ pub async fn pause_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -1170,7 +1170,7 @@ pub async fn resume_work_order(
                 work_order_no: r.work_order_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 process_id: r.process_id.map(|u| u.to_string()),
@@ -1304,7 +1304,7 @@ mod tests {
     #[test]
     fn test_naive_to_utc_some() {
         let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
+            .map(|dt| dt.and_utc())
             .ok();
         let result = naive_to_utc(naive);
         assert_eq!(result.date().year(), 2024);
@@ -1319,7 +1319,7 @@ mod tests {
     #[test]
     fn test_datetime_to_string_returns_nonempty() {
         let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
+            .map(|dt| dt.and_utc())
             .ok();
         let s = datetime_to_string(naive);
         assert!(!s.is_empty());
@@ -1329,7 +1329,7 @@ mod tests {
     #[test]
     fn test_opt_datetime_to_string_some_and_none() {
         let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
+            .map(|dt| dt.and_utc())
             .ok();
         let some_result = opt_datetime_to_string(naive);
         assert!(some_result.is_some());

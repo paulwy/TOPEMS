@@ -172,7 +172,7 @@ pub async fn forward_traceability(
         id: order_node_id.clone(),
         node_type: "order".to_string(),
         name: order.product_name.clone(),
-        code: order.order_no.clone(),
+        code: order.order_no.clone().unwrap_or_default(),
         quantity: Some(
             order
                 .quantity
@@ -186,7 +186,7 @@ pub async fn forward_traceability(
         timestamp: order
             .actual_start_date
             
-            .map(|d| d.to_rfc3339()),
+            .map(|d| d),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -222,7 +222,7 @@ pub async fn forward_traceability(
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone()),
-            timestamp: Some(record.start_time),
+            timestamp: Some(record.start_time.unwrap_or_default()),
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
@@ -242,7 +242,7 @@ pub async fn forward_traceability(
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
         name: format!("{} 成品", order.product_name.clone()),
-        code: order.order_no.clone(),
+        code: order.order_no.clone().unwrap_or_default(),
         quantity: order
             .completed_quantity
             .clone()
@@ -253,7 +253,7 @@ pub async fn forward_traceability(
         timestamp: order
             .actual_end_date
             
-            .map(|d| d.to_rfc3339()),
+            .map(|d| d),
         operator: None,
         description: Some("成品入库".to_string()),
     });
@@ -365,7 +365,7 @@ pub async fn backward_traceability(
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap()),
+            .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
         operator: None,
         description: Some("成品批次".to_string()),
     });

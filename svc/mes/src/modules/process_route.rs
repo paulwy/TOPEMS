@@ -131,7 +131,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 }
 
 fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d).unwrap_or_default()
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {

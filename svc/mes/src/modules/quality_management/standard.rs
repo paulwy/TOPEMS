@@ -209,7 +209,7 @@ pub async fn list_standards(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = ANY($1)
@@ -228,9 +228,9 @@ pub async fn list_standards(
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
                         standard_id: sid.map(|s| s.to_string()),
-                        item_name: v.item_name,
-                        lower_limit: big_decimal_to_f64(v.lower_limit),
-                        upper_limit: big_decimal_to_f64(v.upper_limit),
+                        item_name: v.item_name.unwrap_or_default(),
+                        lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
+                        upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                         unit: v.unit,
                         inspection_method: v.inspection_method,
                         remark: v.remark,
@@ -355,7 +355,7 @@ pub async fn get_standard(
     let values_result = sqlx::query!(
         r#"
         SELECT
-            qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
+            qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
             qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
         FROM quality_standard_values qsv
         WHERE qsv.standard_id = $1
@@ -370,10 +370,10 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.map(|v| v.to_string()),
-                item_name: v.item_name,
-                lower_limit: big_decimal_to_f64(v.lower_limit),
-                upper_limit: big_decimal_to_f64(v.upper_limit),
+                standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                item_name: v.item_name.unwrap_or_default(),
+                lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
+                upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                 unit: v.unit,
                 inspection_method: v.inspection_method,
                 remark: v.remark,
@@ -388,11 +388,11 @@ pub async fn get_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code,
+            code: standard.code.unwrap_or_default(),
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -430,7 +430,7 @@ pub async fn create_standard(
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt)
+                    .map(|dt| dt.naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -495,7 +495,7 @@ pub async fn create_standard(
                     unit, inspection_method, remark
                 "#,
                 standard.id,
-                v.item_name,
+                v.item_name.unwrap_or_default(),
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -509,10 +509,10 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.map(|v| v.to_string()),
-                        item_name: r.item_name,
-                        lower_limit: big_decimal_to_f64(r.lower_limit),
-                        upper_limit: big_decimal_to_f64(r.upper_limit),
+                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                        item_name: r.item_name.unwrap_or_default(),
+                        lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
+                        upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
                         unit: r.unit,
                         inspection_method: r.inspection_method,
                         remark: r.remark,
@@ -535,11 +535,11 @@ pub async fn create_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code,
+            code: standard.code.unwrap_or_default(),
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -585,7 +585,7 @@ pub async fn update_standard(
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt)
+                    .map(|dt| dt.naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -678,7 +678,7 @@ pub async fn update_standard(
                     unit, inspection_method, remark
                 "#,
                 uuid,
-                v.item_name,
+                v.item_name.unwrap_or_default(),
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -692,10 +692,10 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.map(|v| v.to_string()),
-                        item_name: r.item_name,
-                        lower_limit: big_decimal_to_f64(r.lower_limit),
-                        upper_limit: big_decimal_to_f64(r.upper_limit),
+                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                        item_name: r.item_name.unwrap_or_default(),
+                        lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
+                        upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
                         unit: r.unit,
                         inspection_method: r.inspection_method,
                         remark: r.remark,
@@ -712,7 +712,7 @@ pub async fn update_standard(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = $1
@@ -726,10 +726,10 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.map(|v| v.to_string()),
-                    item_name: v.item_name,
-                    lower_limit: big_decimal_to_f64(v.lower_limit),
-                    upper_limit: big_decimal_to_f64(v.upper_limit),
+                    standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
+                    item_name: v.item_name.unwrap_or_default(),
+                    lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
+                    upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                     unit: v.unit,
                     inspection_method: v.inspection_method,
                     remark: v.remark,
@@ -746,11 +746,11 @@ pub async fn update_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code,
+            code: standard.code.unwrap_or_default(),
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),

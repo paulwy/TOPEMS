@@ -329,7 +329,7 @@ pub async fn create_patrol(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt)
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -425,7 +425,7 @@ pub async fn update_patrol(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt)
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -575,7 +575,7 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.map(|v| v.to_string()),
+                    patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
@@ -637,7 +637,7 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.map(|v| v.to_string()),
+                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
@@ -720,7 +720,7 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.map(|v| v.to_string()),
+                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),

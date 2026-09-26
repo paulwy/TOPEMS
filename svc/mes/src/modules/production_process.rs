@@ -539,7 +539,7 @@ pub async fn deactivate_process(
                 description: r.description,
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
                 status: r.status,
-                sequence: r.sequence,
+                sequence: r.sequence.unwrap_or_default(),
                 equipment_required: false,
                 estimated_duration: 0,
                 created_at: r.created_at,
