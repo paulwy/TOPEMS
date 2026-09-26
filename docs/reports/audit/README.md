@@ -97,7 +97,7 @@ const blob: Blob = await operationAuditApi.exportOperationLogs({
   --start-date 2026-01-01 \
   --end-date 2026-01-31 \
   --format markdown \
-  --output docs/audit/reports/compliance-report-2026-01-31.md
+  --output docs/reports/audit/reports/compliance-report-2026-01-31.md
 ```
 
 参数 Options：
@@ -108,9 +108,9 @@ const blob: Blob = await operationAuditApi.exportOperationLogs({
 | `--start-date` | 报告起始日期（`YYYY-MM-DD`，必填）                                    |
 | `--end-date`   | 报告结束日期（`YYYY-MM-DD`，必填）                                    |
 | `--format`     | `markdown`（默认）或 `json`                                           |
-| `--output`     | 输出路径（默认 `docs/audit/reports/compliance-report-YYYY-MM-DD.md`） |
+| `--output`     | 输出路径（默认 `docs/reports/audit/reports/compliance-report-YYYY-MM-DD.md`） |
 | `--api-url`    | 审计 API 基址（默认 `$AUDIT_API_URL` 或 `http://localhost:8080`）     |
-| `--template`   | 模板文件（默认 `docs/audit/templates/compliance-report.md`）          |
+| `--template`   | 模板文件（默认 `docs/reports/audit/templates/compliance-report.md`）          |
 | `--help`       | 帮助                                                                  |
 
 环境变量 Environment：
@@ -150,18 +150,18 @@ Markdown / JSON 报告，并支持原始日志 CSV 导出。与上节 bash 脚�
 DATABASE_URL=postgresql://user:pass@host:5432/topems \
   python3 scripts/audit/generate_audit_report.py \
     --start-date 2026-07-01 --end-date 2026-08-01 \
-    --output docs/audit/reports/audit-report-2026-08.md --format md
+    --output docs/reports/audit/reports/audit-report-2026-08.md --format md
 
 # 同时生成报告 + 导出原始日志 CSV
 python3 scripts/audit/generate_audit_report.py \
   --start-date 2026-07-01 --end-date 2026-08-01 \
-  --output docs/audit/reports/audit-report-2026-08.md \
-  --format md --export-logs --export-dir docs/audit/reports/exports/
+  --output docs/reports/audit/reports/audit-report-2026-08.md \
+  --format md --export-logs --export-dir docs/reports/audit/reports/exports/
 
 # 仅导出 CSV（不生成报告）
 python3 scripts/audit/generate_audit_report.py \
   --start-date 2026-07-01 --end-date 2026-08-01 --format csv \
-  --export-dir docs/audit/reports/exports/
+  --export-dir docs/reports/audit/reports/exports/
 
 # 降级模式：无 DB 也能跑，生成空报告模板（含 TODO 标记）
 python3 scripts/audit/generate_audit_report.py \
@@ -174,7 +174,7 @@ python3 scripts/audit/generate_audit_report.py \
 | ---------------- | ------------------------------------------------------------------------ |
 | `--start-date`   | 报告起始日期（`YYYY-MM-DD`，必填）                                       |
 | `--end-date`     | 报告结束日期（`YYYY-MM-DD`，必填）                                       |
-| `--output`, `-o` | 输出路径（默认 `docs/audit/reports/audit-report-YYYY-MM-DD.{md\|json}`） |
+| `--output`, `-o` | 输出路径（默认 `docs/reports/audit/reports/audit-report-YYYY-MM-DD.{md\|json}`） |
 | `--format`, `-f` | `md`（默认）/ `json` / `csv`（csv=仅导出原始日志 CSV）                   |
 | `--export-logs`  | 同时导出原始日志 CSV（login/operation/permission）                       |
 | `--export-dir`   | CSV 导出目录（默认与 `--output` 同目录的 `exports/`）                    |
@@ -230,7 +230,7 @@ CSV 约定：
 
 ## 6. 模板结构 Template Structure
 
-模板：`docs/audit/templates/compliance-report.md`
+模板：`docs/reports/audit/templates/compliance-report.md`
 
 使用 `{{placeholder}}` 语法（纯静态 Markdown，无 Jinja/Handlebars）：
 
@@ -249,7 +249,7 @@ CSV 约定：
 ## 7. 目录结构 Directory Layout
 
 ```
-docs/audit/
+docs/reports/audit/
 ├── README.md                       # 本文档
 ├── templates/
 │   └── compliance-report.md        # 合规报告模板（bash 脚本用，{{placeholder}} 静态替换）
@@ -287,7 +287,7 @@ scripts/audit/
 | 依赖     | `curl` / `jq`                                            | Python 3.8+ / `psycopg2`（可选）                                 |
 | 服务在线 | 必须在线                                                 | 不需要（离线可跑）                                               |
 | 降级行为 | API 不可达 → exit 5                                      | DB 不可达 → 空报告模板（含 TODO）                                |
-| 模板     | `docs/audit/templates/compliance-report.md`（`{{var}}`） | `scripts/audit/report_template.md`（`{{var}}` + `{% for/if %}`） |
+| 模板     | `docs/reports/audit/templates/compliance-report.md`（`{{var}}`） | `scripts/audit/report_template.md`（`{{var}}` + `{% for/if %}`） |
 | 输出     | Markdown / JSON                                          | Markdown / JSON / CSV（含原始日志导出）                          |
 | 适用     | 在线巡检、运维 dashboard                                 | 离线归档、外部审计交付、定时任务                                 |
 
