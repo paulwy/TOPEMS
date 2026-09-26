@@ -1,3 +1,4 @@
+use bigdecimal::BigDecimal;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -13,8 +14,8 @@ pub struct Batch {
     pub material_name: String,
     pub specification: Option<String>,
     pub unit: Option<String>,
-    pub quantity: f64,
-    pub available_quantity: f64,
+    pub quantity: BigDecimal,
+    pub available_quantity: BigDecimal,
     pub warehouse_id: String,
     pub warehouse_name: Option<String>,
     pub location_id: Option<String>,
@@ -29,8 +30,8 @@ pub struct Batch {
     pub manufacture_date: Option<NaiveDate>,
     pub shelf_life_days: Option<i32>,
     pub remaining_days: Option<i32>,
-    pub unit_price: Option<f64>,
-    pub total_value: Option<f64>,
+    pub unit_price: Option<BigDecimal>,
+    pub total_value: Option<BigDecimal>,
     pub remark: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -43,7 +44,7 @@ pub struct CreateBatchRequest {
     pub material_name: String,
     pub specification: Option<String>,
     pub unit: Option<String>,
-    pub quantity: f64,
+    pub quantity: BigDecimal,
     pub warehouse_id: String,
     pub location_id: Option<String>,
     pub supplier_id: Option<String>,
@@ -53,7 +54,7 @@ pub struct CreateBatchRequest {
     pub quality_status: Option<String>,
     pub manufacture_date: Option<String>,
     pub shelf_life_days: Option<i32>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<BigDecimal>,
     pub remark: Option<String>,
 }
 
@@ -74,7 +75,7 @@ pub struct UpdateBatchRequest {
     pub status: Option<String>,
     pub manufacture_date: Option<String>,
     pub shelf_life_days: Option<i32>,
-    pub unit_price: Option<f64>,
+    pub unit_price: Option<BigDecimal>,
     pub remark: Option<String>,
 }
 

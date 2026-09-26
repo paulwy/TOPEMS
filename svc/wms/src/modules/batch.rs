@@ -173,7 +173,6 @@ pub async fn create_batch(
     .bind(&req.specification)
     .bind(&req.unit)
     .bind(req.quantity)
-    .bind(req.quantity)
     .bind(&req.warehouse_id)
     .bind(&req.location_id)
     .bind(&req.supplier_id)
