@@ -263,7 +263,7 @@ pub async fn list_material_returns(
                 .try_get::<Option<DateTime<Utc>>, _>("return_time")
                 .ok()
                 .flatten()
-                .map(|d| d),
+                .map(|d| d.to_rfc3339()),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")

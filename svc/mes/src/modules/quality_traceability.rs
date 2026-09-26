@@ -186,7 +186,7 @@ pub async fn forward_traceability(
         timestamp: order
             .actual_start_date
             
-            .map(|d| d),
+            .map(|d| d.to_rfc3339()),
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -253,7 +253,7 @@ pub async fn forward_traceability(
         timestamp: order
             .actual_end_date
             
-            .map(|d| d),
+            .map(|d| d.to_rfc3339()),
         operator: None,
         description: Some("成品入库".to_string()),
     });

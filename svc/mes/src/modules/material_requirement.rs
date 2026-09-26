@@ -350,8 +350,8 @@ pub async fn get_material_requirement(
                 specification: r.specification,
                 unit: r.unit,
                 required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
-                available_quantity: big_decimal_to_f64(r.available_quantity),
-                shortfall_quantity: big_decimal_to_f64(r.shortfall_quantity),
+                available_quantity: Some(big_decimal_to_f64(r.available_quantity)),
+                shortfall_quantity: Some(big_decimal_to_f64(r.shortfall_quantity)),
                 required_date: r.required_date,
                 priority: r.priority,
                 status: r
