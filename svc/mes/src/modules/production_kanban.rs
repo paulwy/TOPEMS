@@ -435,9 +435,9 @@ pub async fn get_dashboard(
                     .ok()
                     .flatten()
                     .unwrap_or_else(|| "normal".to_string()),
-                oee: big_decimal_to_f64(
+                oee: Some(big_decimal_to_f64(
                     r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten(),
-                ),
+                )),
             })
             .collect(),
         Err(e) => {
