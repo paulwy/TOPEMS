@@ -89,9 +89,6 @@ pub struct EquipmentStatusResponse {
 
 // ==================== Helper Functions ====================
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
-
 // ==================== Handlers ====================
 
 /// GET /api/mes/kanban/dashboard

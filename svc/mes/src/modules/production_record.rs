@@ -102,8 +102,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
     dt
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
 fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
     f.and_then(|v| BigDecimal::from_str(&v.to_string()).ok())
 }

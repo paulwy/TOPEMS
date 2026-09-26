@@ -163,7 +163,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
     dt
 }
 
-}
 
 // ==================== Production Scheduling Handlers ====================
 

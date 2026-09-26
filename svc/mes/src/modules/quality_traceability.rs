@@ -110,8 +110,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
     dt
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
 // ==================== Quality Traceability Handlers ====================
 
 #[utoipa::path(

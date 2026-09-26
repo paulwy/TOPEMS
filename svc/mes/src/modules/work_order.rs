@@ -130,8 +130,6 @@ fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
     dt.map(|d| d.to_rfc3339())
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
 fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(s)
         .ok()

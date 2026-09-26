@@ -165,8 +165,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
     dt
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
 // ==================== State Transition ====================
 
 pub fn validate_state_transition(current_status: &str, target_status: &str) -> Result<(), String> {
