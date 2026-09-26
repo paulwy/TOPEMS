@@ -386,7 +386,7 @@ pub async fn get_process_route(
                     let pc = s.try_get::<i64, _>("process_count").ok();
                     (tst, pc)
                 }
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
@@ -694,7 +694,7 @@ pub async fn get_route_steps(
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -777,7 +777,7 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
@@ -878,7 +878,7 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
@@ -1049,7 +1049,7 @@ pub async fn reorder_route_steps(
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     description: s.description,
                     created_at: s.created_at,
                 })
