@@ -904,6 +904,7 @@ pub async fn release_requirement(
 mod tests {
     use super::*;
     use chrono::TimeZone;
+    use crate::shared::utils::big_decimal_to_f64_non_opt;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

@@ -20,6 +20,8 @@ pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};
+    use sqlx::types::BigDecimal;
+    use crate::shared::utils::big_decimal_to_f64;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {
