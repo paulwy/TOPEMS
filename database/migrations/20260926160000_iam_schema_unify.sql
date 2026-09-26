@@ -117,3 +117,9 @@ END $$;
 -- 5. 说明：旧的 public.core_users 和 public.core_tenant_users 表暂时保留
 -- 等所有代码都切换到 iam schema 之后，再删除旧表
 -- ================================================
+
+-- ================================================
+-- 6. 删除旧表（确认所有功能正常后执行）
+-- ================================================
+-- DROP TABLE IF EXISTS public.core_users_old CASCADE;
+-- DROP TABLE IF EXISTS public.core_tenant_users_old CASCADE;
