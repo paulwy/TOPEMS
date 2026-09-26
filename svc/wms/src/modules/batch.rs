@@ -63,10 +63,10 @@ pub async fn list_batches(
     let result = sqlx::query_as::<_, Batch>(
         only_own_schema_query!("wms", r#"
         SELECT id, tenant_id, batch_no, sku, material_name, specification, unit, quantity, available_quantity, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, production_date, expiry_date, receipt_date, quality_status, status, manufacture_date, shelf_life_days, remaining_days, unit_price, total_value, remark, created_at, updated_at FROM wms.batches
-        WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
+        WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
-          AND ($4::text IS NULL OR supplier_id = $4)
+          AND ($4::uuid IS NULL OR supplier_id = $4)
           AND ($5::text IS NULL OR quality_status = $5)
           AND ($6::text IS NULL OR status = $6)
         ORDER BY created_at DESC
@@ -90,10 +90,10 @@ pub async fn list_batches(
                 "wms",
                 r#"
                 SELECT COUNT(*) FROM wms.batches
-                WHERE deleted_at IS NULL AND ($1::text IS NULL OR warehouse_id = $1)
+                WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
                   AND ($2::text IS NULL OR sku ILIKE $2)
                   AND ($3::text IS NULL OR batch_no ILIKE $3)
-                  AND ($4::text IS NULL OR supplier_id = $4)
+                  AND ($4::uuid IS NULL OR supplier_id = $4)
                   AND ($5::text IS NULL OR quality_status = $5)
                   AND ($6::text IS NULL OR status = $6)
                 "#
