@@ -1304,7 +1304,7 @@ mod tests {
             .map(|dt| dt.and_utc())
             .ok();
         let result = naive_to_utc(naive);
-        assert_eq!(result.date().year(), 2024);
+        assert_eq!(result.date_naive().year(), 2024);
     }
 
     #[test]

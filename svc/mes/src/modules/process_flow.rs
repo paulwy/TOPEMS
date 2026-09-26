@@ -420,7 +420,7 @@ pub async fn create_process_flow(
     let capacity = body.capacity;
 
     let capacity_value = capacity
-        .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
+        .map(|v| v.to_string().parse::<BigDecimal>().unwrap_or_default())
         .unwrap_or_default();
     let result = sqlx::query!(
         r#"
@@ -499,7 +499,7 @@ pub async fn update_process_flow(
     let capacity = body.capacity;
 
     let capacity_value = capacity
-        .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
+        .map(|v| v.to_string().parse::<BigDecimal>().unwrap_or_default())
         .unwrap_or_default();
     let result = sqlx::query!(
         r#"
@@ -1297,7 +1297,7 @@ mod tests {
                 .unwrap(),
         );
         let utc = naive_to_utc(Some(dt));
-        assert_eq!(utc.date(), dt.date());
+        assert_eq!(utc.date_naive(), dt.date_naive());
         assert_eq!(utc.time(), dt.time());
     }
 
