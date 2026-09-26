@@ -662,7 +662,7 @@ pub async fn get_flow_steps(
                     process_code: s.process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name.unwrap_or_default(),
+                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -734,7 +734,7 @@ pub async fn add_flow_step(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc))
+                    .map(|dt| dt.with_timezone(.map(|dt| dt.with_timezone(&Utc))Utc).naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
