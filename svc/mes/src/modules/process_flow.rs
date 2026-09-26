@@ -734,7 +734,7 @@ pub async fn add_flow_step(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(.map(|dt| dt.with_timezone(&Utc))Utc).naive_utc())
+                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()

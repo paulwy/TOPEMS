@@ -1175,7 +1175,7 @@ pub async fn list_inspections(
                     id: r.id.to_string(),
                     equipment_id: r.equipment_id.to_string(),
                     equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
-                    Some(r.equipment_name).clone().unwrap_or_else(String::new),
+                    equipment_name: r.equipment_name.unwrap_or_default(),
                     inspector: r.inspector,
                     inspection_date: r.inspection_date,
                     location: r.location,
@@ -1196,7 +1196,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default(),
+                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
                 })
                 .collect();
 
@@ -1305,7 +1305,7 @@ pub async fn create_inspection(
                 id: r.id.to_string(),
                 equipment_id: r.equipment_id.to_string(),
                 equipment_code: r.equipment_code.clone().unwrap_or_else(String::new),
-                Some(r.equipment_name).clone().unwrap_or_else(String::new),
+                equipment_name: r.equipment_name.unwrap_or_default(),
                 inspector: r.inspector,
                 inspection_date: r.inspection_date,
                 location: r.location,
@@ -1326,7 +1326,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
             },
             "创建点检记录成功",
         )),
