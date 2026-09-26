@@ -7,24 +7,37 @@ use axum::http::HeaderMap;
 use topems_shared_auth::auth::Claims;
 use uuid::Uuid;
 
-/// 优先从 Claims.tenant_id 获取，否则回退到 `x-tenant-id` header，最终 fallback 到 nil UUID。
+/// 优先从 Claims.tenant_id 获取，否则回退到 `x-tenant-id` header，返回Option。
 ///
 /// 注意：`Claims.tenant_id` 的类型是 `Option<String>`（JWT 中以字符串形式承载），
 /// 因此这里需要先把字符串解析为 `Uuid`，解析失败则继续回退。
-pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+pub fn get_tenant_id_option(claims: &Claims, headers: &HeaderMap) -> Option<Uuid> {
     if let Some(tid) = claims.tenant_id.as_ref() {
         if let Ok(parsed) = Uuid::parse_str(tid) {
-            return parsed;
+            return Some(parsed);
         }
     }
     if let Some(v) = headers.get("x-tenant-id") {
         if let Ok(s) = v.to_str() {
             if let Ok(parsed) = Uuid::parse_str(s) {
-                return parsed;
+                return Some(parsed);
             }
         }
     }
-    Uuid::nil()
+    None
+}
+
+/// 优先从 Claims.tenant_id 获取，否则回退到 `x-tenant-id` header，最终 fallback 到 nil UUID。
+///
+/// 注意：`Claims.tenant_id` 的类型是 `Option<String>`（JWT 中以字符串形式承载），
+/// 因此这里需要先把字符串解析为 `Uuid`，解析失败则继续回退。
+pub fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    get_tenant_id_option(claims, headers).unwrap_or_else(Uuid::nil)
+}
+
+/// 优先从 Claims.tenant_id 获取，否则回退到 `x-tenant-id` header，最终 fallback 到新生成的 UUID。
+pub fn get_tenant_id_or_new(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    get_tenant_id_option(claims, headers).unwrap_or_else(Uuid::new_v4)
 }
 
 /// 在当前 PostgreSQL 会话设置 `app.tenant_id`，使 RLS 策略生效。
@@ -36,6 +49,32 @@ pub async fn set_session_tenant_id(
     sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
         .bind(tenant_id.to_string())
         .execute(pool)
+        .await?;
+    Ok(())
+}
+
+/// 在当前 PostgreSQL 连接设置 `app.tenant_id`，使 RLS 策略生效。
+/// 适用于事务或手动获取连接的场景。
+pub async fn set_session_tenant_id_conn(
+    conn: &mut sqlx::PgConnection,
+    tenant_id: Uuid,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+        .bind(tenant_id.to_string())
+        .execute(conn)
+        .await?;
+    Ok(())
+}
+
+/// 在当前 PostgreSQL 事务设置 `app.tenant_id`，使 RLS 策略生效。
+/// 适用于事务内需要设置RLS上下文的场景。
+pub async fn set_session_tenant_id_tx(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    tenant_id: Uuid,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+        .bind(tenant_id.to_string())
+        .execute(&mut **tx)
         .await?;
     Ok(())
 }
