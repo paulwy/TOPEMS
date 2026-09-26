@@ -495,7 +495,7 @@ pub async fn create_standard(
                     unit, inspection_method, remark
                 "#,
                 standard.id,
-                v.item_name.unwrap_or_default(),
+                v.item_name,
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -678,7 +678,7 @@ pub async fn update_standard(
                     unit, inspection_method, remark
                 "#,
                 uuid,
-                v.item_name.unwrap_or_default(),
+                v.item_name,
                 lower_limit,
                 upper_limit,
                 v.unit,

@@ -218,7 +218,7 @@ pub async fn forward_traceability(
             node_type: "process".to_string(),
             name: process_name,
             code: process_no,
-            quantity: Some(record.big_decimal_to_f64(record.quantity_produced)),
+            quantity: Some(big_decimal_to_f64(record.quantity_produced.clone())),
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone()),
@@ -231,7 +231,7 @@ pub async fn forward_traceability(
             from_id: prev_node_id.clone(),
             to_id: record_node_id.clone(),
             link_type: "production".to_string(),
-            quantity: Some(record.big_decimal_to_f64(record.quantity_produced)),
+            quantity: Some(big_decimal_to_f64(record.quantity_produced.clone())),
         });
 
         prev_node_id = record_node_id.clone();
@@ -248,7 +248,7 @@ pub async fn forward_traceability(
             .clone()
             .map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
-        batch_no: Some(format!("BATCH{}", order.order_no)),
+        batch_no: Some(format!("BATCH{}", order.order_no.unwrap_or_default())),
         status: Some(order.status.clone()),
         timestamp: order
             .actual_end_date

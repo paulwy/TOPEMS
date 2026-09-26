@@ -794,7 +794,7 @@ pub async fn update_work_report(
             .unwrap_or_default()
             .and_hms_opt(0, 0, 0)
             .unwrap()
-            .date(),
+            .and_utc(),
         body.shift,
         output_quantity,
         defect_quantity,
