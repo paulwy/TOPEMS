@@ -116,8 +116,6 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mes:material:read"])),

@@ -171,8 +171,6 @@ fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
     dt.and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-
 fn calculate_oee(
     planned_time: f64,
     run_time: f64,

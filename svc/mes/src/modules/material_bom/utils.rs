@@ -19,7 +19,6 @@ pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String
     dt.map(|d| d.to_rfc3339())
 }
 
-}
 
 #[cfg(test)]
 mod tests {
