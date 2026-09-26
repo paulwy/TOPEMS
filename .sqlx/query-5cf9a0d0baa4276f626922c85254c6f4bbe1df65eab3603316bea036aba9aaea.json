@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "capacity",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 9,

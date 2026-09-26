@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "capacity",
-        "type_info": "Numeric"
+        "type_info": "Float8"
       },
       {
         "ordinal": 9,
@@ -72,7 +72,7 @@
         "Int4",
         "Uuid",
         "Varchar",
-        "Numeric",
+        "Float8",
         "Varchar"
       ]
     },
