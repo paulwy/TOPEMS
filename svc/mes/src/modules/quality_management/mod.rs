@@ -10,6 +10,8 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::types::BigDecimal;
 
 use crate::AppState;
+use crate::shared::utils::big_decimal_to_f64;
+
 
 pub mod inspection;
 mod patrol;
@@ -87,11 +89,6 @@ pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
 }
 
 
-pub fn big_decimal_to_f64<T: Into<Option<BigDecimal>>>(bd: T) -> f64 {
-    bd.into()
-        .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0))
-        .unwrap_or(0.0)
-}
 
 #[allow(dead_code)]
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {

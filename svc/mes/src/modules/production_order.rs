@@ -18,6 +18,8 @@ use topems_shared::auth::Claims;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
 
+use crate::shared::utils::big_decimal_to_f64;
+
 use crate::modules::approval_common::{
     build_approve_response, build_reject_response, build_start_response, create_approval_and_log,
     execute_transition_and_log, reject_and_log,
@@ -164,9 +166,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
-}
 
 // ==================== State Transition ====================
 

@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
 use sqlx::types::BigDecimal;
+use crate::shared::utils::big_decimal_to_f64;
+
 
 pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
@@ -17,9 +19,6 @@ pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String
     dt.map(|d| d.to_rfc3339())
 }
 
-pub(crate) fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
 }
 
 #[cfg(test)]

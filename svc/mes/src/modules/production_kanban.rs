@@ -16,6 +16,8 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
+use crate::shared::utils::big_decimal_to_f64;
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/kanban/dashboard", get(get_dashboard))
@@ -88,9 +90,6 @@ pub struct EquipmentStatusResponse {
 // ==================== Helper Functions ====================
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
-}
 
 
 // ==================== Handlers ====================

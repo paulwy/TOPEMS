@@ -18,6 +18,8 @@ use std::str::FromStr;
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::utils::big_decimal_to_f64;
+
 use crate::AppState;
 use topems_shared::response::ApiResponse;
 use utoipa::ToSchema;
@@ -163,9 +165,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
-}
 
 // ==================== WIP Handlers ====================
 

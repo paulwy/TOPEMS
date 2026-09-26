@@ -19,6 +19,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
     Row,
+use crate::shared::utils::big_decimal_to_f64;
+
 };
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -338,9 +340,6 @@ struct MaterialAvailability {
 // ==================== Helper Functions ====================
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
-}
 
 #[allow(dead_code)]
 fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {

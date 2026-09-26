@@ -18,6 +18,8 @@ use topems_shared_auth::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+use crate::shared::utils::big_decimal_to_f64_opt;
+
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -176,10 +178,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-}
-
+fn big_decimal_to_f64_opt(bd: Option<BigDecimal>) -> Option<f64> {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mes:process:read"])),
@@ -300,7 +299,7 @@ pub async fn list_process_flows(
                 .try_get::<Option<String>, _>("production_line")
                 .ok()
                 .flatten(),
-            capacity: big_decimal_to_f64(
+            capacity: big_decimal_to_f64_opt(
                 r.try_get::<Option<BigDecimal>, _>("capacity")
                     .ok()
                     .flatten(),
@@ -1329,11 +1328,11 @@ mod tests {
     #[test]
     fn big_decimal_to_f64_some() {
         let bd: BigDecimal = "12.5".parse().unwrap();
-        assert_eq!(big_decimal_to_f64(Some(bd)), Some(12.5));
+        assert_eq!(big_decimal_to_f64_opt(Some(bd)), Some(12.5));
     }
 
     #[test]
     fn big_decimal_to_f64_none() {
-        assert_eq!(big_decimal_to_f64(None), None);
+        assert_eq!(big_decimal_to_f64_opt(None), None);
     }
 }

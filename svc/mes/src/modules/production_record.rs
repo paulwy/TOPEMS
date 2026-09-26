@@ -18,6 +18,8 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::utils::big_decimal_to_f64;
+
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
@@ -101,9 +103,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
-}
 
 fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
     f.and_then(|v| BigDecimal::from_str(&v.to_string()).ok())

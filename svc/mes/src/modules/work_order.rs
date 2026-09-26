@@ -18,6 +18,8 @@ use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
+use crate::shared::utils::big_decimal_to_f64;
+
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
@@ -129,9 +131,6 @@ fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
-}
 
 fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(s)
