@@ -1570,7 +1570,7 @@ pub async fn start_outbound_approval(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = get_tenant_id_or_new(claims, headers);
+    let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1634,7 +1634,7 @@ pub async fn approve_outbound(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = get_tenant_id_or_new(claims, headers);
+    let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1716,7 +1716,7 @@ pub async fn reject_outbound(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = get_tenant_id_or_new(claims, headers);
+    let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.outbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),

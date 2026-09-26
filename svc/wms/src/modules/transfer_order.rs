@@ -849,7 +849,7 @@ pub async fn start_transfer_approval(
         Ok(uuid) => uuid,
         Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
     };
-    let tenant_id = get_tenant_id_or_new(claims, headers);
+    let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
@@ -918,7 +918,7 @@ pub async fn approve_transfer(
         Ok(uuid) => uuid,
         Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
     };
-    let tenant_id = get_tenant_id_or_new(claims, headers);
+    let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1005,7 +1005,7 @@ pub async fn reject_transfer(
         Ok(uuid) => uuid,
         Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
     };
-    let tenant_id = get_tenant_id_or_new(claims, headers);
+    let tenant_id = get_tenant_id_or_new(&claims, &headers);
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
