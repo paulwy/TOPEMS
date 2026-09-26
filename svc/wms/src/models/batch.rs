@@ -9,9 +9,9 @@ use uuid::Uuid;
 pub struct Batch {
     pub id: Uuid,
     pub tenant_id: Uuid,
-    pub batch_no: String,
-    pub sku: String,
-    pub material_name: String,
+    pub batch_no: Option<String>,
+    pub sku: Option<String>,
+    pub material_name: Option<String>,
     pub specification: Option<String>,
     pub unit: Option<String>,
     pub quantity: f64,
@@ -25,8 +25,8 @@ pub struct Batch {
     pub production_date: Option<DateTime<Utc>>,
     pub expiry_date: Option<DateTime<Utc>>,
     pub receipt_date: Option<DateTime<Utc>>,
-    pub quality_status: String,
-    pub status: String,
+    pub quality_status: Option<String>,
+    pub status: Option<String>,
     pub manufacture_date: Option<DateTime<Utc>>,
     pub shelf_life_days: Option<i32>,
     pub remaining_days: Option<i32>,
@@ -39,9 +39,9 @@ pub struct Batch {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateBatchRequest {
-    pub batch_no: String,
-    pub sku: String,
-    pub material_name: String,
+    pub batch_no: Option<String>,
+    pub sku: Option<String>,
+    pub material_name: Option<String>,
     pub specification: Option<String>,
     pub unit: Option<String>,
     pub quantity: f64,
