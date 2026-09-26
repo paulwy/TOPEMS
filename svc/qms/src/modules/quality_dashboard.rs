@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 
 #[derive(Debug, Serialize)]
 pub struct QualityOverview {
@@ -184,7 +185,7 @@ pub async fn get_quality_overview(
     .fetch_one(&state.pool)
     .await
     .ok();
-    let qualification_rate: f64 = avg_rate.map(|v| v.to_f64().unwrap_or(0.0)).unwrap_or(0.0);
+    let qualification_rate: f64 = big_decimal_to_f64(avg_rate);
     let defect_rate = 100.0 - qualification_rate;
 
     let total_issues_count: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
@@ -286,10 +287,7 @@ pub async fn get_quality_trend(
             let trend: Vec<QualityTrendItem> = data
                 .iter()
                 .map(|r| {
-                    let rate: f64 = r
-                        .get::<BigDecimal, _>("qualification_rate")
-                        .to_f64()
-                        .unwrap_or(0.0);
+                    let rate: f64 = big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("qualification_rate"));
                     QualityTrendItem {
                         period: r.get::<Option<String>, _>("period").unwrap_or_default(),
                         total_count: r.get::<Option<i64>, _>("total_count").unwrap_or(0),

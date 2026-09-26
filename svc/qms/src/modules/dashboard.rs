@@ -6,6 +6,7 @@ use serde::Serialize;
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 #[derive(Debug, Serialize)]
 pub struct DashboardStats {
@@ -117,9 +118,7 @@ pub async fn get_dashboard_stats(
     .fetch_one(&state.pool)
     .await
     .ok();
-    let qualified_rate: f64 = qualified_rate
-        .map(|v| v.to_f64().unwrap_or(0.0))
-        .unwrap_or(0.0);
+    let qualified_rate: f64 = big_decimal_to_f64(qualified_rate);
 
     // Total issues
     let total_issues: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(

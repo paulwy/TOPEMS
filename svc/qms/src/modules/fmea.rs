@@ -12,6 +12,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 #[utoipa::path(
     get,
@@ -557,7 +558,7 @@ pub async fn get_fmea_statistics(
     .fetch_one(&state.pool)
     .await
     .ok();
-    let average_rpn: f64 = avg_rpn.and_then(|v| v.to_f64()).unwrap_or(0.0);
+    let average_rpn: f64 = big_decimal_to_f64(avg_rpn);
 
     let max_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(
         only_own_schema_query!("qms", r#"SELECT COALESCE(MAX(rpn), 0) FROM qms.qa_fmea_items WHERE fmea_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#),
