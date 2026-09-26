@@ -13,6 +13,7 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 use super::models::{ConfirmSuggestionRequest, ReplenishmentComputeRequest};
 
@@ -576,10 +577,7 @@ pub async fn get_statistics(
 
     match result {
         Ok(row) => {
-            let total_suggested_quantity = row
-                .total_suggested_quantity
-                .map(|v| v.to_f64().unwrap_or(0.0))
-                .unwrap_or(0.0);
+            let total_suggested_quantity = big_decimal_to_f64(row.total_suggested_quantity);
             Json(ApiResponse::success(
                 serde_json::json!({
                     "total_suggestions": row.total_suggestions.unwrap_or(0),
