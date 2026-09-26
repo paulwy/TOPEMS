@@ -111,6 +111,16 @@ pre-commit:
           node scripts/ci/check-error-handling.cjs
         fi
 
+    # [Gate R] RLS权限校验
+    rls-permissions:
+      tags: database rls security
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^scripts/db/|^database/migrations/" || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/ci/check-rls-permissions.cjs" ]; then
+          node scripts/ci/check-rls-permissions.cjs
+        fi
+
     # [Gate Q] 端口单一真相源一致性校验（ports.env ↔ ports.ts）
     ports-consistency:
       tags: config ports
