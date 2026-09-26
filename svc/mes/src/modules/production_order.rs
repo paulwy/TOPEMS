@@ -18,7 +18,6 @@ use topems_shared::auth::Claims;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
 
-use crate::shared::utils::big_decimal_to_f64;
 
 use crate::modules::approval_common::{
     build_approve_response, build_reject_response, build_start_response, create_approval_and_log,

@@ -11,7 +11,6 @@ use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 use super::models::*;
-use super::utils::*;
 
 #[utoipa::path(
     get,

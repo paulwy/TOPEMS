@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use chrono::{TimeZone, Utc};
+use chrono::Utc;
 use sqlx::types::Uuid;
 use tracing::info;
 

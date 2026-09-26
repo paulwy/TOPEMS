@@ -7,7 +7,6 @@ use axum::{
     Router,
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
-use sqlx::types::BigDecimal;
 
 use crate::shared::utils::big_decimal_to_f64;
 use crate::AppState;
