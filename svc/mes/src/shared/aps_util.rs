@@ -212,10 +212,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(9, 30, 0)
             .unwrap();
-        assert_eq!(
-            calc_duration_minutes(start, end),
-            Some(90)
-        );
+        assert_eq!(calc_duration_minutes(start, end), Some(90));
 
         let end2 = NaiveDate::from_ymd_opt(2024, 1, 1)
             .unwrap()
@@ -389,10 +386,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(2, 0, 0)
             .unwrap();
-        assert_eq!(
-            calc_duration_minutes(start, end),
-            Some(240)
-        );
+        assert_eq!(calc_duration_minutes(start, end), Some(240));
     }
 
     #[test]
@@ -405,10 +399,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(18, 30, 0)
             .unwrap();
-        assert_eq!(
-            calc_duration_minutes(start, end),
-            Some(750)
-        );
+        assert_eq!(calc_duration_minutes(start, end), Some(750));
     }
 
     #[test]

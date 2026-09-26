@@ -9,9 +9,8 @@ use axum::{
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::types::BigDecimal;
 
-use crate::AppState;
 use crate::shared::utils::big_decimal_to_f64;
-
+use crate::AppState;
 
 pub mod inspection;
 mod patrol;
@@ -87,8 +86,6 @@ pub fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
 pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
-
-
 
 #[allow(dead_code)]
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {

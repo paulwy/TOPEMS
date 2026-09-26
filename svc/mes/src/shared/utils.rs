@@ -2,7 +2,8 @@ use sqlx::types::BigDecimal;
 
 /// 将 Option<BigDecimal> 转换为 f64，None 或转换失败时返回 0.0
 pub fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|b| b.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|b| b.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 /// 将 Option<BigDecimal> 转换为 Option<f64>，None 或转换失败时返回 None

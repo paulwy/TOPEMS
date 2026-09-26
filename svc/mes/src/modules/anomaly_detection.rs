@@ -918,8 +918,8 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 
             let days_delay = if let Some(pe) = planned_end {
                 Utc::now()
-                    
-                    .naive_utc().date()
+                    .naive_utc()
+                    .date()
                     .signed_duration_since(pe)
                     .num_days()
             } else {
@@ -985,10 +985,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let station_name: Option<String> = row.get("station_name");
 
             let hours_stuck = if let Some(st) = start_time {
-                Utc::now()
-                    
-                    .signed_duration_since(st)
-                    .num_hours()
+                Utc::now().signed_duration_since(st).num_hours()
             } else {
                 0
             };

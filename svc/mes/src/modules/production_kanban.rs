@@ -770,7 +770,9 @@ pub async fn get_equipment_status(
                 .ok()
                 .flatten()
                 .unwrap_or_else(|| "normal".to_string()),
-            oee: Some(big_decimal_to_f64(r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten())),
+            oee: Some(big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten(),
+            )),
         })
         .collect();
 

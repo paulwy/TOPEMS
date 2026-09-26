@@ -163,7 +163,6 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
     dt
 }
 
-
 // ==================== Production Scheduling Handlers ====================
 
 #[utoipa::path(
@@ -870,9 +869,7 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-        let start = s
-            .planned_start_time
-            .unwrap_or_else(|| Utc::now());
+        let start = s.planned_start_time.unwrap_or_else(|| Utc::now());
         let end = s
             .planned_end_time
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
