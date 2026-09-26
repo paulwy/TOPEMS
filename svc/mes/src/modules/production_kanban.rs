@@ -611,11 +611,11 @@ pub async fn get_workstation_status(
                 .try_get::<Option<String>, _>("current_product")
                 .ok()
                 .flatten(),
-            output_today: big_decimal_to_f64(
+            output_today: Some(big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("output_today")
                     .ok()
                     .flatten(),
-            ),
+            )),
             operator: r
                 .try_get::<Option<Uuid>, _>("operator")
                 .ok()
