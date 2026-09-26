@@ -187,14 +187,13 @@ docker-compose down
 
 ```bash
 # 创建数据库
-mysql -u root -p -e "CREATE DATABASE topems CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+psql "$DATABASE_URL" -c "CREATE DATABASE topems;"  # 或由 scripts/topems.sh db start 自动初始化
 
-# 运行数据库迁移
-cd apps/backend
-cargo run -- migrate
+# 运行数据库迁移（主迁移链 database/migrations，278 个，含应用自建表固化迁移）
+./scripts/topems.sh db migrate
 
-# 或者使用迁移工具
-# sqlx migrate run --database-url mysql://root:password@localhost/topems
+# 或者使用 sqlx 直接执行
+sqlx migrate run --source database/migrations
 ```
 
 ### 2.7 环境变量配置

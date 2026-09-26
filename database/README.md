@@ -8,7 +8,7 @@ database/
 ├── checksums.txt             # 迁移校验和
 ├── migrations/               # 增量迁移（生产环境升级）
 │   ├── 000_create_schemas.sql ~ 013_login-log.sql  # 早期序号制迁移（14个）
-│   ├── 20260716000001_*.sql ~ 20260905000003_*.sql  # 时间戳制迁移（75个，持续新增）
+│   ├── 20260716000001_*.sql ~ 20260926120000_*.sql  # 时间戳制迁移（264个，持续新增；合计 278）
 │   └── .snippets/            # 迁移代码片段模板
 ├── init/                     # 全新环境一键初始化（开发环境）
 │   ├── 01_rebuild_database.sql
@@ -41,6 +41,7 @@ database/
 - **生产环境**：只用 `migrations/`，禁止直接执行 `init/`（会删数据）
 - **开发环境**：可用 `init/` 快速重建，也可用 `migrations/` 增量升级
 - **postgres/**：不纳入迁移流程，由 DBA 或运维按需手动执行；其中业务表 DDL（曾存于 init.sql / administration_tables.sql）已于 2026-09-07 收敛至迁移 `20260907000001`，此两文件仅保留说明
+- **应用自建表已固化**（2026-09-26）：ehs/lims 此前在 Rust `init_database()` 内建表、迁移链未覆盖，集成测试在全新环境会因缺表失败；现由迁移 `20260926120000_app_schema_tables.sql` 固化（ehs 43 + lims 37 + mes 32 表，全 `IF NOT EXISTS` 幂等），全新环境执行一次迁移即可一键建全。`scripts/topems.sh test-backend` 已前置 `db_migrate`，测试 setup 另有 `init_database` 兜底
 
 ## 迁移命名规范
 
@@ -49,7 +50,7 @@ database/
 | 阶段 | 命名格式 | 数量 | 时间范围 |
 |------|---------|------|---------|
 | 早期 | `{序号}_{描述}.sql`（如 `000_create_schemas.sql`） | 14个 | 项目初期 ~ 2026-07-14 |
-| 当前 | `{YYYYMMDDHHMMSS}_{描述}.sql`（如 `20260716000001_create_positions_table.sql`） | 75个 | 2026-07-16 ~ 至今 |
+| 当前 | `{YYYYMMDDHHMMSS}_{描述}.sql`（如 `20260716000001_create_positions_table.sql`） | 264个 | 2026-07-16 ~ 至今（合计 278 个，含早期 14 个） |
 
 ### 新迁移规范
 
@@ -82,7 +83,7 @@ database/
 
 ## SQLx 离线缓存
 
-项目根目录 `.sqlx/` 存放 SQLx 离线查询缓存（275个文件，1.1MB），用于 CI 环境无数据库时的编译检查。
+项目根目录 `.sqlx/` 存放 SQLx 离线查询缓存（424个文件，约 1.2MB），用于 CI 环境无数据库时的编译检查。
 
 ```bash
 # 刷新缓存（需要本地数据库在线）

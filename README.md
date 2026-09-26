@@ -613,7 +613,7 @@ python3 -m topems_cli db migrate
 
 # 测试
 ./scripts/topems.sh test-all                 # 运行所有测试
-./scripts/topems.sh test-backend             # 运行后端测试
+./scripts/topems.sh test-backend             # 运行后端测试（自动前置 db_migrate，保证 DB schema 就绪）
 ./scripts/topems.sh test-frontend            # 运行前端测试
 
 # 数据库

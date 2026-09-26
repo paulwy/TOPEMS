@@ -135,7 +135,7 @@ def db_tables():
 @db.command(name="migrate")
 @click.option("--service", "-s", help="仅迁移指定服务")
 def db_migrate(service: str):
-    """运行数据库迁移"""
+    """运行数据库迁移（svc/*/migrations 服务级；主迁移链 database/migrations 请用 topems.sh db migrate / sqlx migrate run）"""
     console.print("[bold]运行数据库迁移...[/bold]")
     
     project_root = Path(__file__).parent.parent.parent.parent.parent

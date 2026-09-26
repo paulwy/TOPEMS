@@ -2038,7 +2038,7 @@ redis_stop() {
 
 # 数据库迁移
 db_migrate() {
-    info "运行数据库迁移..."
+    info "运行数据库迁移（database/migrations，含应用自建表固化迁移）..."
     cd "$PROJECT_ROOT"
 
     load_env
