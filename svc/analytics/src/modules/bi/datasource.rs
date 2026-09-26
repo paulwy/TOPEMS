@@ -316,13 +316,13 @@ pub async fn list_datasources(
                 r.port,
                 r.username,
                 r.connection_string,
-                r.last_sync.map(|t| t.with_timezone(&chrono::Utc)),
+                r.last_sync.map(|t| t.and_utc()),
                 r.data_volume,
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                Some(r.created_at.with_timezone(&chrono::Utc)),
-                Some(r.updated_at.with_timezone(&chrono::Utc)),
+                r.created_at.map(|t| t.and_utc()),
+                r.updated_at.map(|t| t.and_utc()),
             )
         })
         .collect();
@@ -385,8 +385,8 @@ pub async fn create_datasource(
         is_enabled,
         req.connection_config,
         req.query_template,
-        now,
-        now,
+        now.naive_utc(),
+        now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -394,27 +394,27 @@ pub async fn create_datasource(
 
     match result {
         Ok(r) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Create datasource",
-                    "data": row_to_response(
-                        r.id,
-                        r.name,
-                        r.source_type,
-                        r.status,
-                        r.host,
-                        r.database,
-                        r.port,
-                        r.username,
-                        r.connection_string,
-        r.last_sync.map(|t| t.with_timezone(&chrono::Utc)),
-                        r.data_volume,
-                        r.sync_frequency,
-                        r.description,
-                        r.is_enabled,
-        Some(r.created_at.with_timezone(&chrono::Utc)),
-        Some(r.updated_at.with_timezone(&chrono::Utc)),
-                    )
-                })),
+                            "success": true,
+                            "message": "Create datasource",
+                            "data": row_to_response(
+                                r.id,
+                                r.name,
+                                r.source_type,
+                                r.status,
+                                r.host,
+                                r.database,
+                                r.port,
+                                r.username,
+                                r.connection_string,
+        r.last_sync.map(|t| t.and_utc()),
+                                r.data_volume,
+                                r.sync_frequency,
+                                r.description,
+                                r.is_enabled,
+        r.created_at.map(|t| t.and_utc()),
+        r.updated_at.map(|t| t.and_utc()),
+                            )
+                        })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create datasource: {}", e),
@@ -460,27 +460,27 @@ pub async fn get_datasource(
 
     match row {
         Some(r) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Get datasource",
-                    "data": row_to_response(
-                        r.id,
-                        r.name,
-                        r.source_type,
-                        r.status,
-                        r.host,
-                        r.database,
-                        r.port,
-                        r.username,
-                        r.connection_string,
-        r.last_sync.map(|t| t.with_timezone(&chrono::Utc)),
-                        r.data_volume,
-                        r.sync_frequency,
-                        r.description,
-                        r.is_enabled,
-        Some(r.created_at.with_timezone(&chrono::Utc)),
-        Some(r.updated_at.with_timezone(&chrono::Utc)),
-                    )
-                })),
+                            "success": true,
+                            "message": "Get datasource",
+                            "data": row_to_response(
+                                r.id,
+                                r.name,
+                                r.source_type,
+                                r.status,
+                                r.host,
+                                r.database,
+                                r.port,
+                                r.username,
+                                r.connection_string,
+        r.last_sync.map(|t| t.and_utc()),
+                                r.data_volume,
+                                r.sync_frequency,
+                                r.description,
+                                r.is_enabled,
+        r.created_at.map(|t| t.and_utc()),
+        r.updated_at.map(|t| t.and_utc()),
+                            )
+                        })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Datasource not found",
@@ -546,14 +546,14 @@ pub async fn update_datasource(
         req.username,
         req.password,
         req.connection_string,
-        last_sync_naive.map(|v| v.with_timezone(&chrono::Utc)),
+        last_sync_naive.map(|v| v.naive_utc()),
         req.data_volume,
         req.sync_frequency,
         req.description,
         req.is_enabled,
         req.connection_config,
         req.query_template,
-        now,
+        now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -561,27 +561,27 @@ pub async fn update_datasource(
 
     match result {
         Ok(Some(r)) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Update datasource",
-                    "data": row_to_response(
-                        r.id,
-                        r.name,
-                        r.source_type,
-                        r.status,
-                        r.host,
-                        r.database,
-                        r.port,
-                        r.username,
-                        r.connection_string,
-        r.last_sync.map(|t| t.with_timezone(&chrono::Utc)),
-                        r.data_volume,
-                        r.sync_frequency,
-                        r.description,
-                        r.is_enabled,
-        Some(r.created_at.with_timezone(&chrono::Utc)),
-        Some(r.updated_at.with_timezone(&chrono::Utc)),
-                    )
-                })),
+                            "success": true,
+                            "message": "Update datasource",
+                            "data": row_to_response(
+                                r.id,
+                                r.name,
+                                r.source_type,
+                                r.status,
+                                r.host,
+                                r.database,
+                                r.port,
+                                r.username,
+                                r.connection_string,
+        r.last_sync.map(|t| t.and_utc()),
+                                r.data_volume,
+                                r.sync_frequency,
+                                r.description,
+                                r.is_enabled,
+        r.created_at.map(|t| t.and_utc()),
+        r.updated_at.map(|t| t.and_utc()),
+                            )
+                        })),
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,
             "Datasource not found",
@@ -804,7 +804,7 @@ pub async fn refresh_datasource(
             updated_at = $1
         WHERE id = $3
         "#,
-        now,
+        now.naive_utc(),
         records_processed,
         id,
     )

@@ -392,8 +392,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
-                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "获取工艺流程成功",
         )),
@@ -422,6 +422,9 @@ pub async fn create_process_flow(
         .and_then(|id| Uuid::parse_str(id).ok());
     let capacity = body.capacity;
 
+    let capacity_value = capacity
+        .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
+        .unwrap_or_default();
     let result = sqlx::query!(
         r#"
         INSERT INTO process_flows (
@@ -436,15 +439,10 @@ pub async fn create_process_flow(
         body.code,
         body.name,
         body.description,
-        body.version.map(|s| s.parse::<i32>().unwrap_or_default()),
+        body.version.as_deref(),
         route_id,
         body.production_line,
-        capacity
-            .map(|c| c
-                .to_string()
-                .parse::<sqlx::types::BigDecimal>()
-                .unwrap_or_default())
-            .unwrap_or_default(),
+        capacity_value,
         body.unit,
     )
     .fetch_one(&state.pool)
@@ -466,8 +464,8 @@ pub async fn create_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
-                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "创建工艺流程成功",
         )),
@@ -503,6 +501,9 @@ pub async fn update_process_flow(
         .and_then(|id| Uuid::parse_str(id).ok());
     let capacity = body.capacity;
 
+    let capacity_value = capacity
+        .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
+        .unwrap_or_default();
     let result = sqlx::query!(
         r#"
         UPDATE process_flows
@@ -523,15 +524,10 @@ pub async fn update_process_flow(
         "#,
         body.name,
         body.description,
-        body.version.map(|s| s.parse::<i32>().unwrap_or_default()),
+        body.version.as_deref(),
         route_id,
         body.production_line,
-        capacity
-            .map(|c| c
-                .to_string()
-                .parse::<sqlx::types::BigDecimal>()
-                .unwrap_or_default())
-            .unwrap_or_default(),
+        capacity_value,
         body.unit,
         body.status,
         uuid,
@@ -555,8 +551,8 @@ pub async fn update_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
-                updated_at: r.updated_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "更新工艺流程成功",
         )),
@@ -661,12 +657,12 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name,
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -679,7 +675,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                    created_at: s.created_at.unwrap_or_default().and_utc(),
                 })
                 .collect();
 
@@ -794,16 +790,16 @@ pub async fn add_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, String::new()),
+                Err(_) => (None, None),
             };
 
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code,
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
@@ -819,7 +815,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                    created_at: s.created_at.unwrap_or_default().and_utc(),
                 },
                 "添加工艺步骤成功",
             ))
@@ -941,16 +937,16 @@ pub async fn update_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, String::new()),
+                Err(_) => (None, None),
             };
 
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code,
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
@@ -966,7 +962,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                    created_at: s.created_at.unwrap_or_default().and_utc(),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1106,12 +1102,12 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name,
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -1124,7 +1120,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default().with_timezone(&chrono::Utc),
+                    created_at: s.created_at.unwrap_or_default().and_utc(),
                 })
                 .collect();
 
@@ -1218,7 +1214,7 @@ pub async fn analyze_capacity(
         .map(|s| {
             s.standard_time
                 .clone()
-                .unwrap_or(0)
+                .unwrap_or(0.0)
                 .to_string()
                 .parse::<f64>()
                 .unwrap_or_default()
@@ -1247,8 +1243,8 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.clone().unwrap_or(0);
-        let step_capacity = if step_time > 0 {
+        let step_time = step.standard_time.clone().unwrap_or(0.0);
+        let step_capacity = if step_time > 0.0 {
             480.0 / step_time.to_string().parse::<f64>().unwrap_or_default()
         } else {
             0.0

@@ -298,10 +298,8 @@ pub async fn create_record(
         req.work_station_id,
         req.operator_id,
         req.start_time,
-        req.quantity_produced.map(|q| q
-            .to_string()
-            .parse::<sqlx::types::BigDecimal>()
-            .unwrap_or_default()),
+        req.quantity_produced
+            .map(|q| q.to_string().parse::<i32>().unwrap_or_default()),
         req.notes,
         now,
     )
@@ -323,20 +321,17 @@ pub async fn create_record(
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: result.start_time.unwrap_or_default(),
+        start_time: result.start_time,
         end_time: result.end_time,
-        quantity_produced: result
-            .quantity_produced
-            .map(|v| v.to_string().parse::<f64>().unwrap_or(0.0))
-            .unwrap_or(0.0),
+        quantity_produced: result.quantity_produced as f64,
         quantity_defective: result
             .quantity_defective
             .map(|v| v as f64)
             .unwrap_or_default(),
         status: result.status,
         notes: result.notes,
-        created_at: result.created_at.unwrap_or_default(),
-        updated_at: result.updated_at.unwrap_or_default(),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(record, "生产记录创建成功"))
@@ -396,17 +391,14 @@ pub async fn get_record(
                 work_station_id: r.work_station_id,
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 operator_id: r.operator_id,
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: r.start_time,
                 end_time: r.end_time,
-                quantity_produced: r
-                    .quantity_produced
-                    .map(|v| v.to_string().parse::<f64>().unwrap_or(0.0))
-                    .unwrap_or(0.0),
+                quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
@@ -454,10 +446,8 @@ pub async fn update_record(
         req.work_station_id,
         req.operator_id,
         req.end_time,
-        req.quantity_produced.map(|q| q
-            .to_string()
-            .parse::<sqlx::types::BigDecimal>()
-            .unwrap_or_default()),
+        req.quantity_produced
+            .map(|q| q.to_string().parse::<i32>().unwrap_or_default()),
         status,
         req.notes,
         now,
@@ -482,17 +472,14 @@ pub async fn update_record(
                 work_station_id: r.work_station_id,
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 operator_id: r.operator_id,
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: r.start_time,
                 end_time: r.end_time,
-                quantity_produced: r
-                    .quantity_produced
-                    .map(|v| v.to_string().parse::<f64>().unwrap_or(0.0))
-                    .unwrap_or(0.0),
+                quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
@@ -594,17 +581,14 @@ pub async fn complete_record(
                 work_station_id: r.work_station_id,
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 operator_id: r.operator_id,
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: r.start_time,
                 end_time: r.end_time,
-                quantity_produced: r
-                    .quantity_produced
-                    .map(|v| v.to_string().parse::<f64>().unwrap_or(0.0))
-                    .unwrap_or(0.0),
+                quantity_produced: r.quantity_produced as f64,
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }

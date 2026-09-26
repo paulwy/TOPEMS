@@ -43,7 +43,7 @@ pub async fn create_share_link(
         id,
         &req.shared_with,
         req.permission,
-expires_at.unwrap_or_default().and_utc(),now,
+expires_at,now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -51,17 +51,17 @@ expires_at.unwrap_or_default().and_utc(),now,
 
     match result {
         Ok(row) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Create share link",
-                    "data": ShareLinkResponse {
-                        id: row.id,
-                        dashboard_id: row.dashboard_id,
-                        share_url: format!("/dashboard/share/{}", row.id),
-                        permission: row.permission,
-                        expires_at: row.expires_at.map(|t| t.to_string()),
-        created_at: row.created_at.to_rfc3339(),
-                    }
-                })),
+                            "success": true,
+                            "message": "Create share link",
+                            "data": ShareLinkResponse {
+                                id: row.id,
+                                dashboard_id: row.dashboard_id,
+                                share_url: format!("/dashboard/share/{}", row.id),
+                                permission: row.permission,
+                                expires_at: row.expires_at.map(|t| t.to_string()),
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                            }
+                        })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create share link: {}", e),
@@ -117,8 +117,8 @@ pub async fn get_shared_dashboard(
                 "layout": row.layout,
                 "owner_id": row.owner_id,
                 "permission": row.permission,
-        "created_at": row.created_at.to_rfc3339(),
-        "updated_at": row.updated_at.to_rfc3339(),
+        "created_at": row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        "updated_at": row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -171,7 +171,10 @@ pub async fn list_share_links(
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
             expires_at: row.expires_at.map(|t| t.to_string()),
-            created_at: row.created_at.to_rfc3339(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 

@@ -51,8 +51,14 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
             category: row.category,
             tags: row.tags,
             is_active: row.is_active.unwrap_or(true),
-            created_at: row.created_at.to_rfc3339(),
-            updated_at: row.updated_at.to_rfc3339(),
+            created_at: row
+                .created_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
+            updated_at: row
+                .updated_at
+                .map(|v| v.and_utc().to_rfc3339())
+                .unwrap_or_default(),
         })
         .collect();
 
@@ -102,8 +108,8 @@ pub async fn create_dashboard_template(
         req.category,
         req.tags.as_deref(),
         true,
-now,
-now,
+now.naive_utc(),
+now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -111,21 +117,21 @@ now,
 
     match result {
         Ok(row) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Create dashboard template",
-                    "data": DashboardTemplateResponse {
-                        id: row.id,
-                        name: row.name,
-                        description: row.description,
-                        layout: row.layout.unwrap_or(serde_json::json!({})),
-                        preview_image: row.preview_image,
-                        category: row.category,
-                        tags: row.tags,
-                        is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at.to_rfc3339(),
-        updated_at: row.updated_at.to_rfc3339(),
-                    }
-                })),
+                            "success": true,
+                            "message": "Create dashboard template",
+                            "data": DashboardTemplateResponse {
+                                id: row.id,
+                                name: row.name,
+                                description: row.description,
+                                layout: row.layout.unwrap_or(serde_json::json!({})),
+                                preview_image: row.preview_image,
+                                category: row.category,
+                                tags: row.tags,
+                                is_active: row.is_active.unwrap_or(true),
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                            }
+                        })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create template: {}", e),
@@ -165,21 +171,21 @@ pub async fn get_dashboard_template(
 
     match row {
         Some(row) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Get dashboard template",
-                    "data": DashboardTemplateResponse {
-                        id: row.id,
-                        name: row.name,
-                        description: row.description,
-                        layout: row.layout.unwrap_or(serde_json::json!({})),
-                        preview_image: row.preview_image,
-                        category: row.category,
-                        tags: row.tags,
-                        is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at.to_rfc3339(),
-        updated_at: row.updated_at.to_rfc3339(),
-                    }
-                })),
+                            "success": true,
+                            "message": "Get dashboard template",
+                            "data": DashboardTemplateResponse {
+                                id: row.id,
+                                name: row.name,
+                                description: row.description,
+                                layout: row.layout.unwrap_or(serde_json::json!({})),
+                                preview_image: row.preview_image,
+                                category: row.category,
+                                tags: row.tags,
+                                is_active: row.is_active.unwrap_or(true),
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                            }
+                        })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Template not found",
@@ -230,7 +236,7 @@ pub async fn update_dashboard_template(
         req.category,
         req.tags.as_deref(),
         req.is_active,
-now,
+now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -238,21 +244,21 @@ now,
 
     match result {
         Ok(Some(row)) => Json(serde_json::json!({
-                    "success": true,
-                    "message": "Update dashboard template",
-                    "data": DashboardTemplateResponse {
-                        id: row.id,
-                        name: row.name,
-                        description: row.description,
-                        layout: row.layout.unwrap_or(serde_json::json!({})),
-                        preview_image: row.preview_image,
-                        category: row.category,
-                        tags: row.tags,
-                        is_active: row.is_active.unwrap_or(true),
-        created_at: row.created_at.to_rfc3339(),
-        updated_at: row.updated_at.to_rfc3339(),
-                    }
-                })),
+                            "success": true,
+                            "message": "Update dashboard template",
+                            "data": DashboardTemplateResponse {
+                                id: row.id,
+                                name: row.name,
+                                description: row.description,
+                                layout: row.layout.unwrap_or(serde_json::json!({})),
+                                preview_image: row.preview_image,
+                                category: row.category,
+                                tags: row.tags,
+                                is_active: row.is_active.unwrap_or(true),
+        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                            }
+                        })),
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,
             "Template not found",
@@ -289,7 +295,7 @@ pub async fn delete_dashboard_template(
         WHERE id = $2
         RETURNING id
         "#,
-        Utc::now(),
+        Utc::now().naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -362,8 +368,8 @@ pub async fn create_dashboard_from_template(
                 row.layout,
                 req.owner_id,
                 req.is_public.unwrap_or(false),
-now,
-now,
+now.naive_utc(),
+now.naive_utc(),
                 Uuid::nil(),
             )
             .fetch_one(&state.pool)
@@ -371,19 +377,19 @@ now,
 
             match result {
                 Ok(new_row) => Json(serde_json::json!({
-                                    "success": true,
-                                    "message": "Create dashboard from template",
-                                    "data": DashboardResponse {
-                                        id: new_row.id,
-                                        name: new_row.name,
-                                        description: new_row.description,
-                                        layout: new_row.layout,
-                                        owner_id: new_row.owner_id,
-                                        is_public: new_row.is_public.unwrap_or(false),
-                created_at: new_row.created_at.to_rfc3339(),
-                updated_at: new_row.updated_at.to_rfc3339(),
-                                    }
-                                })),
+                                                    "success": true,
+                                                    "message": "Create dashboard from template",
+                                                    "data": DashboardResponse {
+                                                        id: new_row.id,
+                                                        name: new_row.name,
+                                                        description: new_row.description,
+                                                        layout: new_row.layout,
+                                                        owner_id: new_row.owner_id,
+                                                        is_public: new_row.is_public.unwrap_or(false),
+                created_at: new_row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                updated_at: new_row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                                                    }
+                                                })),
                 Err(e) => Json(topems_shared_core::response::error_value(
                     500,
                     &format!("Failed to create dashboard: {}", e),
