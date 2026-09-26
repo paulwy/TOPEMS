@@ -14,6 +14,7 @@ use crate::modules::approval_common::{
     execute_transition_and_log, reject_and_log,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
+use crate::shared::utils::big_decimal_to_f64_non_opt;
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
@@ -21,8 +22,9 @@ use super::big_decimal_to_f64;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
-    page: Option<i32>,
     page_size: Option<i32>,
+    page: Option<i32>,
+
     search: Option<String>,
     status: Option<String>,
     inspection_type: Option<String>,
@@ -208,25 +210,25 @@ pub async fn list_inspections(
             inspection_type: r
                 .try_get::<String, _>("inspection_type")
                 .unwrap_or_default(),
-            quantity: big_decimal_to_f64(
+            quantity: big_decimal_to_f64_non_opt(
                 r.try_get::<Option<BigDecimal>, _>("quantity")
                     .ok()
                     .flatten()
                     .unwrap_or_default(),
             ),
-            qualified_quantity: big_decimal_to_f64(
+            qualified_quantity: big_decimal_to_f64_non_opt(
                 r.try_get::<Option<BigDecimal>, _>("qualified_quantity")
                     .ok()
                     .flatten()
                     .unwrap_or_default(),
             ),
-            unqualified_quantity: big_decimal_to_f64(
+            unqualified_quantity: big_decimal_to_f64_non_opt(
                 r.try_get::<Option<BigDecimal>, _>("unqualified_quantity")
                     .ok()
                     .flatten()
                     .unwrap_or_default(),
             ),
-            qualification_rate: big_decimal_to_f64(
+            qualification_rate: big_decimal_to_f64_non_opt(
                 r.try_get::<Option<BigDecimal>, _>("qualification_rate")
                     .ok()
                     .flatten()
