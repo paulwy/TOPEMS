@@ -524,7 +524,7 @@ pub async fn update_process_flow(
         "#,
         body.name,
         body.description,
-        body.version.as_deref(),
+        body.version.and_then(|v| v.parse::<i32>().ok()),
         route_id,
         body.production_line,
         capacity_value,

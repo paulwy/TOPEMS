@@ -321,7 +321,7 @@ pub async fn create_record(
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
-        start_time: result.start_time,
+        start_time: result.start_time.unwrap_or_default(),
         end_time: result.end_time,
         quantity_produced: big_decimal_to_f64(result.quantity_produced),
         quantity_defective: result
