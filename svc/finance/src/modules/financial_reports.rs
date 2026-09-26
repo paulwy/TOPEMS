@@ -59,9 +59,9 @@ async fn period_net_total(
     .await;
     match result {
         Ok((td, tc, net)) => (
-            big_decimal_to_f64_non_opt(td.unwrap_or(Decimal::ZERO)),
-            big_decimal_to_f64_non_opt(tc.unwrap_or(Decimal::ZERO)),
-            big_decimal_to_f64_non_opt(net.unwrap_or(Decimal::ZERO)),
+            td.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
+            tc.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
+            net.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
         ),
         Err(_) => (0.0, 0.0, 0.0),
     }
