@@ -17,6 +17,7 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AlertQueryParams {
@@ -247,9 +248,9 @@ pub async fn list_alerts(
                     location_id: r.location_id,
                     location_code: r.location_code,
                     alert_type: r.alert_type.unwrap_or_default(),
-                    current_quantity: r.current_quantity.to_f64().unwrap_or(0.0),
-                    threshold_value: r.threshold_value.map(|v| v.to_f64().unwrap_or(0.0)),
-                    deviation_quantity: r.deviation_quantity.map(|v| v.to_f64().unwrap_or(0.0)),
+                    current_quantity: big_decimal_to_f64_non_opt(r.current_quantity),
+                    threshold_value: r.threshold_value.map(big_decimal_to_f64),
+                    deviation_quantity: r.deviation_quantity.map(big_decimal_to_f64),
                     severity: r.severity.unwrap_or_default(),
                     status: r.status.unwrap_or_default(),
                     remarks: r.remarks,
@@ -365,9 +366,9 @@ pub async fn get_alert(
                 location_id: r.location_id,
                 location_code: r.location_code,
                 alert_type: r.alert_type.unwrap_or_default(),
-                current_quantity: r.current_quantity.to_f64().unwrap_or(0.0),
-                threshold_value: r.threshold_value.map(|v| v.to_f64().unwrap_or(0.0)),
-                deviation_quantity: r.deviation_quantity.map(|v| v.to_f64().unwrap_or(0.0)),
+                current_quantity: big_decimal_to_f64_non_opt(r.current_quantity),
+                threshold_value: r.threshold_value.map(big_decimal_to_f64),
+                deviation_quantity: r.deviation_quantity.map(big_decimal_to_f64),
                 severity: r.severity.unwrap_or_default(),
                 status: r.status.unwrap_or_default(),
                 remarks: r.remarks,
@@ -791,9 +792,9 @@ pub async fn get_alerts_by_warehouse(
                     location_id: r.location_id,
                     location_code: r.location_code,
                     alert_type: r.alert_type.unwrap_or_default(),
-                    current_quantity: r.current_quantity.to_f64().unwrap_or(0.0),
-                    threshold_value: r.threshold_value.map(|v| v.to_f64().unwrap_or(0.0)),
-                    deviation_quantity: r.deviation_quantity.map(|v| v.to_f64().unwrap_or(0.0)),
+                    current_quantity: big_decimal_to_f64_non_opt(r.current_quantity),
+                    threshold_value: r.threshold_value.map(big_decimal_to_f64),
+                    deviation_quantity: r.deviation_quantity.map(big_decimal_to_f64),
                     severity: r.severity.unwrap_or_default(),
                     status: r.status.unwrap_or_default(),
                     remarks: r.remarks,

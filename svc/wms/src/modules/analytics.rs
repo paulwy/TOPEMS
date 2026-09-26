@@ -19,6 +19,7 @@ use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 // ===== 查询参数 =====
 
@@ -511,12 +512,9 @@ pub async fn get_flow_trend(
     if let Ok(rows) = inbound_result {
         for row in rows {
             let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
-            let qty: f64 = row
-                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
-                .ok()
-                .flatten()
-                .and_then(|v| v.to_f64())
-                .unwrap_or(0.0);
+            let qty: f64 = big_decimal_to_f64(
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten()
+            );
             let count: i64 = row.try_get("order_count").unwrap_or(0);
             let key = period
                 .map(|p| format_period_date(p, group_by))
@@ -536,12 +534,9 @@ pub async fn get_flow_trend(
     if let Ok(rows) = outbound_result {
         for row in rows {
             let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
-            let qty: f64 = row
-                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
-                .ok()
-                .flatten()
-                .and_then(|v| v.to_f64())
-                .unwrap_or(0.0);
+            let qty: f64 = big_decimal_to_f64(
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten()
+            );
             let count: i64 = row.try_get("order_count").unwrap_or(0);
             let key = period
                 .map(|p| format_period_date(p, group_by))
@@ -644,12 +639,9 @@ pub async fn get_abc_analysis(
     if let Ok(rows) = result {
         for row in rows {
             let code: String = row.try_get("material_code").unwrap_or_default();
-            let value: f64 = row
-                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
-                .ok()
-                .flatten()
-                .and_then(|v| v.to_f64())
-                .unwrap_or(0.0);
+            let value: f64 = big_decimal_to_f64(
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten()
+            );
             materials.push((code, value));
             total_value += value;
         }
@@ -798,12 +790,9 @@ pub async fn get_age_pareto(
 
     if let Ok(rows) = result {
         for row in rows {
-            let value: f64 = row
-                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
-                .ok()
-                .flatten()
-                .and_then(|v| v.to_f64())
-                .unwrap_or(0.0);
+            let value: f64 = big_decimal_to_f64(
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten()
+            );
             let earliest: Option<chrono::NaiveDate> = row.try_get("earliest_date").ok().flatten();
             let days = earliest.map(|d| (now - d).num_days()).unwrap_or(0);
 
