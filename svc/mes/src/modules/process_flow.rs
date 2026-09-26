@@ -386,7 +386,7 @@ pub async fn get_process_flow(
                 version: r.version.map(|v| v.to_string()),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
-                route_name: Some(r.route_name),
+                route_name: r.route_name,
                 production_line: r.production_line,
                 capacity: r
                     .capacity

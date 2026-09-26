@@ -227,7 +227,7 @@ pub async fn list_standards(
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.to_string(),
+                        standard_id: sid.map(|s| s.to_string()),
                         item_name: v.item_name,
                         lower_limit: big_decimal_to_f64(v.lower_limit),
                         upper_limit: big_decimal_to_f64(v.upper_limit),
