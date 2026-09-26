@@ -1,6 +1,7 @@
 // LIMS 服务集成测试
 
 use sqlx::PgPool;
+use topems_lims::models;
 use uuid::Uuid;
 
 #[cfg(test)]
@@ -11,7 +12,10 @@ mod tests {
     const TEST_DATABASE_URL: &str = "postgres://topems:topems_secret@localhost:5432/topems";
 
     async fn setup_test_pool() -> Result<PgPool, sqlx::Error> {
-        PgPool::connect(TEST_DATABASE_URL).await
+        let pool = PgPool::connect(TEST_DATABASE_URL).await?;
+        // 防御：若迁移链未覆盖，由应用同源 init_database 补齐表结构（幂等）
+        models::init_database(&pool).await.ok();
+        Ok(pool)
     }
 
     async fn ensure_db_available() -> bool {

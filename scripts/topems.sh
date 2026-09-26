@@ -682,6 +682,12 @@ test_backend() {
     _preflight_check "$@" || return 1
     info "运行后端测试..."
 
+    # 前置：确保 DB schema 就绪（迁移 + 应用自建表；失败仅告警，由测试内 init 兜底）
+    info "测试前执行数据库迁移（db_migrate）..."
+    if ! db_migrate; then
+        warning "db_migrate 未完全成功，继续测试（依赖应用 init_database 兜底）"
+    fi
+
     cd "$PROJECT_ROOT"
     if cargo test --release --workspace 2>&1; then
         success "所有后端测试通过"

@@ -1,6 +1,7 @@
 use chrono::Utc;
 use sqlx::postgres::PgPool;
 use sqlx::postgres::PgPoolOptions;
+use topems_ehs::models;
 use uuid::Uuid;
 
 async fn create_test_pool() -> PgPool {
@@ -8,7 +9,7 @@ async fn create_test_pool() -> PgPool {
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
 
     // 与 svc/ehs/src/main.rs 保持一致：SEARCH_PATH='ehs, public'，qa_ehs_* 归位到 ehs schema 后无前缀查询依赖该路径
-    PgPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .after_connect(|conn, _meta| {
             Box::pin(async move {
                 sqlx::query("SET search_path TO ehs, public, mes")
@@ -19,7 +20,12 @@ async fn create_test_pool() -> PgPool {
         })
         .connect(&database_url)
         .await
-        .expect("Failed to connect to test database")
+        .expect("Failed to connect to test database");
+
+    // 防御：若迁移链未覆盖，由应用同源 init_database 补齐表结构（幂等）
+    models::init_database(&pool).await.ok();
+
+    pool
 }
 
 async fn create_test_tenant(pool: &PgPool) -> Uuid {
