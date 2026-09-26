@@ -413,12 +413,12 @@ pub async fn delete_customer(
 // ============ #26: 批量/统计端点 ============
 
 #[derive(Debug, Deserialize)]
-struct BatchListRequest {
+pub struct BatchListRequest {
     ids: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
-struct BatchCreateRequest {
+pub struct BatchCreateRequest {
     customers: Vec<CreateCustomerRequest>,
 }
 

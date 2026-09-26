@@ -16,7 +16,7 @@ const TENANT_ID: &str = "default";
 // ===== 同步日志模型 =====
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
-struct ExternalErpSyncLog {
+pub struct ExternalErpSyncLog {
     id: Uuid,
     tenant_id: String,
     connection_id: Option<Uuid>,
@@ -33,7 +33,7 @@ struct ExternalErpSyncLog {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct SyncStatistics {
+pub struct SyncStatistics {
     total_syncs: i64,
     successful: i64,
     failed: i64,

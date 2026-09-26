@@ -135,7 +135,7 @@ pub async fn get_workflows(State(_pool): State<PgPool>) -> Json<ApiResponse<serd
 // ==================== 工作流匹配与自动化规则（前端 workflow.ts 调用）====================
 
 #[derive(Deserialize)]
-struct WorkflowMatchQuery {
+pub struct WorkflowMatchQuery {
     ticket_type: Option<String>,
 }
 
@@ -173,7 +173,7 @@ pub async fn get_workflow_for_ticket_type(
 
 /// 工作流自动化规则视图（前端字段：id/name/trigger/action/is_active）
 #[derive(serde::Serialize)]
-struct WorkflowRuleView {
+pub struct WorkflowRuleView {
     id: Uuid,
     name: String,
     trigger: Option<String>,
@@ -232,7 +232,7 @@ pub async fn list_workflow_automation_rules(
 }
 
 #[derive(Deserialize)]
-struct WorkflowToggleRequest {
+pub struct WorkflowToggleRequest {
     is_active: bool,
 }
 
@@ -288,7 +288,7 @@ pub async fn toggle_workflow_automation_rule(
 // ==================== 状态流转 ====================
 
 #[derive(Deserialize)]
-struct TransitionRequest {
+pub struct TransitionRequest {
     to_status: String,
     comment: Option<String>,
 }
