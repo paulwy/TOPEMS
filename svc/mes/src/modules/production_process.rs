@@ -15,7 +15,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::shared::tenant;
+use topems_shared_db::tenant::{get_tenant_id, set_session_tenant_id};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
@@ -141,8 +141,8 @@ pub async fn list_processes(
         return e;
     }
 
-    let tenant_id = tenant::get_tenant_id(&claims, &headers);
-    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
 
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10).min(100) as i64;
@@ -284,8 +284,8 @@ pub async fn create_process(
         return e;
     }
 
-    let tenant_id = tenant::get_tenant_id(&claims, &headers);
-    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
 
     let now = Utc::now();
     let process_no = format!(
@@ -356,8 +356,8 @@ pub async fn get_process(
         return e;
     }
 
-    let tenant_id = tenant::get_tenant_id(&claims, &headers);
-    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
@@ -401,8 +401,8 @@ pub async fn update_process(
         return e;
     }
 
-    let tenant_id = tenant::get_tenant_id(&claims, &headers);
-    let _ = tenant::set_session_tenant_id(&state.pool, tenant_id).await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let _ = set_session_tenant_id(&state.pool, tenant_id).await;
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"

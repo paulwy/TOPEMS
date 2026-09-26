@@ -1,9 +1,6 @@
 pub mod aps_fsm;
 pub mod aps_util;
 pub mod permission;
-pub mod tenant;
-#[cfg(test)]
-pub mod tenant_test;
 
 use axum::extract::FromRef;
 use sqlx::PgPool;

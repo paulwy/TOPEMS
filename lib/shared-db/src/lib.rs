@@ -206,6 +206,7 @@ pub mod repository;
 pub mod rls;
 pub mod schema;
 pub mod storage;
+pub mod tenant;
 
 pub use audit::{
     AuditLog, AuditLogQuery, AuditLogService, CreateAuditLogRequest, SchemaAwareAuditLogService,
