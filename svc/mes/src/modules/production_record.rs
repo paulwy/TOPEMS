@@ -299,7 +299,7 @@ pub async fn create_record(
         req.operator_id,
         req.start_time,
         req.quantity_produced
-            .map(|q| q.to_string().parse::<i32>().unwrap_or_default()),
+            .map(|q| q.to_string().parse::<BigDecimal>().unwrap_or_default()),
         req.notes,
         now,
     )
@@ -447,7 +447,7 @@ pub async fn update_record(
         req.operator_id,
         req.end_time,
         req.quantity_produced
-            .map(|q| q.to_string().parse::<i32>().unwrap_or_default()),
+            .map(|q| q.to_string().parse::<BigDecimal>().unwrap_or_default()),
         status,
         req.notes,
         now,
