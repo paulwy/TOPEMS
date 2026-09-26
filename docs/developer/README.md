@@ -121,7 +121,8 @@ psql "$DATABASE_URL"
 
 ## Git 提交规范
 
-遵循 [Conventional Commits](https://www.conventionalcommits.org/)：
+遵循 [Conventional Commits](https://www.conventionalcommits.org/)。提交信息格式、Type 类型、分支命名的完整权威约定见
+[architecture-standards.md 第 9 节](./standards/architecture-standards.md#9-git-提交规范)。
 
 ```
 <type>(<scope>): <subject>
@@ -197,7 +198,7 @@ PR 合并必须满足以下门禁：
 | [environment-setup.md](./backend/environment-setup.md) | 后端开发环境搭建 |
 | [backend-services.md](./backend/backend-services.md) | 服务架构与模块组织 |
 | [api-design.md](./backend/api-design.md) | API 设计规范 |
-| [code-standards.md](./backend/code-standards.md) | Rust 代码规范 |
+| [code-standards.md](./backend/code-standards.md) | 代码编写规范（Rust 模块/错误处理/异步、TypeScript、数据库表结构、缓存选型） |
 | [database-development.md](./backend/database-development.md) | 数据库开发与迁移 |
 | [debugging.md](./backend/debugging.md) | 后端调试技巧 |
 | [template-guidelines.md](./backend/template-guidelines.md) | 代码模板指南 |
@@ -221,7 +222,7 @@ PR 合并必须满足以下门禁：
 
 | 文档 | 说明 |
 |------|------|
-| [architecture-standards.md](./standards/architecture-standards.md) | 架构标准 |
+| [architecture-standards.md](./standards/architecture-standards.md) | 项目架构与目录规范（目录结构/命名规范/API 路径/组件/Git 提交/CI-CD，强制执行） |
 | [api-path-standardization.md](./standards/api-path-standardization.md) | API 路径标准化 |
 | [websocket-path-mapping.md](./standards/websocket-path-mapping.md) | WebSocket 路径映射 |
 | [migration-naming-convention.md](./standards/migration-naming-convention.md) | 数据库迁移命名约定 |

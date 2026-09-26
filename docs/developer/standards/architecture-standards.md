@@ -1,9 +1,12 @@
 # TOPEMS 系统架构与命名规范标准
 
-> 版本：2.1
-> 最后更新：2026-06-26
-> 适用范围：前端（React/TypeScript）、后端（Rust/Axum）、CI/CD、Git Hooks
+> 版本：2.2
+> 最后更新：2026-09-26
+> 适用范围：前端（React/TypeScript）、后端（Rust/Axum）、CI/CD、Git Hooks、Git 提交规范
 > 本标准为**强制执行**，所有新代码必须符合本标准
+>
+> **文档分工**：本文件为「项目架构与目录规范」权威版本，涵盖目录结构、命名规范、API 路径、组件规范、Git 提交规范、CI/CD。
+> 代码级编写规范（Rust 模块组织/错误处理/异步、TypeScript 类型与组件写法、数据库表结构、缓存选型）见 [code-standards.md](../backend/code-standards.md)。
 
 ---
 
@@ -179,6 +182,22 @@ apps/web/src/
 - 强制使用 `@/` 别名，禁止使用相对父级路径（`../`）
 - 导入排序：内置模块 → 第三方库 → 内部模块（`@/`） → 同级模块
 
+### 2.6 通用命名原则与禁用词汇
+
+跨语言通用的命名底线要求（具体目录/文件/API/数据库命名见上文各小节）：
+
+| 类型 | 规范 | 示例 |
+|------|------|------|
+| 类名 / 类型 | 大驼峰（PascalCase） | `UserService`, `ApiClient` |
+| 函数名 | Rust 用 snake_case，TS/JS 用 camelCase | `get_user` / `getUser` |
+| 常量 | 全大写下划线分隔 | `MAX_RETRY_COUNT`, `API_BASE_URL` |
+| 变量 | Rust 用 snake_case，TS/JS 用 camelCase | `user_name` / `userName` |
+
+**禁用词汇与做法**：
+- 不使用缩写，除非是公认的标准缩写（如 `URL`, `API`, `ID`, `HTTP`）
+- 不使用单字母变量名（循环计数器 `i`, `j`, `k` 除外）
+- 不使用中文拼音命名
+
 ---
 
 ## 3. 分层架构规范
@@ -317,7 +336,70 @@ HTTP Request → API Handler → Service → Model → Database
 
 ---
 
-## 9. Pre-commit Hook 规范
+## 9. Git 提交规范
+
+> 本规范为项目级权威版本，统一约定提交信息格式与分支命名。详细分支流程与 PR 规范见 [git-workflow.md](../git-workflow.md)。
+
+### 9.1 提交信息格式
+
+遵循 [Conventional Commits](https://www.conventionalcommits.org/)：
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### 9.2 Type 类型
+
+| 类型 | 说明 | 示例 |
+|------|------|------|
+| feat | 新功能 | `feat(iam): add social login` |
+| fix | 修复 bug | `fix(hrm): handle null department` |
+| docs | 文档更新 | `docs: update API docs` |
+| style | 代码格式调整（不影响功能） | `style(ui): format code` |
+| refactor | 重构 | `refactor(api): simplify logic` |
+| perf | 性能优化 | `perf(db): add index` |
+| test | 测试相关 | `test(core): add unit tests` |
+| build / ci | 构建系统 / CI 相关 | `ci: bump actions/cache` |
+| chore | 构建/工具/杂项 | `chore: update dependencies` |
+| revert | 回滚 | `revert: revert commit abc` |
+
+### 9.3 提交示例
+
+```
+feat(iam): add user profile management
+
+- Add profile picture upload
+- Add profile editing form
+- Add profile validation rules
+
+Closes #123
+```
+
+```
+fix(hrm): handle null response in employee endpoint
+
+Add null check for department relation to prevent NPE
+Error occurred when fetching employees without department
+
+Fixes #456
+```
+
+### 9.4 分支命名
+
+| 类型 | 格式 | 示例 |
+|------|------|------|
+| 功能分支 | `feature/{issue-id}-{brief-desc}` | `feature/123-user-auth` |
+| 修复分支 | `bugfix/{issue-id}-{brief-desc}` | `bugfix/456-fix-login` |
+| 发布分支 | `release/v{version}` | `release/v2.5.0` |
+| 热修复分支 | `hotfix/{issue-id}-{brief-desc}` | `hotfix/789-security-patch` |
+
+---
+
+## 10. Pre-commit Hook 规范
 
 ### 9.1 配置
 
@@ -347,16 +429,16 @@ HTTP Request → API Handler → Service → Model → Database
 
 ---
 
-## 10. ESLint 规范
+## 11. ESLint 规范
 
-### 10.1 命名规范规则
+### 11.1 命名规范规则
 
 | 规则 | 强度 | 说明 |
 |------|------|------|
 | `@typescript-eslint/naming-convention` | warn | 变量 camelCase/UPPER_CASE，函数 camelCase/PascalCase，类型 PascalCase |
 | `check-file/filename-naming-convention` | warn | 组件文件 PascalCase (.tsx)，工具文件 camelCase (.ts) |
 
-### 10.2 导入规范规则
+### 11.2 导入规范规则
 
 | 规则 | 强度 | 说明 |
 |------|------|------|
@@ -365,7 +447,7 @@ HTTP Request → API Handler → Service → Model → Database
 | `import-x/no-cycle` | warn | 禁止循环依赖 |
 | `import-x/no-duplicates` | warn | 禁止重复导入 |
 
-### 10.3 代码质量规则
+### 11.3 代码质量规则
 
 | 规则 | 强度 | 说明 |
 |------|------|------|
@@ -377,7 +459,7 @@ HTTP Request → API Handler → Service → Model → Database
 
 ---
 
-## 11. 自动化工具清单
+## 12. 自动化工具清单
 
 | 工具 | 位置 | 用途 | 使用方式 |
 |------|------|------|----------|
@@ -388,9 +470,9 @@ HTTP Request → API Handler → Service → Model → Database
 
 ---
 
-## 12. 合规检查清单
+## 13. 合规检查清单
 
-### 12.1 后端检查项
+### 13.1 后端检查项
 
 - [ ] 所有服务采用 `api/ + models/ + services/` 标准目录结构
 - [ ] `api/mod.rs` 提供 `create_api_routes()` 函数
@@ -401,7 +483,7 @@ HTTP Request → API Handler → Service → Model → Database
 - [ ] 同一服务内无重复路由（多二进制服务的基础路由除外）
 - [ ] 跨服务无重复路径（通用功能如 auth/login 除外）
 
-### 12.2 前端检查项
+### 13.2 前端检查项
 
 - [ ] API 大文件（>500行）已拆分为子目录结构
 - [ ] 组件文件使用 PascalCase，与组件名一致
@@ -411,7 +493,7 @@ HTTP Request → API Handler → Service → Model → Database
 - [ ] 路由按模块拆分，每个模块独立文件
 - [ ] 命名统一（如 flow → workflow）
 
-### 12.3 CI/CD 检查项
+### 13.3 CI/CD 检查项
 
 - [ ] GitHub Actions 工作流配置完整
 - [ ] Pre-commit Hook 配置正确
@@ -427,6 +509,7 @@ HTTP Request → API Handler → Service → Model → Database
 | 1.0 | - | 初始版本，基础目录结构和命名规范 |
 | 2.0 | 2026-06-26 | 新增大文件拆分标准、CI/CD 规范、Pre-commit 规范、ESLint 规范、服务合并记录、合规检查清单 |
 | 2.1 | 2026-06-26 | 大文件拆分从建议提升为强制执行；明确 API 版本号路径唯一合法格式；放宽通用功能跨服务重复限制；新增 8 条通用功能路径例外清单 |
+| 2.2 | 2026-09-26 | 与 code-standards 去重：吸收命名规范中的通用命名原则与禁用词汇（新增 2.6 节）；Git 提交规范统一收敛到本文件（新增第 9 节，原 code-standards 对应章节改为引用）；新增与 code-standards.md 的互链 |
 
 ---
 

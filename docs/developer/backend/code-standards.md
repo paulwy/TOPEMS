@@ -1,6 +1,8 @@
 # 代码规范
 
-本文档定义 TOPEMS 项目的代码编写规范，确保代码质量和一致性。
+本文档定义 TOPEMS 项目的**代码编写规范**，确保代码质量和一致性，聚焦语言级写法：Rust 模块组织/错误处理/异步、TypeScript 类型与组件、数据库表结构、缓存选型。
+
+> **文档分工**：项目架构、目录结构、命名规范、API 路径、Git 提交规范、CI/CD 标准见 [architecture-standards.md](../standards/architecture-standards.md)（项目级权威版本）。本文件不再重复这些内容，仅保留代码级编写约定。
 
 ## 目录
 
@@ -9,31 +11,16 @@
 - [TypeScript 代码规范](#typescript-代码规范)
 - [数据库规范](#数据库规范)
 - [缓存规范](#缓存规范)
-- [Git 提交规范](#git-提交规范)
+- [代码审查清单](#代码审查清单)
 
 ---
 
 ## 通用规范
 
-### 1. 命名规范
+> 命名规范（目录/文件/API/数据库/前端组件命名、禁用词汇）已统一收敛到
+> [architecture-standards.md 第 2 节](../standards/architecture-standards.md#2-命名规范)，此处不再重复。
 
-#### 通用命名原则
-
-| 类型 | 规范 | 示例 |
-|------|------|------|
-| 文件名 | 小写下划线分隔 | `user_service.rs`, `user_service.ts` |
-| 类名 | 大驼峰 | `UserService`, `ApiClient` |
-| 函数名 | 小驼峰或下划线 | `get_user`, `getUser` |
-| 常量 | 全大写下划线分隔 | `MAX_RETRY_COUNT`, `API_BASE_URL` |
-| 变量 | 小驼峰或小写下划线 | `user_name`, `userName` |
-
-#### 禁用词汇
-
-- 不使用缩写，除非是公认的标准缩写（如 `URL`, `API`, `ID`）
-- 不使用单字母变量名（循环计数器除外：`i`, `j`, `k`）
-- 不使用中文拼音命名
-
-### 2. 代码格式化
+### 1. 代码格式化
 
 ```bash
 # Rust 格式化
@@ -43,7 +30,7 @@ cargo fmt
 cd apps/web && pnpm format
 ```
 
-### 3. 代码检查
+### 2. 代码检查
 
 ```bash
 # Rust 代码检查
@@ -543,59 +530,9 @@ let key = gen.entity_key("employee", &id.to_string());
 
 ## Git 提交规范
 
-### 提交信息格式
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-### Type 类型
-
-| 类型 | 说明 | 示例 |
-|------|------|------|
-| feat | 新功能 | `feat(iam): add social login` |
-| fix | 修复 bug | `fix(hrm): handle null department` |
-| docs | 文档更新 | `docs: update API docs` |
-| style | 代码格式调整 | `style(ui): format code` |
-| refactor | 重构 | `refactor(api): simplify logic` |
-| perf | 性能优化 | `perf(db): add index` |
-| test | 测试相关 | `test(core): add unit tests` |
-| chore | 构建/工具 | `chore: update dependencies` |
-| revert | 回滚 | `revert: revert commit abc` |
-
-### 提交示例
-
-```
-feat(iam): add user profile management
-
-- Add profile picture upload
-- Add profile editing form
-- Add profile validation rules
-
-Closes #123
-```
-
-```
-fix(hrm): handle null response in employee endpoint
-
-Add null check for department relation to prevent NPE
-Error occurred when fetching employees without department
-
-Fixes #456
-```
-
-### 分支命名
-
-| 类型 | 格式 | 示例 |
-|------|------|------|
-| 功能分支 | `feature/{issue-id}-{brief-desc}` | `feature/123-user-auth` |
-| 修复分支 | `bugfix/{issue-id}-{brief-desc}` | `bugfix/456-fix-login` |
-| 发布分支 | `release/v{version}` | `release/v2.5.0` |
-| 热修复分支 | `hotfix/{issue-id}-{brief-desc}` | `hotfix/789-security-patch` |
+> 提交信息格式、Type 类型、提交示例、分支命名已统一收敛到项目级权威版本：
+> 见 [architecture-standards.md 第 9 节 Git 提交规范](../standards/architecture-standards.md#9-git-提交规范)。
+> 详细分支流程与 PR 规范另见 [git-workflow.md](../git-workflow.md)。
 
 ---
 
@@ -615,5 +552,6 @@ Fixes #456
 
 ---
 
-**文档版本**: v1.0
-**最后更新**: 2026-06-24
+**文档版本**: v1.1
+**最后更新**: 2026-09-26
+**变更说明**: 与 architecture-standards 去重——命名规范与 Git 提交规范收敛到 architecture-standards.md，本文件仅保留代码级编写约定（Rust/TS/数据库/缓存）。
