@@ -442,7 +442,7 @@ pub async fn add_spc_data_point(
         .ok()
         .and_then(|c| c.lcl.as_ref().and_then(|v| v.to_f64()))
         .unwrap_or(f64::NEG_INFINITY);
-    let value_f64 = big_decimal_to_f64_non_opt(req.value);
+    let value_f64 = big_decimal_to_f64_non_opt(req.value.clone());
     let is_out_of_control = Some(value_f64 > ucl || value_f64 < lcl);
 
     let point = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_spc_data_points (tenant_id, chart_id, sample_no, value, subgroup_size, is_out_of_control) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at, created_at"#)).bind(tenant_id).bind(chart_id).bind(req.sample_no).bind(req.value).bind(req.subgroup_size).bind(is_out_of_control)

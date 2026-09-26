@@ -1255,7 +1255,7 @@ pub async fn complete_return(
                 let return_no = return_record.return_no.clone();
                 let customer_id = return_record.customer_id;
                 let order_id = return_record.order_id;
-                let refund_amount = big_decimal_to_f64_non_opt(return_record.refund_amount);
+                let refund_amount = return_record.refund_amount.to_f64().unwrap_or(0.0);
                 let return_type = return_record.return_type.clone();
                 let status = return_record.status.clone();
                 let completed_by = operator_id;
@@ -1626,7 +1626,7 @@ pub async fn sync_return_to_finance(
     // CreateReconciliationRequest schema: reconciliation_type/period/reference_id/total_amount/record_ids
     // V19.5: 字段名对齐 erp 真实实现（reconciliation_type 而非 type）
     // graceful fallback：失败仅 warn，不阻塞主流程
-    let refund_amount_f64 = big_decimal_to_f64_non_opt(return_record.refund_amount);
+    let refund_amount_f64 = return_record.refund_amount.to_f64().unwrap_or(0.0);
     let recon_payload = serde_json::json!({
         "reconciliation_type": "manual",
         "period": period,
@@ -2526,7 +2526,7 @@ pub async fn confirm_return(
                     let return_no = return_record.return_no.clone();
                     let customer_id = return_record.customer_id;
                     let order_id = return_record.order_id;
-                    let refund_amount = big_decimal_to_f64_non_opt(return_record.refund_amount);
+                    let refund_amount = return_record.refund_amount.to_f64().unwrap_or(0.0);
                     let return_type = return_record.return_type.clone();
                     let status = return_record.status.clone();
                     let completed_by = operator_id;
