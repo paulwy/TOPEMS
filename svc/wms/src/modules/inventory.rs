@@ -18,6 +18,7 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, ListResponse};
+use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 use topems_shared_event::event::{EventPublisher, EventType, InventoryUpdatedPayload};
 
 fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
@@ -27,12 +28,12 @@ fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
         "name": row.get::<String, _>("name"),
         "specification": row.get::<Option<String>, _>("specification"),
         "unit": row.get::<Option<String>, _>("unit"),
-        "quantity": row.get::<bigdecimal::BigDecimal, _>("quantity").to_f64().unwrap_or(0.0),
-        "available_quantity": row.get::<Option<bigdecimal::BigDecimal>, _>("available_quantity").map(|v| v.to_f64().unwrap_or(0.0)),
+        "quantity": big_decimal_to_f64_non_opt(row.get::<bigdecimal::BigDecimal, _>("quantity")),
+        "available_quantity": big_decimal_to_f64(row.get::<Option<bigdecimal::BigDecimal>, _>("available_quantity")),
         "location_id": row.get::<Option<Uuid>, _>("location_id"),
         "warehouse_id": row.get::<Option<Uuid>, _>("warehouse_id"),
-        "min_quantity": row.get::<Option<bigdecimal::BigDecimal>, _>("min_quantity").map(|v| v.to_f64().unwrap_or(0.0)),
-        "max_quantity": row.get::<Option<bigdecimal::BigDecimal>, _>("max_quantity").map(|v| v.to_f64().unwrap_or(0.0)),
+        "min_quantity": big_decimal_to_f64(row.get::<Option<bigdecimal::BigDecimal>, _>("min_quantity")),
+        "max_quantity": big_decimal_to_f64(row.get::<Option<bigdecimal::BigDecimal>, _>("max_quantity")),
         "status": row.get::<String, _>("status"),
         "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
         "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
