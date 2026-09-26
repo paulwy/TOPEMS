@@ -577,7 +577,7 @@ pub async fn get_statistics(
 
     match result {
         Ok(row) => {
-            let total_suggested_quantity = row.total_suggested_quantity.unwrap_or(0.0);
+            let total_suggested_quantity = row.total_suggested_quantity.unwrap_or_default();
             Json(ApiResponse::success(
                 serde_json::json!({
                     "total_suggestions": row.total_suggestions.unwrap_or(0),

@@ -287,7 +287,8 @@ pub async fn get_quality_trend(
             let trend: Vec<QualityTrendItem> = data
                 .iter()
                 .map(|r| {
-                    let rate: f64 = big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("qualification_rate"));
+                    let rate: f64 =
+                        big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("qualification_rate"));
                     QualityTrendItem {
                         period: r.get::<Option<String>, _>("period").unwrap_or_default(),
                         total_count: r.get::<Option<i64>, _>("total_count").unwrap_or(0),

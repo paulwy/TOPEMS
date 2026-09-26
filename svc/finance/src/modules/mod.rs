@@ -28,7 +28,6 @@ pub mod voucher_template_entries;
 
 use axum::{
     extract::{Json, Multipart, Path, Query, State},
-use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
     http::HeaderMap,
     response::IntoResponse,
     Extension, Router,
@@ -1036,7 +1035,7 @@ pub async fn create_payment_handler(
                 let publisher = publisher.clone();
                 let payment_id = payment.id;
                 let payment_no = payment.payment_no.clone();
-                let amount = big_decimal_to_f64_non_opt(payment.total_amount);
+                let amount = payment.total_amount.to_f64().unwrap_or(0.0);
                 let _paid_by = Some(created_by.clone());
                 let paid_at = Some(Utc::now());
                 tokio::spawn(async move {

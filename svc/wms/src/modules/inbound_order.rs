@@ -17,8 +17,8 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
-use topems_shared_event::event::{EventType, StockInboundPayload, WmsInventoryItemReceivedPayload};
 use topems_shared_db::tenant::get_tenant_id_or_new;
+use topems_shared_event::event::{EventType, StockInboundPayload, WmsInventoryItemReceivedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InboundOrderItemRequest {

@@ -29,7 +29,7 @@ pub fn calculate_revenue_score(
     let total_value =
         revenue.unwrap_or(Decimal::ZERO) + total_opportunity_value.unwrap_or(Decimal::ZERO);
 
-    let value_f64: f64 = big_decimal_to_f64_non_opt(total_value);
+    let value_f64: f64 = total_value.to_f64().unwrap_or(0.0);
 
     if value_f64 >= 1_000_000.0 {
         100

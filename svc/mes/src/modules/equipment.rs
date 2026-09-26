@@ -1,6 +1,5 @@
 //! Equipment handlers
 
-use topems_shared_db::decimal::big_decimal_to_f64_opt;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -18,6 +17,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;

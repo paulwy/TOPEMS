@@ -18,7 +18,6 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
-use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use crate::models::{BalanceSheet, IncomeStatement};
 use crate::services::FinanceService;
@@ -630,8 +629,8 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
     let mut suggestions: Vec<String> = Vec::new();
 
     // 偿债能力评分（30分）
-    let current = big_decimal_to_f64_non_opt(ratios.current_ratio);
-    let debt = big_decimal_to_f64_non_opt(ratios.debt_to_asset_ratio);
+    let current = ratios.current_ratio.to_f64().unwrap_or(0.0);
+    let debt = ratios.debt_to_asset_ratio.to_f64().unwrap_or(0.0);
     if current >= 2.0 {
         score += 18.0;
     } else if current >= 1.5 {
@@ -656,8 +655,8 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
     }
 
     // 盈利能力评分（30分）
-    let roe = big_decimal_to_f64_non_opt(ratios.roe);
-    let net_margin = big_decimal_to_f64_non_opt(ratios.net_margin);
+    let roe = ratios.roe.to_f64().unwrap_or(0.0);
+    let net_margin = ratios.net_margin.to_f64().unwrap_or(0.0);
     if roe >= 20.0 {
         score += 18.0;
     } else if roe >= 15.0 {
@@ -680,7 +679,7 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
     }
 
     // 营运能力评分（20分）
-    let asset_turnover = big_decimal_to_f64_non_opt(ratios.total_asset_turnover);
+    let asset_turnover = ratios.total_asset_turnover.to_f64().unwrap_or(0.0);
     if asset_turnover >= 1.0 {
         score += 20.0;
     } else if asset_turnover >= 0.7 {
@@ -694,8 +693,8 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
     }
 
     // 发展能力评分（20分）
-    let rev_growth = big_decimal_to_f64_non_opt(ratios.revenue_growth_rate);
-    let profit_growth = big_decimal_to_f64_non_opt(ratios.net_profit_growth_rate);
+    let rev_growth = ratios.revenue_growth_rate.to_f64().unwrap_or(0.0);
+    let profit_growth = ratios.net_profit_growth_rate.to_f64().unwrap_or(0.0);
     if rev_growth >= 20.0 {
         score += 10.0;
     } else if rev_growth >= 10.0 {
@@ -730,12 +729,12 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
     if suggestions.is_empty() {
         suggestions.push("整体财务状况良好，建议保持现有经营策略".to_string());
     }
-    if big_decimal_to_f64_non_opt(ratios.current_ratio) >= 2.0
-        && big_decimal_to_f64_non_opt(ratios.debt_to_asset_ratio) < 50.0
+    if ratios.current_ratio.to_f64().unwrap_or(0.0) >= 2.0
+        && ratios.debt_to_asset_ratio.to_f64().unwrap_or(0.0) < 50.0
     {
         suggestions.push("偿债能力充足，可适度利用财务杠杆扩大经营".to_string());
     }
-    if big_decimal_to_f64_non_opt(ratios.roe) >= 15.0 {
+    if ratios.roe.to_f64().unwrap_or(0.0) >= 15.0 {
         suggestions.push("盈利能力较强，建议加大研发投入巩固竞争优势".to_string());
     }
 

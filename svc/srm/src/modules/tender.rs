@@ -733,8 +733,8 @@ pub async fn create_tender_bid(
 
     let total_score = match (technical_score.as_ref(), commercial_score.as_ref()) {
         (Some(ts), Some(cs)) => {
-            let ts_val = big_decimal_to_f64_non_opt(ts);
-            let cs_val = big_decimal_to_f64_non_opt(cs);
+            let ts_val = big_decimal_to_f64_non_opt(ts.clone());
+            let cs_val = big_decimal_to_f64_non_opt(cs.clone());
             BigDecimal::from_f64(ts_val * 0.6 + cs_val * 0.4).unwrap_or_default()
         }
         _ => BigDecimal::from(0),

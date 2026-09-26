@@ -8,8 +8,8 @@ use axum::{
 };
 use chrono::{DateTime, NaiveDateTime, Utc};
 
-use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 pub mod inspection;
 mod patrol;
