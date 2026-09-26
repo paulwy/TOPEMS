@@ -877,7 +877,7 @@ pub async fn update_flow_step(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(.map(|dt| dt.with_timezone(&Utc))Utc).naive_utc())
+                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -937,7 +937,7 @@ pub async fn update_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(

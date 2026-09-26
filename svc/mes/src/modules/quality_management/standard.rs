@@ -209,7 +209,7 @@ pub async fn list_standards(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = ANY($1)
@@ -221,13 +221,13 @@ pub async fn list_standards(
 
         if let Ok(value_rows) = values_result {
             for v in value_rows {
-                let sid = v.standard_id;
+                let sid = v.standard_id.unwrap_or_default();
                 values_map
                     .entry(sid)
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.map(|s| s.to_string()),
+                        standard_id: sid.to_string(),
                         item_name: v.item_name.unwrap_or_default(),
                         lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
@@ -355,7 +355,7 @@ pub async fn get_standard(
     let values_result = sqlx::query!(
         r#"
         SELECT
-            qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
+            qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
             qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
         FROM quality_standard_values qsv
         WHERE qsv.standard_id = $1
@@ -712,7 +712,7 @@ pub async fn update_standard(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = $1
