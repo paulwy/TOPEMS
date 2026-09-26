@@ -961,7 +961,7 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-now.date(),
+now.naive_utc().date(),
         now,
     )
     .fetch_optional(&state.pool)
