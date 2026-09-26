@@ -112,7 +112,7 @@ pub async fn list_projects(
     let result = sqlx::query_as::<_, Project>(
         r#"
         SELECT id, tenant_id,
-               CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
+               name,
                code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
