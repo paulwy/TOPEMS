@@ -686,7 +686,7 @@ pub async fn get_route_steps(
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()),
                     process_name: s.process_name,
                     process_code: s.process_code,
                     sequence: s.sequence,
@@ -784,7 +784,7 @@ pub async fn add_route_step(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()),
                     process_name: process_name.unwrap_or_default(),
                     process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
@@ -885,7 +885,7 @@ pub async fn update_route_step(
                 ProcessRouteStepResponse {
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()),
                     process_name: process_name.unwrap_or_default(),
                     process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
@@ -1041,7 +1041,7 @@ pub async fn reorder_route_steps(
                 .map(|s| ProcessRouteStepResponse {
                     id: s.id.to_string(),
                     route_id: s.route_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|v| v.to_string()),
                     process_name: s.process_name,
                     process_code: s.process_code,
                     sequence: s.sequence,
