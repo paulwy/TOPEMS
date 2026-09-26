@@ -17,6 +17,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 fn parse_period(s: &str) -> Option<(i32, i32)> {
     let parts: Vec<&str> = s.split('-').collect();
@@ -58,9 +59,9 @@ async fn period_net_total(
     .await;
     match result {
         Ok((td, tc, net)) => (
-            td.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
-            tc.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
-            net.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0),
+            big_decimal_to_f64_non_opt(td.unwrap_or(Decimal::ZERO)),
+            big_decimal_to_f64_non_opt(tc.unwrap_or(Decimal::ZERO)),
+            big_decimal_to_f64_non_opt(net.unwrap_or(Decimal::ZERO)),
         ),
         Err(_) => (0.0, 0.0, 0.0),
     }
