@@ -2,7 +2,7 @@
 
 > 版本：v1.0
 > 编制日期：2026-09-26
-> 执行状态：**已全部执行完毕**（2026-09-26，6 个 commit：e5f173a8 → 3f152f530）。实际结果见 CHANGELOG.md [未发布] 区段。
+> 执行状态：**已全部执行完毕并收尾**（2026-09-26，11 个 commit：e5f173a8 → f60f197ae，含 D3/D4 待决收尾）。实际结果见 CHANGELOG.md [未发布] 区段。
 > 性质：蓝图方案，为分阶段 `git mv` 执行提供精确依据。执行中 0 硬删除，全部归档保留。
 > 统计口径：docs/ 下 346 个 `.md` + 4 个 `.html`（`docs/assessments/` 实际 44 个，清单漏列 4 个 html）= 350 个 docs 文件；根目录 23 个 `.md`。合计 **373 个待处置对象**。
 
@@ -569,10 +569,10 @@ docs/
 |---|--------|--------|----------|
 | D1 | `assessments/` 带日期报告是否整批归档 vs 保留活跃 | README 称"随代码演进持续同步"，但文件名均带 2026-09 日期，且 P0×13/P1×52 已"全收口" | 默认归档到 reports/archive/，保留 reports/README 索引指向；若团队需持续引用个别 registry 则留在 registries/ |
 | D2 | 根 `TODO.md`（93K）尾部含 2026-09-25 活跃条目 | 任务定性为"UI v3 历史"，但尾部有 date-type-audit/10 域收口等近期工作记录 | 归档前 diff 尾部，确认无未迁移的活跃待办；如有，先补入 project/TODO.md 再归档 |
-| D3 | `docs/archive/`（旧）与新顶层 `archive/` 是否合并 | 两个 archive 并存易混淆 | 本方案先并存；后续可将旧 archive/ 内容并入顶层 archive/misc/（列为二期） |
-| D4 | `architecture/standards.md` 与 `backend/code-standards.md` 是否合并为单一规范 | 二者都含命名/代码规范，有重叠（Git 提交规范、组件规范重复） | 本方案暂不合并（前者偏目录/API 路径强制标准，后者偏代码/缓存实现），由 developer/README 互相链接；若后续仍觉重复再合并 |
+| D3 | `docs/archive/`（旧）与新顶层 `archive/` 是否合并 | 两个 archive 并存易混淆 | **✅ 已闭环（2026-09-26，commit b6335c9c5）**：8 个散落文件并入 archive/misc/（force-add 纳入 git），archive/README 重写为四目录索引 |
+| D4 | `architecture/standards.md` 与 `backend/code-standards.md` 是否合并为单一规范 | 二者都含命名/代码规范，有重叠（Git 提交规范、组件规范重复） | **✅ 已闭环（2026-09-26，commit f60f197ae）**：去重重叠（命名/Git 提交归 architecture-standards 为项目级权威，code-standards 删重复段并锚点互链），developer/README 导航同步去重 |
 | D5 | `docs/security/SECURITY.md` 与根 `SECURITY.md` 去重 | 两份安全文档并存 | 保留（根为 GitHub Community 入口，docs 内为详述），不合并 |
-| D6 | 是否最终删除归档后的泛化文档（development-guide/code-quality-guide/AI_ENGINEERING_GUIDE） | 含错误技术栈，但作为"模板"可能有参考价值 | 先归档观察；一个迭代周期后确认无人引用再 git rm |
+| D6 | 是否最终删除归档后的泛化文档（development-guide/code-quality-guide/AI_ENGINEERING_GUIDE） | 含错误技术栈，但作为"模板"可能有参考价值 | 观察结论（2026-09-26 引用扫描）：development-guide/code-quality-guide **活跃零引用**（仅本方案提及）→ 观察期后可 git rm；AI_ENGINEERING_GUIDE **被 testing/AI_BUSINESS_* 两篇活跃文档引用** → 保留，删除候选仅前两者 |
 | D7 | `architecture/architecture-evolution-and-todo.md`、`TOPEMS_Architecture_Roadmap_v2.md` 归 project 还是 archive | 含 todo 成分与历史路线图 | 默认 archive/misc/，避免与 project/TODO.md 双轨 |
 | D8 | `benchmarks/` v71 基准是否随代码过时 | 构建/覆盖率基准随版本漂移 | 保留在 performance/benchmarks/，README 标注"v71 历史基准" |
 
