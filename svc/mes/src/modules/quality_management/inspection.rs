@@ -419,7 +419,7 @@ pub async fn create_inspection(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt)
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -526,7 +526,7 @@ pub async fn update_inspection(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt)
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()

@@ -578,7 +578,7 @@ pub async fn get_production_schedule(
                 equipment_id: Some(r.equipment_id.unwrap_or_default()),
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
-                process_name: r.process_name,
+                process_name: Some(r.process_name),
                 planned_start_time: r.planned_start_time.map(|t| t),
                 planned_end_time: r.planned_end_time.map(|t| t),
                 actual_start_time: r.actual_start_time.map(|t| t),
@@ -888,10 +888,10 @@ pub async fn get_gantt_data(
         };
 
         let resource_name = s.work_station_name.clone();
-        if resource_ids.insert(resource_name.clone()) {
+        if resource_ids.insert(resource_name.clone().unwrap_or_default()) {
             resources.push(GanttResource {
-                id: resource_name.clone(),
-                name: resource_name.clone(),
+                id: resource_name.clone().unwrap_or_default(),
+                name: resource_name.clone().unwrap_or_default(),
                 category: "workstation".to_string(),
             });
         }
@@ -903,7 +903,7 @@ pub async fn get_gantt_data(
             end: end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
-            resource: Some(resource_name),
+            resource: Some(resource_name.unwrap_or_default()),
             parent: None,
         });
     }
