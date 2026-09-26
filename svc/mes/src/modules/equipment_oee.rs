@@ -460,7 +460,7 @@ pub async fn create_oee_record(
             shift, operator, notes, created_at, updated_at
         "#,
         req.equipment_id,
-        req.record_date.date(),
+        req.record_date.naive_utc().date(),
         BigDecimal::from_str(&req.planned_production_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.actual_run_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.downtime.to_string()).unwrap_or_default(),
