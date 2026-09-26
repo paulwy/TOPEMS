@@ -18,6 +18,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
 use topems_shared_event::event::{EventType, StockInboundPayload, WmsInventoryItemReceivedPayload};
+use topems_shared_db::tenant::get_tenant_id_or_new;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InboundOrderItemRequest {
@@ -1550,17 +1551,7 @@ pub async fn start_inbound_approval(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.inbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1624,17 +1615,7 @@ pub async fn approve_inbound(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.inbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1716,17 +1697,7 @@ pub async fn reject_inbound(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.inbound_orders WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),

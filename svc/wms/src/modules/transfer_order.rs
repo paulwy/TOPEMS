@@ -16,6 +16,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
 use topems_shared_event::event::{EventType, WmsWarehouseTransferCompletedPayload};
+use topems_shared_db::tenant::get_tenant_id_or_new;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -848,17 +849,7 @@ pub async fn start_transfer_approval(
         Ok(uuid) => uuid,
         Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
     };
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
@@ -927,17 +918,7 @@ pub async fn approve_transfer(
         Ok(uuid) => uuid,
         Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
     };
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1024,17 +1005,7 @@ pub async fn reject_transfer(
         Ok(uuid) => uuid,
         Err(_) => return Json(ApiResponse::error(400, "无效的调拨单ID")),
     };
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(only_own_schema_query!(
         "wms",

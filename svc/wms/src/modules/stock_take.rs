@@ -17,6 +17,7 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_db::tenant::get_tenant_id_or_new;
 
 fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     serde_json::json!({
@@ -1577,17 +1578,7 @@ pub async fn start_stock_take_approval(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1652,17 +1643,7 @@ pub async fn approve_stock_take(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
@@ -1745,17 +1726,7 @@ pub async fn reject_stock_take(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let tenant_id = claims
-        .tenant_id
-        .as_ref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .or_else(|| {
-            headers
-                .get("x-tenant-id")
-                .and_then(|v| v.to_str().ok())
-                .and_then(|s| Uuid::parse_str(s).ok())
-        })
-        .unwrap_or_else(Uuid::new_v4);
+    let tenant_id = get_tenant_id_or_new(claims, headers);
 
     let current = sqlx::query(
         only_own_schema_query!("wms", "SELECT status FROM wms.stock_takes WHERE deleted_at IS NULL AND id = $1 AND tenant_id = $2"),
