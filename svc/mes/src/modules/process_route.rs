@@ -386,7 +386,7 @@ pub async fn get_process_route(
                     let pc = s.try_get::<i64, _>("process_count").ok();
                     (tst, pc)
                 }
-                Err(_) => (None, String::new()),
+                Err(_) => (None, None),
             };
 
             Json(ApiResponse::success(
