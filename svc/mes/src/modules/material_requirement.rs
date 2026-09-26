@@ -396,7 +396,7 @@ pub async fn create_material_requirement(
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
                 .ok()
-                .map(|dt| dt)
+                .map(|dt| dt.naive_utc())
         })
         .or_else(|| {
             body.required_date
@@ -501,7 +501,7 @@ pub async fn update_material_requirement(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt)
+                    .map(|dt| dt.naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
