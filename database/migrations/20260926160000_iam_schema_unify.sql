@@ -55,7 +55,10 @@ ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status;
 
 -- ================================================
--- 4. 数据迁移：从 public.core_users 到 iam.users（如果 iam.users 表存在）
+-- 4. 补充 iam.users 表的缺失字段
+ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS full_name_en character varying;
+
+-- 5. 数据迁移：从 public.core_users 到 iam.users（如果 iam.users 表存在）
 -- ================================================
 DO $$
 BEGIN
