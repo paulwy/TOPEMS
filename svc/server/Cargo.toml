@@ -76,7 +76,7 @@ default = [
     # [V2026.08 已合并] module-aps 已移除（aps 合并至 mes，由 module-mes 承载）
     "module-pm",
     "module-pdm",
-    # "module-mes",  # MES 模块暂时禁用，还有 228 个编译错误需要修复
+    "module-mes",
     "module-ehs",
     "module-lims",
     "module-ticket",
