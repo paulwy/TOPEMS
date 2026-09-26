@@ -26,11 +26,11 @@ pub struct SyncRecordResponse {
     pub records_count: Option<i64>,
     pub affected_records: Option<i64>,
     pub error_message: Option<String>,
-    pub started_at: String,
+    pub started_at: DateTime<Utc>,
     pub completed_at: Option<String>,
     pub duration_ms: Option<i64>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 pub type SyncRecordListResponse = PaginatedResponse<SyncRecordResponse>;
@@ -589,11 +589,11 @@ impl From<SyncRecordRow> for SyncRecordResponse {
             records_count: row.records_count,
             affected_records: row.affected_records,
             error_message: row.error_message,
-            started_at: row.started_at.map(format_dt).unwrap_or_default(),
+            started_at: row.started_at.unwrap_or_default(),
             completed_at: row.completed_at.map(format_dt),
             duration_ms: row.duration_ms,
-            created_at: row.created_at.map(format_dt).unwrap_or_default(),
-            updated_at: row.updated_at.map(format_dt).unwrap_or_default(),
+            created_at: row.created_at.unwrap_or_default(),
+            updated_at: row.updated_at.unwrap_or_default(),
         }
     }
 }

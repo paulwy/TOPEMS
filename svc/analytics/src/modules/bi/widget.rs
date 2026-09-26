@@ -1,5 +1,5 @@
+use chrono::{DateTime, Utc};
 use axum::{extract::Path, extract::State, Json};
-use chrono::Utc;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
@@ -43,8 +43,8 @@ pub struct WidgetResponse {
     pub datasource_id: Option<Uuid>,
     pub query_config: Option<serde_json::Value>,
     pub cache_ttl_seconds: Option<i32>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -172,13 +172,9 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -237,13 +233,9 @@ pub async fn get_widgets_by_dashboard(
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -302,8 +294,8 @@ pub async fn create_widget(
         req.datasource_id,
         req.query_config,
         req.cache_ttl_seconds,
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -323,8 +315,8 @@ now.naive_utc(),
                                 datasource_id: row.datasource_id,
                                 query_config: row.query_config,
                                 cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -384,8 +376,8 @@ pub async fn get_widget(
                                 datasource_id: row.datasource_id,
                                 query_config: row.query_config,
                                 cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -446,7 +438,7 @@ pub async fn update_widget(
         req.datasource_id,
         req.query_config,
         req.cache_ttl_seconds,
-now.naive_utc(),
+now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -469,8 +461,8 @@ now.naive_utc(),
                                             datasource_id: row.datasource_id,
                                             query_config: row.query_config,
                                             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-            updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
                                         }
                                     }))
         }

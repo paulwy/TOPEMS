@@ -2,8 +2,8 @@
 //! Provides mock data for BI dashboard analytics
 
 use axum::{extract::Path, Json};
-use chrono::Utc;
 use serde_json::Value;
+use chrono::Utc;
 
 /// Get module-specific analytics
 #[utoipa::path(

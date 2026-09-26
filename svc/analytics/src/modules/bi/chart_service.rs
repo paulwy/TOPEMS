@@ -76,8 +76,8 @@ pub struct ChartQuery {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TimeRange {
-    pub start_date: Option<String>,
-    pub end_date: Option<String>,
+    pub start_date: Option<DateTime<Utc>>,
+    pub end_date: Option<DateTime<Utc>>,
 }
 
 #[allow(dead_code)]

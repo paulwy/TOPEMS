@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use chrono::Utc;
+use chrono::{Utc, TimeZone};
 use sqlx::types::Uuid;
 use tracing::info;
 
@@ -28,10 +28,7 @@ pub async fn create_share_link(
     let share_id = Uuid::new_v4();
     let now = Utc::now();
 
-    let expires_at = req
-        .expires_at
-        .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok())
-        .map(|dt| dt);
+    let expires_at = req.expires_at;
 
     let result = sqlx::query!(
         r#"
@@ -43,7 +40,7 @@ pub async fn create_share_link(
         id,
         &req.shared_with,
         req.permission,
-expires_at,now.naive_utc(),
+expires_at,now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -58,8 +55,8 @@ expires_at,now.naive_utc(),
                                 dashboard_id: row.dashboard_id,
                                 share_url: format!("/dashboard/share/{}", row.id),
                                 permission: row.permission,
-                                expires_at: row.expires_at.map(|t| t.to_string()),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                                expires_at: row.expires_at,
+        created_at: row.created_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -117,8 +114,8 @@ pub async fn get_shared_dashboard(
                 "layout": row.layout,
                 "owner_id": row.owner_id,
                 "permission": row.permission,
-        "created_at": row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        "updated_at": row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        "created_at": row.created_at,
+        "updated_at": row.updated_at,
             }
         })),
         None => Json(topems_shared_core::response::error_value(
@@ -170,11 +167,9 @@ pub async fn list_share_links(
             dashboard_id: row.dashboard_id,
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
-            expires_at: row.expires_at.map(|t| t.to_string()),
+            expires_at: row.expires_at,
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
         })
         .collect();
 

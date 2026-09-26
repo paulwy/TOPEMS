@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 
@@ -26,8 +27,8 @@ pub struct DashboardResponse {
     pub layout: Option<serde_json::Value>,
     pub owner_id: String,
     pub is_public: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -67,8 +68,8 @@ pub struct DashboardTemplateResponse {
     pub category: Option<String>,
     pub tags: Option<Vec<String>>,
     pub is_active: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -81,7 +82,7 @@ pub struct DashboardTemplateListResponse {
 pub struct ShareDashboardRequest {
     pub shared_with: Vec<String>,
     pub permission: String,
-    pub expires_at: Option<String>,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -90,8 +91,8 @@ pub struct ShareLinkResponse {
     pub dashboard_id: Uuid,
     pub share_url: String,
     pub permission: String,
-    pub expires_at: Option<String>,
-    pub created_at: String,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -179,7 +179,7 @@ pub async fn refresh_dashboard_data(
         WHERE id = $2
         RETURNING id, name
         "#,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -208,7 +208,7 @@ pub async fn refresh_dashboard_data(
                 "data": {
                     "id": row.id,
                     "name": row.name,
-                    "last_refreshed": now.to_string(),
+                    "last_refreshed": now,
                     "widgets_refreshed": true,
                 }
             }))
@@ -252,7 +252,7 @@ pub async fn set_auto_refresh(
         "#,
         req.enabled,
         req.interval_seconds,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)

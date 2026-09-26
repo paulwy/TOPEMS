@@ -1,8 +1,8 @@
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Path, Query, State},
     Json,
 };
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -78,8 +78,8 @@ pub struct PermissionRuleResponse {
     pub user_ids: Option<Vec<String>>,
     pub is_active: bool,
     pub created_by: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -183,13 +183,9 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -252,8 +248,8 @@ pub async fn create_permission_rule(
         req.user_ids.as_deref(),
         req.is_active.unwrap_or(true),
         req.created_by,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -275,8 +271,8 @@ pub async fn create_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -345,8 +341,8 @@ pub async fn get_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -406,7 +402,7 @@ pub async fn update_permission_rule(
         req.role_ids.as_deref(),
         req.user_ids.as_deref(),
         req.is_active,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -428,8 +424,8 @@ pub async fn update_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -710,13 +706,9 @@ pub async fn get_user_permissions(
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 

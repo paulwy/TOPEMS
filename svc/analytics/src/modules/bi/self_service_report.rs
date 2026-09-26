@@ -1,10 +1,10 @@
+use chrono::{DateTime, Utc};
 use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
 };
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -63,8 +63,8 @@ pub struct ReportResponse {
     pub config: Option<serde_json::Value>,
     pub owner_id: String,
     pub is_public: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize)]
@@ -129,13 +129,9 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -192,8 +188,8 @@ pub async fn create_report(
         req.config,
         req.owner_id,
         req.is_public.unwrap_or(false),
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -213,8 +209,8 @@ now.naive_utc(),
                                 config: row.config,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -274,8 +270,8 @@ pub async fn get_report(
                                 config: row.config,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -336,7 +332,7 @@ pub async fn update_report(
         req.filters,
         req.config,
         req.is_public,
-now.naive_utc(),
+now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -356,8 +352,8 @@ now.naive_utc(),
                                 config: row.config,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(

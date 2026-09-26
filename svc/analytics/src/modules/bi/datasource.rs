@@ -81,13 +81,13 @@ pub struct DatasourceResponse {
     pub port: Option<i32>,
     pub username: Option<String>,
     pub connection_string: Option<String>,
-    pub last_sync: Option<String>,
+    pub last_sync: Option<DateTime<Utc>>,
     pub data_volume: Option<i64>,
     pub sync_frequency: Option<String>,
     pub description: Option<String>,
     pub is_enabled: bool,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 pub type DatasourceListResponse = PaginatedResponse<DatasourceResponse>;
@@ -139,17 +139,17 @@ fn row_to_response(
         port,
         username,
         connection_string,
-        last_sync: last_sync.map(|t| t.to_string()),
+        last_sync: last_sync,
         data_volume,
         sync_frequency,
         description,
         is_enabled: is_enabled.unwrap_or(true),
         created_at: created_at
-            .map(|t| t.to_string())
-            .unwrap_or_else(|| Utc::now().to_rfc3339()),
+            
+            .unwrap_or_else(Utc::now),
         updated_at: updated_at
-            .map(|t| t.to_string())
-            .unwrap_or_else(|| Utc::now().to_rfc3339()),
+            
+            .unwrap_or_else(Utc::now),
     }
 }
 
@@ -316,13 +316,13 @@ pub async fn list_datasources(
                 r.port,
                 r.username,
                 r.connection_string,
-                r.last_sync.map(|t| t.and_utc()),
+                r.last_sync.map(|t| t),
                 r.data_volume,
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                r.created_at.map(|t| t.and_utc()),
-                r.updated_at.map(|t| t.and_utc()),
+                Some(r.created_at),
+                Some(r.updated_at),
             )
         })
         .collect();
@@ -385,8 +385,8 @@ pub async fn create_datasource(
         is_enabled,
         req.connection_config,
         req.query_template,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -406,13 +406,13 @@ pub async fn create_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync.map(|t| t.and_utc()),
+        r.last_sync.map(|t| t),
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        r.created_at.map(|t| t.and_utc()),
-        r.updated_at.map(|t| t.and_utc()),
+        Some(r.created_at),
+        Some(r.updated_at),
                             )
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -472,13 +472,13 @@ pub async fn get_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync.map(|t| t.and_utc()),
+        r.last_sync.map(|t| t),
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        r.created_at.map(|t| t.and_utc()),
-        r.updated_at.map(|t| t.and_utc()),
+        Some(r.created_at),
+        Some(r.updated_at),
                             )
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -546,14 +546,14 @@ pub async fn update_datasource(
         req.username,
         req.password,
         req.connection_string,
-        last_sync_naive.map(|v| v.naive_utc()),
+        last_sync_naive.map(|v| v),
         req.data_volume,
         req.sync_frequency,
         req.description,
         req.is_enabled,
         req.connection_config,
         req.query_template,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -573,13 +573,13 @@ pub async fn update_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync.map(|t| t.and_utc()),
+        r.last_sync.map(|t| t),
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        r.created_at.map(|t| t.and_utc()),
-        r.updated_at.map(|t| t.and_utc()),
+        Some(r.created_at),
+        Some(r.updated_at),
                             )
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -804,7 +804,7 @@ pub async fn refresh_datasource(
             updated_at = $1
         WHERE id = $3
         "#,
-        now.naive_utc(),
+        now,
         records_processed,
         id,
     )

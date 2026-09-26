@@ -58,13 +58,9 @@ pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -118,8 +114,8 @@ pub async fn create_dashboard(
         req.layout,
         req.owner_id,
         req.is_public.unwrap_or(false),
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
         Uuid::nil(),
     )
     .execute(&state.pool)
@@ -136,8 +132,8 @@ now.naive_utc(),
                 layout: req.layout,
                 owner_id: req.owner_id,
                 is_public: req.is_public.unwrap_or(false),
-                created_at: now.to_string(),
-                updated_at: now.to_string(),
+                created_at: now,
+                updated_at: now,
             }
         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -200,8 +196,8 @@ pub async fn get_dashboard(
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -256,7 +252,7 @@ pub async fn update_dashboard(
         req.description,
         req.layout,
         req.is_public,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -273,8 +269,8 @@ pub async fn update_dashboard(
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -377,13 +373,9 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -442,13 +434,9 @@ pub async fn get_user_dashboards(
             owner_id: row.owner_id,
             is_public: row.is_public.unwrap_or(false),
             created_at: row
-                .created_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .created_at,
             updated_at: row
-                .updated_at
-                .map(|v| v.and_utc().to_rfc3339())
-                .unwrap_or_default(),
+                .updated_at,
         })
         .collect();
 
@@ -514,8 +502,8 @@ pub async fn clone_dashboard(
                 row.layout,
                 row.owner_id,
                 false,
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
                 Uuid::nil(),
             )
             .fetch_one(&state.pool)
@@ -532,8 +520,8 @@ now.naive_utc(),
                                                         layout: new_row.layout,
                                                         owner_id: new_row.owner_id,
                                                         is_public: new_row.is_public.unwrap_or(false),
-                created_at: new_row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-                updated_at: new_row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+                created_at: new_row.created_at,
+                updated_at: new_row.updated_at,
                                                     }
                                                 })),
                 Err(e) => Json(topems_shared_core::response::error_value(
@@ -578,8 +566,8 @@ pub async fn import_dashboard(
         req.layout,
         req.owner_id,
         req.is_public.unwrap_or(false),
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -596,8 +584,8 @@ now.naive_utc(),
                                 layout: row.layout,
                                 owner_id: row.owner_id,
                                 is_public: row.is_public.unwrap_or(false),
-        created_at: row.created_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
-        updated_at: row.updated_at.map(|v| v.and_utc().to_rfc3339()).unwrap_or_default(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
