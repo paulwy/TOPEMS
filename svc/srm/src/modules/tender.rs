@@ -16,6 +16,7 @@ use uuid::Uuid;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 pub struct AppState {
     pub db: PgPool,
@@ -732,8 +733,8 @@ pub async fn create_tender_bid(
 
     let total_score = match (technical_score.as_ref(), commercial_score.as_ref()) {
         (Some(ts), Some(cs)) => {
-            let ts_val = ts.to_f64().unwrap_or(0.0);
-            let cs_val = cs.to_f64().unwrap_or(0.0);
+            let ts_val = big_decimal_to_f64_non_opt(ts);
+            let cs_val = big_decimal_to_f64_non_opt(cs);
             BigDecimal::from_f64(ts_val * 0.6 + cs_val * 0.4).unwrap_or_default()
         }
         _ => BigDecimal::from(0),
