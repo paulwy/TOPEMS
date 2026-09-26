@@ -178,7 +178,7 @@ pub fn calc_throughput_rate(units_produced: f64, time_hours: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
+    use chrono::{NaiveDate, TimeZone, Utc};
 
     #[test]
     fn test_validate_resource_id_valid() {
@@ -204,29 +204,37 @@ mod tests {
 
     #[test]
     fn test_calc_duration_minutes() {
-        let start = NaiveDate::from_ymd_opt(2024, 1, 1)
-            .unwrap()
-            .and_hms_opt(8, 0, 0)
-            .unwrap();
-        let end = NaiveDate::from_ymd_opt(2024, 1, 1)
-            .unwrap()
-            .and_hms_opt(9, 30, 0)
-            .unwrap();
+        let start = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(8, 0, 0)
+                .unwrap(),
+        );
+        let end = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(9, 30, 0)
+                .unwrap(),
+        );
         assert_eq!(calc_duration_minutes(start, end), Some(90));
 
-        let end2 = NaiveDate::from_ymd_opt(2024, 1, 1)
-            .unwrap()
-            .and_hms_opt(7, 0, 0)
-            .unwrap();
+        let end2 = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(7, 0, 0)
+                .unwrap(),
+        );
         assert_eq!(calc_duration_minutes(start, end2), None);
     }
 
     #[test]
     fn test_calc_duration_minutes_same_time() {
-        let t = NaiveDate::from_ymd_opt(2024, 1, 1)
-            .unwrap()
-            .and_hms_opt(8, 0, 0)
-            .unwrap();
+        let t = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(8, 0, 0)
+                .unwrap(),
+        );
         assert_eq!(calc_duration_minutes(t, t), Some(0));
     }
 
@@ -378,27 +386,35 @@ mod tests {
 
     #[test]
     fn test_calc_duration_minutes_cross_day() {
-        let start = NaiveDate::from_ymd_opt(2024, 1, 1)
-            .unwrap()
-            .and_hms_opt(22, 0, 0)
-            .unwrap();
-        let end = NaiveDate::from_ymd_opt(2024, 1, 2)
-            .unwrap()
-            .and_hms_opt(2, 0, 0)
-            .unwrap();
+        let start = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(22, 0, 0)
+                .unwrap(),
+        );
+        let end = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 1, 2)
+                .unwrap()
+                .and_hms_opt(2, 0, 0)
+                .unwrap(),
+        );
         assert_eq!(calc_duration_minutes(start, end), Some(240));
     }
 
     #[test]
     fn test_calc_duration_minutes_multi_hour() {
-        let start = NaiveDate::from_ymd_opt(2024, 3, 1)
-            .unwrap()
-            .and_hms_opt(6, 0, 0)
-            .unwrap();
-        let end = NaiveDate::from_ymd_opt(2024, 3, 1)
-            .unwrap()
-            .and_hms_opt(18, 30, 0)
-            .unwrap();
+        let start = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 3, 1)
+                .unwrap()
+                .and_hms_opt(6, 0, 0)
+                .unwrap(),
+        );
+        let end = Utc.from_utc_datetime(
+            &NaiveDate::from_ymd_opt(2024, 3, 1)
+                .unwrap()
+                .and_hms_opt(18, 30, 0)
+                .unwrap(),
+        );
         assert_eq!(calc_duration_minutes(start, end), Some(750));
     }
 

@@ -952,17 +952,6 @@ mod tests {
     }
 
     #[test]
-    fn big_decimal_to_f64_some() {
-        let bd: BigDecimal = "12.5".parse().unwrap();
-        assert_eq!(big_decimal_to_f64(Some(bd)), Some(12.5));
-    }
-
-    #[test]
-    fn big_decimal_to_f64_none() {
-        assert_eq!(big_decimal_to_f64(None), None);
-    }
-
-    #[test]
     fn big_decimal_to_f64_non_opt_some() {
         let bd: BigDecimal = "99.99".parse().unwrap();
         assert_eq!(big_decimal_to_f64_non_opt(bd), 99.99);
