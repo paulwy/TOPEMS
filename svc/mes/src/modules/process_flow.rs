@@ -790,14 +790,14 @@ pub async fn add_flow_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, None),
+                Err(_) => (None, String::new()),
             };
 
             Json(ApiResponse::success(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()),
+                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
                     process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
@@ -877,7 +877,7 @@ pub async fn update_flow_step(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc))
+                    .map(|dt| dt.with_timezone(.map(|dt| dt.with_timezone(&Utc))Utc).naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
