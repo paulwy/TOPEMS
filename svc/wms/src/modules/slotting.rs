@@ -899,7 +899,7 @@ pub async fn get_impact_analysis(
     let total_improvement = agg.total_improvement.unwrap_or(0.0);
     let result = ImpactAnalysis {
         current_pick_distance: 1000.0,
-        optimized_pick_distance: (1000.0 - total_improvement).max(0.0),
+        optimized_pick_distance: (1000.0_f64 - total_improvement).max(0.0),
         distance_reduction_percent: if total_improvement > 0.0 {
             (total_improvement / 1000.0 * 100.0).min(100.0)
         } else {

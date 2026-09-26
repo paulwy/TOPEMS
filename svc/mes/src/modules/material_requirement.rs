@@ -348,8 +348,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "获取物料需求成功",
         )),
@@ -448,8 +448,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "创建物料需求成功",
         )),
@@ -551,8 +551,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "更新物料需求成功",
         )),
@@ -724,8 +724,8 @@ pub async fn calculate_requirements(
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.unwrap_or_default(),
-                        updated_at: r.updated_at.unwrap_or_default(),
+                        created_at: r.created_at.unwrap_or_default().and_utc(),
+                        updated_at: r.updated_at.unwrap_or_default().and_utc(),
                     });
                 }
             }
@@ -806,8 +806,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "确认物料需求成功",
         )),
@@ -887,8 +887,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.unwrap_or_default().and_utc(),
+                updated_at: r.updated_at.unwrap_or_default().and_utc(),
             },
             "下发物料需求成功",
         )),
@@ -903,8 +903,13 @@ pub async fn release_requirement(
 #[cfg(test)]
 mod tests {
     use super::*;
+<<<<<<< HEAD
     use chrono::TimeZone;
     use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
+=======
+    use crate::shared::utils::big_decimal_to_f64_non_opt;
+    use chrono::TimeZone;
+>>>>>>> 171901d1b (fix(mes/analytics/wms): 修复远端拉平后的编译债务（chrono 时间类型/sqlx 绑定/语法残句）)
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

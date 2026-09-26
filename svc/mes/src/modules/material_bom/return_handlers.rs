@@ -73,7 +73,7 @@ pub async fn create_material_return(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&mut *tx)
     .await;
@@ -128,10 +128,12 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d.to_rfc3339()),
+        return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
         notes: return_record.notes,
-        created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
-        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
+        created_at: (Some(return_record.created_at.unwrap_or_default().and_utc()))
+            .unwrap_or_default(),
+        updated_at: (Some(return_record.updated_at.unwrap_or_default().and_utc()))
+            .unwrap_or_default(),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -416,7 +418,7 @@ pub async fn update_material_return(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-now,
+now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;

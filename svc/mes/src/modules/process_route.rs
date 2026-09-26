@@ -684,13 +684,13 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -773,7 +773,7 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, String::new()),
+                Err(_) => (None, Some(String::new())),
             };
 
             Json(ApiResponse::success(
@@ -782,7 +782,7 @@ pub async fn add_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code,
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -874,7 +874,7 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, String::new()),
+                Err(_) => (None, Some(String::new())),
             };
 
             Json(ApiResponse::success(
@@ -883,7 +883,7 @@ pub async fn update_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code,
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -1039,13 +1039,13 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -1066,8 +1066,13 @@ pub async fn reorder_route_steps(
 #[cfg(test)]
 mod tests {
     use super::*;
+<<<<<<< HEAD
     use chrono::TimeZone;
     use topems_shared_db::decimal::big_decimal_to_f64_opt;
+=======
+    use crate::shared::utils::big_decimal_to_f64_opt;
+    use chrono::TimeZone;
+>>>>>>> 171901d1b (fix(mes/analytics/wms): 修复远端拉平后的编译债务（chrono 时间类型/sqlx 绑定/语法残句）)
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

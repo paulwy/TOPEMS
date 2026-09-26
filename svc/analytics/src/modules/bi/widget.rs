@@ -171,8 +171,8 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            created_at: row.created_at.unwrap_or_default().and_utc(),
+            updated_at: row.updated_at.unwrap_or_default().and_utc(),
         })
         .collect();
 
@@ -230,8 +230,8 @@ pub async fn get_widgets_by_dashboard(
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            created_at: row.created_at.unwrap_or_default().and_utc(),
+            updated_at: row.updated_at.unwrap_or_default().and_utc(),
         })
         .collect();
 
@@ -290,8 +290,8 @@ pub async fn create_widget(
         req.datasource_id,
         req.query_config,
         req.cache_ttl_seconds,
-now,
-now,
+now.naive_utc(),
+now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -299,22 +299,22 @@ now,
 
     match result {
         Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create widget",
-                            "data": WidgetResponse {
-                                id: row.id,
-                                dashboard_id: row.dashboard_id,
-                                name: row.name,
-                                widget_type: row.widget_type,
-                                config: row.config,
-                                position: row.position,
-                                datasource_id: row.datasource_id,
-                                query_config: row.query_config,
-                                cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+                                    "success": true,
+                                    "message": "Create widget",
+                                    "data": WidgetResponse {
+                                        id: row.id,
+                                        dashboard_id: row.dashboard_id,
+                                        name: row.name,
+                                        widget_type: row.widget_type,
+                                        config: row.config,
+                                        position: row.position,
+                                        datasource_id: row.datasource_id,
+                                        query_config: row.query_config,
+                                        cache_ttl_seconds: row.cache_ttl_seconds,
+        created_at: row.created_at.unwrap_or_default().and_utc(),
+        updated_at: row.updated_at.unwrap_or_default().and_utc(),
+                                    }
+                                })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create widget: {}", e),
@@ -360,22 +360,22 @@ pub async fn get_widget(
 
     match row {
         Some(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Get widget",
-                            "data": WidgetResponse {
-                                id: row.id,
-                                dashboard_id: row.dashboard_id,
-                                name: row.name,
-                                widget_type: row.widget_type,
-                                config: row.config,
-                                position: row.position,
-                                datasource_id: row.datasource_id,
-                                query_config: row.query_config,
-                                cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+                                    "success": true,
+                                    "message": "Get widget",
+                                    "data": WidgetResponse {
+                                        id: row.id,
+                                        dashboard_id: row.dashboard_id,
+                                        name: row.name,
+                                        widget_type: row.widget_type,
+                                        config: row.config,
+                                        position: row.position,
+                                        datasource_id: row.datasource_id,
+                                        query_config: row.query_config,
+                                        cache_ttl_seconds: row.cache_ttl_seconds,
+        created_at: row.created_at.unwrap_or_default().and_utc(),
+        updated_at: row.updated_at.unwrap_or_default().and_utc(),
+                                    }
+                                })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Widget not found",
@@ -434,7 +434,7 @@ pub async fn update_widget(
         req.datasource_id,
         req.query_config,
         req.cache_ttl_seconds,
-now,
+now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -445,22 +445,22 @@ now,
             // Invalidate cache when widget is updated
             WIDGET_CACHE.invalidate(&id);
             Json(serde_json::json!({
-                                        "success": true,
-                                        "message": "Update widget",
-                                        "data": WidgetResponse {
-                                            id: row.id,
-                                            dashboard_id: row.dashboard_id,
-                                            name: row.name,
-                                            widget_type: row.widget_type,
-                                            config: row.config,
-                                            position: row.position,
-                                            datasource_id: row.datasource_id,
-                                            query_config: row.query_config,
-                                            cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-                                        }
-                                    }))
+                                                    "success": true,
+                                                    "message": "Update widget",
+                                                    "data": WidgetResponse {
+                                                        id: row.id,
+                                                        dashboard_id: row.dashboard_id,
+                                                        name: row.name,
+                                                        widget_type: row.widget_type,
+                                                        config: row.config,
+                                                        position: row.position,
+                                                        datasource_id: row.datasource_id,
+                                                        query_config: row.query_config,
+                                                        cache_ttl_seconds: row.cache_ttl_seconds,
+            created_at: row.created_at.unwrap_or_default().and_utc(),
+            updated_at: row.updated_at.unwrap_or_default().and_utc(),
+                                                    }
+                                                }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,

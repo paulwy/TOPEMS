@@ -19,9 +19,13 @@ pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::shared::utils::big_decimal_to_f64;
     use chrono::{Datelike, TimeZone, Timelike};
     use sqlx::types::BigDecimal;
+<<<<<<< HEAD
     use topems_shared_db::decimal::big_decimal_to_f64;
+=======
+>>>>>>> 171901d1b (fix(mes/analytics/wms): 修复远端拉平后的编译债务（chrono 时间类型/sqlx 绑定/语法残句）)
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

@@ -119,8 +119,8 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
             levels: row.levels.unwrap_or(serde_json::json!([])),
             measures: row.measures.unwrap_or(serde_json::json!([])),
             owner_id: row.owner_id,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            created_at: row.created_at.unwrap_or_default().and_utc(),
+            updated_at: row.updated_at.unwrap_or_default().and_utc(),
         })
         .collect();
 
@@ -166,8 +166,8 @@ pub async fn create_drilldown_path(
         req.levels,
         req.measures,
         req.owner_id,
-now,
-now,
+now.naive_utc(),
+now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -175,20 +175,20 @@ now,
 
     match result {
         Ok(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Create drilldown path",
-                            "data": DrilldownPathResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                levels: row.levels.unwrap_or(serde_json::json!([])),
-                                measures: row.measures.unwrap_or(serde_json::json!([])),
-                                owner_id: row.owner_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+                                    "success": true,
+                                    "message": "Create drilldown path",
+                                    "data": DrilldownPathResponse {
+                                        id: row.id,
+                                        name: row.name,
+                                        description: row.description,
+                                        datasource_id: row.datasource_id,
+                                        levels: row.levels.unwrap_or(serde_json::json!([])),
+                                        measures: row.measures.unwrap_or(serde_json::json!([])),
+                                        owner_id: row.owner_id,
+        created_at: row.created_at.unwrap_or_default().and_utc(),
+        updated_at: row.updated_at.unwrap_or_default().and_utc(),
+                                    }
+                                })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create drilldown path: {}", e),
@@ -229,20 +229,20 @@ pub async fn get_drilldown_path(
 
     match row {
         Some(row) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Get drilldown path",
-                            "data": DrilldownPathResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                levels: row.levels.unwrap_or(serde_json::json!([])),
-                                measures: row.measures.unwrap_or(serde_json::json!([])),
-                                owner_id: row.owner_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+                                    "success": true,
+                                    "message": "Get drilldown path",
+                                    "data": DrilldownPathResponse {
+                                        id: row.id,
+                                        name: row.name,
+                                        description: row.description,
+                                        datasource_id: row.datasource_id,
+                                        levels: row.levels.unwrap_or(serde_json::json!([])),
+                                        measures: row.measures.unwrap_or(serde_json::json!([])),
+                                        owner_id: row.owner_id,
+        created_at: row.created_at.unwrap_or_default().and_utc(),
+        updated_at: row.updated_at.unwrap_or_default().and_utc(),
+                                    }
+                                })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Drilldown path not found",
@@ -282,7 +282,7 @@ pub async fn update_drilldown_path(
         req.description,
         req.levels,
         req.measures,
-now,
+now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -290,20 +290,20 @@ now,
 
     match result {
         Ok(Some(row)) => Json(serde_json::json!({
-                            "success": true,
-                            "message": "Update drilldown path",
-                            "data": DrilldownPathResponse {
-                                id: row.id,
-                                name: row.name,
-                                description: row.description,
-                                datasource_id: row.datasource_id,
-                                levels: row.levels.unwrap_or(serde_json::json!([])),
-                                measures: row.measures.unwrap_or(serde_json::json!([])),
-                                owner_id: row.owner_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-                            }
-                        })),
+                                    "success": true,
+                                    "message": "Update drilldown path",
+                                    "data": DrilldownPathResponse {
+                                        id: row.id,
+                                        name: row.name,
+                                        description: row.description,
+                                        datasource_id: row.datasource_id,
+                                        levels: row.levels.unwrap_or(serde_json::json!([])),
+                                        measures: row.measures.unwrap_or(serde_json::json!([])),
+                                        owner_id: row.owner_id,
+        created_at: row.created_at.unwrap_or_default().and_utc(),
+        updated_at: row.updated_at.unwrap_or_default().and_utc(),
+                                    }
+                                })),
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,
             "Drilldown path not found",
@@ -425,7 +425,7 @@ pub async fn drill_down(
         Some(req.drill_dimension.clone()),
         req.drill_value.clone(),
         req.filters.clone(),
-now,
+now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_optional(&state.pool)
@@ -517,7 +517,7 @@ pub async fn roll_up(
         Some(req.drill_dimension.clone()),
         req.drill_value.clone(),
         req.filters.clone(),
-now,
+now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_optional(&state.pool)
@@ -589,7 +589,7 @@ pub async fn get_drilldown_history(
             drill_dimension: row.drill_dimension,
             drill_value: row.drill_value,
             filters: row.filters,
-            created_at: row.created_at,
+            created_at: row.created_at.unwrap_or_default().and_utc(),
         })
         .collect();
 
