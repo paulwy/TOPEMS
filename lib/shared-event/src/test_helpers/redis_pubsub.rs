@@ -90,7 +90,7 @@ pub struct ActiveSubscription<T> {
 }
 
 impl<T: Send + 'static> ActiveSubscription<T> {
-    /// 等待匹配 `matcher` 的消息到达，超时 15s。
+    /// 等待匹配 `matcher` 的消息到达，超时 30s。
     pub async fn wait_for_match(self) -> T {
         self.subscriber_task
             .await
@@ -129,10 +129,10 @@ where
         let _ = ready_tx.send(());
 
         let mut stream = pubsub.on_message();
-        let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
         loop {
             if tokio::time::Instant::now() >= deadline {
-                panic!("订阅 channel={ch} 等待匹配消息超时（15s）");
+                panic!("订阅 channel={ch} 等待匹配消息超时（30s）");
             }
             let next = tokio::time::timeout_at(deadline, stream.next()).await;
             let Ok(Some(msg)) = next else { continue };

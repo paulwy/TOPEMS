@@ -663,7 +663,7 @@ pub async fn run_comparison(
             id: result_id,
             comparison_id: id,
             status: "success".to_string(),
-            started_at: started_at,
+            started_at,
             completed_at: Some(completed_at.to_rfc3339()),
             message: format!("Generated {} data points", data_points.len()),
         }

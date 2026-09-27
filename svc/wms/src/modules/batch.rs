@@ -74,7 +74,7 @@ pub async fn list_batches(
     .bind(&params.warehouse_id)
     .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
     .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
-    .bind(&params.supplier_id)
+    .bind(params.supplier_id)
     .bind(&params.quality_status)
     .bind(&params.status)
     .bind(page_size)
@@ -99,7 +99,7 @@ pub async fn list_batches(
             .bind(&params.warehouse_id)
             .bind(params.sku.as_ref().map(|s| format!("%{}%", s)))
             .bind(params.batch_no.as_ref().map(|s| format!("%{}%", s)))
-            .bind(&params.supplier_id)
+            .bind(params.supplier_id)
             .bind(&params.quality_status)
             .bind(&params.status)
             .fetch_one(&mut **txn)
@@ -171,9 +171,9 @@ pub async fn create_batch(
     .bind(&req.specification)
     .bind(&req.unit)
     .bind(req.quantity)
-    .bind(&req.warehouse_id)
-    .bind(&req.location_id)
-    .bind(&req.supplier_id)
+    .bind(req.warehouse_id)
+    .bind(req.location_id)
+    .bind(req.supplier_id)
     .bind(&req.production_date)
     .bind(&req.expiry_date)
     .bind(&req.receipt_date)
@@ -316,8 +316,8 @@ pub async fn update_batch(
     .bind(&req.unit)
     .bind(req.quantity)
     .bind(&req.warehouse_id)
-    .bind(&req.location_id)
-    .bind(&req.supplier_id)
+    .bind(req.location_id)
+    .bind(req.supplier_id)
     .bind(&req.production_date)
     .bind(&req.expiry_date)
     .bind(&req.quality_status)
@@ -436,7 +436,7 @@ pub async fn get_batch_statistics(
             SUM(CASE WHEN remaining_days <= 0 THEN 1 ELSE 0 END) as expired_count,
             SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END) as quality_pending_count
         FROM wms.batches
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid::text)
+        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid)
         "#,
         warehouse_id
     )
@@ -447,8 +447,8 @@ pub async fn get_batch_statistics(
         Ok(row) => {
             let statistics = BatchStatistics {
                 total_batches: row.total_batches.unwrap_or(0),
-                total_quantity: big_decimal_to_f64_non_opt(row.total_quantity.unwrap_or_default()),
-                total_value: big_decimal_to_f64_non_opt(row.total_value.unwrap_or_default()),
+                total_quantity: row.total_quantity.unwrap_or_default(),
+                total_value: row.total_value.unwrap_or_default(),
                 expiring_soon_count: row.expiring_soon_count.unwrap_or(0),
                 expired_count: row.expired_count.unwrap_or(0),
                 quality_pending_count: row.quality_pending_count.unwrap_or(0),

@@ -439,30 +439,30 @@ struct BatchDeleteRequest {
 }
 
 #[derive(Debug, Deserialize)]
-struct StatusUpdateRequest {
+pub struct StatusUpdateRequest {
     status: String,
 }
 
 #[derive(Debug, Deserialize)]
-struct BatchStatusRequest {
+pub struct BatchStatusRequest {
     ids: Vec<Uuid>,
     status: String,
 }
 
 #[derive(Debug, Deserialize)]
-struct BatchCategoryRequest {
+pub struct BatchCategoryRequest {
     ids: Vec<Uuid>,
     category: Option<String>,
     industry: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
-struct RecentParams {
+pub struct RecentParams {
     limit: Option<i64>,
 }
 
 #[derive(Debug, Serialize)]
-struct CustomerStatsResponse {
+pub struct CustomerStatsResponse {
     total: i64,
     active: i64,
     inactive: i64,
@@ -477,7 +477,7 @@ struct CategoryCount {
 }
 
 #[derive(Debug, Serialize)]
-struct CustomerRecentResponse {
+pub struct CustomerRecentResponse {
     customers: Vec<Customer>,
     total: i64,
     page: i64,

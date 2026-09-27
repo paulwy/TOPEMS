@@ -726,7 +726,7 @@ pub async fn add_flow_step(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
+            
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -736,7 +736,7 @@ pub async fn add_flow_step(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -796,7 +796,7 @@ pub async fn add_flow_step(
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code,
+                    process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
@@ -869,7 +869,7 @@ pub async fn update_flow_step(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt)
+            
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -879,7 +879,7 @@ pub async fn update_flow_step(
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
                     .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+                    .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
@@ -943,7 +943,7 @@ pub async fn update_flow_step(
                     flow_id: s.flow_id.to_string(),
                     process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code,
+                    process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,

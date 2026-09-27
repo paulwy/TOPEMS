@@ -610,24 +610,24 @@ struct BatchUpdateOrdersRequest {
 }
 
 #[derive(Debug, Deserialize)]
-struct BatchIdsRequest {
+pub struct BatchIdsRequest {
     ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Deserialize)]
-struct BatchShipRequest {
+pub struct BatchShipRequest {
     ids: Vec<Uuid>,
     ship_date: Option<chrono::DateTime<Utc>>,
 }
 
 #[derive(Debug, Deserialize)]
-struct BatchCancelRequest {
+pub struct BatchCancelRequest {
     ids: Vec<Uuid>,
     reason: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
-struct SalesOrderStatsResponse {
+pub struct SalesOrderStatsResponse {
     total: i64,
     by_status: Vec<StatusCount>,
     by_customer: Vec<CustomerOrderCount>,

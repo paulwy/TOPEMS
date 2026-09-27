@@ -712,7 +712,7 @@ async fn delete_tag_stub() -> Json<ApiResponse<serde_json::Value>> {
 // ==================== 批量操作 ====================
 
 #[derive(Deserialize)]
-struct BatchIdsRequest {
+pub struct BatchIdsRequest {
     ids: Vec<Uuid>,
     #[serde(default)]
     assignee_id: Option<Uuid>,
@@ -938,12 +938,12 @@ struct UploadAttachmentRequest {
 }
 
 #[derive(Deserialize)]
-struct BatchUploadRequest {
+pub struct BatchUploadRequest {
     attachments: Vec<UploadAttachmentRequest>,
 }
 
 #[derive(Deserialize)]
-struct BatchDeleteAttachmentsRequest {
+pub struct BatchDeleteAttachmentsRequest {
     ids: Vec<Uuid>,
 }
 
