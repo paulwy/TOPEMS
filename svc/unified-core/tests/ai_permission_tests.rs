@@ -10,7 +10,7 @@
 use reqwest::Client;
 use serde_json::{json, Value};
 
-const API_URL: &str = "http://localhost:8000";
+const API_URL: &str = "http://localhost:8099";
 
 fn create_client() -> Client {
     Client::new()

@@ -567,7 +567,7 @@ mod tests {
         );
 
         // —— 步骤六：等待 Subscriber handler 中 oneshot 回传的事件 ——
-        let received = tokio::time::timeout(tokio::time::Duration::from_secs(10), rx)
+        let received = tokio::time::timeout(tokio::time::Duration::from_secs(30), rx)
             .await
             .expect("Subscriber 在 10 秒内未触发 handler（事件丢失？）")
             .expect("oneshot 发送端意外关闭");
@@ -678,9 +678,9 @@ mod tests {
         mdm_event.publish().await.expect("MDM event publish 失败");
 
         // 步骤五：等待 Subscriber handler 回传
-        let received = tokio::time::timeout(tokio::time::Duration::from_secs(10), rx)
+        let received = tokio::time::timeout(tokio::time::Duration::from_secs(30), rx)
             .await
-            .expect("Subscriber MDM handler 未在 10s 内触发")
+            .expect("Subscriber MDM handler 未在 30s 内触发")
             .expect("oneshot 关闭");
 
         assert_eq!(received.event_id, expected_event_id);

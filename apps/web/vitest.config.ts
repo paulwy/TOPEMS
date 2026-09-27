@@ -55,15 +55,15 @@ function fixReactTransitionGroup(): Plugin {
           const fileName = id.replace('react-transition-group/cjs/', '');
           const p = path.resolve(root, 'cjs', fileName);
           console.log(`[fixReactTransitionGroup] Trying ${id} -> ${p} (exists: ${fs.existsSync(p)})`);
-          if (fs.existsSync(p)) return p;
+          if (fs.existsSync(p)) return { id: p };
         }
         if (RTG_SUB_PATHS[id]) {
           const p = path.resolve(root, `cjs/${RTG_SUB_PATHS[id]}`);
-          if (fs.existsSync(p)) return p;
+          if (fs.existsSync(p)) return { id: p };
         }
         if (id === 'react-transition-group') {
           const p = path.resolve(root, 'cjs/index.js');
-          if (fs.existsSync(p)) return p;
+          if (fs.existsSync(p)) return { id: p };
         }
       }
       return null;
@@ -141,6 +141,7 @@ export default defineConfig({
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
       '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
       'react-transition-group/TransitionGroupContext': resolveRtgCjs('TransitionGroupContext.js'),
+      'react-transition-group/cjs/TransitionGroupContext.js': resolveRtgCjs('TransitionGroupContext.js'),
       'react-transition-group/Transition': resolveRtgCjs('Transition.js'),
       'react-transition-group/CSSTransition': resolveRtgCjs('CSSTransition.js'),
       'react-transition-group/SwitchTransition': resolveRtgCjs('SwitchTransition.js'),

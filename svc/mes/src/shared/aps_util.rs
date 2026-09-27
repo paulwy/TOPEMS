@@ -588,3 +588,87 @@ mod tests {
         assert_eq!(calc_throughput_rate(0.0, 5.0), 0.0);
     }
 }
+
+#[cfg(test)]
+mod additional_tests {
+    use super::*;
+    use chrono::Duration;
+
+    #[test]
+    fn test_validate_resource_id_valid() {
+        assert!(validate_resource_id("resource_001"));
+        assert!(validate_resource_id("MACHINE-001:LINE-1"));
+        assert!(validate_resource_id("abc123"));
+    }
+
+    #[test]
+    fn test_validate_resource_id_invalid() {
+        assert!(!validate_resource_id(""));
+        assert!(!validate_resource_id("a".repeat(65).as_str()));
+        assert!(!validate_resource_id("resource@001"));
+        assert!(!validate_resource_id("resource 001"));
+    }
+
+    #[test]
+    fn test_calc_duration_minutes_normal() {
+        let start = Utc::now();
+        let end = start + Duration::minutes(30);
+        assert_eq!(calc_duration_minutes(start, end), Some(30));
+    }
+
+    #[test]
+    fn test_calc_duration_minutes_negative() {
+        let start = Utc::now();
+        let end = start - Duration::minutes(30);
+        assert_eq!(calc_duration_minutes(start, end), None);
+    }
+
+    #[test]
+    fn test_check_capacity_overload() {
+        assert!(check_capacity_overload(10.0, 8.0));
+        assert!(!check_capacity_overload(8.0, 10.0));
+        assert!(check_capacity_overload(1.0, 0.0));
+        assert!(!check_capacity_overload(0.0, 0.0));
+    }
+
+    #[test]
+    fn test_calc_utilization_rate() {
+        assert!((calc_utilization_rate(8.0, 10.0).unwrap() - 0.8).abs() < 1e-9);
+        assert!((calc_utilization_rate(12.0, 10.0).unwrap() - 1.0).abs() < 1e-9);
+        assert_eq!(calc_utilization_rate(8.0, 0.0), None);
+        assert_eq!(calc_utilization_rate(-1.0, 10.0), None);
+    }
+
+    #[test]
+    fn test_calc_shortfall_quantity() {
+        assert!((calc_shortfall_quantity(100.0, 80.0) - 20.0).abs() < 1e-9);
+        assert!((calc_shortfall_quantity(80.0, 100.0) - 0.0).abs() < 1e-9);
+        assert!((calc_shortfall_quantity(100.0, 100.0) - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_calc_forecast_accuracy() {
+        assert!((calc_forecast_accuracy(100.0, 90.0).unwrap() - 0.9).abs() < 1e-9);
+        assert!((calc_forecast_accuracy(100.0, 110.0).unwrap() - 0.9).abs() < 1e-9);
+        assert_eq!(calc_forecast_accuracy(0.0, 90.0), None);
+        assert!((calc_forecast_accuracy(100.0, 200.0).unwrap() - 0.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn test_is_valid_plan_no() {
+        assert!(is_valid_plan_no("PO-2024-001"));
+        assert!(is_valid_plan_no("PLAN_001"));
+        assert!(!is_valid_plan_no(""));
+        assert!(!is_valid_plan_no("PO@2024"));
+    }
+
+    #[test]
+    fn test_is_valid_forecast_period() {
+        assert!(is_valid_forecast_period("daily"));
+        assert!(is_valid_forecast_period("weekly"));
+        assert!(is_valid_forecast_period("monthly"));
+        assert!(is_valid_forecast_period("quarterly"));
+        assert!(is_valid_forecast_period("yearly"));
+        assert!(!is_valid_forecast_period("hourly"));
+    }
+}

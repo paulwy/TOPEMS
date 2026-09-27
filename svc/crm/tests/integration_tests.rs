@@ -171,8 +171,8 @@ mod tests {
 
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, org_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+            INSERT INTO crm.customers (id, tenant_id, org_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
+            VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             ON CONFLICT (id) DO UPDATE SET
                 name = EXCLUDED.name,
                 updated_at = NOW()
@@ -241,8 +241,8 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, org_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+            INSERT INTO crm.customers (id, tenant_id, org_id, code, name, customer_type, industry, phone, email, status, created_at, updated_at)
+            VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             "#,
         )
         .bind(customer_id)
@@ -310,8 +310,8 @@ mod tests {
 
         sqlx::query(
             r#"
-            INSERT INTO crm.customers (id, org_id, code, name, customer_type, industry, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO crm.customers (id, tenant_id, org_id, code, name, customer_type, industry, status, created_at, updated_at)
+            VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(customer_id)
@@ -329,8 +329,8 @@ mod tests {
         let opportunity_id = Uuid::new_v4();
         let result = sqlx::query(
             r#"
-            INSERT INTO crm.opportunities (id, org_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            INSERT INTO crm.opportunities (id, tenant_id, org_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
+            VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
         .bind(opportunity_id)
