@@ -312,13 +312,13 @@ pub async fn list_datasources(
                 r.port,
                 r.username,
                 r.connection_string,
-                r.last_sync,
+                r.last_sync.map(|d| d.and_utc()),
                 r.data_volume,
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                Some(r.created_at),
-                Some(r.updated_at),
+                r.created_at.map(|d| d.and_utc()),
+                r.updated_at.map(|d| d.and_utc()),
             )
         })
         .collect();
@@ -381,8 +381,8 @@ pub async fn create_datasource(
         is_enabled,
         req.connection_config,
         req.query_template,
-        now,
-        now,
+        now.naive_utc(),
+        now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -402,13 +402,13 @@ pub async fn create_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync,
+        r.last_sync.map(|d| d.and_utc()),
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        Some(r.created_at),
-        Some(r.updated_at),
+        r.created_at.map(|d| d.and_utc()),
+        r.updated_at.map(|d| d.and_utc()),
                             )
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -468,13 +468,13 @@ pub async fn get_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync,
+        r.last_sync.map(|d| d.and_utc()),
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        Some(r.created_at),
-        Some(r.updated_at),
+        r.created_at.map(|d| d.and_utc()),
+        r.updated_at.map(|d| d.and_utc()),
                             )
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -506,7 +506,7 @@ pub async fn update_datasource(
     info!("Updating datasource: {}", id);
 
     let now = Utc::now();
-    let last_sync_naive = req.last_sync;
+    let last_sync_naive = req.last_sync.map(|d| d.naive_utc());
 
     let result = sqlx::query!(
         r#"
@@ -549,7 +549,7 @@ pub async fn update_datasource(
         req.is_enabled,
         req.connection_config,
         req.query_template,
-        now,
+        now.naive_utc(),
         id,
     )
     .fetch_optional(&state.pool)
@@ -569,13 +569,13 @@ pub async fn update_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync,
+        r.last_sync.map(|d| d.and_utc()),
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        Some(r.created_at),
-        Some(r.updated_at),
+        r.created_at.map(|d| d.and_utc()),
+        r.updated_at.map(|d| d.and_utc()),
                             )
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -800,7 +800,7 @@ pub async fn refresh_datasource(
             updated_at = $1
         WHERE id = $3
         "#,
-        now,
+        now.naive_utc(),
         records_processed,
         id,
     )
