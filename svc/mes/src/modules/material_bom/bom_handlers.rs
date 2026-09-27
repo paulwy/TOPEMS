@@ -5,8 +5,8 @@ use sqlx::{types::Uuid, Row};
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use crate::AppState;
 use topems_shared_db::decimal::big_decimal_to_f64;
+use crate::AppState;
 
 use topems_shared::response::ApiResponse;
 
@@ -198,7 +198,7 @@ pub async fn create_material_bom(
         req.product_code,
         req.version.unwrap_or_else(|| "1.0".to_string()),
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -285,8 +285,8 @@ pub async fn create_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: (Some(bom.created_at.unwrap_or_default().and_utc())).unwrap_or_default(),
-        updated_at: (Some(bom.updated_at.unwrap_or_default().and_utc())).unwrap_or_default(),
+        created_at: (Some(bom.created_at.unwrap_or_default())).unwrap_or_default(),
+        updated_at: (Some(bom.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     Json(ApiResponse::success(
@@ -374,8 +374,8 @@ pub async fn get_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: (Some(bom.created_at.unwrap_or_default().and_utc())).unwrap_or_default(),
-        updated_at: (Some(bom.updated_at.unwrap_or_default().and_utc())).unwrap_or_default(),
+        created_at: (Some(bom.created_at.unwrap_or_default())).unwrap_or_default(),
+        updated_at: (Some(bom.updated_at.unwrap_or_default())).unwrap_or_default(),
     };
 
     let item_responses: Vec<BomItemResponse> = items
@@ -442,7 +442,7 @@ pub async fn update_material_bom(
         req.version,
         req.status,
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&mut *tx)
     .await;
