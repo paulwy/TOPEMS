@@ -913,16 +913,24 @@ pub async fn get_inventory_statistics(
         Ok(row) => {
             let total_items = row.try_get::<i64, _>("total_items").unwrap_or(0);
             let total_quantity: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_quantity").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_quantity")
+                    .ok()
+                    .flatten(),
             );
             let total_available: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_available").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_available")
+                    .ok()
+                    .flatten(),
             );
             let total_reserved: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_reserved").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_reserved")
+                    .ok()
+                    .flatten(),
             );
             let total_value: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                    .ok()
+                    .flatten(),
             );
             let low_stock_count = row.try_get::<i64, _>("low_stock_count").unwrap_or(0);
             let out_of_stock_count = row.try_get::<i64, _>("out_of_stock_count").unwrap_or(0);
@@ -1004,7 +1012,9 @@ pub async fn get_abc_analysis(
 
             for row in rows.iter() {
                 let value: f64 = big_decimal_to_f64(
-                    row.try_get::<Option<bigdecimal::BigDecimal>, _>("value").ok().flatten()
+                    row.try_get::<Option<bigdecimal::BigDecimal>, _>("value")
+                        .ok()
+                        .flatten(),
                 );
                 cumulative_value += value;
                 let percentage = if total_value > 0.0 {
@@ -1105,7 +1115,9 @@ pub async fn get_turnover(
                         .map(|dt| dt.format("%Y-%m").to_string());
                     let transaction_count = row.try_get::<i64, _>("transaction_count").unwrap_or(0);
                     let total_quantity: f64 = big_decimal_to_f64(
-                        row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_quantity").ok().flatten()
+                        row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_quantity")
+                            .ok()
+                            .flatten(),
                     );
 
                     serde_json::json!({
@@ -1193,7 +1205,9 @@ pub async fn get_value_by_warehouse(
                         .ok()
                         .flatten();
                     let value: f64 = big_decimal_to_f64(
-                        row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten()
+                        row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                            .ok()
+                            .flatten(),
                     );
                     let item_count = row.try_get::<i64, _>("item_count").unwrap_or(0);
 

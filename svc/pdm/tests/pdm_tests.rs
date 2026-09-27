@@ -62,7 +62,10 @@ async fn test_create_product() {
     .fetch_one(&pool)
     .await;
 
-    if let Err(e) = &result { eprintln!("❌ Error: {:?}", e); } assert!(result.is_ok());
+    if let Err(e) = &result {
+        eprintln!("❌ Error: {:?}", e);
+    }
+    assert!(result.is_ok());
     let product = result.unwrap();
     assert_eq!(product.product_no, product_no);
     assert_eq!(product.name, "测试产品");
@@ -186,7 +189,10 @@ async fn test_delete_product() {
         .execute(&pool)
         .await;
 
-    if let Err(e) = &result { eprintln!("❌ Error: {:?}", e); } assert!(result.is_ok());
+    if let Err(e) = &result {
+        eprintln!("❌ Error: {:?}", e);
+    }
+    assert!(result.is_ok());
     assert_eq!(result.unwrap().rows_affected(), 1);
 
     let remaining = sqlx::query_as::<_, Product>(
@@ -295,7 +301,10 @@ async fn test_create_material() {
     .execute(&pool)
     .await;
 
-    if let Err(e) = &result { eprintln!("❌ Error: {:?}", e); } assert!(result.is_ok());
+    if let Err(e) = &result {
+        eprintln!("❌ Error: {:?}", e);
+    }
+    assert!(result.is_ok());
 }
 
 #[tokio::test]
@@ -325,5 +334,8 @@ async fn test_create_change_notice() {
     .execute(&pool)
     .await;
 
-    if let Err(e) = &result { eprintln!("❌ Error: {:?}", e); } assert!(result.is_ok());
+    if let Err(e) = &result {
+        eprintln!("❌ Error: {:?}", e);
+    }
+    assert!(result.is_ok());
 }

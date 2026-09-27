@@ -34,11 +34,9 @@ pub struct UpdateAiSettingsRequest {
         (status = 200, description = "获取成功", body = Value)
     )
 )]
-pub async fn get_settings(
-    State(state): State<AppState>,
-) -> Json<Value> {
+pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
     let pool = &state.pool;
-    
+
     // 从请求头获取租户ID
     let tenant_id = match get_tenant_id_from_header(&state).await {
         Some(id) => id,
@@ -68,7 +66,8 @@ pub async fn get_settings(
 
     match result {
         Ok(Some(row)) => {
-            let available_models: Vec<String> = serde_json::from_value(row.available_models).unwrap_or_default();
+            let available_models: Vec<String> =
+                serde_json::from_value(row.available_models).unwrap_or_default();
             Json(json!({
                 "success": true,
                 "data": {
@@ -128,7 +127,7 @@ pub async fn update_settings(
     Json(req): Json<UpdateAiSettingsRequest>,
 ) -> Json<Value> {
     let pool = &state.pool;
-    
+
     let tenant_id = match get_tenant_id_from_header(&state).await {
         Some(id) => id,
         None => {
@@ -172,7 +171,8 @@ pub async fn update_settings(
 
     match result {
         Ok(row) => {
-            let available_models: Vec<String> = serde_json::from_value(row.available_models).unwrap_or_default();
+            let available_models: Vec<String> =
+                serde_json::from_value(row.available_models).unwrap_or_default();
             Json(json!({
                 "success": true,
                 "data": {

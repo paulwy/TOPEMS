@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
-
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
@@ -512,7 +511,9 @@ pub async fn get_flow_trend(
         for row in rows {
             let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
             let qty: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
+                    .ok()
+                    .flatten(),
             );
             let count: i64 = row.try_get("order_count").unwrap_or(0);
             let key = period
@@ -534,7 +535,9 @@ pub async fn get_flow_trend(
         for row in rows {
             let period: Option<chrono::NaiveDateTime> = row.try_get("period").ok().flatten();
             let qty: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_qty")
+                    .ok()
+                    .flatten(),
             );
             let count: i64 = row.try_get("order_count").unwrap_or(0);
             let key = period
@@ -639,7 +642,9 @@ pub async fn get_abc_analysis(
         for row in rows {
             let code: String = row.try_get("material_code").unwrap_or_default();
             let value: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                    .ok()
+                    .flatten(),
             );
             materials.push((code, value));
             total_value += value;
@@ -790,7 +795,9 @@ pub async fn get_age_pareto(
     if let Ok(rows) = result {
         for row in rows {
             let value: f64 = big_decimal_to_f64(
-                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value").ok().flatten()
+                row.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                    .ok()
+                    .flatten(),
             );
             let earliest: Option<chrono::NaiveDate> = row.try_get("earliest_date").ok().flatten();
             let days = earliest.map(|d| (now - d).num_days()).unwrap_or(0);

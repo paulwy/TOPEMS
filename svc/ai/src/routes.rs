@@ -174,7 +174,11 @@ pub fn create_routes(
         .route("/complete", post(ai_handlers::complete))
         .route("/summarize", post(ai_handlers::summarize))
         .route("/templates", get(ai_handlers::list_templates))
-        .route("/settings", get(crate::modules::settings::get_settings).put(crate::modules::settings::update_settings))
+        .route(
+            "/settings",
+            get(crate::modules::settings::get_settings)
+                .put(crate::modules::settings::update_settings),
+        )
         // ========== AI 仪表盘（known_gap A 补全，2026-09-09）==========
         .route(
             "/dashboard/stats",
