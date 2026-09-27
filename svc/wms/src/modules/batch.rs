@@ -438,7 +438,7 @@ pub async fn get_batch_statistics(
             SUM(CASE WHEN remaining_days <= 0 THEN 1 ELSE 0 END) as expired_count,
             SUM(CASE WHEN quality_status = 'pending' THEN 1 ELSE 0 END) as quality_pending_count
         FROM wms.batches
-        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid::uuid)
+        WHERE ($1::uuid IS NULL OR warehouse_id = $1::uuid::text)
         "#,
         warehouse_id
     )
@@ -449,8 +449,8 @@ pub async fn get_batch_statistics(
         Ok(row) => {
             let statistics = BatchStatistics {
                 total_batches: row.total_batches.unwrap_or(0),
-                total_quantity: row.total_quantity.unwrap_or(0.0),
-                total_value: row.total_value.unwrap_or(0.0),
+                total_quantity: big_decimal_to_f64_non_opt(row.total_quantity.unwrap_or_default()),
+                total_value: big_decimal_to_f64_non_opt(row.total_value.unwrap_or_default()),
                 expiring_soon_count: row.expiring_soon_count.unwrap_or(0),
                 expired_count: row.expired_count.unwrap_or(0),
                 quality_pending_count: row.quality_pending_count.unwrap_or(0),
