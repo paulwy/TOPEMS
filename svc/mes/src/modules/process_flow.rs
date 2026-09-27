@@ -16,9 +16,9 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64_opt;
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -173,8 +173,8 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -304,14 +304,16 @@ pub async fn list_process_flows(
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -389,8 +391,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取工艺流程成功",
         )),
@@ -436,7 +438,7 @@ pub async fn create_process_flow(
         body.code,
         body.name,
         body.description,
-        body.version.and_then(|v| v.parse::<i32>().ok()),
+        body.version.as_deref(),
         route_id,
         body.production_line,
         capacity_value,
@@ -461,8 +463,8 @@ pub async fn create_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建工艺流程成功",
         )),
@@ -521,7 +523,7 @@ pub async fn update_process_flow(
         "#,
         body.name,
         body.description,
-        body.version.and_then(|v| v.parse::<i32>().ok()),
+        body.version.as_deref(),
         route_id,
         body.production_line,
         capacity_value,
@@ -548,8 +550,8 @@ pub async fn update_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新工艺流程成功",
         )),
@@ -654,12 +656,12 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -672,7 +674,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default(),
+                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                 })
                 .collect();
 
@@ -726,7 +728,6 @@ pub async fn add_flow_step(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -786,7 +787,7 @@ pub async fn add_flow_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no),
+                Ok(p) => (Some(p.name), p.process_no.unwrap_or_default()),
                 Err(_) => (None, String::new()),
             };
 
@@ -794,7 +795,7 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
@@ -812,7 +813,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default(),
+                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                 },
                 "添加工艺步骤成功",
             ))
@@ -869,7 +870,6 @@ pub async fn update_flow_step(
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
         NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -933,7 +933,7 @@ pub async fn update_flow_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no),
+                Ok(p) => (Some(p.name), p.process_no.unwrap_or_default()),
                 Err(_) => (None, String::new()),
             };
 
@@ -941,7 +941,7 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
                     process_code,
                     sequence: s.sequence,
@@ -959,7 +959,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default(),
+                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1099,12 +1099,12 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.map(|v| v.to_string()).unwrap_or_default(),
+                    process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -1117,7 +1117,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.unwrap_or_default(),
+                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                 })
                 .collect();
 
@@ -1211,7 +1211,7 @@ pub async fn analyze_capacity(
         .map(|s| {
             s.standard_time
                 .clone()
-                .unwrap_or(0)
+                .unwrap_or(0.0)
                 .to_string()
                 .parse::<f64>()
                 .unwrap_or_default()
@@ -1240,8 +1240,8 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.clone().unwrap_or(0);
-        let step_capacity = if step_time > 0 {
+        let step_time = step.standard_time.clone().unwrap_or(0.0);
+        let step_capacity = if step_time > 0.0 {
             480.0 / step_time.to_string().parse::<f64>().unwrap_or_default()
         } else {
             0.0
@@ -1317,7 +1317,7 @@ mod tests {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
         );
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.naive_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

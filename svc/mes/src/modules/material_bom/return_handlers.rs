@@ -1,5 +1,5 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{
     types::{BigDecimal, Uuid},
     Row,
@@ -7,8 +7,8 @@ use sqlx::{
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared::response::ApiResponse;
 
@@ -25,7 +25,7 @@ pub async fn create_material_return(
         return e;
     }
 
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
     let return_no = format!(
         "MR{}{:04}",
         now.format("%Y%m%d"),
@@ -128,10 +128,16 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d.to_rfc3339()),
+        return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
         notes: return_record.notes,
-        created_at: (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
-        updated_at: (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
+        created_at: return_record
+            .created_at
+            .map(|d| d.and_utc())
+            .unwrap_or_else(Utc::now),
+        updated_at: return_record
+            .updated_at
+            .map(|d| d.and_utc())
+            .unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(response, "物料退库单创建成功"))
@@ -259,20 +265,23 @@ pub async fn list_material_returns(
                 .flatten()
                 .map(|u| u.to_string()),
             return_time: r
-                .try_get::<Option<DateTime<Utc>>, _>("return_time")
+                .try_get::<Option<NaiveDateTime>, _>("return_time")
                 .ok()
                 .flatten()
+                .map(|d| d.and_utc())
                 .map(|d| d.to_rfc3339()),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -364,8 +373,8 @@ pub async fn get_material_return(
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": return_record.return_time,
         "notes": return_record.notes,
-        "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
-        "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
+        "created_at": return_record.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        "updated_at": return_record.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "return_id": i.return_id.to_string(),
@@ -395,7 +404,7 @@ pub async fn update_material_return(
         return e;
     }
 
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let result = sqlx::query!(
         r#"
@@ -440,8 +449,8 @@ now,
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": return_record.return_time,
         "notes": return_record.notes,
-        "created_at": (Some(return_record.created_at.unwrap_or_default())).unwrap_or_default(),
-        "updated_at": (Some(return_record.updated_at.unwrap_or_default())).unwrap_or_default(),
+        "created_at": return_record.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        "updated_at": return_record.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
     });
 
     Json(ApiResponse::success(return_json, "物料退库单更新成功"))

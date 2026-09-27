@@ -1,12 +1,12 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared::response::ApiResponse;
 
@@ -133,14 +133,16 @@ pub async fn list_material_boms(
                 .unwrap_or_else(|| "draft".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -167,7 +169,7 @@ pub async fn create_material_bom(
         return e;
     }
 
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
     let bom_no = format!(
         "BOM{}{:04}",
         now.format("%Y%m%d"),
@@ -285,8 +287,8 @@ pub async fn create_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: (Some(bom.created_at.unwrap_or_default())).unwrap_or_default(),
-        updated_at: (Some(bom.updated_at.unwrap_or_default())).unwrap_or_default(),
+        created_at: bom.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        updated_at: bom.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(
@@ -374,8 +376,8 @@ pub async fn get_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: (Some(bom.created_at.unwrap_or_default())).unwrap_or_default(),
-        updated_at: (Some(bom.updated_at.unwrap_or_default())).unwrap_or_default(),
+        created_at: bom.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        updated_at: bom.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
     };
 
     let item_responses: Vec<BomItemResponse> = items
@@ -416,7 +418,7 @@ pub async fn update_material_bom(
         return e;
     }
 
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,

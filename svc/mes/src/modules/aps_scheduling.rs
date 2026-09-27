@@ -14,7 +14,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -25,8 +25,8 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared_core::response::ApiResponse;
 
@@ -735,13 +735,15 @@ async fn fetch_pending_orders(
                 .flatten()
                 .unwrap_or(0),
             planned_start_date: r
-                .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
+                .try_get::<Option<NaiveDateTime>, _>("planned_start_date")
                 .ok()
-                .flatten(),
+                .flatten()
+                .map(|d| d.and_utc()),
             planned_end_date: r
-                .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
+                .try_get::<Option<NaiveDateTime>, _>("planned_end_date")
                 .ok()
-                .flatten(),
+                .flatten()
+                .map(|d| d.and_utc()),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -1205,9 +1207,10 @@ pub async fn check_schedule_constraints(
         }
 
         let suggested_start = order
-            .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
+            .try_get::<Option<NaiveDateTime>, _>("planned_start_date")
             .ok()
-            .flatten();
+            .flatten()
+            .map(|d| d.and_utc());
 
         results.push(ConstraintCheckResult {
             order_id: *order_id,

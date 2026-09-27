@@ -17,8 +17,8 @@ use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 use topems_shared_core::response::ApiResponse;
 
@@ -115,19 +115,19 @@ pub struct WorkOrderResponse {
 
 // ==================== Helper Functions ====================
 
-fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
+fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     match dt {
-        Some(d) => d,
+        Some(d) => d.and_utc(),
         None => Utc::now(),
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d.to_rfc3339())
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    dt.map(|d| d.and_utc().to_rfc3339())
 }
 
 fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
@@ -302,22 +302,22 @@ pub async fn list_work_orders(
                     .flatten(),
             ),
             plan_start_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("plan_start_date")
+                r.try_get::<Option<NaiveDateTime>, _>("plan_start_date")
                     .ok()
                     .flatten(),
             ),
             plan_end_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("plan_end_date")
+                r.try_get::<Option<NaiveDateTime>, _>("plan_end_date")
                     .ok()
                     .flatten(),
             ),
             actual_start_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_start_date")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
                     .ok()
                     .flatten(),
             ),
             actual_end_date: opt_datetime_to_string(
-                r.try_get::<Option<DateTime<Utc>>, _>("actual_end_date")
+                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
                     .ok()
                     .flatten(),
             ),
@@ -335,14 +335,16 @@ pub async fn list_work_orders(
             priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -430,8 +432,8 @@ pub async fn get_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取工单成功",
         )),
@@ -509,8 +511,8 @@ pub async fn create_work_order(
         work_station_id,
         process_id,
         planned_quantity,
-        plan_start_date,
-        plan_end_date,
+        plan_start_date.map(|d| d.naive_utc()),
+        plan_end_date.map(|d| d.naive_utc()),
         team_id,
         body.operator,
         priority,
@@ -541,8 +543,8 @@ pub async fn create_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建工单成功",
         )),
@@ -641,8 +643,8 @@ pub async fn update_work_order(
         process_id,
         planned_quantity,
         completed_quantity,
-        plan_start_date,
-        plan_end_date,
+        plan_start_date.map(|d| d.naive_utc()),
+        plan_end_date.map(|d| d.naive_utc()),
         team_id,
         body.operator,
         body.priority.map(|v| v.parse::<i32>().unwrap_or(0)),
@@ -674,8 +676,8 @@ pub async fn update_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新工单成功",
         )),
@@ -822,8 +824,8 @@ pub async fn start_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "开始工单成功",
         )),
@@ -912,8 +914,8 @@ pub async fn complete_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "完成工单成功",
         )),
@@ -1002,8 +1004,8 @@ pub async fn cancel_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "取消工单成功",
         )),
@@ -1092,8 +1094,8 @@ pub async fn pause_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "暂停工单成功",
         )),
@@ -1182,8 +1184,8 @@ pub async fn resume_work_order(
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "恢复工单成功",
         )),
@@ -1300,9 +1302,7 @@ mod tests {
 
     #[test]
     fn test_naive_to_utc_some() {
-        let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
-            .ok();
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
         let result = naive_to_utc(naive);
         assert_eq!(result.date_naive().year(), 2024);
     }
@@ -1315,9 +1315,7 @@ mod tests {
 
     #[test]
     fn test_datetime_to_string_returns_nonempty() {
-        let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
-            .ok();
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
         let s = datetime_to_string(naive);
         assert!(!s.is_empty());
         assert!(s.contains("2024"));
@@ -1325,9 +1323,7 @@ mod tests {
 
     #[test]
     fn test_opt_datetime_to_string_some_and_none() {
-        let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S")
-            .map(|dt| dt.and_utc())
-            .ok();
+        let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
         let some_result = opt_datetime_to_string(naive);
         assert!(some_result.is_some());
         assert!(some_result.unwrap().contains("2024"));

@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -130,8 +130,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -277,14 +277,16 @@ pub async fn list_process_routes(
             total_estimated_time_minutes: None,
             process_count: None,
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -684,13 +686,13 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -772,7 +774,7 @@ pub async fn add_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no),
+                Ok(p) => (Some(p.name), p.process_no.unwrap_or_default()),
                 Err(_) => (None, String::new()),
             };
 
@@ -873,7 +875,7 @@ pub async fn update_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no),
+                Ok(p) => (Some(p.name), p.process_no.unwrap_or_default()),
                 Err(_) => (None, String::new()),
             };
 
@@ -1039,13 +1041,13 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name.unwrap_or_default()),
+                    work_station_name: Some(s.work_station_name),
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -1088,7 +1090,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.naive_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

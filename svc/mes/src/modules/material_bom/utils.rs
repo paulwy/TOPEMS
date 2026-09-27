@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
@@ -8,12 +8,12 @@ pub(crate) fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc
     dt
 }
 
-pub(crate) fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+pub(crate) fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
 }
 
-pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
-    dt.map(|d| d.to_rfc3339())
+pub(crate) fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    dt.map(|d| d.and_utc().to_rfc3339())
 }
 
 #[cfg(test)]
@@ -58,7 +58,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.naive_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn opt_datetime_to_string_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = opt_datetime_to_string(Some(dt));
+        let r = opt_datetime_to_string(Some(dt.naive_utc()));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }

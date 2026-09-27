@@ -1,6 +1,5 @@
 //! Equipment handlers
 
-use topems_shared_db::decimal::big_decimal_to_f64_opt;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -9,8 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::Datelike;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -18,6 +16,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -123,8 +122,8 @@ fn naive_date_to_string(d: Option<chrono::NaiveDate>) -> Option<String> {
     d.map(|date| date.to_string())
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
 }
 
 fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
@@ -170,14 +169,16 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
         ),
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
         created_at: (r
-            .try_get::<Option<DateTime<Utc>>, _>("created_at")
+            .try_get::<Option<NaiveDateTime>, _>("created_at")
             .ok()
-            .flatten())
+            .flatten()
+            .map(|d| d.and_utc()))
         .unwrap_or_default(),
         updated_at: (r
-            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+            .try_get::<Option<NaiveDateTime>, _>("updated_at")
             .ok()
-            .flatten())
+            .flatten()
+            .map(|d| d.and_utc()))
         .unwrap_or_default(),
     }
 }
@@ -788,18 +789,18 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: r.equipment_no,
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: r.description,
+            description: Some(r.description),
             maintainer: r.maintainer,
             start_time: r.start_time,
             end_time: r.end_time,
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status.expect("REASON"),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.expect("REASON"),
-            updated_at: r.updated_at.expect("REASON"),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -926,18 +927,18 @@ pub async fn create_maintenance(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no.expect("REASON"),
+            equipment_no,
             maintenance_type,
-            description: Some(description.expect("REASON")),
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status.expect("REASON"),
+            status,
             remarks: result.remarks,
-            created_at: created_at.expect("REASON"),
-            updated_at: updated_at.expect("REASON"),
+            created_at,
+            updated_at,
         },
         "维护记录创建成功",
     ))
@@ -1033,18 +1034,18 @@ pub async fn update_maintenance_status(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no.expect("REASON"),
+            equipment_no,
             maintenance_type,
-            description: Some(description.expect("REASON")),
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status.expect("REASON"),
+            status,
             remarks: result.remarks,
-            created_at: created_at.expect("REASON"),
-            updated_at: updated_at.expect("REASON"),
+            created_at,
+            updated_at,
         },
         "维护状态更新成功",
     ))
@@ -1193,7 +1194,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
                 })
                 .collect();
 
@@ -1323,7 +1324,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
             },
             "创建点检记录成功",
         )),
@@ -1423,7 +1424,7 @@ mod tests {
     fn datetime_to_string_some_rfc3339() {
         use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.naive_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

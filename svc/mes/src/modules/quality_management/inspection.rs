@@ -14,9 +14,9 @@ use crate::modules::approval_common::{
     execute_transition_and_log, reject_and_log,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use super::big_decimal_to_f64;
 
@@ -248,14 +248,16 @@ pub async fn list_inspections(
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -330,17 +332,17 @@ pub async fn get_inspection(
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
                 inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64(r.quantity),
-                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
-                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                qualified_quantity: big_decimal_to_f64(Some(r.qualified_quantity)),
+                unqualified_quantity: big_decimal_to_f64(Some(r.unqualified_quantity)),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取检验记录成功",
         )),
@@ -448,17 +450,17 @@ pub async fn create_inspection(
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
                 inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64(r.quantity),
-                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
-                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                qualified_quantity: big_decimal_to_f64(Some(r.qualified_quantity)),
+                unqualified_quantity: big_decimal_to_f64(Some(r.unqualified_quantity)),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建检验记录成功",
         )),
@@ -556,17 +558,17 @@ pub async fn update_inspection(
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: Some(r.process_name.unwrap_or_default()),
                 inspection_type: r.inspection_type,
-                quantity: big_decimal_to_f64(r.quantity),
-                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
-                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
+                quantity: big_decimal_to_f64(Some(r.quantity)),
+                qualified_quantity: big_decimal_to_f64(Some(r.qualified_quantity)),
+                unqualified_quantity: big_decimal_to_f64(Some(r.unqualified_quantity)),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
                 inspection_time: r.inspection_time.map(|t| t.to_string()).unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新检验记录成功",
         )),

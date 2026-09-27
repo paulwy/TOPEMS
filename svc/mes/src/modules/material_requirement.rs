@@ -16,9 +16,9 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64;
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_db::decimal::big_decimal_to_f64;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -111,8 +111,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
-    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -255,14 +255,16 @@ pub async fn list_material_requirements(
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -348,8 +350,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取物料需求成功",
         )),
@@ -448,8 +450,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建物料需求成功",
         )),
@@ -551,8 +553,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新物料需求成功",
         )),
@@ -724,8 +726,8 @@ pub async fn calculate_requirements(
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.unwrap_or_default(),
-                        updated_at: r.updated_at.unwrap_or_default(),
+                        created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                        updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                     });
                 }
             }
@@ -806,8 +808,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "确认物料需求成功",
         )),
@@ -887,8 +889,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "下发物料需求成功",
         )),
@@ -925,7 +927,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt));
+        let s = datetime_to_string(Some(dt.naive_utc()));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

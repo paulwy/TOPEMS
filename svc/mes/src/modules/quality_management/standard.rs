@@ -1,6 +1,6 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::DateTime;
 use chrono::Utc;
+use chrono::{DateTime, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
@@ -221,14 +221,14 @@ pub async fn list_standards(
 
         if let Ok(value_rows) = values_result {
             for v in value_rows {
-                let sid = v.standard_id.unwrap_or_default();
+                let sid = v.standard_id;
                 values_map
                     .entry(sid)
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
                         standard_id: sid.to_string(),
-                        item_name: v.item_name.unwrap_or_default(),
+                        item_name: v.item_name,
                         lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                         unit: v.unit,
@@ -272,14 +272,16 @@ pub async fn list_standards(
                     .flatten(),
                 description: r.try_get::<Option<String>, _>("description").ok().flatten(),
                 created_at: (r
-                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                    .try_get::<Option<NaiveDateTime>, _>("created_at")
                     .ok()
-                    .flatten())
+                    .flatten()
+                    .map(|d| d.and_utc()))
                 .unwrap_or_default(),
                 updated_at: (r
-                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                    .try_get::<Option<NaiveDateTime>, _>("updated_at")
                     .ok()
-                    .flatten())
+                    .flatten()
+                    .map(|d| d.and_utc()))
                 .unwrap_or_default(),
             }
         })
@@ -370,8 +372,8 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
-                item_name: v.item_name.unwrap_or_default(),
+                standard_id: v.standard_id.to_string(),
+                item_name: v.item_name,
                 lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                 upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                 unit: v.unit,
@@ -388,18 +390,24 @@ pub async fn get_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code.unwrap_or_default(),
+            code: standard.code,
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type.unwrap_or_default(),
+            inspection_type: standard.inspection_type,
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.unwrap_or_default(),
-            updated_at: standard.updated_at.unwrap_or_default(),
+            created_at: standard
+                .created_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
+            updated_at: standard
+                .updated_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
         },
         "获取质量标准成功",
     ))
@@ -509,8 +517,8 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
-                        item_name: r.item_name.unwrap_or_default(),
+                        standard_id: r.standard_id.to_string(),
+                        item_name: r.item_name,
                         lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
                         unit: r.unit,
@@ -535,18 +543,24 @@ pub async fn create_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code.unwrap_or_default(),
+            code: standard.code,
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type.unwrap_or_default(),
+            inspection_type: standard.inspection_type,
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.unwrap_or_default(),
-            updated_at: standard.updated_at.unwrap_or_default(),
+            created_at: standard
+                .created_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
+            updated_at: standard
+                .updated_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
         },
         "创建质量标准成功",
     ))
@@ -692,8 +706,8 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.map(|v| v.to_string()).unwrap_or_default(),
-                        item_name: r.item_name.unwrap_or_default(),
+                        standard_id: r.standard_id.to_string(),
+                        item_name: r.item_name,
                         lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
                         unit: r.unit,
@@ -726,8 +740,8 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.map(|v| v.to_string()).unwrap_or_default(),
-                    item_name: v.item_name.unwrap_or_default(),
+                    standard_id: v.standard_id.to_string(),
+                    item_name: v.item_name,
                     lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                     upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                     unit: v.unit,
@@ -746,18 +760,24 @@ pub async fn update_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code.unwrap_or_default(),
+            code: standard.code,
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type.unwrap_or_default(),
+            inspection_type: standard.inspection_type,
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.unwrap_or_default(),
-            updated_at: standard.updated_at.unwrap_or_default(),
+            created_at: standard
+                .created_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
+            updated_at: standard
+                .updated_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
         },
         "更新质量标准成功",
     ))

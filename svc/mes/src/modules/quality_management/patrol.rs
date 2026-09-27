@@ -188,14 +188,16 @@ pub async fn list_patrols(
             findings: r.try_get::<Option<String>, _>("findings").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("created_at")
+                .try_get::<Option<NaiveDateTime>, _>("created_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
+                .try_get::<Option<NaiveDateTime>, _>("updated_at")
                 .ok()
-                .flatten())
+                .flatten()
+                .map(|d| d.and_utc()))
             .unwrap_or_default(),
         })
         .collect();
@@ -270,8 +272,8 @@ pub async fn get_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取巡检记录成功",
         )),
@@ -359,8 +361,8 @@ pub async fn create_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建巡检记录成功",
         )),
@@ -456,8 +458,8 @@ pub async fn update_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新巡检记录成功",
         )),
@@ -575,7 +577,7 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                    patrol_id: r.patrol_id.to_string(),
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value.map(|b| b.to_string()),
@@ -637,7 +639,7 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_id: r.patrol_id.to_string(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
@@ -720,7 +722,7 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.map(|v| v.to_string()).unwrap_or_default(),
+                patrol_id: r.patrol_id.to_string(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value.map(|b| b.to_string()),
