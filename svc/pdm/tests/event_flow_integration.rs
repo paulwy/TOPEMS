@@ -23,7 +23,7 @@ use uuid::Uuid;
 /// 会尝试 publish_to_rabbitmq，但 RabbitMQ 不可用时不影响 Redis publish 路径）。
 #[tokio::test]
 async fn test_pdm_material_event_publish_and_subscribe() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else {
+    let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
         return;
     };
 
@@ -96,7 +96,7 @@ async fn test_pdm_material_event_publish_and_subscribe() {
 /// 并发测试：多组 Material 事件同时发布，验证 event_id 过滤不串扰。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_pdm_material_event_concurrent_no_crosstalk() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else {
+    let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
         return;
     };
 
