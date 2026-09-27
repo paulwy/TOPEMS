@@ -427,7 +427,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_publish_and_length() {
-        let Some((_client, _guard)) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
+        let Some((_client, _guard)) = crate::test_helpers::redis_pubsub::skip_without_redis().await
+        else {
             return;
         };
 
@@ -451,7 +452,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_unified_publish() {
-        let Some((_client, _guard)) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
+        let Some((_client, _guard)) = crate::test_helpers::redis_pubsub::skip_without_redis().await
+        else {
             return;
         };
 
