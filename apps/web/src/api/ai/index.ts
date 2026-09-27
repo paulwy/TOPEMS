@@ -90,6 +90,40 @@ export const aiApi = {
     return apiClient.ai.post(`/conversations/${conversationId}/messages/${messageId}/regenerate`);
   },
 
+  // ========== AI 设置模块 ==========
+  getSettings: async (): Promise<
+    ApiResponse<{
+      default_model: string;
+      max_tokens: number;
+      temperature: number;
+      enable_streaming: boolean;
+      enable_function_calling: boolean;
+      available_models: string[];
+    }>
+  > => {
+    return apiClient.ai.get('/settings');
+  },
+
+  updateSettings: async (data: {
+    default_model?: string;
+    max_tokens?: number;
+    temperature?: number;
+    enable_streaming?: boolean;
+    enable_function_calling?: boolean;
+    available_models?: string[];
+  }): Promise<
+    ApiResponse<{
+      default_model: string;
+      max_tokens: number;
+      temperature: number;
+      enable_streaming: boolean;
+      enable_function_calling: boolean;
+      available_models: string[];
+    }>
+  > => {
+    return apiClient.ai.put('/settings', data);
+  },
+
   // ========== AI 仪表盘统计 ==========
   getDashboardStats: async (): Promise<
     ApiResponse<{

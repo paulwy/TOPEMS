@@ -14,6 +14,7 @@ pub mod multimodal;
 pub mod openapi;
 pub mod qa;
 pub mod recommendation;
+pub mod settings;
 pub mod vector;
 
 #[allow(unused_imports)]
