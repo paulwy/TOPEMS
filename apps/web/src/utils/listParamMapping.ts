@@ -141,7 +141,7 @@ export function parsePaginationFromResponse(
   const total = (data.total as number) ?? 0;
   const page = (data.page as number) ?? (data.current as number) ?? 1;
   const pageSize =
-    (data.page_size as number) ?? (data.size as number) ?? (data.pageSize as number) ?? 10;
+    (data.page_size as number) ?? (data.size as number) ?? (data.pageSize as number) ?? (data.pagesize as number) ?? 10;
   const items = (data.items ?? data.list ?? data.records ?? data.rows ?? []) as unknown[];
   return { items, total, page, pageSize };
 }

@@ -12,7 +12,7 @@ vi.mock('react-i18next', () => {
     require('../../../i18n/locales/zh/components.json'),
     require('../../../i18n/locales/zh/pages.json'),
     require('../../../i18n/locales/zh/templates.json'),
-    require('../../../i18n/locales/zh/design-system.json')
+    require('../../../i18n/locales/zh/design_system.json')
   );
   return {
     useTranslation: () => ({
@@ -32,7 +32,7 @@ vi.mock('@/i18n', () => {
     require('../../../i18n/locales/zh/components.json'),
     require('../../../i18n/locales/zh/pages.json'),
     require('../../../i18n/locales/zh/templates.json'),
-    require('../../../i18n/locales/zh/design-system.json')
+    require('../../../i18n/locales/zh/design_system.json')
   );
   return {
     default: {

@@ -63,7 +63,7 @@ export interface PaginationParamsNormalized {
  * 返回 undefined 代表三个字段都未提供合法数字。
  */
 export function pickPageSize(input: PaginationParamsInput): number | undefined {
-  for (const k of ['pageSize', 'page_size', 'page_size'] as const) {
+  for (const k of ['pageSize', 'page_size', 'pagesize'] as const) {
     const v = input[k];
     if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
   }
@@ -90,7 +90,9 @@ export function normalizePaginationParams(
   out.page = page;
   out.pageSize = pageSize;
   out.page_size = pageSize;
+  out.pagesize = pageSize;
   out.page_size = pageSize;
+  out.pagesize = pageSize;
   return out as PaginationParamsNormalized;
 }
 

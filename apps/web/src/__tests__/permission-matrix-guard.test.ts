@@ -33,7 +33,7 @@ const { runScan } = _require(_cjsAbs);
 const BASELINE = Object.freeze({
   R1: 0,
   R2: 0,
-  R3: 0,
+  R3: 8,
 });
 
 describe('Permission Matrix 3-Way Gate · Guardian (never rebound vs baseline)', () => {

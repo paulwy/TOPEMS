@@ -25,7 +25,7 @@ describe('utils/listParamMapping - mapListParamsToBackend standard 风格', () =
   it('standard 风格分页平铺', () => {
     const result = mapListParamsToBackend({ ...baseState, page: 2, pageSize: 50 });
     expect(result.page).toBe(2);
-    expect(result.pagesize).toBe(50);
+    expect(result.page_size).toBe(50);
   });
 
   it('standard 风格搜索字段默认 keyword', () => {
@@ -70,7 +70,7 @@ describe('utils/listParamMapping - mapListParamsToBackend nested 风格', () => 
   it('nested 风格 filters 与 sort 放在嵌套对象', () => {
     const result = mapListParamsToBackend(baseState, nestedFilterParams);
     expect(result.page).toBe(1);
-    expect(result.pagesize).toBe(20);
+    expect(result.page_size).toBe(20);
     expect(result.keyword).toBe('x');
     const filters = result.filters as Record<string, unknown>;
     expect(filters.status).toBe('ok');
