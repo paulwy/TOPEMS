@@ -4,7 +4,6 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use num_traits::cast::ToPrimitive;
 use sqlx::Row;
 use uuid::Uuid;
 
@@ -13,7 +12,6 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
-use topems_shared_db::decimal::big_decimal_to_f64;
 
 use super::models::{ConfirmSuggestionRequest, ReplenishmentComputeRequest};
 

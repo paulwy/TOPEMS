@@ -5,7 +5,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -17,7 +16,7 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
-use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
+use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AlertQueryParams {

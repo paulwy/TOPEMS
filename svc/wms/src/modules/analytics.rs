@@ -13,7 +13,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
-use num_traits::cast::ToPrimitive;
 
 use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;

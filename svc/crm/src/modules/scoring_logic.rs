@@ -1,6 +1,5 @@
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
-use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 pub fn calculate_score_level(score: i32) -> String {
     if score >= 80 {

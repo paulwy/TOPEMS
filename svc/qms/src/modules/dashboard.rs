@@ -1,7 +1,7 @@
 //! Dashboard handlers
 
 use axum::{extract::State, routing::get, Json, Router};
-use bigdecimal::{BigDecimal, ToPrimitive};
+use bigdecimal::BigDecimal;
 use serde::Serialize;
 use topems_shared_boundary::only_own_schema_query;
 

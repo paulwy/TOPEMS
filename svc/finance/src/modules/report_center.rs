@@ -18,7 +18,6 @@ use axum::{
 use chrono::Utc;
 use rust_decimal::{prelude::ToPrimitive, Decimal};
 use serde::{Deserialize, Serialize};
-use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use crate::models::{BalanceSheet, IncomeStatement};
 use crate::services::FinanceService;

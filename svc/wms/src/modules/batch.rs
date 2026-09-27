@@ -4,7 +4,6 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use num_traits::cast::ToPrimitive;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -15,7 +14,6 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
-use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 pub fn create_routes<S>() -> Router<S>
 where

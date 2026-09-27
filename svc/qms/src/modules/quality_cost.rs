@@ -6,7 +6,7 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use bigdecimal::{BigDecimal, ToPrimitive};
+use bigdecimal::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
