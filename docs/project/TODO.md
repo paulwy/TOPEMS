@@ -221,6 +221,20 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 ## 📊 当前状态
 
+### 登录 500 修复 + iam schema 迁移缺口（2026-09-27）
+
+> 用户报告「登录失败 内部服务器错误」。根因：unified-core `iam.auth` 登录查询 `FROM iam.users u` 引用 `u.full_name_en`，本地 5432 库该列缺失（`column u.full_name_en does not exist` → 500）。
+
+| 项 | 内容 | 状态 |
+|---|---|---|
+| ① 根因 | `database/migrations/20260926160000_iam_schema_unify.sql:59` **已含** `ALTER TABLE iam.users ADD COLUMN IF NOT EXISTS full_name_en`，但本地库 `_sqlx_migrations` 成功记录 = 0——20260924+ 迁移文件全部未应用（库停留在 20260921 手工 psql 状态） | ✅ 定位 |
+| ② 修复 | 本地执行幂等 ALTER（与权威迁移语句一致）→ `curl POST /api/core/iam/auth/login` 恢复 `{"success":true,"code":0}`（admin，token 正常） | ✅ 验证 |
+| ③ 同类缺陷 | `get_position_users`（routes/iam.rs:80 已挂载）SELECT `u.tenant_id`，iam.users **无此列**（tenancy 设计在 iam.tenant_users）→ 调用即 500；改代码去列 + 响应 `tenant_id: null`，接口恢复 200（commit `593fb084d`） | ✅ 闭环 |
+| ④ 全仓扫描 | 全 svc 对 `iam.users` 的列引用 vs 实际 31 列差集 = 无真实缺列（仅方法调用误抓） | ✅ 清零 |
+| ⑤ **遗留待办** | **iam_schema_unify 数据同步步骤未应用**：core_users（46 行）→ iam.users（1 行 admin）会撞 `users_username_key`（两个 admin 不同 id 同 username），整体跑迁移失败。需「统一用户表」专项：46 用户身份归并 + 密码策略确认（core_users hash 与 iam.users hash 不同）+ 唯一约束冲突处理后再应用剩余步骤 | ⏳ 待办（P2） |
+
+**环境事实（重要）**：本地仅 5432（brew postgresql@18，topems_app 角色）；5433 无服务但 `svc/{wms,gis,analytics}/.env` 指向 5433（V521 RLS 就绪态配置，未入库）→ 任何 sqlx 编译/pre-push 需显式 `DATABASE_URL='postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems'`；pre-push 门禁依赖 postgres 运行（brew services 已常驻）+ cargo 缓存健康（损坏依赖需 `cargo clean -p <crate>`）。
+
 ### 已完成：决策4 core_* 归属实施（2026-09-03 · 平台共享层 + B 类归位 + RLS 补强）
 
 > 用户确认实施架构评估三项推荐。核心结论：core_* 留 public 作为**跨服务平台共享层**（非 unified-core 专属域），DSH 边界模型显式识别；B 类 core_ 前缀业务表归位业务 schema；A 类核心表补 RLS（就绪态，owner 绕过下不影响现有服务）。
