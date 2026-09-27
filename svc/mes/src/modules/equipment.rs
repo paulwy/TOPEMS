@@ -1,6 +1,5 @@
 //! Equipment handlers
 
-use topems_shared_db::decimal::big_decimal_to_f64_opt;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -18,6 +17,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
+use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -788,18 +788,18 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: r.equipment_no,
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: r.description,
+            description: Some(r.description),
             maintainer: r.maintainer,
             start_time: r.start_time,
             end_time: r.end_time,
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status.expect("REASON"),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.expect("REASON"),
-            updated_at: r.updated_at.expect("REASON"),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -926,18 +926,18 @@ pub async fn create_maintenance(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no.expect("REASON"),
+            equipment_no,
             maintenance_type,
-            description: Some(description.expect("REASON")),
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status.expect("REASON"),
+            status: status,
             remarks: result.remarks,
-            created_at: created_at.expect("REASON"),
-            updated_at: updated_at.expect("REASON"),
+            created_at: created_at,
+            updated_at: updated_at,
         },
         "维护记录创建成功",
     ))
@@ -1033,18 +1033,18 @@ pub async fn update_maintenance_status(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no.expect("REASON"),
+            equipment_no,
             maintenance_type,
-            description: Some(description.expect("REASON")),
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status.expect("REASON"),
+            status: status,
             remarks: result.remarks,
-            created_at: created_at.expect("REASON"),
-            updated_at: updated_at.expect("REASON"),
+            created_at: created_at,
+            updated_at: updated_at,
         },
         "维护状态更新成功",
     ))
@@ -1193,7 +1193,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
                 })
                 .collect();
 
@@ -1323,7 +1323,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
             },
             "创建点检记录成功",
         )),
