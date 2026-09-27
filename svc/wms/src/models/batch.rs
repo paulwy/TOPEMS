@@ -111,25 +111,25 @@ mod tests {
         Batch {
             id: Uuid::new_v4(),
             tenant_id: Uuid::new_v4(),
-            batch_no: "BAT-001".into(),
-            sku: "SKU-A".into(),
-            material_name: "Material A".into(),
+            batch_no: Some("BAT-001".into()),
+            sku: Some("SKU-A".into()),
+            material_name: Some("Material A".into()),
             specification: Some("10mm".into()),
             unit: Some("PCS".into()),
             quantity: 500.0,
             available_quantity: 480.0,
-            warehouse_id: "wh-1".into(),
+            warehouse_id: Some(Uuid::new_v4()),
             warehouse_name: Some("Main".into()),
-            location_id: Some("loc-1".into()),
+            location_id: Some(Uuid::new_v4()),
             location_code: Some("A-01".into()),
-            supplier_id: Some("sup-1".into()),
+            supplier_id: Some(Uuid::new_v4()),
             supplier_name: Some("Supplier Co".into()),
-            production_date: NaiveDate::from_ymd_opt(2026, 1, 1),
-            expiry_date: NaiveDate::from_ymd_opt(2027, 1, 1),
-            receipt_date: NaiveDate::from_ymd_opt(2026, 2, 1),
-            quality_status: "qualified".into(),
-            status: "active".into(),
-            manufacture_date: NaiveDate::from_ymd_opt(2026, 1, 1),
+            production_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
+            expiry_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2027, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
+            receipt_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2026, 2, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
+            quality_status: Some("qualified".into()),
+            status: Some("active".into()),
+            manufacture_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
             shelf_life_days: Some(365),
             remaining_days: Some(180),
             unit_price: Some(9.99),
@@ -190,15 +190,15 @@ mod tests {
     #[test]
     fn create_batch_request_serde_roundtrip() {
         let req = CreateBatchRequest {
-            batch_no: "BAT-NEW".into(),
-            sku: "SKU-B".into(),
-            material_name: "Material B".into(),
+            batch_no: Some("BAT-NEW".into()),
+            sku: Some("SKU-B".into()),
+            material_name: Some("Material B".into()),
             specification: Some("20mm".into()),
             unit: Some("KG".into()),
             quantity: 100.0,
-            warehouse_id: "wh-2".into(),
-            location_id: Some("loc-2".into()),
-            supplier_id: Some("sup-2".into()),
+            warehouse_id: Some(Uuid::new_v4()),
+            location_id: Some(Uuid::new_v4()),
+            supplier_id: Some(Uuid::new_v4()),
             production_date: Some("2026-03-01".into()),
             expiry_date: Some("2027-03-01".into()),
             receipt_date: None,
@@ -217,13 +217,13 @@ mod tests {
     #[test]
     fn create_batch_request_minimal() {
         let req = CreateBatchRequest {
-            batch_no: "BAT-MIN".into(),
-            sku: "SKU-X".into(),
-            material_name: "Plain".into(),
+            batch_no: Some("BAT-MIN".into()),
+            sku: Some("SKU-X".into()),
+            material_name: Some("Plain".into()),
             specification: None,
             unit: None,
             quantity: 0.0,
-            warehouse_id: "wh".into(),
+            warehouse_id: Some(Uuid::new_v4()),
             location_id: None,
             supplier_id: None,
             production_date: None,
@@ -237,7 +237,7 @@ mod tests {
         };
         let v = serde_json::to_value(&req).unwrap();
         let back: CreateBatchRequest = serde_json::from_value(v).unwrap();
-        assert_eq!(back.batch_no, "BAT-MIN");
+        assert_eq!(back.batch_no.as_deref(), Some("BAT-MIN"));
         assert!(back.quality_status.is_none());
     }
 
