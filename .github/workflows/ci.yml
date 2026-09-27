@@ -262,11 +262,17 @@ jobs:
 
       - name: Check workspace registry consistency
         run: python3 scripts/check-workspace-registry.py --check
+
+      - name: Check config single-source-of-truth (P0-3: services.yaml ↔ ports.env/Cargo.toml/ports.ts/vite.config)
+        run: node scripts/ci/check-config-sources.cjs --check
     # 仅这些路径变更时在 push/PR 上运行；schedule/workflow_dispatch 每次全量跑
     paths:
       - 'config/**'
       - 'Cargo.toml'
+      - 'apps/web/vite.config.ts'
+      - 'apps/web/src/config/ports.ts'
       - 'scripts/check-workspace-registry.py'
+      - 'scripts/ci/check-config-sources.cjs'
 
   # ──────────────────────────────────────────────────────────────────────────
   # [P2-3 NEW Gate] CHANGELOG 发布校验

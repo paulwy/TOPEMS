@@ -83,8 +83,9 @@ export const BACKEND_PORTS: Record<string, number> = {
   mobile: 8070,
   gis: 8071,
   integration: 8072,
-  // Billing (8085)
-  billing: 8085,
+  // Logistics (8073，V284 补全；aps 已合并至 mes)
+  tms: 8073,
+  // [V2026.08 已移除] billing 服务未立项（原 8085 端口停用）
   // Frontend / Gateway 基础设施
   web: 3000,
   gateway: 8080,

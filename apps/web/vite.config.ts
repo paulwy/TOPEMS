@@ -92,9 +92,8 @@ const SERVICES: ServiceConfig[] = [
   // 独立 search 服务（全文搜索，端口 8082）
   { name: 'search', port: BACKEND_PORTS.search, apiPrefix: '/api/search' },
 
-  // 独立 billing/ticket/feedback 服务（从 unified-core 外迁）
-  // 旧路由 /api/core/{billing,ticket,feedback}/* 由 /api/core 通用代理兼容
-  { name: 'billing', port: BACKEND_PORTS.billing, apiPrefix: '/api/billing' },
+  // 独立 ticket/feedback 服务（从 unified-core 外迁；billing 未立项已移除）
+  // 旧路由 /api/core/{ticket,feedback}/* 由 /api/core 通用代理兼容
   { name: 'ticket', port: BACKEND_PORTS.ticket, apiPrefix: '/api/ticket' },
   { name: 'feedback', port: BACKEND_PORTS.feedback, apiPrefix: '/api/feedback' },
 
@@ -167,14 +166,10 @@ const SERVICES: ServiceConfig[] = [
     legacyPrefix: '/integration/api',
   },
 
-  // 低代码平台（V64 新增，独立服务 svc/lowcode，端口 8088 占位）
-  // 后端服务尚未立项时，proxy 指向 8088 会返回 503，前端 client.ts 已做 V64 静默降级
-  {
-    name: 'lowcode',
-    port: BACKEND_PORTS.lowcode,
-    apiPrefix: '/api/lowcode',
-    legacyPrefix: '/lowcode/api',
-  },
+  // 物流服务（V284 补全，独立进程，端口 8073；aps 已合并至 mes）
+  { name: 'tms', port: BACKEND_PORTS.tms, apiPrefix: '/api/tms', legacyPrefix: '/tms/api' },
+
+  // [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有 handler 返回 501），代码归档见 docs/archive/
 
   // 自动化编排（V64 新增，初期落地 unified-core，端口 8000）
   // 路径前缀 /api/core/automation，与 moduleMapping.automation.apiBasePath 对齐
@@ -184,7 +179,7 @@ const SERVICES: ServiceConfig[] = [
   // V68.1: plugin-registry 独立服务（端口 8096）
   // 插件注册/市场/安装/升级 API，路径前缀 /api/plugin
   // 旧路径 /api/core/plugin/* 通过下方兼容代理重写为 /api/plugin/* 转发到 8096
-  { name: 'plugin-registry', port: CORE_PORT, isVirtual: true, apiPrefix: '/api/plugin' },
+  { name: 'plugin-registry', port: BACKEND_PORTS['plugin-registry'], apiPrefix: '/api/plugin' },
 ];
 
 // ============================================================================

@@ -560,6 +560,16 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 - [x] workflow 拆分评估 P2（API 熔断）/ P3（流程定义只读副本）——**已闭环（2026-09-01，TODO 过期残留已修正）**：P2 服务调用熔断器已落地（shared-service-client `circuit_breaker.rs` + `base_client.rs` 通用集成，CLOSED→OPEN→HALF_OPEN 状态机，仅 5xx/网络错误计失败，4 单测 + 运行时验证：假 server 500 连续 12 次→熔断后仅收 5 次快速失败 503→冷却 32s 半开试探；与搜索降级告警联动）；P3 流程定义只读副本评估完成（`docs/architecture/workflow-split-assessment.md` §5.1：触发条件 `flow.workflows > 100,000 行`，当前 18 行未触发，按预案维持 workflow API 单一权威源，规模达成时各域 TTL 缓存只读副本 + 事件同步，仅复制定义表、运行态不复制）；另 check_split_threshold `--mark` 接入跨库标记已随 P3 落地
 - [x] erp→mes 生产执行闭环接线（**已闭环 2026-09-04**，归档 TODO-archived-workbench L157 详录：下达/回传/RLS 事务/镜像/端到端验证全通过）——本条为过期残留，已修正状态
 
+### 补充：2026-09-27 配置单一真相源 CI 校验门禁（P0-3）（V519）
+
+- [x] **④ 配置单一真相源 CI 校验**（P0-3）——已闭环：统一校验脚本 + 真实漂移修复 + 门禁接线
+  - **新脚本** `scripts/ci/check-config-sources.cjs`（纯 Node 零依赖，缩进感知 YAML 解析）：以 `config/services.yaml` 为权威，5 向校验——A(ports.env 值级+多余条目) / B(Cargo.toml svc 目录双向) / C(ports.ts BACKEND_PORTS 值级+死条目) / D(vite.config SERVICES 名/端口/isVirtual/死条目) / E(非虚拟端口冲突)；`--check` 门禁模式不一致 exit 1；命名别名表（core→unified-core→iam、analytics→bi、feedback→ticket、web→frontend、gateway→api_gateway）+ KNOWN_EXCEPTIONS（svc/server 模块化单体例外）
+  - **解析器修 3 类 bug**：顶层段边界未识别（module_groups 组标题污染 special_ports 解析）；切顶层段丢失未 flush 条目（tms/automation 解析缺失）；`_corePort/_portalPort` 内部变量误当端口条目
+  - **真实漂移修复**（此前漏网）：vite `plugin-registry` 误用 CORE_PORT+isVirtual → 改独立服务 BACKEND_PORTS['plugin-registry']（8096，旧路径 /api/plugin 代理此前转发到 8000）；vite/ports.ts/ports.env 三处 billing 死条目清理（billing 服务未立项，端口停用注释归档）；vite lowcode 死条目清理；**vite 补 tms 代理条目 + ports.ts 补 `tms: 8073`**（TransportPlan 前端 /api/tms 此前无代理，落到 8000 通配 404）
+  - **门禁接线**：lefthook pre-commit Gate Q `ports-consistency` 改调新脚本，触发路径扩至 Cargo.toml/vite.config.ts/ports.ts/脚本自身；CI `config-registry-gate` job 新增 node --check 步骤，paths 扩至 vite.config.ts/ports.ts/新脚本
+  - **删除被取代脚本** `scripts/ci/check-ports-consistency.cjs`（仅查 ports.env↔ports.ts，零引用）
+  - 验证：`node scripts/ci/check-config-sources.cjs --check` 全绿（服务 37 · ports.env 37 · Cargo svc 29 · ports.ts 39 · vite SERVICES 34）；vite.config.ts transpile 通过；lefthook staged 场景实测通过（捕获 5 触发文件 + exit 0）
+
 ### V531 补充：前端单测验证结论（2026-09-17）
 
 - **分批全过**（22 域 + __tests__ 前 11 文件）：admin 137 / pm 16 / wms 2 / lims 2 / plugin 21 / monitor 1 / ai 40 / system 8 / automation 8 / shared 22 / iam 6 / gis 12 / erp 18 / oa 5 / finance 7 / bi 8 / mes 21 / ehs 7 / workflow 1 / report 25 / qms 1 / hrm 7 / doc 22 / mobile 55 全绿。
@@ -575,7 +585,7 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
   - **runtime 采集形态说明**：mono 模式（:8099 单进程聚合，独立端口 8000-8020 不监听、进程内调用不打 svc_call 指标）无法采集 runtime 边——`--collect` 属容器/独立部署模式能力（09-04 已验证匹配 3/仅 runtime 2）；每日巡检 `check_split_threshold.py --topology auto` 在容器模式自动比对 runtime vs design
 - [ ] **② 告警消费落地**——ServiceCallMonitor（未知服务/高频/降级）接飞书通知，治理观测闭环
 - [ ] **③ RLS 受限用户切换端到端回归**（V521 遗留）——5433 topems_app 全服务回归（登录/业务流/服务间调用）
-- [ ] **④ 配置单一真相源 CI 校验**（P0-3）——ports/services.yaml/Cargo.toml/vite.config 一致性门禁
+- [x] **④ 配置单一真相源 CI 校验**（P0-3）——已闭环（2026-09-27，见 V519 归档节）
 - [ ] **⑤ 拆分前置治理深化**——integration 直写改 API 编排剩余、跨域白名单设计性保留复核
 - [ ] **⑥ 事件通道选型规则**（P1-1）——Redis Pub/Sub vs RabbitMQ 决策矩阵
 - [x] **② 告警消费落地**——ServiceCallMonitor 接飞书通知（**已闭环 2026-09-17**）：
@@ -598,7 +608,7 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 ### 🚧 待办（按优先级）
 - [ ] **RLS 受限用户切换端到端回归**（V521 遗留）：5433 topems_app 全服务回归（登录/业务流/服务间调用），切换就绪态已具备，待运行环境
-- [ ] **配置单一真相源 CI 校验**（P0-3）：ports/services.yaml/Cargo.toml/vite.config 一致性门禁
+- [x] **配置单一真相源 CI 校验**（P0-3）：ports/services.yaml/Cargo.toml/vite.config 一致性门禁（已闭环 2026-09-27，V519）
 - [ ] **拆分前置治理深化**（P2）：integration 直写改 API 编排剩余、跨域白名单设计性保留复核
 - [ ] **事件通道选型规则**（P1-1）：Redis Pub/Sub vs RabbitMQ 决策矩阵
 

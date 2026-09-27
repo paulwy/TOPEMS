@@ -121,14 +121,14 @@ pre-commit:
           node scripts/ci/check-rls-permissions.cjs
         fi
 
-    # [Gate Q] 端口单一真相源一致性校验（ports.env ↔ ports.ts）
+    # [Gate Q] 配置单一真相源一致性校验（P0-3：services.yaml 权威 ↔ ports.env/Cargo.toml/ports.ts/vite.config）
     ports-consistency:
       tags: config ports
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^(config/ports.env|apps/web/src/config/ports.ts|config/services.yaml)$" || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^(config/ports.env|config/services.yaml|Cargo.toml|apps/web/src/config/ports.ts|apps/web/vite.config.ts|scripts/ci/check-config-sources.cjs)$" || true)
         [ -z "$STAGED" ] && exit 0
-        if [ -f "scripts/ci/check-ports-consistency.cjs" ]; then
-          node scripts/ci/check-ports-consistency.cjs
+        if [ -f "scripts/ci/check-config-sources.cjs" ]; then
+          node scripts/ci/check-config-sources.cjs --check
         fi
 
     # [Gate N] Large files check (>1MB) — migrated from husky #1
