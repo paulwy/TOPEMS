@@ -579,6 +579,10 @@ pub(crate) fn is_public_path(path: &str) -> bool {
         "/api/core/iam/auth/reset-password",
         "/api/core/iam/auth/logout",
         "/api/integration/webhooks",
+        "/api/plugin/marketplace/list",
+        "/api/plugin/marketplace",
+        "/api/plugin/marketplace/list",
+        "/api/plugin/marketplace",
         "/api/v1/core/iam/auth/login",
         "/api/v1/core/iam/auth/refresh",
         "/api/v1/core/iam/auth/register",
@@ -592,6 +596,7 @@ pub(crate) fn is_public_path(path: &str) -> bool {
     }
     path.starts_with("/api/core/iam/auth/")
         || path.starts_with("/api/integration/webhooks")
+        || path.starts_with("/api/plugin/marketplace/")
         || path.starts_with("/api/v1/core/iam/auth/")
         || path.starts_with("/api/v1/integration/webhooks")
         // 各服务/模块挂载后的健康检查端点（如 /api/finance/health），无敏感信息

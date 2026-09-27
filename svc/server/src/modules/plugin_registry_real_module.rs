@@ -50,9 +50,11 @@ impl PluginRegistryRealModule {
         // crate 内部路由自带 /api/plugin/* 完整前缀，直接挂载（不重复 nest）
         let routes = topems_plugin_registry::modules::plugin::create_routes()
             .with_state(app_state)
+            // 挂载模块自己的JWT中间件，解析token并注入Claims到req.extensions()
+            // 注意：不使用全局的auth_middleware，因为两个模块的Claims类型不匹配
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
-                topems_shared_auth::auth::auth_middleware,
+                topems_plugin_registry::shared::middleware::jwt_auth_middleware,
             ))
             .layer(axum::middleware::from_fn_with_state(
                 ctx.db.clone(),
