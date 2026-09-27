@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT default_model, max_tokens, temperature, enable_streaming, enable_function_calling, available_models FROM ai.ai_settings WHERE tenant_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "default_model",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "max_tokens",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "temperature",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "enable_streaming",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "enable_function_calling",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "available_models",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "82adc7c401f2585a106852c1227214e916f0c604d576a0accdaaa2b54b6e3934"
+}
