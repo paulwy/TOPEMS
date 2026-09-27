@@ -472,7 +472,7 @@ mod tests {
     ///   3) Subscriber handler 内部通过 oneshot 把收到的事件回传给测试断言。
     #[tokio::test]
     async fn test_event_subscriber_receives_publisher_events() {
-        let Some(redis_client) = redis_pubsub::skip_without_redis().await else {
+        let Some((redis_client, _guard)) = redis_pubsub::skip_without_redis().await else {
             return;
         };
 
@@ -591,7 +591,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
     async fn test_event_subscriber_receives_mdm_event() {
-        let Some(redis_client) = redis_pubsub::skip_without_redis().await else {
+        let Some((redis_client, _guard)) = redis_pubsub::skip_without_redis().await else {
             return;
         };
 

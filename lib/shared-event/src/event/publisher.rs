@@ -630,7 +630,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_publisher_roundtrip() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else {
+        let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
             return;
         };
 
@@ -691,7 +691,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_event_publisher_concurrent_no_crosstalk() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else {
+        let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
             return;
         };
 

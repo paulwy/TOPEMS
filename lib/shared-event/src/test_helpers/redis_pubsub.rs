@@ -11,7 +11,7 @@
 //!
 //! #[tokio::test]
 //! async fn my_test() {
-//!     let Some(client) = skip_without_redis().await else { return };
+//!     let Some((client, _guard)) = skip_without_redis().await else { return };
 //!     let expected_id = event.event_id;
 //!     let channel = event.channel();
 //!
@@ -43,20 +43,34 @@ pub async fn maybe_connect_redis() -> Option<Client> {
     }
 }
 
+/// Drop 时恢复 `EVENT_BUS_MODE` 原值，避免并行测试间全局环境变量互相污染。
+pub struct EventBusModeGuard {
+    prev: Option<String>,
+}
+
+impl Drop for EventBusModeGuard {
+    fn drop(&mut self) {
+        match &self.prev {
+            Some(v) => std::env::set_var("EVENT_BUS_MODE", v),
+            None => std::env::remove_var("EVENT_BUS_MODE"),
+        }
+    }
+}
+
 /// 测试需要真实 Redis 时使用：连不上就打印 skip 信息并返回 `None`，调用方直接 return 即可。
 ///
 /// ```ignore
-/// let Some(client) = skip_without_redis().await else { return };
+/// let Some((client, _guard)) = skip_without_redis().await else { return };
 /// ```
-pub async fn skip_without_redis() -> Option<Client> {
+pub async fn skip_without_redis() -> Option<(Client, EventBusModeGuard)> {
     match maybe_connect_redis().await {
         Some(c) => {
             // V321: 确保使用本助手的测试显式使用 Pub/Sub 模式
             // （EventPublisher 默认已改为 stream 模式，需显式切回 pubsub 以匹配本助手的 SUBSCRIBE）
-            if std::env::var("EVENT_BUS_MODE").is_err() {
-                std::env::set_var("EVENT_BUS_MODE", "pubsub");
-            }
-            Some(c)
+            // 记录原值并设置 pubsub；guard 在测试结束时恢复，防止污染并行测试。
+            let prev = std::env::var("EVENT_BUS_MODE").ok();
+            std::env::set_var("EVENT_BUS_MODE", "pubsub");
+            Some((c, EventBusModeGuard { prev }))
         }
         None => {
             eprintln!(

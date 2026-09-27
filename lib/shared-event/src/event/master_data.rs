@@ -635,7 +635,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires live Redis stream; skip in pure function test runs"]
     async fn test_event_publish_and_subscribe() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else {
+        let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
             return;
         };
 
@@ -868,7 +868,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
     #[ignore = "requires live Redis pubsub; skip in pure function test runs"]
     async fn test_concurrent_same_channel_no_crosstalk() {
-        let Some(client) = redis_pubsub::skip_without_redis().await else {
+        let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
             return;
         };
 

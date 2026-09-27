@@ -734,7 +734,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_publish_subscribe_roundtrip() {
-        let Some(client) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
+        let Some((client, _guard)) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
             return;
         };
 
@@ -844,7 +844,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stream_mdm_publish_subscribe_roundtrip() {
-        let Some(client) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
+        let Some((client, _guard)) = crate::test_helpers::redis_pubsub::skip_without_redis().await else {
             return;
         };
 
