@@ -124,12 +124,36 @@ mod tests {
             location_code: Some("A-01".into()),
             supplier_id: Some(Uuid::new_v4()),
             supplier_name: Some("Supplier Co".into()),
-            production_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
-            expiry_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2027, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
-            receipt_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2026, 2, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
+            production_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+                NaiveDate::from_ymd_opt(2026, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                chrono::Utc,
+            )),
+            expiry_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+                NaiveDate::from_ymd_opt(2027, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                chrono::Utc,
+            )),
+            receipt_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+                NaiveDate::from_ymd_opt(2026, 2, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                chrono::Utc,
+            )),
             quality_status: Some("qualified".into()),
             status: Some("active".into()),
-            manufacture_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(), chrono::Utc)),
+            manufacture_date: Some(chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(
+                NaiveDate::from_ymd_opt(2026, 1, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                chrono::Utc,
+            )),
             shelf_life_days: Some(365),
             remaining_days: Some(180),
             unit_price: Some(9.99),
