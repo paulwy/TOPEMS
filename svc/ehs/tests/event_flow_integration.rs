@@ -26,7 +26,7 @@ use uuid::Uuid;
 /// 此测试验证该事件类型的 Redis Pub/Sub 通道端到端可用。
 #[tokio::test]
 async fn test_ehs_hrm_employee_event_roundtrip() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else {
+    let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
         return;
     };
 
@@ -81,7 +81,7 @@ async fn test_ehs_hrm_employee_event_roundtrip() {
 /// 验证 LIMS 异常检测事件端到端可达。
 #[tokio::test]
 async fn test_ehs_lims_abnormal_event_roundtrip() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else {
+    let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
         return;
     };
 
@@ -141,7 +141,7 @@ async fn test_ehs_lims_abnormal_event_roundtrip() {
 /// 验证 QMS 纠正措施事件端到端可达。
 #[tokio::test]
 async fn test_ehs_qms_corrective_action_event_roundtrip() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else {
+    let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
         return;
     };
 
@@ -192,7 +192,7 @@ async fn test_ehs_qms_corrective_action_event_roundtrip() {
 /// 并发测试：多组 EHS 事件同时发布到同一 channel，验证 event_id 过滤不串扰。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_ehs_concurrent_events_no_crosstalk() {
-    let Some(client) = redis_pubsub::skip_without_redis().await else {
+    let Some((client, _guard)) = redis_pubsub::skip_without_redis().await else {
         return;
     };
 
