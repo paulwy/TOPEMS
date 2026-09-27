@@ -156,7 +156,7 @@ pub async fn get_position_users(
 ) -> Json<serde_json::Value> {
     let rows = sqlx::query(
         r#"
-        SELECT u.id, u.username, u.email, u.full_name, u.tenant_id
+        SELECT u.id, u.username, u.email, u.full_name
         FROM iam.users u
         JOIN iam.user_positions up ON u.id = up.user_id
         WHERE up.position_id = $1
@@ -176,7 +176,7 @@ pub async fn get_position_users(
                 "username": r.get::<String, _>("username"),
                 "email": r.get::<String, _>("email"),
                 "full_name": r.get::<Option<String>, _>("full_name"),
-                "tenant_id": r.get::<Option<uuid::Uuid>, _>("tenant_id"),
+                "tenant_id": null,
             })
         })
         .collect();
