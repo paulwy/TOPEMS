@@ -14,6 +14,7 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -447,8 +448,8 @@ pub async fn get_batch_statistics(
         Ok(row) => {
             let statistics = BatchStatistics {
                 total_batches: row.total_batches.unwrap_or(0),
-                total_quantity: row.total_quantity.unwrap_or_default(),
-                total_value: row.total_value.unwrap_or_default(),
+                total_quantity: big_decimal_to_f64_non_opt(row.total_quantity.unwrap_or_default()),
+                total_value: big_decimal_to_f64_non_opt(row.total_value.unwrap_or_default()),
                 expiring_soon_count: row.expiring_soon_count.unwrap_or(0),
                 expired_count: row.expired_count.unwrap_or(0),
                 quality_pending_count: row.quality_pending_count.unwrap_or(0),

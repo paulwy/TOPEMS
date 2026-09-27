@@ -9,7 +9,7 @@ BEGIN
   IF to_regclass('pm.acceptances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_acceptances_project_id ON pm.acceptances(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -18,7 +18,7 @@ BEGIN
   IF to_regclass('bi.analytics_comparison_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_comparison_results_comparison_id ON bi.analytics_comparison_results(comparison_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -27,7 +27,7 @@ BEGIN
   IF to_regclass('rs.analytics_comparison_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_comparison_results_comparison_id ON rs.analytics_comparison_results(comparison_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -36,7 +36,7 @@ BEGIN
   IF to_regclass('bi.analytics_dashboard_shares') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_dashboard_shares_dashboard_id ON bi.analytics_dashboard_shares(dashboard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -45,7 +45,7 @@ BEGIN
   IF to_regclass('public.analytics_dashboard_shares') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_dashboard_shares_dashboard_id ON public.analytics_dashboard_shares(dashboard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -54,7 +54,7 @@ BEGIN
   IF to_regclass('rs.analytics_dashboard_shares') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_dashboard_shares_dashboard_id ON rs.analytics_dashboard_shares(dashboard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -63,7 +63,7 @@ BEGIN
   IF to_regclass('bi.analytics_datasets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_datasets_datasource_id ON bi.analytics_datasets(datasource_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -72,7 +72,7 @@ BEGIN
   IF to_regclass('public.analytics_datasets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_datasets_datasource_id ON public.analytics_datasets(datasource_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -81,7 +81,7 @@ BEGIN
   IF to_regclass('rs.analytics_datasets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_datasets_datasource_id ON rs.analytics_datasets(datasource_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -90,7 +90,7 @@ BEGIN
   IF to_regclass('bi.analytics_drilldown_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_drilldown_history_path_id ON bi.analytics_drilldown_history(path_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -99,7 +99,7 @@ BEGIN
   IF to_regclass('public.analytics_drilldown_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_drilldown_history_path_id ON public.analytics_drilldown_history(path_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -108,7 +108,7 @@ BEGIN
   IF to_regclass('rs.analytics_drilldown_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_analytics_drilldown_history_path_id ON rs.analytics_drilldown_history(path_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -117,7 +117,7 @@ BEGIN
   IF to_regclass('doc_service.archive_borrows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_archive_borrows_archive_id ON doc_service.archive_borrows(archive_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -126,7 +126,7 @@ BEGIN
   IF to_regclass('doc_service.archive_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_archive_categories_parent_id ON doc_service.archive_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -135,7 +135,7 @@ BEGIN
   IF to_regclass('doc_service.archive_destructions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_archive_destructions_archive_id ON doc_service.archive_destructions(archive_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -144,7 +144,7 @@ BEGIN
   IF to_regclass('doc_service.archive_metadata') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_archive_metadata_archive_id ON doc_service.archive_metadata(archive_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -153,7 +153,7 @@ BEGIN
   IF to_regclass('doc_service.archives') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_archives_category_id ON doc_service.archives(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -162,7 +162,7 @@ BEGIN
   IF to_regclass('doc_service.archives') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_archives_file_id ON doc_service.archives(file_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -171,7 +171,7 @@ BEGIN
   IF to_regclass('erp.asset_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_asset_categories_parent_id ON erp.asset_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -180,7 +180,7 @@ BEGIN
   IF to_regclass('erp.asset_depreciation_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_asset_depreciation_records_asset_id ON erp.asset_depreciation_records(asset_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -189,7 +189,7 @@ BEGIN
   IF to_regclass('plugin_erp.assets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_assets_company_id ON plugin_erp.assets(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -198,7 +198,7 @@ BEGIN
   IF to_regclass('plugin_erp.assets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_assets_custodian_id ON plugin_erp.assets(custodian_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -207,7 +207,7 @@ BEGIN
   IF to_regclass('plugin_erp.assets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_assets_department_id ON plugin_erp.assets(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -216,7 +216,7 @@ BEGIN
   IF to_regclass('plugin_erp.assets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_assets_tenant_id ON plugin_erp.assets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -225,7 +225,7 @@ BEGIN
   IF to_regclass('plugin_hrm.attendance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_attendance_records_company_id ON plugin_hrm.attendance_records(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -234,7 +234,7 @@ BEGIN
   IF to_regclass('plugin_hrm.attendance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_attendance_records_department_id ON plugin_hrm.attendance_records(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -243,7 +243,7 @@ BEGIN
   IF to_regclass('plugin_hrm.attendance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_attendance_records_employee_id ON plugin_hrm.attendance_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -252,7 +252,7 @@ BEGIN
   IF to_regclass('plugin_hrm.attendance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_attendance_records_tenant_id ON plugin_hrm.attendance_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -261,7 +261,7 @@ BEGIN
   IF to_regclass('iam.audit_logs') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON iam.audit_logs(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -270,7 +270,7 @@ BEGIN
   IF to_regclass('erp.bank_transactions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_bank_transactions_account_id ON erp.bank_transactions(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -279,7 +279,7 @@ BEGIN
   IF to_regclass('public.barcode_scans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_barcode_scans_user_id ON public.barcode_scans(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -288,7 +288,7 @@ BEGIN
   IF to_regclass('plugin_srm.bids') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_bids_request_id ON plugin_srm.bids(request_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -297,7 +297,7 @@ BEGIN
   IF to_regclass('mes.bom_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_bom_items_bom_id ON mes.bom_items(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -306,7 +306,7 @@ BEGIN
   IF to_regclass('public.bom_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_bom_items_bom_id ON public.bom_items(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -315,7 +315,7 @@ BEGIN
   IF to_regclass('rs.bom_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_bom_items_bom_id ON rs.bom_items(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -324,7 +324,7 @@ BEGIN
   IF to_regclass('pm.budgets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_budgets_project_id ON pm.budgets(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -333,7 +333,7 @@ BEGIN
   IF to_regclass('unified_core.categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON unified_core.categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -342,7 +342,7 @@ BEGIN
   IF to_regclass('unified_core.categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_categories_tenant_id ON unified_core.categories(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -351,7 +351,7 @@ BEGIN
   IF to_regclass('shared.code_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_code_categories_parent_id ON shared.code_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -360,7 +360,7 @@ BEGIN
   IF to_regclass('public.companies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_companies_tenant_id ON public.companies(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -369,7 +369,7 @@ BEGIN
   IF to_regclass('erp.consolidation_report_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_consolidation_report_lines_report_id ON erp.consolidation_report_lines(report_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -378,7 +378,7 @@ BEGIN
   IF to_regclass('erp.consolidation_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_consolidation_reports_scope_id ON erp.consolidation_reports(scope_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -387,7 +387,7 @@ BEGIN
   IF to_regclass('erp.consolidation_scope_companies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_consolidation_scope_companies_scope_id ON erp.consolidation_scope_companies(scope_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -396,7 +396,7 @@ BEGIN
   IF to_regclass('crm.contacts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_contacts_customer_id ON crm.contacts(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -405,7 +405,7 @@ BEGIN
   IF to_regclass('plugin_crm.contacts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_contacts_customer_id ON plugin_crm.contacts(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -414,7 +414,7 @@ BEGIN
   IF to_regclass('plugin_crm.contacts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_contacts_tenant_id ON plugin_crm.contacts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -423,7 +423,7 @@ BEGIN
   IF to_regclass('srm.contract_terms') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_contract_terms_contract_id ON srm.contract_terms(contract_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -432,7 +432,7 @@ BEGIN
   IF to_regclass('hrm.contracts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_contracts_employee_id ON hrm.contracts(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -441,7 +441,7 @@ BEGIN
   IF to_regclass('pm.contracts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_contracts_project_id ON pm.contracts(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -450,7 +450,7 @@ BEGIN
   IF to_regclass('plugin_ai.conversation_messages') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversation_messages_conversation_id ON plugin_ai.conversation_messages(conversation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -459,7 +459,7 @@ BEGIN
   IF to_regclass('plugin_ai.conversation_messages') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversation_messages_tenant_id ON plugin_ai.conversation_messages(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -468,7 +468,7 @@ BEGIN
   IF to_regclass('plugin_ai.conversations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversations_knowledge_base_id ON plugin_ai.conversations(knowledge_base_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -477,7 +477,7 @@ BEGIN
   IF to_regclass('plugin_ai.conversations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversations_tenant_id ON plugin_ai.conversations(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -486,7 +486,7 @@ BEGIN
   IF to_regclass('unified_core.conversations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversations_tenant_id ON unified_core.conversations(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -495,7 +495,7 @@ BEGIN
   IF to_regclass('integration.conversion_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversion_executions_rule_id ON integration.conversion_executions(rule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -504,7 +504,7 @@ BEGIN
   IF to_regclass('public.conversion_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversion_executions_rule_id ON public.conversion_executions(rule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -513,7 +513,7 @@ BEGIN
   IF to_regclass('rs.conversion_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_conversion_executions_rule_id ON rs.conversion_executions(rule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -522,7 +522,7 @@ BEGIN
   IF to_regclass('public.core_billing_invoices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_billing_invoices_subscription_id ON public.core_billing_invoices(subscription_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -531,7 +531,7 @@ BEGIN
   IF to_regclass('rs.core_billing_invoices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_billing_invoices_subscription_id ON rs.core_billing_invoices(subscription_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -540,7 +540,7 @@ BEGIN
   IF to_regclass('public.core_billing_invoices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_billing_invoices_tenant_id ON public.core_billing_invoices(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -549,7 +549,7 @@ BEGIN
   IF to_regclass('public.core_chat_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_chat_members_room_id ON public.core_chat_members(room_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -558,7 +558,7 @@ BEGIN
   IF to_regclass('rs.core_chat_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_chat_members_room_id ON rs.core_chat_members(room_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -567,7 +567,7 @@ BEGIN
   IF to_regclass('public.core_chat_messages') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room_id ON public.core_chat_messages(room_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -576,7 +576,7 @@ BEGIN
   IF to_regclass('rs.core_chat_messages') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room_id ON rs.core_chat_messages(room_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -585,7 +585,7 @@ BEGIN
   IF to_regclass('public.core_crm_contacts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_crm_contacts_customer_id ON public.core_crm_contacts(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -594,7 +594,7 @@ BEGIN
   IF to_regclass('public.core_crm_opportunities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_crm_opportunities_customer_id ON public.core_crm_opportunities(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -603,7 +603,7 @@ BEGIN
   IF to_regclass('public.core_dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_dict_items_dict_type_id ON public.core_dict_items(dict_type_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -612,7 +612,7 @@ BEGIN
   IF to_regclass('rs.core_dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_dict_items_dict_type_id ON rs.core_dict_items(dict_type_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -621,7 +621,7 @@ BEGIN
   IF to_regclass('public.core_dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_dict_items_parent_id ON public.core_dict_items(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -630,7 +630,7 @@ BEGIN
   IF to_regclass('rs.core_dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_dict_items_parent_id ON rs.core_dict_items(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -639,7 +639,7 @@ BEGIN
   IF to_regclass('public.core_doc_document_links') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_document_links_document_id ON public.core_doc_document_links(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -648,7 +648,7 @@ BEGIN
   IF to_regclass('public.core_doc_document_links') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_document_links_target_document_id ON public.core_doc_document_links(target_document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -657,7 +657,7 @@ BEGIN
   IF to_regclass('public.core_doc_document_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_document_permissions_document_id ON public.core_doc_document_permissions(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -666,7 +666,7 @@ BEGIN
   IF to_regclass('public.core_doc_document_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_document_versions_document_id ON public.core_doc_document_versions(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -675,7 +675,7 @@ BEGIN
   IF to_regclass('public.core_doc_documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_documents_folder_id ON public.core_doc_documents(folder_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -684,7 +684,7 @@ BEGIN
   IF to_regclass('rs.core_doc_documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_documents_folder_id ON rs.core_doc_documents(folder_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -693,7 +693,7 @@ BEGIN
   IF to_regclass('public.core_doc_documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_documents_template_id ON public.core_doc_documents(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -702,7 +702,7 @@ BEGIN
   IF to_regclass('rs.core_doc_documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_documents_template_id ON rs.core_doc_documents(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -711,7 +711,7 @@ BEGIN
   IF to_regclass('public.core_doc_folders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_folders_parent_id ON public.core_doc_folders(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -720,7 +720,7 @@ BEGIN
   IF to_regclass('rs.core_doc_folders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_doc_folders_parent_id ON rs.core_doc_folders(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -729,7 +729,7 @@ BEGIN
   IF to_regclass('public.core_erp_inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_erp_inventory_material_id ON public.core_erp_inventory(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -738,7 +738,7 @@ BEGIN
   IF to_regclass('public.core_erp_purchase_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_erp_purchase_orders_supplier_id ON public.core_erp_purchase_orders(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -747,7 +747,7 @@ BEGIN
   IF to_regclass('public.core_erp_sales_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_erp_sales_orders_customer_id ON public.core_erp_sales_orders(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -756,7 +756,7 @@ BEGIN
   IF to_regclass('public.core_finance_account_opening_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_account_opening_balances_account_id ON public.core_finance_account_opening_balances(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -765,7 +765,7 @@ BEGIN
   IF to_regclass('public.core_finance_account_opening_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_account_opening_balances_tenant_id ON public.core_finance_account_opening_balances(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -774,7 +774,7 @@ BEGIN
   IF to_regclass('finance.core_finance_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_accounts_parent_id ON finance.core_finance_accounts(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -783,7 +783,7 @@ BEGIN
   IF to_regclass('public.core_finance_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_accounts_parent_id ON public.core_finance_accounts(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -792,7 +792,7 @@ BEGIN
   IF to_regclass('rs.core_finance_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_accounts_parent_id ON rs.core_finance_accounts(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -801,7 +801,7 @@ BEGIN
   IF to_regclass('public.core_finance_approval_nodes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_approval_nodes_config_id ON public.core_finance_approval_nodes(config_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -810,7 +810,7 @@ BEGIN
   IF to_regclass('public.core_finance_approval_nodes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_approval_nodes_tenant_id ON public.core_finance_approval_nodes(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -819,7 +819,7 @@ BEGIN
   IF to_regclass('finance.core_finance_approval_workflows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_approval_workflows_tenant_id ON finance.core_finance_approval_workflows(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -828,7 +828,7 @@ BEGIN
   IF to_regclass('public.core_finance_approval_workflows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_approval_workflows_tenant_id ON public.core_finance_approval_workflows(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -837,7 +837,7 @@ BEGIN
   IF to_regclass('rs.core_finance_approval_workflows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_approval_workflows_tenant_id ON rs.core_finance_approval_workflows(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -846,7 +846,7 @@ BEGIN
   IF to_regclass('finance.core_finance_aux_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_accounts_parent_id ON finance.core_finance_aux_accounts(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -855,7 +855,7 @@ BEGIN
   IF to_regclass('public.core_finance_aux_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_accounts_parent_id ON public.core_finance_aux_accounts(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -864,7 +864,7 @@ BEGIN
   IF to_regclass('rs.core_finance_aux_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_accounts_parent_id ON rs.core_finance_aux_accounts(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -873,7 +873,7 @@ BEGIN
   IF to_regclass('finance.core_finance_aux_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_accounts_tenant_id ON finance.core_finance_aux_accounts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -882,7 +882,7 @@ BEGIN
   IF to_regclass('public.core_finance_aux_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_accounts_tenant_id ON public.core_finance_aux_accounts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -891,7 +891,7 @@ BEGIN
   IF to_regclass('rs.core_finance_aux_accounts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_accounts_tenant_id ON rs.core_finance_aux_accounts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -900,7 +900,7 @@ BEGIN
   IF to_regclass('finance.core_finance_aux_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_balances_account_id ON finance.core_finance_aux_balances(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -909,7 +909,7 @@ BEGIN
   IF to_regclass('public.core_finance_aux_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_balances_account_id ON public.core_finance_aux_balances(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -918,7 +918,7 @@ BEGIN
   IF to_regclass('rs.core_finance_aux_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_balances_account_id ON rs.core_finance_aux_balances(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -927,7 +927,7 @@ BEGIN
   IF to_regclass('finance.core_finance_aux_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_balances_tenant_id ON finance.core_finance_aux_balances(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -936,7 +936,7 @@ BEGIN
   IF to_regclass('public.core_finance_aux_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_balances_tenant_id ON public.core_finance_aux_balances(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -945,7 +945,7 @@ BEGIN
   IF to_regclass('rs.core_finance_aux_balances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_aux_balances_tenant_id ON rs.core_finance_aux_balances(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -954,7 +954,7 @@ BEGIN
   IF to_regclass('finance.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_account_id ON finance.core_finance_ledger(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -963,7 +963,7 @@ BEGIN
   IF to_regclass('public.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_account_id ON public.core_finance_ledger(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -972,7 +972,7 @@ BEGIN
   IF to_regclass('rs.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_account_id ON rs.core_finance_ledger(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -981,7 +981,7 @@ BEGIN
   IF to_regclass('finance.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_tenant_id ON finance.core_finance_ledger(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -990,7 +990,7 @@ BEGIN
   IF to_regclass('public.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_tenant_id ON public.core_finance_ledger(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -999,7 +999,7 @@ BEGIN
   IF to_regclass('rs.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_tenant_id ON rs.core_finance_ledger(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1008,7 +1008,7 @@ BEGIN
   IF to_regclass('finance.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_voucher_id ON finance.core_finance_ledger(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1017,7 +1017,7 @@ BEGIN
   IF to_regclass('public.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_voucher_id ON public.core_finance_ledger(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1026,7 +1026,7 @@ BEGIN
   IF to_regclass('rs.core_finance_ledger') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_ledger_voucher_id ON rs.core_finance_ledger(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1035,7 +1035,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_approval_config') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_approval_config_tenant_id ON public.core_finance_payment_approval_config(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1044,7 +1044,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_approval_config') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_approval_config_workflow_id ON public.core_finance_payment_approval_config(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1053,7 +1053,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_items_payment_id ON public.core_finance_payment_items(payment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1062,7 +1062,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_workflow') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_workflow_payment_id ON public.core_finance_payment_workflow(payment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1071,7 +1071,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_workflow') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_workflow_tenant_id ON public.core_finance_payment_workflow(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1080,7 +1080,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_workflow') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_workflow_workflow_id ON public.core_finance_payment_workflow(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1089,7 +1089,7 @@ BEGIN
   IF to_regclass('public.core_finance_payment_workflow') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payment_workflow_workflow_instance_id ON public.core_finance_payment_workflow(workflow_instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1098,7 +1098,7 @@ BEGIN
   IF to_regclass('public.core_finance_payments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_payments_tenant_id ON public.core_finance_payments(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1107,7 +1107,7 @@ BEGIN
   IF to_regclass('finance.core_finance_periods') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_periods_tenant_id ON finance.core_finance_periods(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1116,7 +1116,7 @@ BEGIN
   IF to_regclass('public.core_finance_periods') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_periods_tenant_id ON public.core_finance_periods(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1125,7 +1125,7 @@ BEGIN
   IF to_regclass('rs.core_finance_periods') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_periods_tenant_id ON rs.core_finance_periods(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1134,7 +1134,7 @@ BEGIN
   IF to_regclass('finance.core_finance_reconciliation_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_items_matched_item_id ON finance.core_finance_reconciliation_items(matched_item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1143,7 +1143,7 @@ BEGIN
   IF to_regclass('public.core_finance_reconciliation_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_items_matched_item_id ON public.core_finance_reconciliation_items(matched_item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1152,7 +1152,7 @@ BEGIN
   IF to_regclass('finance.core_finance_reconciliation_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_items_session_id ON finance.core_finance_reconciliation_items(session_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1161,7 +1161,7 @@ BEGIN
   IF to_regclass('public.core_finance_reconciliation_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_items_session_id ON public.core_finance_reconciliation_items(session_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1170,7 +1170,7 @@ BEGIN
   IF to_regclass('finance.core_finance_reconciliation_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_items_tenant_id ON finance.core_finance_reconciliation_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1179,7 +1179,7 @@ BEGIN
   IF to_regclass('public.core_finance_reconciliation_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_items_tenant_id ON public.core_finance_reconciliation_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1188,7 +1188,7 @@ BEGIN
   IF to_regclass('finance.core_finance_reconciliation_sessions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_sessions_tenant_id ON finance.core_finance_reconciliation_sessions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1197,7 +1197,7 @@ BEGIN
   IF to_regclass('public.core_finance_reconciliation_sessions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_reconciliation_sessions_tenant_id ON public.core_finance_reconciliation_sessions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1206,7 +1206,7 @@ BEGIN
   IF to_regclass('public.core_finance_voucher_entries') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_entries_account_id ON public.core_finance_voucher_entries(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1215,7 +1215,7 @@ BEGIN
   IF to_regclass('public.core_finance_voucher_entries') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_entries_voucher_id ON public.core_finance_voucher_entries(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1224,7 +1224,7 @@ BEGIN
   IF to_regclass('finance.core_finance_voucher_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_lines_account_id ON finance.core_finance_voucher_lines(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1233,7 +1233,7 @@ BEGIN
   IF to_regclass('public.core_finance_voucher_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_lines_account_id ON public.core_finance_voucher_lines(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1242,7 +1242,7 @@ BEGIN
   IF to_regclass('rs.core_finance_voucher_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_lines_account_id ON rs.core_finance_voucher_lines(account_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1251,7 +1251,7 @@ BEGIN
   IF to_regclass('finance.core_finance_voucher_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_lines_voucher_id ON finance.core_finance_voucher_lines(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1260,7 +1260,7 @@ BEGIN
   IF to_regclass('public.core_finance_voucher_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_lines_voucher_id ON public.core_finance_voucher_lines(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1269,7 +1269,7 @@ BEGIN
   IF to_regclass('rs.core_finance_voucher_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_lines_voucher_id ON rs.core_finance_voucher_lines(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1278,7 +1278,7 @@ BEGIN
   IF to_regclass('public.core_finance_voucher_templates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_voucher_templates_tenant_id ON public.core_finance_voucher_templates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1287,7 +1287,7 @@ BEGIN
   IF to_regclass('finance.core_finance_vouchers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_vouchers_tenant_id ON finance.core_finance_vouchers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1296,7 +1296,7 @@ BEGIN
   IF to_regclass('public.core_finance_vouchers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_vouchers_tenant_id ON public.core_finance_vouchers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1305,7 +1305,7 @@ BEGIN
   IF to_regclass('rs.core_finance_vouchers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_finance_vouchers_tenant_id ON rs.core_finance_vouchers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1314,7 +1314,7 @@ BEGIN
   IF to_regclass('core.core_form_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_form_instances_form_definition_id ON core.core_form_instances(form_definition_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1323,7 +1323,7 @@ BEGIN
   IF to_regclass('core.core_form_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_form_instances_workflow_instance_id ON core.core_form_instances(workflow_instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1332,7 +1332,7 @@ BEGIN
   IF to_regclass('portal.core_guide_lessons') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_guide_lessons_guide_id ON portal.core_guide_lessons(guide_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1341,7 +1341,7 @@ BEGIN
   IF to_regclass('public.core_guide_lessons') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_guide_lessons_guide_id ON public.core_guide_lessons(guide_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1350,7 +1350,7 @@ BEGIN
   IF to_regclass('rs.core_guide_lessons') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_guide_lessons_guide_id ON rs.core_guide_lessons(guide_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1359,7 +1359,7 @@ BEGIN
   IF to_regclass('portal.core_guide_progress') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_guide_progress_guide_id ON portal.core_guide_progress(guide_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1368,7 +1368,7 @@ BEGIN
   IF to_regclass('public.core_guide_progress') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_guide_progress_guide_id ON public.core_guide_progress(guide_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1377,7 +1377,7 @@ BEGIN
   IF to_regclass('rs.core_guide_progress') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_guide_progress_guide_id ON rs.core_guide_progress(guide_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1386,7 +1386,7 @@ BEGIN
   IF to_regclass('public.core_hrm_attendance') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_hrm_attendance_employee_id ON public.core_hrm_attendance(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1395,7 +1395,7 @@ BEGIN
   IF to_regclass('public.core_hrm_departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_hrm_departments_parent_id ON public.core_hrm_departments(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1404,7 +1404,7 @@ BEGIN
   IF to_regclass('public.core_hrm_employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_hrm_employees_department_id ON public.core_hrm_employees(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1413,7 +1413,7 @@ BEGIN
   IF to_regclass('public.core_hrm_leaves') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_hrm_leaves_employee_id ON public.core_hrm_leaves(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1422,7 +1422,7 @@ BEGIN
   IF to_regclass('public.core_menus') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_menus_group_id ON public.core_menus(group_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1431,7 +1431,7 @@ BEGIN
   IF to_regclass('rs.core_menus') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_menus_group_id ON rs.core_menus(group_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1440,7 +1440,7 @@ BEGIN
   IF to_regclass('public.core_menus') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_menus_parent_id ON public.core_menus(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1449,7 +1449,7 @@ BEGIN
   IF to_regclass('rs.core_menus') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_menus_parent_id ON rs.core_menus(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1458,7 +1458,7 @@ BEGIN
   IF to_regclass('core.core_plugin_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_instances_plugin_id ON core.core_plugin_instances(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1467,7 +1467,7 @@ BEGIN
   IF to_regclass('public.core_plugin_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_instances_plugin_id ON public.core_plugin_instances(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1476,7 +1476,7 @@ BEGIN
   IF to_regclass('rs.core_plugin_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_instances_plugin_id ON rs.core_plugin_instances(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1485,7 +1485,7 @@ BEGIN
   IF to_regclass('core.core_plugin_reviews') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_reviews_plugin_id ON core.core_plugin_reviews(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1494,7 +1494,7 @@ BEGIN
   IF to_regclass('public.core_plugin_reviews') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_reviews_plugin_id ON public.core_plugin_reviews(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1503,7 +1503,7 @@ BEGIN
   IF to_regclass('rs.core_plugin_reviews') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_reviews_plugin_id ON rs.core_plugin_reviews(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1512,7 +1512,7 @@ BEGIN
   IF to_regclass('core.core_plugin_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_versions_plugin_id ON core.core_plugin_versions(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1521,7 +1521,7 @@ BEGIN
   IF to_regclass('public.core_plugin_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_versions_plugin_id ON public.core_plugin_versions(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1530,7 +1530,7 @@ BEGIN
   IF to_regclass('rs.core_plugin_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_plugin_versions_plugin_id ON rs.core_plugin_versions(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1539,7 +1539,7 @@ BEGIN
   IF to_regclass('public.core_role_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_role_permissions_permission_id ON public.core_role_permissions(permission_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1548,7 +1548,7 @@ BEGIN
   IF to_regclass('rs.core_role_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_role_permissions_permission_id ON rs.core_role_permissions(permission_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1557,7 +1557,7 @@ BEGIN
   IF to_regclass('public.core_role_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_role_permissions_role_id ON public.core_role_permissions(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1566,7 +1566,7 @@ BEGIN
   IF to_regclass('rs.core_role_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_role_permissions_role_id ON rs.core_role_permissions(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1575,7 +1575,7 @@ BEGIN
   IF to_regclass('public.core_subscriptions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_subscriptions_plan_id ON public.core_subscriptions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1584,7 +1584,7 @@ BEGIN
   IF to_regclass('rs.core_subscriptions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_subscriptions_plan_id ON rs.core_subscriptions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1593,7 +1593,7 @@ BEGIN
   IF to_regclass('public.core_subscriptions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_subscriptions_tenant_id ON public.core_subscriptions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1602,7 +1602,7 @@ BEGIN
   IF to_regclass('public.core_tenant_modules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_modules_tenant_id ON public.core_tenant_modules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1611,7 +1611,7 @@ BEGIN
   IF to_regclass('rs.core_tenant_modules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_modules_tenant_id ON rs.core_tenant_modules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1620,7 +1620,7 @@ BEGIN
   IF to_regclass('core.core_tenant_plugins') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_plugin_id ON core.core_tenant_plugins(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1629,7 +1629,7 @@ BEGIN
   IF to_regclass('public.core_tenant_plugins') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_plugin_id ON public.core_tenant_plugins(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1638,7 +1638,7 @@ BEGIN
   IF to_regclass('rs.core_tenant_plugins') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_plugin_id ON rs.core_tenant_plugins(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1647,7 +1647,7 @@ BEGIN
   IF to_regclass('public.core_tenant_plugins') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_tenant_id ON public.core_tenant_plugins(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1656,7 +1656,7 @@ BEGIN
   IF to_regclass('rs.core_tenant_plugins') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_plugins_tenant_id ON rs.core_tenant_plugins(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1665,7 +1665,7 @@ BEGIN
   IF to_regclass('public.core_tenant_settings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_settings_tenant_id ON public.core_tenant_settings(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1674,7 +1674,7 @@ BEGIN
   IF to_regclass('rs.core_tenant_settings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_settings_tenant_id ON rs.core_tenant_settings(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1683,7 +1683,7 @@ BEGIN
   IF to_regclass('public.core_tenant_usage') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_usage_tenant_id ON public.core_tenant_usage(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1692,7 +1692,7 @@ BEGIN
   IF to_regclass('rs.core_tenant_usage') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_usage_tenant_id ON rs.core_tenant_usage(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1701,7 +1701,7 @@ BEGIN
   IF to_regclass('public.core_tenant_users') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_users_tenant_id ON public.core_tenant_users(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1710,7 +1710,7 @@ BEGIN
   IF to_regclass('rs.core_tenant_users') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_tenant_users_tenant_id ON rs.core_tenant_users(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1719,7 +1719,7 @@ BEGIN
   IF to_regclass('public.core_usage_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_usage_records_tenant_id ON public.core_usage_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1728,7 +1728,7 @@ BEGIN
   IF to_regclass('public.core_user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_user_roles_role_id ON public.core_user_roles(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1737,7 +1737,7 @@ BEGIN
   IF to_regclass('rs.core_user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_user_roles_role_id ON rs.core_user_roles(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1746,7 +1746,7 @@ BEGIN
   IF to_regclass('public.core_user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_user_roles_user_id ON public.core_user_roles(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1755,7 +1755,7 @@ BEGIN
   IF to_regclass('rs.core_user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_user_roles_user_id ON rs.core_user_roles(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1764,7 +1764,7 @@ BEGIN
   IF to_regclass('public.core_wms_inbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_wms_inbound_orders_warehouse_id ON public.core_wms_inbound_orders(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1773,7 +1773,7 @@ BEGIN
   IF to_regclass('public.core_wms_inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_wms_inventory_warehouse_id ON public.core_wms_inventory(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1782,7 +1782,7 @@ BEGIN
   IF to_regclass('public.core_wms_outbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_wms_outbound_orders_warehouse_id ON public.core_wms_outbound_orders(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1791,7 +1791,7 @@ BEGIN
   IF to_regclass('core.core_workflow_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_approvals_task_id ON core.core_workflow_approvals(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1800,7 +1800,7 @@ BEGIN
   IF to_regclass('core.core_workflow_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_approvals_workflow_instance_id ON core.core_workflow_approvals(workflow_instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1809,7 +1809,7 @@ BEGIN
   IF to_regclass('core.core_workflow_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_history_workflow_instance_id ON core.core_workflow_history(workflow_instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1818,7 +1818,7 @@ BEGIN
   IF to_regclass('core.core_workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_instances_workflow_id ON core.core_workflow_instances(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1827,7 +1827,7 @@ BEGIN
   IF to_regclass('public.core_workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_instances_workflow_id ON public.core_workflow_instances(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1836,7 +1836,7 @@ BEGIN
   IF to_regclass('rs.core_workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_instances_workflow_id ON rs.core_workflow_instances(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1845,7 +1845,7 @@ BEGIN
   IF to_regclass('core.core_workflow_process_logs') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_process_logs_workflow_instance_id ON core.core_workflow_process_logs(workflow_instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1854,7 +1854,7 @@ BEGIN
   IF to_regclass('core.core_workflow_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_rules_workflow_id ON core.core_workflow_rules(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1863,7 +1863,7 @@ BEGIN
   IF to_regclass('core.core_workflow_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_tasks_instance_id ON core.core_workflow_tasks(instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1872,7 +1872,7 @@ BEGIN
   IF to_regclass('public.core_workflow_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_tasks_instance_id ON public.core_workflow_tasks(instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1881,7 +1881,7 @@ BEGIN
   IF to_regclass('rs.core_workflow_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_tasks_instance_id ON rs.core_workflow_tasks(instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1890,7 +1890,7 @@ BEGIN
   IF to_regclass('core.core_workflow_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_versions_workflow_id ON core.core_workflow_versions(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1899,7 +1899,7 @@ BEGIN
   IF to_regclass('public.core_workflow_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_core_workflow_versions_workflow_id ON public.core_workflow_versions(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1908,7 +1908,7 @@ BEGIN
   IF to_regclass('crm.customer_tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_customer_tags_customer_id ON crm.customer_tags(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1917,7 +1917,7 @@ BEGIN
   IF to_regclass('crm.customer_tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_customer_tags_tag_id ON crm.customer_tags(tag_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1926,7 +1926,7 @@ BEGIN
   IF to_regclass('plugin_crm.customers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_customers_tenant_id ON plugin_crm.customers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1935,7 +1935,7 @@ BEGIN
   IF to_regclass('wms.cycle_count_configs') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_cycle_count_configs_location_id ON wms.cycle_count_configs(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1944,7 +1944,7 @@ BEGIN
   IF to_regclass('wms.cycle_count_configs') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_cycle_count_configs_warehouse_id ON wms.cycle_count_configs(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1953,7 +1953,7 @@ BEGIN
   IF to_regclass('public.defect_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_defect_records_task_id ON public.defect_records(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1962,7 +1962,7 @@ BEGIN
   IF to_regclass('hrm.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_company_id ON hrm.departments(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1971,7 +1971,7 @@ BEGIN
   IF to_regclass('public.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_company_id ON public.departments(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1980,7 +1980,7 @@ BEGIN
   IF to_regclass('shared.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_company_id ON shared.departments(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1989,7 +1989,7 @@ BEGIN
   IF to_regclass('hrm.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_parent_id ON hrm.departments(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -1998,7 +1998,7 @@ BEGIN
   IF to_regclass('public.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_parent_id ON public.departments(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2007,7 +2007,7 @@ BEGIN
   IF to_regclass('shared.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_parent_id ON shared.departments(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2016,7 +2016,7 @@ BEGIN
   IF to_regclass('public.departments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_departments_tenant_id ON public.departments(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2025,7 +2025,7 @@ BEGIN
   IF to_regclass('gis.device_location_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_device_location_records_device_id ON gis.device_location_records(device_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2034,7 +2034,7 @@ BEGIN
   IF to_regclass('gis.device_locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON gis.device_locations(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2043,7 +2043,7 @@ BEGIN
   IF to_regclass('public.device_locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON public.device_locations(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2052,7 +2052,7 @@ BEGIN
   IF to_regclass('rs.device_locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_device_locations_map_id ON rs.device_locations(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2061,7 +2061,7 @@ BEGIN
   IF to_regclass('public.devices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_devices_user_id ON public.devices(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2070,7 +2070,7 @@ BEGIN
   IF to_regclass('erp.dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_dict_items_dict_type_id ON erp.dict_items(dict_type_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2079,7 +2079,7 @@ BEGIN
   IF to_regclass('erp.dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_dict_items_parent_id ON erp.dict_items(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2088,7 +2088,7 @@ BEGIN
   IF to_regclass('wms.discrepancy_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_discrepancy_records_stock_take_id ON wms.discrepancy_records(stock_take_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2097,7 +2097,7 @@ BEGIN
   IF to_regclass('wms.discrepancy_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_discrepancy_records_stock_take_item_id ON wms.discrepancy_records(stock_take_item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2106,7 +2106,7 @@ BEGIN
   IF to_regclass('unified_core.document_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_categories_category_id ON unified_core.document_categories(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2115,7 +2115,7 @@ BEGIN
   IF to_regclass('unified_core.document_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_categories_document_id ON unified_core.document_categories(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2124,7 +2124,7 @@ BEGIN
   IF to_regclass('ai.document_chunks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id ON ai.document_chunks(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2133,7 +2133,7 @@ BEGIN
   IF to_regclass('plugin_ai.document_chunks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_chunks_document_id ON plugin_ai.document_chunks(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2142,7 +2142,7 @@ BEGIN
   IF to_regclass('plugin_ai.document_chunks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_chunks_tenant_id ON plugin_ai.document_chunks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2151,7 +2151,7 @@ BEGIN
   IF to_regclass('plugin_ai.document_embeddings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_embeddings_chunk_id ON plugin_ai.document_embeddings(chunk_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2160,7 +2160,7 @@ BEGIN
   IF to_regclass('plugin_ai.document_embeddings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_embeddings_tenant_id ON plugin_ai.document_embeddings(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2169,7 +2169,7 @@ BEGIN
   IF to_regclass('doc.document_links') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_links_document_id ON doc.document_links(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2178,7 +2178,7 @@ BEGIN
   IF to_regclass('doc.document_links') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_links_target_document_id ON doc.document_links(target_document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2187,7 +2187,7 @@ BEGIN
   IF to_regclass('doc.document_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_permissions_document_id ON doc.document_permissions(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2196,7 +2196,7 @@ BEGIN
   IF to_regclass('doc.document_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_versions_document_id ON doc.document_versions(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2205,7 +2205,7 @@ BEGIN
   IF to_regclass('unified_core.document_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_versions_document_id ON unified_core.document_versions(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2214,7 +2214,7 @@ BEGIN
   IF to_regclass('unified_core.document_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_document_versions_tenant_id ON unified_core.document_versions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2223,7 +2223,7 @@ BEGIN
   IF to_regclass('doc.documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_folder_id ON doc.documents(folder_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2232,7 +2232,7 @@ BEGIN
   IF to_regclass('plugin_ai.documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_knowledge_base_id ON plugin_ai.documents(knowledge_base_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2241,7 +2241,7 @@ BEGIN
   IF to_regclass('pm.documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_project_id ON pm.documents(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2250,7 +2250,7 @@ BEGIN
   IF to_regclass('doc.documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_template_id ON doc.documents(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2259,7 +2259,7 @@ BEGIN
   IF to_regclass('plugin_ai.documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON plugin_ai.documents(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2268,7 +2268,7 @@ BEGIN
   IF to_regclass('unified_core.documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_documents_tenant_id ON unified_core.documents(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2277,7 +2277,7 @@ BEGIN
   IF to_regclass('erp.elimination_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_elimination_rules_scope_id ON erp.elimination_rules(scope_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2286,7 +2286,7 @@ BEGIN
   IF to_regclass('mail.emails') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_emails_template_id ON mail.emails(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2295,7 +2295,7 @@ BEGIN
   IF to_regclass('unified_core.emails') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_emails_tenant_id ON unified_core.emails(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2304,7 +2304,7 @@ BEGIN
   IF to_regclass('hrm.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_company_id ON hrm.employees(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2313,7 +2313,7 @@ BEGIN
   IF to_regclass('public.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_company_id ON public.employees(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2322,7 +2322,7 @@ BEGIN
   IF to_regclass('shared.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_company_id ON shared.employees(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2331,7 +2331,7 @@ BEGIN
   IF to_regclass('hrm.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_department_id ON hrm.employees(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2340,7 +2340,7 @@ BEGIN
   IF to_regclass('public.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_department_id ON public.employees(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2349,7 +2349,7 @@ BEGIN
   IF to_regclass('shared.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_department_id ON shared.employees(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2358,7 +2358,7 @@ BEGIN
   IF to_regclass('hrm.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_position_id ON hrm.employees(position_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2367,7 +2367,7 @@ BEGIN
   IF to_regclass('public.employees') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_employees_tenant_id ON public.employees(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2376,7 +2376,7 @@ BEGIN
   IF to_regclass('shared.entity_tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_entity_tags_tag_id ON shared.entity_tags(tag_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2385,7 +2385,7 @@ BEGIN
   IF to_regclass('mes.equipment_inspection_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_inspection_records_equipment_id ON mes.equipment_inspection_records(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2394,7 +2394,7 @@ BEGIN
   IF to_regclass('mes.equipment_inspections') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_inspections_equipment_id ON mes.equipment_inspections(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2403,7 +2403,7 @@ BEGIN
   IF to_regclass('public.equipment_inspections') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_inspections_equipment_id ON public.equipment_inspections(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2412,7 +2412,7 @@ BEGIN
   IF to_regclass('rs.equipment_inspections') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_inspections_equipment_id ON rs.equipment_inspections(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2421,7 +2421,7 @@ BEGIN
   IF to_regclass('mes.equipment_maintenance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_equipment_id ON mes.equipment_maintenance_records(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2430,7 +2430,7 @@ BEGIN
   IF to_regclass('public.equipment_maintenance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_equipment_id ON public.equipment_maintenance_records(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2439,7 +2439,7 @@ BEGIN
   IF to_regclass('rs.equipment_maintenance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_equipment_id ON rs.equipment_maintenance_records(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2448,7 +2448,7 @@ BEGIN
   IF to_regclass('mes.equipment_oee') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_oee_equipment_id ON mes.equipment_oee(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2457,7 +2457,7 @@ BEGIN
   IF to_regclass('public.equipment_oee') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_oee_equipment_id ON public.equipment_oee(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2466,7 +2466,7 @@ BEGIN
   IF to_regclass('rs.equipment_oee') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_oee_equipment_id ON rs.equipment_oee(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2475,7 +2475,7 @@ BEGIN
   IF to_regclass('mes.equipment') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_equipment_work_station_id ON mes.equipment(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2484,7 +2484,7 @@ BEGIN
   IF to_regclass('shared.exchange_rates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_exchange_rates_from_currency_id ON shared.exchange_rates(from_currency_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2493,7 +2493,7 @@ BEGIN
   IF to_regclass('shared.exchange_rates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_exchange_rates_to_currency_id ON shared.exchange_rates(to_currency_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2502,7 +2502,7 @@ BEGIN
   IF to_regclass('plugin_erp.expense_claims') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_expense_claims_department_id ON plugin_erp.expense_claims(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2511,7 +2511,7 @@ BEGIN
   IF to_regclass('plugin_erp.expense_claims') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_expense_claims_employee_id ON plugin_erp.expense_claims(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2520,7 +2520,7 @@ BEGIN
   IF to_regclass('plugin_erp.expense_claims') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_expense_claims_tenant_id ON plugin_erp.expense_claims(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2529,7 +2529,7 @@ BEGIN
   IF to_regclass('plugin_erp.expense_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_expense_items_claim_id ON plugin_erp.expense_items(claim_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2538,7 +2538,7 @@ BEGIN
   IF to_regclass('plugin_erp.expense_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_expense_items_tenant_id ON plugin_erp.expense_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2547,7 +2547,7 @@ BEGIN
   IF to_regclass('file.file_metadata') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_file_metadata_file_id ON file.file_metadata(file_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2556,7 +2556,7 @@ BEGIN
   IF to_regclass('doc_service.file_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_file_permissions_file_id ON doc_service.file_permissions(file_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2565,7 +2565,7 @@ BEGIN
   IF to_regclass('storage.file_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_file_permissions_file_id ON storage.file_permissions(file_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2574,7 +2574,7 @@ BEGIN
   IF to_regclass('doc_service.file_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_file_versions_file_id ON doc_service.file_versions(file_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2583,7 +2583,7 @@ BEGIN
   IF to_regclass('storage.files') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_files_parent_id ON storage.files(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2592,7 +2592,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_fraud_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_fraud_rules_tenant_id ON finance.finance_v54_fraud_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2601,7 +2601,7 @@ BEGIN
   IF to_regclass('public.finance_v54_fraud_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_fraud_rules_tenant_id ON public.finance_v54_fraud_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2610,7 +2610,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_fraud_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_fraud_rules_tenant_id ON rs.finance_v54_fraud_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2619,7 +2619,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_fraud_scores') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_fraud_scores_tenant_id ON finance.finance_v54_fraud_scores(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2628,7 +2628,7 @@ BEGIN
   IF to_regclass('public.finance_v54_fraud_scores') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_fraud_scores_tenant_id ON public.finance_v54_fraud_scores(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2637,7 +2637,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_fraud_scores') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_fraud_scores_tenant_id ON rs.finance_v54_fraud_scores(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2646,7 +2646,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_review_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_results_tenant_id ON finance.finance_v54_review_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2655,7 +2655,7 @@ BEGIN
   IF to_regclass('public.finance_v54_review_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_results_tenant_id ON public.finance_v54_review_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2664,7 +2664,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_review_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_results_tenant_id ON rs.finance_v54_review_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2673,7 +2673,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_review_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_rules_tenant_id ON finance.finance_v54_review_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2682,7 +2682,7 @@ BEGIN
   IF to_regclass('public.finance_v54_review_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_rules_tenant_id ON public.finance_v54_review_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2691,7 +2691,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_review_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_rules_tenant_id ON rs.finance_v54_review_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2700,7 +2700,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_review_workflows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_workflows_tenant_id ON finance.finance_v54_review_workflows(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2709,7 +2709,7 @@ BEGIN
   IF to_regclass('public.finance_v54_review_workflows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_workflows_tenant_id ON public.finance_v54_review_workflows(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2718,7 +2718,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_review_workflows') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_review_workflows_tenant_id ON rs.finance_v54_review_workflows(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2727,7 +2727,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_risk_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_risk_alerts_tenant_id ON finance.finance_v54_risk_alerts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2736,7 +2736,7 @@ BEGIN
   IF to_regclass('public.finance_v54_risk_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_risk_alerts_tenant_id ON public.finance_v54_risk_alerts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2745,7 +2745,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_risk_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_risk_alerts_tenant_id ON rs.finance_v54_risk_alerts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2754,7 +2754,7 @@ BEGIN
   IF to_regclass('finance.finance_v54_risk_indicators') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_risk_indicators_tenant_id ON finance.finance_v54_risk_indicators(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2763,7 +2763,7 @@ BEGIN
   IF to_regclass('public.finance_v54_risk_indicators') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_risk_indicators_tenant_id ON public.finance_v54_risk_indicators(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2772,7 +2772,7 @@ BEGIN
   IF to_regclass('rs.finance_v54_risk_indicators') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v54_risk_indicators_tenant_id ON rs.finance_v54_risk_indicators(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2781,7 +2781,7 @@ BEGIN
   IF to_regclass('finance.finance_v55_invoice_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_invoice_items_tenant_id ON finance.finance_v55_invoice_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2790,7 +2790,7 @@ BEGIN
   IF to_regclass('public.finance_v55_invoice_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_invoice_items_tenant_id ON public.finance_v55_invoice_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2799,7 +2799,7 @@ BEGIN
   IF to_regclass('rs.finance_v55_invoice_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_invoice_items_tenant_id ON rs.finance_v55_invoice_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2808,7 +2808,7 @@ BEGIN
   IF to_regclass('finance.finance_v55_invoices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_invoices_tenant_id ON finance.finance_v55_invoices(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2817,7 +2817,7 @@ BEGIN
   IF to_regclass('public.finance_v55_invoices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_invoices_tenant_id ON public.finance_v55_invoices(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2826,7 +2826,7 @@ BEGIN
   IF to_regclass('rs.finance_v55_invoices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_invoices_tenant_id ON rs.finance_v55_invoices(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2835,7 +2835,7 @@ BEGIN
   IF to_regclass('finance.finance_v55_payment_requests') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_payment_requests_tenant_id ON finance.finance_v55_payment_requests(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2844,7 +2844,7 @@ BEGIN
   IF to_regclass('public.finance_v55_payment_requests') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_payment_requests_tenant_id ON public.finance_v55_payment_requests(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2853,7 +2853,7 @@ BEGIN
   IF to_regclass('rs.finance_v55_payment_requests') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_payment_requests_tenant_id ON rs.finance_v55_payment_requests(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2862,7 +2862,7 @@ BEGIN
   IF to_regclass('finance.finance_v55_payment_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_payment_results_tenant_id ON finance.finance_v55_payment_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2871,7 +2871,7 @@ BEGIN
   IF to_regclass('public.finance_v55_payment_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_payment_results_tenant_id ON public.finance_v55_payment_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2880,7 +2880,7 @@ BEGIN
   IF to_regclass('rs.finance_v55_payment_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_payment_results_tenant_id ON rs.finance_v55_payment_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2889,7 +2889,7 @@ BEGIN
   IF to_regclass('finance.finance_v55_reconciliation_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_reconciliation_results_tenant_id ON finance.finance_v55_reconciliation_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2898,7 +2898,7 @@ BEGIN
   IF to_regclass('public.finance_v55_reconciliation_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_reconciliation_results_tenant_id ON public.finance_v55_reconciliation_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2907,7 +2907,7 @@ BEGIN
   IF to_regclass('rs.finance_v55_reconciliation_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_reconciliation_results_tenant_id ON rs.finance_v55_reconciliation_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2916,7 +2916,7 @@ BEGIN
   IF to_regclass('finance.finance_v55_reconciliation_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_reconciliation_rules_tenant_id ON finance.finance_v55_reconciliation_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2925,7 +2925,7 @@ BEGIN
   IF to_regclass('public.finance_v55_reconciliation_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_reconciliation_rules_tenant_id ON public.finance_v55_reconciliation_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2934,7 +2934,7 @@ BEGIN
   IF to_regclass('rs.finance_v55_reconciliation_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v55_reconciliation_rules_tenant_id ON rs.finance_v55_reconciliation_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2943,7 +2943,7 @@ BEGIN
   IF to_regclass('finance.finance_v56_tax_brackets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_brackets_tenant_id ON finance.finance_v56_tax_brackets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2952,7 +2952,7 @@ BEGIN
   IF to_regclass('public.finance_v56_tax_brackets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_brackets_tenant_id ON public.finance_v56_tax_brackets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2961,7 +2961,7 @@ BEGIN
   IF to_regclass('rs.finance_v56_tax_brackets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_brackets_tenant_id ON rs.finance_v56_tax_brackets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2970,7 +2970,7 @@ BEGIN
   IF to_regclass('finance.finance_v56_tax_forms') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_forms_tenant_id ON finance.finance_v56_tax_forms(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2979,7 +2979,7 @@ BEGIN
   IF to_regclass('public.finance_v56_tax_forms') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_forms_tenant_id ON public.finance_v56_tax_forms(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2988,7 +2988,7 @@ BEGIN
   IF to_regclass('rs.finance_v56_tax_forms') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_forms_tenant_id ON rs.finance_v56_tax_forms(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -2997,7 +2997,7 @@ BEGIN
   IF to_regclass('finance.finance_v56_tax_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_lines_tenant_id ON finance.finance_v56_tax_lines(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3006,7 +3006,7 @@ BEGIN
   IF to_regclass('public.finance_v56_tax_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_lines_tenant_id ON public.finance_v56_tax_lines(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3015,7 +3015,7 @@ BEGIN
   IF to_regclass('rs.finance_v56_tax_lines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_lines_tenant_id ON rs.finance_v56_tax_lines(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3024,7 +3024,7 @@ BEGIN
   IF to_regclass('finance.finance_v56_tax_plans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_plans_tenant_id ON finance.finance_v56_tax_plans(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3033,7 +3033,7 @@ BEGIN
   IF to_regclass('public.finance_v56_tax_plans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_plans_tenant_id ON public.finance_v56_tax_plans(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3042,7 +3042,7 @@ BEGIN
   IF to_regclass('rs.finance_v56_tax_plans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_plans_tenant_id ON rs.finance_v56_tax_plans(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3051,7 +3051,7 @@ BEGIN
   IF to_regclass('finance.finance_v56_tax_rates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_rates_tenant_id ON finance.finance_v56_tax_rates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3060,7 +3060,7 @@ BEGIN
   IF to_regclass('public.finance_v56_tax_rates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_rates_tenant_id ON public.finance_v56_tax_rates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3069,7 +3069,7 @@ BEGIN
   IF to_regclass('rs.finance_v56_tax_rates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_rates_tenant_id ON rs.finance_v56_tax_rates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3078,7 +3078,7 @@ BEGIN
   IF to_regclass('finance.finance_v56_tax_suggestions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_suggestions_tenant_id ON finance.finance_v56_tax_suggestions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3087,7 +3087,7 @@ BEGIN
   IF to_regclass('public.finance_v56_tax_suggestions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_suggestions_tenant_id ON public.finance_v56_tax_suggestions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3096,7 +3096,7 @@ BEGIN
   IF to_regclass('rs.finance_v56_tax_suggestions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v56_tax_suggestions_tenant_id ON rs.finance_v56_tax_suggestions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3105,7 +3105,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_analysis_dimensions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_analysis_dimensions_tenant_id ON finance.finance_v57_analysis_dimensions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3114,7 +3114,7 @@ BEGIN
   IF to_regclass('public.finance_v57_analysis_dimensions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_analysis_dimensions_tenant_id ON public.finance_v57_analysis_dimensions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3123,7 +3123,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_analysis_dimensions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_analysis_dimensions_tenant_id ON rs.finance_v57_analysis_dimensions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3132,7 +3132,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_analysis_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_analysis_results_tenant_id ON finance.finance_v57_analysis_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3141,7 +3141,7 @@ BEGIN
   IF to_regclass('public.finance_v57_analysis_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_analysis_results_tenant_id ON public.finance_v57_analysis_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3150,7 +3150,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_analysis_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_analysis_results_tenant_id ON rs.finance_v57_analysis_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3159,7 +3159,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_forecast_models') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_forecast_models_tenant_id ON finance.finance_v57_forecast_models(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3168,7 +3168,7 @@ BEGIN
   IF to_regclass('public.finance_v57_forecast_models') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_forecast_models_tenant_id ON public.finance_v57_forecast_models(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3177,7 +3177,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_forecast_models') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_forecast_models_tenant_id ON rs.finance_v57_forecast_models(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3186,7 +3186,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_generated_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_generated_reports_template_id ON finance.finance_v57_generated_reports(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3195,7 +3195,7 @@ BEGIN
   IF to_regclass('public.finance_v57_generated_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_generated_reports_template_id ON public.finance_v57_generated_reports(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3204,7 +3204,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_generated_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_generated_reports_template_id ON rs.finance_v57_generated_reports(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3213,7 +3213,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_generated_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_generated_reports_tenant_id ON finance.finance_v57_generated_reports(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3222,7 +3222,7 @@ BEGIN
   IF to_regclass('public.finance_v57_generated_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_generated_reports_tenant_id ON public.finance_v57_generated_reports(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3231,7 +3231,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_generated_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_generated_reports_tenant_id ON rs.finance_v57_generated_reports(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3240,7 +3240,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_insights') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_insights_tenant_id ON finance.finance_v57_insights(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3249,7 +3249,7 @@ BEGIN
   IF to_regclass('public.finance_v57_insights') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_insights_tenant_id ON public.finance_v57_insights(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3258,7 +3258,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_insights') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_insights_tenant_id ON rs.finance_v57_insights(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3267,7 +3267,7 @@ BEGIN
   IF to_regclass('finance.finance_v57_report_templates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_report_templates_tenant_id ON finance.finance_v57_report_templates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3276,7 +3276,7 @@ BEGIN
   IF to_regclass('public.finance_v57_report_templates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_report_templates_tenant_id ON public.finance_v57_report_templates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3285,7 +3285,7 @@ BEGIN
   IF to_regclass('rs.finance_v57_report_templates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v57_report_templates_tenant_id ON rs.finance_v57_report_templates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3294,7 +3294,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_cash_pools') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_cash_pools_tenant_id ON finance.finance_v58_cash_pools(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3303,7 +3303,7 @@ BEGIN
   IF to_regclass('public.finance_v58_cash_pools') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_cash_pools_tenant_id ON public.finance_v58_cash_pools(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3312,7 +3312,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_cash_pools') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_cash_pools_tenant_id ON rs.finance_v58_cash_pools(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3321,7 +3321,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_forecast_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_results_scenario_id ON finance.finance_v58_forecast_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3330,7 +3330,7 @@ BEGIN
   IF to_regclass('public.finance_v58_forecast_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_results_scenario_id ON public.finance_v58_forecast_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3339,7 +3339,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_forecast_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_results_scenario_id ON rs.finance_v58_forecast_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3348,7 +3348,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_forecast_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_results_tenant_id ON finance.finance_v58_forecast_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3357,7 +3357,7 @@ BEGIN
   IF to_regclass('public.finance_v58_forecast_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_results_tenant_id ON public.finance_v58_forecast_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3366,7 +3366,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_forecast_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_results_tenant_id ON rs.finance_v58_forecast_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3375,7 +3375,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_forecast_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_scenarios_tenant_id ON finance.finance_v58_forecast_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3384,7 +3384,7 @@ BEGIN
   IF to_regclass('public.finance_v58_forecast_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_scenarios_tenant_id ON public.finance_v58_forecast_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3393,7 +3393,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_forecast_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_forecast_scenarios_tenant_id ON rs.finance_v58_forecast_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3402,7 +3402,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_liquidity_targets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_liquidity_targets_tenant_id ON finance.finance_v58_liquidity_targets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3411,7 +3411,7 @@ BEGIN
   IF to_regclass('public.finance_v58_liquidity_targets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_liquidity_targets_tenant_id ON public.finance_v58_liquidity_targets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3420,7 +3420,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_liquidity_targets') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_liquidity_targets_tenant_id ON rs.finance_v58_liquidity_targets(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3429,7 +3429,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_optimization_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_optimization_results_tenant_id ON finance.finance_v58_optimization_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3438,7 +3438,7 @@ BEGIN
   IF to_regclass('public.finance_v58_optimization_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_optimization_results_tenant_id ON public.finance_v58_optimization_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3447,7 +3447,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_optimization_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_optimization_results_tenant_id ON rs.finance_v58_optimization_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3456,7 +3456,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_pool_allocations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_allocations_pool_id ON finance.finance_v58_pool_allocations(pool_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3465,7 +3465,7 @@ BEGIN
   IF to_regclass('public.finance_v58_pool_allocations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_allocations_pool_id ON public.finance_v58_pool_allocations(pool_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3474,7 +3474,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_pool_allocations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_allocations_pool_id ON rs.finance_v58_pool_allocations(pool_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3483,7 +3483,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_pool_allocations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_allocations_tenant_id ON finance.finance_v58_pool_allocations(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3492,7 +3492,7 @@ BEGIN
   IF to_regclass('public.finance_v58_pool_allocations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_allocations_tenant_id ON public.finance_v58_pool_allocations(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3501,7 +3501,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_pool_allocations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_allocations_tenant_id ON rs.finance_v58_pool_allocations(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3510,7 +3510,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_from_pool ON finance.finance_v58_pool_transfers(from_pool)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3519,7 +3519,7 @@ BEGIN
   IF to_regclass('public.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_from_pool ON public.finance_v58_pool_transfers(from_pool)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3528,7 +3528,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_from_pool ON rs.finance_v58_pool_transfers(from_pool)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3537,7 +3537,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_tenant_id ON finance.finance_v58_pool_transfers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3546,7 +3546,7 @@ BEGIN
   IF to_regclass('public.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_tenant_id ON public.finance_v58_pool_transfers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3555,7 +3555,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_tenant_id ON rs.finance_v58_pool_transfers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3564,7 +3564,7 @@ BEGIN
   IF to_regclass('finance.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_to_pool ON finance.finance_v58_pool_transfers(to_pool)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3573,7 +3573,7 @@ BEGIN
   IF to_regclass('public.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_to_pool ON public.finance_v58_pool_transfers(to_pool)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3582,7 +3582,7 @@ BEGIN
   IF to_regclass('rs.finance_v58_pool_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v58_pool_transfers_to_pool ON rs.finance_v58_pool_transfers(to_pool)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3591,7 +3591,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_credit_profiles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_credit_profiles_tenant_id ON finance.finance_v59_credit_profiles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3600,7 +3600,7 @@ BEGIN
   IF to_regclass('public.finance_v59_credit_profiles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_credit_profiles_tenant_id ON public.finance_v59_credit_profiles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3609,7 +3609,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_credit_profiles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_credit_profiles_tenant_id ON rs.finance_v59_credit_profiles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3618,7 +3618,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_device_profiles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_device_profiles_tenant_id ON finance.finance_v59_device_profiles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3627,7 +3627,7 @@ BEGIN
   IF to_regclass('public.finance_v59_device_profiles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_device_profiles_tenant_id ON public.finance_v59_device_profiles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3636,7 +3636,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_device_profiles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_device_profiles_tenant_id ON rs.finance_v59_device_profiles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3645,7 +3645,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_fraud_decisions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_decisions_tenant_id ON finance.finance_v59_fraud_decisions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3654,7 +3654,7 @@ BEGIN
   IF to_regclass('public.finance_v59_fraud_decisions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_decisions_tenant_id ON public.finance_v59_fraud_decisions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3663,7 +3663,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_fraud_decisions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_decisions_tenant_id ON rs.finance_v59_fraud_decisions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3672,7 +3672,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_fraud_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_rules_tenant_id ON finance.finance_v59_fraud_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3681,7 +3681,7 @@ BEGIN
   IF to_regclass('public.finance_v59_fraud_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_rules_tenant_id ON public.finance_v59_fraud_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3690,7 +3690,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_fraud_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_rules_tenant_id ON rs.finance_v59_fraud_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3699,7 +3699,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_fraud_signals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_signals_tenant_id ON finance.finance_v59_fraud_signals(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3708,7 +3708,7 @@ BEGIN
   IF to_regclass('public.finance_v59_fraud_signals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_signals_tenant_id ON public.finance_v59_fraud_signals(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3717,7 +3717,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_fraud_signals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_fraud_signals_tenant_id ON rs.finance_v59_fraud_signals(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3726,7 +3726,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_scoring_models') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_scoring_models_tenant_id ON finance.finance_v59_scoring_models(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3735,7 +3735,7 @@ BEGIN
   IF to_regclass('public.finance_v59_scoring_models') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_scoring_models_tenant_id ON public.finance_v59_scoring_models(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3744,7 +3744,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_scoring_models') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_scoring_models_tenant_id ON rs.finance_v59_scoring_models(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3753,7 +3753,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_stress_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_results_scenario_id ON finance.finance_v59_stress_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3762,7 +3762,7 @@ BEGIN
   IF to_regclass('public.finance_v59_stress_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_results_scenario_id ON public.finance_v59_stress_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3771,7 +3771,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_stress_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_results_scenario_id ON rs.finance_v59_stress_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3780,7 +3780,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_stress_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_results_tenant_id ON finance.finance_v59_stress_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3789,7 +3789,7 @@ BEGIN
   IF to_regclass('public.finance_v59_stress_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_results_tenant_id ON public.finance_v59_stress_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3798,7 +3798,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_stress_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_results_tenant_id ON rs.finance_v59_stress_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3807,7 +3807,7 @@ BEGIN
   IF to_regclass('finance.finance_v59_stress_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_scenarios_tenant_id ON finance.finance_v59_stress_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3816,7 +3816,7 @@ BEGIN
   IF to_regclass('public.finance_v59_stress_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_scenarios_tenant_id ON public.finance_v59_stress_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3825,7 +3825,7 @@ BEGIN
   IF to_regclass('rs.finance_v59_stress_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v59_stress_scenarios_tenant_id ON rs.finance_v59_stress_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3834,7 +3834,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_alert_channels') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alert_channels_tenant_id ON finance.finance_v60_alert_channels(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3843,7 +3843,7 @@ BEGIN
   IF to_regclass('public.finance_v60_alert_channels') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alert_channels_tenant_id ON public.finance_v60_alert_channels(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3852,7 +3852,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_alert_channels') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alert_channels_tenant_id ON rs.finance_v60_alert_channels(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3861,7 +3861,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_alert_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alert_rules_tenant_id ON finance.finance_v60_alert_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3870,7 +3870,7 @@ BEGIN
   IF to_regclass('public.finance_v60_alert_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alert_rules_tenant_id ON public.finance_v60_alert_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3879,7 +3879,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_alert_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alert_rules_tenant_id ON rs.finance_v60_alert_rules(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3888,7 +3888,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alerts_rule_id ON finance.finance_v60_alerts(rule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3897,7 +3897,7 @@ BEGIN
   IF to_regclass('public.finance_v60_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alerts_rule_id ON public.finance_v60_alerts(rule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3906,7 +3906,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alerts_rule_id ON rs.finance_v60_alerts(rule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3915,7 +3915,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alerts_tenant_id ON finance.finance_v60_alerts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3924,7 +3924,7 @@ BEGIN
   IF to_regclass('public.finance_v60_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alerts_tenant_id ON public.finance_v60_alerts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3933,7 +3933,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_alerts_tenant_id ON rs.finance_v60_alerts(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3942,7 +3942,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_decision_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_results_scenario_id ON finance.finance_v60_decision_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3951,7 +3951,7 @@ BEGIN
   IF to_regclass('public.finance_v60_decision_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_results_scenario_id ON public.finance_v60_decision_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3960,7 +3960,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_decision_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_results_scenario_id ON rs.finance_v60_decision_results(scenario_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3969,7 +3969,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_decision_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_results_tenant_id ON finance.finance_v60_decision_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3978,7 +3978,7 @@ BEGIN
   IF to_regclass('public.finance_v60_decision_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_results_tenant_id ON public.finance_v60_decision_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3987,7 +3987,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_decision_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_results_tenant_id ON rs.finance_v60_decision_results(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -3996,7 +3996,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_decision_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_scenarios_tenant_id ON finance.finance_v60_decision_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4005,7 +4005,7 @@ BEGIN
   IF to_regclass('public.finance_v60_decision_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_scenarios_tenant_id ON public.finance_v60_decision_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4014,7 +4014,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_decision_scenarios') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_decision_scenarios_tenant_id ON rs.finance_v60_decision_scenarios(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4023,7 +4023,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_depends_on ON finance.finance_v60_schedule_dependencies(depends_on)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4032,7 +4032,7 @@ BEGIN
   IF to_regclass('public.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_depends_on ON public.finance_v60_schedule_dependencies(depends_on)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4041,7 +4041,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_depends_on ON rs.finance_v60_schedule_dependencies(depends_on)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4050,7 +4050,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_task_id ON finance.finance_v60_schedule_dependencies(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4059,7 +4059,7 @@ BEGIN
   IF to_regclass('public.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_task_id ON public.finance_v60_schedule_dependencies(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4068,7 +4068,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_task_id ON rs.finance_v60_schedule_dependencies(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4077,7 +4077,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_tenant_id ON finance.finance_v60_schedule_dependencies(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4086,7 +4086,7 @@ BEGIN
   IF to_regclass('public.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_tenant_id ON public.finance_v60_schedule_dependencies(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4095,7 +4095,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_schedule_dependencies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_dependencies_tenant_id ON rs.finance_v60_schedule_dependencies(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4104,7 +4104,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_schedule_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_executions_task_id ON finance.finance_v60_schedule_executions(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4113,7 +4113,7 @@ BEGIN
   IF to_regclass('public.finance_v60_schedule_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_executions_task_id ON public.finance_v60_schedule_executions(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4122,7 +4122,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_schedule_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_executions_task_id ON rs.finance_v60_schedule_executions(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4131,7 +4131,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_schedule_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_executions_tenant_id ON finance.finance_v60_schedule_executions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4140,7 +4140,7 @@ BEGIN
   IF to_regclass('public.finance_v60_schedule_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_executions_tenant_id ON public.finance_v60_schedule_executions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4149,7 +4149,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_schedule_executions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_executions_tenant_id ON rs.finance_v60_schedule_executions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4158,7 +4158,7 @@ BEGIN
   IF to_regclass('finance.finance_v60_schedule_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_tasks_tenant_id ON finance.finance_v60_schedule_tasks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4167,7 +4167,7 @@ BEGIN
   IF to_regclass('public.finance_v60_schedule_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_tasks_tenant_id ON public.finance_v60_schedule_tasks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4176,7 +4176,7 @@ BEGIN
   IF to_regclass('rs.finance_v60_schedule_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_finance_v60_schedule_tasks_tenant_id ON rs.finance_v60_schedule_tasks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4185,7 +4185,7 @@ BEGIN
   IF to_regclass('doc_service.folder_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_folder_permissions_folder_id ON doc_service.folder_permissions(folder_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4194,7 +4194,7 @@ BEGIN
   IF to_regclass('doc.folders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON doc.folders(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4203,7 +4203,7 @@ BEGIN
   IF to_regclass('doc_service.folders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON doc_service.folders(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4212,7 +4212,7 @@ BEGIN
   IF to_regclass('gis.geofeatures') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_geofeatures_geodata_id ON gis.geofeatures(geodata_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4221,7 +4221,7 @@ BEGIN
   IF to_regclass('doc_service.help_articles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_help_articles_category_id ON doc_service.help_articles(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4230,7 +4230,7 @@ BEGIN
   IF to_regclass('wms.inbound_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inbound_order_items_location_id ON wms.inbound_order_items(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4239,7 +4239,7 @@ BEGIN
   IF to_regclass('wms.inbound_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inbound_order_items_order_id ON wms.inbound_order_items(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4248,7 +4248,7 @@ BEGIN
   IF to_regclass('plugin_wms.inbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inbound_orders_tenant_id ON plugin_wms.inbound_orders(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4257,7 +4257,7 @@ BEGIN
   IF to_regclass('plugin_wms.inbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inbound_orders_warehouse_id ON plugin_wms.inbound_orders(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4266,7 +4266,7 @@ BEGIN
   IF to_regclass('wms.inbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inbound_orders_warehouse_id ON wms.inbound_orders(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4275,7 +4275,7 @@ BEGIN
   IF to_regclass('crm.interactions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_interactions_contact_id ON crm.interactions(contact_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4284,7 +4284,7 @@ BEGIN
   IF to_regclass('crm.interactions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_interactions_customer_id ON crm.interactions(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4293,7 +4293,7 @@ BEGIN
   IF to_regclass('crm.interactions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_interactions_opportunity_id ON crm.interactions(opportunity_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4302,7 +4302,7 @@ BEGIN
   IF to_regclass('wms.inventory_alert_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_alert_records_inventory_id ON wms.inventory_alert_records(inventory_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4311,7 +4311,7 @@ BEGIN
   IF to_regclass('wms.inventory_alert_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_alert_records_location_id ON wms.inventory_alert_records(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4320,7 +4320,7 @@ BEGIN
   IF to_regclass('wms.inventory_alert_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_alert_records_warehouse_id ON wms.inventory_alert_records(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4329,7 +4329,7 @@ BEGIN
   IF to_regclass('wms.inventory_alert_rules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_alert_rules_warehouse_id ON wms.inventory_alert_rules(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4338,7 +4338,7 @@ BEGIN
   IF to_regclass('plugin_wms.inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_location_id ON plugin_wms.inventory(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4347,7 +4347,7 @@ BEGIN
   IF to_regclass('wms.inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_location_id ON wms.inventory(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4356,7 +4356,7 @@ BEGIN
   IF to_regclass('erp.inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_material_id ON erp.inventory(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4365,7 +4365,7 @@ BEGIN
   IF to_regclass('plugin_wms.inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_tenant_id ON plugin_wms.inventory(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4374,7 +4374,7 @@ BEGIN
   IF to_regclass('plugin_wms.inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_warehouse_id ON plugin_wms.inventory(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4383,7 +4383,7 @@ BEGIN
   IF to_regclass('wms.inventory') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_inventory_warehouse_id ON wms.inventory(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4392,7 +4392,7 @@ BEGIN
   IF to_regclass('plugin_ai.knowledge_bases') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_knowledge_bases_tenant_id ON plugin_ai.knowledge_bases(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4401,7 +4401,7 @@ BEGIN
   IF to_regclass('core.knowledge_chunks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_document_id ON core.knowledge_chunks(document_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4410,7 +4410,7 @@ BEGIN
   IF to_regclass('core.knowledge_chunks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_kb_id ON core.knowledge_chunks(kb_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4419,7 +4419,7 @@ BEGIN
   IF to_regclass('core.knowledge_documents') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_knowledge_documents_kb_id ON core.knowledge_documents(kb_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4428,7 +4428,7 @@ BEGIN
   IF to_regclass('core.knowledge_qa_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_knowledge_qa_history_kb_id ON core.knowledge_qa_history(kb_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4437,7 +4437,7 @@ BEGIN
   IF to_regclass('hrm.leave_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leave_records_approver_id ON hrm.leave_records(approver_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4446,7 +4446,7 @@ BEGIN
   IF to_regclass('hrm.leave_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leave_records_employee_id ON hrm.leave_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4455,7 +4455,7 @@ BEGIN
   IF to_regclass('plugin_hrm.leave_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leave_records_employee_id ON plugin_hrm.leave_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4464,7 +4464,7 @@ BEGIN
   IF to_regclass('plugin_hrm.leave_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_leave_records_tenant_id ON plugin_hrm.leave_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4473,7 +4473,7 @@ BEGIN
   IF to_regclass('gis.location_photos') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_location_photos_map_id ON gis.location_photos(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4482,7 +4482,7 @@ BEGIN
   IF to_regclass('public.location_photos') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_location_photos_map_id ON public.location_photos(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4491,7 +4491,7 @@ BEGIN
   IF to_regclass('rs.location_photos') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_location_photos_map_id ON rs.location_photos(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4500,7 +4500,7 @@ BEGIN
   IF to_regclass('plugin_wms.locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_locations_tenant_id ON plugin_wms.locations(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4509,7 +4509,7 @@ BEGIN
   IF to_regclass('plugin_wms.locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_locations_warehouse_id ON plugin_wms.locations(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4518,7 +4518,7 @@ BEGIN
   IF to_regclass('wms.locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_locations_warehouse_id ON wms.locations(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4527,7 +4527,7 @@ BEGIN
   IF to_regclass('gis.map_layers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_map_layers_map_id ON gis.map_layers(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4536,7 +4536,7 @@ BEGIN
   IF to_regclass('mes.material_issue_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issue_items_issue_id ON mes.material_issue_items(issue_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4545,7 +4545,7 @@ BEGIN
   IF to_regclass('public.material_issue_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issue_items_issue_id ON public.material_issue_items(issue_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4554,7 +4554,7 @@ BEGIN
   IF to_regclass('rs.material_issue_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issue_items_issue_id ON rs.material_issue_items(issue_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4563,7 +4563,7 @@ BEGIN
   IF to_regclass('mes.material_issues') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issues_bom_id ON mes.material_issues(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4572,7 +4572,7 @@ BEGIN
   IF to_regclass('public.material_issues') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issues_bom_id ON public.material_issues(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4581,7 +4581,7 @@ BEGIN
   IF to_regclass('rs.material_issues') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issues_bom_id ON rs.material_issues(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4590,7 +4590,7 @@ BEGIN
   IF to_regclass('mes.material_issues') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issues_order_id ON mes.material_issues(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4599,7 +4599,7 @@ BEGIN
   IF to_regclass('public.material_issues') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issues_order_id ON public.material_issues(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4608,7 +4608,7 @@ BEGIN
   IF to_regclass('rs.material_issues') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_issues_order_id ON rs.material_issues(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4617,7 +4617,7 @@ BEGIN
   IF to_regclass('public.material_requirement_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_requirement_items_requirement_id ON public.material_requirement_items(requirement_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4626,7 +4626,7 @@ BEGIN
   IF to_regclass('mes.material_requirements') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_requirements_order_id ON mes.material_requirements(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4635,7 +4635,7 @@ BEGIN
   IF to_regclass('public.material_requirements') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_requirements_order_id ON public.material_requirements(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4644,7 +4644,7 @@ BEGIN
   IF to_regclass('rs.material_requirements') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_requirements_order_id ON rs.material_requirements(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4653,7 +4653,7 @@ BEGIN
   IF to_regclass('mes.material_return_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_return_items_return_id ON mes.material_return_items(return_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4662,7 +4662,7 @@ BEGIN
   IF to_regclass('public.material_return_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_return_items_return_id ON public.material_return_items(return_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4671,7 +4671,7 @@ BEGIN
   IF to_regclass('rs.material_return_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_return_items_return_id ON rs.material_return_items(return_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4680,7 +4680,7 @@ BEGIN
   IF to_regclass('mes.material_returns') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_returns_order_id ON mes.material_returns(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4689,7 +4689,7 @@ BEGIN
   IF to_regclass('public.material_returns') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_returns_order_id ON public.material_returns(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4698,7 +4698,7 @@ BEGIN
   IF to_regclass('rs.material_returns') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_material_returns_order_id ON rs.material_returns(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4707,7 +4707,7 @@ BEGIN
   IF to_regclass('unified_core.messages') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_messages_tenant_id ON unified_core.messages(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4716,7 +4716,7 @@ BEGIN
   IF to_regclass('plugin_pm.milestones') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_milestones_project_id ON plugin_pm.milestones(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4725,7 +4725,7 @@ BEGIN
   IF to_regclass('plugin_pm.milestones') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_milestones_tenant_id ON plugin_pm.milestones(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4734,7 +4734,7 @@ BEGIN
   IF to_regclass('public.mobile_scan_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_mobile_scan_records_user_id ON public.mobile_scan_records(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4743,7 +4743,7 @@ BEGIN
   IF to_regclass('plugin_mobile.mobile_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_mobile_tasks_tenant_id ON plugin_mobile.mobile_tasks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4752,7 +4752,7 @@ BEGIN
   IF to_regclass('unified_core.notification_templates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notification_templates_tenant_id ON unified_core.notification_templates(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4761,7 +4761,7 @@ BEGIN
   IF to_regclass('pm.notifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_project_id ON pm.notifications(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4770,7 +4770,7 @@ BEGIN
   IF to_regclass('unified_core.notifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_tenant_id ON unified_core.notifications(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4779,7 +4779,7 @@ BEGIN
   IF to_regclass('public.notifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4788,7 +4788,7 @@ BEGIN
   IF to_regclass('public.offline_operations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_offline_operations_user_id ON public.offline_operations(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4797,7 +4797,7 @@ BEGIN
   IF to_regclass('public.offline_sync_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_offline_sync_records_user_id ON public.offline_sync_records(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4806,7 +4806,7 @@ BEGIN
   IF to_regclass('crm.opportunities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_opportunities_contact_id ON crm.opportunities(contact_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4815,7 +4815,7 @@ BEGIN
   IF to_regclass('crm.opportunities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_opportunities_customer_id ON crm.opportunities(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4824,7 +4824,7 @@ BEGIN
   IF to_regclass('plugin_crm.opportunities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_opportunities_customer_id ON plugin_crm.opportunities(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4833,7 +4833,7 @@ BEGIN
   IF to_regclass('plugin_crm.opportunities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_opportunities_tenant_id ON plugin_crm.opportunities(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4842,7 +4842,7 @@ BEGIN
   IF to_regclass('wms.outbound_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_outbound_order_items_destination_location_id ON wms.outbound_order_items(destination_location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4851,7 +4851,7 @@ BEGIN
   IF to_regclass('wms.outbound_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_outbound_order_items_order_id ON wms.outbound_order_items(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4860,7 +4860,7 @@ BEGIN
   IF to_regclass('wms.outbound_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_outbound_order_items_source_location_id ON wms.outbound_order_items(source_location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4869,7 +4869,7 @@ BEGIN
   IF to_regclass('plugin_wms.outbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_outbound_orders_tenant_id ON plugin_wms.outbound_orders(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4878,7 +4878,7 @@ BEGIN
   IF to_regclass('plugin_wms.outbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_outbound_orders_warehouse_id ON plugin_wms.outbound_orders(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4887,7 +4887,7 @@ BEGIN
   IF to_regclass('wms.outbound_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_outbound_orders_warehouse_id ON wms.outbound_orders(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4896,7 +4896,7 @@ BEGIN
   IF to_regclass('plugin_mobile.patrol_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_patrol_records_tenant_id ON plugin_mobile.patrol_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4905,7 +4905,7 @@ BEGIN
   IF to_regclass('hrm.payroll_details') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_payroll_details_payroll_item_id ON hrm.payroll_details(payroll_item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4914,7 +4914,7 @@ BEGIN
   IF to_regclass('hrm.payroll_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_payroll_items_payroll_run_id ON hrm.payroll_items(payroll_run_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4923,7 +4923,7 @@ BEGIN
   IF to_regclass('hrm.payroll_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_payroll_records_employee_id ON hrm.payroll_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4932,7 +4932,7 @@ BEGIN
   IF to_regclass('plugin_hrm.payroll_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_payroll_records_employee_id ON plugin_hrm.payroll_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4941,7 +4941,7 @@ BEGIN
   IF to_regclass('plugin_hrm.payroll_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_payroll_records_tenant_id ON plugin_hrm.payroll_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4950,7 +4950,7 @@ BEGIN
   IF to_regclass('public.pdm_bom_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pdm_bom_items_bom_id ON public.pdm_bom_items(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4959,7 +4959,7 @@ BEGIN
   IF to_regclass('rs.pdm_bom_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pdm_bom_items_bom_id ON rs.pdm_bom_items(bom_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4968,7 +4968,7 @@ BEGIN
   IF to_regclass('public.pdm_production_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pdm_production_steps_process_id ON public.pdm_production_steps(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4977,7 +4977,7 @@ BEGIN
   IF to_regclass('rs.pdm_production_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pdm_production_steps_process_id ON rs.pdm_production_steps(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4986,7 +4986,7 @@ BEGIN
   IF to_regclass('public.pdm_workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pdm_workflow_instances_workflow_id ON public.pdm_workflow_instances(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -4995,7 +4995,7 @@ BEGIN
   IF to_regclass('rs.pdm_workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pdm_workflow_instances_workflow_id ON rs.pdm_workflow_instances(workflow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5004,7 +5004,7 @@ BEGIN
   IF to_regclass('hrm.performance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_performance_records_employee_id ON hrm.performance_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5013,7 +5013,7 @@ BEGIN
   IF to_regclass('plugin_hrm.performance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_performance_records_employee_id ON plugin_hrm.performance_records(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5022,7 +5022,7 @@ BEGIN
   IF to_regclass('hrm.performance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_performance_records_reviewer_id ON hrm.performance_records(reviewer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5031,7 +5031,7 @@ BEGIN
   IF to_regclass('plugin_hrm.performance_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_performance_records_tenant_id ON plugin_hrm.performance_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5040,7 +5040,7 @@ BEGIN
   IF to_regclass('public.photo_uploads') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_photo_uploads_user_id ON public.photo_uploads(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5049,7 +5049,7 @@ BEGIN
   IF to_regclass('gis.pipelines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pipelines_map_id ON gis.pipelines(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5058,7 +5058,7 @@ BEGIN
   IF to_regclass('public.pipelines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pipelines_map_id ON public.pipelines(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5067,7 +5067,7 @@ BEGIN
   IF to_regclass('rs.pipelines') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_pipelines_map_id ON rs.pipelines(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5076,7 +5076,7 @@ BEGIN
   IF to_regclass('unified_core.plugin_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_plugin_instances_plugin_id ON unified_core.plugin_instances(plugin_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5085,7 +5085,7 @@ BEGIN
   IF to_regclass('unified_core.plugin_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_plugin_instances_tenant_id ON unified_core.plugin_instances(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5094,7 +5094,7 @@ BEGIN
   IF to_regclass('portal.portal_menus') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_portal_menus_parent_id ON portal.portal_menus(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5103,7 +5103,7 @@ BEGIN
   IF to_regclass('hrm.positions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_positions_company_id ON hrm.positions(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5112,7 +5112,7 @@ BEGIN
   IF to_regclass('plugin_hrm.positions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_positions_company_id ON plugin_hrm.positions(company_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5121,7 +5121,7 @@ BEGIN
   IF to_regclass('plugin_hrm.positions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_positions_department_id ON plugin_hrm.positions(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5130,7 +5130,7 @@ BEGIN
   IF to_regclass('plugin_hrm.positions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_positions_tenant_id ON plugin_hrm.positions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5139,7 +5139,7 @@ BEGIN
   IF to_regclass('scm.price_comparison_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_price_comparison_items_comparison_id ON scm.price_comparison_items(comparison_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5148,7 +5148,7 @@ BEGIN
   IF to_regclass('scm.price_comparison_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_price_comparison_items_quote_id ON scm.price_comparison_items(quote_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5157,7 +5157,7 @@ BEGIN
   IF to_regclass('scm.price_comparison_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_price_comparison_items_supplier_id ON scm.price_comparison_items(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5166,7 +5166,7 @@ BEGIN
   IF to_regclass('scm.price_comparisons') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_price_comparisons_inquiry_id ON scm.price_comparisons(inquiry_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5175,7 +5175,7 @@ BEGIN
   IF to_regclass('scm.price_comparisons') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_price_comparisons_recommended_quote_id ON scm.price_comparisons(recommended_quote_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5184,7 +5184,7 @@ BEGIN
   IF to_regclass('scm.price_comparisons') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_price_comparisons_recommended_supplier_id ON scm.price_comparisons(recommended_supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5193,7 +5193,7 @@ BEGIN
   IF to_regclass('public.process_flow_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_flow_steps_equipment_id ON public.process_flow_steps(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5202,7 +5202,7 @@ BEGIN
   IF to_regclass('mes.process_flow_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_flow_steps_flow_id ON mes.process_flow_steps(flow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5211,7 +5211,7 @@ BEGIN
   IF to_regclass('public.process_flow_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_flow_steps_flow_id ON public.process_flow_steps(flow_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5220,7 +5220,7 @@ BEGIN
   IF to_regclass('public.process_flow_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_flow_steps_process_id ON public.process_flow_steps(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5229,7 +5229,7 @@ BEGIN
   IF to_regclass('public.process_flow_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_flow_steps_work_station_id ON public.process_flow_steps(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5238,7 +5238,7 @@ BEGIN
   IF to_regclass('mes.process_route_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_route_steps_process_id ON mes.process_route_steps(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5247,7 +5247,7 @@ BEGIN
   IF to_regclass('public.process_route_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_route_steps_process_id ON public.process_route_steps(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5256,7 +5256,7 @@ BEGIN
   IF to_regclass('mes.process_route_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_route_steps_route_id ON mes.process_route_steps(route_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5265,7 +5265,7 @@ BEGIN
   IF to_regclass('public.process_route_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_route_steps_route_id ON public.process_route_steps(route_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5274,7 +5274,7 @@ BEGIN
   IF to_regclass('public.process_route_steps') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_process_route_steps_work_station_id ON public.process_route_steps(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5283,7 +5283,7 @@ BEGIN
   IF to_regclass('public.production_kanbans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_kanbans_order_id ON public.production_kanbans(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5292,7 +5292,7 @@ BEGIN
   IF to_regclass('mes.production_processes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_processes_predecessor_process_id ON mes.production_processes(predecessor_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5301,7 +5301,7 @@ BEGIN
   IF to_regclass('mes.production_processes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_processes_successor_process_id ON mes.production_processes(successor_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5310,7 +5310,7 @@ BEGIN
   IF to_regclass('public.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_equipment_id ON public.production_records(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5319,7 +5319,7 @@ BEGIN
   IF to_regclass('rs.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_equipment_id ON rs.production_records(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5328,7 +5328,7 @@ BEGIN
   IF to_regclass('mes.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_order_id ON mes.production_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5337,7 +5337,7 @@ BEGIN
   IF to_regclass('public.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_order_id ON public.production_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5346,7 +5346,7 @@ BEGIN
   IF to_regclass('rs.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_order_id ON rs.production_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5355,7 +5355,7 @@ BEGIN
   IF to_regclass('mes.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_process_id ON mes.production_records(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5364,7 +5364,7 @@ BEGIN
   IF to_regclass('public.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_process_id ON public.production_records(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5373,7 +5373,7 @@ BEGIN
   IF to_regclass('rs.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_process_id ON rs.production_records(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5382,7 +5382,7 @@ BEGIN
   IF to_regclass('mes.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_work_station_id ON mes.production_records(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5391,7 +5391,7 @@ BEGIN
   IF to_regclass('public.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_work_station_id ON public.production_records(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5400,7 +5400,7 @@ BEGIN
   IF to_regclass('rs.production_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_records_work_station_id ON rs.production_records(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5409,7 +5409,7 @@ BEGIN
   IF to_regclass('mes.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_equipment_id ON mes.production_schedules(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5418,7 +5418,7 @@ BEGIN
   IF to_regclass('public.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_equipment_id ON public.production_schedules(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5427,7 +5427,7 @@ BEGIN
   IF to_regclass('rs.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_equipment_id ON rs.production_schedules(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5436,7 +5436,7 @@ BEGIN
   IF to_regclass('mes.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_order_id ON mes.production_schedules(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5445,7 +5445,7 @@ BEGIN
   IF to_regclass('public.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_order_id ON public.production_schedules(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5454,7 +5454,7 @@ BEGIN
   IF to_regclass('rs.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_order_id ON rs.production_schedules(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5463,7 +5463,7 @@ BEGIN
   IF to_regclass('mes.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_process_id ON mes.production_schedules(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5472,7 +5472,7 @@ BEGIN
   IF to_regclass('public.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_process_id ON public.production_schedules(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5481,7 +5481,7 @@ BEGIN
   IF to_regclass('rs.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_process_id ON rs.production_schedules(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5490,7 +5490,7 @@ BEGIN
   IF to_regclass('mes.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_work_station_id ON mes.production_schedules(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5499,7 +5499,7 @@ BEGIN
   IF to_regclass('public.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_work_station_id ON public.production_schedules(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5508,7 +5508,7 @@ BEGIN
   IF to_regclass('rs.production_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_production_schedules_work_station_id ON rs.production_schedules(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5517,7 +5517,7 @@ BEGIN
   IF to_regclass('pm.project_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_approvals_project_id ON pm.project_approvals(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5526,7 +5526,7 @@ BEGIN
   IF to_regclass('pm.project_benefits') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_benefits_project_id ON pm.project_benefits(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5535,7 +5535,7 @@ BEGIN
   IF to_regclass('public.project_budget_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_budget_items_budget_id ON public.project_budget_items(budget_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5544,7 +5544,7 @@ BEGIN
   IF to_regclass('pm.project_expenses') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_expenses_project_id ON pm.project_expenses(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5553,7 +5553,7 @@ BEGIN
   IF to_regclass('pm.project_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON pm.project_members(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5562,7 +5562,7 @@ BEGIN
   IF to_regclass('rs.project_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON rs.project_members(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5571,7 +5571,7 @@ BEGIN
   IF to_regclass('pm.project_milestones') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_milestones_phase_id ON pm.project_milestones(phase_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5580,7 +5580,7 @@ BEGIN
   IF to_regclass('rs.project_milestones') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_milestones_phase_id ON rs.project_milestones(phase_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5589,7 +5589,7 @@ BEGIN
   IF to_regclass('pm.project_milestones') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_milestones_project_id ON pm.project_milestones(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5598,7 +5598,7 @@ BEGIN
   IF to_regclass('rs.project_milestones') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_milestones_project_id ON rs.project_milestones(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5607,7 +5607,7 @@ BEGIN
   IF to_regclass('rs.project_phases') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_phases_predecessor_id ON rs.project_phases(predecessor_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5616,7 +5616,7 @@ BEGIN
   IF to_regclass('pm.project_phases') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_phases_project_id ON pm.project_phases(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5625,7 +5625,7 @@ BEGIN
   IF to_regclass('rs.project_phases') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_phases_project_id ON rs.project_phases(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5634,7 +5634,7 @@ BEGIN
   IF to_regclass('pm.project_resources') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_project_resources_project_id ON pm.project_resources(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5643,7 +5643,7 @@ BEGIN
   IF to_regclass('pm.projects') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_projects_parent_id ON pm.projects(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5652,7 +5652,7 @@ BEGIN
   IF to_regclass('plugin_pm.projects') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_projects_tenant_id ON plugin_pm.projects(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5661,7 +5661,7 @@ BEGIN
   IF to_regclass('scm.purchase_contract_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_purchase_contract_items_contract_id ON scm.purchase_contract_items(contract_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5670,7 +5670,7 @@ BEGIN
   IF to_regclass('scm.purchase_inquiry_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_purchase_inquiry_items_inquiry_id ON scm.purchase_inquiry_items(inquiry_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5679,7 +5679,7 @@ BEGIN
   IF to_regclass('scm.purchase_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_purchase_items_order_id ON scm.purchase_items(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5688,7 +5688,7 @@ BEGIN
   IF to_regclass('scm.purchase_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON scm.purchase_orders(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5697,7 +5697,7 @@ BEGIN
   IF to_regclass('srm.purchase_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier_id ON srm.purchase_orders(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5706,7 +5706,7 @@ BEGIN
   IF to_regclass('public.push_devices') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_push_devices_user_id ON public.push_devices(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5715,7 +5715,7 @@ BEGIN
   IF to_regclass('public.qa_apqp_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_project_id ON public.qa_apqp_approvals(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5724,7 +5724,7 @@ BEGIN
   IF to_regclass('rs.qa_apqp_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_project_id ON rs.qa_apqp_approvals(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5733,7 +5733,7 @@ BEGIN
   IF to_regclass('public.qa_apqp_phases') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_project_id ON public.qa_apqp_phases(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5742,7 +5742,7 @@ BEGIN
   IF to_regclass('rs.qa_apqp_phases') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_project_id ON rs.qa_apqp_phases(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5751,7 +5751,7 @@ BEGIN
   IF to_regclass('public.qa_apqp_risks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_project_id ON public.qa_apqp_risks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5760,7 +5760,7 @@ BEGIN
   IF to_regclass('rs.qa_apqp_risks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_project_id ON rs.qa_apqp_risks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5769,7 +5769,7 @@ BEGIN
   IF to_regclass('public.qa_apqp_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_phase_id ON public.qa_apqp_tasks(phase_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5778,7 +5778,7 @@ BEGIN
   IF to_regclass('rs.qa_apqp_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_phase_id ON rs.qa_apqp_tasks(phase_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5787,7 +5787,7 @@ BEGIN
   IF to_regclass('public.qa_apqp_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_project_id ON public.qa_apqp_tasks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5796,7 +5796,7 @@ BEGIN
   IF to_regclass('rs.qa_apqp_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_project_id ON rs.qa_apqp_tasks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5805,7 +5805,7 @@ BEGIN
   IF to_regclass('public.qa_audit_findings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_plan_id ON public.qa_audit_findings(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5814,7 +5814,7 @@ BEGIN
   IF to_regclass('rs.qa_audit_findings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_plan_id ON rs.qa_audit_findings(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5823,7 +5823,7 @@ BEGIN
   IF to_regclass('public.qa_audit_findings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_task_id ON public.qa_audit_findings(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5832,7 +5832,7 @@ BEGIN
   IF to_regclass('rs.qa_audit_findings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_findings_task_id ON rs.qa_audit_findings(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5841,7 +5841,7 @@ BEGIN
   IF to_regclass('public.qa_audit_plans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_standard_id ON public.qa_audit_plans(standard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5850,7 +5850,7 @@ BEGIN
   IF to_regclass('rs.qa_audit_plans') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_standard_id ON rs.qa_audit_plans(standard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5859,7 +5859,7 @@ BEGIN
   IF to_regclass('public.qa_audit_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_tasks_plan_id ON public.qa_audit_tasks(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5868,7 +5868,7 @@ BEGIN
   IF to_regclass('rs.qa_audit_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_audit_tasks_plan_id ON rs.qa_audit_tasks(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5877,7 +5877,7 @@ BEGIN
   IF to_regclass('public.qa_corrective_action_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_corrective_action_items_action_id ON public.qa_corrective_action_items(action_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5886,7 +5886,7 @@ BEGIN
   IF to_regclass('rs.qa_corrective_action_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_corrective_action_items_action_id ON rs.qa_corrective_action_items(action_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5895,7 +5895,7 @@ BEGIN
   IF to_regclass('public.qa_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_corrective_actions_issue_id ON public.qa_corrective_actions(issue_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5904,7 +5904,7 @@ BEGIN
   IF to_regclass('rs.qa_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_corrective_actions_issue_id ON rs.qa_corrective_actions(issue_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5913,7 +5913,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_accident_investigations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_accident_investigations_accident_id ON public.qa_ehs_accident_investigations(accident_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5922,7 +5922,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_accident_investigations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_accident_investigations_accident_id ON rs.qa_ehs_accident_investigations(accident_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5931,7 +5931,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_accident_reviews') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_accident_reviews_accident_id ON public.qa_ehs_accident_reviews(accident_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5940,7 +5940,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_accident_reviews') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_accident_reviews_accident_id ON rs.qa_ehs_accident_reviews(accident_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5949,7 +5949,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_accident_treatments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_accident_treatments_accident_id ON public.qa_ehs_accident_treatments(accident_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5958,7 +5958,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_accident_treatments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_accident_treatments_accident_id ON rs.qa_ehs_accident_treatments(accident_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5967,7 +5967,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_compliance_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_items_evaluation_id ON public.qa_ehs_compliance_items(evaluation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5976,7 +5976,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_compliance_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_items_evaluation_id ON rs.qa_ehs_compliance_items(evaluation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5985,7 +5985,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_compliance_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_items_regulation_id ON public.qa_ehs_compliance_items(regulation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -5994,7 +5994,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_compliance_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_compliance_items_regulation_id ON rs.qa_ehs_compliance_items(regulation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6003,7 +6003,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_detection_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_detection_records_factor_id ON public.qa_ehs_detection_records(factor_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6012,7 +6012,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_detection_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_detection_records_factor_id ON rs.qa_ehs_detection_records(factor_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6021,7 +6021,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_drill_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_evaluations_drill_id ON public.qa_ehs_drill_evaluations(drill_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6030,7 +6030,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_drill_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_evaluations_drill_id ON rs.qa_ehs_drill_evaluations(drill_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6039,7 +6039,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_drill_problems') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_problems_drill_id ON public.qa_ehs_drill_problems(drill_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6048,7 +6048,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_drill_problems') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_problems_drill_id ON rs.qa_ehs_drill_problems(drill_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6057,7 +6057,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_drill_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_plan_id ON public.qa_ehs_drill_records(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6066,7 +6066,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_drill_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_plan_id ON rs.qa_ehs_drill_records(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6075,7 +6075,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_emergency_plan_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plan_approvals_plan_id ON public.qa_ehs_emergency_plan_approvals(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6084,7 +6084,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_emergency_plan_approvals') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plan_approvals_plan_id ON rs.qa_ehs_emergency_plan_approvals(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6093,7 +6093,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_emergency_plan_supplies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plan_supplies_plan_id ON public.qa_ehs_emergency_plan_supplies(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6102,7 +6102,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_emergency_plan_supplies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plan_supplies_plan_id ON rs.qa_ehs_emergency_plan_supplies(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6111,7 +6111,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_emergency_plan_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plan_versions_plan_id ON public.qa_ehs_emergency_plan_versions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6120,7 +6120,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_emergency_plan_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_emergency_plan_versions_plan_id ON rs.qa_ehs_emergency_plan_versions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6129,7 +6129,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_hazard_rectifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_rectifications_hazard_id ON public.qa_ehs_hazard_rectifications(hazard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6138,7 +6138,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_hazard_rectifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_rectifications_hazard_id ON rs.qa_ehs_hazard_rectifications(hazard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6147,7 +6147,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_hazard_verifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_verifications_hazard_id ON public.qa_ehs_hazard_verifications(hazard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6156,7 +6156,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_hazard_verifications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazard_verifications_hazard_id ON rs.qa_ehs_hazard_verifications(hazard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6165,7 +6165,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_hazards') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_inspection_id ON public.qa_ehs_hazards(inspection_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6174,7 +6174,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_hazards') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_inspection_id ON rs.qa_ehs_hazards(inspection_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6183,7 +6183,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_health_abnormalities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_abnormalities_record_id ON public.qa_ehs_health_abnormalities(record_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6192,7 +6192,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_health_abnormalities') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_abnormalities_record_id ON rs.qa_ehs_health_abnormalities(record_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6201,7 +6201,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_health_exam_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_records_plan_id ON public.qa_ehs_health_exam_records(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6210,7 +6210,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_health_exam_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_health_exam_records_plan_id ON rs.qa_ehs_health_exam_records(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6219,7 +6219,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_inspection_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_items_plan_id ON public.qa_ehs_inspection_items(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6228,7 +6228,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_inspection_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_items_plan_id ON rs.qa_ehs_inspection_items(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6237,7 +6237,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_inspection_record_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_record_items_item_id ON public.qa_ehs_inspection_record_items(item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6246,7 +6246,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_inspection_record_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_record_items_item_id ON rs.qa_ehs_inspection_record_items(item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6255,7 +6255,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_inspection_record_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_record_items_record_id ON public.qa_ehs_inspection_record_items(record_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6264,7 +6264,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_inspection_record_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_record_items_record_id ON rs.qa_ehs_inspection_record_items(record_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6273,7 +6273,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_inspection_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_records_plan_id ON public.qa_ehs_inspection_records(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6282,7 +6282,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_inspection_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_inspection_records_plan_id ON rs.qa_ehs_inspection_records(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6291,7 +6291,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_material_stocks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_material_stocks_material_id ON public.qa_ehs_material_stocks(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6300,7 +6300,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_material_stocks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_material_stocks_material_id ON rs.qa_ehs_material_stocks(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6309,7 +6309,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_msds') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_msds_material_id ON public.qa_ehs_msds(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6318,7 +6318,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_msds') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_msds_material_id ON rs.qa_ehs_msds(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6327,7 +6327,7 @@ BEGIN
   IF to_regclass('public.qa_ehs_stock_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_material_id ON public.qa_ehs_stock_records(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6336,7 +6336,7 @@ BEGIN
   IF to_regclass('rs.qa_ehs_stock_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_material_id ON rs.qa_ehs_stock_records(material_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6345,7 +6345,7 @@ BEGIN
   IF to_regclass('public.qa_eightd_audit_logs') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_eightd_audit_logs_report_id ON public.qa_eightd_audit_logs(report_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6354,7 +6354,7 @@ BEGIN
   IF to_regclass('rs.qa_eightd_audit_logs') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_eightd_audit_logs_report_id ON rs.qa_eightd_audit_logs(report_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6363,7 +6363,7 @@ BEGIN
   IF to_regclass('public.qa_fmea_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_fmea_id ON public.qa_fmea_items(fmea_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6372,7 +6372,7 @@ BEGIN
   IF to_regclass('rs.qa_fmea_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_fmea_items_fmea_id ON rs.qa_fmea_items(fmea_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6381,7 +6381,7 @@ BEGIN
   IF to_regclass('public.qa_inspection_audits') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_inspection_audits_inspection_id ON public.qa_inspection_audits(inspection_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6390,7 +6390,7 @@ BEGIN
   IF to_regclass('rs.qa_inspection_audits') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_inspection_audits_inspection_id ON rs.qa_inspection_audits(inspection_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6399,7 +6399,7 @@ BEGIN
   IF to_regclass('public.qa_inspection_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_inspection_results_inspection_id ON public.qa_inspection_results(inspection_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6408,7 +6408,7 @@ BEGIN
   IF to_regclass('rs.qa_inspection_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_inspection_results_inspection_id ON rs.qa_inspection_results(inspection_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6417,7 +6417,7 @@ BEGIN
   IF to_regclass('lims.qa_lab_calibration_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_calibration_records_instrument_id ON lims.qa_lab_calibration_records(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6426,7 +6426,7 @@ BEGIN
   IF to_regclass('public.qa_lab_calibration_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_calibration_records_instrument_id ON public.qa_lab_calibration_records(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6435,7 +6435,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_calibration_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_calibration_records_instrument_id ON rs.qa_lab_calibration_records(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6444,7 +6444,7 @@ BEGIN
   IF to_regclass('lims.qa_lab_inspection_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_inspection_reports_sample_id ON lims.qa_lab_inspection_reports(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6453,7 +6453,7 @@ BEGIN
   IF to_regclass('public.qa_lab_inspection_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_inspection_reports_sample_id ON public.qa_lab_inspection_reports(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6462,7 +6462,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_inspection_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_inspection_reports_sample_id ON rs.qa_lab_inspection_reports(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6471,7 +6471,7 @@ BEGIN
   IF to_regclass('lims.qa_lab_reagent_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_reagent_alerts_reagent_id ON lims.qa_lab_reagent_alerts(reagent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6480,7 +6480,7 @@ BEGIN
   IF to_regclass('public.qa_lab_reagent_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_reagent_alerts_reagent_id ON public.qa_lab_reagent_alerts(reagent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6489,7 +6489,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_reagent_alerts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_reagent_alerts_reagent_id ON rs.qa_lab_reagent_alerts(reagent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6498,7 +6498,7 @@ BEGIN
   IF to_regclass('lims.qa_lab_reagent_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_reagent_history_reagent_id ON lims.qa_lab_reagent_history(reagent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6507,7 +6507,7 @@ BEGIN
   IF to_regclass('public.qa_lab_reagent_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_reagent_history_reagent_id ON public.qa_lab_reagent_history(reagent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6516,7 +6516,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_reagent_history') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_reagent_history_reagent_id ON rs.qa_lab_reagent_history(reagent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6525,7 +6525,7 @@ BEGIN
   IF to_regclass('lims.qa_lab_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_records_task_id ON lims.qa_lab_records(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6534,7 +6534,7 @@ BEGIN
   IF to_regclass('public.qa_lab_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_records_task_id ON public.qa_lab_records(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6543,7 +6543,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_records_task_id ON rs.qa_lab_records(task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6552,7 +6552,7 @@ BEGIN
   IF to_regclass('lims.qa_lab_sample_lifecycle') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_sample_lifecycle_sample_id ON lims.qa_lab_sample_lifecycle(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6561,7 +6561,7 @@ BEGIN
   IF to_regclass('public.qa_lab_sample_lifecycle') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_sample_lifecycle_sample_id ON public.qa_lab_sample_lifecycle(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6570,7 +6570,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_sample_lifecycle') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_sample_lifecycle_sample_id ON rs.qa_lab_sample_lifecycle(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6579,7 +6579,7 @@ BEGIN
   IF to_regclass('rs.qa_lab_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_sample_id ON rs.qa_lab_tasks(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6588,7 +6588,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_barcode_scan_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_barcode_scan_records_barcode_id ON lims.qa_lims_barcode_scan_records(barcode_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6597,7 +6597,7 @@ BEGIN
   IF to_regclass('public.qa_lims_barcode_scan_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_barcode_scan_records_barcode_id ON public.qa_lims_barcode_scan_records(barcode_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6606,7 +6606,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_barcode_scan_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_barcode_scan_records_barcode_id ON rs.qa_lims_barcode_scan_records(barcode_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6615,7 +6615,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_collection_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_collection_tasks_instrument_id ON lims.qa_lims_collection_tasks(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6624,7 +6624,7 @@ BEGIN
   IF to_regclass('public.qa_lims_collection_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_collection_tasks_instrument_id ON public.qa_lims_collection_tasks(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6633,7 +6633,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_collection_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_collection_tasks_instrument_id ON rs.qa_lims_collection_tasks(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6642,7 +6642,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_instrument_data') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_instrument_data_instrument_id ON lims.qa_lims_instrument_data(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6651,7 +6651,7 @@ BEGIN
   IF to_regclass('public.qa_lims_instrument_data') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_instrument_data_instrument_id ON public.qa_lims_instrument_data(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6660,7 +6660,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_instrument_data') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_instrument_data_instrument_id ON rs.qa_lims_instrument_data(instrument_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6669,7 +6669,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_method_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_categories_parent_id ON lims.qa_lims_method_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6678,7 +6678,7 @@ BEGIN
   IF to_regclass('public.qa_lims_method_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_categories_parent_id ON public.qa_lims_method_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6687,7 +6687,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_method_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_categories_parent_id ON rs.qa_lims_method_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6696,7 +6696,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_method_validations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_validations_method_id ON lims.qa_lims_method_validations(method_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6705,7 +6705,7 @@ BEGIN
   IF to_regclass('public.qa_lims_method_validations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_validations_method_id ON public.qa_lims_method_validations(method_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6714,7 +6714,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_method_validations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_validations_method_id ON rs.qa_lims_method_validations(method_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6723,7 +6723,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_method_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_versions_method_id ON lims.qa_lims_method_versions(method_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6732,7 +6732,7 @@ BEGIN
   IF to_regclass('public.qa_lims_method_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_versions_method_id ON public.qa_lims_method_versions(method_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6741,7 +6741,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_method_versions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_method_versions_method_id ON rs.qa_lims_method_versions(method_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6750,7 +6750,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_corrective_actions_evaluation_id ON lims.qa_lims_pt_corrective_actions(evaluation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6759,7 +6759,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_corrective_actions_evaluation_id ON public.qa_lims_pt_corrective_actions(evaluation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6768,7 +6768,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_corrective_actions_evaluation_id ON rs.qa_lims_pt_corrective_actions(evaluation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6777,7 +6777,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_corrective_actions_plan_id ON lims.qa_lims_pt_corrective_actions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6786,7 +6786,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_corrective_actions_plan_id ON public.qa_lims_pt_corrective_actions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6795,7 +6795,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_corrective_actions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_corrective_actions_plan_id ON rs.qa_lims_pt_corrective_actions(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6804,7 +6804,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_plan_id ON lims.qa_lims_pt_evaluations(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6813,7 +6813,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_plan_id ON public.qa_lims_pt_evaluations(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6822,7 +6822,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_plan_id ON rs.qa_lims_pt_evaluations(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6831,7 +6831,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_sample_id ON lims.qa_lims_pt_evaluations(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6840,7 +6840,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_sample_id ON public.qa_lims_pt_evaluations(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6849,7 +6849,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_sample_id ON rs.qa_lims_pt_evaluations(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6858,7 +6858,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_plan_id ON lims.qa_lims_pt_results(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6867,7 +6867,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_plan_id ON public.qa_lims_pt_results(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6876,7 +6876,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_plan_id ON rs.qa_lims_pt_results(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6885,7 +6885,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_sample_id ON lims.qa_lims_pt_results(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6894,7 +6894,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_sample_id ON public.qa_lims_pt_results(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6903,7 +6903,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_results') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_sample_id ON rs.qa_lims_pt_results(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6912,7 +6912,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_pt_samples') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_samples_plan_id ON lims.qa_lims_pt_samples(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6921,7 +6921,7 @@ BEGIN
   IF to_regclass('public.qa_lims_pt_samples') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_samples_plan_id ON public.qa_lims_pt_samples(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6930,7 +6930,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_pt_samples') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_samples_plan_id ON rs.qa_lims_pt_samples(plan_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6939,7 +6939,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_rfid_tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_sample_id ON lims.qa_lims_rfid_tags(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6948,7 +6948,7 @@ BEGIN
   IF to_regclass('public.qa_lims_rfid_tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_sample_id ON public.qa_lims_rfid_tags(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6957,7 +6957,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_rfid_tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_sample_id ON rs.qa_lims_rfid_tags(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6966,7 +6966,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_sample_barcodes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_sample_barcodes_sample_id ON lims.qa_lims_sample_barcodes(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6975,7 +6975,7 @@ BEGIN
   IF to_regclass('public.qa_lims_sample_barcodes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_sample_barcodes_sample_id ON public.qa_lims_sample_barcodes(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6984,7 +6984,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_sample_barcodes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_sample_barcodes_sample_id ON rs.qa_lims_sample_barcodes(sample_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -6993,7 +6993,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_test_methods') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_test_methods_category_id ON lims.qa_lims_test_methods(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7002,7 +7002,7 @@ BEGIN
   IF to_regclass('public.qa_lims_test_methods') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_test_methods_category_id ON public.qa_lims_test_methods(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7011,7 +7011,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_test_methods') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_test_methods_category_id ON rs.qa_lims_test_methods(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7020,7 +7020,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_uncertainty_components') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_components_project_id ON lims.qa_lims_uncertainty_components(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7029,7 +7029,7 @@ BEGIN
   IF to_regclass('public.qa_lims_uncertainty_components') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_components_project_id ON public.qa_lims_uncertainty_components(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7038,7 +7038,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_uncertainty_components') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_components_project_id ON rs.qa_lims_uncertainty_components(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7047,7 +7047,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_uncertainty_components') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_components_source_id ON lims.qa_lims_uncertainty_components(source_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7056,7 +7056,7 @@ BEGIN
   IF to_regclass('public.qa_lims_uncertainty_components') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_components_source_id ON public.qa_lims_uncertainty_components(source_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7065,7 +7065,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_uncertainty_components') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_components_source_id ON rs.qa_lims_uncertainty_components(source_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7074,7 +7074,7 @@ BEGIN
   IF to_regclass('lims.qa_lims_uncertainty_sources') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_sources_project_id ON lims.qa_lims_uncertainty_sources(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7083,7 +7083,7 @@ BEGIN
   IF to_regclass('public.qa_lims_uncertainty_sources') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_sources_project_id ON public.qa_lims_uncertainty_sources(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7092,7 +7092,7 @@ BEGIN
   IF to_regclass('rs.qa_lims_uncertainty_sources') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_lims_uncertainty_sources_project_id ON rs.qa_lims_uncertainty_sources(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7101,7 +7101,7 @@ BEGIN
   IF to_regclass('public.qa_spc_data_points') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_spc_data_points_chart_id ON public.qa_spc_data_points(chart_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7110,7 +7110,7 @@ BEGIN
   IF to_regclass('rs.qa_spc_data_points') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_spc_data_points_chart_id ON rs.qa_spc_data_points(chart_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7119,7 +7119,7 @@ BEGIN
   IF to_regclass('public.qa_standard_revisions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_standard_revisions_standard_id ON public.qa_standard_revisions(standard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7128,7 +7128,7 @@ BEGIN
   IF to_regclass('rs.qa_standard_revisions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_qa_standard_revisions_standard_id ON rs.qa_standard_revisions(standard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7137,7 +7137,7 @@ BEGIN
   IF to_regclass('pm.quality_checks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_checks_project_id ON pm.quality_checks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7146,7 +7146,7 @@ BEGIN
   IF to_regclass('public.quality_inspections') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_inspections_order_id ON public.quality_inspections(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7155,7 +7155,7 @@ BEGIN
   IF to_regclass('public.quality_inspections') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_inspections_process_id ON public.quality_inspections(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7164,7 +7164,7 @@ BEGIN
   IF to_regclass('mes.quality_patrol_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_patrol_items_patrol_id ON mes.quality_patrol_items(patrol_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7173,7 +7173,7 @@ BEGIN
   IF to_regclass('public.quality_patrol_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_patrol_items_patrol_id ON public.quality_patrol_items(patrol_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7182,7 +7182,7 @@ BEGIN
   IF to_regclass('public.quality_patrols') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_patrols_workstation_id ON public.quality_patrols(workstation_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7191,7 +7191,7 @@ BEGIN
   IF to_regclass('mes.quality_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_records_order_id ON mes.quality_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7200,7 +7200,7 @@ BEGIN
   IF to_regclass('public.quality_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_records_order_id ON public.quality_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7209,7 +7209,7 @@ BEGIN
   IF to_regclass('rs.quality_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_records_order_id ON rs.quality_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7218,7 +7218,7 @@ BEGIN
   IF to_regclass('mes.quality_standard_values') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_standard_values_standard_id ON mes.quality_standard_values(standard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7227,7 +7227,7 @@ BEGIN
   IF to_regclass('public.quality_standard_values') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_standard_values_standard_id ON public.quality_standard_values(standard_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7236,7 +7236,7 @@ BEGIN
   IF to_regclass('public.quality_traceability_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_quality_traceability_records_order_id ON public.quality_traceability_records(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7245,7 +7245,7 @@ BEGIN
   IF to_regclass('finance.reconcile_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_reconcile_items_order_id ON finance.reconcile_items(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7254,7 +7254,7 @@ BEGIN
   IF to_regclass('plugin_hrm.recruitment_applications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_recruitment_applications_department_id ON plugin_hrm.recruitment_applications(department_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7263,7 +7263,7 @@ BEGIN
   IF to_regclass('hrm.recruitment_applications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_recruitment_applications_recruitment_id ON hrm.recruitment_applications(recruitment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7272,7 +7272,7 @@ BEGIN
   IF to_regclass('plugin_hrm.recruitment_applications') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_recruitment_applications_tenant_id ON plugin_hrm.recruitment_applications(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7281,7 +7281,7 @@ BEGIN
   IF to_regclass('hrm.recruitment_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_recruitment_records_position_id ON hrm.recruitment_records(position_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7290,7 +7290,7 @@ BEGIN
   IF to_regclass('iam.refresh_tokens') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON iam.refresh_tokens(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7299,7 +7299,7 @@ BEGIN
   IF to_regclass('public.refresh_tokens') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON public.refresh_tokens(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7308,7 +7308,7 @@ BEGIN
   IF to_regclass('wms.replenishment_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_replenishment_order_items_order_id ON wms.replenishment_order_items(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7317,7 +7317,7 @@ BEGIN
   IF to_regclass('bi.report_execution_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_execution_records_schedule_id ON bi.report_execution_records(schedule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7326,7 +7326,7 @@ BEGIN
   IF to_regclass('public.report_execution_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_execution_records_schedule_id ON public.report_execution_records(schedule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7335,7 +7335,7 @@ BEGIN
   IF to_regclass('rs.report_execution_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_execution_records_schedule_id ON rs.report_execution_records(schedule_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7344,7 +7344,7 @@ BEGIN
   IF to_regclass('public.report_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_schedules_template_id ON public.report_schedules(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7353,7 +7353,7 @@ BEGIN
   IF to_regclass('rs.report_schedules') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_schedules_template_id ON rs.report_schedules(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7362,7 +7362,7 @@ BEGIN
   IF to_regclass('bi.report_subscriptions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_subscriptions_template_id ON bi.report_subscriptions(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7371,7 +7371,7 @@ BEGIN
   IF to_regclass('public.report_subscriptions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_subscriptions_template_id ON public.report_subscriptions(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7380,7 +7380,7 @@ BEGIN
   IF to_regclass('rs.report_subscriptions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_report_subscriptions_template_id ON rs.report_subscriptions(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7389,7 +7389,7 @@ BEGIN
   IF to_regclass('public.reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_reports_template_id ON public.reports(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7398,7 +7398,7 @@ BEGIN
   IF to_regclass('rs.reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_reports_template_id ON rs.reports(template_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7407,7 +7407,7 @@ BEGIN
   IF to_regclass('pm.risks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_risks_project_id ON pm.risks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7416,7 +7416,7 @@ BEGIN
   IF to_regclass('unified_core.role_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_role_permissions_permission_id ON unified_core.role_permissions(permission_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7425,7 +7425,7 @@ BEGIN
   IF to_regclass('unified_core.role_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON unified_core.role_permissions(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7434,7 +7434,7 @@ BEGIN
   IF to_regclass('unified_core.roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_roles_tenant_id ON unified_core.roles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7443,7 +7443,7 @@ BEGIN
   IF to_regclass('hrm.salary_adjustments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_salary_adjustments_approver_id ON hrm.salary_adjustments(approver_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7452,7 +7452,7 @@ BEGIN
   IF to_regclass('hrm.salary_adjustments') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_salary_adjustments_employee_id ON hrm.salary_adjustments(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7461,7 +7461,7 @@ BEGIN
   IF to_regclass('erp.sales_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sales_orders_customer_id ON erp.sales_orders(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7470,7 +7470,7 @@ BEGIN
   IF to_regclass('plugin_crm.sales_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sales_orders_customer_id ON plugin_crm.sales_orders(customer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7479,7 +7479,7 @@ BEGIN
   IF to_regclass('plugin_crm.sales_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sales_orders_opportunity_id ON plugin_crm.sales_orders(opportunity_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7488,7 +7488,7 @@ BEGIN
   IF to_regclass('plugin_crm.sales_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sales_orders_tenant_id ON plugin_crm.sales_orders(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7497,7 +7497,7 @@ BEGIN
   IF to_regclass('plugin_mobile.scan_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_scan_records_tenant_id ON plugin_mobile.scan_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7506,7 +7506,7 @@ BEGIN
   IF to_regclass('unified_core.sessions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sessions_tenant_id ON unified_core.sessions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7515,7 +7515,7 @@ BEGIN
   IF to_regclass('iam.sessions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON iam.sessions(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7524,7 +7524,7 @@ BEGIN
   IF to_regclass('unified_core.sessions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON unified_core.sessions(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7533,7 +7533,7 @@ BEGIN
   IF to_regclass('pm.settlements') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_settlements_project_id ON pm.settlements(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7542,7 +7542,7 @@ BEGIN
   IF to_regclass('shared.shared_dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_shared_dict_items_dict_type_id ON shared.shared_dict_items(dict_type_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7551,7 +7551,7 @@ BEGIN
   IF to_regclass('shared.shared_dict_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_shared_dict_items_parent_id ON shared.shared_dict_items(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7560,7 +7560,7 @@ BEGIN
   IF to_regclass('public.shortcuts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_shortcuts_user_id ON public.shortcuts(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7569,7 +7569,7 @@ BEGIN
   IF to_regclass('wms.stock_take_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_stock_take_items_location_id ON wms.stock_take_items(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7578,7 +7578,7 @@ BEGIN
   IF to_regclass('wms.stock_take_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_stock_take_items_stock_take_id ON wms.stock_take_items(stock_take_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7587,7 +7587,7 @@ BEGIN
   IF to_regclass('wms.stock_takes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_stock_takes_location_id ON wms.stock_takes(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7596,7 +7596,7 @@ BEGIN
   IF to_regclass('wms.stock_takes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_stock_takes_warehouse_id ON wms.stock_takes(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7605,7 +7605,7 @@ BEGIN
   IF to_regclass('public.stocktake_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_stocktake_records_item_id ON public.stocktake_records(item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7614,7 +7614,7 @@ BEGIN
   IF to_regclass('scm.supplier_admission_audit_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_admission_audit_items_admission_id ON scm.supplier_admission_audit_items(admission_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7623,7 +7623,7 @@ BEGIN
   IF to_regclass('srm.supplier_categories') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_categories_parent_id ON srm.supplier_categories(parent_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7632,7 +7632,7 @@ BEGIN
   IF to_regclass('srm.supplier_contracts') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_contracts_supplier_id ON srm.supplier_contracts(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7641,7 +7641,7 @@ BEGIN
   IF to_regclass('scm.supplier_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_evaluations_supplier_id ON scm.supplier_evaluations(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7650,7 +7650,7 @@ BEGIN
   IF to_regclass('srm.supplier_evaluations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_evaluations_supplier_id ON srm.supplier_evaluations(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7659,7 +7659,7 @@ BEGIN
   IF to_regclass('srm.supplier_products') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_products_supplier_id ON srm.supplier_products(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7668,7 +7668,7 @@ BEGIN
   IF to_regclass('scm.supplier_quote_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_quote_items_inquiry_item_id ON scm.supplier_quote_items(inquiry_item_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7677,7 +7677,7 @@ BEGIN
   IF to_regclass('scm.supplier_quote_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_quote_items_quote_id ON scm.supplier_quote_items(quote_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7686,7 +7686,7 @@ BEGIN
   IF to_regclass('scm.supplier_quotes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_quotes_inquiry_id ON scm.supplier_quotes(inquiry_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7695,7 +7695,7 @@ BEGIN
   IF to_regclass('scm.supplier_quotes') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_supplier_quotes_supplier_id ON scm.supplier_quotes(supplier_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7704,7 +7704,7 @@ BEGIN
   IF to_regclass('public.sync_policies') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sync_policies_user_id ON public.sync_policies(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7713,7 +7713,7 @@ BEGIN
   IF to_regclass('shared.tags') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tags_group_id ON shared.tags(group_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7722,7 +7722,7 @@ BEGIN
   IF to_regclass('plugin_pm.tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tasks_parent_task_id ON plugin_pm.tasks(parent_task_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7731,7 +7731,7 @@ BEGIN
   IF to_regclass('plugin_pm.tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON plugin_pm.tasks(project_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7740,7 +7740,7 @@ BEGIN
   IF to_regclass('plugin_pm.tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tasks_tenant_id ON plugin_pm.tasks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7749,7 +7749,7 @@ BEGIN
   IF to_regclass('public.team_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_team_members_employee_id ON public.team_members(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7758,7 +7758,7 @@ BEGIN
   IF to_regclass('mes.team_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON mes.team_members(team_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7767,7 +7767,7 @@ BEGIN
   IF to_regclass('public.team_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON public.team_members(team_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7776,7 +7776,7 @@ BEGIN
   IF to_regclass('rs.team_members') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON rs.team_members(team_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7785,7 +7785,7 @@ BEGIN
   IF to_regclass('mes.teams') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_teams_work_station_id ON mes.teams(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7794,7 +7794,7 @@ BEGIN
   IF to_regclass('public.teams') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_teams_work_station_id ON public.teams(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7803,7 +7803,7 @@ BEGIN
   IF to_regclass('rs.teams') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_teams_work_station_id ON rs.teams(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7812,7 +7812,7 @@ BEGIN
   IF to_regclass('doc_service.templates') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_templates_category_id ON doc_service.templates(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7821,7 +7821,7 @@ BEGIN
   IF to_regclass('public.tenant_plugins') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tenant_plugins_tenant_id ON public.tenant_plugins(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7830,7 +7830,7 @@ BEGIN
   IF to_regclass('plugin_srm.tender_awards') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tender_awards_bid_id ON plugin_srm.tender_awards(bid_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7839,7 +7839,7 @@ BEGIN
   IF to_regclass('plugin_srm.tender_awards') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tender_awards_tender_id ON plugin_srm.tender_awards(tender_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7848,7 +7848,7 @@ BEGIN
   IF to_regclass('plugin_srm.tender_bids') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tender_bids_tender_id ON plugin_srm.tender_bids(tender_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7857,7 +7857,7 @@ BEGIN
   IF to_regclass('public.tool_permissions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_tool_permissions_tenant_permission_id ON public.tool_permissions(tenant_permission_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7866,7 +7866,7 @@ BEGIN
   IF to_regclass('hrm.training_participants') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_training_participants_employee_id ON hrm.training_participants(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7875,7 +7875,7 @@ BEGIN
   IF to_regclass('plugin_hrm.training_participants') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_training_participants_employee_id ON plugin_hrm.training_participants(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7884,7 +7884,7 @@ BEGIN
   IF to_regclass('plugin_hrm.training_participants') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_training_participants_tenant_id ON plugin_hrm.training_participants(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7893,7 +7893,7 @@ BEGIN
   IF to_regclass('hrm.training_participants') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_training_participants_training_id ON hrm.training_participants(training_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7902,7 +7902,7 @@ BEGIN
   IF to_regclass('plugin_hrm.training_participants') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_training_participants_training_id ON plugin_hrm.training_participants(training_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7911,7 +7911,7 @@ BEGIN
   IF to_regclass('plugin_hrm.training_records') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_training_records_tenant_id ON plugin_hrm.training_records(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7920,7 +7920,7 @@ BEGIN
   IF to_regclass('wms.transfer_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfer_items_destination_location_id ON wms.transfer_items(destination_location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7929,7 +7929,7 @@ BEGIN
   IF to_regclass('wms.transfer_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfer_items_source_location_id ON wms.transfer_items(source_location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7938,7 +7938,7 @@ BEGIN
   IF to_regclass('wms.transfer_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfer_items_transfer_id ON wms.transfer_items(transfer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7947,7 +7947,7 @@ BEGIN
   IF to_regclass('wms.transfer_order_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfer_order_items_transfer_id ON wms.transfer_order_items(transfer_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7956,7 +7956,7 @@ BEGIN
   IF to_regclass('wms.transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfers_destination_location_id ON wms.transfers(destination_location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7965,7 +7965,7 @@ BEGIN
   IF to_regclass('wms.transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfers_destination_warehouse_id ON wms.transfers(destination_warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7974,7 +7974,7 @@ BEGIN
   IF to_regclass('wms.transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfers_source_location_id ON wms.transfers(source_location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7983,7 +7983,7 @@ BEGIN
   IF to_regclass('wms.transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_transfers_source_warehouse_id ON wms.transfers(source_warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -7992,7 +7992,7 @@ BEGIN
   IF to_regclass('shared.units') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_units_base_unit_id ON shared.units(base_unit_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8001,7 +8001,7 @@ BEGIN
   IF to_regclass('shared.units') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_units_category_id ON shared.units(category_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8010,7 +8010,7 @@ BEGIN
   IF to_regclass('unified_core.user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_user_roles_role_id ON unified_core.user_roles(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8019,7 +8019,7 @@ BEGIN
   IF to_regclass('unified_core.user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_user_roles_tenant_id ON unified_core.user_roles(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8028,7 +8028,7 @@ BEGIN
   IF to_regclass('unified_core.user_roles') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON unified_core.user_roles(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8037,7 +8037,7 @@ BEGIN
   IF to_regclass('public.user_settings') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON public.user_settings(user_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8046,7 +8046,7 @@ BEGIN
   IF to_regclass('shared.users') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_users_employee_id ON shared.users(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8055,7 +8055,7 @@ BEGIN
   IF to_regclass('unified_core.users') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_users_employee_id ON unified_core.users(employee_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8064,7 +8064,7 @@ BEGIN
   IF to_regclass('iam.users') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_users_role_id ON iam.users(role_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8073,7 +8073,7 @@ BEGIN
   IF to_regclass('unified_core.users') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_users_tenant_id ON unified_core.users(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8082,7 +8082,7 @@ BEGIN
   IF to_regclass('plugin_erp.voucher_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_voucher_items_tenant_id ON plugin_erp.voucher_items(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8091,7 +8091,7 @@ BEGIN
   IF to_regclass('plugin_erp.voucher_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_voucher_items_voucher_id ON plugin_erp.voucher_items(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8100,7 +8100,7 @@ BEGIN
   IF to_regclass('public.voucher_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_voucher_items_voucher_id ON public.voucher_items(voucher_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8109,7 +8109,7 @@ BEGIN
   IF to_regclass('plugin_erp.vouchers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_vouchers_tenant_id ON plugin_erp.vouchers(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8118,7 +8118,7 @@ BEGIN
   IF to_regclass('gis.warehouse_locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON gis.warehouse_locations(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8127,7 +8127,7 @@ BEGIN
   IF to_regclass('public.warehouse_locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON public.warehouse_locations(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8136,7 +8136,7 @@ BEGIN
   IF to_regclass('rs.warehouse_locations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_warehouse_locations_map_id ON rs.warehouse_locations(map_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8145,7 +8145,7 @@ BEGIN
   IF to_regclass('plugin_wms.warehouses') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_warehouses_tenant_id ON plugin_wms.warehouses(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8154,7 +8154,7 @@ BEGIN
   IF to_regclass('wms.wave_pick_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wave_pick_items_location_id ON wms.wave_pick_items(location_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8163,7 +8163,7 @@ BEGIN
   IF to_regclass('wms.wave_pick_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wave_pick_items_outbound_order_id ON wms.wave_pick_items(outbound_order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8172,7 +8172,7 @@ BEGIN
   IF to_regclass('wms.wave_pick_items') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wave_pick_items_wave_pick_id ON wms.wave_pick_items(wave_pick_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8181,7 +8181,7 @@ BEGIN
   IF to_regclass('wms.wave_picks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wave_picks_batch_id ON wms.wave_picks(batch_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8190,7 +8190,7 @@ BEGIN
   IF to_regclass('wms.wave_picks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wave_picks_warehouse_id ON wms.wave_picks(warehouse_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8199,7 +8199,7 @@ BEGIN
   IF to_regclass('mes.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_from_process_id ON mes.wip_transfers(from_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8208,7 +8208,7 @@ BEGIN
   IF to_regclass('public.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_from_process_id ON public.wip_transfers(from_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8217,7 +8217,7 @@ BEGIN
   IF to_regclass('rs.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_from_process_id ON rs.wip_transfers(from_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8226,7 +8226,7 @@ BEGIN
   IF to_regclass('mes.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_from_work_station_id ON mes.wip_transfers(from_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8235,7 +8235,7 @@ BEGIN
   IF to_regclass('public.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_from_work_station_id ON public.wip_transfers(from_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8244,7 +8244,7 @@ BEGIN
   IF to_regclass('rs.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_from_work_station_id ON rs.wip_transfers(from_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8253,7 +8253,7 @@ BEGIN
   IF to_regclass('mes.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_to_process_id ON mes.wip_transfers(to_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8262,7 +8262,7 @@ BEGIN
   IF to_regclass('public.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_to_process_id ON public.wip_transfers(to_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8271,7 +8271,7 @@ BEGIN
   IF to_regclass('rs.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_to_process_id ON rs.wip_transfers(to_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8280,7 +8280,7 @@ BEGIN
   IF to_regclass('mes.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_to_work_station_id ON mes.wip_transfers(to_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8289,7 +8289,7 @@ BEGIN
   IF to_regclass('public.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_to_work_station_id ON public.wip_transfers(to_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8298,7 +8298,7 @@ BEGIN
   IF to_regclass('rs.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_to_work_station_id ON rs.wip_transfers(to_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8307,7 +8307,7 @@ BEGIN
   IF to_regclass('mes.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_wip_id ON mes.wip_transfers(wip_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8316,7 +8316,7 @@ BEGIN
   IF to_regclass('public.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_wip_id ON public.wip_transfers(wip_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8325,7 +8325,7 @@ BEGIN
   IF to_regclass('rs.wip_transfers') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wip_transfers_wip_id ON rs.wip_transfers(wip_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8334,7 +8334,7 @@ BEGIN
   IF to_regclass('mes.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_current_process_id ON mes.wips(current_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8343,7 +8343,7 @@ BEGIN
   IF to_regclass('public.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_current_process_id ON public.wips(current_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8352,7 +8352,7 @@ BEGIN
   IF to_regclass('rs.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_current_process_id ON rs.wips(current_process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8361,7 +8361,7 @@ BEGIN
   IF to_regclass('mes.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_current_work_station_id ON mes.wips(current_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8370,7 +8370,7 @@ BEGIN
   IF to_regclass('public.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_current_work_station_id ON public.wips(current_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8379,7 +8379,7 @@ BEGIN
   IF to_regclass('rs.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_current_work_station_id ON rs.wips(current_work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8388,7 +8388,7 @@ BEGIN
   IF to_regclass('mes.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_order_id ON mes.wips(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8397,7 +8397,7 @@ BEGIN
   IF to_regclass('public.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_order_id ON public.wips(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8406,7 +8406,7 @@ BEGIN
   IF to_regclass('rs.wips') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_wips_order_id ON rs.wips(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8415,7 +8415,7 @@ BEGIN
   IF to_regclass('mes.work_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_orders_order_id ON mes.work_orders(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8424,7 +8424,7 @@ BEGIN
   IF to_regclass('public.work_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_orders_order_id ON public.work_orders(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8433,7 +8433,7 @@ BEGIN
   IF to_regclass('public.work_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_orders_process_id ON public.work_orders(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8442,7 +8442,7 @@ BEGIN
   IF to_regclass('public.work_orders') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_orders_work_station_id ON public.work_orders(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8451,7 +8451,7 @@ BEGIN
   IF to_regclass('public.work_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_reports_order_id ON public.work_reports(order_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8460,7 +8460,7 @@ BEGIN
   IF to_regclass('public.work_reports') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_reports_work_station_id ON public.work_reports(work_station_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8469,7 +8469,7 @@ BEGIN
   IF to_regclass('public.work_stations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_stations_equipment_id ON public.work_stations(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8478,7 +8478,7 @@ BEGIN
   IF to_regclass('rs.work_stations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_stations_equipment_id ON rs.work_stations(equipment_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8487,7 +8487,7 @@ BEGIN
   IF to_regclass('public.work_stations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_stations_process_id ON public.work_stations(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8496,7 +8496,7 @@ BEGIN
   IF to_regclass('rs.work_stations') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_work_stations_process_id ON rs.work_stations(process_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8505,7 +8505,7 @@ BEGIN
   IF to_regclass('unified_core.workflow_definitions') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_definitions_tenant_id ON unified_core.workflow_definitions(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8514,7 +8514,7 @@ BEGIN
   IF to_regclass('unified_core.workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_instances_definition_id ON unified_core.workflow_instances(definition_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8523,7 +8523,7 @@ BEGIN
   IF to_regclass('unified_core.workflow_instances') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_instances_tenant_id ON unified_core.workflow_instances(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8532,7 +8532,7 @@ BEGIN
   IF to_regclass('unified_core.workflow_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_tasks_instance_id ON unified_core.workflow_tasks(instance_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
@@ -8541,7 +8541,7 @@ BEGIN
   IF to_regclass('unified_core.workflow_tasks') IS NOT NULL THEN
     BEGIN
       EXECUTE 'CREATE INDEX IF NOT EXISTS idx_workflow_tasks_tenant_id ON unified_core.workflow_tasks(tenant_id)';
-    EXCEPTION WHEN undefined_column OR undefined_object THEN NULL;
+    EXCEPTION WHEN undefined_column OR undefined_object OR feature_not_supported OR wrong_object_type THEN NULL;
     END;
   END IF;
 END $fk$;
