@@ -182,8 +182,8 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.unwrap_or_default().and_utc(),
-            updated_at: row.updated_at.unwrap_or_default().and_utc(),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -246,8 +246,8 @@ pub async fn create_permission_rule(
         req.user_ids.as_deref(),
         req.is_active.unwrap_or(true),
         req.created_by,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -255,24 +255,24 @@ pub async fn create_permission_rule(
 
     match result {
         Ok(row) => Json(serde_json::json!({
-                                    "success": true,
-                                    "message": "Create permission rule",
-                                    "data": PermissionRuleResponse {
-                                        id: row.id,
-                                        name: row.name,
-                                        description: row.description,
-                                        datasource_id: row.datasource_id,
-                                        table_name: row.table_name,
-                                        rule_type: row.rule_type,
-                                        condition: row.condition.unwrap_or(serde_json::json!({})),
-                                        role_ids: row.role_ids,
-                                        user_ids: row.user_ids,
-                                        is_active: row.is_active.unwrap_or(true),
-                                        created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_default().and_utc(),
-        updated_at: row.updated_at.unwrap_or_default().and_utc(),
-                                    }
-                                })),
+                            "success": true,
+                            "message": "Create permission rule",
+                            "data": PermissionRuleResponse {
+                                id: row.id,
+                                name: row.name,
+                                description: row.description,
+                                datasource_id: row.datasource_id,
+                                table_name: row.table_name,
+                                rule_type: row.rule_type,
+                                condition: row.condition.unwrap_or(serde_json::json!({})),
+                                role_ids: row.role_ids,
+                                user_ids: row.user_ids,
+                                is_active: row.is_active.unwrap_or(true),
+                                created_by: row.created_by,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+                            }
+                        })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create permission rule: {}", e),
@@ -325,24 +325,24 @@ pub async fn get_permission_rule(
 
     match row {
         Some(row) => Json(serde_json::json!({
-                                    "success": true,
-                                    "message": "Get permission rule",
-                                    "data": PermissionRuleResponse {
-                                        id: row.id,
-                                        name: row.name,
-                                        description: row.description,
-                                        datasource_id: row.datasource_id,
-                                        table_name: row.table_name,
-                                        rule_type: row.rule_type,
-                                        condition: row.condition.unwrap_or(serde_json::json!({})),
-                                        role_ids: row.role_ids,
-                                        user_ids: row.user_ids,
-                                        is_active: row.is_active.unwrap_or(true),
-                                        created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_default().and_utc(),
-        updated_at: row.updated_at.unwrap_or_default().and_utc(),
-                                    }
-                                })),
+                            "success": true,
+                            "message": "Get permission rule",
+                            "data": PermissionRuleResponse {
+                                id: row.id,
+                                name: row.name,
+                                description: row.description,
+                                datasource_id: row.datasource_id,
+                                table_name: row.table_name,
+                                rule_type: row.rule_type,
+                                condition: row.condition.unwrap_or(serde_json::json!({})),
+                                role_ids: row.role_ids,
+                                user_ids: row.user_ids,
+                                is_active: row.is_active.unwrap_or(true),
+                                created_by: row.created_by,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+                            }
+                        })),
         None => Json(topems_shared_core::response::error_value(
             500,
             "Permission rule not found",
@@ -400,7 +400,7 @@ pub async fn update_permission_rule(
         req.role_ids.as_deref(),
         req.user_ids.as_deref(),
         req.is_active,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -408,24 +408,24 @@ pub async fn update_permission_rule(
 
     match result {
         Ok(Some(row)) => Json(serde_json::json!({
-                                    "success": true,
-                                    "message": "Update permission rule",
-                                    "data": PermissionRuleResponse {
-                                        id: row.id,
-                                        name: row.name,
-                                        description: row.description,
-                                        datasource_id: row.datasource_id,
-                                        table_name: row.table_name,
-                                        rule_type: row.rule_type,
-                                        condition: row.condition.unwrap_or(serde_json::json!({})),
-                                        role_ids: row.role_ids,
-                                        user_ids: row.user_ids,
-                                        is_active: row.is_active.unwrap_or(true),
-                                        created_by: row.created_by,
-        created_at: row.created_at.unwrap_or_default().and_utc(),
-        updated_at: row.updated_at.unwrap_or_default().and_utc(),
-                                    }
-                                })),
+                            "success": true,
+                            "message": "Update permission rule",
+                            "data": PermissionRuleResponse {
+                                id: row.id,
+                                name: row.name,
+                                description: row.description,
+                                datasource_id: row.datasource_id,
+                                table_name: row.table_name,
+                                rule_type: row.rule_type,
+                                condition: row.condition.unwrap_or(serde_json::json!({})),
+                                role_ids: row.role_ids,
+                                user_ids: row.user_ids,
+                                is_active: row.is_active.unwrap_or(true),
+                                created_by: row.created_by,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+                            }
+                        })),
         Ok(None) => Json(topems_shared_core::response::error_value(
             500,
             "Permission rule not found",
@@ -703,8 +703,8 @@ pub async fn get_user_permissions(
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.unwrap_or_default().and_utc(),
-            updated_at: row.updated_at.unwrap_or_default().and_utc(),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 

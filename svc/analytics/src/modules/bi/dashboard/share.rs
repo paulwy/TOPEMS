@@ -40,7 +40,7 @@ pub async fn create_share_link(
         id,
         &req.shared_with,
         req.permission,
-expires_at.map(|v| v.naive_utc()),now.naive_utc(),
+expires_at,now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -48,17 +48,17 @@ expires_at.map(|v| v.naive_utc()),now.naive_utc(),
 
     match result {
         Ok(row) => Json(serde_json::json!({
-                                    "success": true,
-                                    "message": "Create share link",
-                                    "data": ShareLinkResponse {
-                                        id: row.id,
-                                        dashboard_id: row.dashboard_id,
-                                        share_url: format!("/dashboard/share/{}", row.id),
-                                        permission: row.permission,
-                                        expires_at: row.expires_at.map(|v| v.and_utc()),
-        created_at: row.created_at.unwrap_or_default().and_utc(),
-                                    }
-                                })),
+                            "success": true,
+                            "message": "Create share link",
+                            "data": ShareLinkResponse {
+                                id: row.id,
+                                dashboard_id: row.dashboard_id,
+                                share_url: format!("/dashboard/share/{}", row.id),
+                                permission: row.permission,
+                                expires_at: row.expires_at,
+        created_at: row.created_at,
+                            }
+                        })),
         Err(e) => Json(topems_shared_core::response::error_value(
             500,
             &format!("Failed to create share link: {}", e),
@@ -167,8 +167,8 @@ pub async fn list_share_links(
             dashboard_id: row.dashboard_id,
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
-            expires_at: row.expires_at.map(|v| v.and_utc()),
-            created_at: row.created_at.unwrap_or_default().and_utc(),
+            expires_at: row.expires_at,
+            created_at: row.created_at,
         })
         .collect();
 

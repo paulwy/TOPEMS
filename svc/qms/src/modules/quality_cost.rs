@@ -560,12 +560,8 @@ pub async fn get_cost_trend(
                     period: r.get::<Option<String>, _>("period").unwrap_or_default(),
                     prevention: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("prevention")),
                     appraisal: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("appraisal")),
-                    internal_failure: big_decimal_to_f64_non_opt(
-                        r.get::<BigDecimal, _>("internal_failure"),
-                    ),
-                    external_failure: big_decimal_to_f64_non_opt(
-                        r.get::<BigDecimal, _>("external_failure"),
-                    ),
+                    internal_failure: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("internal_failure")),
+                    external_failure: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("external_failure")),
                     total: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("total")),
                 })
                 .collect();
