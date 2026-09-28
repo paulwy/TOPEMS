@@ -1,12 +1,12 @@
 //! Quality Traceability handlers
 
-use sqlx::types::BigDecimal;
-use chrono::NaiveDateTime;
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
+use chrono::NaiveDateTime;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::types::BigDecimal;
 use sqlx::types::Uuid;
 use topems_shared_auth::auth::Claims;
 

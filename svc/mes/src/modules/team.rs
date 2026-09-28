@@ -1,4 +1,3 @@
-use chrono::NaiveDateTime;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -7,6 +6,7 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
+use chrono::NaiveDateTime;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};

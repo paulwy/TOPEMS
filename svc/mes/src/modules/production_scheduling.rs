@@ -1,7 +1,5 @@
 //! Production Scheduling handlers
 
-use std::str::FromStr;
-use sqlx::types::BigDecimal;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -12,10 +10,9 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    types::Uuid,
-    Row,
-};
+use sqlx::types::BigDecimal;
+use sqlx::{types::Uuid, Row};
+use std::str::FromStr;
 
 use topems_shared::auth::Claims;
 

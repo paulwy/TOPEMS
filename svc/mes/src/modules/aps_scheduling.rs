@@ -6,9 +6,6 @@
 //! - 排程模拟：假设分析，评估不同排产方案
 //! - 优化建议：延期风险预警、瓶颈分析
 
-use std::str::FromStr;
-use sqlx::types::BigDecimal;
-use chrono::NaiveDateTime;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -17,13 +14,13 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use chrono::NaiveDateTime;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    types::Uuid,
-    Row,
-};
+use sqlx::types::BigDecimal;
+use sqlx::{types::Uuid, Row};
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 

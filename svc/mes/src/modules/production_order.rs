@@ -1,6 +1,5 @@
 //! Production Order handlers
 
-use chrono::NaiveDateTime;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -9,12 +8,10 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
+use chrono::NaiveDateTime;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    types::Uuid,
-    Row,
-};
+use sqlx::{types::Uuid, Row};
 use topems_shared::auth::Claims;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
