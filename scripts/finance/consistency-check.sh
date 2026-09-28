@@ -110,7 +110,6 @@ call_endpoint() {
   local method="$1"
   local url="$2"
   local out_file="$3"
-  local -n status_ref=$4
 
   local curl_opts=(-s -w "\n%{http_code}" -o "$out_file" -H "Authorization: Bearer $TOKEN" -H "Accept: application/json")
   if [[ -n "$TENANT_ID" ]]; then
@@ -121,7 +120,7 @@ call_endpoint() {
   response=$(curl "${curl_opts[@]}" -X "$method" "$url" 2>/dev/null || true)
   local http_code
   http_code=$(echo "$response" | tail -n1)
-  status_ref="${http_code:-000}"
+  echo "${http_code:-000}"
 }
 
 # Compare two response files
@@ -202,8 +201,8 @@ main() {
     fin_tmp=$(mktemp)
 
     local erp_status fin_status
-    call_endpoint "$method" "$erp_url" "$erp_tmp" erp_status
-    call_endpoint "$method" "$fin_url" "$fin_tmp" fin_status
+    erp_status=$(call_endpoint "$method" "$erp_url" "$erp_tmp")
+    fin_status=$(call_endpoint "$method" "$fin_url" "$fin_tmp")
 
     local compare_result
     compare_result=$(compare_responses "$desc" "$erp_tmp" "$fin_tmp" "$erp_status" "$fin_status")

@@ -89,6 +89,7 @@ run_module_test() {
     echo -e "${BLUE}  ${module_upper} 模块测试${NC}"
     echo -e "${BLUE}----------------------------------------${NC}"
 
+    local rc=0
     cargo test --package topems-unified-core --test "$test_file" 2>&1 | while IFS= read -r line; do
         if [[ "$line" == *"test result: ok"* ]]; then
             echo -e "${GREEN}$line${NC}"
@@ -100,8 +101,13 @@ run_module_test() {
             echo "$line"
         fi
     done
+    rc=${PIPESTATUS[0]}
 
     echo ""
+    if [ $rc -ne 0 ]; then
+        echo -e "${RED}✗ ${module_upper} 模块测试失败（exit $rc）${NC}"
+        return 1
+    fi
 }
 
 # 运行所有测试
@@ -133,8 +139,10 @@ run_all_tests() {
 
     if [ $failed -eq 0 ]; then
         echo -e "${GREEN}所有测试通过！${NC}"
+        return 0
     else
-        echo -e "${YELLOW}部分测试失败，请检查日志${NC}"
+        echo -e "${RED}部分测试失败，请检查日志${NC}" >&2
+        return 1
     fi
 }
 
@@ -166,15 +174,18 @@ generate_report() {
 main() {
     check_environment
 
+    local rc=0
     if [ "$MODULE" == "all" ]; then
-        run_all_tests
+        run_all_tests || rc=1
     else
-        run_module_test "$MODULE"
+        run_module_test "$MODULE" || rc=1
     fi
 
     if [ "$GENERATE_REPORT" = true ]; then
-        generate_report
+        generate_report || rc=1
     fi
+
+    exit $rc
 }
 
 main

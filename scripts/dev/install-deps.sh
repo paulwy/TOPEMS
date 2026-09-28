@@ -11,6 +11,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_ROOT"
 
+# 口令策略：优先环境变量注入（TOPEMS_DB_PASSWORD / TOPEMS_REDIS_PASSWORD），
+# 未设置时生成随机口令并写入 standalone.env——禁止明文硬编码默认口令
+DB_PASSWORD="${TOPEMS_DB_PASSWORD:-$(openssl rand -hex 12)}"
+REDIS_PASSWORD="${TOPEMS_REDIS_PASSWORD:-$(openssl rand -hex 12)}"
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -73,11 +78,11 @@ install_postgres() {
   if [ "$OS" == "macos" ]; then
     createuser -s topems 2>/dev/null || true
     createdb -O topems topems 2>/dev/null || true
-    psql -U "$USER" -d postgres -c "ALTER USER topems WITH PASSWORD 'topems_secret';" 2>/dev/null || true
+    psql -U "$USER" -d postgres -c "ALTER USER topems WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || true
   else
     sudo -u postgres createuser topems
     sudo -u postgres createdb -O topems topems
-    sudo -u postgres psql -c "ALTER USER topems WITH PASSWORD 'topems_secret';"
+    sudo -u postgres psql -c "ALTER USER topems WITH PASSWORD '$DB_PASSWORD';"
   fi
   
   success "PostgreSQL 安装完成"
@@ -100,10 +105,10 @@ install_redis() {
   # 设置密码
   info "配置 Redis 密码..."
   if [ "$OS" == "macos" ]; then
-    redis-cli config set requirepass "topems_redis_secret"
+    redis-cli config set requirepass "$REDIS_PASSWORD"
     redis-cli config rewrite
   else
-    sudo redis-cli config set requirepass "topems_redis_secret"
+    sudo redis-cli config set requirepass "$REDIS_PASSWORD"
     sudo redis-cli config rewrite
   fi
   
@@ -259,19 +264,17 @@ WEB_PORT=3000
 EOF
   fi
   
-  # 创建独立运行环境变量文件
-  if [ ! -f "$PROJECT_ROOT/config/standalone.env" ]; then
-    cat > "$PROJECT_ROOT/config/standalone.env" << EOF
+  # 创建/更新独立运行环境变量文件（口令随本次安装同步，保证可连接）
+  cat > "$PROJECT_ROOT/config/standalone.env" << EOF
 # TOPEMS 独立运行环境变量（非 Docker 方案）
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
-REDIS_URL=redis://:topems_redis_secret@localhost:6379
+DATABASE_URL=postgres://topems:${DB_PASSWORD}@localhost:5432/topems
+REDIS_URL=redis://:${REDIS_PASSWORD}@localhost:6379
 OLLAMA_HOST=http://localhost:11434
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
 REFRESH_SECRET="${REFRESH_SECRET:-$(openssl rand -hex 32)}"
 CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 RUST_LOG=info,service_discovery=info,rd::ai_integration=info,portal::federation_gateway=debug,portal::graphql_schema=debug,portal::intelligent_gateway=debug
 EOF
-  fi
   
   success "配置文件创建完成"
 }
@@ -293,7 +296,7 @@ verify_install() {
   fi
   
   # Redis
-  if redis-cli -a topems_redis_secret ping | grep -q PONG; then
+  if redis-cli -a "$REDIS_PASSWORD" ping | grep -q PONG; then
     echo "✅ Redis"
   else
     echo "❌ Redis"

@@ -211,10 +211,11 @@ run_all_tests() {
     return 0
 }
 
-# 运行所有场景
+# 运行所有场景（任一场景失败 → 返回非零，不再 || true 吞失败）
 run_all_scenarios() {
     local test_name="${1:-all}"
     local scenarios=("smoke" "average" "stress")
+    local all_failed=0
     
     for scenario in "${scenarios[@]}"; do
         print_separator
@@ -222,11 +223,13 @@ run_all_scenarios() {
         print_separator
         
         if [ "$test_name" = "all" ]; then
-            run_all_tests "$scenario" || true
+            run_all_tests "$scenario" || all_failed=1
         else
-            run_test "$test_name" "$scenario" || true
+            run_test "$test_name" "$scenario" || all_failed=1
         fi
     done
+    
+    return $all_failed
 }
 
 # 生成性能测试汇总报告
@@ -448,23 +451,30 @@ main() {
     # 检查前置条件
     check_prerequisites
     
-    # 运行测试
+    # 运行测试（任一失败 → 非零退出）
+    local run_rc=0
     if [ "$run_all" = true ]; then
-        run_all_scenarios "$test_name"
+        run_all_scenarios "$test_name" || run_rc=1
     elif [ "$test_name" = "all" ]; then
-        run_all_tests "$scenario"
+        run_all_tests "$scenario" || run_rc=1
     else
-        run_test "$test_name" "$scenario"
+        run_test "$test_name" "$scenario" || run_rc=1
     fi
     
     # 生成汇总报告
     generate_summary_report
     
     print_separator
-    print_success "性能测试完成！"
+    if [ $run_rc -eq 0 ]; then
+        print_success "性能测试完成！"
+    else
+        print_error "性能测试存在失败场景（详见上方日志）"
+    fi
     print_info "报告目录: $REPORT_DIR"
     print_info "日志目录: $LOG_DIR"
     print_separator
+    
+    return $run_rc
 }
 
 main "$@"

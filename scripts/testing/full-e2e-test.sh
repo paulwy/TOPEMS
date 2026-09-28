@@ -158,6 +158,14 @@ setup_dependencies() {
     fi
 }
 
+teardown() {
+    log_info "清理测试环境..."
+    # 本脚本不启动常驻服务（依赖检查模式），teardown 清理 E2E 默认产物
+    rm -rf "${PROJECT_ROOT}/tests/e2e/test-results" 2>/dev/null || true
+    rm -rf "${PROJECT_ROOT}/tests/e2e/playwright-report" 2>/dev/null || true
+    log_success "清理完成"
+}
+
 run_database_migrations() {
     log_info "运行数据库迁移..."
     [ ! -f "${PROJECT_ROOT}/.env" ] && { log_warning ".env 不存在，跳过迁移"; return 0; }
@@ -185,7 +193,7 @@ run_rust_tests() {
     log_success "$service 单元测试通过"
     if [ -d "tests" ]; then
         log_verbose "运行集成测试..."
-        cargo test --test '*' 2>&1 | tee -a "${LOG_DIR}/${service}-integration.log" || log_warning "$service 集成测试部分失败"
+        cargo test --test '*' 2>&1 | tee -a "${LOG_DIR}/${service}-integration.log" || { log_error "$service 集成测试失败"; return 1; }
     fi
 }
 
@@ -194,9 +202,23 @@ run_ai_service_tests() {
     local ai_dir="${PROJECT_ROOT}/svc/ai"
     [ ! -d "$ai_dir" ] && { log_error "AI 服务目录不存在"; return 1; }
     cd "$ai_dir"
-    [ -f "tests/dsh_agent_e2e_test.rs" ] && { log_verbose "DSH Agent E2E..."; cargo test --test dsh_agent_e2e_test 2>&1 | tee -a "${LOG_DIR}/ai-dsh-agent-e2e.log" || true; }
-    [ -f "tests/dsh_ai_enhanced_e2e_test.rs" ] && { log_verbose "AI 增强 E2E..."; cargo test --test dsh_ai_enhanced_e2e_test 2>&1 | tee -a "${LOG_DIR}/ai-enhanced-e2e.log" || true; }
-    [ -f "tests/dsh_agent_performance_integration_test.rs" ] && { log_verbose "性能集成..."; cargo test --test dsh_agent_performance_integration_test 2>&1 | tee -a "${LOG_DIR}/ai-performance.log" || true; }
+    local ai_failed=0
+    if [ -f "tests/dsh_agent_e2e_test.rs" ]; then
+        log_verbose "DSH Agent E2E..."
+        cargo test --test dsh_agent_e2e_test 2>&1 | tee -a "${LOG_DIR}/ai-dsh-agent-e2e.log" || { log_error "DSH Agent E2E 失败"; ai_failed=1; }
+    fi
+    if [ -f "tests/dsh_ai_enhanced_e2e_test.rs" ]; then
+        log_verbose "AI 增强 E2E..."
+        cargo test --test dsh_ai_enhanced_e2e_test 2>&1 | tee -a "${LOG_DIR}/ai-enhanced-e2e.log" || { log_error "AI 增强 E2E 失败"; ai_failed=1; }
+    fi
+    if [ -f "tests/dsh_agent_performance_integration_test.rs" ]; then
+        log_verbose "性能集成..."
+        cargo test --test dsh_agent_performance_integration_test 2>&1 | tee -a "${LOG_DIR}/ai-performance.log" || { log_error "AI 性能集成测试失败"; ai_failed=1; }
+    fi
+    if [ $ai_failed -ne 0 ]; then
+        log_error "AI 服务专项测试存在失败"
+        return 1
+    fi
     log_success "AI 服务专项测试完成"
 }
 
@@ -206,8 +228,13 @@ run_e2e_tests() {
     [ ! -d "$e2e_dir" ] && { log_warning "E2E 测试目录不存在"; return 1; }
     cd "$e2e_dir"
     if [ -f "package.json" ]; then
-        command -v pnpm &> /dev/null && pnpm install --frozen-lockfile 2>&1 | tee -a "${LOG_DIR}/e2e-install.log" || true
-        [ -f "playwright.config.ts" ] && command -v npx &> /dev/null && { log_verbose "Playwright E2E..."; npx playwright test 2>&1 | tee -a "${LOG_DIR}/e2e-playwright.log" || true; }
+        if command -v pnpm &> /dev/null; then
+            pnpm install --frozen-lockfile 2>&1 | tee -a "${LOG_DIR}/e2e-install.log" || log_warning "E2E 依赖安装失败，继续尝试运行测试"
+        fi
+        if [ -f "playwright.config.ts" ] && command -v npx &> /dev/null; then
+            log_verbose "Playwright E2E..."
+            npx playwright test 2>&1 | tee -a "${LOG_DIR}/e2e-playwright.log" || { log_error "Playwright E2E 测试失败"; return 1; }
+        fi
     fi
 }
 
@@ -279,10 +306,14 @@ main() {
     for service in "${test_services[@]}"; do
         if [ "$service" = "ai" ]; then run_ai_service_tests || overall_status=1; else run_rust_tests "$service" || overall_status=1; fi
     done
-    run_e2e_tests || true
+    run_e2e_tests || overall_status=1
     local report_file=""
     [ "$GENERATE_REPORT" = true ] && report_file=$(generate_report)
-    [ "$SKIP_TEARDOWN" = false ] && log_info "清理完成" || log_info "跳过清理"
+    if [ "$SKIP_TEARDOWN" = false ]; then
+        teardown
+    else
+        log_info "跳过清理（--skip-teardown）"
+    fi
     local end_time=$(date +%s) duration=$((end_time - start_time)) minutes=$((duration / 60)) seconds=$((duration % 60))
     echo ""; echo "=============================================="; echo "  联调完成"; echo "=============================================="
     echo "  耗时: ${minutes}分${seconds}秒"

@@ -14,20 +14,31 @@
 
 set -e
 
-# 数据库连接配置
+# 数据库连接配置（口令不设明文默认：优先环境变量，其次从 config/standalone.env 提取）
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-topems}"
 DB_USER="${DB_USER:-topems}"
-DB_PASSWORD="${DB_PASSWORD:-topems_secret}"
+DB_PASSWORD="${DB_PASSWORD:-}"
 
-# 默认用户名和密码
-USERNAME="${1:-admin}"
-NEW_PASSWORD="${2:-admin123}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+if [ -z "$DB_PASSWORD" ] && [ -f "$PROJECT_ROOT/config/standalone.env" ]; then
+    DB_PASSWORD="$(sed -n 's#^DATABASE_URL=postgres://[^:]*:\([^@]*\)@.*#\1#p' "$PROJECT_ROOT/config/standalone.env" | head -1)"
+fi
+if [ -z "$DB_PASSWORD" ]; then
+    echo "错误: 未设置 DB_PASSWORD 环境变量，且无法从 config/standalone.env 提取数据库口令" >&2
+    echo "用法: DB_PASSWORD='<口令>' bash scripts/dev/update-admin-password.sh <用户名> <新密码>" >&2
+    exit 2
+fi
 
-# bcrypt 密码哈希（对应密码: admin123）
-# 使用 Python bcrypt 生成: bcrypt.hashpw(b'admin123', bcrypt.gensalt())
-DEFAULT_ADMIN_PASSWORD_HASH='$2b$12$YkGrx2WY9t1JbChfVNO7pe6S4T7iPjFm8j7dm5HBOe2d.InbncFce'
+# 用户名与密码均为必填（不再提供 admin/admin123 默认弱口令）
+USERNAME="${1:?用法: $0 <用户名> <新密码>}"
+NEW_PASSWORD="${2:?用法: $0 <用户名> <新密码>}"
+if [ ${#NEW_PASSWORD} -lt 8 ]; then
+    echo "错误: 新密码长度至少 8 位" >&2
+    exit 2
+fi
 
 echo "============================================================"
 echo "TOPEMS Admin 用户密码重置脚本"
@@ -55,10 +66,10 @@ fi
 echo "------------------------------------------------------------"
 echo "步骤 1: 查看当前用户信息"
 echo "------------------------------------------------------------"
-psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -c "
+psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -v username="$USERNAME" -c "
 SELECT id, username, email, is_superuser, status 
 FROM core_users 
-WHERE username = '${USERNAME}';
+WHERE username = :'username';
 " 2>&1 || {
     echo "❌ 查询失败"
     unset PGPASSWORD
@@ -75,38 +86,29 @@ if [ "$confirm" != "yes" ] && [ "$confirm" != "y" ] && [ "$confirm" != "Y" ] && 
 fi
 echo
 
-# 如果使用默认密码，使用预设哈希
-if [ "$NEW_PASSWORD" = "admin123" ]; then
-    PASSWORD_HASH="$DEFAULT_ADMIN_PASSWORD_HASH"
-    echo "使用预设 bcrypt 哈希（密码: admin123）"
-else
-    # 动态生成哈希
-    if command -v python3 &> /dev/null; then
-        echo "生成 bcrypt 哈希..."
-        PASSWORD_HASH=$(python3 -c "import bcrypt, sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt()).decode())" "$NEW_PASSWORD" 2>/dev/null) || {
-            echo "❌ 错误: 需要安装 bcrypt 库"
-            echo "  运行: pip install bcrypt"
-            echo "  或使用默认密码 admin123"
-            unset PGPASSWORD
-            exit 1
-        }
-    else
-        echo "❌ 错误: 需要 Python 3 来生成自定义密码哈希"
-        echo "  或使用默认密码 admin123"
+# 动态生成 bcrypt 哈希
+if command -v python3 &> /dev/null; then
+    echo "生成 bcrypt 哈希..."
+    PASSWORD_HASH=$(python3 -c "import bcrypt, sys; print(bcrypt.hashpw(sys.argv[1].encode(), bcrypt.gensalt()).decode())" "$NEW_PASSWORD" 2>/dev/null) || {
+        echo "❌ 错误: 需要安装 bcrypt 库（pip install bcrypt）"
         unset PGPASSWORD
         exit 1
-    fi
+    }
+else
+    echo "❌ 错误: 需要 Python 3 来生成密码哈希"
+    unset PGPASSWORD
+    exit 1
 fi
 echo
 
 echo "------------------------------------------------------------"
 echo "步骤 2: 更新密码"
 echo "------------------------------------------------------------"
-psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -c "
+psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -v username="$USERNAME" -v pwdhash="$PASSWORD_HASH" -c "
 UPDATE core_users 
-SET password_hash = '${PASSWORD_HASH}',
+SET password_hash = :'pwdhash',
     updated_at = NOW()
-WHERE username = '${USERNAME}';
+WHERE username = :'username';
 " 2>&1 || {
     echo "❌ 更新失败"
     unset PGPASSWORD
@@ -117,12 +119,12 @@ echo
 echo "------------------------------------------------------------"
 echo "步骤 3: 验证结果"
 echo "------------------------------------------------------------"
-psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -c "
+psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" -v username="$USERNAME" -c "
 SELECT username, email, 
        substring(password_hash, 1, 30) || '...' as password_hash_preview, 
        updated_at 
 FROM core_users 
-WHERE username = '${USERNAME}';
+WHERE username = :'username';
 "
 echo
 

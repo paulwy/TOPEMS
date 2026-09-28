@@ -55,7 +55,7 @@ else
     echo "🏋️  完整性能测试模式"
     echo "   VUs: 50-100 | Duration: 60-120s"
     echo ""
-    if curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/health" 2>/dev/null | grep -q "200\|401"; then
+    if curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/health" 2>/dev/null | grep -q "200\|401"; then
         echo "✅ 后端服务已连接 ($BASE_URL)"
     else
         echo "⚠️  后端服务未运行 ($BASE_URL)，测试可能全部失败"

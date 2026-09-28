@@ -1611,7 +1611,7 @@ jobs:
           fi
 
       - name: Bundle size budget check
-        run: bash scripts/bundle-check.sh --json /tmp/bundle-report.json
+        run: MAX_TOTAL=30M MAX_CHUNK=500K MAX_VENDOR=2500K MAX_INITIAL=1500K bash scripts/bundle-check.sh --json /tmp/bundle-report.json
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5

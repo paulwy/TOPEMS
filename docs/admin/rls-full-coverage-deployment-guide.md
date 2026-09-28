@@ -138,7 +138,7 @@ journalctl -u topems-backend -f --lines 50
 
 ```bash
 # 测试核心 API
-curl -s http://localhost:8080/api/health | jq .
+curl -s http://localhost:8080/health | jq .
 curl -s -H "Authorization: Bearer <token>" http://localhost:8080/api/core/tenants | jq .
 
 # 测试 RLS 隔离（使用不同租户 token）

@@ -203,8 +203,11 @@ main() {
   info "测试用例: ${#BENCH_CASES[@]} 个 (Rust/React/Python/解释)"
 
   if [ "$1" = "--all" ]; then
-    # 测试所有已安装模型（排除嵌入模型）
-    mapfile -t models < <(curl -s "${OLLAMA_HOST}/api/tags" | python3 -c "
+    # 测试所有已安装模型（排除嵌入模型）——bash 3.2 兼容：mapfile → while read
+    local models=()
+    while IFS= read -r mname; do
+      [ -n "$mname" ] && models+=("$mname")
+    done < <(curl -s "${OLLAMA_HOST}/api/tags" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 for m in d.get('models', []):

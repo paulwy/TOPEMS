@@ -97,6 +97,9 @@ check_environment() {
     echo ""
 }
 
+# 后端测试失败标志（供 main 聚合退出码）
+BACKEND_FAILED=0
+
 # 运行后端测试
 run_backend_tests() {
     echo -e "${BLUE}========================================${NC}"
@@ -109,14 +112,24 @@ run_backend_tests() {
     echo -e "${YELLOW}运行 IAM 权限测试...${NC}"
     echo ""
 
-    # 运行权限库测试
+    # 运行权限库测试（保留真实退出码，不再 || true 吞失败）
     echo -e "${YELLOW}1. 运行权限库测试 (lib/tests/permission_test.rs)${NC}"
-    cargo test --package topems-shared --test permission_test 2>&1 || true
+    cargo test --package topems-shared --test permission_test 2>&1 | tail -6
+    local rc1=${PIPESTATUS[0]}
+    if [ $rc1 -ne 0 ]; then
+        echo -e "${RED}✗ 权限库测试失败 (exit $rc1)${NC}" >&2
+        BACKEND_FAILED=1
+    fi
     echo ""
 
     # 运行 IAM 模块测试
     echo -e "${YELLOW}2. 运行 IAM 模块测试 (svc/unified-core/tests/iam_permission_tests.rs)${NC}"
-    cargo test --package topems-unified-core --test iam_permission_tests 2>&1 || true
+    cargo test --package topems-unified-core --test iam_permission_tests 2>&1 | tail -6
+    local rc2=${PIPESTATUS[0]}
+    if [ $rc2 -ne 0 ]; then
+        echo -e "${RED}✗ IAM 模块测试失败 (exit $rc2)${NC}" >&2
+        BACKEND_FAILED=1
+    fi
     echo ""
 
     echo -e "${GREEN}后端测试完成${NC}"
@@ -196,6 +209,11 @@ main() {
 
     if [ "$RUN_FRONTEND" = true ]; then
         run_frontend_tests
+    fi
+
+    if [ $BACKEND_FAILED -ne 0 ]; then
+        echo -e "${RED}后端测试存在失败，退出码非零${NC}" >&2
+        exit 1
     fi
 
     generate_summary

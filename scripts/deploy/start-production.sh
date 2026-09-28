@@ -10,10 +10,17 @@ ENV_FILE="${PROJECT_DIR}/.env.production"
 LOG_DIR="/tmp/topems-logs"
 BACKEND_BIN="${PROJECT_DIR}/target/release/topems-unified-core"
 FRONTEND_DIR="${PROJECT_DIR}/apps/web/dist"
-BACKEND_PORT=8013
-FRONTEND_PORT=3001
 BACKEND_PID_FILE="${LOG_DIR}/backend.pid"
 FRONTEND_PID_FILE="${LOG_DIR}/frontend.pid"
+
+# 端口从 config/ports.env 单一事实源派生；文件缺失时保留传统默认
+BACKEND_PORT=8013
+FRONTEND_PORT=3001
+if [ -f "${PROJECT_DIR}/config/ports.env" ]; then
+    source "${PROJECT_DIR}/config/ports.env"
+    BACKEND_PORT="${AI_PORT:-$BACKEND_PORT}"
+    FRONTEND_PORT="${WEB_PORT:-$FRONTEND_PORT}"
+fi
 
 mkdir -p "$LOG_DIR"
 

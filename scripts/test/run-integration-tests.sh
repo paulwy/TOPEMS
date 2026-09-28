@@ -323,8 +323,13 @@ run_service_tests() {
         return 0
     fi
 
-    # 检查服务是否就绪
+    # 检查服务是否就绪：--start-services 模式下未就绪 = 失败（服务本应由脚本启动）
     if ! curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
+        if [ "$START_SERVICES" = true ]; then
+            error "$service_name 服务未运行（端口 $port）——--start-services 模式下未就绪视为失败"
+            TOTAL_FAILED=$((TOTAL_FAILED + 1))
+            return 1
+        fi
         warning "$service_name 服务未运行（端口 $port），跳过集成测试"
         TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
         return 0
@@ -482,7 +487,8 @@ main() {
         if [ $TOTAL_PASSED -gt 0 ]; then
             success "所有集成测试通过！"
         else
-            warning "没有运行任何测试（可能服务未启动或没有集成测试）"
+            error "没有运行任何测试（服务未启动/无测试文件）——零测试视为失败，防 CI 假绿"
+            exit 1
         fi
     else
         error "部分集成测试失败，请查看上方日志"

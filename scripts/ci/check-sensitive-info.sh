@@ -48,9 +48,10 @@ for f in $STAGED; do
   DIFF_LINES=$(git diff --cached -- "$f" 2>/dev/null | grep '^+' | grep -v '^+++' || true)
   [ -z "$DIFF_LINES" ] && continue
 
-  # 过滤值为变量引用（如 PGPASSWORD="$DB_PASSWORD"、secret="$VAR"）的赋值行：
-  # 变量引用不是硬编码密钥，避免误报
-  DIFF_LINES=$(printf '%s\n' "$DIFF_LINES" | grep -vE '^[+][^=]*=[[:space:]]*"?[$]' || true)
+  # 过滤值为变量引用（如 PGPASSWORD="$DB_PASSWORD"、secret="$VAR"）的赋值行，
+  # 以及占位符提示行（如 echo "用法: DB_PASSWORD='<口令>' ..."）：
+  # 两者都不是硬编码密钥，避免误报
+  DIFF_LINES=$(printf '%s\n' "$DIFF_LINES" | grep -vE '^[+][^=]*=[[:space:]]*"?[$]|<(口令|password|DB_PASSWORD|TOPEMS_DB_PASSWORD|new_password)>' || true)
   [ -z "$DIFF_LINES" ] && continue
 
   for p in "${PATTERNS[@]}"; do

@@ -1,6 +1,10 @@
 #!/bin/bash
 # 文件: scripts/deploy.sh
-# TOPEMS 一键部署脚本 (离线环境使用)
+# [DEPRECATED] TOPEMS 一键部署脚本 (docker run 离线范式 C)
+# 说明: 仓库部署范式已收敛为 A（systemd + /opt/topems，见 scripts/deploy/production-deploy.sh 与 install.sh）。
+#       本脚本保留仅供历史离线环境参考；端口一律以 config/ports.env 为单一事实源，
+#       新部署请使用 production-deploy.sh（含失败回滚与真实 unit 管理）。
+# 使用: VERSION=x ./deploy.sh [deploy|rollback|...]
 
 set -e
 

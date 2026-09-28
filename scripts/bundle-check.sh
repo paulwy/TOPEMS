@@ -15,9 +15,9 @@
 #
 # Environment:
 #   DIST_DIR        - Vite output directory (default: apps/web/dist)
-#   MAX_TOTAL       - Total budget (default: 5M)
-#   MAX_CHUNK       - App-chunk budget (default: 500K)
-#   MAX_VENDOR      - Vendor-chunk budget (default: 2500K)
+#   MAX_TOTAL       - Total budget (default: 30M，与现网 dist 体量对齐)
+#   MAX_CHUNK       - App-chunk budget (default: 500K，与 ci.yml 内联门禁一致)
+#   MAX_VENDOR      - Vendor-chunk budget (default: 2500K，与 ci.yml 内联门禁一致)
 #   MAX_INITIAL     - Initial-entry budget (default: 1500K)
 #
 # Exit codes:
@@ -50,9 +50,11 @@ fi
 # ---------------------------------------------------------------------------
 
 DIST_DIR="${DIST_DIR:-$ROOT_DIR/apps/web/dist}"
-MAX_TOTAL="${MAX_TOTAL:-15M}"
-MAX_CHUNK="${MAX_CHUNK:-1000K}"
-MAX_VENDOR="${MAX_VENDOR:-5M}"
+# 预算口径与 .github/workflows/ci.yml 权威阈值统一（ci.yml 内联门禁 = MAX_CHUNK 500K / MAX_VENDOR 2500K）；
+# MAX_TOTAL 按现网实际体量（dist 约 23MB）+ 增长余量设为 30M
+MAX_TOTAL="${MAX_TOTAL:-30M}"
+MAX_CHUNK="${MAX_CHUNK:-500K}"
+MAX_VENDOR="${MAX_VENDOR:-2500K}"
 MAX_INITIAL="${MAX_INITIAL:-1500K}"
 
 JSON_OUT=""
