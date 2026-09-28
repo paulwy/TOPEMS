@@ -6,7 +6,7 @@ use axum::{extract::Extension, extract::State, routing::get, Json, Router};
 use chrono::NaiveDate;
 use serde::Serialize;
 use sqlx::{
-    types::{BigDecimal, Uuid},
+    Uuid,
     Row,
 };
 use topems_shared_auth::auth::Claims;
