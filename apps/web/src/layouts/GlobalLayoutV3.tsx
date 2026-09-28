@@ -727,7 +727,7 @@ export const GlobalLayoutV3: React.FC<GlobalLayoutV3Props> = ({ children, fullWi
   };
 
   const handleSettingsOpen = () => {
-    navigate('/dashboard');
+    navigate('/settings');
   };
 
   const handleProfileOpen = () => {
