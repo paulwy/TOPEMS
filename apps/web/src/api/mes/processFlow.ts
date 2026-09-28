@@ -6,7 +6,7 @@ export interface ProcessFlow {
   code: string;
   name: string;
   description?: string;
-  version?: string;
+  version?: number;
   status: string;
   route_id?: string;
   route_name?: string;
@@ -21,7 +21,7 @@ export interface CreateProcessFlowRequest {
   code: string;
   name: string;
   description?: string;
-  version?: string;
+  version?: number;
   route_id?: string;
   production_line?: string;
   capacity?: number;
@@ -31,7 +31,7 @@ export interface CreateProcessFlowRequest {
 export interface UpdateProcessFlowRequest {
   name?: string;
   description?: string;
-  version?: string;
+  version?: number;
   route_id?: string;
   production_line?: string;
   capacity?: number;

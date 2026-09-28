@@ -299,7 +299,7 @@ pub async fn create_record(
         req.work_station_id,
         req.operator_id,
         req.start_time,
-        req.quantity_produced.map(|q| q as i32),
+        f64_to_big_decimal(req.quantity_produced),
         req.notes,
         now,
     )
@@ -446,7 +446,7 @@ pub async fn update_record(
         req.work_station_id,
         req.operator_id,
         req.end_time,
-        req.quantity_produced.map(|q| q as i32),
+        f64_to_big_decimal(req.quantity_produced),
         status,
         req.notes,
         now,

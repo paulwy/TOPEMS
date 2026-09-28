@@ -38,6 +38,33 @@ fn generate_embedding(text: &str, dimension: usize) -> Vec<f32> {
     embedding
 }
 
+/// POST /api/embedding/generate - 生成文本向量
+pub async fn generate(
+    State(_state): State<AppState>,
+    Json(req): Json<EmbeddingRequest>,
+) -> Json<ApiResponse<EmbeddingResponse>> {
+    let model = req
+        .model
+        .unwrap_or_else(|| "text-embedding-3-small".to_string());
+    let dimension = req.dimensions.unwrap_or(768);
+
+    let mut embeddings: Vec<Vec<f32>> = Vec::new();
+
+    for text in &req.texts {
+        let embedding = generate_embedding(text, dimension);
+        embeddings.push(embedding);
+    }
+
+    Json(ApiResponse::success(
+        EmbeddingResponse {
+            embeddings,
+            model,
+            dimension,
+        },
+        "Success",
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -121,31 +148,4 @@ mod tests {
         let cloned = resp.clone();
         assert_eq!(cloned.dimension, resp.dimension);
     }
-}
-
-/// POST /api/embedding/generate - 生成文本向量
-pub async fn generate(
-    State(_state): State<AppState>,
-    Json(req): Json<EmbeddingRequest>,
-) -> Json<ApiResponse<EmbeddingResponse>> {
-    let model = req
-        .model
-        .unwrap_or_else(|| "text-embedding-3-small".to_string());
-    let dimension = req.dimensions.unwrap_or(768);
-
-    let mut embeddings: Vec<Vec<f32>> = Vec::new();
-
-    for text in &req.texts {
-        let embedding = generate_embedding(text, dimension);
-        embeddings.push(embedding);
-    }
-
-    Json(ApiResponse::success(
-        EmbeddingResponse {
-            embeddings,
-            model,
-            dimension,
-        },
-        "Success",
-    ))
 }

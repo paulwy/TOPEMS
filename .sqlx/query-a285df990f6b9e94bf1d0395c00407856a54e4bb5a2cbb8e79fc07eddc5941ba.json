@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "quantity_produced",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 9,
@@ -81,7 +81,7 @@
         "Uuid",
         "Uuid",
         "Timestamptz",
-        "Int4",
+        "Numeric",
         "Text",
         "Timestamptz"
       ]

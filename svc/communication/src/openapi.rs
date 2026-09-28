@@ -17,7 +17,6 @@ use utoipa::OpenApi;
     responses((status = 200, description = "OK")),
 )]
 fn _health() {}
-
 #[derive(OpenApi)]
 #[openapi(
     paths(
@@ -121,7 +120,6 @@ fn _health() {}
         description = "通讯渠道网关服务 API - 包含邮件、短信、IM、站内消息等多渠道发送能力"
     )
 )]
-
 // =============================================================================
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // （health_handler 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec，

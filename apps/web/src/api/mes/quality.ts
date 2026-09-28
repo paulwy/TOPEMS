@@ -108,7 +108,7 @@ export interface QualityStandard {
   inspection_type: string;
   standard_values: QualityStandardValue[];
   status: string;
-  version?: string;
+  version?: number;
   effective_date?: string;
   description?: string;
   created_at: string;
@@ -140,7 +140,7 @@ export interface CreateQualityStandardRequest {
     inspection_method?: string;
     remark?: string;
   }>;
-  version?: string;
+  version?: number;
   effective_date?: string;
   description?: string;
 }

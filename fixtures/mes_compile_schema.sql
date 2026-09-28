@@ -1,6 +1,6 @@
 -- ============================================================================
 -- mes 编译结构快照（mes_guard.sh --sync-snapshot 自动生成，勿手改）
--- 来源: topems@localhost:5432/topems  生成时间: 2026-09-25T00:55:47Z
+-- 来源: postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems@postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems:postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems/postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems  生成时间: 2026-09-28T13:37:43Z
 -- 用途: CI mes-online-check 干净库编译（导入本文件后在线解析）
 -- 规则: 任何 mes schema / public 共享表结构变更后，必须重新执行本脚本同步
 -- ============================================================================
@@ -34,6 +34,18 @@ SET row_security = off;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+
+CREATE TABLE mes._sqlx_migrations (
+    version bigint NOT NULL,
+    description text NOT NULL,
+    installed_on timestamp with time zone DEFAULT now() NOT NULL,
+    success boolean NOT NULL,
+    checksum bytea NOT NULL,
+    execution_time bigint NOT NULL
+);
+
+
 
 
 CREATE TABLE mes.audit_logs (
@@ -73,10 +85,9 @@ CREATE TABLE mes.batch_records (
     supplier character varying(256),
     status character varying(32) DEFAULT 'active'::character varying,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -94,9 +105,8 @@ CREATE TABLE mes.bom_items (
     loss_rate numeric(5,4) DEFAULT 0,
     sequence integer DEFAULT 0,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -138,8 +148,8 @@ CREATE TABLE mes.demand_forecasts (
     notes text,
     status character varying(32) DEFAULT 'draft'::character varying,
     tenant_id uuid,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     deleted_at timestamp with time zone
 );
 
@@ -298,10 +308,9 @@ CREATE TABLE mes.equipment_inspections (
     items jsonb,
     abnormalities text,
     remarks text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -381,9 +390,9 @@ CREATE TABLE mes.equipment_oee (
     shift character varying(32),
     operator character varying(128),
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone,
     tenant_id uuid
 );
 
@@ -399,10 +408,16 @@ CREATE TABLE mes.material_boms (
     version character varying(32) DEFAULT '1.0'::character varying,
     status character varying(32) DEFAULT 'draft'::character varying,
     description text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone
+);
+
+
+
+
+CREATE TABLE mes.material_categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL
 );
 
 
@@ -419,9 +434,8 @@ CREATE TABLE mes.material_issue_items (
     actual_quantity numeric(12,4) NOT NULL,
     batch_no character varying(64),
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -436,12 +450,11 @@ CREATE TABLE mes.material_issues (
     status character varying(32) DEFAULT 'pending'::character varying,
     warehouse_id uuid,
     operator_id uuid,
-    issue_time timestamp with time zone,
+    issue_time timestamp without time zone,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone
 );
 
 
@@ -487,10 +500,9 @@ CREATE TABLE mes.material_requirements (
     status character varying(32) DEFAULT 'pending'::character varying,
     source_type character varying(32),
     remark text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -507,9 +519,8 @@ CREATE TABLE mes.material_return_items (
     reason text,
     batch_no character varying(64),
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -523,12 +534,11 @@ CREATE TABLE mes.material_returns (
     status character varying(32) DEFAULT 'pending'::character varying,
     warehouse_id uuid,
     operator_id uuid,
-    return_time timestamp with time zone,
+    return_time timestamp without time zone,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone
 );
 
 
@@ -555,12 +565,12 @@ CREATE TABLE mes.process_flow_steps (
     sequence integer NOT NULL,
     work_station_id uuid,
     equipment_ids uuid[] DEFAULT '{}'::uuid[],
-    standard_time numeric(12,4),
-    wait_time numeric(12,4),
-    transfer_time numeric(12,4),
+    standard_time double precision,
+    wait_time double precision,
+    transfer_time text,
     quality_check_required boolean DEFAULT false,
     description text,
-    created_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone
 );
@@ -575,14 +585,14 @@ CREATE TABLE mes.process_flows (
     code character varying(64) NOT NULL,
     name character varying(256) NOT NULL,
     description text,
-    version character varying(32),
+    version integer,
     status character varying(32) DEFAULT 'active'::character varying,
     route_id uuid,
     production_line character varying(256),
-    capacity numeric(12,4),
+    capacity double precision,
     unit character varying(32),
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone,
     name_en character varying(255)
@@ -680,7 +690,7 @@ CREATE TABLE mes.production_orders (
     quantity integer NOT NULL,
     unit character varying(20) DEFAULT 'piece'::character varying,
     planned_quantity integer,
-    completed_quantity integer DEFAULT 0,
+    completed_quantity numeric(12,2) DEFAULT 0,
     rejected_quantity integer DEFAULT 0,
     scrapped_quantity integer DEFAULT 0,
     priority character varying(20) DEFAULT 'normal'::character varying,
@@ -755,8 +765,8 @@ CREATE TABLE mes.production_plans (
     target_quantity numeric(14,2),
     notes text,
     tenant_id uuid,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     deleted_at timestamp with time zone
 );
 
@@ -835,7 +845,7 @@ CREATE TABLE mes.production_records (
     end_time timestamp with time zone,
     duration_minutes numeric(10,2),
     planned_quantity integer,
-    completed_quantity integer DEFAULT 0 NOT NULL,
+    completed_quantity numeric(12,2) DEFAULT 0 NOT NULL,
     good_quantity integer DEFAULT 0,
     rejected_quantity integer DEFAULT 0,
     scrapped_quantity integer DEFAULT 0,
@@ -892,17 +902,17 @@ CREATE TABLE mes.production_schedules (
     work_station_id uuid,
     equipment_id uuid,
     process_id uuid,
-    planned_start_time timestamp with time zone,
-    planned_end_time timestamp with time zone,
-    actual_start_time timestamp with time zone,
-    actual_end_time timestamp with time zone,
+    planned_start_time timestamp without time zone,
+    planned_end_time timestamp without time zone,
+    actual_start_time timestamp without time zone,
+    actual_end_time timestamp without time zone,
     status character varying(32) DEFAULT 'pending'::character varying,
     priority integer DEFAULT 0,
     sequence integer DEFAULT 0,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone,
     tenant_id uuid
 );
 
@@ -928,8 +938,8 @@ CREATE TABLE mes.quality_inspections (
     status character varying(32) DEFAULT 'pending'::character varying,
     result character varying(32),
     memo text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone,
     concession_approval_id uuid
@@ -948,7 +958,7 @@ CREATE TABLE mes.quality_patrol_items (
     actual_value character varying(256),
     status character varying(32) DEFAULT 'pending'::character varying,
     remark text,
-    created_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone
 );
@@ -970,8 +980,8 @@ CREATE TABLE mes.quality_patrols (
     result character varying(32),
     findings text,
     memo text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone
 );
@@ -996,13 +1006,12 @@ CREATE TABLE mes.quality_records (
     defective_quantity numeric(12,2) DEFAULT 0,
     quality_status character varying(32) DEFAULT 'pending'::character varying,
     inspector character varying(128),
-    inspection_time timestamp with time zone,
+    inspection_time timestamp without time zone,
     defect_reason text,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -1017,7 +1026,7 @@ CREATE TABLE mes.quality_standard_values (
     unit character varying(32),
     inspection_method character varying(256),
     remark text,
-    created_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone
 );
@@ -1035,11 +1044,11 @@ CREATE TABLE mes.quality_standards (
     product_name character varying(256),
     inspection_type character varying(32) NOT NULL,
     status character varying(32) DEFAULT 'active'::character varying,
-    version character varying(32),
+    version integer,
     effective_date character varying(32),
     description text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone
 );
@@ -1056,11 +1065,10 @@ CREATE TABLE mes.team_members (
     employee_name character varying(128) NOT NULL,
     employee_code character varying(64),
     "position" character varying(64),
-    join_date timestamp with time zone DEFAULT now(),
+    join_date timestamp without time zone DEFAULT now(),
     status character varying(32) DEFAULT 'active'::character varying,
-    created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -1077,9 +1085,9 @@ CREATE TABLE mes.teams (
     member_count integer DEFAULT 0,
     status character varying(32) DEFAULT 'active'::character varying,
     description text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone,
     tenant_id uuid
 );
 
@@ -1095,13 +1103,12 @@ CREATE TABLE mes.wip_transfers (
     to_process_id uuid,
     to_work_station_id uuid,
     quantity numeric(12,2) NOT NULL,
-    transfer_time timestamp with time zone NOT NULL,
+    transfer_time timestamp without time zone NOT NULL,
     operator character varying(128),
     transfer_type character varying(32) DEFAULT 'process_transfer'::character varying,
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -1120,14 +1127,13 @@ CREATE TABLE mes.wips (
     current_work_station_id uuid,
     status character varying(32) DEFAULT 'in_progress'::character varying,
     batch_no character varying(64),
-    start_time timestamp with time zone,
-    last_transfer_time timestamp with time zone,
+    start_time timestamp without time zone,
+    last_transfer_time timestamp without time zone,
     operator character varying(128),
     notes text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone
 );
 
 
@@ -1144,19 +1150,18 @@ CREATE TABLE mes.work_orders (
     process_id uuid,
     planned_quantity numeric(12,2) DEFAULT 0,
     completed_quantity numeric(12,2) DEFAULT 0,
-    plan_start_date timestamp with time zone,
-    plan_end_date timestamp with time zone,
-    actual_start_date timestamp with time zone,
-    actual_end_date timestamp with time zone,
+    plan_start_date timestamp without time zone,
+    plan_end_date timestamp without time zone,
+    actual_start_date timestamp without time zone,
+    actual_end_date timestamp without time zone,
     team_id uuid,
     operator character varying(64),
     status character varying(32) DEFAULT 'pending'::character varying,
     priority integer DEFAULT 0,
     remark text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    tenant_id uuid
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    deleted_at timestamp without time zone
 );
 
 
@@ -1244,6 +1249,11 @@ COMMENT ON COLUMN mes.work_stations.station_type IS '工作站类型：assembly,
 
 
 COMMENT ON COLUMN mes.work_stations.status IS '状态：available, busy, maintenance, offline等';
+
+
+
+ALTER TABLE ONLY mes._sqlx_migrations
+    ADD CONSTRAINT _sqlx_migrations_pkey PRIMARY KEY (version);
 
 
 
@@ -1554,6 +1564,14 @@ ALTER TABLE ONLY mes.work_reports
 
 ALTER TABLE ONLY mes.work_stations
     ADD CONSTRAINT work_stations_pkey PRIMARY KEY (id);
+
+
+
+CREATE INDEX audit_logs_tenant_id_idx ON mes.audit_logs USING btree (tenant_id);
+
+
+
+CREATE INDEX equipment_tenant_id_idx ON mes.equipment USING btree (tenant_id);
 
 
 
@@ -2213,6 +2231,65 @@ CREATE INDEX idx_work_stations_type ON mes.work_stations USING btree (station_ty
 
 
 
+CREATE INDEX process_flows_tenant_id_idx ON mes.process_flows USING btree (tenant_id);
+
+
+
+CREATE INDEX process_routes_tenant_id_idx ON mes.process_routes USING btree (tenant_id);
+
+
+
+CREATE INDEX production_orders_tenant_id_idx ON mes.production_orders USING btree (tenant_id);
+
+
+
+CREATE INDEX production_processes_tenant_id_idx ON mes.production_processes USING btree (tenant_id);
+
+
+
+CREATE INDEX production_records_tenant_id_idx ON mes.production_records USING btree (tenant_id);
+
+
+
+CREATE INDEX quality_inspections_tenant_id_idx ON mes.quality_inspections USING btree (tenant_id);
+
+
+
+CREATE INDEX quality_patrols_tenant_id_idx ON mes.quality_patrols USING btree (tenant_id);
+
+
+
+CREATE INDEX quality_standards_tenant_id_idx ON mes.quality_standards USING btree (tenant_id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ALTER TABLE ONLY mes.bom_items
     ADD CONSTRAINT bom_items_bom_id_fkey FOREIGN KEY (bom_id) REFERENCES mes.material_boms(id) ON DELETE CASCADE;
 
@@ -2406,12 +2483,6 @@ ALTER TABLE ONLY mes.work_orders
 ALTER TABLE mes.audit_logs ENABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE mes.batch_records ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.bom_items ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE mes.capacities ENABLE ROW LEVEL SECURITY;
 
 
@@ -2428,9 +2499,6 @@ CREATE POLICY equipment_inspection_records_tenant_policy ON mes.equipment_inspec
 
 
 
-ALTER TABLE mes.equipment_inspections ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE mes.equipment_maintenance_records ENABLE ROW LEVEL SECURITY;
 
 
@@ -2438,32 +2506,8 @@ CREATE POLICY equipment_maintenance_records_tenant_policy ON mes.equipment_maint
 
 
 
-ALTER TABLE mes.equipment_oee ENABLE ROW LEVEL SECURITY;
-
-
 CREATE POLICY equipment_tenant_policy ON mes.equipment USING (((tenant_id = (current_setting('app.tenant_id'::text, true))::uuid) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
 
-
-
-ALTER TABLE mes.material_boms ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.material_issue_items ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.material_issues ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.material_plans ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.material_requirements ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.material_return_items ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.material_returns ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE mes.module_settings ENABLE ROW LEVEL SECURITY;
@@ -2497,9 +2541,6 @@ CREATE POLICY process_routes_tenant_policy ON mes.process_routes USING (((tenant
 
 
 
-ALTER TABLE mes.production_costs ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE mes.production_orders ENABLE ROW LEVEL SECURITY;
 
 
@@ -2524,9 +2565,6 @@ CREATE POLICY production_records_tenant_policy ON mes.production_records USING (
 
 
 
-ALTER TABLE mes.production_schedules ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE mes.quality_inspections ENABLE ROW LEVEL SECURITY;
 
 
@@ -2546,9 +2584,6 @@ ALTER TABLE mes.quality_patrols ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY quality_patrols_tenant_policy ON mes.quality_patrols USING (((tenant_id = (current_setting('app.tenant_id'::text, true))::uuid) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
 
-
-
-ALTER TABLE mes.quality_records ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE mes.quality_standard_values ENABLE ROW LEVEL SECURITY;
@@ -2586,88 +2621,6 @@ CREATE POLICY rls_tenant_isolation ON mes.production_plans USING (((current_sett
 
 
 CREATE POLICY rls_tenant_isolation ON mes.work_reports USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
-
-
-
-ALTER TABLE mes.team_members ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.teams ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY tenant_isolation ON mes.batch_records USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.bom_items USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.equipment_inspections USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.equipment_oee USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_boms USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_issue_items USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_issues USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_plans USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = current_setting('app.tenant_id'::text, true)))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = current_setting('app.tenant_id'::text, true))));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_requirements USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_return_items USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.material_returns USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.production_costs USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.production_schedules USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.quality_records USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.team_members USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.teams USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.wip_transfers USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.wips USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
-
-
-
-CREATE POLICY tenant_isolation ON mes.work_orders USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
 
 
 
@@ -2759,15 +2712,6 @@ CREATE POLICY tenant_isolation_work_stations ON mes.work_stations USING ((((tena
 
 
 
-ALTER TABLE mes.wip_transfers ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.wips ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE mes.work_orders ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE mes.work_reports ENABLE ROW LEVEL SECURITY;
 
 
@@ -2775,6 +2719,24 @@ ALTER TABLE mes.work_stations ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY work_stations_tenant_policy ON mes.work_stations USING (((tenant_id = (current_setting('app.tenant_id'::text, true))::uuid) OR (COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text)));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2808,9 +2770,9 @@ CREATE TABLE public.inspection_records (
     category character varying(255) NOT NULL,
     status character varying(50) NOT NULL,
     inspector character varying(255),
-    inspection_time timestamp with time zone NOT NULL,
+    inspection_time timestamp without time zone NOT NULL,
     issues text,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -2825,10 +2787,6 @@ CREATE INDEX idx_inspection_records_tenant_id ON public.inspection_records USING
 
 
 
-ALTER TABLE public.inspection_records ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY tenant_isolation ON public.inspection_records USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (tenant_id = (current_setting('app.tenant_id'::text, true))::uuid)));
 
 
 
@@ -2856,52 +2814,27 @@ SET default_table_access_method = heap;
 
 
 CREATE TABLE public.audit_logs (
-    id bigint NOT NULL,
-    request_id character varying(64) NOT NULL,
-    user_id character varying(36),
-    method character varying(10) NOT NULL,
-    path text NOT NULL,
-    query_string text,
-    status_code integer NOT NULL,
-    duration_ms bigint NOT NULL,
-    ip_address character varying(45),
-    user_agent text,
-    "timestamp" timestamp with time zone NOT NULL,
-    success boolean NOT NULL,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    entity_type text,
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tenant_id uuid,
+    action character varying(255) DEFAULT ''::character varying NOT NULL,
+    entity_type character varying(50) DEFAULT ''::character varying NOT NULL,
     entity_id uuid,
     entity_ids jsonb,
+    user_id uuid,
     user_name text,
     request_details jsonb,
     response_details jsonb,
-    status character varying(32),
+    status character varying(20) DEFAULT 'success'::character varying NOT NULL,
     error_message text,
-    tenant_id uuid,
-    action character varying
+    ip_address character varying(45),
+    user_agent text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    success boolean
 );
 
 ALTER TABLE ONLY public.audit_logs FORCE ROW LEVEL SECURITY;
 
-
-
-
-CREATE SEQUENCE public.audit_logs_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-
-
-ALTER SEQUENCE public.audit_logs_id_seq OWNED BY public.audit_logs.id;
-
-
-
-ALTER TABLE ONLY public.audit_logs ALTER COLUMN id SET DEFAULT nextval('public.audit_logs_id_seq'::regclass);
 
 
 
@@ -2914,27 +2847,15 @@ CREATE INDEX audit_logs_tenant_id_idx ON public.audit_logs USING btree (tenant_i
 
 
 
+CREATE INDEX idx_audit_logs_action ON public.audit_logs USING btree (action);
+
+
+
 CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at DESC);
 
 
 
 CREATE INDEX idx_audit_logs_entity_type ON public.audit_logs USING btree (entity_type);
-
-
-
-CREATE INDEX idx_audit_logs_path ON public.audit_logs USING btree (path);
-
-
-
-CREATE INDEX idx_audit_logs_request_id ON public.audit_logs USING btree (request_id);
-
-
-
-CREATE INDEX idx_audit_logs_status_code ON public.audit_logs USING btree (status_code);
-
-
-
-CREATE INDEX idx_audit_logs_timestamp ON public.audit_logs USING btree ("timestamp" DESC);
 
 
 

@@ -36,7 +36,7 @@
       {
         "ordinal": 6,
         "name": "completed_quantity",
-        "type_info": "Int4"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 7,

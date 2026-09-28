@@ -65,10 +65,9 @@ export const processFlowSchema: EntitySchema = {
     {
       name: 'version',
       label: i18n.t('mes.process_flow.k13'),
-      type: 'text',
+      type: 'number',
       listWidth: 80,
       showInList: false,
-      validation: [{ type: 'maxLength', value: 32 }],
     },
     {
       name: 'status',
