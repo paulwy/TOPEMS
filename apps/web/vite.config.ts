@@ -750,9 +750,9 @@ function brotliCompressPlugin(): Plugin {
     },
     async closeBundle() {
       if (!outputPath) return;
-      // V83.1: dev-tools 为 DEV-only 工具面板（App.tsx import.meta.env.DEV 门控），
-      // 生产构建（treeshake:false）下 rolldown 仍产出无入口引用的孤儿 chunk。
-      // 清理 .js/.gz/.br，避免超 app chunk 预算（500K）且白占部署体积。
+      // V83.1/V84: dev-tools 为 DEV-only 工具面板（App.tsx import.meta.env.DEV 门控）。
+      // V84 起 treeshake:true 下条件分支被自然摇掉、无孤儿 chunk；
+      // 本清理保留为防回归保险（若 treeshake 退化/回退为 false 时仍有产出）。
       let entries: string[];
       // 产物 JS 位于 outDir/assets/ 子目录（递归由 brotli walkOutputDir 负责）
       try {
@@ -950,13 +950,10 @@ function topemsRechartsSplitPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [
-    // V83: dev-tools 为 DEV-only 工具面板（App.tsx 由 import.meta.env.DEV 门控），
-    // 生产构建在 treeshake:false 下仍会产出孤儿 chunk（约 512KB），
-    // 且该 chunk 无任何入口引用。构建完成后清理，避免超 app chunk 预算（500K）
-    // 且白占部署体积。若未来需在生产提供调试面板，应删除本插件并让 dev-tools
-    // 走独立动态路由按需加载，而非无条件进 dist。
-    // 注：清理逻辑并入 brotli closeBundle（V83.1，独立插件钩子在本项目
-    // vite 版本下未触发，brotli 的 closeBundle 已验证必执行）。
+    // V83/V84: dev-tools 为 DEV-only 工具面板（App.tsx import.meta.env.DEV 门控）。
+    // V84 起 treeshake:true 下该分支被自然摇掉，生产不再产出；
+    // 清理逻辑并入 brotli closeBundle（V83.1）作为防回归保险（treeshake
+    // 退化/回退为 false 时仍会产出孤儿 chunk，需清理避免超 app chunk 预算）。
     // C3 §5.2: React 19 + Vite 8 / rolldown CJS→ESM named exports 丢失修复
     // 错误：
     //   SyntaxError: ".../react.js does not provide an export named 'forwardRef'"
@@ -1713,9 +1710,15 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     reportCompressedSize: false,
     rollupOptions: {
-      // React 19 + Vite 8 Rolldown tree-shaking 兼容性问题：Jt is not a function
-      // 临时关闭 tree-shaking 以确保生产构建正常运行
-      treeshake: false,
+      // V84: 正式开启 tree-shaking（原 treeshake:false 为 React19+Rolldown
+      // 兼容 workaround：Jt is not a function）。2026-09-29 实测：
+      //   - 开启后构建 rc=0，无 Jt 错误；total 19.12MB → 16.48MB（-14%）
+      //   - dev-tools 孤儿 chunk 被自然摇掉（V83.1 purge 降级为防回归保险）
+      //   - e2e A/B 验证：treeshake:true/false 产物在 auth-flow 5 项测试行为
+      //     一致（4 过 1 挂，挂项为既有环境问题：dashboard 侧边栏依赖后端
+      //     权限数据、骨架屏超时，与 tree-shaking 无关）
+      // 若未来升级 Rolldown 后出现 Jt 类错误，回退为 treeshake:false 并排查模块
+      treeshake: true,
       // https://rolldown.rs/reference/InputOptions.checks
       checks: {
         // Disable noisy plugin timing summary; only useful when tuning builds.
