@@ -24,15 +24,13 @@ import {
   Divider,
   Paper,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-  Delete as DeleteIcon,
-  Dataset as DatasetIcon,
-  Description as DescriptionIcon,
-  Api as ApiIcon,
-} from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import DeleteIcon from '@mui/icons-material/Delete';
+import DatasetIcon from '@mui/icons-material/Dataset';
+import DescriptionIcon from '@mui/icons-material/Description';
+import ApiIcon from '@mui/icons-material/Api';
 import { dataAssetCatalogApiV66 } from '@/api/master/dataAssetCatalogV66';
 import type {
   DataAsset,

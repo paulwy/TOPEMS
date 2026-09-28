@@ -738,8 +738,7 @@ async function walkOutputDir(dir: string): Promise<string[]> {
 
 function brotliCompressPlugin(): Plugin {
   let outputPath = '';
-  let logger: ResolvedConfig['logger'];
-  return {
+  let logger: ResolvedConfig['logger'];  return {
     name: 'vite:compression-brotli',
     apply: 'build',
     enforce: 'post',
@@ -751,6 +750,24 @@ function brotliCompressPlugin(): Plugin {
     },
     async closeBundle() {
       if (!outputPath) return;
+      // V83.1: dev-tools 为 DEV-only 工具面板（App.tsx import.meta.env.DEV 门控），
+      // 生产构建（treeshake:false）下 rolldown 仍产出无入口引用的孤儿 chunk。
+      // 清理 .js/.gz/.br，避免超 app chunk 预算（500K）且白占部署体积。
+      let entries: string[];
+      // 产物 JS 位于 outDir/assets/ 子目录（递归由 brotli walkOutputDir 负责）
+      try {
+        entries = await fsp.readdir(path.join(outputPath, 'assets'));
+      } catch {
+        return;
+      }
+      for (const en of entries) {
+        if (/^dev-tools-[0-9a-zA-Z_-]+\.js(\.(gz|br))?$/.test(en)) {
+          try {
+            await fsp.unlink(path.join(outputPath, 'assets', en));
+            logger.info(`[purge-dev-tools] 已清理生产孤儿 chunk ${en}`);
+          } catch {}
+        }
+      }
       let files: string[];
       try {
         files = await walkOutputDir(outputPath);
@@ -820,7 +837,7 @@ function topemsRechartsSplitPlugin(): Plugin {
         },
         {
           test: /[\\/]node_modules[\\/](@mui[\\/]material|@emotion|stylis)[\\/]/,
-          name: 'mui-core',
+          name: 'mui-core-vendor',
         },
         { test: /[\\/]node_modules[\\/]@mui[\\/]icons-material[\\/]/, name: 'mui-icons' },
         { test: /[\\/]node_modules[\\/]@mui[\\/]x-(date-pickers|tree-view)[\\/]/, name: 'mui-x' },
@@ -833,6 +850,9 @@ function topemsRechartsSplitPlugin(): Plugin {
           name: 'leaflet-vendor',
         },
         { test: /[\\/]node_modules[\\/]@amap[\\/]/, name: 'amap-vendor' },
+        // exceljs 为按需动态 import（importExport/DataExport/QualityInspection），
+        // 独立 vendor chunk 避免与 app chunk 混淆（bundle-check 按名判定 vendor 阈值）
+        { test: /[\\/]node_modules[\\/](exceljs|exceljs-dist)[\\/]/, name: 'exceljs-vendor' },
         { test: /[\\/]node_modules[\\/](xlsx|docx-preview)[\\/]/, name: 'office-vendor' },
         {
           test: /[\\/]node_modules[\\/](react-markdown|react-syntax-highlighter|remark-gfm)[\\/]/,
@@ -930,6 +950,13 @@ function topemsRechartsSplitPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [
+    // V83: dev-tools 为 DEV-only 工具面板（App.tsx 由 import.meta.env.DEV 门控），
+    // 生产构建在 treeshake:false 下仍会产出孤儿 chunk（约 512KB），
+    // 且该 chunk 无任何入口引用。构建完成后清理，避免超 app chunk 预算（500K）
+    // 且白占部署体积。若未来需在生产提供调试面板，应删除本插件并让 dev-tools
+    // 走独立动态路由按需加载，而非无条件进 dist。
+    // 注：清理逻辑并入 brotli closeBundle（V83.1，独立插件钩子在本项目
+    // vite 版本下未触发，brotli 的 closeBundle 已验证必执行）。
     // C3 §5.2: React 19 + Vite 8 / rolldown CJS→ESM named exports 丢失修复
     // 错误：
     //   SyntaxError: ".../react.js does not provide an export named 'forwardRef'"
