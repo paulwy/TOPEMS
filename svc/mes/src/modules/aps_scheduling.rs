@@ -6,6 +6,9 @@
 //! - 排程模拟：假设分析，评估不同排产方案
 //! - 优化建议：延期风险预警、瓶颈分析
 
+use std::str::FromStr;
+use sqlx::types::BigDecimal;
+use chrono::NaiveDateTime;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -17,7 +20,7 @@ use axum::{
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    Uuid,
+    types::Uuid,
     Row,
 };
 use std::collections::HashMap;

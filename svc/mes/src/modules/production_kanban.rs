@@ -2,11 +2,12 @@
 //!
 //! 生产看板只读接口：提供看板总览、订单进度、工位状态、质量趋势、设备状态等聚合查询。
 
+use sqlx::types::BigDecimal;
 use axum::{extract::Extension, extract::State, routing::get, Json, Router};
 use chrono::NaiveDate;
 use serde::Serialize;
 use sqlx::{
-    Uuid,
+    types::Uuid,
     Row,
 };
 use topems_shared_auth::auth::Claims;

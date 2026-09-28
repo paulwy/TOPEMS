@@ -5,6 +5,7 @@
 //! - 成本分析报告：成本构成、趋势分析、对比分析
 //! - 成本预测：基于历史数据预测未来成本
 
+use sqlx::types::BigDecimal;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -16,7 +17,7 @@ use axum::{
 use chrono::{DateTime, Datelike, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    Uuid,
+    types::Uuid,
     Row,
 };
 use topems_shared_db::decimal::big_decimal_to_f64;

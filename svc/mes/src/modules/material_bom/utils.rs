@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use chrono::{DateTime, Utc};
 
 pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
@@ -20,7 +21,6 @@ pub(crate) fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};
-    use sqlx::types::BigDecimal;
     use topems_shared_db::decimal::big_decimal_to_f64;
 
     #[test]

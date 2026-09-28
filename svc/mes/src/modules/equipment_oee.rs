@@ -1,12 +1,15 @@
 //! Equipment OEE handlers
 
+use std::str::FromStr;
+use sqlx::types::BigDecimal;
+use chrono::NaiveDateTime;
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    Uuid,
+    types::Uuid,
     Row,
 };
 
