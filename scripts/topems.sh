@@ -2143,59 +2143,22 @@ redis_stop() {
 
 # 数据库迁移
 db_migrate() {
-    info "运行数据库迁移（database/migrations，含应用自建表固化迁移）..."
+    info "运行数据库迁移（统一入口 scripts/migrate.sh）..."
     cd "$PROJECT_ROOT"
 
     load_env
     parse_database_url
 
-    info "使用 psql 模式执行迁移文件..."
-    
-    # V3xx 修复：真实迁移目录为 database/migrations（原扫描顶层 migrations/ 不存在，静默空转）；
-    #          psql 统一注入 PGPASSWORD（本机无 ~/.pgpass）、加 ON_ERROR_STOP=1，
-    #          迁移失败不再写入 _sqlx_migrations（不再把失败标记为已应用）。
-    if ! command -v psql >/dev/null 2>&1; then
-        error "未找到 psql，请安装 PostgreSQL 客户端后重试"
+    # 收敛为 migrate.sh 唯一入口（sqlx-cli 优先、psql fallback 结构与 sqlx 对齐）：
+    # 扫描 database/migrations + svc/*/migrations，失败返回非零（不误记账、不静默空转）
+    if ! command -v psql >/dev/null 2>&1 && ! command -v sqlx >/dev/null 2>&1; then
+        error "未找到 psql/sqlx-cli，请安装 PostgreSQL 客户端后重试"
         return 1
     fi
 
-    local _psql_base=(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME")
-    local _migrate_dirs="database/migrations"
-    local _extra_dir
-    while IFS= read -r _extra_dir; do
-        _migrate_dirs="$_migrate_dirs $_extra_dir"
-    done < <(find svc -name migrations -type d 2>/dev/null)
-
-    for migrate_dir in $_migrate_dirs; do
-        [ -d "$migrate_dir" ] || continue
-
-        info "迁移目录: $migrate_dir..."
-        local file
-        for file in "$migrate_dir"/*.sql; do
-            [ -f "$file" ] || continue
-            local base=$(basename "$file" .sql)
-            local version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
-
-            if [ -z "$version" ]; then
-                warning "迁移文件 $file 没有版本号，跳过"
-                continue
-            fi
-
-            if PGPASSWORD="$DB_PASSWORD" "${_psql_base[@]}" -tAc "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
-                detail "迁移 $base 已应用，跳过"
-                continue
-            fi
-
-            info "执行迁移: $file..."
-            if PGPASSWORD="$DB_PASSWORD" "${_psql_base[@]}" -v ON_ERROR_STOP=1 -f "$file" 2>&1; then
-                PGPASSWORD="$DB_PASSWORD" "${_psql_base[@]}" -v ON_ERROR_STOP=1 -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
-            else
-                warning "迁移 $file 失败（已跳过，不会标记为已应用）"
-            fi
-        done
-    done
-    
-    success "数据库迁移完成"
+    export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+    bash "$PROJECT_ROOT/scripts/migrate.sh" run
+    return $?
 }
 
 # ==============================================================================

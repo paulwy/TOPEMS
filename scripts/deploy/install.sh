@@ -131,7 +131,7 @@ echo ""
         echo -e "${YELLOW}Building backend services...${NC}"
 
         # Get script directory (project root)
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
         cd "${SCRIPT_DIR}"
 
@@ -188,7 +188,7 @@ echo ""
 # Build shared packages
 echo -e "${YELLOW}Building shared packages...${NC}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 cd "${SCRIPT_DIR}/packages/shared-types"
 pnpm install --legacy-peer-deps
@@ -230,7 +230,7 @@ echo ""
 # Copy configuration templates
 echo -e "${YELLOW}Copying configuration templates...${NC}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Copy systemd service files
 cp -r "${SCRIPT_DIR}/deploy/systemd"/*.service /etc/systemd/system/

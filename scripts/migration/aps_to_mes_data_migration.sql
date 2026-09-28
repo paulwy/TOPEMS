@@ -154,11 +154,8 @@ SELECT
     (SELECT COUNT(*) FROM plugin_aps.aps_demand_forecasts) -
     (SELECT COUNT(*) FROM demand_forecasts) AS diff;
 
--- 提交事务
--- 如果验证通过，取消下面的注释
--- COMMIT;
-
--- 如果验证失败，回滚
+-- 提交事务（默认提交；如需人工核对后再落库，可临时改为 ROLLBACK，先跑 --dry-run 看计数）
+COMMIT;
 -- ROLLBACK;
 
 -- ============================================================

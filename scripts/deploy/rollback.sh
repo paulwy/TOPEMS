@@ -96,7 +96,8 @@ mkdir -p "$CURRENT_BACKUP"
 if $DC exec -T postgres pg_dump -U topems topems > "$CURRENT_BACKUP/database_pre_rollback.sql" 2>/dev/null; then
     print_ok "当前数据库已备份到: $CURRENT_BACKUP/database_pre_rollback.sql"
 else
-    print_fail "备份当前数据库失败，跳过"
+    print_fail "备份当前数据库失败——中止回滚（绝不 dropdb 删库，先排查数据库连接）"
+    exit 1
 fi
 
 # 3. 恢复环境变量

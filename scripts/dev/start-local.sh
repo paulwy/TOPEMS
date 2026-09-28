@@ -408,7 +408,7 @@ case "$cmd" in
   status)
     show_status
     ;;
-  monolith|"")
+  all|monolith|"")
     check_env
     install_deps
     start_db

@@ -4,7 +4,8 @@
 
 set -e
 
-PROJECT_DIR="/Users/xingzhai/TOPEMS"
+# 从脚本自身位置推导仓库根（脚本位于 scripts/deploy/，上两级为仓库根）——不再硬编码他人机器路径
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ENV_FILE="${PROJECT_DIR}/.env.production"
 LOG_DIR="/tmp/topems-logs"
 BACKEND_BIN="${PROJECT_DIR}/target/release/topems-unified-core"

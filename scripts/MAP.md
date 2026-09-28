@@ -13,11 +13,8 @@
 | `generate-inventory.mjs` | Scan Cargo.toml + modules + migrations → docs/architecture/inventory.md |
 | `generate-jwt-keys.sh` | Generate JWT_SECRET / JWT_REFRESH_SECRET key pairs |
 | `patch-react-transition-group.js` | Fix ESM imports for react-transition-group (called by `npm prepare` + CI) |
-| `sccache-setup.sh` | Configure sccache for faster Rust recompilation |
-| `ci-cache-utils.sh` | CI cache restore/save helpers |
 | `sync-ports.sh` | Sync service ports across .env / services.conf / config |
 | `bundle-check.sh` | Vite bundle size checker (CI) |
-| `blue-green-deploy.sh` | Blue-green deployment script |
 | `check-design-tokens.mjs` | Design token usage checker (`npm run check:design-tokens`) |
 | `check-migration-names.mjs` | Migration filename convention checker (CI + Makefile) |
 | `check-migrations.mjs` | Migration file structure checker (CI + Makefile) |
@@ -51,13 +48,10 @@
 | `check-nav-route.cjs` | Nav → route registration check |
 | `check-props-alignment.cjs` | Props field realness AST scan |
 | `compare-api-modules.cjs` | Compare API module definitions |
-| `coverage-baseline.sh` | Coverage baseline runner |
 | `coverage-report.py` | Coverage report generator |
 | `gen-r12-zp0-z4cover-report.cjs` | R12 Z-P0~Z4 coverage report |
-| `lint-check.sh` | Lint check runner |
 | `page-audit.cjs` | Page standardization check (V64) |
 | `perm-matrix-toolkit.cjs` | Permission matrix scanner (R1~R7) |
-| `sccache_stats.sh` | sccache statistics |
 | `verify-glossary.cjs` | i18n glossary verifier |
 
 ## dev/ · Development tools

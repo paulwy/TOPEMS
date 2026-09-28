@@ -68,6 +68,13 @@ fi
 echo "== 空库迁移验证 =="
 echo "  验证库: $PG_DB @ $PG_HOST:$PG_PORT (user $PG_USER)"
 
+# --- 0. 库名守卫：只允许操作明确的验证/临时库，防止误删生产库 ------------------
+if ! [[ "$PG_DB" =~ (verify|test|tmp|mig) ]]; then
+  echo "错误: 验证库名 '$PG_DB' 不含 verify/test/tmp/mig 标记，拒绝执行（防误删生产库）" >&2
+  echo "提示: 请使用形如 DATABASE_URL=postgres://user:pass@host:5432/topems_mig_verify 的验证库名" >&2
+  exit 3
+fi
+
 # --- 1. DROP/CREATE 空库（同权限下 DROP 允许：owner/superuser） ----------------
 echo "== 重建空库 $PG_DB =="
 $PSQL -v ON_ERROR_STOP=1 -q \

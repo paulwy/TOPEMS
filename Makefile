@@ -46,12 +46,6 @@ check-offline: ## 离线 cargo check（SQLX_OFFLINE=true，模拟 CI GitHub Acti
 check-migrations: ## 检查 database/migrations/ 命名规范、序号连续性、禁止修改历史迁移
 	node scripts/check-migrations.mjs
 
-coverage-baseline: ## 快速模式覆盖率基线（13 crates + apps/web vitest）
-	./scripts/ci/coverage-baseline.sh --fast
-
-coverage-baseline-full: ## 全 workspace + apps/web 覆盖率基线
-	./scripts/ci/coverage-baseline.sh --full
-
 # ---------- 常用快捷命令 ----------
 check-iam: ## 仅离线 check topems-unified-core（IAM 端口 8000）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-unified-core

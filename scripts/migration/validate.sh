@@ -367,33 +367,27 @@ fi
 
 # Schema drift check (optional)
 if [[ -n "${DATABASE_URL:-}" ]]; then
-  log_info "DATABASE_URL is set; checking schema_migrations..."
+  log_info "DATABASE_URL is set; checking _sqlx_migrations..."
   if ! command -v psql >/dev/null 2>&1; then
     log_warn "psql not found; skipping schema drift check"
   else
-    if psql "$DATABASE_URL" -c "SELECT 1 FROM schema_migrations LIMIT 1" >/dev/null 2>&1; then
-      log_ok "schema_migrations table exists"
+    if psql "$DATABASE_URL" -c "SELECT 1 FROM _sqlx_migrations LIMIT 1" >/dev/null 2>&1; then
+      log_ok "_sqlx_migrations table exists"
 
-      applied_count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM schema_migrations WHERE status = 'success'" 2>/dev/null | tr -d ' ')
+      applied_count=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM _sqlx_migrations WHERE success = true" 2>/dev/null | tr -d ' ')
       log_info "Applied successful migrations in database: ${applied_count:-0}"
 
+      # _sqlx_migrations 无 plugin_code 列（sqlx-cli 结构：version/description/installed_on/success/checksum/execution_time_ms），
+      # 跨服务同版本号会视为已应用（提示级别，不阻断）
       missing_in_db=()
       for dir in "${MIGRATION_DIRS[@]}"; do
         full_dir="$REPO_ROOT/$dir"
         [[ -d "$full_dir" ]] || continue
-        plugin_code=""
-        if [[ "$dir" =~ ^svc/([^/]+)/migrations$ ]]; then
-          plugin_code="${BASH_REMATCH[1]}"
-        fi
         while IFS= read -r -d '' file; do
           name="$(basename "$file")"
           version="$(extract_version "$name")"
           [[ -z "$version" ]] && continue
-          if [[ "$plugin_code" == "database" || "$plugin_code" == "migrations" || -z "$plugin_code" ]]; then
-            found=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM schema_migrations WHERE version = '$version' AND status = 'success'" 2>/dev/null | tr -d ' ')
-          else
-            found=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM schema_migrations WHERE plugin_code = '$plugin_code' AND version = '$version' AND status = 'success'" 2>/dev/null | tr -d ' ')
-          fi
+          found=$(psql "$DATABASE_URL" -t -A -c "SELECT COUNT(*) FROM _sqlx_migrations WHERE version = '$version' AND success = true" 2>/dev/null | tr -d ' ')
           if [[ "${found:-0}" -eq 0 ]]; then
             missing_in_db+=("$(rel_path "$file")")
           fi
@@ -401,16 +395,16 @@ if [[ -n "${DATABASE_URL:-}" ]]; then
       done
 
       if [[ ${#missing_in_db[@]} -eq 0 ]]; then
-        log_ok "All local migrations are recorded in schema_migrations"
+        log_ok "All local migrations are recorded in _sqlx_migrations"
       else
-        log_warn "${#missing_in_db[@]} local migration(s) not found in schema_migrations"
+        log_warn "${#missing_in_db[@]} local migration(s) not found in _sqlx_migrations"
         for f in "${missing_in_db[@]}"; do
           echo "  - $f"
         done
       fi
     else
-      SCHEMA_DRIFT+=("schema_migrations table not found")
-      log_err "schema_migrations table does not exist or is not accessible"
+      SCHEMA_DRIFT+=("_sqlx_migrations table not found")
+      log_err "_sqlx_migrations table does not exist or is not accessible"
     fi
   fi
 else

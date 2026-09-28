@@ -259,10 +259,10 @@ main() {
   # ==================== 7. 服务重启 ====================
   step "7/8 - 服务重启"
 
-  # 停止旧服务
+  # 停止旧服务（真实 systemd unit：topems-unified-core / topems-ai；不存在则用 pkill 兜底）
   log "停止旧服务..."
-  systemctl stop topems-backend 2>/dev/null || true
-  systemctl stop topems-frontend 2>/dev/null || true
+  systemctl stop topems-unified-core 2>/dev/null || true
+  systemctl stop topems-ai 2>/dev/null || true
   pkill -f "topems-unified-core" 2>/dev/null || true
   pkill -f "topems-ai" 2>/dev/null || true
   sleep 2
@@ -270,9 +270,9 @@ main() {
   # 启动新服务
   log "启动新服务..."
 
-  # 启动后端
-  if command -v systemctl &> /dev/null; then
-    systemctl start topems-backend 2>/dev/null || warn "后端 systemd 服务启动失败"
+  # 启动后端：systemd unit 存在则用 systemctl，否则回退 nohup
+  if command -v systemctl &> /dev/null && systemctl list-unit-files topems-unified-core >/dev/null 2>&1; then
+    systemctl start topems-unified-core 2>/dev/null || warn "后端 systemd 服务启动失败"
   else
     nohup "$PROJECT_DIR/target/release/topems-unified-core" > /var/log/topems/backend.log 2>&1 &
     log "后端服务已启动 (PID: $!)"

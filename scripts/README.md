@@ -10,7 +10,7 @@
 | --------------------- | ------------------------------ | ------------------------------------------------------- |
 | `topems.sh`（本目录）      | **主入口**，零依赖 Bash，日常开发首选        | `start`/`stop`/`status`/`build`/`test`/`clean`          |
 | `cli/`（Python CLI）    | 高级运维工具，需 `pip install -e cli/` | `db migrate`/`doctor`/`db backup`/`schema-defense`      |
-| `Makefile`（项目根目录）     | Rust 专项快捷命令                    | `make sqlx-prepare`/`check-offline`/`coverage-baseline` |
+| `Makefile`（项目根目录）     | Rust 专项快捷命令                    | `make sqlx-prepare`/`check-offline` |
 | `package.json`（项目根目录） | 前端专属命令                         | `pnpm dev:web`/`build`/`lint`/`format`                  |
 
 > `topems.sh`
@@ -85,9 +85,7 @@ scripts/
 │   ├── topems-standalone.ps1
 │   └── topems.bat
 │
-├── blue-green-deploy.sh       # 蓝绿部署
 ├── bundle-check.sh            # 前端包体积检查
-├── sccache-setup.sh           # Rust 编译缓存设置
 ├── patch-react-transition-group.js  # ESM 兼容性补丁（pnpm install 后执行）
 │
 └── MAP.md                     # 完整脚本索引（scripts/MAP.md）
@@ -238,7 +236,6 @@ node scripts/patch-react-transition-group.js --check
 | `./scripts/deploy/deploy.sh`               | 部署脚本（默认本地，--docker 使用 Docker） |
 | `./scripts/deploy/rollback.sh`             | 回滚脚本                          |
 | `./scripts/deploy/docker/topems-docker.sh` | Docker Compose 部署             |
-| `./scripts/blue-green-deploy.sh`           | 蓝绿部署                          |
 
 ### 生产部署
 

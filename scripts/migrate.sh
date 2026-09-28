@@ -358,14 +358,15 @@ ensure_sqlx_migrations_table() {
     log_info "创建 _sqlx_migrations 表..."
     local create_sql
     create_sql=$(cat <<'SQL'
+-- 与 sqlx-cli 0.7+ 真实结构对齐（version BIGINT / checksum BYTEA / execution_time_ms），
+-- 避免 fallback 记账与 sqlx 混用冲突（此前 varchar/string checksum 与 sqlx 不兼容）
 CREATE TABLE IF NOT EXISTS _sqlx_migrations (
-    version VARCHAR(50) PRIMARY KEY,
+    version BIGINT PRIMARY KEY,
     description TEXT NOT NULL,
-    installed_on TIMESTAMP NOT NULL DEFAULT NOW(),
+    installed_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     success BOOLEAN NOT NULL DEFAULT TRUE,
-    checksum VARCHAR(64),
-    execution_time BIGINT NOT NULL DEFAULT 0,
-    additional_info JSONB
+    checksum BYTEA NOT NULL,
+    execution_time_ms BIGINT NOT NULL DEFAULT 0
 );
 SQL
 )
@@ -395,8 +396,8 @@ is_migration_applied() {
 record_migration() {
   local version="$1" description="$2"
   psql "$DATABASE_URL" -c \
-    "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) \
-     VALUES ('$version', '$description', NOW(), true, 'manual-via-migrate-sh', 0) \
+    "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time_ms) \
+     VALUES ('$version', '$description', NOW(), true, decode('manual-via-migrate-sh', 'escape'), 0) \
      ON CONFLICT (version) DO NOTHING" >/dev/null 2>&1
 }
 

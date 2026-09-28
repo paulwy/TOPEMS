@@ -111,16 +111,21 @@ fi
 
 if [ $? -eq 0 ]; then
     echo ""
-    log_success "迁移执行完成！"
+    log_success "迁移执行完成并已提交！"
     echo ""
-    log_info "请检查上方的计数对比结果，确认数据迁移正确"
-    log_info "如果数据正确，请在 SQL 文件中取消 COMMIT 的注释，或手动执行 COMMIT"
-    echo ""
+    if [ "$DRY_RUN" = false ]; then
+        log_info "目标表行数（确认迁移结果）："
+        psql "$DATABASE_URL" -t -A -c "
+            SELECT 'production_plans: ' || COUNT(*) FROM production_plans;
+            SELECT 'capacities: ' || COUNT(*) FROM capacities;
+            SELECT 'demand_forecasts: ' || COUNT(*) FROM demand_forecasts;
+        " 2>/dev/null || log_warn "无法读取目标表计数（请确认表存在）"
+        echo ""
+    fi
     log_warn "后续步骤（确认数据正确后）："
-    log_warn "  1. 在 SQL 文件中取消 COMMIT 注释，或手动执行 COMMIT"
-    log_warn "  2. 可选：备份或删除 plugin_aps schema"
-    log_warn "  3. 更新配置，停止 APS 服务"
+    log_warn "  1. 可选：备份或删除 plugin_aps schema"
+    log_warn "  2. 更新配置，停止 APS 服务"
 else
-    log_error "迁移执行失败，请检查错误信息"
+    log_error "迁移执行失败，请检查错误信息（事务已回滚，数据未落库）"
     exit 1
 fi
