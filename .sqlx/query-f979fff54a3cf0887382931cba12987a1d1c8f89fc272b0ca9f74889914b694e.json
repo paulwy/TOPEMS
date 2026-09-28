@@ -16,27 +16,27 @@
       {
         "ordinal": 2,
         "name": "material_code",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
         "name": "material_name",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 4,
         "name": "system_quantity",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 5,
         "name": "counted_quantity",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 6,
         "name": "discrepancy_quantity",
-        "type_info": "Float8"
+        "type_info": "Numeric"
       },
       {
         "ordinal": 7,
@@ -51,10 +51,10 @@
     },
     "nullable": [
       false,
-      true,
-      true,
-      true,
-      true,
+      false,
+      false,
+      false,
+      false,
       true,
       true,
       false

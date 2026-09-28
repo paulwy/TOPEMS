@@ -155,7 +155,9 @@ fi
 if [ "$MODE" == "check" ]; then
   log "执行 sqlx 缓存 --check（通过 SQLX_OFFLINE cargo check 一组核心包）..."
   # 有 query! 宏使用且正常可编译的包清单（来自 grep 统计）
-  DEFAULT_CHECK_PKGS=(topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-hrm topems-pm topems-portal topems-master-data topems-communication topems-ticket topems-ai topems-feedback topems-search topems-analytics topems-ehs topems-gis topems-integration topems-lims topems-mobile topems-pdm topems-rd topems-shared-ai)
+  # V300：纳入 topems-mes——它是 sqlx 宏查询最多的服务（165），且缓存不入库、
+  #       历史上被排除在 check 之外，是"离线缓存反复缺失"的直接肇事者。
+  DEFAULT_CHECK_PKGS=(topems-mes topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-hrm topems-pm topems-portal topems-master-data topems-communication topems-ticket topems-ai topems-feedback topems-search topems-analytics topems-ehs topems-gis topems-integration topems-lims topems-mobile topems-pdm topems-rd topems-shared-ai)
   # 若用户指定了 -p，则只 check 指定的
   if [ "${#CUSTOM_PKGS[@]}" -gt 0 ]; then
     CHECK_PKGS=("${CUSTOM_PKGS[@]}")
@@ -330,7 +332,8 @@ LEFTOVER=$(find svc lib -name ".sqlx" -type d 2>/dev/null | wc -l | tr -d ' ')
 # ---------- offline-test 模式：验证离线可用 ----------
 if [ "$MODE" == "offline-test" ]; then
   log "执行 SQLX_OFFLINE=true 离线编译验证（清空 DATABASE_URL）..."
-  TEST_PKGS=(topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-analytics topems-shared-ai)
+  # V300：纳入 topems-mes（宏查询最多的服务），使离线验证覆盖全部 7 个宏服务。
+  TEST_PKGS=(topems-mes topems-unified-core topems-finance topems-crm topems-erp topems-scm topems-srm topems-qms topems-wms topems-analytics topems-shared-ai)
   set +e
   FAIL_TEST=()
   for p in "${TEST_PKGS[@]}"; do

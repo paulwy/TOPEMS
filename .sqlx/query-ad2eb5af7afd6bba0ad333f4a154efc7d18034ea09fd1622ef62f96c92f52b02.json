@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    INSERT INTO team_members (\n                        team_id, employee_id, employee_name, employee_code, position, join_date\n                    ) VALUES ($1, $2, $3, $4, $5, $6)\n                    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Timestamp"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ad2eb5af7afd6bba0ad333f4a154efc7d18034ea09fd1622ef62f96c92f52b02"
+}

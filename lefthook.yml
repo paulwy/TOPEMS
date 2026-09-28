@@ -62,17 +62,21 @@ pre-commit:
           node scripts/ci/check-axum-layer-order.cjs
         fi
 
-    # [Gate S] SQLx offline cache freshness (dry-run · WARN only, never blocks commit)
-    # Triggers on .rs / .sql changes or any .sqlx/ cache edit so authors remember
-    # to commit regenerated .sqlx/query-*.json alongside SQL/migration changes.
+    # [Gate S] SQLx offline cache integrity (V300: WARN-only → BLOCKING)
+    # 历史教训：静态启发式（文件数/脏标记）抓不住"缓存缺查询"（53 个文件也曾全 PASS）。
+    # 真正可靠的验证只有离线编译：SQLX_OFFLINE=true cargo check 宏服务，缓存缺失必报错。
+    # 触发条件：.rs/.sql/.sqlx 变更。失败时运行 ./scripts/dev/sqlx-prepare.sh 刷新缓存后重提。
     sqlx-cache-freshness:
       tags: rust sqlx cache
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|sql)$|^\.sqlx/' || true)
         [ -z "$STAGED" ] && exit 0
-        if [ -f "scripts/ci/check-sqlx-cache-freshness.cjs" ]; then
-          node scripts/ci/check-sqlx-cache-freshness.cjs
-        fi
+        bash scripts/dev/sqlx-prepare.sh --check || {
+          echo "❌ [Gate S] SQLx 离线缓存不完整或不一致，提交已阻断。"
+          echo "   请运行: ./scripts/dev/sqlx-prepare.sh"
+          echo "   然后: git add .sqlx && git commit"
+          exit 1
+        }
 
     # [Gate H] CRM contract consistency
     crm-contract:
@@ -206,13 +210,14 @@ pre-push:
   parallel: true
   commands:
     # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
+    # V300: SQLX_OFFLINE=false（在线）→ true（离线）。pre-push 是缓存完整性的最后本地防线：
+    #       根 .sqlx 缺任何宏查询，离线编译必然失败，push 被阻断，杜绝"本地能过、CI/新环境必炸"。
     cargo-check-workspace:
       tags: rust check
       run: |
         # pre-push 时代码已提交，直接跑 cargo check，确保编译通过
-        # 避免 DB schema 修改了但代码没修改就 push 到远端
-        # 不用 --all-features，避免开启不需要的 feature 导致数据库连接问题
-        export SQLX_OFFLINE=false
+        # 离线模式验证 .sqlx/ 缓存完整性；不依赖 DB 在线状态，比在线模式更稳
+        export SQLX_OFFLINE=true
         cargo check --workspace
 
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
@@ -223,16 +228,18 @@ pre-push:
 
     # [V232-P3 NEW Gate K] cargo clippy workspace — Rust-only
     # 只把 correctness 级别的错误当错误，其他 warning 就好
+    # V300: 离线模式（SQLX_OFFLINE=true）——同时验证 .sqlx 缓存完整性
     cargo-clippy-workspace:
       tags: rust clippy
       run: |
-        export SQLX_OFFLINE=false
+        export SQLX_OFFLINE=true
         cargo clippy --workspace --all-targets -- -D clippy::correctness
 # 
     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
     # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）
+    # V300: 离线模式（SQLX_OFFLINE=true）——同时验证 .sqlx 缓存完整性
     cargo-test-workspace:
       tags: rust test
       run: |
-        export SQLX_OFFLINE=false
+        export SQLX_OFFLINE=true
         cargo test --workspace --lib

@@ -263,7 +263,7 @@ jobs:
       - name: Check workspace registry consistency
         run: python3 scripts/check-workspace-registry.py --check
 
-      - name: Check config single-source-of-truth (P0-3: services.yaml ↔ ports.env/Cargo.toml/ports.ts/vite.config)
+      - name: "Check config single-source-of-truth (P0-3: services.yaml ↔ ports.env/Cargo.toml/ports.ts/vite.config)"
         run: node scripts/ci/check-config-sources.cjs --check
     # 仅这些路径变更时在 push/PR 上运行；schedule/workflow_dispatch 每次全量跑
     paths:
@@ -2307,12 +2307,13 @@ jobs:
               ;;
           esac
 
-      - name: Verify sqlx cache semantic consistency (advisory)
+      - name: Verify sqlx cache semantic consistency (blocking)
         # V274: defense-check-all 完成后 DB 已有完整 schema（所有表+列），
         # 此时运行 cargo sqlx prepare --check --workspace 验证 .sqlx/ 缓存与 DB schema 语义一致。
-        # advisory 模式：非阻塞，仅报告不一致。
+        # V300: advisory → blocking。历史教训：根 .sqlx 缓存曾 322→53 缩水（mes/analytics 查询全失），
+        #       因 continue-on-error 非阻断而被合入，导致 mes 离线编译反复炸。
+        #       缓存不完整/不一致 = 本步骤失败 = 无法合并。
         # 前置条件：defense-check-all 通过（exit 0）→ DB schema 完整。
-        continue-on-error: true
         env:
           DATABASE_URL: postgresql://topems_test:topems_test_secret@localhost:5432/topems_defense
           SQLX_OFFLINE: "false"
@@ -2325,23 +2326,23 @@ jobs:
           if [ $RC -eq 0 ]; then
             echo "✅ SQLx Semantic Check: .sqlx cache consistent with DB schema"
           else
-            echo "::warning title=SQLx Semantic Check::.sqlx cache 与 DB schema 语义不一致，请运行 ./scripts/dev/sqlx-prepare.sh 刷新缓存"
-            echo "⚠️ SQLx Semantic Check: FAIL (advisory, non-blocking)"
+            echo "::error title=SQLx Semantic Check::.sqlx 缓存与 DB schema 语义不一致，请运行 ./scripts/dev/sqlx-prepare.sh 刷新缓存后重新提交（V300 起为 blocking 门禁）"
+            echo "❌ SQLx Semantic Check: FAIL (blocking — 缓存不完整/不一致将阻断合并)"
           fi
 
           # 写入 Step Summary
           {
-            echo "### SQLx Cache Semantic Check (advisory)"
+            echo "### SQLx Cache Semantic Check (blocking)"
             echo ""
             echo "| 指标 | 值 |"
             echo "|------|----|"
             echo "| 退出码 | $RC |"
-            echo "| 状态 | $([ $RC -eq 0 ] && echo '✅ PASS' || echo '⚠️ FAIL (advisory)') |"
+            echo "| 状态 | $([ $RC -eq 0 ] && echo '✅ PASS' || echo '❌ FAIL (blocking)') |"
             echo ""
             echo "> 本地复现: \`DATABASE_URL=... ./scripts/dev/sqlx-prepare.sh --semantic\`"
           } >> $GITHUB_STEP_SUMMARY
 
-          exit 0
+          exit $RC
 
   # ==========================================================================
   # Slow DB Startup Test（V278 回归测试）
