@@ -45,12 +45,10 @@ function main() {
 
   for (const table of criticalTables) {
     const [schema, tableName] = table.split('.');
+    // 用 has_table_privilege 判定：role_table_grants 不显示表 owner 的隐式权限，
+    // 对 topems_app 作为 owner 的关键表会误报"未授权"
     const hasGrant = query(`
-      SELECT 1 FROM information_schema.role_table_grants
-      WHERE grantee = 'topems_app'
-        AND table_schema = '${schema}'
-        AND table_name = '${tableName}'
-        AND privilege_type = 'SELECT'
+      SELECT has_table_privilege('topems_app', '${schema}.${tableName}', 'SELECT')::int LIMIT 1
     `) === '1';
 
     if (!hasGrant) {
@@ -61,11 +59,12 @@ function main() {
   }
 
   // 3. 检查默认权限是否设置
+  // 任一角色对 topems_app 的默认表授权均视为已设置，避免 owner 角色名变化导致的误报
   const hasDefaultPrivs = query(`
     SELECT 1 FROM pg_default_acl
-    WHERE defaclrole = (SELECT oid FROM pg_roles WHERE rolname = 'topems')
-      AND defaclobjtype = 'r'
+    WHERE defaclobjtype = 'r'
       AND defaclacl::text LIKE '%topems_app%'
+    LIMIT 1
   `) === '1';
 
   if (!hasDefaultPrivs) {

@@ -1,6 +1,6 @@
 -- ============================================================================
 -- mes 编译结构快照（mes_guard.sh --sync-snapshot 自动生成，勿手改）
--- 来源: postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems@postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems:postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems/postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems  生成时间: 2026-09-28T13:37:43Z
+-- 来源: postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems@postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems:postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems/postgres://topems_app:topems_app_secret@127.0.0.1:5432/topems  生成时间: 2026-09-28T14:35:43Z
 -- 用途: CI mes-online-check 干净库编译（导入本文件后在线解析）
 -- 规则: 任何 mes schema / public 共享表结构变更后，必须重新执行本脚本同步
 -- ============================================================================
@@ -28,6 +28,18 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 
+
+
+
+
+CREATE FUNCTION mes.update_updated_at_column() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
 
 
 
@@ -133,6 +145,837 @@ ALTER TABLE ONLY mes.capacities FORCE ROW LEVEL SECURITY;
 
 
 
+CREATE TABLE mes.core_billing_invoices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    subscription_id uuid,
+    invoice_number character varying(64) NOT NULL,
+    status character varying(32) DEFAULT 'draft'::character varying,
+    subtotal_cents integer DEFAULT 0,
+    discount_cents integer DEFAULT 0,
+    tax_cents integer DEFAULT 0,
+    total_cents integer DEFAULT 0,
+    period_start date NOT NULL,
+    period_end date NOT NULL,
+    paid_at timestamp with time zone,
+    payment_method character varying(64),
+    payment_reference character varying(256),
+    line_items jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_billing_plans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(64) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    license_type character varying(32) DEFAULT 'subscription'::character varying,
+    price_cents integer DEFAULT 0 NOT NULL,
+    price_period character varying(32) DEFAULT 'monthly'::character varying,
+    included_users integer DEFAULT 5,
+    included_storage_gb bigint DEFAULT 5,
+    included_api_calls bigint DEFAULT 50000,
+    included_modules text[],
+    overage_users_cents integer DEFAULT 500,
+    overage_storage_cents integer DEFAULT 50,
+    overage_api_calls_cents integer DEFAULT 10,
+    is_active boolean DEFAULT true,
+    is_trial boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_chat_members (
+    room_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role character varying(32) DEFAULT 'member'::character varying,
+    tenant_id uuid NOT NULL,
+    joined_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_chat_messages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    room_id uuid NOT NULL,
+    sender_id uuid NOT NULL,
+    sender_name character varying(128),
+    message_type character varying(32) DEFAULT 'text'::character varying,
+    content text NOT NULL,
+    file_url character varying(512),
+    is_recalled boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_chat_rooms (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128),
+    room_type character varying(32) DEFAULT 'private'::character varying,
+    creator_id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_dashboard_refresh_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    module character varying(64) NOT NULL,
+    tenant_id uuid NOT NULL,
+    refresh_time timestamp with time zone DEFAULT now() NOT NULL,
+    status character varying(32) DEFAULT 'success'::character varying NOT NULL,
+    duration_ms integer,
+    row_count integer DEFAULT 0,
+    error_message text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_dict_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    dict_type_id uuid NOT NULL,
+    code character varying(100) NOT NULL,
+    name character varying(200) NOT NULL,
+    value text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    parent_id uuid,
+    extra_data jsonb,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_dict_types (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(100) NOT NULL,
+    name character varying(200) NOT NULL,
+    category character varying(100) DEFAULT 'general'::character varying NOT NULL,
+    description text,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_email_queue (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    from_email character varying(256) NOT NULL,
+    to_email character varying(256) NOT NULL,
+    subject character varying(512),
+    body text,
+    html_body text,
+    cc text[],
+    bcc text[],
+    attempts integer DEFAULT 0,
+    max_attempts integer DEFAULT 3,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    error_message text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    sent_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_email_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    subject_template character varying(512) NOT NULL,
+    body_template text NOT NULL,
+    description text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_emails (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    from_email character varying(256) NOT NULL,
+    to_email character varying(256) NOT NULL,
+    subject character varying(512),
+    body text,
+    html_body text,
+    cc text[],
+    bcc text[],
+    is_read boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    sent_at timestamp with time zone,
+    read_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_faqs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    question text NOT NULL,
+    answer text NOT NULL,
+    category character varying(100) DEFAULT 'general'::character varying NOT NULL,
+    views bigint DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_file_folders (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    parent_id uuid,
+    owner_id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(256) NOT NULL,
+    original_name character varying(256),
+    path character varying(512) NOT NULL,
+    size bigint NOT NULL,
+    mime_type character varying(128),
+    extension character varying(32),
+    folder_id uuid,
+    uploader_id uuid NOT NULL,
+    status character varying(32) DEFAULT 'active'::character varying,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_guide_lessons (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    guide_id uuid NOT NULL,
+    title text NOT NULL,
+    content text DEFAULT ''::text NOT NULL,
+    duration character varying(50) DEFAULT '5min'::character varying NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_guide_progress (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    guide_id uuid NOT NULL,
+    user_id character varying(255) NOT NULL,
+    completed_lessons uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    progress integer DEFAULT 0 NOT NULL,
+    completed_at timestamp with time zone,
+    tenant_id uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_guides (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    category character varying(100) DEFAULT 'general'::character varying NOT NULL,
+    duration character varying(50) DEFAULT '10min'::character varying NOT NULL,
+    lessons_count integer DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_inter_module_sync (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    sync_type character varying(64) NOT NULL,
+    source_module character varying(64) NOT NULL,
+    target_module character varying(64) NOT NULL,
+    source_entity character varying(128) NOT NULL,
+    source_id uuid,
+    source_code character varying(128),
+    status character varying(32) DEFAULT 'pending'::character varying,
+    retry_count integer DEFAULT 0,
+    max_retries integer DEFAULT 3,
+    error_message text,
+    next_retry_at timestamp with time zone,
+    executed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_login_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid,
+    username character varying(64) NOT NULL,
+    ip_address character varying(128) NOT NULL,
+    user_agent text,
+    status character varying(32) NOT NULL,
+    error_message text,
+    login_time timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_menu_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    name character varying(200) NOT NULL,
+    code character varying(100) NOT NULL,
+    icon character varying(200),
+    sort_order integer DEFAULT 0 NOT NULL,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_menus (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    parent_id uuid,
+    name character varying(200) NOT NULL,
+    code character varying(100) NOT NULL,
+    path character varying(500),
+    icon character varying(200),
+    sort_order integer DEFAULT 0 NOT NULL,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    permissions jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.core_migration_history (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_name character varying(128) NOT NULL,
+    version character varying(64) NOT NULL,
+    name character varying(256) NOT NULL,
+    description text,
+    applied_at timestamp with time zone,
+    duration_ms bigint,
+    success boolean DEFAULT true,
+    error_message text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_mobile_offline_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    module character varying(64) NOT NULL,
+    action character varying(64) NOT NULL,
+    data jsonb NOT NULL,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    retry_count integer DEFAULT 0,
+    max_retries integer DEFAULT 3,
+    error_message text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_notification_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    title_template character varying(256) NOT NULL,
+    content_template text NOT NULL,
+    notification_type character varying(64) DEFAULT 'info'::character varying,
+    description text,
+    created_by uuid,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_notifications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    title character varying(256) NOT NULL,
+    content text,
+    notification_type character varying(64) DEFAULT 'info'::character varying,
+    is_read boolean DEFAULT false,
+    is_archived boolean DEFAULT false,
+    priority integer DEFAULT 0,
+    data jsonb,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    read_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(128) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    resource character varying(64),
+    action character varying(32),
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_plugin_categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(64) NOT NULL,
+    code character varying(64) NOT NULL,
+    description text,
+    icon character varying(64),
+    sort_order integer DEFAULT 0,
+    plugin_count integer DEFAULT 0,
+    is_active boolean DEFAULT true,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_plugin_instances (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_id uuid NOT NULL,
+    runtime_url character varying(512),
+    runtime_status character varying(32) DEFAULT 'stopped'::character varying,
+    base_path character varying(128) DEFAULT '/api/plugins/{code}'::character varying,
+    last_heartbeat timestamp without time zone,
+    started_at timestamp with time zone,
+    stopped_at timestamp with time zone,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_plugin_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_code character varying(64) NOT NULL,
+    permission_code character varying(100) NOT NULL,
+    permission_name character varying(255),
+    resource_type character varying(50),
+    action character varying(50),
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_plugin_pricing (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_code character varying(64) NOT NULL,
+    plugin_name character varying(128) NOT NULL,
+    base_price_cents integer DEFAULT 0,
+    per_user_price_cents integer DEFAULT 0,
+    is_active boolean DEFAULT true,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_plugin_reviews (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    user_name character varying(128),
+    rating integer,
+    title character varying(256),
+    content text,
+    is_verified_purchase boolean DEFAULT false,
+    is_featured boolean DEFAULT false,
+    helpful_count integer DEFAULT 0,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
+);
+
+
+
+
+CREATE TABLE mes.core_plugin_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_id uuid NOT NULL,
+    version character varying(32) NOT NULL,
+    release_notes text,
+    is_stable boolean DEFAULT true,
+    is_latest boolean DEFAULT false,
+    download_url character varying(512),
+    checksum character varying(64),
+    file_size bigint,
+    min_app_version character varying(32),
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_plugins (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(64) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    version character varying(32) NOT NULL,
+    plugin_type character varying(32) DEFAULT 'business'::character varying,
+    is_installed boolean DEFAULT false,
+    installed_at timestamp with time zone,
+    is_active boolean DEFAULT false,
+    activated_at timestamp with time zone,
+    is_free boolean DEFAULT true,
+    price_cents integer DEFAULT 0,
+    remote_url character varying(512),
+    checksum character varying(64),
+    entry_point character varying(256),
+    dependencies jsonb DEFAULT '[]'::jsonb,
+    install_count integer DEFAULT 0,
+    rating numeric(3,2) DEFAULT 0,
+    rating_count integer DEFAULT 0,
+    is_published boolean DEFAULT false,
+    is_featured boolean DEFAULT false,
+    is_recommended boolean DEFAULT false,
+    author_name character varying(128),
+    author_url character varying(512),
+    homepage_url character varying(512),
+    screenshots jsonb DEFAULT '[]'::jsonb,
+    tags text[],
+    category character varying(64),
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    published_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_role_permissions (
+    role_id uuid NOT NULL,
+    permission_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_roles (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(64) NOT NULL,
+    description text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_subscriptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    plan_id uuid NOT NULL,
+    status character varying(32) DEFAULT 'active'::character varying,
+    current_period_start date NOT NULL,
+    current_period_end date NOT NULL,
+    is_trial boolean DEFAULT false,
+    trial_ends_at timestamp with time zone,
+    cancelled_at timestamp with time zone,
+    cancel_at_period_end boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_tenant_modules (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    module_code character varying(64) NOT NULL,
+    module_name character varying(128),
+    is_active boolean DEFAULT true,
+    activated_at timestamp with time zone DEFAULT now(),
+    expires_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_tenant_plugins (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    plugin_id uuid NOT NULL,
+    installed_version character varying(32),
+    is_active boolean DEFAULT true,
+    license_type character varying(32) DEFAULT 'subscription'::character varying,
+    license_expires_at timestamp with time zone,
+    purchase_order_id character varying(128),
+    activated_at timestamp with time zone DEFAULT now(),
+    last_used_at timestamp with time zone,
+    usage_count integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_tenant_settings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    setting_key character varying(128) NOT NULL,
+    setting_value text,
+    is_public boolean DEFAULT false,
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_tenant_usage (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    users_count integer DEFAULT 0,
+    storage_used_mb bigint DEFAULT 0,
+    api_calls_count bigint DEFAULT 0,
+    period_start date NOT NULL,
+    period_end date NOT NULL,
+    base_cost numeric(10,2) DEFAULT 0,
+    overage_cost numeric(10,2) DEFAULT 0,
+    plugin_cost numeric(10,2) DEFAULT 0,
+    total_cost numeric(10,2) DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_tenant_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    email character varying(256) NOT NULL,
+    role character varying(32) DEFAULT 'member'::character varying,
+    status character varying(32) DEFAULT 'active'::character varying,
+    created_at timestamp with time zone DEFAULT now(),
+    last_login timestamp without time zone
+);
+
+
+
+
+CREATE TABLE mes.core_tenants (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    code character varying(64) NOT NULL,
+    tenant_type character varying(32) DEFAULT 'shared'::character varying,
+    plan character varying(32) DEFAULT 'basic'::character varying,
+    license_type character varying(32) DEFAULT 'subscription'::character varying,
+    license_expires_at timestamp with time zone,
+    database_host character varying(256),
+    database_port integer DEFAULT 5432,
+    database_name character varying(64),
+    quota_users integer DEFAULT 20,
+    quota_storage_gb bigint DEFAULT 10,
+    quota_api_calls bigint DEFAULT 100000,
+    quota_plugins text[],
+    features jsonb DEFAULT '{}'::jsonb,
+    status character varying(32) DEFAULT 'trial'::character varying,
+    trial_expires_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    activated_at timestamp with time zone,
+    suspended_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_usage_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    metric_type character varying(64) NOT NULL,
+    metric_name character varying(128),
+    quantity bigint DEFAULT 0 NOT NULL,
+    unit character varying(32),
+    period_start timestamp without time zone NOT NULL,
+    period_end timestamp without time zone NOT NULL,
+    cost_cents integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_user_roles (
+    user_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    username character varying(64) NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    full_name character varying(128),
+    phone character varying(32),
+    avatar_url character varying(512),
+    status character varying(32) DEFAULT 'active'::character varying,
+    is_superuser boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    last_login_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_workflow_instances (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workflow_id uuid NOT NULL,
+    title character varying(256) NOT NULL,
+    initiator_id uuid NOT NULL,
+    current_node_id character varying(64),
+    status character varying(32) DEFAULT 'pending'::character varying,
+    variables jsonb,
+    tenant_id uuid NOT NULL,
+    started_at timestamp with time zone DEFAULT now(),
+    completed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now()
+);
+
+
+
+
+CREATE TABLE mes.core_workflow_tasks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    instance_id uuid NOT NULL,
+    node_id character varying(64) NOT NULL,
+    assignee_id uuid NOT NULL,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    comment text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    completed_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.core_workflows (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    definition jsonb NOT NULL,
+    status character varying(32) DEFAULT 'draft'::character varying,
+    version integer DEFAULT 1,
+    created_by uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    published_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.crm_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_opportunities integer DEFAULT 0,
+    win_amount numeric(15,2) DEFAULT 0,
+    conversion_rate numeric(5,2) DEFAULT 0,
+    avg_cycle_days numeric(6,1) DEFAULT 0,
+    stage_distribution jsonb DEFAULT '[]'::jsonb,
+    trend_data jsonb DEFAULT '[]'::jsonb,
+    industry_distribution jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
 CREATE TABLE mes.demand_forecasts (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     forecast_no character varying(64) NOT NULL,
@@ -154,6 +997,42 @@ CREATE TABLE mes.demand_forecasts (
 );
 
 ALTER TABLE ONLY mes.demand_forecasts FORCE ROW LEVEL SECURITY;
+
+
+
+
+CREATE TABLE mes.dynamic_data (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    schema_id uuid NOT NULL,
+    data_json jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+COMMENT ON TABLE mes.dynamic_data IS '动态数据存储表 - 根据 Schema 存储业务数据（JSONB）';
+
+
+
+COMMENT ON COLUMN mes.dynamic_data.data_json IS '业务数据（JSONB，结构由 schema_id 对应的 schema_json 定义）';
+
+
+
+CREATE TABLE mes.ehs_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_accidents integer DEFAULT 0,
+    pending_hazards integer DEFAULT 0,
+    training_rate numeric(5,2) DEFAULT 0,
+    drill_count integer DEFAULT 0,
+    accident_trend jsonb DEFAULT '[]'::jsonb,
+    hazard_types jsonb DEFAULT '[]'::jsonb,
+    training_trend jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
 
 
 
@@ -399,6 +1278,40 @@ CREATE TABLE mes.equipment_oee (
 
 
 
+CREATE TABLE mes.hrm_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_employees integer DEFAULT 0,
+    new_hires integer DEFAULT 0,
+    on_leave integer DEFAULT 0,
+    avg_salary numeric(10,2) DEFAULT 0,
+    department_distribution jsonb DEFAULT '[]'::jsonb,
+    hire_trend jsonb DEFAULT '[]'::jsonb,
+    education_distribution jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+CREATE TABLE mes.lims_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    pending_samples integer DEFAULT 0,
+    in_progress_tasks integer DEFAULT 0,
+    instrument_utilization numeric(5,2) DEFAULT 0,
+    pass_rate numeric(5,2) DEFAULT 0,
+    sample_trend jsonb DEFAULT '[]'::jsonb,
+    task_status jsonb DEFAULT '[]'::jsonb,
+    instrument_status jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
 CREATE TABLE mes.material_boms (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     bom_no character varying(64) NOT NULL,
@@ -481,6 +1394,13 @@ CREATE TABLE mes.material_plans (
 
 
 
+CREATE TABLE mes.material_requirement_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL
+);
+
+
+
+
 CREATE TABLE mes.material_requirements (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     mrp_no character varying(64) NOT NULL,
@@ -553,6 +1473,23 @@ CREATE TABLE mes.module_settings (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone
+);
+
+
+
+
+CREATE TABLE mes.pdm_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    active_projects integer DEFAULT 0,
+    pending_documents integer DEFAULT 0,
+    bom_changes integer DEFAULT 0,
+    completion_rate numeric(5,2) DEFAULT 0,
+    project_distribution jsonb DEFAULT '[]'::jsonb,
+    document_types jsonb DEFAULT '[]'::jsonb,
+    change_trend jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -1058,6 +1995,34 @@ ALTER TABLE ONLY mes.quality_standards FORCE ROW LEVEL SECURITY;
 
 
 
+CREATE TABLE mes.schema_registry (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(100) NOT NULL,
+    title character varying(200) NOT NULL,
+    description text,
+    schema_json jsonb NOT NULL,
+    table_name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+
+
+COMMENT ON TABLE mes.schema_registry IS 'Schema 注册表 - 存储前端 EntitySchema 配置，驱动动态 CRUD API';
+
+
+
+COMMENT ON COLUMN mes.schema_registry.schema_json IS 'EntitySchema JSON 配置（含 fields、list、form 等）';
+
+
+
+COMMENT ON COLUMN mes.schema_registry.table_name IS '动态创建的数据表名（dynamic_<name>）';
+
+
+
 CREATE TABLE mes.team_members (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     team_id uuid NOT NULL,
@@ -1134,6 +2099,23 @@ CREATE TABLE mes.wips (
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     deleted_at timestamp without time zone
+);
+
+
+
+
+CREATE TABLE mes.wms_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_inventory integer DEFAULT 0,
+    pending_inbound integer DEFAULT 0,
+    pending_outbound integer DEFAULT 0,
+    space_utilization numeric(5,2) DEFAULT 0,
+    inbound_trend jsonb DEFAULT '[]'::jsonb,
+    category_distribution jsonb DEFAULT '[]'::jsonb,
+    outbound_trend jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -1287,6 +2269,386 @@ ALTER TABLE ONLY mes.capacities
 
 
 
+ALTER TABLE ONLY mes.core_billing_invoices
+    ADD CONSTRAINT core_billing_invoices_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_billing_invoices
+    ADD CONSTRAINT core_billing_invoices_tenant_id_invoice_number_key UNIQUE (tenant_id, invoice_number);
+
+
+
+ALTER TABLE ONLY mes.core_billing_plans
+    ADD CONSTRAINT core_billing_plans_code_key UNIQUE (code);
+
+
+
+ALTER TABLE ONLY mes.core_billing_plans
+    ADD CONSTRAINT core_billing_plans_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_chat_members
+    ADD CONSTRAINT core_chat_members_pkey PRIMARY KEY (room_id, user_id);
+
+
+
+ALTER TABLE ONLY mes.core_chat_messages
+    ADD CONSTRAINT core_chat_messages_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_chat_rooms
+    ADD CONSTRAINT core_chat_rooms_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_dashboard_refresh_log
+    ADD CONSTRAINT core_dashboard_refresh_log_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_dict_items
+    ADD CONSTRAINT core_dict_items_dict_type_id_code_key UNIQUE (dict_type_id, code);
+
+
+
+ALTER TABLE ONLY mes.core_dict_items
+    ADD CONSTRAINT core_dict_items_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_dict_types
+    ADD CONSTRAINT core_dict_types_code_key UNIQUE (code);
+
+
+
+ALTER TABLE ONLY mes.core_dict_types
+    ADD CONSTRAINT core_dict_types_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_email_queue
+    ADD CONSTRAINT core_email_queue_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_email_templates
+    ADD CONSTRAINT core_email_templates_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_emails
+    ADD CONSTRAINT core_emails_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_faqs
+    ADD CONSTRAINT core_faqs_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_file_folders
+    ADD CONSTRAINT core_file_folders_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_files
+    ADD CONSTRAINT core_files_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_guide_lessons
+    ADD CONSTRAINT core_guide_lessons_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_guide_progress
+    ADD CONSTRAINT core_guide_progress_guide_id_user_id_key UNIQUE (guide_id, user_id);
+
+
+
+ALTER TABLE ONLY mes.core_guide_progress
+    ADD CONSTRAINT core_guide_progress_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_guides
+    ADD CONSTRAINT core_guides_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_inter_module_sync
+    ADD CONSTRAINT core_inter_module_sync_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_login_logs
+    ADD CONSTRAINT core_login_logs_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_menu_groups
+    ADD CONSTRAINT core_menu_groups_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_menu_groups
+    ADD CONSTRAINT core_menu_groups_tenant_id_code_key UNIQUE (tenant_id, code);
+
+
+
+ALTER TABLE ONLY mes.core_menus
+    ADD CONSTRAINT core_menus_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_menus
+    ADD CONSTRAINT core_menus_tenant_id_code_key UNIQUE (tenant_id, code);
+
+
+
+ALTER TABLE ONLY mes.core_migration_history
+    ADD CONSTRAINT core_migration_history_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_migration_history
+    ADD CONSTRAINT core_migration_history_plugin_name_version_key UNIQUE (plugin_name, version);
+
+
+
+ALTER TABLE ONLY mes.core_mobile_offline_records
+    ADD CONSTRAINT core_mobile_offline_records_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_notification_templates
+    ADD CONSTRAINT core_notification_templates_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_notifications
+    ADD CONSTRAINT core_notifications_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_permissions
+    ADD CONSTRAINT core_permissions_code_key UNIQUE (code);
+
+
+
+ALTER TABLE ONLY mes.core_permissions
+    ADD CONSTRAINT core_permissions_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_categories
+    ADD CONSTRAINT core_plugin_categories_code_key UNIQUE (code);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_categories
+    ADD CONSTRAINT core_plugin_categories_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_instances
+    ADD CONSTRAINT core_plugin_instances_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_instances
+    ADD CONSTRAINT core_plugin_instances_plugin_id_key UNIQUE (plugin_id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_permissions
+    ADD CONSTRAINT core_plugin_permissions_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_permissions
+    ADD CONSTRAINT core_plugin_permissions_plugin_code_permission_code_key UNIQUE (plugin_code, permission_code);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_pricing
+    ADD CONSTRAINT core_plugin_pricing_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_pricing
+    ADD CONSTRAINT core_plugin_pricing_plugin_code_key UNIQUE (plugin_code);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_reviews
+    ADD CONSTRAINT core_plugin_reviews_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_versions
+    ADD CONSTRAINT core_plugin_versions_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_plugin_versions
+    ADD CONSTRAINT core_plugin_versions_plugin_id_version_key UNIQUE (plugin_id, version);
+
+
+
+ALTER TABLE ONLY mes.core_plugins
+    ADD CONSTRAINT core_plugins_code_key UNIQUE (code);
+
+
+
+ALTER TABLE ONLY mes.core_plugins
+    ADD CONSTRAINT core_plugins_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_role_permissions
+    ADD CONSTRAINT core_role_permissions_pkey PRIMARY KEY (role_id, permission_id);
+
+
+
+ALTER TABLE ONLY mes.core_roles
+    ADD CONSTRAINT core_roles_name_key UNIQUE (name);
+
+
+
+ALTER TABLE ONLY mes.core_roles
+    ADD CONSTRAINT core_roles_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_subscriptions
+    ADD CONSTRAINT core_subscriptions_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_subscriptions
+    ADD CONSTRAINT core_subscriptions_tenant_id_key UNIQUE (tenant_id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_modules
+    ADD CONSTRAINT core_tenant_modules_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_modules
+    ADD CONSTRAINT core_tenant_modules_tenant_id_module_code_key UNIQUE (tenant_id, module_code);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_plugins
+    ADD CONSTRAINT core_tenant_plugins_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_plugins
+    ADD CONSTRAINT core_tenant_plugins_tenant_id_plugin_id_key UNIQUE (tenant_id, plugin_id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_settings
+    ADD CONSTRAINT core_tenant_settings_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_settings
+    ADD CONSTRAINT core_tenant_settings_tenant_id_setting_key_key UNIQUE (tenant_id, setting_key);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_usage
+    ADD CONSTRAINT core_tenant_usage_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_usage
+    ADD CONSTRAINT core_tenant_usage_tenant_id_period_start_key UNIQUE (tenant_id, period_start);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_tenant_id_email_key UNIQUE (tenant_id, email);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_tenant_id_user_id_key UNIQUE (tenant_id, user_id);
+
+
+
+ALTER TABLE ONLY mes.core_tenants
+    ADD CONSTRAINT core_tenants_code_key UNIQUE (code);
+
+
+
+ALTER TABLE ONLY mes.core_tenants
+    ADD CONSTRAINT core_tenants_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_usage_records
+    ADD CONSTRAINT core_usage_records_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_user_roles
+    ADD CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id);
+
+
+
+ALTER TABLE ONLY mes.core_users
+    ADD CONSTRAINT core_users_email_key UNIQUE (email);
+
+
+
+ALTER TABLE ONLY mes.core_users
+    ADD CONSTRAINT core_users_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_users
+    ADD CONSTRAINT core_users_username_key UNIQUE (username);
+
+
+
+ALTER TABLE ONLY mes.core_workflow_instances
+    ADD CONSTRAINT core_workflow_instances_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_workflow_tasks
+    ADD CONSTRAINT core_workflow_tasks_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.core_workflows
+    ADD CONSTRAINT core_workflows_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.crm_dashboard_snapshots
+    ADD CONSTRAINT crm_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.crm_dashboard_snapshots
+    ADD CONSTRAINT crm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+
 ALTER TABLE ONLY mes.demand_forecasts
     ADD CONSTRAINT demand_forecasts_pkey PRIMARY KEY (id);
 
@@ -1294,6 +2656,21 @@ ALTER TABLE ONLY mes.demand_forecasts
 
 ALTER TABLE ONLY mes.demand_forecasts
     ADD CONSTRAINT demand_forecasts_tenant_id_forecast_no_key UNIQUE (tenant_id, forecast_no);
+
+
+
+ALTER TABLE ONLY mes.dynamic_data
+    ADD CONSTRAINT dynamic_data_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.ehs_dashboard_snapshots
+    ADD CONSTRAINT ehs_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.ehs_dashboard_snapshots
+    ADD CONSTRAINT ehs_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
 
 
 
@@ -1324,6 +2701,26 @@ ALTER TABLE ONLY mes.equipment_oee
 
 ALTER TABLE ONLY mes.equipment
     ADD CONSTRAINT equipment_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.hrm_dashboard_snapshots
+    ADD CONSTRAINT hrm_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.hrm_dashboard_snapshots
+    ADD CONSTRAINT hrm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+
+ALTER TABLE ONLY mes.lims_dashboard_snapshots
+    ADD CONSTRAINT lims_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.lims_dashboard_snapshots
+    ADD CONSTRAINT lims_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
 
 
 
@@ -1362,6 +2759,11 @@ ALTER TABLE ONLY mes.material_plans
 
 
 
+ALTER TABLE ONLY mes.material_requirement_items
+    ADD CONSTRAINT material_requirement_items_pkey PRIMARY KEY (id);
+
+
+
 ALTER TABLE ONLY mes.material_requirements
     ADD CONSTRAINT material_requirements_mrp_no_key UNIQUE (mrp_no);
 
@@ -1394,6 +2796,16 @@ ALTER TABLE ONLY mes.module_settings
 
 ALTER TABLE ONLY mes.module_settings
     ADD CONSTRAINT module_settings_tenant_id_category_key_key UNIQUE (tenant_id, category, key);
+
+
+
+ALTER TABLE ONLY mes.pdm_dashboard_snapshots
+    ADD CONSTRAINT pdm_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.pdm_dashboard_snapshots
+    ADD CONSTRAINT pdm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
 
 
 
@@ -1512,6 +2924,16 @@ ALTER TABLE ONLY mes.quality_standards
 
 
 
+ALTER TABLE ONLY mes.schema_registry
+    ADD CONSTRAINT schema_registry_name_key UNIQUE (name);
+
+
+
+ALTER TABLE ONLY mes.schema_registry
+    ADD CONSTRAINT schema_registry_pkey PRIMARY KEY (id);
+
+
+
 ALTER TABLE ONLY mes.team_members
     ADD CONSTRAINT team_members_pkey PRIMARY KEY (id);
 
@@ -1544,6 +2966,16 @@ ALTER TABLE ONLY mes.wips
 
 ALTER TABLE ONLY mes.wips
     ADD CONSTRAINT wips_wip_no_key UNIQUE (wip_no);
+
+
+
+ALTER TABLE ONLY mes.wms_dashboard_snapshots
+    ADD CONSTRAINT wms_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+
+ALTER TABLE ONLY mes.wms_dashboard_snapshots
+    ADD CONSTRAINT wms_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
 
 
 
@@ -1580,6 +3012,334 @@ CREATE INDEX idx_batch_records_batch_no ON mes.batch_records USING btree (batch_
 
 
 CREATE INDEX idx_bom_items_bom_id ON mes.bom_items USING btree (bom_id);
+
+
+
+CREATE INDEX idx_core_billing_plans_tenant ON mes.core_billing_plans USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_chat_members_tenant ON mes.core_chat_members USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_chat_messages_room ON mes.core_chat_messages USING btree (room_id);
+
+
+
+CREATE INDEX idx_core_chat_messages_tenant ON mes.core_chat_messages USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_chat_rooms_members ON mes.core_chat_members USING btree (user_id);
+
+
+
+CREATE INDEX idx_core_emails_tenant ON mes.core_emails USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_emails_to ON mes.core_emails USING btree (to_email);
+
+
+
+CREATE INDEX idx_core_faqs_active ON mes.core_faqs USING btree (is_active);
+
+
+
+CREATE INDEX idx_core_faqs_category ON mes.core_faqs USING btree (category);
+
+
+
+CREATE INDEX idx_core_faqs_sort ON mes.core_faqs USING btree (sort_order);
+
+
+
+CREATE INDEX idx_core_faqs_tenant ON mes.core_faqs USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_file_folders_parent ON mes.core_file_folders USING btree (parent_id);
+
+
+
+CREATE INDEX idx_core_file_folders_tenant ON mes.core_file_folders USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_files_folder ON mes.core_files USING btree (folder_id);
+
+
+
+CREATE INDEX idx_core_files_tenant ON mes.core_files USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_files_uploader ON mes.core_files USING btree (uploader_id);
+
+
+
+CREATE INDEX idx_core_guide_lessons_active ON mes.core_guide_lessons USING btree (is_active);
+
+
+
+CREATE INDEX idx_core_guide_lessons_guide_id ON mes.core_guide_lessons USING btree (guide_id);
+
+
+
+CREATE INDEX idx_core_guide_lessons_sort ON mes.core_guide_lessons USING btree (sort_order);
+
+
+
+CREATE INDEX idx_core_guide_lessons_tenant ON mes.core_guide_lessons USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_guide_progress_guide ON mes.core_guide_progress USING btree (guide_id);
+
+
+
+CREATE INDEX idx_core_guide_progress_tenant ON mes.core_guide_progress USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_guide_progress_user ON mes.core_guide_progress USING btree (user_id);
+
+
+
+CREATE INDEX idx_core_guides_active ON mes.core_guides USING btree (is_active);
+
+
+
+CREATE INDEX idx_core_guides_category ON mes.core_guides USING btree (category);
+
+
+
+CREATE INDEX idx_core_guides_sort ON mes.core_guides USING btree (sort_order);
+
+
+
+CREATE INDEX idx_core_guides_tenant ON mes.core_guides USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_instances_tenant ON mes.core_workflow_instances USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_instances_workflow ON mes.core_workflow_instances USING btree (workflow_id);
+
+
+
+CREATE INDEX idx_core_invoices_status ON mes.core_billing_invoices USING btree (status);
+
+
+
+CREATE INDEX idx_core_invoices_tenant ON mes.core_billing_invoices USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_menu_groups_status ON mes.core_menu_groups USING btree (status);
+
+
+
+CREATE INDEX idx_core_menu_groups_tenant_id ON mes.core_menu_groups USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_menus_group_id ON mes.core_menus USING btree (group_id);
+
+
+
+CREATE INDEX idx_core_menus_parent_id ON mes.core_menus USING btree (parent_id);
+
+
+
+CREATE INDEX idx_core_menus_status ON mes.core_menus USING btree (status);
+
+
+
+CREATE INDEX idx_core_menus_tenant_id ON mes.core_menus USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_migration_history_plugin ON mes.core_migration_history USING btree (plugin_name);
+
+
+
+CREATE INDEX idx_core_migration_history_tenant ON mes.core_migration_history USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_notifications_tenant ON mes.core_notifications USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_notifications_user ON mes.core_notifications USING btree (user_id);
+
+
+
+CREATE INDEX idx_core_plugin_instances_status ON mes.core_plugin_instances USING btree (runtime_status);
+
+
+
+CREATE INDEX idx_core_plugin_instances_tenant ON mes.core_plugin_instances USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_plugin_permissions_code ON mes.core_plugin_permissions USING btree (plugin_code);
+
+
+
+CREATE INDEX idx_core_plugin_permissions_tenant ON mes.core_plugin_permissions USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_plugin_pricing_tenant ON mes.core_plugin_pricing USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_plugin_reviews_plugin ON mes.core_plugin_reviews USING btree (plugin_id);
+
+
+
+CREATE INDEX idx_core_plugin_reviews_tenant ON mes.core_plugin_reviews USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_plugins_category ON mes.core_plugins USING btree (category);
+
+
+
+CREATE INDEX idx_core_plugins_code ON mes.core_plugins USING btree (code);
+
+
+
+CREATE INDEX idx_core_plugins_installed ON mes.core_plugins USING btree (is_installed);
+
+
+
+CREATE INDEX idx_core_plugins_tenant ON mes.core_plugins USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_role_permissions_role_id ON mes.core_role_permissions USING btree (role_id);
+
+
+
+CREATE INDEX idx_core_roles_name ON mes.core_roles USING btree (name);
+
+
+
+CREATE INDEX idx_core_roles_tenant ON mes.core_roles USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_subscriptions_tenant ON mes.core_subscriptions USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_tasks_instance ON mes.core_workflow_tasks USING btree (instance_id);
+
+
+
+CREATE INDEX idx_core_tasks_tenant ON mes.core_workflow_tasks USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_tenant_plugins_tenant ON mes.core_tenant_plugins USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_tenant_usage_period ON mes.core_tenant_usage USING btree (tenant_id, period_start);
+
+
+
+CREATE INDEX idx_core_tenant_users_email ON mes.core_tenant_users USING btree (email);
+
+
+
+CREATE INDEX idx_core_tenant_users_tenant ON mes.core_tenant_users USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_tenants_code ON mes.core_tenants USING btree (code);
+
+
+
+CREATE INDEX idx_core_tenants_status ON mes.core_tenants USING btree (status);
+
+
+
+CREATE INDEX idx_core_usage_tenant_period ON mes.core_usage_records USING btree (tenant_id, period_start);
+
+
+
+CREATE INDEX idx_core_user_roles_user_id ON mes.core_user_roles USING btree (user_id);
+
+
+
+CREATE INDEX idx_core_users_email ON mes.core_users USING btree (email);
+
+
+
+CREATE INDEX idx_core_users_tenant ON mes.core_users USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_core_users_username ON mes.core_users USING btree (username);
+
+
+
+CREATE INDEX idx_core_workflows_status ON mes.core_workflows USING btree (status);
+
+
+
+CREATE INDEX idx_core_workflows_tenant ON mes.core_workflows USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_dashboard_refresh_module ON mes.core_dashboard_refresh_log USING btree (module);
+
+
+
+CREATE INDEX idx_dashboard_refresh_tenant ON mes.core_dashboard_refresh_log USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_dashboard_refresh_time ON mes.core_dashboard_refresh_log USING btree (refresh_time);
+
+
+
+CREATE INDEX idx_dict_items_parent_id ON mes.core_dict_items USING btree (parent_id);
+
+
+
+CREATE INDEX idx_dict_items_tenant ON mes.core_dict_items USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_dict_items_type_id ON mes.core_dict_items USING btree (dict_type_id);
+
+
+
+CREATE INDEX idx_dict_types_category ON mes.core_dict_types USING btree (category);
+
+
+
+CREATE INDEX idx_dict_types_tenant ON mes.core_dict_types USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_dynamic_data_created_at ON mes.dynamic_data USING btree (created_at DESC);
+
+
+
+CREATE INDEX idx_dynamic_data_data_json_gin ON mes.dynamic_data USING gin (data_json);
+
+
+
+CREATE INDEX idx_dynamic_data_schema_id ON mes.dynamic_data USING btree (schema_id);
 
 
 
@@ -1711,6 +3471,34 @@ CREATE INDEX idx_equipment_work_station_id ON mes.equipment USING btree (work_st
 
 
 
+CREATE INDEX idx_inter_module_sync_source ON mes.core_inter_module_sync USING btree (source_module);
+
+
+
+CREATE INDEX idx_inter_module_sync_status ON mes.core_inter_module_sync USING btree (status);
+
+
+
+CREATE INDEX idx_inter_module_sync_tenant ON mes.core_inter_module_sync USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_login_logs_login_time ON mes.core_login_logs USING btree (login_time);
+
+
+
+CREATE INDEX idx_login_logs_status ON mes.core_login_logs USING btree (status);
+
+
+
+CREATE INDEX idx_login_logs_tenant_id ON mes.core_login_logs USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_login_logs_user_id ON mes.core_login_logs USING btree (user_id);
+
+
+
 CREATE INDEX idx_material_boms_bom_no ON mes.material_boms USING btree (bom_no);
 
 
@@ -1836,6 +3624,18 @@ CREATE INDEX idx_mes_production_records_tenant_id ON mes.production_records USIN
 
 
 CREATE INDEX idx_mes_work_stations_tenant_id ON mes.work_stations USING btree (tenant_id);
+
+
+
+CREATE INDEX idx_mobile_offline_module ON mes.core_mobile_offline_records USING btree (module);
+
+
+
+CREATE INDEX idx_mobile_offline_status ON mes.core_mobile_offline_records USING btree (status);
+
+
+
+CREATE INDEX idx_mobile_offline_user ON mes.core_mobile_offline_records USING btree (user_id);
 
 
 
@@ -2127,6 +3927,18 @@ CREATE INDEX idx_quality_standards_status ON mes.quality_standards USING btree (
 
 
 
+CREATE INDEX idx_schema_registry_active ON mes.schema_registry USING btree (is_active);
+
+
+
+CREATE INDEX idx_schema_registry_created_at ON mes.schema_registry USING btree (created_at DESC);
+
+
+
+CREATE INDEX idx_schema_registry_name ON mes.schema_registry USING btree (name);
+
+
+
 CREATE INDEX idx_team_members_employee_id ON mes.team_members USING btree (employee_id);
 
 
@@ -2290,8 +4102,159 @@ CREATE INDEX quality_standards_tenant_id_idx ON mes.quality_standards USING btre
 
 
 
+
+
+
+
+
+
 ALTER TABLE ONLY mes.bom_items
     ADD CONSTRAINT bom_items_bom_id_fkey FOREIGN KEY (bom_id) REFERENCES mes.material_boms(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_billing_invoices
+    ADD CONSTRAINT core_billing_invoices_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES mes.core_subscriptions(id);
+
+
+
+ALTER TABLE ONLY mes.core_billing_invoices
+    ADD CONSTRAINT core_billing_invoices_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+
+
+
+ALTER TABLE ONLY mes.core_chat_members
+    ADD CONSTRAINT core_chat_members_room_id_fkey FOREIGN KEY (room_id) REFERENCES mes.core_chat_rooms(id);
+
+
+
+ALTER TABLE ONLY mes.core_chat_messages
+    ADD CONSTRAINT core_chat_messages_room_id_fkey FOREIGN KEY (room_id) REFERENCES mes.core_chat_rooms(id);
+
+
+
+ALTER TABLE ONLY mes.core_dict_items
+    ADD CONSTRAINT core_dict_items_dict_type_id_fkey FOREIGN KEY (dict_type_id) REFERENCES mes.core_dict_types(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_dict_items
+    ADD CONSTRAINT core_dict_items_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES mes.core_dict_items(id) ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY mes.core_guide_lessons
+    ADD CONSTRAINT core_guide_lessons_guide_id_fkey FOREIGN KEY (guide_id) REFERENCES mes.core_guides(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_guide_progress
+    ADD CONSTRAINT core_guide_progress_guide_id_fkey FOREIGN KEY (guide_id) REFERENCES mes.core_guides(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_menus
+    ADD CONSTRAINT core_menus_group_id_fkey FOREIGN KEY (group_id) REFERENCES mes.core_menu_groups(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_menus
+    ADD CONSTRAINT core_menus_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES mes.core_menus(id) ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY mes.core_plugin_instances
+    ADD CONSTRAINT core_plugin_instances_plugin_id_fkey FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_plugin_reviews
+    ADD CONSTRAINT core_plugin_reviews_plugin_id_fkey FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_plugin_versions
+    ADD CONSTRAINT core_plugin_versions_plugin_id_fkey FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_role_permissions
+    ADD CONSTRAINT core_role_permissions_permission_id_fkey FOREIGN KEY (permission_id) REFERENCES mes.core_permissions(id);
+
+
+
+ALTER TABLE ONLY mes.core_role_permissions
+    ADD CONSTRAINT core_role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
+
+
+
+ALTER TABLE ONLY mes.core_subscriptions
+    ADD CONSTRAINT core_subscriptions_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES mes.core_billing_plans(id);
+
+
+
+ALTER TABLE ONLY mes.core_subscriptions
+    ADD CONSTRAINT core_subscriptions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_modules
+    ADD CONSTRAINT core_tenant_modules_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_plugins
+    ADD CONSTRAINT core_tenant_plugins_plugin_id_fkey FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_tenant_plugins
+    ADD CONSTRAINT core_tenant_plugins_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_tenant_settings
+    ADD CONSTRAINT core_tenant_settings_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_usage
+    ADD CONSTRAINT core_tenant_usage_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+
+
+
+ALTER TABLE ONLY mes.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id) ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY mes.core_usage_records
+    ADD CONSTRAINT core_usage_records_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
+
+
+
+ALTER TABLE ONLY mes.core_user_roles
+    ADD CONSTRAINT core_user_roles_role_id_fkey FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
+
+
+
+ALTER TABLE ONLY mes.core_user_roles
+    ADD CONSTRAINT core_user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES mes.core_users(id);
+
+
+
+ALTER TABLE ONLY mes.core_workflow_instances
+    ADD CONSTRAINT core_workflow_instances_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES mes.core_workflows(id);
+
+
+
+ALTER TABLE ONLY mes.core_workflow_tasks
+    ADD CONSTRAINT core_workflow_tasks_instance_id_fkey FOREIGN KEY (instance_id) REFERENCES mes.core_workflow_instances(id);
+
+
+
+ALTER TABLE ONLY mes.dynamic_data
+    ADD CONSTRAINT dynamic_data_schema_id_fkey FOREIGN KEY (schema_id) REFERENCES mes.schema_registry(id) ON DELETE CASCADE;
 
 
 

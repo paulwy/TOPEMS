@@ -25,9 +25,9 @@
 //! ## 使用示例
 //!
 //! ```no_run
-//! use topems_search::create_router;
+//! use topems_search::handlers::search_routes;
 //!
-//! let app = create_router();
+//! let app = search_routes();
 //! // 挂载到 Axum 应用
 //! ```
 
