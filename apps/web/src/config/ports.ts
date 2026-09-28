@@ -57,6 +57,8 @@ export const BACKEND_PORTS: Record<string, number> = {
   // V68.1 拆分服务 (8095-8096)
   monitor: 8095,
   'plugin-registry': 8096,
+  // 统一入口服务 (BFF 网关)
+  server: 8099,
   // Operation services (8010-8029)
   erp: 8010,
   finance: 8011,

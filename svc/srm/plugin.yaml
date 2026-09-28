@@ -5,7 +5,7 @@ name: 供应商管理
 description: SRM 供应商关系管理系统 - 供应商档案、合同管理、评估
 version: 1.0.0
 plugin_type: business
-dependencies: []
+dependencies: [scm]
 deployment:
   port: 8042
   base_path: /api/srm

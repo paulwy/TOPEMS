@@ -141,6 +141,10 @@ master-data svc/master-data        topems-master-data          $(get_port MASTER
 monitor     svc/monitor            topems-monitor              $(get_port MONITOR_PORT 8095)
 plugin-registry svc/plugin-registry topems-plugin-registry    $(get_port PLUGIN_REGISTRY_PORT 8096)
 
+# 独立部署服务
+server      svc/server             topems-server                $(get_port SERVER_PORT 8099)
+tms         svc/tms                topems-tms                   $(get_port TMS_PORT 8073)
+
 # 说明: 核心服务（iam=unified-core）与扩展服务统一由上方服务行承载；
 # 不写入 CORE_SERVICES=... 伪服务行（此前 get_all_services 会误把它当服务名）
 EOF

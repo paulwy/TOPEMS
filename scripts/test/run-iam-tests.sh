@@ -97,8 +97,9 @@ check_environment() {
     echo ""
 }
 
-# 后端测试失败标志（供 main 聚合退出码）
+# 后端/前端测试失败标志（供 main 聚合退出码）
 BACKEND_FAILED=0
+FRONTEND_FAILED=0
 
 # 运行后端测试
 run_backend_tests() {
@@ -155,11 +156,27 @@ run_frontend_tests() {
     echo -e "${YELLOW}运行 IAM 权限 E2E 测试...${NC}"
     echo ""
 
-    # 运行测试
+    # 运行测试（测试文件不存在时明确失败，防止 "No tests found" 假绿）
+    local spec="e2e/iam-permission.spec.ts"
+    if [ ! -f "$spec" ]; then
+        echo -e "${RED}✗ 测试文件不存在: $spec${NC}" >&2
+        echo -e "${YELLOW}   e2e 目录当前测试: $(ls e2e/*.spec.ts 2>/dev/null | xargs -n1 basename | tr '\n' ' ')${NC}" >&2
+        FRONTEND_FAILED=1
+        return 1
+    fi
+
+    local rc=0
     if [ "$GENERATE_REPORT" = true ]; then
-        npx playwright test e2e/iam-permission.spec.ts --reporter=html
+        npx playwright test "$spec" --reporter=html 2>&1 | tail -8
+        rc=${PIPESTATUS[0]}
     else
-        npx playwright test e2e/iam-permission.spec.ts
+        npx playwright test "$spec" 2>&1 | tail -8
+        rc=${PIPESTATUS[0]}
+    fi
+    if [ $rc -ne 0 ]; then
+        echo -e "${RED}✗ 前端 E2E 测试失败 (exit $rc)${NC}" >&2
+        FRONTEND_FAILED=1
+        return 1
     fi
 
     echo ""
@@ -211,8 +228,8 @@ main() {
         run_frontend_tests
     fi
 
-    if [ $BACKEND_FAILED -ne 0 ]; then
-        echo -e "${RED}后端测试存在失败，退出码非零${NC}" >&2
+    if [ $BACKEND_FAILED -ne 0 ] || [ $FRONTEND_FAILED -ne 0 ]; then
+        echo -e "${RED}测试存在失败（后端=${BACKEND_FAILED} 前端=${FRONTEND_FAILED}），退出码非零${NC}" >&2
         exit 1
     fi
 

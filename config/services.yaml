@@ -282,6 +282,15 @@ service_groups:
       dependencies: [unified-core]
       service_dir: search
 
+    - name: server
+      port: 8099
+      env_var: SERVER_PORT
+      description: 统一入口服务（BFF 网关，聚合各服务 API 路由）
+      status: implemented
+      bootstrap_mode: C  # Shared Bootstrap V2 Pattern: Application { router, port, name } 自建（自定义路由/适配器）
+      dependencies: [unified-core]
+      service_dir: server
+
     # [V2026.08 已移除] lowcode 空壳占位服务（后端尚未立项，所有handler返回501）
     # 代码归档见 docs/archive/，如未来立项可恢复
 

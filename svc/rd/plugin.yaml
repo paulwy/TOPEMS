@@ -5,7 +5,7 @@ name: 研发管理
 description: RD 研发管理系统 - 项目管理、实验记录、配方管理
 version: 1.0.0
 plugin_type: business
-dependencies: []
+dependencies: [mes, pm]
 deployment:
   port: 8053
   base_path: /api/rd

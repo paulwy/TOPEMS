@@ -145,6 +145,9 @@ const SERVICES: ServiceConfig[] = [
   // 主数据服务（独立进程，端口 8090）
   { name: 'master-data', port: BACKEND_PORTS['master-data'], apiPrefix: '/api/master-data' },
 
+  // 统一入口服务（BFF 网关，8099；模块化单体 VITE_MONOLITH=1 时所有 API 汇聚于此）
+  { name: 'server', port: BACKEND_PORTS.server, apiPrefix: '/api/server' },
+
   // 基础设施
   {
     name: 'mobile',

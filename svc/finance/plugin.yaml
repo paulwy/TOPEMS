@@ -5,7 +5,7 @@ name: 财务管理服务
 description: 财务管理服务 - 科目管理、凭证处理、账簿查询、财务报表
 version: 1.0.0
 plugin_type: service
-dependencies: []
+dependencies: [erp]
 deployment: {}
 runtime:
   port: 8011
