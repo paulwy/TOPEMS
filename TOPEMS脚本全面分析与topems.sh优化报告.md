@@ -7,6 +7,15 @@
 
 ---
 
+## 实施状态（按用户指示逐项推进，最新优先）
+
+| 轮次 | 提交 | 内容 | 状态 |
+|---|---|---|---|
+| 第一轮 | `80c0b80a2` | 孤儿/空壳/废弃脚本清理（8 删）；部署高危 H1-H3（install/rollback/production-deploy/start-production）；迁移高危 H4-H6（verify-empty 守卫/APS COMMIT/migrate fallback/validate 表名）；迁移入口收敛（topems.sh db_migrate → migrate.sh run） | ✅ 已推 |
+| 第二轮 | `bd62a8260` | M3/M4/M9 测试退出码统一；M6 bash 3.2 兼容（去 nameref/mapfile）；M8 健康路径 /health；M16/M14 弱口令环境变量化+SQL 注入修复；bundle 预算统一（500K/2500K/30M，ci.yml 显式传参）；建议 4 单一事实源（start-production 端口读 ports.env、deploy.sh 标 DEPRECATED）；hook 修复（sensitive-info 放行占位符提示行） | ✅ 已推 |
+
+---
+
 ## 一、总体结论
 
 1. **77 个脚本 `bash -n` 语法全部通过**；shellcheck 扫描 37 个零告警、40 个有告警（无 error 级，多为 SC2155/SC2046 类风格项）。
