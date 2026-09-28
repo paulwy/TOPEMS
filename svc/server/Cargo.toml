@@ -94,6 +94,7 @@ default = [
     "module-search",
     "module-monitor",
     "module-plugin-registry",
+    "module-gis",
     "module-integration",
     "module-mobile",
     # [2026-09-17] tms real_module 接入模块化单体（P3 门控转为默认启用）

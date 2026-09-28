@@ -68,19 +68,31 @@ const FinanceReportsPage: React.FC = () => {
   });
 
   const businessOverview = reportsQuery.data?.businessOverview ?? null;
-  const projectSummaries = useMemo(() => reportsQuery.data?.projectSummaries ?? [], [reportsQuery]);
-  const monthlyTrends = useMemo(() => reportsQuery.data?.monthlyTrends ?? [], [reportsQuery]);
+  const projectSummaries = useMemo(
+    () =>
+      Array.isArray(reportsQuery.data?.projectSummaries) ? reportsQuery.data.projectSummaries : [],
+    [reportsQuery]
+  );
+  const monthlyTrends = useMemo(
+    () => (Array.isArray(reportsQuery.data?.monthlyTrends) ? reportsQuery.data.monthlyTrends : []),
+    [reportsQuery]
+  );
   const departmentSummaries = useMemo(
-    () => reportsQuery.data?.departmentSummaries ?? [],
+    () =>
+      Array.isArray(reportsQuery.data?.departmentSummaries)
+        ? reportsQuery.data.departmentSummaries
+        : [],
     [reportsQuery]
   );
   const loading = reportsQuery.isLoading;
   const error = reportsQuery.error ? t('finance.finance_reports_page.fail') : null;
 
-  const formatCurrency = (amount: number) =>
-    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (amount?: number) => {
+    const val = amount || 0;
+    return `¥${val.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+  };
 
-  const statCards = useMemo<StatCard[]>(() => {
+  const statCards = useMemo(() => {
     if (!businessOverview) return [];
 
     return [

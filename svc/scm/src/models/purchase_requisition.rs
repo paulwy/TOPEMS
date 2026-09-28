@@ -6,7 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct PurchaseRequisition {
     pub id: Uuid,
-    pub requisition_no: String,
+    pub requisition_no: Option<String>,
     pub title: String,
     pub applicant_id: Option<Uuid>,
     pub applicant_name: Option<String>,
@@ -46,7 +46,7 @@ pub struct PurchaseRequisitionItem {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreatePurchaseRequisitionRequest {
-    pub requisition_no: String,
+    pub requisition_no: Option<String>,
     pub title: String,
     pub applicant_id: Option<String>,
     pub department_id: Option<String>,
@@ -105,7 +105,7 @@ mod tests {
     fn purchase_requisition_serde_roundtrip_full() {
         let r = PurchaseRequisition {
             id: fixed_uuid(),
-            requisition_no: "PR-2026-001".to_string(),
+            requisition_no: Some("PR-2026-001".to_string()),
             title: "原材料采购申请".to_string(),
             applicant_id: Some(fixed_uuid()),
             applicant_name: Some("张三".to_string()),
@@ -133,7 +133,7 @@ mod tests {
     fn purchase_requisition_serde_roundtrip_minimal() {
         let r = PurchaseRequisition {
             id: fixed_uuid(),
-            requisition_no: "PR-0001".to_string(),
+            requisition_no: Some("PR-0001".to_string()),
             title: "Minimal".to_string(),
             applicant_id: None,
             applicant_name: None,
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn create_purchase_requisition_request_serde_roundtrip() {
         let req = CreatePurchaseRequisitionRequest {
-            requisition_no: "PR-001".to_string(),
+            requisition_no: Some("PR-001".to_string()),
             title: "申请标题".to_string(),
             applicant_id: Some("u-001".to_string()),
             department_id: Some("d-001".to_string()),
@@ -214,7 +214,7 @@ mod tests {
     #[test]
     fn create_purchase_requisition_request_serde_minimal() {
         let req = CreatePurchaseRequisitionRequest {
-            requisition_no: "PR-002".to_string(),
+            requisition_no: Some("PR-002".to_string()),
             title: "Min".to_string(),
             applicant_id: None,
             department_id: None,
@@ -309,7 +309,7 @@ mod tests {
             "updated_at": "2026-08-16T08:00:00Z"
         }"#;
         let r: PurchaseRequisition = serde_json::from_str(raw).unwrap();
-        assert_eq!(r.requisition_no, "PR-JSON-001");
+        assert_eq!(r.requisition_no, Some("PR-JSON-001".to_string()));
         assert_eq!(r.status, "approved");
         assert_eq!(r.priority, Some("high".to_string()));
         assert_eq!(r.total_amount, Some(1234.56));

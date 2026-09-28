@@ -662,10 +662,8 @@ const navItems: NavItem[] = [
   },
 ];
 
-const footerItems: NavItem[] = [
-  { id: 'settings', label: 'shared.sidebar.settings', icon: Settings },
-  { id: 'profile', label: 'shared.sidebar.profile', icon: User },
-];
+// 底部菜单项已移除：系统设置在左侧"系统管理"二级菜单，个人中心在右上角头像下拉菜单
+const footerItems: NavItem[] = [];
 
 // 路径到导航项 ID 的映射
 

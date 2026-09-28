@@ -236,7 +236,7 @@ pub async fn list_suppliers(
             let total = count_result.unwrap_or(0);
 
             let response_data = serde_json::json!({
-                "suppliers": suppliers,
+                "items": suppliers,
                 "total": total,
                 "page": page,
                 "page_size": page_size

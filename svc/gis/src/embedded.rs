@@ -111,6 +111,14 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             axum::routing::get(modules::warehouse::list_warehouse_locations_by_map),
         )
         .route(
+            "/business-locations",
+            axum::routing::get(modules::business::list_business_locations),
+        )
+        .route(
+            "/business-locations/{id}",
+            axum::routing::get(modules::business::get_business_location),
+        )
+        .route(
             "/location-photos",
             axum::routing::get(modules::photo::list_location_photos),
         )
@@ -252,7 +260,8 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         )
         .route(
             "/business-locations",
-            axum::routing::post(modules::business::create_business_location),
+            axum::routing::get(modules::business::list_business_locations)
+                .post(modules::business::create_business_location),
         )
         .route(
             "/business-locations/{id}",

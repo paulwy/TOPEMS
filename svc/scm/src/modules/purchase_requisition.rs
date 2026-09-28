@@ -154,6 +154,12 @@ pub async fn create_requisition(
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
 
+    // 自动生成采购申请编号
+    let requisition_no = data.requisition_no.clone().unwrap_or_else(|| {
+        let now = chrono::Utc::now();
+        format!("PR-{}", now.timestamp_millis())
+    });
+
     let requisition = sqlx::query_as::<_, PurchaseRequisition>(only_own_schema_query!(
         "scm",
         r#"
@@ -164,7 +170,7 @@ pub async fn create_requisition(
         RETURNING *
         "#
     ))
-    .bind(&data.requisition_no)
+    .bind(&requisition_no)
     .bind(&data.title)
     .bind(applicant_id)
     .bind(department_id)
