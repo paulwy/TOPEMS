@@ -207,7 +207,9 @@ pre-commit:
         fi
 
 pre-push:
-  parallel: true
+  # V300: parallel:true → false。四个 cargo 命令共享 target/包缓存锁，并行会竞争
+  # 导致随机失败（曾实测 cargo-test-workspace 并行失败、串行全绿）。
+  parallel: false
   commands:
     # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
     # V300: SQLX_OFFLINE=false（在线）→ true（离线）。pre-push 是缓存完整性的最后本地防线：
