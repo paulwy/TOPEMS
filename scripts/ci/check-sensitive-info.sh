@@ -48,6 +48,11 @@ for f in $STAGED; do
   DIFF_LINES=$(git diff --cached -- "$f" 2>/dev/null | grep '^+' | grep -v '^+++' || true)
   [ -z "$DIFF_LINES" ] && continue
 
+  # 过滤值为变量引用（如 PGPASSWORD="$DB_PASSWORD"、secret="$VAR"）的赋值行：
+  # 变量引用不是硬编码密钥，避免误报
+  DIFF_LINES=$(printf '%s\n' "$DIFF_LINES" | grep -vE '^[+][^=]*=[[:space:]]*"?[$]' || true)
+  [ -z "$DIFF_LINES" ] && continue
+
   for p in "${PATTERNS[@]}"; do
     if echo "$DIFF_LINES" | grep -qiE "$p" 2>/dev/null; then
       FOUND="${FOUND}  - $f (matched: $p)\n"

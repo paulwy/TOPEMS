@@ -173,10 +173,83 @@ load_env() {
     fi
 }
 
-# 编译服务（V70+ 增加内存自适应 & 构建锁）
+# =============================================
+# SQLx 离线缓存新鲜度门禁（V3xx）
+# 背景：mes 离线缓存缺失/过时曾反复导致编译与启动失败。根治设施：
+#   - 根 .sqlx/ 全量缓存已入库（309 条），mes 已纳入离线校验范围；
+#   - scripts/dev/sqlx-prepare.sh --check 为离线缓存一致性门禁
+#     （lefthook pre-commit Gate S / pre-push / CI 共用同一逻辑）；
+#   - lefthook.yml pre-commit Gate S 对 .rs/.sql/.sqlx 变更阻断，
+#     pre-push 四个 cargo 命令 SQLX_OFFLINE=true 串行。
+# 本函数把同一门禁前移到 topems.sh 的编译/启动主流程入口：
+#   - build / build-all / build-backend / start / start-all / run / dev
+#     默认先跑 --check，失败即停并给出修复指引，避免"编译或启动时才暴露缓存缺失"。
+# 跳过方式：参数 --skip-sqlx-check，或环境变量 SQLX_CHECK_SKIP=1，
+#           或 --online（在线模式不消费离线缓存）。
+# 同一进程内只跑一次（_SQLX_CHECKED 守卫），build-all 不会逐包重复检查。
+# =============================================
+_SQLX_CHECKED=0
+_check_sqlx_cache_freshness() {
+    local args=("$@")
+    local skip=0
+    local a
+    for a in "${args[@]}"; do
+        case "$a" in
+            --skip-sqlx-check|--online) skip=1 ;;
+        esac
+    done
+    if [ "${SQLX_CHECK_SKIP:-0}" = "1" ]; then
+        skip=1
+    fi
+    if [ "$skip" -eq 1 ]; then
+        detail "已跳过 SQLx 缓存新鲜度校验（--skip-sqlx-check / --online / SQLX_CHECK_SKIP=1）"
+        return 0
+    fi
+    if [ "$_SQLX_CHECKED" -eq 1 ]; then
+        detail "SQLx 缓存新鲜度本进程已校验通过，跳过重复检查"
+        return 0
+    fi
+    info "========== [门禁] SQLx 离线缓存新鲜度校验（sqlx-prepare.sh --check） =========="
+    if [ ! -x "$SCRIPT_DIR/dev/sqlx-prepare.sh" ]; then
+        error "缺少 $SCRIPT_DIR/dev/sqlx-prepare.sh，无法校验离线缓存。"
+        return 1
+    fi
+    if ! bash "$SCRIPT_DIR/dev/sqlx-prepare.sh" --check; then
+        echo ""
+        error "========== SQLx 离线缓存缺失或与当前代码不一致，已中止操作 =========="
+        error "修复指引："
+        error "  1) 连接数据库后刷新缓存：  ./scripts/dev/sqlx-prepare.sh"
+        error "  2) 提交缓存变更：          git add .sqlx && git commit"
+        error "  3) 重新执行本命令；临时绕过： topems <cmd> --skip-sqlx-check（或 SQLX_CHECK_SKIP=1）"
+        return 1
+    fi
+    _SQLX_CHECKED=1
+    success "SQLx 离线缓存新鲜度校验通过（缓存与当前代码匹配）"
+    return 0
+}
+
+# 返回 mes 专用 DATABASE_URL（.env 派生 + search_path=mes,public；无 .env 时回退默认）
+_mes_db_url() {
+    local url="${DATABASE_URL:-}"
+    if [ -z "$url" ]; then
+        load_env
+        url="${DATABASE_URL:-postgresql://topems_app:topems_app_secret@localhost:5432/topems}"
+    fi
+    if [[ "$url" != *"search_path"* ]]; then
+        if [[ "$url" == *"?"* ]]; then
+            url="${url}&options=-csearch_path=mes,public"
+        else
+            url="${url}?options=-csearch_path=mes,public"
+        fi
+    fi
+    echo "$url"
+}
+
+# 编译服务（V70+ 增加内存自适应 & 构建锁；V3xx 统一离线优先 + SQLx 缓存门禁）
 build_service() {
     local service_name=$1
-    local extra_opts=${2:-""}
+    shift
+    local extra_opts="$*"
     local service_path=$(get_service_path "$service_name")
 
     # V70+ 保存/恢复 CARGO_BUILD_JOBS，避免污染后续构建
@@ -199,19 +272,20 @@ build_service() {
     local executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
 
+    # V3xx 参数解析：显式循环（替代子串匹配，避免 --debug/--dev 误判；未知 flag 透传）
     # V64+ 编译策略：默认优先离线（SQLX_OFFLINE=true），依赖根目录 .sqlx/
     # 除非显式声明 --online 或 env FORCE_ONLINE_BUILD=1
     local online="${FORCE_ONLINE_BUILD:-0}"
+    local offline_only=0
     local profile="--release"
-    if [[ "$extra_opts" == *"--dev"* ]] || [[ "$extra_opts" == *"--debug"* ]]; then
-        profile=""
-    fi
-    if [[ "$extra_opts" == *"--online"* ]]; then
-        online=1
-    fi
-    if [[ "$extra_opts" == *"--offline"* ]]; then
-        online=0
-    fi
+    local _opt
+    for _opt in $extra_opts; do
+        case "$_opt" in
+            --dev|--debug) profile="" ;;
+            --online)      online=1 ;;
+            --offline)     online=0; offline_only=1 ;;
+        esac
+    done
 
     # V70+ 内存自适应 + serial 模式
     local cargo_jobs=""
@@ -253,24 +327,9 @@ build_service() {
         esac
     fi
 
-    # mes 特例：必须在线编译（mes schema 结构，根 .sqlx 缓存与代码不匹配）
-    # 配方与 scripts/mes_guard.sh 一致：rm .sqlx + SQLX_OFFLINE=false + search_path=mes,public
-    if [ "$service_name" = "mes" ]; then
-        rm -f svc/mes/.sqlx/query-*.json
-        export SQLX_OFFLINE=false
-        export DATABASE_URL="postgresql://topems:topems_secret@localhost:5432/topems?options=-csearch_path=mes,public"
-        info "  mes 在线编译配方（mes_guard 机制，search_path=mes,public）"
-        if cargo build $profile --bin "$executable_name" 2>&1; then
-            success "mes 编译成功（在线，search_path=mes,public）"
-            _restore_cargo_jobs
-            return 0
-        else
-            _restore_cargo_jobs
-            error "mes 编译失败（在线）。请运行 ./scripts/topems.sh mes-guard 查看详情"
-            return 1
-        fi
-    fi
-
+    # V3xx：统一离线优先（含 mes）。根 .sqlx/ 缓存 309 条已入库，sqlx-prepare.sh --check
+    # 离线门禁保证缓存与代码匹配；mes 不再走"rm svc/mes/.sqlx + 在线编译"特例，
+    # 与其它服务一致（在线回退时自动附加 search_path=mes,public）。
     local cmd
     if [ "$online" = "1" ]; then
         cmd="SQLX_OFFLINE= cargo build $profile --bin $executable_name"
@@ -283,24 +342,52 @@ build_service() {
         success "$service_name 编译成功 ($( [ -z "$profile" ] && echo "debug" || echo "release" ), $( [ "$online" = "1" ] && echo "online" || echo "offline sqlx" ))"
         _restore_cargo_jobs
         return 0
-    else
-        # 内存不足导致失败时，不再重试（会再次 OOM）
-        if [ "$mem_status" -eq 2 ] || [ "$mem_status" -eq 1 ]; then
-            _restore_cargo_jobs
-            error "$service_name 编译失败（可能与内存不足有关）。建议: 释放内存后重试。"
-            return 1
-        fi
-        warning "$service_name 离线编译失败，自动尝试在线编译（需要 DATABASE_URL）..."
-        load_env
-        if SQLX_OFFLINE= cargo build $profile --bin "$executable_name" 2>&1; then
-            success "$service_name 在线编译成功"
-            _restore_cargo_jobs
-            return 0
+    fi
+
+    # 内存不足导致失败时，不再重试（会再次 OOM）
+    if [ "$mem_status" -eq 2 ] || [ "$mem_status" -eq 1 ]; then
+        _restore_cargo_jobs
+        error "$service_name 编译失败（可能与内存不足有关）。建议: 释放内存后重试。"
+        return 1
+    fi
+
+    # --offline 显式指定：失败即停，绝不静默回退在线（帮助文档语义一致）
+    if [ "$offline_only" -eq 1 ]; then
+        _restore_cargo_jobs
+        error "$service_name 离线编译失败（--offline 模式不回退在线编译）。"
+        error "修复指引："
+        error "  1) 校验离线缓存与当前代码是否一致：  ./scripts/dev/sqlx-prepare.sh --check"
+        error "  2) 连接数据库刷新缓存：              ./scripts/dev/sqlx-prepare.sh"
+        error "  3) 提交缓存变更后重试：              git add .sqlx && git commit"
+        return 1
+    fi
+
+    # 默认模式：离线失败自动尝试在线（需要 DATABASE_URL）
+    warning "$service_name 离线编译失败，自动尝试在线编译（需要 DATABASE_URL）..."
+    load_env
+    local online_url="${DATABASE_URL:-}"
+    if [ "$service_name" = "mes" ] && [ -n "$online_url" ] && [[ "$online_url" != *"search_path"* ]]; then
+        # mes 查询依赖 search_path=mes,public（见 docs/developer/backend/mes-compile-mechanism.md）
+        if [[ "$online_url" == *"?"* ]]; then
+            online_url="${online_url}&options=-csearch_path=mes,public"
         else
-            _restore_cargo_jobs
-            error "$service_name 编译失败（离线+在线均失败），建议执行: ./scripts/dev/sqlx-prepare.sh 刷新根 .sqlx/"
-            return 1
+            online_url="${online_url}?options=-csearch_path=mes,public"
         fi
+    fi
+    if [ -z "$online_url" ]; then
+        _restore_cargo_jobs
+        error "未配置 DATABASE_URL（.env 缺失或未设置），无法在线回退。"
+        error "请先运行 ./scripts/dev/sqlx-prepare.sh --check 定位离线缓存问题，或配置 DATABASE_URL 后重试。"
+        return 1
+    fi
+    if DATABASE_URL="$online_url" SQLX_OFFLINE= cargo build $profile --bin "$executable_name" 2>&1; then
+        success "$service_name 在线编译成功"
+        _restore_cargo_jobs
+        return 0
+    else
+        _restore_cargo_jobs
+        error "$service_name 编译失败（离线+在线均失败），建议执行: ./scripts/dev/sqlx-prepare.sh 刷新根 .sqlx/ 后重试"
+        return 1
     fi
 }
 
@@ -423,6 +510,7 @@ build_all_backend() {
         export CARGO_BUILD_JOBS=1
     fi
 
+    # V3xx SQLx 离线缓存新鲜度门禁：缓存与当前代码匹配才进入编译
     if [ "$do_prepare" = "1" ]; then
         info "========== 预处理: 刷新 SQLx 离线缓存 =========="
         load_env
@@ -430,6 +518,17 @@ build_all_backend() {
             "$SCRIPT_DIR/dev/sqlx-prepare.sh" || warning "sqlx prepare 失败，但继续尝试编译"
         else
             warning "找不到 $SCRIPT_DIR/dev/sqlx-prepare.sh，跳过 sqlx prepare 阶段"
+        fi
+        # 刷新后强制校验：确认本次刷新真的让离线缓存可用
+        if ! _check_sqlx_cache_freshness $extra_opts; then
+            _release_build_lock
+            return 1
+        fi
+    else
+        # 默认离线优先：缓存缺失/过时即停（--skip-sqlx-check / SQLX_CHECK_SKIP=1 可跳过）
+        if ! _check_sqlx_cache_freshness $extra_opts; then
+            _release_build_lock
+            return 1
         fi
     fi
 
@@ -689,6 +788,8 @@ test_backend() {
     fi
 
     cd "$PROJECT_ROOT"
+    # V3xx：与 lefthook pre-push / CI 一致，离线模式跑测试（根 .sqlx 已入库）
+    export SQLX_OFFLINE=true
     if cargo test --release --workspace 2>&1; then
         success "所有后端测试通过"
         return 0
@@ -1384,6 +1485,8 @@ start_all_services() {
     local filtered_opts=""
     for opt in $extra_opts; do [ "$opt" != "--skip-preflight" ] && filtered_opts="$filtered_opts $opt"; done
     extra_opts="$filtered_opts"
+    # V3xx SQLx 缓存新鲜度门禁：缓存与当前代码匹配才启动（--skip-sqlx-check 可跳过）
+    _check_sqlx_cache_freshness $extra_opts || return 1
     info "启动所有服务..."
     load_env
 
@@ -1511,6 +1614,8 @@ stop_all_services() {
 # 启动开发环境（macOS）
 start_dev_macos() {
     _preflight_check "$@" || return 1
+    # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check / SQLX_CHECK_SKIP=1 可跳过）
+    _check_sqlx_cache_freshness "$@" || return 1
     info "启动 macOS 开发环境..."
 
     check_command() {
@@ -2046,30 +2151,46 @@ db_migrate() {
 
     info "使用 psql 模式执行迁移文件..."
     
-    for migrate_dir in "migrations" $(find svc -name migrations -type d); do
+    # V3xx 修复：真实迁移目录为 database/migrations（原扫描顶层 migrations/ 不存在，静默空转）；
+    #          psql 统一注入 PGPASSWORD（本机无 ~/.pgpass）、加 ON_ERROR_STOP=1，
+    #          迁移失败不再写入 _sqlx_migrations（不再把失败标记为已应用）。
+    if ! command -v psql >/dev/null 2>&1; then
+        error "未找到 psql，请安装 PostgreSQL 客户端后重试"
+        return 1
+    fi
+
+    local _psql_base=(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME")
+    local _migrate_dirs="database/migrations"
+    local _extra_dir
+    while IFS= read -r _extra_dir; do
+        _migrate_dirs="$_migrate_dirs $_extra_dir"
+    done < <(find svc -name migrations -type d 2>/dev/null)
+
+    for migrate_dir in $_migrate_dirs; do
         [ -d "$migrate_dir" ] || continue
-        
+
         info "迁移目录: $migrate_dir..."
-        for file in $(ls "$migrate_dir"/*.sql 2>/dev/null | sort); do
+        local file
+        for file in "$migrate_dir"/*.sql; do
             [ -f "$file" ] || continue
             local base=$(basename "$file" .sql)
             local version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
-            
+
             if [ -z "$version" ]; then
                 warning "迁移文件 $file 没有版本号，跳过"
                 continue
             fi
-            
-            if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
+
+            if PGPASSWORD="$DB_PASSWORD" "${_psql_base[@]}" -tAc "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
                 detail "迁移 $base 已应用，跳过"
                 continue
             fi
-            
+
             info "执行迁移: $file..."
-            if psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$file" 2>&1; then
-                psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
+            if PGPASSWORD="$DB_PASSWORD" "${_psql_base[@]}" -v ON_ERROR_STOP=1 -f "$file" 2>&1; then
+                PGPASSWORD="$DB_PASSWORD" "${_psql_base[@]}" -v ON_ERROR_STOP=1 -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
             else
-                warning "迁移 $file 失败"
+                warning "迁移 $file 失败（已跳过，不会标记为已应用）"
             fi
         done
     done
@@ -2334,7 +2455,7 @@ db_backup() {
         fi
     else
         info "使用本地 psql 执行备份..."
-        if pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" > "$backup_file" 2>&1; then
+        if PGPASSWORD="$DB_PASSWORD" pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" > "$backup_file" 2>&1; then
             backup_success=true
         fi
     fi
@@ -2365,7 +2486,7 @@ db_restore() {
     if command -v docker &> /dev/null && docker ps | grep -q postgres; then
         cat "$backup_file" | docker exec -i topems-postgres psql -U "$DB_USER" "$DB_NAME"
     else
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" < "$backup_file"
+        PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME" < "$backup_file"
     fi
 
     success "数据库恢复完成"
@@ -2380,8 +2501,8 @@ db_reset() {
     [[ ! "$confirm" =~ ^[Yy]$ ]] && { info "取消重置"; return 0; }
 
     info "重置数据库..."
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "CREATE DATABASE $DB_NAME;" 2>/dev/null
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null
+    PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -c "CREATE DATABASE $DB_NAME;" 2>/dev/null
     success "数据库重置完成"
 }
 
@@ -2787,6 +2908,8 @@ clean_project() {
             else
                 rm -rf "$sqlx_dir"
                 detail "已清理 .sqlx ($sqlx_size)"
+                warning "注意：.sqlx 为 SQLx 离线编译缓存（已入库 git）。清理后离线编译/启动会依赖它，"
+                warning "  如需恢复：git checkout -- .sqlx，或运行 ./scripts/dev/sqlx-prepare.sh 重新生成。"
                 did_clean=true
             fi
         fi
@@ -3073,9 +3196,9 @@ TOPEMS 服务管理工具
 
 服务管理:
   status [服务]           查看服务状态
-  start <服务>            启动服务（自动注册到 unified-core）
+  start <服务> [--force]  启动服务（自动注册到 unified-core；二进制缺失时自动编译）
   stop <服务>             停止服务
-  restart <服务>          重启服务
+  restart <服务> [--force]  重启服务（可选 --force 强制重启）
   mes-guard [选项]       运行 mes 编译守卫（遮蔽检查 + 在线编译断言 0 error）
                             --clean          清理 public 遮蔽对象（幂等）
                             --sync-snapshot  同步 fixtures/mes_compile_schema.sql
@@ -3083,12 +3206,13 @@ TOPEMS 服务管理工具
                             --skip-compile   只做遮蔽检查（快排）
   check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志
-  build <服务> [--online|--offline|--dev]  编译服务
+  build <服务> [--online|--offline|--dev|--skip-sqlx-check]  编译服务（默认离线优先 + 缓存新鲜度门禁）
   build-all [选项]        全量编译所有服务（后端+前端）
                             --prepare         先刷新 sqlx 缓存（需要 DATABASE_URL）
                             --only-core       只编核心服务（iam=unified-core）
                             --online          强制在线编译（无缓存也可）
-                            --offline         强制离线编译（失败立即停止）
+                            --offline         强制离线编译（失败立即停止，不回退在线）
+                            --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁（build/start 默认先跑 --check）
                             --dev|--debug     编 debug 版（默认 release）
                             --skip=<svc>      跳过某个包，可重复
                             --backend-only    只编后端，跳过前端
@@ -3106,6 +3230,7 @@ TOPEMS 服务管理工具
                             --no-frontend     不启动前端
                             --no-register     不自动注册插件
                             --skip=<svc>      跳过某个服务
+                            --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁
   stop-all                停止所有服务（含前端）
   restart-all [选项]      重启所有服务（透传 start-all 选项）
 
@@ -3114,6 +3239,7 @@ TOPEMS 服务管理工具
                           --only-core       只启动核心服务
                           --no-frontend     不启动前端
                           --skip=<svc>      跳过某个服务
+                          --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁
   run-stop                一键停止所有服务+数据库
 
 前端:
@@ -3122,18 +3248,23 @@ TOPEMS 服务管理工具
 
 测试:
   test-all                运行所有测试（后端+前端）
-  test-backend            运行后端测试
+  test-backend            运行后端测试（SQLX_OFFLINE=true 离线模式，与 pre-push/CI 一致）
   test-frontend [模式] [--no-typecheck]
                           运行前端测试（默认前置 tsc 类型检查）
                             模式: all(默认) | unit | component | smoke | coverage
                                   shard:1 .. shard:8  (component 分片，省内存)
                             --no-typecheck: 跳过类型检查（纯跑 vitest）
 
-SQLx 离线缓存 (V64+):
+SQLx 离线缓存 (V64+; V3xx 门禁):
   sqlx prepare [--pkg=X] [--all]  生成离线缓存
   sqlx prepare --check            校验离线缓存
   sqlx prepare --merge            合并分包缓存到根 .sqlx
   sqlx check-offline              无 DATABASE_URL 下全量离线编译校验
+
+SQLx 离线缓存新鲜度门禁 (V3xx):
+  build / build-all / build-backend / start / start-all / run / dev 默认先执行
+  scripts/dev/sqlx-prepare.sh --check；缓存缺失或与代码不一致即停止并给出修复指引。
+  跳过: 命令加 --skip-sqlx-check，或设置环境变量 SQLX_CHECK_SKIP=1，或使用 --online。
 
 数据库:
   db start                启动 PostgreSQL
@@ -3189,6 +3320,7 @@ WebSocket:
   RETRY_DELAY             初始重试间隔（默认: 3秒）
   BACKOFF_FACTOR          退避系数（默认: 2，指数退避）
   FORCE_ONLINE_BUILD      设为 1 时 build/build-all 默认在线编译
+  SQLX_CHECK_SKIP         设为 1 时跳过 SQLx 离线缓存新鲜度门禁（等同 --skip-sqlx-check）
 
 示例:
   topems status               查看所有服务状态
@@ -3199,7 +3331,7 @@ WebSocket:
   topems build-all            全量编译（离线优先，失败自动切在线）
   topems build-all --serial   全量串行构建（单线程，避免并行锁竞争）
   topems build-all --serial --cooldown=3  串行构建+3秒冷却间隔
-  topems build-all --prepare  先刷新 sqlx 缓存再编译
+  topems build-all --prepare  先刷新 sqlx 缓存再编译（刷新后自动校验缓存可用）
   topems build-all --only-core --dev  仅 debug 编译核心服务
   topems sqlx prepare --all   生成全量 SQLx 离线缓存
   topems test-all             运行所有测试
@@ -3238,7 +3370,13 @@ case "${1:-help}" in
                 exit 1
                 ;;
             *)
-                start_service "$2" "${3:-false}"
+                # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check 可跳过）；--force 归一化
+                _check_sqlx_cache_freshness "${@:3}" || exit 1
+                if [ "${3:-}" = "--force" ]; then
+                    start_service "$2" true
+                else
+                    start_service "$2" "${3:-false}"
+                fi
                 ;;
         esac
         ;;
@@ -3261,14 +3399,19 @@ case "${1:-help}" in
                 stop_frontend && start_frontend
                 ;;
             mes)
+                # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check 可跳过）
+                _check_sqlx_cache_freshness "${@:3}" || exit 1
                 # mes 重启前编译守卫：防启动坏/旧版本（MES_GUARD_SKIP=1 跳过）
+                # V3xx：DB 连接串从 .env 派生（原硬编码 topems:topems_secret 与 .env 不一致）
                 if [ "${MES_GUARD_SKIP:-0}" != "1" ]; then
-                    bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems:topems_secret@localhost:5432/topems?options=-csearch_path=mes,public" || {
+                    bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "$(_mes_db_url)" || {
                         error "mes 编译守卫失败，已中止重启（MES_GUARD_SKIP=1 可跳过）"
                         exit 1
                     }
                 fi
-                stop_service mes && sleep 1 && start_service mes "${3:-false}"
+                _topems_force_flag=false
+                [ "${3:-}" = "--force" ] && _topems_force_flag=true
+                stop_service mes && sleep 1 && start_service mes "$_topems_force_flag"
                 ;;
             "")
                 error "请指定服务名"
@@ -3276,7 +3419,10 @@ case "${1:-help}" in
                 exit 1
                 ;;
             *)
-                stop_service "$2" && sleep 1 && start_service "$2" "${3:-false}"
+                _check_sqlx_cache_freshness "${@:3}" || exit 1
+                _topems_force_flag=false
+                [ "${3:-}" = "--force" ] && _topems_force_flag=true
+                stop_service "$2" && sleep 1 && start_service "$2" "$_topems_force_flag"
                 ;;
         esac
         ;;
@@ -3286,11 +3432,14 @@ case "${1:-help}" in
         ;;
     build)
         [ -z "$2" ] && { error "请指定服务名"; show_help; exit 1; }
+        # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check 可跳过）
+        _check_sqlx_cache_freshness "${@:3}" || exit 1
         build_service "$2" "${@:3}"
         ;;
     mes-guard)
         # mes 编译守卫：遮蔽检查 + 在线编译断言 0 error（--clean/--sync-snapshot/--skip-compile 透传）
-        bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "postgresql://topems:topems_secret@localhost:5432/topems?options=-csearch_path=mes,public" "${@:2}"
+        # V3xx：DB 连接串从 .env 派生（原硬编码 topems:topems_secret 与 .env 不一致）
+        bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "$(_mes_db_url)" "${@:2}"
         ;;
     build-all)
         build_all "${@:2}"
