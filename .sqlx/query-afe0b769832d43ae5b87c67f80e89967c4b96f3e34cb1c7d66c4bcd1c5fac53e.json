@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            i.warehouse_id,\n            w.warehouse_name as warehouse_name,\n            COUNT(*) as alert_count\n        FROM wms.inventory i\n        LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id\n        WHERE i.deleted_at IS NULL\n          AND (\n            (i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity)\n            OR (i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity)\n            OR (i.reorder_point IS NOT NULL AND i.quantity <= i.reorder_point)\n            OR i.quantity <= 0\n          )\n        GROUP BY i.warehouse_id, w.warehouse_name\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "warehouse_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "warehouse_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "alert_count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "afe0b769832d43ae5b87c67f80e89967c4b96f3e34cb1c7d66c4bcd1c5fac53e"
+}

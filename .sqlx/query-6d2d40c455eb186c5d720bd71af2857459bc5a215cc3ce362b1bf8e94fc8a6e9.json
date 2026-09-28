@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            i.id as inventory_id,\n            i.material_code as material_code,\n            i.material_name as material_name,\n            i.warehouse_id as warehouse_id,\n            w.warehouse_name as warehouse_name,\n            i.location_id as location_id,\n            l.location_code as location_code,\n            CASE\n                WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN 'below_min'\n                WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN 'above_max'\n                WHEN i.reorder_point IS NOT NULL AND i.quantity <= i.reorder_point THEN 'reorder_needed'\n                WHEN i.quantity <= 0 THEN 'out_of_stock'\n                ELSE NULL\n            END as alert_type,\n            i.quantity as current_quantity,\n            CASE\n                WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN i.min_quantity\n                WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN i.max_quantity\n                WHEN i.reorder_point IS NOT NULL AND i.quantity <= i.reorder_point THEN i.reorder_point\n                ELSE NULL\n            END as threshold_value,\n            CASE\n                WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN i.min_quantity - i.quantity\n                WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN i.quantity - i.max_quantity\n                ELSE NULL\n            END as deviation_quantity,\n            CASE\n                WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity * 0.5 THEN 'critical'\n                WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN 'warning'\n                WHEN i.quantity <= 0 THEN 'critical'\n                WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN 'warning'\n                ELSE 'info'\n            END as severity,\n            'pending' as status,\n            NULL as remarks\n        FROM wms.inventory i\n        LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id\n        LEFT JOIN wms.locations l ON i.location_id = l.id\n        WHERE i.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "inventory_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "material_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "material_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "warehouse_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "warehouse_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "location_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "location_code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "alert_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "current_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 9,
+        "name": "threshold_value",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 10,
+        "name": "deviation_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 11,
+        "name": "severity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "remarks",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      null,
+      false,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "6d2d40c455eb186c5d720bd71af2857459bc5a215cc3ce362b1bf8e94fc8a6e9"
+}

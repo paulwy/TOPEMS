@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO wms.stock_takes (id, stock_take_number, stock_take_type, warehouse_id,\n                                         location_id, material_category, status, planned_date,\n                                         planned_by, created_at, updated_at, tenant_id, organization_id)\n            VALUES ($1, $2, 'cycle', $3, $4, $5, 'planned', CURRENT_DATE, $6, $7, $8, $9, '00000000-0000-0000-0000-000000000001')\n            RETURNING id\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "01c305b55cbbf65535218444a4f76158edf808e4770254d29d01062cd70fce41"
+}

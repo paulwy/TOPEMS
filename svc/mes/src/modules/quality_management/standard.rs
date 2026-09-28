@@ -1,6 +1,6 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::Utc;
-use chrono::{DateTime, NaiveDateTime};
+use chrono::{DateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
