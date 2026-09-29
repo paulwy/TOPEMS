@@ -29,7 +29,7 @@
 # 在项目根目录
 pnpm dev
 # 或
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 ```
 
 脚本会自动：
@@ -278,7 +278,7 @@ curl -X POST http://localhost:8000/api/core/ai/chat \
 ./scripts/topems.sh logs iam
 
 # 一键启动（含数据库和前端）
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 ```
 
 ### 前端
@@ -333,7 +333,7 @@ for port in 3000 3001 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 804
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 ```
 
 ### Q: 数据库连接失败？

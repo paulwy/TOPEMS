@@ -26,6 +26,11 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOPEMS_SCRIPT="$PROJECT_ROOT/scripts/topems.sh"
 SERVICES_CONF="$PROJECT_ROOT/scripts/services.conf"
 
+# 建议 7：共享 test 输出解析（extract_test_counts / print_test_summary）
+# shellcheck source=lib/topems_extract.sh
+# shellcheck disable=SC1091
+source "$SCRIPT_DIR/lib/topems_extract.sh"
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -358,19 +363,11 @@ run_service_tests() {
     test_exit_code=$?
     set -e
 
-    # 统计测试结果
+    # 统计测试结果（共享提取：scripts/test/lib/topems_extract.sh）
     local passed=0
     local failed=0
     local ignored=0
-
-    # 提取测试结果
-    if echo "$test_output" | grep -q "test result:"; then
-        local result_line
-        result_line=$(echo "$test_output" | grep "test result:" | tail -1)
-        passed=$(echo "$result_line" | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+' || echo "0")
-        failed=$(echo "$result_line" | grep -oE '[0-9]+ failed' | grep -oE '[0-9]+' || echo "0")
-        ignored=$(echo "$result_line" | grep -oE '[0-9]+ ignored' | grep -oE '[0-9]+' || echo "0")
-    fi
+    extract_test_counts "$test_output" passed failed ignored
 
     # 输出测试结果摘要
     echo ""

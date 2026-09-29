@@ -112,7 +112,7 @@ cargo build --workspace
 ### 4. 一键启动
 
 ```bash
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 ```
 
 或使用 `pnpm`：
@@ -164,7 +164,7 @@ pnpm dev
 
 ```bash
 # 根目录
-pnpm dev              # 一键启动（等价于 ./scripts/start-local.sh）
+pnpm dev              # 一键启动（等价于 ./scripts/dev/start-local.sh）
 pnpm dev:web          # 仅启动 web 前端（3000）
 pnpm dev:core         # 仅启动 core 微前端（3001）
 pnpm dev:backend      # 仅启动后端 IAM

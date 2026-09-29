@@ -925,7 +925,7 @@ curl http://localhost:11434/api/tags
 bash scripts/init-vector-index.sh
 
 # 5. 启动服务
-bash scripts/start-local.sh
+bash scripts/dev/start-local.sh
 ```
 
 ### 核心能力

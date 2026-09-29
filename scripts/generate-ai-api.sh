@@ -185,8 +185,11 @@ lines = [
 for name, schema in schemas.items():
     if schema.get('type') == 'string' and 'enum' in schema:
         enum_values = schema['enum']
+        # 多行格式与 openapi-typescript 输出一致（仓内 generated/types.ts 即此风格），
+        # 保证生成结果可复现、不产生格式噪音 diff
         lines.append(f"/** {schema.get('description', name)} */")
-        lines.append(f"export type {name} = { ' | '.join(f"'{v}'" for v in enum_values) };")
+        lines.append(f"export type {name} =")
+        lines.append("\n  | ".join(f"'{v}'" for v in enum_values) + ";")
         lines.append("")
 
 # 生成接口类型
@@ -223,11 +226,16 @@ for name, schema in schemas.items():
             elif prop_schema.get('type') == 'boolean':
                 prop_type = 'boolean'
             elif prop_schema.get('type') == 'array':
-                items = prop_schema.get('items', {})
-                if '$ref' in items:
-                    item_type = items['$ref'].split('/')[-1]
-                else:
-                    item_type = items.get('type', 'unknown')
+                # 递归解析 items（支持多维数组，如 by_user_top10: string[][]）
+                def resolve_item_type(item_schema):
+                    if '$ref' in item_schema:
+                        return item_schema['$ref'].split('/')[-1]
+                    if item_schema.get('type') == 'array':
+                        return resolve_item_type(item_schema.get('items', {})) + '[]'
+                    if item_schema.get('type') == 'string' and 'enum' in item_schema:
+                        return ' | '.join(f"'{v}'" for v in item_schema['enum'])
+                    return item_schema.get('type', 'unknown')
+                item_type = resolve_item_type(prop_schema.get('items', {}))
                 prop_type = f"{item_type}[]"
             elif prop_schema.get('type') == 'object':
                 if prop_schema.get('additionalProperties'):
@@ -256,6 +264,14 @@ PYTHON_SCRIPT
             log_error "未找到 python3，无法生成类型"
             exit 1
         fi
+    fi
+
+    # 生成后统一 prettier 格式化（仓内 generated/*.ts 为 prettier 折行风格，
+    # 不加格式化每次生成都会产生全文件格式噪音 diff；优先用仓库内置 prettier，
+    # 不依赖全局安装）
+    if [ -x "$PROJECT_ROOT/apps/web/node_modules/.bin/prettier" ]; then
+        "$PROJECT_ROOT/apps/web/node_modules/.bin/prettier" --write "$TYPES_OUTPUT" >/dev/null 2>&1 \
+            && log_info "prettier 格式化: $TYPES_OUTPUT"
     fi
 }
 
@@ -489,6 +505,12 @@ export const aiBusinessApi = {
 export default aiBusinessApi;
 EOF
         log_success "API 客户端基本生成成功: $CLIENT_OUTPUT"
+    fi
+
+    # 与 types.ts 相同：prettier 格式化保证可复现（见 generate_types 注释）
+    if [ -x "$PROJECT_ROOT/apps/web/node_modules/.bin/prettier" ]; then
+        "$PROJECT_ROOT/apps/web/node_modules/.bin/prettier" --write "$CLIENT_OUTPUT" >/dev/null 2>&1 \
+            && log_info "prettier 格式化: $CLIENT_OUTPUT"
     fi
 }
 

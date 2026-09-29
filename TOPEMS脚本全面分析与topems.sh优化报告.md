@@ -13,6 +13,10 @@
 |---|---|---|---|
 | 第一轮 | `80c0b80a2` | 孤儿/空壳/废弃脚本清理（8 删）；部署高危 H1-H3（install/rollback/production-deploy/start-production）；迁移高危 H4-H6（verify-empty 守卫/APS COMMIT/migrate fallback/validate 表名）；迁移入口收敛（topems.sh db_migrate → migrate.sh run） | ✅ 已推 |
 | 第二轮 | `bd62a8260` | M3/M4/M9 测试退出码统一；M6 bash 3.2 兼容（去 nameref/mapfile）；M8 健康路径 /health；M16/M14 弱口令环境变量化+SQL 注入修复；bundle 预算统一（500K/2500K/30M，ci.yml 显式传参）；建议 4 单一事实源（start-production 端口读 ports.env、deploy.sh 标 DEPRECATED）；hook 修复（sensitive-info 放行占位符提示行） | ✅ 已推 |
+| 实跑验证 | `d277f21ac` | 实跑暴露并修复：sync-ports 全链路权威登记（server 8099 入 services.yaml/ports.env/ports.ts/vite SERVICES）；5 个 plugin.yaml deps 对齐；services.conf 重生成（去 CORE_SERVICES 伪行）；run-iam-tests 防假绿（spec 缺失即败）；upgrade-runtime 口令门禁实跑 exit 2 ✓ | ✅ 已推 |
+| V83 构建层 | `6ee446f49` | bundle 根治：mui-icons 3.6MB→6.6KB（barrel→子路径，根因 treeshake:false）；mui-core/exceljs 归 vendor；dev-tools 孤儿 chunk 清理。total 23.06→19.12MB 全绿 | ✅ 已推 |
+| V84 tree-shaking | `c0b4abd28` | 正式开启 treeshake（移除 React19+Rolldown workaround）；dev-tools 自然摇掉；A/B e2e 无回归。total→16.48MB | ✅ 已推 |
+| 逐项收尾 | 本轮 | 建议 7 共享 test 提取 lib；生成器修复（枚举格式/数组递归/prettier 可复现）；start-local 文档引用统一；migrate/generate 实跑验证（红线安全项） | 🔄 本批 |
 
 ---
 

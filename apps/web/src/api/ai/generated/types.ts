@@ -496,7 +496,7 @@ export interface SecurityEventSummary {
 export interface AuditSummary {
   total_audit_logs: number;
   by_operation: Record<string, unknown>;
-  by_user_top10: unknown[];
+  by_user_top10: string[][];
   by_resource_type: Record<string, unknown>;
   anomalous_operations: number;
   unauthorized_attempts: number;

@@ -66,7 +66,7 @@ echo "JWT_REFRESH_SECRET=$(openssl rand -base64 32)" >> .env
 createdb topems
 
 # 5. 一键启动所有服务（推荐）
-./scripts/start-local.sh
+./scripts/dev/start-local.sh
 # 或
 pnpm dev
 
