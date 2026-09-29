@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # OpenAPI 统一文档生成脚本
 #
 # 功能：从所有已暴露 /api-docs/openapi.json 端点的服务聚合生成统一的 openapi.yaml

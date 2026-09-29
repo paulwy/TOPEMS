@@ -45,7 +45,7 @@ fi
 
 # 编译
 echo "--- 编译 (release)"
-cd "$MES_DIR"
+cd "$MES_DIR" || exit 1
 unset DATABASE_URL MES_FORCE_ONLINE SQLX_OFFLINE
 if [ "$MODE" = "online" ]; then
   export DATABASE_URL="$DB_URL"

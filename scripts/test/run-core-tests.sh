@@ -83,7 +83,8 @@ check_environment() {
 run_module_test() {
     local module=$1
     local test_file="${module}_permission_tests"
-    local module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
+    local module_upper
+    module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
 
     echo -e "${BLUE}----------------------------------------${NC}"
     echo -e "${BLUE}  ${module_upper} 模块测试${NC}"
@@ -117,7 +118,8 @@ run_all_tests() {
     local failed=0
 
     for module in "${modules[@]}"; do
-        local module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
+        local module_upper
+        module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
         echo -e "${YELLOW}运行 ${module_upper} 模块测试...${NC}"
 
         if cargo test --package topems-unified-core --test "${module}_permission_tests" 2>&1 | grep -q "test result: ok"; then
@@ -148,7 +150,8 @@ run_all_tests() {
 
 # 生成测试报告
 generate_report() {
-    local report_file="test-report-$(date +%Y%m%d-%H%M%S).md"
+    local report_file
+    report_file="test-report-$(date +%Y%m%d-%H%M%S).md"
 
     echo "# 核心模块权限测试报告" > "$report_file"
     echo "" >> "$report_file"
@@ -158,11 +161,12 @@ generate_report() {
     local modules=("iam" "workflow" "doc" "file" "notification" "im")
 
     for module in "${modules[@]}"; do
-        local module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
+        local module_upper
+        module_upper=$(echo "$module" | tr '[:lower:]' '[:upper:]')
         echo "## ${module_upper} 模块" >> "$report_file"
         echo "" >> "$report_file"
         echo '```' >> "$report_file"
-        cargo test --package topems-unified-core --test "${module}_permission_tests" 2>&1 >> "$report_file"
+        cargo test --package topems-unified-core --test "${module}_permission_tests" >> "$report_file" 2>&1
         echo '```' >> "$report_file"
         echo "" >> "$report_file"
     done

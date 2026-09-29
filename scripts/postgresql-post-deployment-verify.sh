@@ -98,7 +98,8 @@ verify_basic_service() {
 
     # systemd 服务状态（Linux）
     if command -v systemctl &> /dev/null; then
-        local service_status=$(systemctl is-active "$PG_SERVICE" 2>/dev/null || echo "unknown")
+        local service_status
+        service_status=$(systemctl is-active "$PG_SERVICE" 2>/dev/null || echo "unknown")
         if [[ "$service_status" == "active" ]]; then
             log_pass "PostgreSQL 服务状态: active"
         else
@@ -117,7 +118,8 @@ verify_basic_service() {
     fi
 
     # 目标数据库连接
-    local db_test=$(exec_sql "SELECT 1;" "$DB_NAME")
+    local db_test
+    db_test=$(exec_sql "SELECT 1;" "$DB_NAME")
     if [[ "$db_test" == "1" ]]; then
         log_pass "目标数据库连接 ($DB_NAME): 正常"
     else
@@ -125,11 +127,13 @@ verify_basic_service() {
     fi
 
     # PostgreSQL 版本
-    local pg_version=$(exec_sql "SELECT version();" | head -1 | awk '{print $2}')
+    local pg_version
+    pg_version=$(exec_sql "SELECT version();" | head -1 | awk '{print $2}')
     log_info "PostgreSQL 版本: $pg_version"
 
     # 运行时间
-    local uptime=$(exec_sql "SELECT now() - pg_postmaster_start_time();")
+    local uptime
+    uptime=$(exec_sql "SELECT now() - pg_postmaster_start_time();")
     log_info "PostgreSQL 运行时间: $uptime"
 }
 
@@ -141,9 +145,12 @@ verify_config_params() {
     printf "%-30s %-20s %-20s %s\n" "------" "------" "------" "----"
 
     for config_item in "${TARGET_CONFIG[@]}"; do
-        local param=$(echo "$config_item" | cut -d'|' -f1)
-        local target_value=$(echo "$config_item" | cut -d'|' -f2)
-        local current_value=$(exec_sql "SHOW $param;")
+        local param
+        param=$(echo "$config_item" | cut -d'|' -f1)
+        local target_value
+        target_value=$(echo "$config_item" | cut -d'|' -f2)
+        local current_value
+        current_value=$(exec_sql "SHOW $param;")
         local status="FAIL"
         local status_color="$RED"
 
@@ -168,7 +175,8 @@ verify_pg_stat_statements() {
     print_section "3. pg_stat_statements 验证"
 
     # 扩展是否存在
-    local ext_exists=$(exec_sql "SELECT count(*) FROM pg_extension WHERE extname = 'pg_stat_statements';" "$DB_NAME")
+    local ext_exists
+    ext_exists=$(exec_sql "SELECT count(*) FROM pg_extension WHERE extname = 'pg_stat_statements';" "$DB_NAME")
     if [[ "$ext_exists" == "1" ]]; then
         log_pass "pg_stat_statements 扩展: 已创建"
     else
@@ -177,11 +185,13 @@ verify_pg_stat_statements() {
     fi
 
     # 扩展版本
-    local ext_version=$(exec_sql "SELECT extversion FROM pg_extension WHERE extname = 'pg_stat_statements';" "$DB_NAME")
+    local ext_version
+    ext_version=$(exec_sql "SELECT extversion FROM pg_extension WHERE extname = 'pg_stat_statements';" "$DB_NAME")
     log_info "pg_stat_statements 版本: $ext_version"
 
     # 统计信息
-    local stats=$(exec_sql "
+    local stats
+    stats=$(exec_sql "
         SELECT 
             count(*) as queries,
             sum(calls) as calls,
@@ -190,10 +200,14 @@ verify_pg_stat_statements() {
         FROM pg_stat_statements;
     " "$DB_NAME")
 
-    local queries=$(echo "$stats" | cut -d'|' -f1)
-    local calls=$(echo "$stats" | cut -d'|' -f2)
-    local total_time=$(echo "$stats" | cut -d'|' -f3)
-    local avg_time=$(echo "$stats" | cut -d'|' -f4)
+    local queries
+    queries=$(echo "$stats" | cut -d'|' -f1)
+    local calls
+    calls=$(echo "$stats" | cut -d'|' -f2)
+    local total_time
+    total_time=$(echo "$stats" | cut -d'|' -f3)
+    local avg_time
+    avg_time=$(echo "$stats" | cut -d'|' -f4)
 
     log_info "统计信息: $queries 个查询, $calls 次调用, 总时间 ${total_time}ms, 平均 ${avg_time}ms"
 
@@ -226,7 +240,8 @@ verify_slow_query_log() {
     print_section "4. 慢查询日志验证"
 
     # 日志收集器状态
-    local logging_collector=$(exec_sql "SHOW logging_collector;")
+    local logging_collector
+    logging_collector=$(exec_sql "SHOW logging_collector;")
     if [[ "$logging_collector" == "on" ]]; then
         log_pass "日志收集器: 已启用"
     else
@@ -234,24 +249,29 @@ verify_slow_query_log() {
     fi
 
     # 慢查询阈值
-    local log_min_duration=$(exec_sql "SHOW log_min_duration_statement;")
+    local log_min_duration
+    log_min_duration=$(exec_sql "SHOW log_min_duration_statement;")
     log_info "慢查询阈值: ${log_min_duration}ms"
 
     # 日志目录
-    local log_directory=$(exec_sql "SHOW log_directory;")
-    local log_filename=$(exec_sql "SHOW log_filename;")
+    local log_directory
+    log_directory=$(exec_sql "SHOW log_directory;")
+    local log_filename
+    log_filename=$(exec_sql "SHOW log_filename;")
     log_info "日志目录: $log_directory"
     log_info "日志文件名格式: $log_filename"
 
     # 查找最新的日志文件
     local log_dir_path="$PG_DATA/$log_directory"
     if [[ -d "$log_dir_path" ]]; then
-        local latest_log=$(ls -t "$log_dir_path"/*.log 2>/dev/null | head -1)
+        local latest_log
+        latest_log=$(ls -t "$log_dir_path"/*.log 2>/dev/null | head -1)
         if [[ -n "$latest_log" ]]; then
             log_info "最新日志文件: $latest_log"
 
             # 检查慢查询记录
-            local slow_query_count=$(grep -c "duration:" "$latest_log" 2>/dev/null | tr -d '[:space:]' || echo "0")
+            local slow_query_count
+            slow_query_count=$(grep -c "duration:" "$latest_log" 2>/dev/null | tr -d '[:space:]' || echo "0")
             if [[ "$slow_query_count" =~ ^[0-9]+$ ]] && [[ "$slow_query_count" -gt 0 ]]; then
                 log_pass "慢查询日志记录: 已记录 $slow_query_count 条"
             else
@@ -275,11 +295,16 @@ verify_performance_metrics() {
     print_section "5. 性能指标验证"
 
     # 连接数
-    local total_connections=$(exec_sql "SELECT count(*) FROM pg_stat_activity;")
-    local active_connections=$(exec_sql "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';")
-    local idle_connections=$(exec_sql "SELECT count(*) FROM pg_stat_activity WHERE state = 'idle';")
-    local max_connections=$(exec_sql "SHOW max_connections;")
-    local connection_usage=$(echo "scale=1; $total_connections * 100 / $max_connections" | bc 2>/dev/null || echo "0")
+    local total_connections
+    total_connections=$(exec_sql "SELECT count(*) FROM pg_stat_activity;")
+    local active_connections
+    active_connections=$(exec_sql "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';")
+    local idle_connections
+    idle_connections=$(exec_sql "SELECT count(*) FROM pg_stat_activity WHERE state = 'idle';")
+    local max_connections
+    max_connections=$(exec_sql "SHOW max_connections;")
+    local connection_usage
+    connection_usage=$(echo "scale=1; $total_connections * 100 / $max_connections" | bc 2>/dev/null || echo "0")
 
     log_info "连接数: 总 $total_connections / 最大 $max_connections (${connection_usage}%)"
     log_info "  - 活跃: $active_connections"
@@ -292,7 +317,8 @@ verify_performance_metrics() {
     fi
 
     # 缓存命中率
-    local cache_stats=$(exec_sql "
+    local cache_stats
+    cache_stats=$(exec_sql "
         SELECT 
             COALESCE(sum(heap_blks_read), 0) as heap_read,
             COALESCE(sum(heap_blks_hit), 0) as heap_hit,
@@ -300,7 +326,8 @@ verify_performance_metrics() {
         FROM pg_statio_user_tables;
     ")
 
-    local cache_hit_rate=$(echo "$cache_stats" | cut -d'|' -f3 | tr -d '[:space:]')
+    local cache_hit_rate
+    cache_hit_rate=$(echo "$cache_stats" | cut -d'|' -f3 | tr -d '[:space:]')
     if [[ -z "$cache_hit_rate" || "$cache_hit_rate" == "" ]]; then
         cache_hit_rate="0"
     fi
@@ -315,7 +342,8 @@ verify_performance_metrics() {
     fi
 
     # 索引命中率
-    local index_stats=$(exec_sql "
+    local index_stats
+    index_stats=$(exec_sql "
         SELECT 
             COALESCE(sum(idx_blks_read), 0) as idx_read,
             COALESCE(sum(idx_blks_hit), 0) as idx_hit,
@@ -323,7 +351,8 @@ verify_performance_metrics() {
         FROM pg_statio_user_indexes;
     ")
 
-    local index_hit_rate=$(echo "$index_stats" | cut -d'|' -f3 | tr -d '[:space:]')
+    local index_hit_rate
+    index_hit_rate=$(echo "$index_stats" | cut -d'|' -f3 | tr -d '[:space:]')
     if [[ -z "$index_hit_rate" || "$index_hit_rate" == "" ]]; then
         index_hit_rate="0"
     fi
@@ -338,11 +367,13 @@ verify_performance_metrics() {
     fi
 
     # 数据库大小
-    local db_size=$(exec_sql "SELECT pg_size_pretty(pg_database_size('$DB_NAME'));")
+    local db_size
+    db_size=$(exec_sql "SELECT pg_size_pretty(pg_database_size('$DB_NAME'));")
     log_info "数据库大小: $db_size"
 
     # 事务吞吐量
-    local xact_stats=$(exec_sql "
+    local xact_stats
+    xact_stats=$(exec_sql "
         SELECT 
             sum(xact_commit + xact_rollback) as total_transactions,
             now() - pg_postmaster_start_time() as uptime
@@ -350,7 +381,8 @@ verify_performance_metrics() {
         WHERE datname = '$DB_NAME';
     ")
 
-    local total_transactions=$(echo "$xact_stats" | cut -d'|' -f1)
+    local total_transactions
+    total_transactions=$(echo "$xact_stats" | cut -d'|' -f1)
     log_info "总事务数: $total_transactions (自启动以来)"
 }
 
@@ -361,7 +393,8 @@ verify_system_resources() {
     # CPU 使用率
     if [[ "$(uname)" == "Darwin" ]]; then
         # macOS: 使用 top -l 1 -n 0 获取 CPU 使用率
-        local cpu_usage=$(top -l 1 -n 0 2>/dev/null | grep "CPU usage" | awk '{print $3}' | cut -d'%' -f1 || echo "0")
+        local cpu_usage
+        cpu_usage=$(top -l 1 -n 0 2>/dev/null | grep "CPU usage" | awk '{print $3}' | cut -d'%' -f1 || echo "0")
         log_info "CPU 使用率: ${cpu_usage}%"
 
         if [[ "$cpu_usage" =~ ^[0-9.]+$ ]] && (( $(echo "$cpu_usage < 80" | bc -l 2>/dev/null || echo "0") )); then
@@ -371,7 +404,8 @@ verify_system_resources() {
         fi
     elif command -v top &> /dev/null; then
         # Linux: 使用 top -bn1
-        local cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1 2>/dev/null || echo "0")
+        local cpu_usage
+        cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1 2>/dev/null || echo "0")
         log_info "CPU 使用率: ${cpu_usage}%"
 
         if (( $(echo "$cpu_usage < 80" | bc -l) )); then
@@ -383,10 +417,14 @@ verify_system_resources() {
 
     # 内存使用率
     if command -v free &> /dev/null; then
-        local memory_info=$(free -m | grep Mem)
-        local total_memory=$(echo "$memory_info" | awk '{print $2}')
-        local used_memory=$(echo "$memory_info" | awk '{print $3}')
-        local memory_usage=$(echo "scale=1; $used_memory * 100 / $total_memory" | bc 2>/dev/null || echo "0")
+        local memory_info
+        memory_info=$(free -m | grep Mem)
+        local total_memory
+        total_memory=$(echo "$memory_info" | awk '{print $2}')
+        local used_memory
+        used_memory=$(echo "$memory_info" | awk '{print $3}')
+        local memory_usage
+        memory_usage=$(echo "scale=1; $used_memory * 100 / $total_memory" | bc 2>/dev/null || echo "0")
 
         log_info "内存使用: ${used_memory}MB / ${total_memory}MB (${memory_usage}%)"
 
@@ -396,7 +434,8 @@ verify_system_resources() {
             log_warn "内存使用率: 较高"
         fi
     elif [[ "$(uname)" == "Darwin" ]]; then
-        local memory_info=$(vm_stat | head -5)
+        local memory_info
+        memory_info=$(vm_stat | head -5)
         log_info "内存信息: $memory_info"
         log_pass "内存检查: 已完成（macOS）"
     fi
@@ -413,7 +452,8 @@ verify_system_resources() {
     fi
 
     # 磁盘空间
-    local disk_usage=$(df -h "$PG_DATA" | tail -1 | awk '{print $5}' | cut -d'%' -f1)
+    local disk_usage
+    disk_usage=$(df -h "$PG_DATA" | tail -1 | awk '{print $5}' | cut -d'%' -f1)
     log_info "数据目录磁盘使用率: ${disk_usage}%"
 
     if [[ "$disk_usage" -lt 80 ]]; then

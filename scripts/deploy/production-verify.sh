@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # ==============================================================================
 # TOPEMS 生产环境部署验证脚本
 #
@@ -324,7 +325,8 @@ security_checks() {
 
 generate_report() {
     log_info "生成部署验证报告..."
-    local report_file="${REPORT_DIR}/production-verify-$(date +%Y%m%d-%H%M%S).html"
+    local report_file
+    report_file="${REPORT_DIR}/production-verify-$(date +%Y%m%d-%H%M%S).html"
     mkdir -p "$(dirname "$report_file")"
 
     local total_checks=$((PASSED_CHECKS + FAILED_CHECKS + WARNING_CHECKS))
@@ -385,7 +387,8 @@ main() {
     mkdir -p "$REPORT_DIR" "$LOG_DIR"
     echo ""; echo "=============================================="; echo "  TOPEMS 生产环境部署验证"; echo "=============================================="; echo ""
     echo "  目标服务: $BASE_URL"; echo ""
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
 
     pre_deployment_checks
     health_checks

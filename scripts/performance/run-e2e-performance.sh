@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # =============================================================================
 # TOPEMS 一键 E2E 性能测试
 # =============================================================================
@@ -124,7 +125,8 @@ start_infra_macos() {
         ok "PostgreSQL 已在端口 $PG_PORT 运行"
     else
         log "启动 PostgreSQL..."
-        local pg_ver="$(brew list --versions | grep -i postgresql | head -1 | awk '{print $1}')"
+        local pg_ver
+        pg_ver="$(brew list --versions | grep -i postgresql | head -1 | awk '{print $1}')"
         if [[ -n "$pg_ver" ]]; then
             brew services start "$pg_ver" 2>/dev/null || brew services start postgresql 2>/dev/null || {
                 warn "brew services start postgresql 失败，请手动启动"
@@ -180,7 +182,7 @@ start_scm_service() {
 
     log "编译并启动 SCM 服务 (端口 $SCM_PORT)..."
     (
-        cd "$PROJECT_ROOT"
+        cd "$PROJECT_ROOT" || exit 1
         DEVELOPMENT_MODE="false" \
         SCM_PORT="$SCM_PORT" \
         nohup cargo run --release --bin "topems-scm" \

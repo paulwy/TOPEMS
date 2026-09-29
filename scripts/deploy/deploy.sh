@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # 文件: scripts/deploy.sh
 # [DEPRECATED] TOPEMS 一键部署脚本 (docker run 离线范式 C)
 # 说明: 仓库部署范式已收敛为 A（systemd + /opt/topems，见 scripts/deploy/production-deploy.sh 与 install.sh）。
@@ -192,7 +193,8 @@ start_infrastructure() {
         docker rm -f ${PROJECT_NAME}-postgres 2>/dev/null || true
     fi
 
-    local pg_image=$(docker images | grep "^postgres" | awk '{print $1":"$2}' | head -1)
+    local pg_image
+    pg_image=$(docker images | grep "^postgres" | awk '{print $1":"$2}' | head -1)
     if [ -z "$pg_image" ]; then
         pg_image="pgvector/pgvector:16"
         warn "未找到本地 postgres 镜像，将使用 $pg_image"
@@ -567,14 +569,17 @@ case "${1:-deploy}" in
         ;;
     start)
         log "启动所有服务..."
+        # shellcheck disable=SC2046
         docker start $(docker ps -a -q -f name=${PROJECT_NAME})
         ;;
     stop)
         log "停止所有服务..."
+        # shellcheck disable=SC2046
         docker stop $(docker ps -q -f name=${PROJECT_NAME})
         ;;
     restart)
         log "重启所有服务..."
+        # shellcheck disable=SC2046
         docker restart $(docker ps -q -f name=${PROJECT_NAME})
         ;;
     status)
@@ -591,7 +596,9 @@ case "${1:-deploy}" in
         warn "清理所有容器和数据..."
         read -p "确认清理? (y/N): " confirm
         if [ "$confirm" = "y" ]; then
+            # shellcheck disable=SC2046
             docker stop $(docker ps -q -f name=${PROJECT_NAME}) 2>/dev/null || true
+            # shellcheck disable=SC2046
             docker rm $(docker ps -a -q -f name=${PROJECT_NAME}) 2>/dev/null || true
             log "清理完成"
         fi

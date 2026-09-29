@@ -116,7 +116,7 @@ echo -e "${GREEN}✓ Systemd files removed${NC}"
 
 # Remove binaries
 echo -e "${YELLOW}Removing binaries...${NC}"
-rm -rf "${PREFIX}/bin"
+rm -rf "${PREFIX:?PREFIX 未设置}/bin"
 
 # Remove service directories
 echo -e "${YELLOW}Removing service directories...${NC}"
@@ -144,7 +144,7 @@ else
 fi
 
 # Remove lib
-rm -rf "${PREFIX}/lib"
+rm -rf "${PREFIX:?PREFIX 未设置}/lib"
 
 # Remove user if home directory is empty
 if [[ -d "${PREFIX}" ]]; then

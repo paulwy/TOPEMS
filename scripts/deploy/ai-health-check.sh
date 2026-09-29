@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # AI 业务智能模块 - 健康检查脚本
 #
 # 用于部署后验证 AI 业务智能模块的所有 API 端点是否正常工作。

@@ -160,7 +160,7 @@ run_frontend_tests() {
     local spec="e2e/iam-permission.spec.ts"
     if [ ! -f "$spec" ]; then
         echo -e "${RED}✗ 测试文件不存在: $spec${NC}" >&2
-        echo -e "${YELLOW}   e2e 目录当前测试: $(ls e2e/*.spec.ts 2>/dev/null | xargs -n1 basename | tr '\n' ' ')${NC}" >&2
+        echo -e "${YELLOW}   e2e 目录当前测试: $(ls e2e/*.spec.ts 2>/dev/null | sed 's|.*/||' | tr '\n' ' ')${NC}" >&2
         FRONTEND_FAILED=1
         return 1
     fi

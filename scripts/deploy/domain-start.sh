@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # TOPEMS 域服务启动脚本
 # 按业务域分组启动，降低运维成本
 #
@@ -110,7 +111,9 @@ show_usage() {
 
 check_dependencies() {
     local domain=$1
-    local deps="$(domain_depends_of_$(domain_depends_key_of "$domain"))"
+    local deps
+    # shellcheck disable=SC2046
+    deps="$(domain_depends_of_$(domain_depends_key_of "$domain"))"
     
     if [ -z "$deps" ] || [ "$deps" = "" ]; then
         return 0
@@ -129,7 +132,9 @@ check_dependencies() {
 
 start_domain() {
     local domain=$1
-    local services="$(domain_services_of_$(domain_key_of "$domain"))"
+    local services
+    # shellcheck disable=SC2046
+    services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "启动域: ${domain}"
     log "服务列表: ${services}"
@@ -148,7 +153,9 @@ start_domain() {
 
 stop_domain() {
     local domain=$1
-    local services="$(domain_services_of_$(domain_key_of "$domain"))"
+    local services
+    # shellcheck disable=SC2046
+    services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "停止域: ${domain}"
     
@@ -163,7 +170,9 @@ stop_domain() {
 
 show_status() {
     local domain=$1
-    local services="$(domain_services_of_$(domain_key_of "$domain"))"
+    local services
+    # shellcheck disable=SC2046
+    services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "域 ${domain} 服务状态:"
     echo ""
@@ -185,7 +194,9 @@ show_status() {
 
 show_logs() {
     local domain=$1
-    local services="$(domain_services_of_$(domain_key_of "$domain"))"
+    local services
+    # shellcheck disable=SC2046
+    services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "域 ${domain} 日志:"
     
@@ -206,6 +217,7 @@ DOMAIN="$1"
 ACTION="$2"
 
 # 验证域
+# shellcheck disable=SC2046
 if [ -z "$(domain_services_of_$(domain_key_of "$DOMAIN"))" ]; then
     error "未知域: ${DOMAIN}"
 fi

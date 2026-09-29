@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # =============================================================================
 # mes_guard.sh — mes 编译一体化守卫（本地开发 + CI 共用）
 #
@@ -78,7 +79,8 @@ if [[ "$SYNC_SNAPSHOT" == "1" ]]; then
   DB_NAME="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^@]*@[^/]+/([^?]+).*|\1|')"
   [[ -z "$DB_HOST" ]] && DB_HOST="localhost"
   [[ -z "$DB_PORT" ]] && DB_PORT="5432"
-  export PGPASSWORD="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^:]+:([^@]*)@.*|\1|')"
+  export PGPASSWORD
+  PGPASSWORD="$(printf '%s' "$DB_URL" | sed -E 's|postgresql://[^:]+:([^@]*)@.*|\1|')"
 
   {
     echo "-- ============================================================================"

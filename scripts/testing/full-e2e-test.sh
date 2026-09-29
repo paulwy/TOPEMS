@@ -50,7 +50,8 @@ check_command() {
 }
 
 wait_for_port() {
-    local host="$1" port="$2" timeout="${3:-30}" start_time=$(date +%s)
+    local host
+    host="$1" port="$2" timeout="${3:-30}" start_time=$(date +%s)
     log_verbose "等待 $host:$port 就绪（超时 ${timeout}s）..."
     while true; do
         nc -z "$host" "$port" 2>/dev/null && return 0
@@ -244,7 +245,8 @@ run_e2e_tests() {
 
 generate_report() {
     log_info "生成联调报告..."
-    local report_file="${REPORT_DIR}/full-e2e-report-$(date +%Y%m%d-%H%M%S).html"
+    local report_file
+    report_file="${REPORT_DIR}/full-e2e-report-$(date +%Y%m%d-%H%M%S).html"
     mkdir -p "$(dirname "$report_file")"
     local total_tests=0 passed_tests=0 failed_tests=0
     for log_file in "${LOG_DIR}"/*.log; do
@@ -280,7 +282,8 @@ generate_report() {
 EOF
     for log_file in "${LOG_DIR}"/*.log; do
         [ -f "$log_file" ] || continue
-        local filename=$(basename "$log_file")
+        local filename
+        filename=$(basename "$log_file")
         echo "<div class=\"log-file\"><h4>${filename}</h4><pre>$(tail -30 "$log_file" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')</pre></div>" >> "$report_file"
     done
     echo "</div></div></body></html>" >> "$report_file"
@@ -296,7 +299,8 @@ main() {
     parse_args "$@"
     mkdir -p "$REPORT_DIR" "$LOG_DIR"
     echo ""; echo "=============================================="; echo "  TOPEMS 完整后端环境联调"; echo "=============================================="; echo ""
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     check_environment || exit 1
     [ "$SKIP_SETUP" = false ] && { setup_dependencies; run_database_migrations; } || log_info "跳过环境设置"
     local test_services=()
@@ -314,7 +318,8 @@ main() {
     else
         log_info "跳过清理（--skip-teardown）"
     fi
-    local end_time=$(date +%s) duration=$((end_time - start_time)) minutes=$((duration / 60)) seconds=$((duration % 60))
+    local end_time
+    end_time=$(date +%s) duration=$((end_time - start_time)) minutes=$((duration / 60)) seconds=$((duration % 60))
     echo ""; echo "=============================================="; echo "  联调完成"; echo "=============================================="
     echo "  耗时: ${minutes}分${seconds}秒"
     [ -n "$report_file" ] && echo "  报告: $report_file"

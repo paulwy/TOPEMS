@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # TOPEMS PostgreSQL 生产环境配置调优 - 部署前检查脚本
 # 版本：v1.0
 # 日期：2026-09-11
@@ -107,7 +108,8 @@ check_os() {
     fi
 
     # 检查内核版本
-    local kernel_version=$(uname -r)
+    local kernel_version
+    kernel_version=$(uname -r)
     log_info "内核版本: $kernel_version"
 }
 
@@ -116,7 +118,8 @@ check_hardware() {
     print_section "2. 硬件资源检查"
 
     # CPU 核心数
-    local cpu_cores=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo "0")
+    local cpu_cores
+    cpu_cores=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo "0")
     if [[ "$cpu_cores" -ge "$MIN_CPU_CORES" ]]; then
         log_pass "CPU 核心数: $cpu_cores (最低要求: $MIN_CPU_CORES)"
     else
@@ -124,11 +127,13 @@ check_hardware() {
     fi
 
     # 内存大小
-    local memory_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}' || echo "0")
+    local memory_kb
+    memory_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}' || echo "0")
     if [[ "$memory_kb" == "0" ]]; then
         memory_kb=$(sysctl -n hw.memsize 2>/dev/null | awk '{print $1/1024}' || echo "0")
     fi
-    local memory_gb=$(echo "scale=2; $memory_kb / 1024 / 1024" | bc 2>/dev/null || echo "0")
+    local memory_gb
+    memory_gb=$(echo "scale=2; $memory_kb / 1024 / 1024" | bc 2>/dev/null || echo "0")
 
     if (( $(echo "$memory_gb >= $MIN_MEMORY_GB" | bc -l) )); then
         log_pass "内存大小: ${memory_gb}GB (最低要求: ${MIN_MEMORY_GB}GB)"
@@ -140,7 +145,8 @@ check_hardware() {
     log_info "磁盘信息:"
     if command -v lsblk &> /dev/null; then
         lsblk -d -o name,rota,size 2>/dev/null | head -10
-        local ssd_count=$(lsblk -d -n -o rota 2>/dev/null | grep -c "0" || echo "0")
+        local ssd_count
+        ssd_count=$(lsblk -d -n -o rota 2>/dev/null | grep -c "0" || echo "0")
         if [[ "$ssd_count" -gt 0 ]]; then
             log_pass "检测到 SSD 磁盘 ($ssd_count 个)"
         else
@@ -153,8 +159,10 @@ check_hardware() {
 
     # 备份目录空间
     if [[ -d "$BACKUP_DIR" ]]; then
-        local backup_space_kb=$(df -k "$BACKUP_DIR" | tail -1 | awk '{print $4}')
-        local backup_space_gb=$(echo "scale=2; $backup_space_kb / 1024 / 1024" | bc 2>/dev/null || echo "0")
+        local backup_space_kb
+        backup_space_kb=$(df -k "$BACKUP_DIR" | tail -1 | awk '{print $4}')
+        local backup_space_gb
+        backup_space_gb=$(echo "scale=2; $backup_space_kb / 1024 / 1024" | bc 2>/dev/null || echo "0")
         if (( $(echo "$backup_space_gb >= $MIN_DISK_SPACE_GB" | bc -l) )); then
             log_pass "备份目录空间: ${backup_space_gb}GB (最低要求: ${MIN_DISK_SPACE_GB}GB)"
         else
@@ -171,8 +179,10 @@ check_postgresql() {
 
     # PostgreSQL 版本
     if command -v psql &> /dev/null; then
-        local pg_version=$(psql --version | awk '{print $3}')
-        local pg_major_version=$(echo "$pg_version" | cut -d. -f1)
+        local pg_version
+        pg_version=$(psql --version | awk '{print $3}')
+        local pg_major_version
+        pg_major_version=$(echo "$pg_version" | cut -d. -f1)
         if [[ "$pg_major_version" -ge "$MIN_PG_VERSION" ]]; then
             log_pass "PostgreSQL 版本: $pg_version (最低要求: $MIN_PG_VERSION)"
         else
@@ -228,9 +238,12 @@ check_current_config() {
     printf "%-30s %-20s %-20s %s\n" "------" "------" "------" "----"
 
     for config_item in "${TARGET_CONFIG[@]}"; do
-        local param=$(echo "$config_item" | cut -d'|' -f1)
-        local target_value=$(echo "$config_item" | cut -d'|' -f2)
-        local current_value=$(psql -U air -d topems -t -c "SHOW $param;" 2>/dev/null | tr -d '[:space:]' || echo "N/A")
+        local param
+        param=$(echo "$config_item" | cut -d'|' -f1)
+        local target_value
+        target_value=$(echo "$config_item" | cut -d'|' -f2)
+        local current_value
+        current_value=$(psql -U air -d topems -t -c "SHOW $param;" 2>/dev/null | tr -d '[:space:]' || echo "N/A")
         local status="待修改"
 
         if [[ "$current_value" == "$target_value" ]]; then
@@ -251,9 +264,12 @@ check_connections() {
     fi
 
     # 总连接数
-    local total_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d '[:space:]' || echo "0")
-    local max_connections=$(psql -U air -d topems -t -c "SHOW max_connections;" 2>/dev/null | tr -d '[:space:]' || echo "0")
-    local connection_usage=$(echo "scale=1; $total_connections * 100 / $max_connections" | bc 2>/dev/null || echo "0")
+    local total_connections
+    total_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    local max_connections
+    max_connections=$(psql -U air -d topems -t -c "SHOW max_connections;" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    local connection_usage
+    connection_usage=$(echo "scale=1; $total_connections * 100 / $max_connections" | bc 2>/dev/null || echo "0")
 
     log_info "总连接数: $total_connections / $max_connections (${connection_usage}%)"
 
@@ -264,7 +280,8 @@ check_connections() {
     fi
 
     # 活跃连接数
-    local active_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null | tr -d '[:space:]' || echo "0")
+    local active_connections
+    active_connections=$(psql -U air -d topems -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null | tr -d '[:space:]' || echo "0")
     log_info "活跃连接数: $active_connections"
 
     if [[ "$active_connections" -gt 10 ]]; then
@@ -274,7 +291,8 @@ check_connections() {
     fi
 
     # 最长查询时间
-    local longest_query=$(psql -U air -d topems -t -c "
+    local longest_query
+    longest_query=$(psql -U air -d topems -t -c "
         SELECT COALESCE(max(EXTRACT(EPOCH FROM (now() - query_start))), 0)::int
         FROM pg_stat_activity
         WHERE state = 'active' AND pid != pg_backend_pid();
@@ -302,7 +320,8 @@ check_backup() {
 
     # 配置文件备份
     if [[ -f "$PG_CONF" ]]; then
-        local conf_backup_count=$(ls -1 "$BACKUP_DIR"/postgresql.conf.backup-* 2>/dev/null | wc -l | tr -d '[:space:]')
+        local conf_backup_count
+        conf_backup_count=$(ls -1 "$BACKUP_DIR"/postgresql.conf.backup-* 2>/dev/null | wc -l | tr -d '[:space:]')
         if [[ "$conf_backup_count" -gt 0 ]]; then
             log_pass "已存在 $conf_backup_count 个配置文件备份"
             ls -lh "$BACKUP_DIR"/postgresql.conf.backup-* 2>/dev/null | tail -3
@@ -312,7 +331,8 @@ check_backup() {
     fi
 
     # 数据库备份（可选检查）
-    local db_backup_count=$(ls -1 "$BACKUP_DIR"/*.dump 2>/dev/null | wc -l | tr -d '[:space:]')
+    local db_backup_count
+    db_backup_count=$(ls -1 "$BACKUP_DIR"/*.dump 2>/dev/null | wc -l | tr -d '[:space:]')
     if [[ "$db_backup_count" -gt 0 ]]; then
         log_pass "已存在 $db_backup_count 个数据库备份"
     else

@@ -52,8 +52,10 @@ FAIL_LIST=()
 cd "$COMPOSE_DIR"
 
 build_one() {
-  local svc=$1
-  local log="/tmp/build-${svc}-${TS}.log"
+  local svc
+  svc=$1
+  local log
+  log="/tmp/build-${svc}-${TS}.log"
   echo "────────────────────────────"
   echo "🚀 BUILD $svc  $(date '+%H:%M:%S')"
   if docker compose build --progress plain "$svc" >"$log" 2>&1; then

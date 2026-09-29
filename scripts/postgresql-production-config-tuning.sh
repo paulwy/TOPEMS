@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2024
 # TOPEMS PostgreSQL 生产环境配置调优脚本
 # 版本：v1.0
 # 日期：2026-09-11
@@ -93,7 +94,8 @@ pre_check() {
 backup_config() {
     log_info "开始备份当前配置..."
 
-    local timestamp=$(date '+%Y%m%d-%H%M%S')
+    local timestamp
+    timestamp=$(date '+%Y%m%d-%H%M%S')
     local backup_file="$BACKUP_DIR/postgresql.conf.backup-$timestamp"
 
     # 备份配置文件
@@ -114,6 +116,7 @@ backup_config() {
             'logging_collector'
         )
         ORDER BY name;
+    # shellcheck disable=SC2024
     " > "$params_file" 2>/dev/null || true
     log_success "当前配置参数已保存: $params_file"
 
@@ -169,7 +172,8 @@ validate_config() {
     log_info "开始验证配置语法..."
 
     # 使用 PostgreSQL 自带的配置验证
-    local result=$(postgres -C "$PG_DATA" -t 2>&1) || true
+    local result
+    result=$(postgres -C "$PG_DATA" -t 2>&1) || true
 
     if echo "$result" | grep -q "syntax error"; then
         log_error "配置语法错误:"
@@ -186,7 +190,8 @@ restart_postgresql() {
     log_info "开始重启 PostgreSQL..."
 
     # 检查是否有活跃连接
-    local active_connections=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active' AND pid != pg_backend_pid();" 2>/dev/null | tr -d ' ')
+    local active_connections
+    active_connections=$(sudo -u postgres psql -t -c "SELECT count(*) FROM pg_stat_activity WHERE state = 'active' AND pid != pg_backend_pid();" 2>/dev/null | tr -d ' ')
 
     if [[ "$active_connections" -gt 5 ]]; then
         log_warning "当前有 $active_connections 个活跃连接，建议在业务低峰期重启"
@@ -249,7 +254,8 @@ verify_config() {
     for param in "${expected_params[@]}"; do
         local name=${param%%=*}
         local expected=${param#*=}
-        local actual=$(sudo -u postgres psql -t -c "SHOW $name;" 2>/dev/null | tr -d '[:space:]')
+        local actual
+        actual=$(sudo -u postgres psql -t -c "SHOW $name;" 2>/dev/null | tr -d '[:space:]')
 
         if [[ "$actual" == "$expected" ]]; then
             log_success "  $name = $actual"
@@ -279,7 +285,8 @@ verify_config() {
 rollback_config() {
     log_info "开始回滚配置..."
 
-    local backup_file=$(cat "$BACKUP_DIR/latest-backup.txt" 2>/dev/null)
+    local backup_file
+    backup_file=$(cat "$BACKUP_DIR/latest-backup.txt" 2>/dev/null)
 
     if [[ -z "$backup_file" || ! -f "$backup_file" ]]; then
         log_error "未找到备份文件，无法回滚"

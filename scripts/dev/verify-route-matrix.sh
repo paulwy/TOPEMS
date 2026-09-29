@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # ============================================================
 # TOPEMS V9.0 路由统一验收脚本 - 9 路径 curl 矩阵
 # AC-3: 新路径 2xx / 旧路径带 Deprecation 响应头

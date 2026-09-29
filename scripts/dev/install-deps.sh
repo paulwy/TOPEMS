@@ -196,7 +196,8 @@ build_backend() {
   
   local services_conf="$PROJECT_ROOT/scripts/services.conf"
   if [ -f "$services_conf" ]; then
-    local services=$(grep -v "^#" "$services_conf" | grep -v "^$" | awk '{print $3}' | sort -u)
+    local services
+    services=$(grep -v "^#" "$services_conf" | grep -v "^$" | awk '{print $3}' | sort -u)
   else
     local services="topems-unified-core topems-pm topems-erp topems-finance topems-ai topems-hrm topems-crm topems-mes topems-pdm topems-scm topems-wms topems-srm topems-qms topems-lims topems-ehs topems-rd topems-analytics topems-portal topems-mobile topems-gis topems-integration"
   fi

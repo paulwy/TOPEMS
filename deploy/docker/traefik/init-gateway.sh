@@ -113,7 +113,8 @@ fi
 declare -a SERVICES=()
 
 load_services_from_yaml() {
-    local file="$1"
+    local file
+    file="$1"
     if [[ ! -f "${file}" ]]; then
         log_warn "服务配置文件不存在: ${file}"
         return 1
@@ -133,7 +134,8 @@ load_services_from_yaml() {
 
     log_info "从 ${file} 加载 ${count} 个服务..."
 
-    local i=0
+    local i
+    i=0
     while [[ ${i} -lt ${count} ]]; do
         local name prefix svc host port
         name=$(yq ".services[${i}].name" "${file}")

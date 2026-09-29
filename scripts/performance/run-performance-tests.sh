@@ -132,8 +132,10 @@ run_test() {
     local test_name="$1"
     local scenario="$2"
     local test_file="$PERF_TEST_DIR/${test_name}.k6.js"
-    local report_file="$REPORT_DIR/${test_name}_${scenario}_$(date +%Y%m%d_%H%M%S).json"
-    local log_file="$LOG_DIR/${test_name}_${scenario}_$(date +%Y%m%d_%H%M%S).log"
+    local report_file
+    report_file="$REPORT_DIR/${test_name}_${scenario}_$(date +%Y%m%d_%H%M%S).json"
+    local log_file
+    log_file="$LOG_DIR/${test_name}_${scenario}_$(date +%Y%m%d_%H%M%S).log"
     
     print_separator
     print_info "运行测试: $test_name"
@@ -148,19 +150,22 @@ run_test() {
     fi
     
     # 运行 k6 测试
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     
     if k6 run \
         --env BASE_URL="$BASE_URL" \
         --env SCENARIO="$scenario" \
         --out json="$report_file" \
         "$test_file" 2>&1 | tee "$log_file"; then
-        local end_time=$(date +%s)
+        local end_time
+        end_time=$(date +%s)
         local duration=$((end_time - start_time))
         print_success "测试完成: $test_name ($duration 秒)"
         return 0
     else
-        local end_time=$(date +%s)
+        local end_time
+        end_time=$(date +%s)
         local duration=$((end_time - start_time))
         print_error "测试失败: $test_name ($duration 秒)"
         print_error "查看日志: $log_file"
@@ -234,7 +239,8 @@ run_all_scenarios() {
 
 # 生成性能测试汇总报告
 generate_summary_report() {
-    local report_file="$REPORT_DIR/summary_$(date +%Y%m%d_%H%M%S).md"
+    local report_file
+    report_file="$REPORT_DIR/summary_$(date +%Y%m%d_%H%M%S).md"
     
     print_info "生成性能测试汇总报告: $report_file"
     

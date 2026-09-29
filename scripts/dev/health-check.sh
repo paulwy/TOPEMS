@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # TOPEMS 部署验证脚本
 # 位置: /opt/topems/scripts/health_check.sh
 # 使用: ./scripts/health_check.sh

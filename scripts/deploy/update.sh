@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 #
 # TOPEMS Update Script
 # Updates TOPEMS services with new binaries
@@ -122,7 +123,7 @@ ALL_SERVICES=(
 )
 
 if [[ -n "$SERVICES" ]]; then
-    UPDATE_SERVICES=(${SERVICES//,/ })
+    IFS=',' read -r -a UPDATE_SERVICES <<< "$SERVICES" || true
 else
     UPDATE_SERVICES=("${ALL_SERVICES[@]}")
 fi

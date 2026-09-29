@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 # =============================================
 # TOPEMS SQLx 离线缓存一站式刷新脚本
 # =============================================
@@ -117,7 +118,7 @@ pkg_exists() {
 
 # ---------- 主流程 ----------
 SKIP_LIST=()
-[ -n "$SKIP_PKGS" ] && SKIP_LIST=($SKIP_PKGS)
+if [ -n "$SKIP_PKGS" ]; then read -r -a SKIP_LIST <<< "$SKIP_PKGS" || true; fi
 
 # 收集 packages（保持与 bash 3 兼容，不使用 declare -A）
 PKG_FLAT=()            # "name|dir" 扁平数组，支持 macOS /bin/bash 3.x

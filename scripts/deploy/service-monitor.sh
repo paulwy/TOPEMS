@@ -59,7 +59,8 @@ ALERT_SCRIPT=""
 log() {
     local level="$1"
     local message="$2"
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo "[$timestamp] [$level] $message" | tee -a "$LOG_FILE" 2>/dev/null || echo "[$timestamp] [$level] $message"
 }
 
@@ -87,7 +88,8 @@ check_service_health() {
     local url="http://localhost:${port}${health_path}"
     
     if command -v curl &> /dev/null; then
-        local http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$HEALTH_CHECK_TIMEOUT" "$url" 2>/dev/null || echo "000")
+        local http_code
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time "$HEALTH_CHECK_TIMEOUT" "$url" 2>/dev/null || echo "000")
         if [ "$http_code" = "200" ] || [ "$http_code" = "204" ]; then
             return 0
         else
@@ -149,7 +151,8 @@ send_alert() {
     local issue="$2"
     local action="$3"
     
-    local alert_message="[$(date '+%Y-%m-%d %H:%M:%S')] TOPEMS 服务告警: $service_name - $issue - 执行操作: $action"
+    local alert_message
+    alert_message="[$(date '+%Y-%m-%d %H:%M:%S')] TOPEMS 服务告警: $service_name - $issue - 执行操作: $action"
     
     log "ALERT" "$alert_message"
     

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
 # Migration validation script for TOPEMS
 # Checks filename format, version ordering, idempotency, down migrations,
 # checksums, and optional schema drift via DATABASE_URL.

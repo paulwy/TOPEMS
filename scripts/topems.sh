@@ -83,7 +83,8 @@ get_service_path() { echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $2}';
 get_service_port() { echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $4}'; }
 get_all_services() { echo "$SERVICES_CONFIG" | grep -v "^#" | grep -v "^$" | awk '{print $1}' | sort; }
 get_executable_name() {
-    local binary_name=$(echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $3}')
+    local binary_name
+    binary_name=$(echo "$SERVICES_CONFIG" | grep "^${1} " | awk '{print $3}')
     echo "${binary_name:-topems-$1}"
 }
 
@@ -140,7 +141,8 @@ get_port_pid() {
 }
 get_service_pid() {
     local port=$2
-    local executable_name=$(get_executable_name "$1")
+    local executable_name
+    executable_name=$(get_executable_name "$1")
     local pid=""
     if _is_windows; then
         # Windows/Git Bash: use netstat for the real Windows PID (MSYS ps PID is not usable)
@@ -250,7 +252,8 @@ build_service() {
     local service_name=$1
     shift
     local extra_opts="$*"
-    local service_path=$(get_service_path "$service_name")
+    local service_path
+    service_path=$(get_service_path "$service_name")
 
     # V70+ 保存/恢复 CARGO_BUILD_JOBS，避免污染后续构建
     local _orig_cargo_jobs="${CARGO_BUILD_JOBS:-}"
@@ -269,7 +272,8 @@ build_service() {
     [ -z "$service_path" ] && error "服务 $service_name 不存在" && return 1
 
     info "编译 $service_name 服务..."
-    local executable_name=$(get_executable_name "$service_name")
+    local executable_name
+    executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
 
     # V3xx 参数解析：显式循环（替代子串匹配，避免 --debug/--dev 误判；未知 flag 透传）
@@ -332,7 +336,7 @@ build_service() {
     # 与其它服务一致（在线回退时自动附加 search_path=mes,public）。
     local cmd
     if [ "$online" = "1" ]; then
-        cmd="SQLX_OFFLINE= cargo build $profile --bin $executable_name"
+        cmd="SQLX_OFFLINE='' cargo build $profile --bin $executable_name"
     else
         cmd="SQLX_OFFLINE=true cargo build $profile --bin $executable_name"
     fi
@@ -380,7 +384,7 @@ build_service() {
         error "请先运行 ./scripts/dev/sqlx-prepare.sh --check 定位离线缓存问题，或配置 DATABASE_URL 后重试。"
         return 1
     fi
-    if DATABASE_URL="$online_url" SQLX_OFFLINE= cargo build $profile --bin "$executable_name" 2>&1; then
+    if DATABASE_URL="$online_url" SQLX_OFFLINE='' cargo build $profile --bin "$executable_name" 2>&1; then
         success "$service_name 在线编译成功"
         _restore_cargo_jobs
         return 0
@@ -545,7 +549,8 @@ build_all_backend() {
     local build_skipped=0
     local build_total=0
     local failed_list=""
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     local is_safe_mode=0
 
     # V70+ 构建间内存检查条件（serial 模式下也每个服务前检查）
@@ -668,7 +673,8 @@ build_frontend() {
     local extra_opts="${1:-""}"
     info "编译前端..."
 
-    local pkg_cmd=$(get_pkg_cmd) || return 1
+    local pkg_cmd
+    pkg_cmd=$(get_pkg_cmd) || return 1
     ensure_frontend_deps "$pkg_cmd" || return 1
 
     local dev_mode=0
@@ -777,6 +783,7 @@ build_all() {
 }
 
 # 运行后端测试（使用并行测试提高效率）
+# shellcheck disable=SC2120
 test_backend() {
     _preflight_check "$@" || return 1
     info "运行后端测试..."
@@ -991,7 +998,8 @@ _start_service_internal() {
     local service_name=$1
     local port=$2
     local executable_path=$3
-    local port_env_var=$(get_port_env_var "$service_name")
+    local port_env_var
+    port_env_var=$(get_port_env_var "$service_name")
 
     cd "$PROJECT_ROOT"
     
@@ -1008,8 +1016,10 @@ _start_service_internal() {
 start_service() {
     local service_name=$1
     local force=${2:-false}
-    local service_path=$(get_service_path "$service_name")
-    local port=$(get_service_port "$service_name")
+    local service_path
+    service_path=$(get_service_path "$service_name")
+    local port
+    port=$(get_service_port "$service_name")
 
     [ -z "$service_path" ] && error "服务 $service_name 不存在" && return 1
     [ -z "$port" ] && error "无法获取服务 $service_name 的端口" && return 1
@@ -1017,7 +1027,8 @@ start_service() {
     info "启动 $service_name 服务..."
 
     if check_port $port; then
-        local pid=$(get_service_pid "$service_name" "$port")
+        local pid
+        pid=$(get_service_pid "$service_name" "$port")
         if [ -n "$pid" ]; then
             warning "$service_name 服务已在运行 (PID: $pid, 端口: $port)"
             [ "$force" = "true" ] && { info "强制重启..."; stop_service "$service_name"; } || return 0
@@ -1027,11 +1038,13 @@ start_service() {
         fi
     fi
 
-    local executable_name=$(get_executable_name "$service_name")
+    local executable_name
+    executable_name=$(get_executable_name "$service_name")
     local executable_path="$PROJECT_ROOT/target/release/${executable_name}"
     
     if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "topems-unified-core" ]; then
-        local other_service=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
+        local other_service
+        other_service=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
         if [ -n "$other_service" ]; then
             info "$service_name 与 $other_service 共享同一可执行文件，$other_service 已在运行，跳过 $service_name"
             return 0
@@ -1094,7 +1107,8 @@ start_service() {
 
             return 0
         else
-            local failed_pid=$(get_service_pid "$service_name" "$port")
+            local failed_pid
+            failed_pid=$(get_service_pid "$service_name" "$port")
             if [ -n "$failed_pid" ]; then
                 kill -9 $failed_pid 2>/dev/null || true
                 sleep 1
@@ -1111,12 +1125,14 @@ start_service() {
 # 停止服务
 stop_service() {
     local service_name=$1
-    local port=$(get_service_port "$service_name")
+    local port
+    port=$(get_service_port "$service_name")
     [ -z "$port" ] && error "无法获取服务 $service_name 的端口" && return 1
 
     info "停止 $service_name 服务..."
     if check_port $port; then
-        local pid=$(get_service_pid "$service_name" "$port")
+        local pid
+        pid=$(get_service_pid "$service_name" "$port")
         if [ -n "$pid" ]; then
             if _is_windows; then taskkill //F //PID "$pid" >/dev/null 2>&1 || true; else kill $pid 2>/dev/null || true; fi
             sleep 1
@@ -1139,22 +1155,27 @@ stop_service() {
 # 查看服务状态
 status_service() {
     local service_name=$1
-    local port=$(get_service_port "$service_name")
+    local port
+    port=$(get_service_port "$service_name")
     [ -z "$port" ] && { echo -e "${RED}❌ $service_name: 无法获取端口${NC}"; return 1; }
 
     if check_port $port; then
-        local pid=$(get_service_pid "$service_name" "$port")
+        local pid
+        pid=$(get_service_pid "$service_name" "$port")
         if curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
             echo -e "${GREEN}✅${NC} $service_name (端口 $port) 运行中 (PID: $pid) [健康]"
         else
             echo -e "${YELLOW}⚠️${NC} $service_name (端口 $port) 运行中 (PID: $pid) [健康检查失败]"
         fi
     else
-        local executable_name=$(get_executable_name "$service_name")
+        local executable_name
+        executable_name=$(get_executable_name "$service_name")
         if [ -n "$executable_name" ] && ps aux | grep -v grep | grep -q "$executable_name" && [ "$executable_name" != "topems-unified-core" ]; then
-            local provider=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
+            local provider
+            provider=$(echo "$SERVICES_CONFIG" | grep -v "^${service_name} " | grep " ${executable_name} " | awk '{print $1}')
             if [ -n "$provider" ]; then
-                local provider_port=$(get_service_port "$provider")
+                local provider_port
+                provider_port=$(get_service_port "$provider")
                 if curl -s -f "http://localhost:$provider_port/health" >/dev/null 2>&1; then
                     echo -e "${GREEN}✅${NC} $service_name (端口 $port) 由 $provider 服务提供 [健康]"
                     return
@@ -1181,9 +1202,11 @@ _wait_for_plugin_registry() {
     local waited=0
 
     while [ $waited -lt $max_wait ]; do
-        local health=$(curl -s -o /dev/null -w "%{http_code}" "$registry_url/health" 2>/dev/null || echo "000")
+        local health
+        health=$(curl -s -o /dev/null -w "%{http_code}" "$registry_url/health" 2>/dev/null || echo "000")
         if [ "$health" = "200" ]; then
-            local test_resp=$(curl -s -o /dev/null -w "%{http_code}" "$registry_url/dev/runtime/ping/register" 2>/dev/null || echo "000")
+            local test_resp
+            test_resp=$(curl -s -o /dev/null -w "%{http_code}" "$registry_url/dev/runtime/ping/register" 2>/dev/null || echo "000")
             if [ "$test_resp" != "000" ]; then
                 return 0
             fi
@@ -1223,7 +1246,8 @@ except Exception:
 # 服务注册到 plugin-registry（含重试与指数退避）
 register_plugin() {
     local service_name=$1
-    local port=$(get_service_port "$service_name")
+    local port
+    port=$(get_service_port "$service_name")
     [ -z "$port" ] && return
 
     local registry_url="http://localhost:8096"
@@ -1231,8 +1255,10 @@ register_plugin() {
     local initial_delay=2
     local max_delay=30
 
-    local service_display_name=$(get_service_display_name "$service_name")
-    local description=$(get_service_description "$service_name")
+    local service_display_name
+    service_display_name=$(get_service_display_name "$service_name")
+    local description
+    description=$(get_service_description "$service_name")
     local runtime_url="http://localhost:$port"
     local plugin_token="${PLUGIN_REGISTRATION_TOKEN:-}"
 
@@ -1330,7 +1356,8 @@ register_all_plugins() {
         if echo "$CORE_SERVICES" | grep -wq "$service"; then
             continue
         fi
-        local port=$(get_service_port "$service")
+        local port
+        port=$(get_service_port "$service")
         if check_port "$port"; then
             services_to_register+=("$service")
         else
@@ -1433,7 +1460,8 @@ check_and_restart_services() {
 
     for service in $(get_all_services); do
         total=$((total + 1))
-        local port=$(get_service_port "$service")
+        local port
+        port=$(get_service_port "$service")
         if check_port $port; then
             running=$((running + 1))
         else
@@ -1461,7 +1489,8 @@ wait_for_core_services() {
     local wait_interval=2
 
     for service in $CORE_SERVICES; do
-        local port=$(get_service_port "$service")
+        local port
+        port=$(get_service_port "$service")
         local elapsed=0
         while [ $elapsed -lt $max_wait ]; do
             if check_port $port && curl -s -f "http://localhost:$port/health" >/dev/null 2>&1; then
@@ -1562,7 +1591,8 @@ start_all_services() {
 
         # 全部服务启动后，统一重试注册失败的服务
         if [ "$no_register" = "0" ] && [ -f "$register_failed_log" ] && [ -s "$register_failed_log" ]; then
-            local failed_count=$(wc -l < "$register_failed_log" | tr -s ' ' | xargs)
+            local failed_count
+            failed_count=$(wc -l < "$register_failed_log" | tr -s ' ' | xargs)
             echo ""
             info "========== [2b/3] 重试注册失败的服务 ($failed_count 个) =========="
             while IFS= read -r svc; do
@@ -1612,6 +1642,7 @@ stop_all_services() {
 }
 
 # 启动开发环境（macOS）
+# shellcheck disable=SC2120
 start_dev_macos() {
     _preflight_check "$@" || return 1
     # V3xx SQLx 缓存新鲜度门禁（--skip-sqlx-check / SQLX_CHECK_SKIP=1 可跳过）
@@ -1627,7 +1658,8 @@ start_dev_macos() {
 
     check_command "cargo" || return 1
     check_command "node" || return 1
-    local pkg_cmd=$(get_pkg_cmd) || return 1
+    local pkg_cmd
+    pkg_cmd=$(get_pkg_cmd) || return 1
     check_command "psql" || return 1
 
     db_start
@@ -1684,7 +1716,8 @@ get_frontend_pid() {
 start_frontend() {
     info "启动前端服务..."
 
-    local pkg_cmd=$(get_pkg_cmd) || return 1
+    local pkg_cmd
+    pkg_cmd=$(get_pkg_cmd) || return 1
     ensure_frontend_deps "$pkg_cmd" || return 1
 
     if check_port 3000; then
@@ -1754,7 +1787,8 @@ stop_frontend() {
     # 再按进程名杀（仍在编译、端口未开的 vite/tsc 进程）
     local proc_pid
     proc_pid=$(get_frontend_pid)
-    local all_pid=$(echo "$port_pid $proc_pid" | tr ' ' '\n' | sort -u | grep -v "^$")
+    local all_pid
+    all_pid=$(echo "$port_pid $proc_pid" | tr ' ' '\n' | sort -u | grep -v "^$")
 
     if [ -n "$all_pid" ]; then
         if _is_windows; then
@@ -1792,6 +1826,7 @@ show_all_status() {
     for service in $(get_all_services); do
         status_service "$service"
         total_count=$((total_count + 1))
+        # shellcheck disable=SC2046
         if check_port $(get_service_port "$service"); then
             running_count=$((running_count + 1))
         fi
@@ -1840,9 +1875,12 @@ ws_check() {
     local total_count=${#ws_endpoints[@]}
     
     for endpoint in "${ws_endpoints[@]}"; do
-        local name=$(echo "$endpoint" | cut -d: -f1)
-        local path=$(echo "$endpoint" | cut -d: -f2)
-        local port=$(echo "$endpoint" | cut -d: -f3)
+        local name
+        name=$(echo "$endpoint" | cut -d: -f1)
+        local path
+        path=$(echo "$endpoint" | cut -d: -f2)
+        local port
+        port=$(echo "$endpoint" | cut -d: -f3)
         
         local backend_running=false
         if check_port $port; then
@@ -1850,7 +1888,8 @@ ws_check() {
         fi
         
         if [ "$frontend_running" = true ]; then
-            local proxy_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 \
+            local proxy_status
+            proxy_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 \
                 -H "Upgrade: websocket" \
                 -H "Connection: Upgrade" \
                 -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
@@ -1870,7 +1909,8 @@ ws_check() {
                 echo -e "${YELLOW}⚠️${NC} $name ($path) 状态码: $proxy_status"
             fi
         elif [ "$backend_running" = true ]; then
-            local backend_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 \
+            local backend_status
+            backend_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 \
                 -H "Upgrade: websocket" \
                 -H "Connection: Upgrade" \
                 -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
@@ -1927,7 +1967,8 @@ parse_database_url() {
 
 # 定位 psql（跨平台）：PATH → 常见安装目录
 find_psql_bin() {
-    local p=$(command -v psql 2>/dev/null)
+    local p
+    p=$(command -v psql 2>/dev/null)
     if [ -z "$p" ] && _is_windows; then
         for pg_dir in "/c/Program Files/PostgreSQL"/*/bin "/d/Program Files/PostgreSQL"/*/bin "/e/Program Files/PostgreSQL"/*/bin; do
             if [ -x "$pg_dir/psql" ]; then p="$pg_dir/psql"; break; fi
@@ -1947,7 +1988,8 @@ db_is_ready() {
     if command -v pg_isready &>/dev/null; then
         pg_isready_cmd="pg_isready"
     elif [ -n "$psql_cmd" ]; then
-        local pi="$(dirname "$psql_cmd")/pg_isready"
+        local pi
+        pi="$(dirname "$psql_cmd")/pg_isready"
         [ -x "$pi" ] && pg_isready_cmd="$pi"
     fi
 
@@ -1969,7 +2011,8 @@ db_is_ready() {
 
 # 定位 redis-cli（跨平台）：PATH → 常见安装目录
 find_redis_cli() {
-    local rcli=$(command -v redis-cli 2>/dev/null)
+    local rcli
+    rcli=$(command -v redis-cli 2>/dev/null)
     if [ -z "$rcli" ] && _is_windows; then
         for rdir in "/e/ZenTao/bin/redis" "/c/Program Files/Redis" "/d/Program Files/Redis" "/c/Program Files/Memurai"; do
             if [ -x "$rdir/redis-cli.exe" ]; then rcli="$rdir/redis-cli.exe"; break; fi
@@ -1985,9 +2028,11 @@ redis_auth_arg() {
 
 # Redis 是否就绪（带密码 ping，跨平台）
 redis_is_ready() {
-    local rcli=$(find_redis_cli)
+    local rcli
+    rcli=$(find_redis_cli)
     [ -z "$rcli" ] && return 2
-    local rpass=$(redis_auth_arg)
+    local rpass
+    rpass=$(redis_auth_arg)
     if [ -n "$rpass" ]; then
         "$rcli" -a "$rpass" ping >/dev/null 2>&1
     else
@@ -1999,7 +2044,8 @@ redis_is_ready() {
 db_start() {
     info "启动 PostgreSQL..."
     if command -v brew &> /dev/null; then
-        local pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
+        local pg_version
+        pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
         if [ -n "$pg_version" ]; then
             brew services start "$pg_version" 2>/dev/null
         else
@@ -2010,7 +2056,8 @@ db_start() {
         sudo systemctl start postgresql 2>/dev/null || true
     elif _is_windows; then
         # Windows/Git Bash：PostgreSQL 通常已注册为 Windows 服务，仅需探测 psql
-        local psql_bin=$(find_psql_bin)
+        local psql_bin
+        psql_bin=$(find_psql_bin)
         if [ -z "$psql_bin" ]; then
             error "未找到 psql，请安装 PostgreSQL 并将其 bin 目录加入 PATH（或使用 topems.ps1）"
             return 1
@@ -2042,7 +2089,8 @@ db_stop() {
         return 1
     fi
     if command -v brew &> /dev/null; then
-        local pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
+        local pg_version
+        pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
         if [ -n "$pg_version" ]; then
             brew services stop "$pg_version" 2>/dev/null
         else
@@ -2066,15 +2114,18 @@ db_status() {
         [ -n "$psql_cmd" ] && PGPASSWORD=$DB_PASSWORD "$psql_cmd" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT version();" 2>/dev/null | head -1
         case "$(detect_os)" in
             windows)
-                local pid=$(netstat -ano 2>/dev/null | grep -E "[:.]${DB_PORT} .*LISTENING" | awk '{print $NF}' | sort -u | head -1)
+                local pid
+                pid=$(netstat -ano 2>/dev/null | grep -E "[:.]${DB_PORT} .*LISTENING" | awk '{print $NF}' | sort -u | head -1)
                 [ -n "$pid" ] && detail "端口 ${DB_PORT} 由 postgres (PID ${pid}) 监听"
                 ;;
             linux)
-                local act=$(systemctl is-active postgresql 2>/dev/null || true)
+                local act
+                act=$(systemctl is-active postgresql 2>/dev/null || true)
                 [ -n "$act" ] && detail "systemd 服务状态: ${act}"
                 ;;
             darwin)
-                local brewst=$(brew services list 2>/dev/null | grep -iE 'postgres' | head -1 || true)
+                local brewst
+                brewst=$(brew services list 2>/dev/null | grep -iE 'postgres' | head -1 || true)
                 [ -n "$brewst" ] && detail "${brewst}"
                 ;;
         esac
@@ -2087,8 +2138,10 @@ db_status() {
     echo ""
     info "=== Redis 状态 ==="
     if redis_is_ready; then
-        local rcli=$(find_redis_cli)
-        local rpass=$(redis_auth_arg)
+        local rcli
+        rcli=$(find_redis_cli)
+        local rpass
+        rpass=$(redis_auth_arg)
         local rver=""
         if [ -n "$rpass" ]; then
             rver=$("$rcli" -a "$rpass" info server 2>/dev/null | grep "redis_version" | head -1)
@@ -2112,7 +2165,8 @@ redis_start() {
         sudo systemctl start redis 2>/dev/null || true
     fi
 
-    local redis_cli=$(find_redis_cli)
+    local redis_cli
+    redis_cli=$(find_redis_cli)
     if [ -z "$redis_cli" ]; then
         error "未找到 redis-cli，请安装 Redis 并将其 bin 目录加入 PATH（或使用 topems.ps1）"
         return 1
@@ -2400,7 +2454,8 @@ db_defense_check_all() {
 # 备份数据库
 db_backup() {
     local backup_dir="$PROJECT_ROOT/backups"
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
     local backup_file="$backup_dir/topems_db_${timestamp}.sql"
 
     mkdir -p "$backup_dir"
@@ -2841,7 +2896,9 @@ clean_project() {
 
     if [ "$clean_rust" = true ]; then
         # ── 杀后台 cargo 进程 + 清 coverage 残留（公共函数）──────────
+        # shellcheck disable=SC2046
         _kill_background_cargo $( $dry_run && echo --dry-run ) && did_clean=true
+        # shellcheck disable=SC2046
         _clean_cov_remnants $( $dry_run && echo --dry-run ) && did_clean=true
 
         # target/ 完整清理
@@ -3096,7 +3153,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将清理 Ollama blobs 残留: $ollama_blobs ($blob_size, $blob_count files)"
                 else
-                    rm -rf "$ollama_blobs"/* 2>/dev/null
+                    rm -rf "${ollama_blobs:?}/*" 2>/dev/null
                     detail "已清理 Ollama blobs 残留 ($blob_size)"
                     did_clean=true
                 fi

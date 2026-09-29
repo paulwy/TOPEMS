@@ -19,4 +19,5 @@ cd "$(git rev-parse --show-toplevel)"
 # git 2.50: tracked files under an ignored dir return exit 1 on `git add <path>`.
 # STAGED paths all come from the index (tracked/staged), so -f only re-stages
 # their modifications and never introduces new ignored files.
+# shellcheck disable=SC2046
 git add -f $(echo "$STAGED" | tr -d '\r')
