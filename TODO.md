@@ -134,14 +134,15 @@
 ## 🚀 后续优化任务（2026-09-28 端到端测试发现）
 
 ### P1 高优先级（影响业务使用）
-- [ ] 修复前端列表字段映射不匹配问题：
-  - [ ] SCM供应商列表：后端返回data.suppliers，前端期望data.items，导致新建数据后不显示
-  - [ ] SCM采购申请列表：同样的字段映射问题
-  - [ ] 统一所有列表接口的返回字段，要么后端返回items，要么前端适配suppliers
-- [ ] 修复顶部导航栏按钮跳转：
-  - [ ] 系统设置按钮正确跳转到/system/settings
-  - [ ] 个人中心按钮正确跳转到/profile
-- [ ] 接入全局搜索功能（顶部搜索按钮可用）
+- [x] 修复前端列表字段映射不匹配问题：
+  - [x] SCM供应商列表：后端返回data.suppliers，前端期望data.items——源码已修（2e159aa35），
+        后续发现 BFF 旧二进制未生效，重编译 server 后实跑验证 items ✓
+  - [x] SCM采购申请列表：purchase_order.rs 返回键 'orders' → 'items'，全 scm 模块扫描
+        确认唯一非 items 键名，实测 20/65 条 ✓
+- [x] 修复顶部导航栏按钮跳转：
+  - [x] 系统设置按钮正确跳转到/system/settings——补路由注册 + HeaderUserMenu 接入
+  - [x] 个人中心按钮正确跳转到/profile——核对已正确
+- [x] 接入全局搜索功能（顶部搜索按钮可用）——searchApi.globalSearch 完整链路核对确认已实现
 
 ### P2 中优先级（体验优化）
 - [ ] 清理MUI elevation={24}主题警告
