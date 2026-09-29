@@ -28,7 +28,7 @@ pub async fn create_share_link(
     let share_id = Uuid::new_v4();
     let now = Utc::now();
 
-    let expires_at = req.expires_at.map(|d| d.naive_utc());
+    let expires_at = req.expires_at;
 
     let result = sqlx::query!(
         r#"
@@ -40,7 +40,7 @@ pub async fn create_share_link(
         id,
         &req.shared_with,
         req.permission,
-expires_at,now.naive_utc(),
+expires_at,now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -55,8 +55,8 @@ expires_at,now.naive_utc(),
                                 dashboard_id: row.dashboard_id,
                                 share_url: format!("/dashboard/share/{}", row.id),
                                 permission: row.permission,
-                                expires_at: row.expires_at.map(|d| d.and_utc()),
-        created_at: row.created_at.expect("created_at should exist").and_utc(),
+                                expires_at: row.expires_at,
+        created_at: row.created_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -167,8 +167,8 @@ pub async fn list_share_links(
             dashboard_id: row.dashboard_id,
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
-            expires_at: row.expires_at.map(|d| d.and_utc()),
-            created_at: row.created_at.expect("created_at should exist").and_utc(),
+            expires_at: row.expires_at,
+            created_at: row.created_at,
         })
         .collect();
 

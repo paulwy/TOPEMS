@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -173,8 +173,8 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -304,16 +304,16 @@ pub async fn list_process_flows(
             ),
             unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -391,8 +391,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取工艺流程成功",
         )),
@@ -463,8 +463,8 @@ pub async fn create_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "创建工艺流程成功",
         )),
@@ -550,8 +550,8 @@ pub async fn update_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "更新工艺流程成功",
         )),
@@ -674,7 +674,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 })
                 .collect();
 
@@ -727,12 +727,12 @@ pub async fn add_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                    .map(|dt| dt.with_timezone(&Utc))
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -813,7 +813,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 },
                 "添加工艺步骤成功",
             ))
@@ -869,12 +869,12 @@ pub async fn update_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.with_timezone(&Utc).naive_utc())
+                    .map(|dt| dt.with_timezone(&Utc))
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -959,7 +959,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1117,7 +1117,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 })
                 .collect();
 
@@ -1317,7 +1317,7 @@ mod tests {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
         );
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

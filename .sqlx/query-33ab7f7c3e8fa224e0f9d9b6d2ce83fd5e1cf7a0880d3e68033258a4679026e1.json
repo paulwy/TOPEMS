@@ -106,7 +106,7 @@
       {
         "ordinal": 20,
         "name": "resolved_name",
-        "type_info": "Varchar"
+        "type_info": "Text"
       }
     ],
     "parameters": {

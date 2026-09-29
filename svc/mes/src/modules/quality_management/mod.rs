@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 
 use crate::AppState;
@@ -83,15 +83,15 @@ pub fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-pub fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 #[allow(dead_code)]
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
-        NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
-            .map(|dt| dt.and_utc())
+        DateTime<Utc>::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
+            .map(|dt| dt)
             .ok()
     })
 }
@@ -99,8 +99,8 @@ fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
 #[allow(dead_code)]
 fn parse_opt_date(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
-        NaiveDateTime::parse_from_str(&s, "%Y-%m-%d")
-            .map(|dt| dt.and_utc())
+        DateTime<Utc>::parse_from_str(&s, "%Y-%m-%d")
+            .map(|dt| dt)
             .ok()
     })
 }

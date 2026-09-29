@@ -2920,18 +2920,25 @@ clean_project() {
         fi
 
         local sqlx_dir="$PROJECT_ROOT/.sqlx"
-        if [ -d "$sqlx_dir" ]; then
-            local sqlx_size
-            sqlx_size=$(du -sh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
-            if [ "$dry_run" = true ]; then
-                info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
-            else
-                rm -rf "$sqlx_dir"
-                detail "已清理 .sqlx ($sqlx_size)"
-                warning "注意：.sqlx 为 SQLx 离线编译缓存（已入库 git）。清理后离线编译/启动会依赖它，"
-                warning "  如需恢复：git checkout -- .sqlx，或运行 ./scripts/dev/sqlx-prepare.sh 重新生成。"
-                did_clean=true
+        # 默认不删除.sqlx缓存（已入库git，删除会导致离线编译失败暴露大量历史类型错误）
+        # 只有显式加 --sqlx 参数才清理
+        if [ "${CLEAN_SQLX:-false}" = "true" ]; then
+            if [ -d "$sqlx_dir" ]; then
+                local sqlx_size
+                sqlx_size=$(du -sh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
+                else
+                    rm -rf "$sqlx_dir"
+                    detail "已清理 .sqlx ($sqlx_size)"
+                    warning "注意：.sqlx 为 SQLx 离线编译缓存（已入库 git）。清理后离线编译/启动会依赖它，"
+                    warning "  如需恢复：git checkout -- .sqlx，或运行 ./scripts/dev/sqlx-prepare.sh 重新生成。"
+                    did_clean=true
+                fi
             fi
+        else
+            detail "默认跳过 .sqlx 缓存清理（已入库git，删除会导致离线编译失败）"
+            detail "  如需强制清理.sqlx，请执行: CLEAN_SQLX=true ./scripts/topems.sh clean --sqlx"
         fi
     fi
 

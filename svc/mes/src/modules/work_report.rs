@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -134,12 +134,12 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
-fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
-    dt.map(|d| d.and_utc().to_rfc3339())
+fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
+    dt.map(|d| d.to_rfc3339())
 }
 
 fn parse_report_date(s: &str) -> Result<NaiveDate, String> {
@@ -379,23 +379,23 @@ pub async fn list_work_reports(
                 r.try_get::<Option<DateTime<Utc>>, _>("approved_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.naive_utc()),
+                    ,
             ),
             approval_remark: r
                 .try_get::<Option<String>, _>("approval_remark")
                 .ok()
                 .flatten(),
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -478,10 +478,10 @@ pub async fn get_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "获取工报成功",
         )),
@@ -676,10 +676,10 @@ pub async fn create_work_report(
                     remark: r.remark,
                     status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
-                    approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
+                    approved_at: opt_datetime_to_string(r.approved_at),
                     approval_remark: r.approval_remark,
-                    created_at: r.created_at,
-                    updated_at: r.updated_at,
+                    created_at: r.created_at.unwrap_or_default(),
+                    updated_at: r.updated_at.unwrap_or_default(),
                 },
                 "创建工报成功",
             ))
@@ -822,10 +822,10 @@ pub async fn update_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "更新工报成功",
         )),
@@ -962,10 +962,10 @@ pub async fn approve_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "审批通过成功",
         )),
@@ -1057,10 +1057,10 @@ pub async fn reject_work_report(
                 remark: r.remark,
                 status: r.status.map(|u| u.to_string()).unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
-                approved_at: opt_datetime_to_string(r.approved_at.map(|d| d.naive_utc())),
+                approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             },
             "审批驳回成功",
         )),
@@ -1268,7 +1268,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_produces_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 1, 2, 3, 4, 5).unwrap();
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-01-02T03:04:05"), "got {}", s);
     }
 
@@ -1282,7 +1282,7 @@ mod tests {
     #[test]
     fn opt_datetime_to_string_some_returns_some() {
         let dt = Utc.with_ymd_and_hms(2024, 6, 15, 12, 0, 0).unwrap();
-        let r = opt_datetime_to_string(Some(dt.naive_utc()));
+        let r = opt_datetime_to_string(Some(dt));
         assert!(r.is_some());
         assert!(r.unwrap().starts_with("2024-06-15T12:00:00"));
     }

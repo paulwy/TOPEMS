@@ -1,5 +1,5 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::Utc;
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -24,7 +24,7 @@ pub async fn create_material_issue(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let issue_no = format!(
         "MI{}{:04}",
         now.format("%Y%m%d"),
@@ -131,15 +131,15 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: issue.issue_time.map(|d| d.and_utc()),
+        issue_time: issue.issue_time,
         notes: issue.notes,
         created_at: issue
             .created_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
         updated_at: issue
             .updated_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
     };
 
@@ -273,22 +273,22 @@ pub async fn list_material_issues(
                 .flatten()
                 .map(|u| u.to_string()),
             issue_time: r
-                .try_get::<Option<NaiveDateTime>, _>("issue_time")
+                .try_get::<Option<DateTime<Utc>>, _>("issue_time")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()),
+                ,
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -381,8 +381,8 @@ pub async fn get_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        "updated_at": issue.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        "created_at": issue.created_at.unwrap_or_else(Utc::now),
+        "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -412,7 +412,7 @@ pub async fn update_material_issue(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let result = sqlx::query!(
         r#"
@@ -458,8 +458,8 @@ now,
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        "updated_at": issue.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        "created_at": issue.created_at.unwrap_or_else(Utc::now),
+        "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

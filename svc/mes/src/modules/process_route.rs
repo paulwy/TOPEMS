@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -129,8 +129,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -276,16 +276,16 @@ pub async fn list_process_routes(
             total_estimated_time_minutes: None,
             process_count: None,
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -393,13 +393,13 @@ pub async fn get_process_route(
                     name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: total_estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     process_count,
-                    created_at: r.created_at,
-                    updated_at: r.updated_at,
+                    created_at: r.created_at.unwrap_or_default(),
+                    updated_at: r.updated_at.unwrap_or_default(),
                 },
                 "获取工艺路线成功",
             ))
@@ -466,12 +466,12 @@ pub async fn create_process_route(
                     name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at,
-                    updated_at: r.updated_at,
+                    created_at: r.created_at.unwrap_or_default(),
+                    updated_at: r.updated_at.unwrap_or_default(),
                 },
                 "创建工艺路线成功",
             ))
@@ -551,12 +551,12 @@ pub async fn update_process_route(
                     name: r.name,
                     description: r.description,
                     version: None,
-                    status: r.status,
+                    status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at,
-                    updated_at: r.updated_at,
+                    created_at: r.created_at.unwrap_or_default(),
+                    updated_at: r.updated_at.unwrap_or_default(),
                 },
                 "更新工艺路线成功",
             ))
@@ -1089,7 +1089,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

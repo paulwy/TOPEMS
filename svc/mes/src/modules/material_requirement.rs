@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -111,8 +111,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     }
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -255,16 +255,16 @@ pub async fn list_material_requirements(
             source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
             remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -350,8 +350,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取物料需求成功",
         )),
@@ -383,12 +383,12 @@ pub async fn create_material_requirement(
     let required_quantity =
         BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
 
-    let required_date = NaiveDateTime::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S")
+    let required_date = DateTime<Utc>::parse_from_str(&body.required_date, "%Y-%m-%d %H:%M:%S")
         .ok()
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
                 .ok()
-                .map(|dt| dt.naive_utc())
+                .map(|dt| dt)
         })
         .or_else(|| {
             body.required_date
@@ -450,8 +450,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "创建物料需求成功",
         )),
@@ -488,12 +488,12 @@ pub async fn update_material_requirement(
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let required_date = body.required_date.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.naive_utc())
+                    .map(|dt| dt)
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -553,8 +553,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "更新物料需求成功",
         )),
@@ -698,7 +698,7 @@ pub async fn calculate_requirements(
                     item.specification,
                     Some(item.unit),
                     required_quantity_bd,
-                    NaiveDateTime::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").ok(),
+                    DateTime<Utc>::parse_from_str(&now_str, "%Y-%m-%d %H:%M:%S").ok(),
                     Some("normal"),
                     Some("calculated"),
                     Some("calculated"),
@@ -726,8 +726,8 @@ pub async fn calculate_requirements(
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                        updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                        created_at: r.created_at.unwrap_or_else(Utc::now),
+                        updated_at: r.updated_at.unwrap_or_else(Utc::now),
                     });
                 }
             }
@@ -808,8 +808,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "确认物料需求成功",
         )),
@@ -889,8 +889,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "下发物料需求成功",
         )),
@@ -927,7 +927,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

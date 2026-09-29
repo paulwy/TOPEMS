@@ -3,7 +3,7 @@
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -365,7 +365,7 @@ pub async fn backward_traceability(
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_utc()),
+            .map(|d| d.and_hms_opt(0, 0, 0).unwrap()),
         operator: None,
         description: Some("成品批次".to_string()),
     });
@@ -684,10 +684,10 @@ pub async fn list_quality_records(
                 .unwrap_or_else(|| "pending".to_string()),
             inspector: r.try_get::<Option<String>, _>("inspector").ok().flatten(),
             inspection_time: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("inspection_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
             defect_reason: r
                 .try_get::<Option<String>, _>("defect_reason")
@@ -695,16 +695,16 @@ pub async fn list_quality_records(
                 .flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
         })
         .collect();

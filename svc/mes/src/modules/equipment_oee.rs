@@ -3,7 +3,7 @@
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -168,7 +168,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 }
 
 fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
-    dt.and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
+    dt.and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
 }
 
 fn calculate_oee(
@@ -385,16 +385,16 @@ pub async fn list_oee_records(
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
         })
         .collect();
@@ -432,7 +432,7 @@ pub async fn create_oee_record(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let (availability, performance, quality_rate, oee) = calculate_oee(
         req.planned_production_time,
@@ -459,7 +459,7 @@ pub async fn create_oee_record(
             shift, operator, notes, created_at, updated_at
         "#,
         req.equipment_id,
-        req.record_date.naive_utc().date(),
+        req.record_date.date(),
         BigDecimal::from_str(&req.planned_production_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.actual_run_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.downtime.to_string()).unwrap_or_default(),
@@ -518,11 +518,11 @@ pub async fn create_oee_record(
         notes: result.notes,
         created_at: result
             .created_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
         updated_at: result
             .updated_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
     };
 
@@ -601,8 +601,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -723,7 +723,7 @@ pub async fn update_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -758,8 +758,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
@@ -1081,7 +1081,7 @@ pub async fn get_equipment_efficiency_analysis(
             EquipmentEfficiencyAnalysis {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_no: r.equipment_no,
+                equipment_no: r.equipment_no.unwrap_or_default(),
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),

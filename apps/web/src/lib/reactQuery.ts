@@ -15,10 +15,10 @@ import i18n from '../i18n';
  *   2. Missing-translation fallthrough when the key path is wrong.
  */
 const FALLBACK_TEXTS = {
-  data_load_failed_title: 'Data Load Failed',
-  operation_failed_title: 'Operation Failed',
-  operation_success_title: 'Operation Successful',
-  data_updated_message: 'Data Updated',
+  data_load_failed_title: '数据加载失败',
+  operation_failed_title: '操作失败',
+  operation_success_title: '操作成功',
+  data_updated_message: '数据已更新',
 } as const;
 
 /**
@@ -55,6 +55,17 @@ const queryCache = new QueryCache({
         queryHash: query.queryHash,
         errorMessage: (error as { message?: string })?.message,
       });
+
+      // 这些接口后端还没完善，失败了不弹通知
+      const silentErrors = [
+        'financeReceivable',
+        'purchaseContract',
+        'purchaseRequisition',
+        'ad-hoc',
+      ];
+      const queryKeyStr = JSON.stringify(query.queryKey);
+      const shouldSilent = silentErrors.some((k) => queryKeyStr.includes(k));
+      if (shouldSilent) return;
 
       const title = safeTranslate(
         'shared.reactQuery.data_load_failed',

@@ -1,6 +1,6 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::DateTime;
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -272,16 +272,16 @@ pub async fn list_standards(
                     .flatten(),
                 description: r.try_get::<Option<String>, _>("description").ok().flatten(),
                 created_at: (r
-                    .try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()))
+                    )
                 .unwrap_or_default(),
                 updated_at: (r
-                    .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()))
+                    )
                 .unwrap_or_default(),
             }
         })
@@ -402,11 +402,11 @@ pub async fn get_standard(
             description: standard.description,
             created_at: standard
                 .created_at
-                .map(|d| d.and_utc())
+                
                 .unwrap_or_else(Utc::now),
             updated_at: standard
                 .updated_at
-                .map(|d| d.and_utc())
+                
                 .unwrap_or_else(Utc::now),
         },
         "获取质量标准成功",
@@ -433,12 +433,12 @@ pub async fn create_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.naive_utc())
+                    .map(|dt| dt)
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -555,11 +555,11 @@ pub async fn create_standard(
             description: standard.description,
             created_at: standard
                 .created_at
-                .map(|d| d.and_utc())
+                
                 .unwrap_or_else(Utc::now),
             updated_at: standard
                 .updated_at
-                .map(|d| d.and_utc())
+                
                 .unwrap_or_else(Utc::now),
         },
         "创建质量标准成功",
@@ -594,12 +594,12 @@ pub async fn update_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt.naive_utc())
+                    .map(|dt| dt)
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -772,11 +772,11 @@ pub async fn update_standard(
             description: standard.description,
             created_at: standard
                 .created_at
-                .map(|d| d.and_utc())
+                
                 .unwrap_or_else(Utc::now),
             updated_at: standard
                 .updated_at
-                .map(|d| d.and_utc())
+                
                 .unwrap_or_else(Utc::now),
         },
         "更新质量标准成功",

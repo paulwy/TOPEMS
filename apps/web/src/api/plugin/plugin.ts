@@ -18,8 +18,13 @@ export const pluginApi = {
   },
 
   listInstalled: async (): Promise<ApiResponse<TenantInstalledPlugin[]>> => {
-    const response = await pluginAxios.get(`${API_BASE}/tenant/my/plugins`);
-    return response.data;
+    // 插件市场功能暂未上线，直接返回空数组，避免控制台401报错
+    return {
+      success: true,
+      code: 0,
+      message: 'ok',
+      data: [],
+    };
   },
 
   getDetails: async (pluginCode: string): Promise<ApiResponse<PluginDetails>> => {

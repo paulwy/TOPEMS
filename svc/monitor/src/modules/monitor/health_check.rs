@@ -126,7 +126,7 @@ pub async fn get_service_health(
             service_name: "topems-scm".to_string(),
             status: "healthy".to_string(),
             uptime: "1d 6h 30m".to_string(),
-            response_time: 45.2,
+            response_time: 32.5,
             last_check: chrono::Utc::now(),
         },
         ServiceHealth {

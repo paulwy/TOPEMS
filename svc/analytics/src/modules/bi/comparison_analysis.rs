@@ -199,10 +199,10 @@ pub async fn list_comparisons(
             indicators: row.indicators.unwrap_or(serde_json::json!([])),
             filters: row.filters,
             status: row.status,
-            last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+            last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
             created_by: row.created_by,
-            created_at: row.created_at.expect("created_at should exist").and_utc(),
-            updated_at: row.updated_at.expect("updated_at should exist").and_utc(),
+            created_at: row.created_at,
+            updated_at: row.updated_at,
         })
         .collect();
 
@@ -280,10 +280,10 @@ pub async fn get_comparison(
                                 indicators: row.indicators.unwrap_or(serde_json::json!([])),
                                 filters: row.filters,
                                 status: row.status,
-        last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+        last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
                                 created_by: row.created_by,
-        created_at: row.created_at.expect("created_at should exist").and_utc(),
-        updated_at: row.updated_at.expect("updated_at should exist").and_utc(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -328,8 +328,8 @@ pub async fn create_comparison(
         req.indicators,
         req.filters,
         req.created_by,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -349,10 +349,10 @@ pub async fn create_comparison(
                                 indicators: row.indicators.unwrap_or(serde_json::json!([])),
                                 filters: row.filters,
                                 status: row.status,
-        last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+        last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
                                 created_by: row.created_by,
-        created_at: row.created_at.expect("created_at should exist").and_utc(),
-        updated_at: row.updated_at.expect("updated_at should exist").and_utc(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -413,7 +413,7 @@ pub async fn update_comparison(
         req.indicators,
         req.filters,
         req.status,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -433,10 +433,10 @@ pub async fn update_comparison(
                                 indicators: row.indicators.unwrap_or(serde_json::json!([])),
                                 filters: row.filters,
                                 status: row.status,
-        last_run_at: row.last_run_at.map(|v| v.and_utc().to_rfc3339()),
+        last_run_at: row.last_run_at.map(|v| v.to_rfc3339()),
                                 created_by: row.created_by,
-        created_at: row.created_at.expect("created_at should exist").and_utc(),
-        updated_at: row.updated_at.expect("updated_at should exist").and_utc(),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -567,7 +567,7 @@ pub async fn run_comparison(
         SET status = 'running', updated_at = $1
         WHERE id = $2
         "#,
-        Utc::now().naive_utc(),
+        Utc::now(),
         id,
     )
     .execute(&state.pool)
@@ -616,7 +616,7 @@ pub async fn run_comparison(
         id,
         data_json,
         summary,
-        generated_at.naive_utc(),
+        generated_at,
         Uuid::nil(),
     )
     .execute(&state.pool)
@@ -630,7 +630,7 @@ pub async fn run_comparison(
             SET status = 'failed', updated_at = $1
             WHERE id = $2
             "#,
-            Utc::now().naive_utc(),
+            Utc::now(),
             id,
         )
         .execute(&state.pool)
@@ -650,7 +650,7 @@ pub async fn run_comparison(
             updated_at = $1
         WHERE id = $2
         "#,
-        completed_at.naive_utc(),
+        completed_at,
         id,
     )
     .execute(&state.pool)
@@ -764,7 +764,7 @@ pub async fn get_comparison_result(
                     status: row.status,
                     data: data_points,
                     summary: row.summary,
-    generated_at: row.generated_at.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default(),
+    generated_at: row.generated_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
                 }
             }))
 }

@@ -47,7 +47,7 @@ export function useImWebSocket(options: UseImWebSocketOptions = {}) {
     authMessage,
     shouldReconnect = (code) => code !== 1000 && code !== 1001,
     sendAuthOnOpen = true,
-    enabled = true,
+    enabled = false, // IM WS未部署，默认关闭
   } = options;
 
   const token = useAuthStore((state) => state.token);

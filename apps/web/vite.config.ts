@@ -451,6 +451,15 @@ const buildServiceProxies = (): Record<string, any> => {
     }
   }
 
+  // 模块化单体模式：所有WebSocket统一代理到8099
+  if (MONO_TARGET) {
+    proxies['/ws'] = {
+      target: MONO_TARGET,
+      changeOrigin: true,
+      ws: true,
+    };
+  }
+
   // /api/* 路径
   const apiV1Services = SERVICES.filter((s) => s.apiPrefix && !s.isVirtual);
   for (const svc of apiV1Services) {

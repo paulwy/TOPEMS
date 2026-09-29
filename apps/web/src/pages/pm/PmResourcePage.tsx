@@ -73,7 +73,9 @@ const PmResourcePage: React.FC = () => {
     const data = projectsQuery.data;
     if (!data?.success || !data.data) return [];
     const items = (data.data as { items?: Project[] }).items;
-    return items || (data.data as unknown as Project[]) || [];
+    if (Array.isArray(items)) return items;
+    if (Array.isArray(data.data)) return data.data as Project[];
+    return [];
   }, [projectsQuery.data]);
   const apiAdapter: CrudApiAdapter<ProjectResource> = useMemo(
     () => ({
@@ -219,7 +221,7 @@ const PmResourcePage: React.FC = () => {
             <MenuItem value=''>
               <em>{i18n.t('pm.pm_resource_page.k10')}</em>
             </MenuItem>
-            {projects.map((p: { id: string; name: string }) => (
+            {(projects || []).map((p: { id: string; name: string }) => (
               <MenuItem
                 key={p.id}
                 value={p.id}

@@ -323,7 +323,7 @@ export async function getDashboard() {
     }
   `);
   // GraphQL data 外层含 dashboard 包裹，解包后返回 { stats, todos, services }
-  return result.dashboard;
+  return result?.dashboard || { stats: [], todos: [], services: [] };
 }
 
 /** 完成待办事项（GraphQL Mutation） */

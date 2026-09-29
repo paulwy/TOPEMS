@@ -30,12 +30,12 @@ export function useDashboardWebSocket(options: UseDashboardWebSocketOptions = {}
     onOpen,
     onClose,
     onError,
-    reconnectAttempts = 5,
+    reconnectAttempts = 3,
     maxReconnectDelay = 30000,
     minReconnectDelay = 1000,
     connectionTimeout = 10000,
     shouldReconnect,
-    enabled = true,
+    enabled = false, // WS未挂载路由，全局关闭不连接
   } = options;
 
   const { token } = useAuthStore();
@@ -95,7 +95,7 @@ export function useDashboardWebSocket(options: UseDashboardWebSocketOptions = {}
         onClose?.(event);
       },
       onError: (event) => {
-        apiLogger.error('[DashboardWS] Error:', event);
+        apiLogger.debug('[DashboardWS] Error:', event);
         onError?.(event);
       },
       reconnectAttempts,

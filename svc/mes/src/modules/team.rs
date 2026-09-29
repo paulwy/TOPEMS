@@ -6,7 +6,7 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
@@ -118,8 +118,8 @@ fn naive_to_utc<T: Into<Option<DateTime<Utc>>>>(dt: T) -> DateTime<Utc> {
     dt.into().unwrap_or_else(Utc::now)
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 #[utoipa::path(
@@ -256,16 +256,16 @@ pub async fn list_teams(
                 .unwrap_or_else(|| "active".to_string()),
             description: r.try_get::<Option<String>, _>("description").ok().flatten(),
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -342,8 +342,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -362,7 +362,7 @@ pub async fn create_team(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let work_station_id: Option<Uuid> = req
         .work_station_id
@@ -450,11 +450,11 @@ pub async fn create_team(
         description: result.description,
         created_at: result
             .created_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
         updated_at: result
             .updated_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
     };
 
@@ -504,7 +504,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -531,8 +531,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }
@@ -630,7 +630,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| d.and_utc().to_rfc3339()),
+            join_date: r.join_date.map(|d| d.to_rfc3339()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -653,7 +653,7 @@ pub async fn add_team_member(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
     let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
@@ -704,7 +704,7 @@ pub async fn add_team_member(
         employee_name: result.employee_name,
         employee_code: result.employee_code,
         position: result.position,
-        join_date: result.join_date.map(|d| d.and_utc().to_rfc3339()),
+        join_date: result.join_date.map(|d| d.to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
@@ -763,7 +763,7 @@ pub async fn remove_team_member(
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now().naive_utc(),
+            Utc::now(),
         )
         .execute(&state.pool)
         .await;
@@ -798,7 +798,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

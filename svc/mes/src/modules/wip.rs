@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -309,30 +309,30 @@ pub async fn list_wips(
                 .unwrap_or_else(|| "in_progress".to_string()),
             batch_no: r.try_get::<Option<String>, _>("batch_no").ok().flatten(),
             start_time: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("start_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
             last_transfer_time: opt_naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("last_transfer_time")
+                r.try_get::<Option<DateTime<Utc>>, _>("last_transfer_time")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
             updated_at: naive_to_utc(
-                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
                     .flatten()
-                    .map(|d| d.and_utc()),
+                    ,
             ),
         })
         .collect();
@@ -368,7 +368,7 @@ pub async fn create_wip(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let wip_no = format!(
         "WIP{}{:04}",
         now.format("%Y%m%d"),
@@ -445,17 +445,17 @@ now,
         current_work_station_name: None,
         status: result.status.unwrap_or_else(|| "in_progress".to_string()),
         batch_no: result.batch_no,
-        start_time: result.start_time.map(|d| d.and_utc()),
-        last_transfer_time: result.last_transfer_time.map(|d| d.and_utc()),
+        start_time: result.start_time,
+        last_transfer_time: result.last_transfer_time,
         operator: result.operator,
         notes: result.notes,
         created_at: result
             .created_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
         updated_at: result
             .updated_at
-            .map(|d| d.and_utc())
+            
             .unwrap_or_else(Utc::now),
     };
 
@@ -526,15 +526,15 @@ pub async fn get_wip(
                 current_process_id: r.current_process_id,
                 current_process_name: Some(r.process_name),
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: Some(r.work_station_name),
+                current_work_station_name: r.work_station_name.unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time.unwrap_or_default(),
+                last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -587,7 +587,7 @@ pub async fn update_wip(
         req.status,
         req.batch_no,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -617,12 +617,12 @@ pub async fn update_wip(
                 current_work_station_name: None,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time.unwrap_or_default(),
+                last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -697,7 +697,7 @@ pub async fn transfer_wip(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let transfer_no = format!(
         "TRF{}{:04}",
         now.format("%Y%m%d"),

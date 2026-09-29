@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -122,8 +122,8 @@ fn naive_date_to_string(d: Option<chrono::NaiveDate>) -> Option<String> {
     d.map(|date| date.to_string())
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
@@ -169,16 +169,16 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
         ),
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
         created_at: (r
-            .try_get::<Option<NaiveDateTime>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten()
-            .map(|d| d.and_utc()))
+            )
         .unwrap_or_default(),
         updated_at: (r
-            .try_get::<Option<NaiveDateTime>, _>("updated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
             .flatten()
-            .map(|d| d.and_utc()))
+            )
         .unwrap_or_default(),
     }
 }
@@ -789,18 +789,18 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: Some(r.equipment_no),
+            equipment_no: r.equipment_no.unwrap_or_default(),
             maintenance_type: r.maintenance_type,
-            description: Some(r.description),
+            description: r.description.unwrap_or_default(),
             maintainer: r.maintainer,
-            start_time: r.start_time,
-            end_time: r.end_time,
+            start_time: r.start_time.unwrap_or_default(),
+            end_time: Some(r.end_time),
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status,
+            status: r.status.unwrap_or_default(),
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_default(),
+            updated_at: r.updated_at.unwrap_or_default(),
         })
         .collect();
 
@@ -1194,7 +1194,7 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
+                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
                 })
                 .collect();
 
@@ -1324,7 +1324,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().and_utc().to_rfc3339(),
+                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
             },
             "创建点检记录成功",
         )),
@@ -1424,7 +1424,7 @@ mod tests {
     fn datetime_to_string_some_rfc3339() {
         use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 

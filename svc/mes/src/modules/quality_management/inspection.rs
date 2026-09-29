@@ -1,5 +1,5 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
@@ -248,16 +248,16 @@ pub async fn list_inspections(
             result: r.try_get::<Option<String>, _>("result").ok().flatten(),
             memo: r.try_get::<Option<String>, _>("memo").ok().flatten(),
             created_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
             updated_at: (r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc()))
+                )
             .unwrap_or_default(),
         })
         .collect();
@@ -341,8 +341,8 @@ pub async fn get_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取检验记录成功",
         )),
@@ -418,12 +418,12 @@ pub async fn create_inspection(
         BigDecimal::from_str("0").unwrap_or_default(),
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.naive_utc())
+                        .map(|dt| dt)
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -459,8 +459,8 @@ pub async fn create_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "创建检验记录成功",
         )),
@@ -525,12 +525,12 @@ pub async fn update_inspection(
         unqualified_quantity,
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt.naive_utc())
+                        .map(|dt| dt)
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -567,8 +567,8 @@ pub async fn update_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "更新检验记录成功",
         )),

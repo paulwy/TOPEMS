@@ -211,14 +211,14 @@ const FinanceReportsPage: React.FC = () => {
           id: 'project-table',
           title: t('finance.finance_reports_page.text_a34842'),
           columns,
-          data: projectSummaries.map((p) => ({
-            project_name: p.project_name,
+          data: (projectSummaries || []).map((p) => ({
+            project_name: p.project_name || '-',
             contract_amount: formatCurrency(p.contract_amount),
             received_amount: formatCurrency(p.received_amount),
             payable_amount: formatCurrency(p.payable_amount),
             paid_amount: formatCurrency(p.paid_amount),
             profit: formatCurrency(p.profit),
-            margin: p.margin.toFixed(2),
+            margin: (p.margin || 0).toFixed(2),
             status: p.status,
           })),
           loading,

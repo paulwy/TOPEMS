@@ -14,6 +14,12 @@ import {
   RefreshCw,
   Search,
   TrendingUp,
+  FlaskConical,
+  ShieldCheck,
+  Boxes,
+  FlaskRound,
+  Handshake,
+  Bot,
   Truck,
   Zap,
 } from 'lucide-react';
@@ -73,7 +79,7 @@ const getDefaultModules = (): Array<{
     name: i18n.t('dashboard.dash_scm_name'),
     desc: i18n.t('dashboard.dash_scm_desc'),
     icon: Truck,
-    status: 'warning' as const,
+    status: 'running' as const,
     stat: '',
   },
   {
@@ -89,7 +95,7 @@ const getDefaultModules = (): Array<{
     name: i18n.t('dashboard.dash_wms_name'),
     desc: i18n.t('dashboard.dash_wms_desc'),
     icon: Package,
-    status: 'idle' as const,
+    status: 'running' as const,
     stat: '',
   },
   {
@@ -97,6 +103,54 @@ const getDefaultModules = (): Array<{
     name: i18n.t('dashboard.dash_bi_name'),
     desc: i18n.t('dashboard.dash_bi_desc'),
     icon: TrendingUp,
+    status: 'running' as const,
+    stat: '',
+  },
+  {
+    id: 'lims',
+    name: i18n.t('dashboard.dash_lims_name'),
+    desc: i18n.t('dashboard.dash_lims_desc'),
+    icon: FlaskConical,
+    status: 'running' as const,
+    stat: '',
+  },
+  {
+    id: 'ehs',
+    name: i18n.t('dashboard.dash_ehs_name'),
+    desc: i18n.t('dashboard.dash_ehs_desc'),
+    icon: ShieldCheck,
+    status: 'running' as const,
+    stat: '',
+  },
+  {
+    id: 'pdm',
+    name: i18n.t('dashboard.dash_pdm_name'),
+    desc: i18n.t('dashboard.dash_pdm_desc'),
+    icon: Boxes,
+    status: 'running' as const,
+    stat: '',
+  },
+  {
+    id: 'rd',
+    name: i18n.t('dashboard.dash_rd_name'),
+    desc: i18n.t('dashboard.dash_rd_desc'),
+    icon: FlaskRound,
+    status: 'running' as const,
+    stat: '',
+  },
+  {
+    id: 'srm',
+    name: i18n.t('dashboard.dash_srm_name'),
+    desc: i18n.t('dashboard.dash_srm_desc'),
+    icon: Handshake,
+    status: 'running' as const,
+    stat: '',
+  },
+  {
+    id: 'ai',
+    name: 'AI智能',
+    desc: 'AI辅助分析平台',
+    icon: Bot,
     status: 'running' as const,
     stat: '',
   },
@@ -388,11 +442,11 @@ const DashboardPage: React.FC = () => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
                 gap: 'var(--space-3)',
               }}
             >
-              {modules.slice(0, 6).map((module: any) => {
+              {modules.map((module: any) => {
                 const Icon = module.icon || Box;
                 return (
                   <div

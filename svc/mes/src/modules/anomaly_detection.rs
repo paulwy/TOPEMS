@@ -723,7 +723,7 @@ async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let next_maint: Option<chrono::NaiveDate> = row.get("next_maintenance_date");
 
             let days_overdue = if let Some(nm) = next_maint {
-                Utc::now().signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap().and_utc()).num_days()
+                Utc::now().signed_duration_since(nm.and_hms_opt(0, 0, 0).unwrap()).num_days()
             } else {
                 90
             };
@@ -918,7 +918,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 
             let days_delay = if let Some(pe) = planned_end {
                 Utc::now()
-                    .naive_utc()
+                    
                     .date()
                     .signed_duration_since(pe)
                     .num_days()

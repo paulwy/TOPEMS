@@ -9,7 +9,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
@@ -102,8 +102,8 @@ impl From<ProductionProcessRow> for ProductionProcessResponse {
             sequence: r.sequence.unwrap_or_default(),
             equipment_required: false,
             estimated_duration: 0,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_default(),
+            updated_at: r.updated_at.unwrap_or_default(),
         }
     }
 }
@@ -252,16 +252,16 @@ pub async fn list_processes(
                 .flatten()
                 .unwrap_or(0),
             created_at: r
-                .try_get::<Option<NaiveDateTime>, _>("created_at")
+                .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc())
+                
                 .unwrap_or(Utc::now()),
             updated_at: r
-                .try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                .map(|d| d.and_utc())
+                
                 .unwrap_or(Utc::now()),
         })
         .collect();
@@ -541,12 +541,12 @@ pub async fn deactivate_process(
                 name: r.name,
                 description: r.description,
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status,
+                status: r.status.unwrap_or_default(),
                 sequence: r.sequence,
                 equipment_required: false,
                 estimated_duration: 0,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_default(),
+                updated_at: r.updated_at.unwrap_or_default(),
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }

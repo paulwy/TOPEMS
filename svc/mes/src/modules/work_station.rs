@@ -8,7 +8,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::NaiveDateTime;
+use chrono::DateTime<Utc>;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
@@ -102,8 +102,8 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    dt.map(|d| d.and_utc().to_rfc3339()).unwrap_or_default()
+fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
+    dt.map(|d| d.to_rfc3339()).unwrap_or_default()
 }
 
 fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse {
@@ -160,16 +160,16 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
         },
         description: r.try_get::<Option<String>, _>("description").ok().flatten(),
         created_at: (r
-            .try_get::<Option<NaiveDateTime>, _>("created_at")
+            .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
             .flatten()
-            .map(|d| d.and_utc()))
+            )
         .unwrap_or_default(),
         updated_at: (r
-            .try_get::<Option<NaiveDateTime>, _>("updated_at")
+            .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
             .flatten()
-            .map(|d| d.and_utc()))
+            )
         .unwrap_or_default(),
     }
 }
@@ -673,7 +673,7 @@ mod tests {
     #[test]
     fn datetime_to_string_some_rfc3339() {
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
-        let s = datetime_to_string(Some(dt.naive_utc()));
+        let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
     }
 
