@@ -64,6 +64,8 @@
     无需强合并
 
 ### ⚠️ 存在问题（诚实记录）
+- BI `/datasets/test-sql` 后端仍为桩实现（恒返回空 columns/data）——前端结果展示链路已通（显示"查询未返回数据"空态），真实 SQL 执行待后端落地
+- BI SQL 测试结果解析路径 `res?.data?.data` 基于 apiClient 已解包一层的假设，后端真实现后需实跑复核字段层级
 - push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）——本次 511s 长推送全程 keepalive 无截断，进一步缓解但非根除
 - 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）——已加 MIGRATE_ALLOW_STALE=1 防护 + 决策文档化
 - 远端半成品批次教训：残缺 .sqlx 缓存 + 无 CI 门禁会导致离线编译假通过——已通过 Gate S（pre-commit/pre-push/CI 三层）+ sqlx-prepare.sh --check 固化防线
@@ -181,6 +183,9 @@
 - [x] BI即席查询接口返回结构适配——后端 /datasets/test-sql 返回 {columns,data,
       valid}，前端原未展示结果；DatasetPage 增 SQL 测试结果表格（列头+行渲染）
       + SqlTestResult 类型 + i18n（sql_test_result/sql_test_empty）
+      （a52edd540 验证：tsc rc=0；i18n-quality 0 残留/对齐；vitest redesign+
+       DatasetPage 19/19、store/theme/common 449/449 全过；pre-push 五门禁含
+       cargo test 305s 通过）
 
 ### P3 低优先级（功能增强）
 - [ ] 实现WebSocket实时推送（MES看板）
