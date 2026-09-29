@@ -115,6 +115,8 @@ export interface GisMapTemplateProps extends BoxProps {
   fullscreenControl?: boolean;
   locateControl?: boolean;
   showLayerPanel?: boolean;
+  /** 是否显示内置绘制控件（默认 true；页面自定义绘制交互时可关闭） */
+  drawControl?: boolean;
   children?: React.ReactNode;
 }
 
@@ -575,6 +577,7 @@ export function GisMapTemplate({
   fullscreenControl = true,
   locateControl = true,
   showLayerPanel = true,
+  drawControl = true,
   children,
   ...props
 }: GisMapTemplateProps) {
@@ -833,11 +836,13 @@ export function GisMapTemplate({
         )}
       </Box>
 
-      <DrawControl
-        onDraw={handleDraw}
-        onClear={handleClearDraw}
-        drawMode={drawMode}
-      />
+      {drawControl && (
+        <DrawControl
+          onDraw={handleDraw}
+          onClear={handleClearDraw}
+          drawMode={drawMode}
+        />
+      )}
 
       {(zoomControl || fullscreenControl || locateControl) && (
         <MapControl

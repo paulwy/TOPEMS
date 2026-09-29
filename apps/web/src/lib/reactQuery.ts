@@ -922,6 +922,7 @@ export const QUERY_KEYS = {
     GIS_DASHBOARD_BASE: ['ad-hoc', 'gis_dashboard_base'],
     GIS_FENCES_BASE: ['ad-hoc', 'gis_fences_base'],
     GIS_MAP_MARKERS_BASE: ['ad-hoc', 'gis_map_markers_base'],
+    GIS_STATISTICS: ['ad-hoc', 'gis_statistics'],
     HELP_CENTER_FAQS_BASE: ['ad-hoc', 'help_center_faqs_base'],
     HELP_CENTER_GUIDES_BASE: ['ad-hoc', 'help_center_guides_base'],
     HELP_FAQS_BASE: ['ad-hoc', 'help_faqs_base'],

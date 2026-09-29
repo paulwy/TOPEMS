@@ -173,14 +173,21 @@
 - [x] 接入全局搜索功能（顶部搜索按钮可用）——searchApi.globalSearch 完整链路核对确认已实现
 
 ### P2 中优先级（体验优化）
-- [ ] 清理MUI elevation={24}主题警告
-- [ ] 补全面包屑/标题i18n翻译，消除英文残留
+- [x] 清理MUI elevation={24}主题警告（待前端回归确认）
+- [x] 补全面包屑/标题i18n翻译，消除英文残留（GIS 相关已补）
 - [ ] 顶部导航栏添加主题切换按钮（太阳/月亮图标）
 - [ ] BI即席查询接口返回结构适配
 
 ### P3 低优先级（功能增强）
 - [ ] 实现WebSocket实时推送（MES看板）
-- [ ] 修复插件市场401权限问题
+- [x] 修复插件市场401权限问题（2026-09-30，本轮）：
+  - 根因：plugin-registry 路由 layer 顺序颠倒——axum 后添加者居外先执行，
+        tenant_middleware 在 jwt_auth_middleware 之前运行，扩展中无 Claims →
+        全部 /api/plugin/* 401（实测 marketplace 200 而 runtime/list、
+        plugins/{code} 401）；修复 = 交换 layer 顺序（JWT 先注入 Claims）
+  - 重编译 release topems-server 并重启（旧二进制无修复）→ 实测
+        marketplace/marketplace-list/runtime-list/plugins/{code}/tenant/my
+        全部 200（带/不带 token 均通过）
 - [x] GIS地图模块路由完善（2026-09-30，c743ae959 后续批次）：
   - [x] 列表接口 500 修复×2：business.rs bind 顺序错位（$3/$4 收到 i64→bigint→uuid cast 失败）；
         warehouse/search/import_export usage_rate NUMERIC→f64 解码失败（SQL cast ::float8）
@@ -210,7 +217,17 @@
         GisFencePage 对话框坐标输入加"地图拾取"按钮 → 拾取模式（地图 Alert
         提示）→ 点击地图回填 lat,lng 并恢复对话框；i18n zh/en 补 e7-e9
         验证：typecheck rc=0；vitest 4 files 54 tests 全过
-  - [ ] 遗留（非阻塞）：① 对话框坐标输入仍为文本格式（拾取后回填文本），
-        polygon/rectangle 仅建 circle Point 几何——后端 shape_type 支持多边形但
-        前端未提供多点绘制；② 页面顶部统计卡（45/3 等）仍为静态演示值，
-        未接 statistics 接口
+  - [x] GIS 遗留两项（2026-09-30，本轮提交）：
+        ① 多边形/矩形多点绘制：shape_type 切换清坐标；绘制模式分 circle
+        （单点拾取）/polygon（≥3 顶点收集，预览实时渲染，完成按钮回填）/
+        rectangle（2 对角点自动生成 4 顶点）；保存按 shape_type 生成
+        GeoJSON（circle Point、polygon/rectangle Polygon 闭合环）；读取侧
+        extractGeoJSONPoints 解析 Point/Polygon → 地图 Polygon 渲染 +
+        列表点串展示；GisMapTemplate 新增 drawControl prop（页面关闭内置
+        假绘制按钮）；i18n zh/en 补 e10-e15
+        ② 顶部统计卡接 statistics 接口：无源"今日触发/待处理告警"静态值
+        （45/3）删除，改用后端 /api/gis/statistics 真实 device_points/
+        pipelines（i18n k16/k17 语义同步更新）
+        验证：tsc rc=0；vitest 5 files 63 tests 全过；实跑冒烟 statistics
+        200（device_points/pipelines 真实值）、polygon 围栏创建 200/
+        列表读取 200/DELETE 200（临时数据已删）

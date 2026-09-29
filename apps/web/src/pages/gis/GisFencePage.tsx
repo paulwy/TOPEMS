@@ -37,10 +37,9 @@ import {
   Delete,
   Search,
   Shield,
-  AlertTriangle,
   CheckCircle,
-  Clock,
   AlertCircle,
+  Route,
 } from 'lucide-react';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -62,10 +61,41 @@ interface FenceData {
   type: 'circle' | 'polygon' | 'rectangle';
   radius?: number;
   coordinates: string;
+  /** 多边形/矩形顶点（地图渲染用，[lat,lng]） */
+  coordinatesArr?: [number, number][];
   alertOnEnter: boolean;
   alertOnExit: boolean;
   status: 'active' | 'inactive';
   createdAt: string;
+}
+
+/** 解析后端 GeoJSON coordinates（Point/Polygon）为 [lat,lng] 顶点数组 */
+function extractGeoJSONPoints(coordinates: unknown): Array<[number, number]> {
+  if (!coordinates || typeof coordinates !== 'object') return [];
+  const obj = coordinates as { type?: string; coordinates?: unknown };
+  if (obj.type === 'Point' && Array.isArray(obj.coordinates)) {
+    const [lng, lat] = obj.coordinates as [number, number];
+    return Number.isFinite(lng) && Number.isFinite(lat) ? [[lat, lng]] : [];
+  }
+  if (
+    obj.type === 'Polygon' &&
+    Array.isArray(obj.coordinates) &&
+    Array.isArray(obj.coordinates[0])
+  ) {
+    const ring = obj.coordinates[0] as Array<[number, number]>;
+    return ring
+      .filter((p) => Array.isArray(p) && p.length >= 2)
+      .map(([lng, lat]) => [lat, lng] as [number, number]);
+  }
+  return [];
+}
+
+/** 点数组 → 展示用点串（"lat,lng;lat,lng"） */
+function pointsToString(points: Array<[number, number]>, max = 6): string {
+  return points
+    .slice(0, max)
+    .map(([lat, lng]) => `${lat.toFixed(4)}, ${lng.toFixed(4)}`)
+    .join('; ');
 }
 
 export const GisFencePage: React.FC = () => {
@@ -75,7 +105,10 @@ export const GisFencePage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [pickMode, setPickMode] = useState(false);
+  /** 绘制模式：none 关闭；circle 单点拾取；polygon 多点绘制；rectangle 两点对角 */
+  const [drawMode, setDrawMode] = useState<'none' | 'circle' | 'polygon' | 'rectangle'>('none');
+  /** 绘制过程中已收集的点（[lat,lng]） */
+  const [drawPoints, setDrawPoints] = useState<Array<[number, number]>>([]);
   const [fenceForm, setFenceForm] = useState<{
     name: string;
     shape_type: 'circle' | 'polygon' | 'rectangle';
@@ -86,18 +119,20 @@ export const GisFencePage: React.FC = () => {
 
   /** 后端 GeoFenceRecord → 页面展示结构 */
   const toFenceData = useCallback((g: GeoFenceRecord): FenceData => {
-    const coords = (g.coordinates as { coordinates?: [number, number] })?.coordinates ?? null;
-    const coordinatesStr = coords
-      ? `${coords[1].toFixed(4)}, ${coords[0].toFixed(4)}`
-      : typeof g.coordinates === 'string'
-        ? g.coordinates
-        : '';
+    const points = extractGeoJSONPoints(g.coordinates);
+    const coordinatesStr =
+      points.length > 0
+        ? pointsToString(points)
+        : typeof g.coordinates === 'string'
+          ? g.coordinates
+          : '';
     return {
       id: g.id,
       name: g.name,
       type: g.shape_type,
       radius: g.radius,
       coordinates: coordinatesStr,
+      coordinatesArr: points.length > 1 ? points : undefined,
       alertOnEnter: (g.event_types ?? []).includes('enter'),
       alertOnExit: (g.event_types ?? []).includes('exit'),
       status: g.status,
@@ -132,6 +167,19 @@ export const GisFencePage: React.FC = () => {
       throw new Error(res.message || t('gis.gis_fence_page.k4'));
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  /** 顶部统计卡真实数据：后端 /api/gis/statistics */
+  const { data: statistics } = useQuery({
+    queryKey: QUERY_KEYS.AD_HOC.GIS_STATISTICS,
+    queryFn: async () => {
+      const res = await gisApi.getStatistics();
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error(res.message || t('gis.gis_fence_page.k4'));
+    },
+    staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
   const deleteFenceMutation = useMutation({
@@ -187,7 +235,8 @@ export const GisFencePage: React.FC = () => {
   };
 
   const parseCoordinates = (coords: string): [number, number] => {
-    const [lat, lng] = coords.split(',').map((c) => parseFloat(c.trim()));
+    const first = coords.split(';')[0];
+    const [lat, lng] = first.split(',').map((c) => parseFloat(c.trim()));
     return [lat || 0, lng || 0];
   };
 
@@ -197,10 +246,29 @@ export const GisFencePage: React.FC = () => {
     type: fence.type,
     position: parseCoordinates(fence.coordinates),
     radius: fence.radius,
+    coordinates: fence.coordinatesArr,
     color: fence.status === 'active' ? ct.error.main : ct.grey[500],
     alertOnEnter: fence.alertOnEnter,
     alertOnExit: fence.alertOnExit,
   }));
+
+  /** 绘制中预览围栏（多边形/矩形顶点收集过程实时渲染） */
+  const previewFences: GeoFence[] =
+    drawMode !== 'none' && drawPoints.length > 0
+      ? [
+          {
+            id: '__draw_preview__',
+            name: '',
+            type:
+              drawMode === 'circle' ? 'circle' : drawMode === 'rectangle' ? 'rectangle' : 'polygon',
+            position: drawPoints[0],
+            coordinates: drawPoints,
+            color: ct.primary.main,
+            alertOnEnter: false,
+            alertOnExit: false,
+          },
+        ]
+      : [];
 
   const allMarkers: MapMarker[] = [
     ...fences.map((fence) => ({
@@ -281,17 +349,17 @@ export const GisFencePage: React.FC = () => {
       color: 'success',
     },
     {
-      id: 'triggered',
+      id: 'device_points',
       title: t('gis.gis_fence_page.k16'),
-      value: '45',
-      icon: <AlertTriangle style={{ width: 24, height: 24 }} />,
+      value: statistics?.device_points ?? 0,
+      icon: <MapPin style={{ width: 24, height: 24 }} />,
       color: 'warning',
     },
     {
-      id: 'pending',
+      id: 'pipelines',
       title: t('gis.gis_fence_page.k17'),
-      value: '3',
-      icon: <Clock style={{ width: 24, height: 24 }} />,
+      value: statistics?.pipelines ?? 0,
+      icon: <Route style={{ width: 24, height: 24 }} />,
       color: 'error',
     },
   ];
@@ -323,34 +391,108 @@ export const GisFencePage: React.FC = () => {
     setOpenDialog(true);
   }, []);
 
-  /** 进入地图拾取模式：关闭对话框，提示点击地图选点 */
+  /** 进入地图绘制模式：circle 单点拾取；polygon/rectangle 多点绘制 */
   const handleStartMapPick = useCallback(() => {
-    setPickMode(true);
+    const mode = fenceForm.shape_type;
+    setDrawMode(mode);
+    setDrawPoints([]);
     setOpenDialog(false);
     addNotification({
       title: t('gis.gis_fence_page.e8'),
-      message: t('gis.gis_fence_page.e8'),
+      message:
+        mode === 'circle'
+          ? t('gis.gis_fence_page.e8')
+          : mode === 'rectangle'
+            ? i18n.t('gis.gis_fence_page.e10_rect')
+            : i18n.t('gis.gis_fence_page.e10_poly'),
       type: 'info',
     });
-  }, [addNotification, t]);
+  }, [fenceForm.shape_type, addNotification, t]);
 
-  /** 地图单击：拾取模式下回填坐标并恢复对话框 */
+  /** 完成多边形绘制：收集点回填坐标并恢复对话框 */
+  const handleFinishDraw = useCallback(() => {
+    if (drawPoints.length < 3) return;
+    setFenceForm((f) => ({
+      ...f,
+      coordinates: pointsToString(drawPoints),
+    }));
+    setDrawMode('none');
+    setDrawPoints([]);
+    setOpenDialog(true);
+    addNotification({
+      title: t('gis.gis_fence_page.e9'),
+      message: pointsToString(drawPoints, 3),
+      type: 'success',
+    });
+  }, [drawPoints, addNotification, t]);
+
+  /** 取消绘制 */
+  const handleCancelDraw = useCallback(() => {
+    setDrawMode('none');
+    setDrawPoints([]);
+    setOpenDialog(true);
+  }, []);
+
+  /** 地图单击：按绘制模式处理（circle 回填单点；polygon 追加顶点；rectangle 两点对角） */
   const handleMapClick = useCallback(
     (pos: { lat: number; lng: number }) => {
-      if (!pickMode) return;
-      setFenceForm((f) => ({
-        ...f,
-        coordinates: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`,
-      }));
-      setPickMode(false);
-      setOpenDialog(true);
-      addNotification({
-        title: t('gis.gis_fence_page.e9'),
-        message: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`,
-        type: 'success',
-      });
+      if (drawMode === 'none') return;
+      const point: [number, number] = [pos.lat, pos.lng];
+      if (drawMode === 'circle') {
+        setFenceForm((f) => ({
+          ...f,
+          coordinates: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`,
+        }));
+        setDrawMode('none');
+        setDrawPoints([]);
+        setOpenDialog(true);
+        addNotification({
+          title: t('gis.gis_fence_page.e9'),
+          message: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`,
+          type: 'success',
+        });
+        return;
+      }
+      const next = [...drawPoints, point];
+      if (drawMode === 'rectangle') {
+        if (next.length >= 2) {
+          // 对角两点 → 矩形四顶点
+          const [a, b] = next;
+          const minLat = Math.min(a[0], b[0]);
+          const maxLat = Math.max(a[0], b[0]);
+          const minLng = Math.min(a[1], b[1]);
+          const maxLng = Math.max(a[1], b[1]);
+          const rect: Array<[number, number]> = [
+            [minLat, minLng],
+            [maxLat, minLng],
+            [maxLat, maxLng],
+            [minLat, maxLng],
+          ];
+          setFenceForm((f) => ({
+            ...f,
+            coordinates: pointsToString(rect),
+          }));
+          setDrawMode('none');
+          setDrawPoints([]);
+          setOpenDialog(true);
+          addNotification({
+            title: t('gis.gis_fence_page.e9'),
+            message: t('gis.gis_fence_page.e11'),
+            type: 'success',
+          });
+          return;
+        }
+      }
+      setDrawPoints(next);
+      if (drawMode === 'polygon') {
+        addNotification({
+          title: t('gis.gis_fence_page.e10_poly'),
+          message: i18n.t('gis.gis_fence_page.e12', { v1: next.length }),
+          type: 'info',
+        });
+      }
     },
-    [pickMode, addNotification, t]
+    [drawMode, drawPoints, addNotification, t]
   );
 
   const handleSaveFence = useCallback(async () => {
@@ -362,15 +504,56 @@ export const GisFencePage: React.FC = () => {
       });
       return;
     }
-    const coords = fenceForm.coordinates.split(',').map((c) => parseFloat(c.trim()));
-    const [lat, lng] = coords;
+    /** 解析点串（"lat,lng;lat,lng"）→ [lat,lng] 数组 */
+    const parsePointString = (str: string): Array<[number, number]> =>
+      str
+        .split(';')
+        .map((pair) => pair.split(',').map((c) => parseFloat(c.trim())))
+        .filter((p) => p.length >= 2 && p.every((n) => Number.isFinite(n)))
+        .map((p) => [p[0], p[1]] as [number, number]);
+
+    const pts = parsePointString(fenceForm.coordinates);
+    if (
+      fenceForm.shape_type !== 'circle' &&
+      pts.length < (fenceForm.shape_type === 'rectangle' ? 2 : 3)
+    ) {
+      addNotification({
+        title: t('gis.gis_fence_page.k6'),
+        message:
+          fenceForm.shape_type === 'rectangle'
+            ? i18n.t('gis.gis_fence_page.e13_rect')
+            : i18n.t('gis.gis_fence_page.e13_poly'),
+        type: 'error',
+      });
+      return;
+    }
+    let coordinates: unknown;
+    if (fenceForm.shape_type === 'circle') {
+      const [lat = 0, lng = 0] = pts[0] ?? [];
+      coordinates = { type: 'Point', coordinates: [lng, lat] };
+    } else if (fenceForm.shape_type === 'rectangle' && pts.length >= 2) {
+      // 对角两点 → 矩形四顶点（闭合环）
+      const [a, b] = pts;
+      const ring: Array<[number, number]> = [
+        [Math.min(a[1], b[1]), Math.min(a[0], b[0])],
+        [Math.max(a[1], b[1]), Math.min(a[0], b[0])],
+        [Math.max(a[1], b[1]), Math.max(a[0], b[0])],
+        [Math.min(a[1], b[1]), Math.max(a[0], b[0])],
+        [Math.min(a[1], b[1]), Math.min(a[0], b[0])],
+      ];
+      coordinates = { type: 'Polygon', coordinates: [ring] };
+    } else {
+      // polygon：顶点环闭合
+      const ring: Array<[number, number]> = [
+        ...pts.map(([lat, lng]) => [lng, lat] as [number, number]),
+        [pts[0][1], pts[0][0]],
+      ];
+      coordinates = { type: 'Polygon', coordinates: [ring] };
+    }
     const payload: CreateGeoFenceRequest = {
       name: fenceForm.name.trim(),
       shape_type: fenceForm.shape_type,
-      coordinates:
-        fenceForm.shape_type === 'circle' && !Number.isNaN(lat) && !Number.isNaN(lng)
-          ? { type: 'Point', coordinates: [lng, lat] }
-          : { type: 'Point', coordinates: [lng ?? 0, lat ?? 0] },
+      coordinates,
       radius: fenceForm.radius,
       event_types: [
         ...(fenceForm.eventTypes.enter ? ['enter'] : []),
@@ -647,23 +830,46 @@ export const GisFencePage: React.FC = () => {
             <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <CardHeader title={t('gis.gis_fence_page.k36')} />
               <CardContent sx={{ flex: 1, p: 0 }}>
-                {pickMode && (
+                {drawMode !== 'none' && (
                   <Alert
                     severity='info'
                     sx={{ m: 1 }}
+                    action={
+                      drawMode === 'polygon' ? (
+                        <Button
+                          size='small'
+                          color='success'
+                          disabled={drawPoints.length < 3}
+                          onClick={handleFinishDraw}
+                        >
+                          {t('gis.gis_fence_page.e14')}
+                        </Button>
+                      ) : undefined
+                    }
                   >
-                    {t('gis.gis_fence_page.e8')}
+                    {drawMode === 'circle' && t('gis.gis_fence_page.e8')}
+                    {drawMode === 'rectangle' && i18n.t('gis.gis_fence_page.e10_rect')}
+                    {drawMode === 'polygon' &&
+                      i18n.t('gis.gis_fence_page.e12', { v1: drawPoints.length })}
+                    <Button
+                      size='small'
+                      sx={{ ml: 1 }}
+                      onClick={handleCancelDraw}
+                    >
+                      {t('gis.gis_fence_page.e15')}
+                    </Button>
                   </Alert>
                 )}
                 <GisMapTemplate
                   initialCenter={[39.9042, 116.4074]}
                   initialZoom={13}
                   markers={allMarkers}
-                  fences={mapFences}
+                  fences={[...mapFences, ...previewFences]}
                   onFenceClick={handleFenceClick}
                   onMapClick={handleMapClick}
                   searchable
                   onSearch={handleSearch}
+                  drawControl={false}
                   sx={{ height: 400 }}
                 />
               </CardContent>
@@ -763,6 +969,9 @@ export const GisFencePage: React.FC = () => {
                     setFenceForm((f) => ({
                       ...f,
                       shape_type: e.target.value as 'circle' | 'polygon' | 'rectangle',
+                      // 切换图形类型时清空坐标，避免旧图形坐标污染
+                      coordinates: '',
+                      radius: e.target.value === 'circle' ? f.radius : undefined,
                     }))
                   }
                 >

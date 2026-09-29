@@ -209,8 +209,8 @@
   "gis.gis_fence_page.k13": "离开告警",
   "gis.gis_fence_page.k14": "围栏总数",
   "gis.gis_fence_page.k15": "激活围栏",
-  "gis.gis_fence_page.k16": "今日触发",
-  "gis.gis_fence_page.k17": "待处理告警",
+  "gis.gis_fence_page.k16": "设备点位",
+  "gis.gis_fence_page.k17": "管线",
   "gis.gis_fence_page.k18": "搜索",
   "gis.gis_fence_page.k19": "围栏详情",
   "gis.gis_fence_page.k20": "地理围栏管理",
@@ -561,5 +561,13 @@
   "gis.nav.gis-fence_desc": "电子围栏",
   "gis.gis_fence_page.e7": "地图拾取",
   "gis.gis_fence_page.e8": "拾取模式：点击地图选择围栏中心点",
-  "gis.gis_fence_page.e9": "已拾取坐标，请完善围栏信息"
+  "gis.gis_fence_page.e9": "已拾取坐标，请完善围栏信息",
+  "gis.gis_fence_page.e10_poly": "点击地图添加多边形顶点（至少 3 个点）",
+  "gis.gis_fence_page.e10_rect": "点击地图选择矩形的两个对角点",
+  "gis.gis_fence_page.e11": "矩形绘制完成",
+  "gis.gis_fence_page.e12": "已收集 {{v1}} 个顶点，点击「完成绘制」保存",
+  "gis.gis_fence_page.e13_poly": "多边形围栏至少需要 3 个顶点，请补充坐标",
+  "gis.gis_fence_page.e13_rect": "矩形围栏需要两个对角点坐标",
+  "gis.gis_fence_page.e14": "完成绘制",
+  "gis.gis_fence_page.e15": "取消"
 }
