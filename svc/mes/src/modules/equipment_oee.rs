@@ -167,7 +167,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 }
 
 fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
-    dt.and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt))
+    dt.and_then(|d| d.and_hms_opt(0, 0, 0).map(|dt| dt.and_utc()))
 }
 
 fn calculate_oee(
@@ -458,7 +458,7 @@ pub async fn create_oee_record(
             shift, operator, notes, created_at, updated_at
         "#,
         req.equipment_id,
-        req.record_date.date(),
+        req.record_date.date_naive(),
         BigDecimal::from_str(&req.planned_production_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.actual_run_time.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&req.downtime.to_string()).unwrap_or_default(),
@@ -584,7 +584,7 @@ pub async fn get_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
-                equipment_code: r.equipment_no.unwrap_or_default(),
+                equipment_code: Some(r.equipment_no),
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
                 run_time: big_decimal_to_f64(Some(r.actual_run_time)),
@@ -975,7 +975,7 @@ pub async fn get_oee_statistics(
             .map(|r| OeeEquipmentStat {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_code: r.equipment_code,
+                equipment_code: r.equipment_code.unwrap_or_default(),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
@@ -1080,7 +1080,7 @@ pub async fn get_equipment_efficiency_analysis(
             EquipmentEfficiencyAnalysis {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_no: Some(r.equipment_no),
+                equipment_no: r.equipment_no.flatten().unwrap_or_default(),
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),
