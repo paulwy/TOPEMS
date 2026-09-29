@@ -727,7 +727,7 @@ pub async fn add_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
@@ -869,7 +869,7 @@ pub async fn update_flow_step(
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
     let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)

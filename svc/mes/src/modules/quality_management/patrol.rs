@@ -327,7 +327,7 @@ pub async fn create_patrol(
         body.workstation_name,
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
-            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
@@ -423,7 +423,7 @@ pub async fn update_patrol(
         body.workstation_name,
         body.inspector,
         body.patrol_time.as_ref().and_then(|s| {
-            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)

@@ -433,7 +433,7 @@ pub async fn create_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -594,7 +594,7 @@ pub async fn update_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)

@@ -418,7 +418,7 @@ pub async fn create_inspection(
         BigDecimal::from_str("0").unwrap_or_default(),
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
@@ -525,7 +525,7 @@ pub async fn update_inspection(
         unqualified_quantity,
         body.inspector,
         body.inspection_time.as_ref().and_then(|s| {
-            DateTime<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .ok()
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
