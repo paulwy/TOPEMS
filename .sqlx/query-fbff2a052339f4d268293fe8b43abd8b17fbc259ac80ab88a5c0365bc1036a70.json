@@ -6,7 +6,7 @@
       {
         "ordinal": 0,
         "name": "default_model",
-        "type_info": "Varchar"
+        "type_info": "Text"
       },
       {
         "ordinal": 1,
@@ -37,7 +37,7 @@
     "parameters": {
       "Left": [
         "Uuid",
-        "Varchar",
+        "Text",
         "Int4",
         "Float8",
         "Bool",

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, rule_type\n        FROM wms.slotting_rules\n        WHERE is_active = TRUE\n          AND ($1::uuid IS NULL OR warehouse_id = $1)\n        ORDER BY priority, created_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "rule_type",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "1cb4e4189606183e3116f725a1331b8ae64bb3f6758101bf5c633c20f73285f6"
+}

@@ -63,7 +63,7 @@ pub async fn create_material_issue(
         RETURNING 
             id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         issue_no,
         req.order_id,
@@ -72,7 +72,7 @@ pub async fn create_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&mut *tx)
     .await;
@@ -130,15 +130,15 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: issue.issue_time,
+        issue_time: issue.issue_time.map(|d| d.and_utc()),
         notes: issue.notes,
         created_at: issue
             .created_at
-            
+            .map(|d| d.and_utc())
             .unwrap_or_else(Utc::now),
         updated_at: issue
             .updated_at
-            
+            .map(|d| d.and_utc())
             .unwrap_or_else(Utc::now),
     };
 
@@ -215,7 +215,7 @@ pub async fn list_material_issues(
         SELECT 
             id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         FROM material_issues
         {}
         ORDER BY created_at DESC
@@ -274,20 +274,17 @@ pub async fn list_material_issues(
             issue_time: r
                 .try_get::<Option<DateTime<Utc>>, _>("issue_time")
                 .ok()
-                .flatten()
-                ,
+                .flatten(),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
             updated_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
         })
         .collect();
@@ -330,7 +327,7 @@ pub async fn get_material_issue(
         r#"
         SELECT id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         FROM material_issues
         WHERE id = $1
         "#,
@@ -380,8 +377,8 @@ pub async fn get_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.unwrap_or_else(Utc::now),
-        "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
+        "created_at": issue.created_at.unwrap_or_else(|| Utc::now().naive_utc()),
+        "updated_at": issue.updated_at.unwrap_or_else(|| Utc::now().naive_utc()),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -425,14 +422,14 @@ pub async fn update_material_issue(
         WHERE id = $1
         RETURNING id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         id,
         req.status,
         req.warehouse_id,
         req.operator_id,
         req.notes,
-now,
+now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -457,8 +454,8 @@ now,
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.unwrap_or_else(Utc::now),
-        "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
+        "created_at": issue.created_at.unwrap_or_else(|| Utc::now().naive_utc()),
+        "updated_at": issue.updated_at.unwrap_or_else(|| Utc::now().naive_utc()),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

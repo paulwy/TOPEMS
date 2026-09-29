@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -181,7 +181,7 @@ pub async fn list_material_requirements(
             id, mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
-            status: status.unwrap_or_default(), source_type, remark, created_at, updated_at
+            status, source_type, remark, created_at, updated_at
         FROM material_requirements
         {}
         ORDER BY created_at DESC
@@ -256,14 +256,12 @@ pub async fn list_material_requirements(
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
             updated_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
         })
         .collect();
@@ -315,7 +313,7 @@ pub async fn get_material_requirement(
             id, mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
-            status: status.unwrap_or_default(), source_type, remark, created_at, updated_at
+            status, source_type, remark, created_at, updated_at
         FROM material_requirements
         WHERE id = $1
         "#,
@@ -349,8 +347,8 @@ pub async fn get_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取物料需求成功",
         )),
@@ -387,7 +385,7 @@ pub async fn create_material_requirement(
         .or_else(|| {
             DateTime::parse_from_rfc3339(&body.required_date)
                 .ok()
-                .map(|dt| dt)
+                .map(|dt| dt.naive_utc())
         })
         .or_else(|| {
             body.required_date
@@ -449,8 +447,8 @@ pub async fn create_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建物料需求成功",
         )),
@@ -492,7 +490,7 @@ pub async fn update_material_requirement(
             .or_else(|| {
                 DateTime::parse_from_rfc3339(s)
                     .ok()
-                    .map(|dt| dt)
+                    .map(|dt| dt.naive_utc())
             })
             .or_else(|| {
                 s.parse::<chrono::NaiveDate>()
@@ -552,8 +550,8 @@ pub async fn update_material_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新物料需求成功",
         )),
@@ -725,8 +723,8 @@ pub async fn calculate_requirements(
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.unwrap_or_else(Utc::now),
-                        updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                        created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                        updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                     });
                 }
             }
@@ -807,8 +805,8 @@ pub async fn confirm_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "确认物料需求成功",
         )),
@@ -888,8 +886,8 @@ pub async fn release_requirement(
                     .unwrap_or_else(|| "pending".to_string()),
                 source_type: r.source_type,
                 remark: r.remark,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "下发物料需求成功",
         )),

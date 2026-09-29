@@ -3,7 +3,7 @@
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::types::Uuid;
@@ -171,7 +171,7 @@ pub async fn forward_traceability(
         id: order_node_id.clone(),
         node_type: "order".to_string(),
         name: order.product_name.clone(),
-        code: order.order_no.clone().unwrap_or_default(),
+        code: order.order_no.clone(),
         quantity: Some(
             order
                 .quantity
@@ -183,7 +183,7 @@ pub async fn forward_traceability(
         batch_no: None,
         status: Some(order.status.clone()),
         timestamp: order.actual_start_date.and_then(|d| {
-            d.naive_utc().and_hms_opt(0, 0, 0)
+            d.and_hms_opt(0, 0, 0)
                 .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
         }),
         operator: None,
@@ -216,8 +216,8 @@ pub async fn forward_traceability(
             id: record_node_id.clone(),
             node_type: "process".to_string(),
             name: process_name,
-            code: process_no,
-            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone().unwrap_or_default())),
+            code: process_no.unwrap_or_default(),
+            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone())),
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone()),
@@ -230,7 +230,7 @@ pub async fn forward_traceability(
             from_id: prev_node_id.clone(),
             to_id: record_node_id.clone(),
             link_type: "production".to_string(),
-            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone().unwrap_or_default())),
+            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone())),
         });
 
         prev_node_id = record_node_id.clone();
@@ -241,16 +241,16 @@ pub async fn forward_traceability(
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
         name: format!("{} 成品", order.product_name.clone()),
-        code: order.order_no.clone().unwrap_or_default(),
+        code: order.order_no.clone(),
         quantity: order
             .completed_quantity
             .clone()
             .map(|v| v.to_string().parse::<f64>().unwrap_or_default()),
         unit: Some("件".to_string()),
-        batch_no: Some(format!("BATCH{}", order.order_no.unwrap_or_default())),
+        batch_no: Some(format!("BATCH{}", order.order_no)),
         status: Some(order.status.clone()),
         timestamp: order.actual_end_date.and_then(|d| {
-            d.naive_utc().and_hms_opt(0, 0, 0)
+            d.and_hms_opt(0, 0, 0)
                 .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
         }),
         operator: None,
@@ -362,9 +362,10 @@ pub async fn backward_traceability(
         unit: batch.unit.clone(),
         batch_no: Some(batch.batch_no.clone()),
         status: Some(batch.status.clone().unwrap_or_default()),
-        timestamp: batch
-            .production_date
-            .map(|d| d.naive_utc().and_hms_opt(0, 0, 0).unwrap()),
+        timestamp: batch.production_date.and_then(|d| {
+            d.and_hms_opt(0, 0, 0)
+                .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
+        }),
         operator: None,
         description: Some("成品批次".to_string()),
     });
@@ -685,8 +686,7 @@ pub async fn list_quality_records(
             inspection_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("inspection_time")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
             defect_reason: r
                 .try_get::<Option<String>, _>("defect_reason")
@@ -696,14 +696,12 @@ pub async fn list_quality_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
         })
         .collect();

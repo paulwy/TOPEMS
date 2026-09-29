@@ -40,7 +40,7 @@ pub async fn create_share_link(
         id,
         &req.shared_with,
         req.permission,
-expires_at,now,
+expires_at.map(|d| d.naive_utc()), now.naive_utc(),
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -55,8 +55,8 @@ expires_at,now,
                                 dashboard_id: row.dashboard_id,
                                 share_url: format!("/dashboard/share/{}", row.id),
                                 permission: row.permission,
-                                expires_at: row.expires_at,
-        created_at: row.created_at,
+                                expires_at: row.expires_at.map(|d| d.and_utc()),
+        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -167,8 +167,8 @@ pub async fn list_share_links(
             dashboard_id: row.dashboard_id,
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
-            expires_at: row.expires_at,
-            created_at: row.created_at,
+            expires_at: row.expires_at.map(|d| d.and_utc()),
+            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
         })
         .collect();
 

@@ -558,5 +558,8 @@
   "gis.nav.gis-tracking": "轨迹追踪",
   "gis.nav.gis-tracking_desc": "轨迹追踪",
   "gis.nav.gis-fence": "电子围栏",
-  "gis.nav.gis-fence_desc": "电子围栏"
+  "gis.nav.gis-fence_desc": "电子围栏",
+  "gis.gis_fence_page.e7": "地图拾取",
+  "gis.gis_fence_page.e8": "拾取模式：点击地图选择围栏中心点",
+  "gis.gis_fence_page.e9": "已拾取坐标，请完善围栏信息"
 }

@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -170,14 +170,12 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
         created_at: (r
             .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
-            .flatten()
-            )
+            .flatten())
         .unwrap_or_default(),
         updated_at: (r
             .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
-            .flatten()
-            )
+            .flatten())
         .unwrap_or_default(),
     }
 }
@@ -258,7 +256,7 @@ pub async fn list_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
+            status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
@@ -345,7 +343,7 @@ pub async fn create_equipment(
         ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
+            status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
@@ -404,7 +402,7 @@ pub async fn get_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
+            status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
@@ -475,7 +473,7 @@ pub async fn update_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
+            status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
@@ -599,7 +597,7 @@ pub async fn maintenance_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
+            status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
@@ -788,18 +786,18 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: r.equipment_no.unwrap_or_default(),
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: r.description.unwrap_or_default(),
+            description: Some(r.description),
             maintainer: r.maintainer,
             start_time: r.start_time,
-            end_time: Some(r.end_time),
+            end_time: r.end_time,
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status.unwrap_or_default(),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.unwrap_or_default(),
-            updated_at: r.updated_at.unwrap_or_default(),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -926,18 +924,18 @@ pub async fn create_maintenance(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no.flatten(),
+            equipment_no: equipment_no,
             maintenance_type,
-            description: description.unwrap_or_default(),
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status.unwrap_or_default(),
+            status: status,
             remarks: result.remarks,
-            created_at: created_at.unwrap_or_default(),
-            updated_at: updated_at.unwrap_or_default(),
+            created_at: created_at,
+            updated_at: updated_at,
         },
         "维护记录创建成功",
     ))
@@ -1033,18 +1031,18 @@ pub async fn update_maintenance_status(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no.flatten(),
+            equipment_no: equipment_no,
             maintenance_type,
-            description: description.unwrap_or_default(),
+            description: Some(description),
             maintainer,
             start_time,
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status.unwrap_or_default(),
+            status: status,
             remarks: result.remarks,
-            created_at: created_at.unwrap_or_default(),
-            updated_at: updated_at.unwrap_or_default(),
+            created_at: created_at,
+            updated_at: updated_at,
         },
         "维护状态更新成功",
     ))
@@ -1193,7 +1191,10 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                    created_at: r
+                        .created_at
+                        .map(|d| d.and_utc().to_rfc3339())
+                        .unwrap_or_default(),
                 })
                 .collect();
 
@@ -1274,7 +1275,7 @@ pub async fn create_inspection(
             equipment_id, equipment_code, equipment_name,
             inspector, inspection_date, location,
             temperature, vibration, noiselevel,
-            status: status.unwrap_or_default(), items, abnormalities, remarks
+            status, items, abnormalities, remarks
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *
@@ -1323,7 +1324,10 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r.created_at.unwrap_or_default().to_rfc3339(),
+                created_at: r
+                    .created_at
+                    .map(|d| d.and_utc().to_rfc3339())
+                    .unwrap_or_default(),
             },
             "创建点检记录成功",
         )),

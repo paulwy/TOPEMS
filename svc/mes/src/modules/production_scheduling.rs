@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -430,7 +430,7 @@ pub async fn create_production_schedule(
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15, $16, $16)
         RETURNING 
             id, schedule_no, order_id, order_no,
@@ -438,8 +438,8 @@ pub async fn create_production_schedule(
             quantity, work_station_id, equipment_id,
             process_id, planned_start_time, planned_end_time,
             actual_start_time, actual_end_time,
-            status: status.unwrap_or_default(), priority, sequence, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, priority, sequence, notes,
+            created_at, updated_at
         "#,
         schedule_no,
         req.order_id,
@@ -450,12 +450,12 @@ pub async fn create_production_schedule(
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-req.planned_start_time,
-req.planned_end_time,
+req.planned_start_time.map(|d| d.naive_utc()),
+req.planned_end_time.map(|d| d.naive_utc()),
         req.priority.unwrap_or(0),
         req.sequence.unwrap_or(0),
         req.notes,
-now,
+now.naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -483,21 +483,21 @@ now,
         equipment_name: None,
         process_id: result.process_id,
         process_name: None,
-        planned_start_time: result.planned_start_time,
-        planned_end_time: result.planned_end_time,
-        actual_start_time: result.actual_start_time,
-        actual_end_time: result.actual_end_time,
+        planned_start_time: result.planned_start_time.map(|d| d.and_utc()),
+        planned_end_time: result.planned_end_time.map(|d| d.and_utc()),
+        actual_start_time: result.actual_start_time.map(|d| d.and_utc()),
+        actual_end_time: result.actual_end_time.map(|d| d.and_utc()),
         status: result.status.unwrap_or_else(|| "pending".to_string()),
         priority: result.priority.unwrap_or(0),
         sequence: result.sequence.unwrap_or(0),
         notes: result.notes,
         created_at: result
             .created_at
-            
+            .map(|d| d.and_utc())
             .unwrap_or_else(Utc::now),
         updated_at: result
             .updated_at
-            
+            .map(|d| d.and_utc())
             .unwrap_or_else(Utc::now),
     };
 
@@ -576,21 +576,21 @@ pub async fn get_production_schedule(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
-                work_station_name: r.work_station_name,
-                equipment_id: Some(r.equipment_id),
+                work_station_name: Some(r.work_station_name),
+                equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
                 process_name: Some(r.process_name),
-                planned_start_time: r.planned_start_time,
-                planned_end_time: r.planned_end_time,
-                actual_start_time: r.actual_start_time,
-                actual_end_time: r.actual_end_time,
+                planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
+                planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
+                actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
+                actual_end_time: r.actual_end_time.map(|d| d.and_utc()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -648,20 +648,20 @@ pub async fn update_production_schedule(
             quantity, work_station_id, equipment_id,
             process_id, planned_start_time, planned_end_time,
             actual_start_time, actual_end_time,
-            status: status.unwrap_or_default(), priority, sequence, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, priority, sequence, notes,
+            created_at, updated_at
         "#,
         id,
         req.work_station_id,
         req.equipment_id,
         req.process_id,
-        req.planned_start_time,
-        req.planned_end_time,
+        req.planned_start_time.map(|d| d.naive_utc()),
+        req.planned_end_time.map(|d| d.naive_utc()),
         req.priority,
         req.sequence,
         req.status,
         req.notes,
-        Utc::now(),
+        Utc::now().naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -687,20 +687,20 @@ pub async fn update_production_schedule(
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
                 work_station_name: None,
-                equipment_id: Some(r.equipment_id),
+                equipment_id: r.equipment_id,
                 equipment_name: None,
                 process_id: r.process_id,
                 process_name: None,
-                planned_start_time: r.planned_start_time,
-                planned_end_time: r.planned_end_time,
-                actual_start_time: r.actual_start_time,
-                actual_end_time: r.actual_end_time,
+                planned_start_time: r.planned_start_time.map(|d| d.and_utc()),
+                planned_end_time: r.planned_end_time.map(|d| d.and_utc()),
+                actual_start_time: r.actual_start_time.map(|d| d.and_utc()),
+                actual_end_time: r.actual_end_time.map(|d| d.and_utc()),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "生产排产更新成功"))
         }
@@ -804,8 +804,8 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-            req.new_start_time,
-            now,
+            req.new_start_time.map(|d| d.naive_utc()),
+            now.naive_utc(),
         )
         .execute(&state.pool)
         .await;
@@ -876,10 +876,10 @@ pub async fn get_gantt_data(
     for s in &schedules {
         let start = s
             .planned_start_time
-            .unwrap_or_else(|| Utc::now());
+            .unwrap_or_else(|| Utc::now().naive_utc());
         let end = s
             .planned_end_time
-            .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
+            .unwrap_or_else(|| Utc::now().naive_utc() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
@@ -892,8 +892,8 @@ pub async fn get_gantt_data(
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
-                id: resource_name.clone().unwrap_or_default(),
-                name: resource_name.clone().unwrap_or_default(),
+                id: resource_name.clone(),
+                name: resource_name.clone(),
                 category: "workstation".to_string(),
             });
         }
@@ -901,8 +901,8 @@ pub async fn get_gantt_data(
         tasks.push(GanttTask {
             id: s.id.to_string(),
             name: format!("{} - {}", s.schedule_no.clone(), s.product_name.clone()),
-            start: start,
-            end: end,
+            start: start.and_utc(),
+            end: end.and_utc(),
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
             resource: Some(resource_name),

@@ -1,5 +1,5 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -190,14 +190,12 @@ pub async fn list_patrols(
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
             updated_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
         })
         .collect();
@@ -272,8 +270,8 @@ pub async fn get_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "获取巡检记录成功",
         )),
@@ -317,8 +315,8 @@ pub async fn create_patrol(
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
-            status: status.unwrap_or_default(), result, findings, memo,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, result, findings, memo,
+            created_at, updated_at
         "#,
         patrol_no,
         body.production_line,
@@ -331,7 +329,7 @@ pub async fn create_patrol(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt)
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -361,8 +359,8 @@ pub async fn create_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "创建巡检记录成功",
         )),
@@ -414,8 +412,8 @@ pub async fn update_patrol(
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
-            status: status.unwrap_or_default(), result, findings, memo,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, result, findings, memo,
+            created_at, updated_at
         "#,
         body.production_line,
         workstation_id,
@@ -427,7 +425,7 @@ pub async fn update_patrol(
                 .or_else(|| {
                     chrono::DateTime::parse_from_rfc3339(s)
                         .ok()
-                        .map(|dt| dt)
+                        .map(|dt| dt.naive_utc())
                 })
                 .or_else(|| {
                     s.parse::<chrono::NaiveDate>()
@@ -458,8 +456,8 @@ pub async fn update_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
             },
             "更新巡检记录成功",
         )),

@@ -14,7 +14,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime, Duration};
+use chrono::{DateTime, Duration, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -736,13 +736,11 @@ async fn fetch_pending_orders(
             planned_start_date: r
                 .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
                 .ok()
-                .flatten()
-                ,
+                .flatten(),
             planned_end_date: r
                 .try_get::<Option<DateTime<Utc>>, _>("planned_end_date")
                 .ok()
-                .flatten()
-                ,
+                .flatten(),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -857,7 +855,7 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'scheduled', $13, 0, $14, $15, $15
         )
@@ -1208,8 +1206,7 @@ pub async fn check_schedule_constraints(
         let suggested_start = order
             .try_get::<Option<DateTime<Utc>>, _>("planned_start_date")
             .ok()
-            .flatten()
-            ;
+            .flatten();
 
         results.push(ConstraintCheckResult {
             order_id: *order_id,

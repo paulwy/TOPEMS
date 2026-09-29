@@ -95,7 +95,7 @@ impl From<ProductionProcessRow> for ProductionProcessResponse {
             id: r.id,
             process_no: r.process_no,
             name: r.name,
-            description: Some(r.description),
+            description: r.description,
             version: r.version.unwrap_or_else(|| "1.0".to_string()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
             sequence: r.sequence.unwrap_or_default(),
@@ -191,8 +191,8 @@ pub async fn list_processes(
         r#"
         SELECT
             id, process_code AS process_no, process_name AS name, description, version,
-            status: status.unwrap_or_default(), sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
+            created_at, updated_at
         FROM mes.production_processes
         {}
         ORDER BY sequence ASC, created_at DESC
@@ -254,13 +254,11 @@ pub async fn list_processes(
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
                 .flatten()
-                
                 .unwrap_or(Utc::now()),
             updated_at: r
                 .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
                 .flatten()
-                
                 .unwrap_or(Utc::now()),
         })
         .collect();
@@ -305,8 +303,8 @@ pub async fn create_process(
         ) VALUES ($1, $2, $3, $4, 'active', $5, $6, CAST($7 AS NUMERIC), $8, $8, $9, $9)
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
-            status: status.unwrap_or_default(), sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
+            created_at, updated_at
         "#,
     )
     .bind(process_no)
@@ -365,8 +363,8 @@ pub async fn get_process(
         r#"
         SELECT
             id, process_code AS process_no, process_name AS name, description, version,
-            status: status.unwrap_or_default(), sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
+            created_at, updated_at
         FROM mes.production_processes
         WHERE id = $1 AND deleted_at IS NULL
         "#,
@@ -419,8 +417,8 @@ pub async fn update_process(
         WHERE id = $1 AND status = 'active'
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
-            status: status.unwrap_or_default(), sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
+            created_at, updated_at
         "#,
     )
     .bind(id)
@@ -515,8 +513,8 @@ pub async fn deactivate_process(
         WHERE id = $1 AND status = 'active'
         RETURNING 
             id, process_code AS process_no, process_name AS name, description, version,
-            status: status.unwrap_or_default(), sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,
-            created_at: created_at.unwrap_or_default(), updated_at
+            status, sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,
+            created_at, updated_at
         "#,
         id,
         Utc::now(),
@@ -538,7 +536,7 @@ pub async fn deactivate_process(
                 id: r.id,
                 process_no: r.process_no.unwrap_or_default(),
                 name: r.name,
-                description: Some(r.description),
+                description: r.description,
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
                 status: r.status,
                 sequence: r.sequence,

@@ -18,6 +18,14 @@
   - GIS 路由跟进：拉取远端修复 → 发现功能丢失 → 合并方案保留完整 CRUD（155 测试过）
 - ✅ **门禁体系现状**：pre-commit（lint/typecheck/sensitive-info/Gate S）+ pre-push（cargo-check/clippy/fmt/test 550 tests）+ ci.yml 同阈值（bundle 30M/chunk 500K/vendor 2500K/initial 1500K）
 
+- ✅ **远端 MES 半成品批次接管修复**（1ace75b74，已推 origin/main）：
+  - 远端 cb3cbd037 起 6 个半成品批次在残缺缓存下离线编译"假通过"，实际约 245 处代码错误 + 43 条 SQL 缺缓存
+  - mes 30 模块逐类清零（E0599/E0308/E0271/E0433/E0277/to_rfc3339 误用）+ 43 处 SQL 字符串内误植 Rust 表达式清理 + 在线 prepare 补全缓存
+  - analytics 同类 133 处一并清零（Gate S 全量暴露）
+  - 测试链路补齐 chrono TimeZone/Duration/Datelike/Timelike/NaiveDate import，workspace lib 测试 13239 全绿
+  - 全仓 cargo fmt 统一；pre-push 五门禁全绿（check/clippy/fmt/test/shellcheck，511s）
+- ✅ **GIS 围栏遗留三项根治**（fa6c1fca2，已推 origin/main）：列表 {items,total} 分页归一 / 移除假触发计数 / 坐标地图拾取
+
 ### ⏳ 后续工作（按优先级）
 - **P0（需生产环境）**：
   - Linux 生产实跑 install/update 全流程（dry-run 已验证逻辑，systemd 真实部署待验）
@@ -37,8 +45,9 @@
     无需强合并
 
 ### ⚠️ 存在问题（诚实记录）
-- push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）
-- 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）
+- push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）——本次 511s 长推送全程 keepalive 无截断，进一步缓解但非根除
+- 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）——已加 MIGRATE_ALLOW_STALE=1 防护 + 决策文档化
+- 远端半成品批次教训：残缺 .sqlx 缓存 + 无 CI 门禁会导致离线编译假通过——已通过 Gate S（pre-commit/pre-push/CI 三层）+ sqlx-prepare.sh --check 固化防线
 - 本机无 systemd（部署类验证仅到 dry-run 层）
 - shellcheck 告警已清零且防线已固化：check-shellcheck.sh（全量+changed 双模式）
   挂 pre-commit/pre-push/CI 三层（d6d232bcd），70 脚本 0 告警为门禁基线
@@ -172,9 +181,17 @@
         三处消费点自动修复）；GisContext updatePipeline 签名 Partial 对齐 pipelineApi
         验证：tsc rc=0；vitest 3 files 53 tests 全过；fence/pipeline 真契约冒烟
         POST/GET/PUT/DELETE 全 200（临时数据已删）
-  - [ ] 遗留（已知限制，非阻塞）：① fence 列表 GET 返回 {items,total}（分页包装），
-        fence.ts listGeoFences 按数组类型 + 页面 Array.isArray 适配——真实后端当前
-        仅返回 items 数组时可用，若后端开启分页需改类型（同 map-markers adaptResponse）；
-        ② GisFencePage triggerCount 恒 0（后端 Geofence 无触发计数字段）；③ 对话框
-        坐标输入为手动 "lat, lng" 文本（无地图拾取），polygon/rectangle 仅建 circle
-        Point 几何——后续可加地图取点交互
+  - [x] GIS 功能接入遗留三项（2026-09-30，本轮提交）：
+        ① fence 列表分页归一：fence.ts listGeoFences 改用 adaptResponse 归一
+        {items,total}→PaginatedResponse，页面取 res.data.items——实跑验证
+        创建→列表 items=1/total=1/首条 name 正确→DELETE 200（临时数据已删），
+        不再恒空；② triggerCount 假数据移除（FenceData/详情卡/表格列全删，
+        后端 Geofence 确无触发计数字段，不做无源数据）；③ 坐标地图拾取：
+        GisMapTemplate 新增 onMapClick（react-leaflet useMapEvents 转发），
+        GisFencePage 对话框坐标输入加"地图拾取"按钮 → 拾取模式（地图 Alert
+        提示）→ 点击地图回填 lat,lng 并恢复对话框；i18n zh/en 补 e7-e9
+        验证：typecheck rc=0；vitest 4 files 54 tests 全过
+  - [ ] 遗留（非阻塞）：① 对话框坐标输入仍为文本格式（拾取后回填文本），
+        polygon/rectangle 仅建 circle Point 几何——后端 shape_type 支持多边形但
+        前端未提供多点绘制；② 页面顶部统计卡（45/3 等）仍为静态演示值，
+        未接 statistics 接口

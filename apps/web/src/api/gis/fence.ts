@@ -1,5 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import type { PaginatedResponse, RawPaginatedResponse } from './types';
+import { adaptResponse } from './utils';
 
 /**
  * GIS 围栏管理 API——契约对齐 svc/gis 后端 Geofence 结构
@@ -46,8 +48,16 @@ export interface CreateGeoFenceRequest {
 }
 
 const fenceApi = {
-  listGeoFences: async (): Promise<ApiResponse<GeoFenceRecord[]>> => {
-    return apiClient.gis.get<GeoFenceRecord[]>('/fences');
+  /** 后端 GET /fences 返回 {items,total} 分页包装，归一为 PaginatedResponse */
+  listGeoFences: async (): Promise<ApiResponse<PaginatedResponse<GeoFenceRecord>>> => {
+    const raw = await apiClient.gis.get<RawPaginatedResponse>('/fences');
+    if (raw.success && raw.data) {
+      return {
+        ...raw,
+        data: adaptResponse<GeoFenceRecord>(raw.data, 'items'),
+      } as unknown as ApiResponse<PaginatedResponse<GeoFenceRecord>>;
+    }
+    return raw as unknown as ApiResponse<PaginatedResponse<GeoFenceRecord>>;
   },
 
   getGeoFence: async (id: string): Promise<ApiResponse<GeoFenceRecord>> => {
