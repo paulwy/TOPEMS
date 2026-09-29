@@ -1,5 +1,43 @@
 # TOPEMS 项目 TODO 列表
 
+## ✅ 今日已完成（2026-09-29）——脚本体系整治批次
+
+### 已根治/已完成（全部已推 origin/main）
+- ✅ **mes 离线缓存根治**：根因 = sqlx 离线缓存与 309 条 `.sqlx/` 缓存脱节。根 `.sqlx/` 缓存（单一事实源）+ `sqlx-prepare.sh --check` + pre-commit Gate S + pre-push 四命令
+- ✅ **脚本全面分析报告**（77 脚本、6 高危 + 10 体系性缺陷）——已存档至 `docs/archive/misc/TOPEMS脚本全面分析与topems.sh优化报告.md`
+- ✅ **topems.sh 优化**：11 项改进（缓存新鲜度门禁集成编译/启动主流程、db_migrate 假成功修复、mes 连接串统一、test-backend 离线化），9/9 兼容测试
+- ✅ **结构性建议实施**（16 个提交链 80c0b80a2→63651a59c）：
+  - 孤儿脚本 8 删；部署高危 4 项 + 迁移高危 3 项修复；测试退出码统一；bash 3.2 兼容（macOS 必崩修复×多处）；弱口令+SQL 注入；健康路径 /health
+  - 服务清单单一事实源（server 8099 权威登记四端对齐）；plugin deps 对齐；run-iam-tests 防假绿
+  - **bundle 构建根治**：V83（mui-icons 3.6MB→6.6KB）+ V84（tree-shaking）→ 23.06→16.48MB 全绿
+  - 共享 test lib；generate-ai-api 生成器可复现；.gitignore 私钥漏洞修复（sensitive-info 拦截）
+  - 红线实跑：migrate-verify-empty 283/283 跑通；迁移链空库守卫×2；domain-start bash 3.2 重构
+  - 并发 flaky 容错×3（shared-event subscriber/publisher + webhook 超时放宽）
+  - **部署路径根治**：install/update `--dry-run` 预演，实跑抓出并修复 5 类真实缺陷（pnpm 9.15、patch ESM、apps/core 死步骤、SCRIPT_DIR 错位×2）
+  - **主库半迁移处置**（用户拍板）：接受现状 + `migrate.sh` 半迁移状态检测防护（拒绝 258 积压补跑，需 MIGRATE_ALLOW_STALE=1）+ 决策文档化
+  - GIS 路由跟进：拉取远端修复 → 发现功能丢失 → 合并方案保留完整 CRUD（155 测试过）
+- ✅ **门禁体系现状**：pre-commit（lint/typecheck/sensitive-info/Gate S）+ pre-push（cargo-check/clippy/fmt/test 550 tests）+ ci.yml 同阈值（bundle 30M/chunk 500K/vendor 2500K/initial 1500K）
+
+### ⏳ 后续工作（按优先级）
+- **P0（需生产环境）**：
+  - Linux 生产实跑 install/update 全流程（dry-run 已验证逻辑，systemd 真实部署待验）
+  - 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
+- **P1（本机可继续）**：
+  - 报告 M 级遗留复核：40 个脚本 shellcheck 风格告警清理（SC2155/SC2046 类）
+  - `generate-ai-api.sh` client.ts 生成结构与仓内差异归零
+  - `topems_mig_verify` 验证库残留核验清理
+  - push 效率优化：pre-push 全量 408s，评估分层门禁（提交层轻量 + 推送层全量）或缓存复用
+- **P2（持续观察）**：
+  - 全量并发 flaky 同类模式巡检（已修 3 例）
+  - bundle 973 chunks 碎片化观察（16.48MB 预算绿）
+
+### ⚠️ 存在问题（诚实记录）
+- push 阶段 SSH 截断反复出现（keepalive 参数缓解，根因 pre-push 408s 长连接空闲超时未根治）
+- pre-push 全量 408s 偏慢，开发体验成本高
+- 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）
+- 本机无 systemd（部署类验证仅到 dry-run 层）
+- 40 个脚本 shellcheck 告警未清零（无 error 级，风格为主）
+
 ## ✅ 今日已完成（2026-09-27）
 
 ### P0 架构重构

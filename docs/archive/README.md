@@ -6,7 +6,7 @@
 
 | 子目录 | 文件数 | 内容定位 |
 |--------|-------:|----------|
-| [`misc/`](misc/) | 27 | 杂项历史归档：旧架构计划、重构报告、TODO 备份、泛化模板与指南、交付报告等 |
+| [`misc/`](misc/) | 28 | 杂项历史归档：旧架构计划、重构报告、TODO 备份、泛化模板与指南、交付报告等 |
 | [`roadmap-history/`](roadmap-history/) | 43 | 路线图历史快照：V67–V266 版本阶段记录、周度报告、构建/基线日志、TODO 归档 |
 | [`superpowers/`](superpowers/) | 42 | 已完成并落地的实施计划与技术规格（`plans/` 23 份 + `specs/` 18 份 + 索引 README） |
 | [`ui-migration/`](ui-migration/) | 11 | UI v3 迁移期文档：迁移指南、部署、测试清单、根 TODO 历史、灰度发布配置等 |
@@ -28,7 +28,7 @@
 
 ## 各子目录说明
 
-### misc/ — 杂项历史归档（27 份）
+### misc/ — 杂项历史归档（28 份）
 
 早期散落的一次性历史文档，按类别大致包括：
 
@@ -37,6 +37,7 @@
 - **设计系统与模板**：`design-inventory-and-template-analysis.md`、`design-system-implementation-plan.md`、`design-system-spec.md`
 - **TODO 备份**：`TODO_backup_20260828.md`、`TODO_HISTORY_phases_19_55.md`
 - **交付与项目总结**：`PROJECT_COMPLETION_SUMMARY.md`、`PROJECT_COMPLETION_REPORT.md`、`final-delivery-report.md`、`project-summary-report.md`
+- **脚本体系整治（2026-09-29 归档）**：`TOPEMS脚本全面分析与topems.sh优化报告.md`（77 脚本全面分析 + topems.sh 优化 + 实施状态追踪表；实施链已落 TODO.md）
 - **泛化指南与手册**：`AI_ENGINEERING_GUIDE.md`、`development-guide-generic.md`、`USER_GUIDE-v1-merged.md`、`assessments-README-old.md`
 - **集成与迁移**：`aps_mes_merge_deployment.md`、`integration-implementation-plan.md`、`migration-inventory.md`
 - **其他阶段计划**：`TOPEMS_Architecture_Roadmap_v2.md`、`v68.1-implementation-plan.md`、`V82-2a-next-steps-20260812.md`
