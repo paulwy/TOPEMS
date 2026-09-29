@@ -402,12 +402,55 @@ record_migration() {
 }
 
 # ----------------------------------------------------------------------------
+# 半迁移状态检测（防误补跑历史积压迁移到运行库）
+# ----------------------------------------------------------------------------
+# 背景：主库 topems 的 _sqlx_migrations 仅 25 条记录（止于 20260725000002），
+# 但 database/migrations 已有 300+ 文件且结构经运行时演进至 09-26——这是
+# 既有"半迁移状态"（接受现状，勿补跑）。若直接 sqlx migrate run，
+# 会把全部未记录版本补跑到运行库（含数据操作迁移，风险极高）。
+# 本检测：任一滞后（有未应用迁移）给出信息性警告；积压 ≥ 阈值时拒绝执行，
+# 需显式 MIGRATE_ALLOW_STALE=1 确认才继续。
+check_stale_migration_state() {
+  local dir="$1"
+  [[ "$DRY_RUN" == "true" ]] && return 0
+
+  local applied
+  applied="$(psql "$DATABASE_URL" -t -A -c "SELECT count(*) FROM _sqlx_migrations;" 2>/dev/null || true)"
+  # 空库（表不存在）或 0 记录 → 全新环境，正常全量，不拦截
+  [[ -z "$applied" || "$applied" == "0" ]] && return 0
+
+  local files
+  files="$(list_migrations_in_dir "$dir" | wc -l | tr -d ' ')"
+  local max_record max_file
+  max_record="$(psql "$DATABASE_URL" -t -A -c "SELECT max(version) FROM _sqlx_migrations;" 2>/dev/null || true)"
+  max_file="$(list_migrations_in_dir "$dir" | awk -F'\t' '{print $1}' | sort -n | tail -1)"
+
+  if [[ -n "$applied" && "$applied" -lt "$files" ]]; then
+    local backlog=$((files - applied))
+    if [[ "$backlog" -ge "${MIGRATE_STALE_THRESHOLD:-10}" ]]; then
+      log_warn "检测到半迁移/积压状态: 已记录 $applied / 文件 ${files}（积压 ${backlog} 个，最高记录 ${max_record} < 文件最高 ${max_file}）"
+      log_warn "sqlx migrate run 将把 $backlog 个历史版本补跑到该库（若为运行库，可能非预期）"
+      if [[ "${MIGRATE_ALLOW_STALE:-}" != "1" ]]; then
+        log_error "已拒绝执行。若确认需要补跑，请设置 MIGRATE_ALLOW_STALE=1 后重试"
+        return 1
+      fi
+      log_warn "MIGRATE_ALLOW_STALE=1 已设置，继续执行补跑"
+    else
+      log_info "有 $backlog 个新迁移未应用（正常演进），继续"
+    fi
+  fi
+  return 0
+}
+
+# ----------------------------------------------------------------------------
 # 使用 sqlx-cli 执行迁移
 # ----------------------------------------------------------------------------
 run_migrations_with_sqlx() {
   local dir="$1" name="$2"
 
   log_step "应用迁移: $name ($dir)"
+
+  check_stale_migration_state "$dir" || return 1
 
   if [[ "$DRY_RUN" == "true" ]]; then
     log_detail "[dry-run] sqlx migrate run --source \"$dir\""
