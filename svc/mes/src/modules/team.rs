@@ -335,12 +335,12 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: Some(r.work_station_name).filter(|s| !s.is_empty()),
+                work_station_name: r.work_station_name.filter(|s| !s.is_empty()),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
-                description: Some(r.description),
+                description: r.description.unwrap_or_default(),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
@@ -529,7 +529,7 @@ pub async fn update_team(
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
-                description: Some(r.description),
+                description: r.description.unwrap_or_default(),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
