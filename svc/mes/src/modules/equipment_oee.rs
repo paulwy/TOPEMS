@@ -1088,7 +1088,7 @@ pub async fn get_equipment_efficiency_analysis(
                 quality_rate: big_decimal_to_f64(r.quality_rate),
                 rank: (idx + 1) as i32,
                 trend: 0.0,
-                status: status.unwrap_or_default(),
+                status: status,
             }
         })
         .collect();
