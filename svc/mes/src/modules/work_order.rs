@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -1202,7 +1202,6 @@ pub async fn resume_work_order(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Datelike, Timelike, Utc};
 
     #[test]
     fn test_parse_datetime_rfc3339() {

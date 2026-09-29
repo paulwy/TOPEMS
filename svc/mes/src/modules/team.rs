@@ -6,7 +6,7 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -776,7 +776,6 @@ pub async fn remove_team_member(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

@@ -3,7 +3,7 @@
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::types::Uuid;
@@ -722,8 +722,6 @@ pub async fn list_quality_records(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
-    use chrono::{Datelike, Timelike};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

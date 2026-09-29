@@ -14,8 +14,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -1761,7 +1760,6 @@ mod tests {
     // ---- 辅助转换函数 ----
     #[test]
     fn aps_naive_to_utc_some() {
-        use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 8, 1, 6, 0, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.date_naive(), dt.date_naive());
@@ -1778,7 +1776,6 @@ mod tests {
 
     #[test]
     fn aps_opt_naive_to_utc_some_none() {
-        use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 8, 1, 6, 0, 0).unwrap();
         assert!(opt_naive_to_utc(Some(dt)).is_some());
         assert!(opt_naive_to_utc(None).is_none());

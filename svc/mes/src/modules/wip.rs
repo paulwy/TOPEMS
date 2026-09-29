@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -1085,8 +1085,6 @@ pub async fn get_wip_statistics(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
-    use chrono::{Datelike, Timelike};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

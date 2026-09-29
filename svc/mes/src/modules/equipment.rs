@@ -8,8 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc};
-use chrono::{DateTime, Datelike, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -1338,12 +1337,10 @@ pub async fn create_inspection(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::NaiveDate;
 
     // ---- naive_to_utc ----
     #[test]
     fn naive_to_utc_some_keeps_value() {
-        use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 7, 1, 9, 45, 0).unwrap();
         let utc = naive_to_utc(Some(dt));
         assert_eq!(utc.date_naive(), dt.date_naive());
@@ -1422,7 +1419,6 @@ mod tests {
     // ---- datetime_to_string ----
     #[test]
     fn datetime_to_string_some_rfc3339() {
-        use chrono::TimeZone;
         let dt = Utc.with_ymd_and_hms(2024, 3, 1, 0, 0, 0).unwrap();
         let s = datetime_to_string(Some(dt));
         assert!(s.starts_with("2024-03-01T00:00:00"), "got {}", s);
