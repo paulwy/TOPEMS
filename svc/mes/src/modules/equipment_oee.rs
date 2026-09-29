@@ -3,7 +3,7 @@
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Utc, NaiveDateTime, NaiveDate};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -499,7 +499,7 @@ pub async fn create_oee_record(
         id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()),
-        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()).flatten(),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),
@@ -584,7 +584,7 @@ pub async fn get_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
-                equipment_code: Some(r.equipment_no),
+                equipment_code: r.equipment_no.unwrap_or_default(),
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
                 run_time: big_decimal_to_f64(Some(r.actual_run_time)),
