@@ -17,6 +17,8 @@
 | V83 构建层 | `6ee446f49` | bundle 根治：mui-icons 3.6MB→6.6KB（barrel→子路径，根因 treeshake:false）；mui-core/exceljs 归 vendor；dev-tools 孤儿 chunk 清理。total 23.06→19.12MB 全绿 | ✅ 已推 |
 | V84 tree-shaking | `c0b4abd28` | 正式开启 treeshake（移除 React19+Rolldown workaround）；dev-tools 自然摇掉；A/B e2e 无回归。total→16.48MB | ✅ 已推 |
 | 逐项收尾 | 本轮 | 建议 7 共享 test 提取 lib；生成器修复（枚举格式/数组递归/prettier 可复现）；start-local 文档引用统一；migrate/generate 实跑验证（红线安全项） | 🔄 本批 |
+| 部署路径根治 | `f2d379d0` | install/update --dry-run 预演模式（不依赖生产环境），实跑抓出并修复 5 类真实缺陷：pnpm 9.15 移除 --legacy-peer-deps（改根 .npmrc）、prepare 脚本 ESM 崩溃（patch .js→.cjs）、apps/core 死步骤删除、install/update SCRIPT_DIR 层级错位（cargo build 错误目录/二进制判断失效）；lock 保持不动防依赖漂移。验证：install --dry-run 18 动作 rc=0、update 循环动作全打印 rc=0、web pnpm install Done（prepare 生效） | ✅ 已推 |
+| 主库半迁移处置 | `60f09ac9` | 用户拍板"接受现状+文档化+防护"：`migrate.sh run` 新增 check_stale_migration_state——空库放行 / 少量未应用（<10）信息提示 / 积压 ≥10 拒绝执行（需 MIGRATE_ALLOW_STALE=1 确认）。主库实跑正确拒绝（已记录 25/文件 283、积压 258、最高记录 20260725000002<文件 20260928120000）、空库 dry-run 放行。**决策记录：主库 topems 为既有半迁移状态（结构经运行时演进至 09-26，_sqlx_migrations 不补跑）** | ✅ 已推 |
 
 ---
 
