@@ -169,8 +169,8 @@ if [[ "$SKIP_FRONTEND" == false ]]; then
     echo -e "${YELLOW}Building frontend...${NC}"
 
     cd "${SCRIPT_DIR}/apps/web"
-    npm install
-    npm run build
+    pnpm install
+    pnpm run build
 
     # Backup old frontend
     if [[ -d "${PREFIX}/web" ]]; then
