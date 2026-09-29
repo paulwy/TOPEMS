@@ -183,7 +183,7 @@ pub async fn forward_traceability(
         batch_no: None,
         status: Some(order.status.clone()),
         timestamp: order.actual_start_date.and_then(|d| {
-            d.and_hms_opt(0, 0, 0)
+            d.naive_utc().and_hms_opt(0, 0, 0)
                 .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
         }),
         operator: None,
@@ -221,7 +221,7 @@ pub async fn forward_traceability(
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone()),
-            timestamp: record.start_time.unwrap_or_default(),
+            timestamp: Some(record.start_time),
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
@@ -250,7 +250,7 @@ pub async fn forward_traceability(
         batch_no: Some(format!("BATCH{}", order.order_no.unwrap_or_default())),
         status: Some(order.status.clone()),
         timestamp: order.actual_end_date.and_then(|d| {
-            d.and_hms_opt(0, 0, 0)
+            d.naive_utc().and_hms_opt(0, 0, 0)
                 .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
         }),
         operator: None,
@@ -364,7 +364,7 @@ pub async fn backward_traceability(
         status: Some(batch.status.clone().unwrap_or_default()),
         timestamp: batch
             .production_date
-            .map(|d| d.and_hms_opt(0, 0, 0).unwrap()),
+            .map(|d| d.naive_utc().and_hms_opt(0, 0, 0).unwrap()),
         operator: None,
         description: Some("成品批次".to_string()),
     });
