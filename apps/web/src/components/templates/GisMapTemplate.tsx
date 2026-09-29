@@ -43,6 +43,7 @@ import {
   Polyline,
   Polygon,
   Circle as LeafletCircle,
+  useMapEvents,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -104,6 +105,8 @@ export interface GisMapTemplateProps extends BoxProps {
   onLayerVisibilityChange?: (layerId: string, visible: boolean) => void;
   fences?: GeoFence[];
   onFenceClick?: (fence: GeoFence) => void;
+  /** 地图单击回调（坐标拾取等场景），返回 lat/lng */
+  onMapClick?: (latlng: { lat: number; lng: number }) => void;
   trackPoints?: TrackPoint[];
   onTrackPlayback?: (isPlaying: boolean) => void;
   searchable?: boolean;
@@ -153,6 +156,20 @@ const defaultOverlayLayers: MapLayer[] = [
   { id: 'fences', name: i18n.t('components.gis_map_template.k4'), type: 'overlay', visible: true },
   { id: 'tracks', name: i18n.t('components.gis_map_template.k5'), type: 'overlay', visible: true },
 ];
+
+/** 地图单击事件转发（react-leaflet 事件挂在 MapContainer 子组件上） */
+function MapClickHandler({
+  onMapClick,
+}: {
+  onMapClick?: (latlng: { lat: number; lng: number }) => void;
+}) {
+  useMapEvents({
+    click(e) {
+      onMapClick?.({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+  return null;
+}
 
 interface MapControlProps {
   onZoomIn: () => void;
@@ -549,6 +566,7 @@ export function GisMapTemplate({
   onLayerVisibilityChange,
   fences = [],
   onFenceClick,
+  onMapClick,
   trackPoints = [],
   onTrackPlayback,
   searchable = true,
@@ -695,6 +713,7 @@ export function GisMapTemplate({
         style={{ width: '100%', height: '100%' }}
         zoomControl={zoomControl}
       >
+        <MapClickHandler onMapClick={onMapClick} />
         {baseLayersToRender
           .filter((layer) => layer.id === selectedBaseLayer)
           .map((layer) => (

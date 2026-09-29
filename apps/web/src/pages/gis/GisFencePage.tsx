@@ -28,6 +28,7 @@ import {
   FormControlLabel,
   CircularProgress,
   Alert,
+  InputAdornment,
 } from '@mui/material';
 import {
   MapPin,
@@ -65,8 +66,6 @@ interface FenceData {
   alertOnExit: boolean;
   status: 'active' | 'inactive';
   createdAt: string;
-  lastTriggered?: string;
-  triggerCount: number;
 }
 
 export const GisFencePage: React.FC = () => {
@@ -76,6 +75,7 @@ export const GisFencePage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [pickMode, setPickMode] = useState(false);
   const [fenceForm, setFenceForm] = useState<{
     name: string;
     shape_type: 'circle' | 'polygon' | 'rectangle';
@@ -102,7 +102,6 @@ export const GisFencePage: React.FC = () => {
       alertOnExit: (g.event_types ?? []).includes('exit'),
       status: g.status,
       createdAt: g.created_at,
-      triggerCount: 0,
     };
   }, []);
 
@@ -128,7 +127,7 @@ export const GisFencePage: React.FC = () => {
     queryFn: async () => {
       const res = await fenceApi.listGeoFences();
       if (res.success && res.data) {
-        return (Array.isArray(res.data) ? res.data : []).map(toFenceData);
+        return (Array.isArray(res.data) ? res.data : (res.data.items ?? [])).map(toFenceData);
       }
       throw new Error(res.message || t('gis.gis_fence_page.k4'));
     },
@@ -222,12 +221,6 @@ export const GisFencePage: React.FC = () => {
             color='text.secondary'
           >
             {t('gis.gis_fence_page.r1')} {getTypeLabel(fence.type)}
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {t('gis.gis_fence_page.r2')} {fence.triggerCount}
           </Typography>
           {fence.alertOnEnter && (
             <Chip
@@ -329,6 +322,36 @@ export const GisFencePage: React.FC = () => {
   const handleCreateFence = useCallback(() => {
     setOpenDialog(true);
   }, []);
+
+  /** 进入地图拾取模式：关闭对话框，提示点击地图选点 */
+  const handleStartMapPick = useCallback(() => {
+    setPickMode(true);
+    setOpenDialog(false);
+    addNotification({
+      title: t('gis.gis_fence_page.e8'),
+      message: t('gis.gis_fence_page.e8'),
+      type: 'info',
+    });
+  }, [addNotification, t]);
+
+  /** 地图单击：拾取模式下回填坐标并恢复对话框 */
+  const handleMapClick = useCallback(
+    (pos: { lat: number; lng: number }) => {
+      if (!pickMode) return;
+      setFenceForm((f) => ({
+        ...f,
+        coordinates: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`,
+      }));
+      setPickMode(false);
+      setOpenDialog(true);
+      addNotification({
+        title: t('gis.gis_fence_page.e9'),
+        message: `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`,
+        type: 'success',
+      });
+    },
+    [pickMode, addNotification, t]
+  );
 
   const handleSaveFence = useCallback(async () => {
     if (!fenceForm.name.trim()) {
@@ -582,7 +605,6 @@ export const GisFencePage: React.FC = () => {
                               )}
                             </Box>
                           </TableCell>
-                          <TableCell>{fence.triggerCount}</TableCell>
                           <TableCell>
                             <Chip
                               size='small'
@@ -625,12 +647,21 @@ export const GisFencePage: React.FC = () => {
             <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <CardHeader title={t('gis.gis_fence_page.k36')} />
               <CardContent sx={{ flex: 1, p: 0 }}>
+                {pickMode && (
+                  <Alert
+                    severity='info'
+                    sx={{ m: 1 }}
+                  >
+                    {t('gis.gis_fence_page.e8')}
+                  </Alert>
+                )}
                 <GisMapTemplate
                   initialCenter={[39.9042, 116.4074]}
                   initialZoom={13}
                   markers={allMarkers}
                   fences={mapFences}
                   onFenceClick={handleFenceClick}
+                  onMapClick={handleMapClick}
                   searchable
                   onSearch={handleSearch}
                   sx={{ height: 400 }}
@@ -746,6 +777,21 @@ export const GisFencePage: React.FC = () => {
                 fullWidth
                 value={fenceForm.coordinates}
                 onChange={(e) => setFenceForm((f) => ({ ...f, coordinates: e.target.value }))}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position='end'>
+                        <Button
+                          size='small'
+                          startIcon={<MapPin size={14} />}
+                          onClick={handleStartMapPick}
+                        >
+                          {t('gis.gis_fence_page.e7')}
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
               <TextField
                 label={t('gis.gis_fence_page.k58')}

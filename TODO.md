@@ -172,9 +172,17 @@
         三处消费点自动修复）；GisContext updatePipeline 签名 Partial 对齐 pipelineApi
         验证：tsc rc=0；vitest 3 files 53 tests 全过；fence/pipeline 真契约冒烟
         POST/GET/PUT/DELETE 全 200（临时数据已删）
-  - [ ] 遗留（已知限制，非阻塞）：① fence 列表 GET 返回 {items,total}（分页包装），
-        fence.ts listGeoFences 按数组类型 + 页面 Array.isArray 适配——真实后端当前
-        仅返回 items 数组时可用，若后端开启分页需改类型（同 map-markers adaptResponse）；
-        ② GisFencePage triggerCount 恒 0（后端 Geofence 无触发计数字段）；③ 对话框
-        坐标输入为手动 "lat, lng" 文本（无地图拾取），polygon/rectangle 仅建 circle
-        Point 几何——后续可加地图取点交互
+  - [x] GIS 功能接入遗留三项（2026-09-30，本轮提交）：
+        ① fence 列表分页归一：fence.ts listGeoFences 改用 adaptResponse 归一
+        {items,total}→PaginatedResponse，页面取 res.data.items——实跑验证
+        创建→列表 items=1/total=1/首条 name 正确→DELETE 200（临时数据已删），
+        不再恒空；② triggerCount 假数据移除（FenceData/详情卡/表格列全删，
+        后端 Geofence 确无触发计数字段，不做无源数据）；③ 坐标地图拾取：
+        GisMapTemplate 新增 onMapClick（react-leaflet useMapEvents 转发），
+        GisFencePage 对话框坐标输入加"地图拾取"按钮 → 拾取模式（地图 Alert
+        提示）→ 点击地图回填 lat,lng 并恢复对话框；i18n zh/en 补 e7-e9
+        验证：typecheck rc=0；vitest 4 files 54 tests 全过
+  - [ ] 遗留（非阻塞）：① 对话框坐标输入仍为文本格式（拾取后回填文本），
+        polygon/rectangle 仅建 circle Point 几何——后端 shape_type 支持多边形但
+        前端未提供多点绘制；② 页面顶部统计卡（45/3 等）仍为静态演示值，
+        未接 statistics 接口

@@ -998,5 +998,8 @@
   "gis.nav.gis-dashboard_desc": "GIS Overview",
   "gis.nav.gis-map_desc": "Map",
   "gis.nav.gis-tracking_desc": "Tracking",
-  "gis.nav.gis-fence_desc": "Geofence"
+  "gis.nav.gis-fence_desc": "Geofence",
+  "gis.gis_fence_page.e7": "Pick on map",
+  "gis.gis_fence_page.e8": "Pick mode: click the map to choose fence center",
+  "gis.gis_fence_page.e9": "Coordinates picked, please complete the fence info"
 }
