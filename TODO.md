@@ -173,10 +173,14 @@
 - [x] 接入全局搜索功能（顶部搜索按钮可用）——searchApi.globalSearch 完整链路核对确认已实现
 
 ### P2 中优先级（体验优化）
-- [x] 清理MUI elevation={24}主题警告（待前端回归确认）
-- [x] 补全面包屑/标题i18n翻译，消除英文残留（GIS 相关已补）
-- [ ] 顶部导航栏添加主题切换按钮（太阳/月亮图标）
-- [ ] BI即席查询接口返回结构适配
+- [x] 清理MUI elevation={24}主题警告（已确认无残留，theme.ts 用语义 token）
+- [x] 补全面包屑/标题i18n翻译，消除英文残留（TopBar 通知/设置/用户 aria、
+      PageHeader 面包屑 aria 中文化，common/components 键补齐，zh 假 en 清除）
+- [x] 顶部导航栏添加主题切换按钮（太阳/月亮图标）——TopBar 接入 ThemeSelector
+      （showMenu=false 循环切换亮/暗/系统），HeaderUserMenu 原下拉保留
+- [x] BI即席查询接口返回结构适配——后端 /datasets/test-sql 返回 {columns,data,
+      valid}，前端原未展示结果；DatasetPage 增 SQL 测试结果表格（列头+行渲染）
+      + SqlTestResult 类型 + i18n（sql_test_result/sql_test_empty）
 
 ### P3 低优先级（功能增强）
 - [ ] 实现WebSocket实时推送（MES看板）

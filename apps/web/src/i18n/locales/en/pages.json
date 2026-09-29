@@ -10747,5 +10747,7 @@
   "pages.template_list.k9": "Edit",
   "pages.tenant_billing_page.strong_0": "Current plan: ",
   "pages.tenant_settings_page.subtitle": "Manage tenant information and configuration",
-  "pages.tenant_settings_page.title": "Tenant Settings"
+  "pages.tenant_settings_page.title": "Tenant Settings",
+  "pages.dataset_page.sql_test_result": "SQL Test Result",
+  "pages.dataset_page.sql_test_empty": "Query returned no data"
 }

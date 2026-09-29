@@ -5033,5 +5033,7 @@
   "pages.template_list.k9": "编辑",
   "pages.tenant_billing_page.strong_0": "当前套餐：",
   "pages.tenant_settings_page.subtitle": "管理租户信息与配置",
-  "pages.tenant_settings_page.title": "租户设置"
+  "pages.tenant_settings_page.title": "租户设置",
+  "pages.dataset_page.sql_test_result": "SQL 测试结果",
+  "pages.dataset_page.sql_test_empty": "查询未返回数据"
 }

@@ -37,6 +37,7 @@ import {
   testSqlQuery,
   type Dataset,
   type DatasetField,
+  type SqlTestResult,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
@@ -50,6 +51,7 @@ const DatasetPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [editorTab, setEditorTab] = useState(0);
+  const [sqlTestResult, setSqlTestResult] = useState<SqlTestResult | null>(null);
   const [formData, setFormData] = useState<Partial<Dataset>>({
     name: '',
     description: '',
@@ -98,12 +100,14 @@ const DatasetPage = () => {
     mutationFn: ({ dataSourceId, sql }: { dataSourceId: string; sql: string }) =>
       testSqlQuery(dataSourceId, sql),
 
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.BI_DATASETS_2_BASE,
         exact: false,
         refetchType: 'active',
       });
+      // 适配后端 /datasets/test-sql 返回结构 {columns, data, valid}
+      setSqlTestResult((res?.data?.data as SqlTestResult | undefined) ?? null);
     },
   });
   const displayDatasets = datasets;
@@ -662,6 +666,53 @@ const DatasetPage = () => {
                   },
                 }}
               />
+              {sqlTestResult && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ mb: 1 }}
+                  >
+                    {i18n.t('pages.dataset_page.sql_test_result')}
+                  </Typography>
+                  {sqlTestResult.columns.length > 0 ? (
+                    <TableContainer
+                      component={Paper}
+                      sx={{ maxHeight: 320 }}
+                    >
+                      <Table
+                        size='small'
+                        stickyHeader
+                      >
+                        <TableHead>
+                          <TableRow>
+                            {sqlTestResult.columns.map((col) => (
+                              <TableCell key={col}>{col}</TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {sqlTestResult.data.map((row, idx) => (
+                            <TableRow key={idx}>
+                              {sqlTestResult.columns.map((col) => (
+                                <TableCell key={col}>
+                                  {String((row as Record<string, unknown>)[col] ?? '')}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {i18n.t('pages.dataset_page.sql_test_empty')}
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Box>
           )}
         </CardContent>
