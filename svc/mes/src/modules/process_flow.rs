@@ -380,11 +380,11 @@ pub async fn get_process_flow(
                 id: r.id.to_string(),
                 code: r.code,
                 name: r.name,
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
-                route_name: r.route_name,
+                route_name: Some(r.route_name),
                 production_line: r.production_line,
                 capacity: r
                     .capacity
@@ -452,7 +452,7 @@ pub async fn create_process_flow(
                 id: r.id.to_string(),
                 code: r.code,
                 name: r.name,
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
@@ -539,7 +539,7 @@ pub async fn update_process_flow(
                 id: r.id.to_string(),
                 code: r.code,
                 name: r.name,
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
@@ -660,7 +660,7 @@ pub async fn get_flow_steps(
                     process_code: s.process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name.unwrap_or_default(),
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -1103,7 +1103,7 @@ pub async fn reorder_flow_steps(
                     process_code: s.process_code,
                     sequence: s.sequence,
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: s.work_station_name.unwrap_or_default(),
+                    work_station_name: Some(s.work_station_name),
                     equipment_ids: Some(
                         serde_json::to_string(&s.equipment_ids).unwrap_or_default(),
                     ),
@@ -1210,7 +1210,7 @@ pub async fn analyze_capacity(
         .map(|s| {
             s.standard_time
                 .clone()
-                .unwrap_or(0.0)
+                .unwrap_or(0)
                 .to_string()
                 .parse::<f64>()
                 .unwrap_or_default()
@@ -1239,7 +1239,7 @@ pub async fn analyze_capacity(
     let mut max_utilization = 0.0;
 
     for step in &steps {
-        let step_time = step.standard_time.clone().unwrap_or(0.0);
+        let step_time = step.standard_time.clone().unwrap_or(0);
         let step_capacity = if step_time > 0.0 {
             480.0 / step_time.to_string().parse::<f64>().unwrap_or_default()
         } else {
