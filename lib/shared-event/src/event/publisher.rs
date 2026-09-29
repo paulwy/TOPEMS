@@ -45,6 +45,14 @@ impl EventPublisher {
     /// - 未设置 或 `pubsub`：使用 Redis Pub/Sub（默认，向后兼容）
     /// - `stream`：使用 Redis Stream（消息持久化，支持消费者组）
     pub fn new(service_name: &str) -> EventResult<Self> {
+        let bus_mode = env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "stream".to_string());
+        let use_stream = !bus_mode.eq_ignore_ascii_case("pubsub");
+        Self::new_with_mode(service_name, use_stream)
+    }
+
+    /// 显式指定发布模式的构造器（测试用：不受进程级 EVENT_BUS_MODE 并行污染影响，
+    /// 生产路径仍走 `new` 读环境变量）
+    pub fn new_with_mode(service_name: &str, use_stream: bool) -> EventResult<Self> {
         let redis_url =
             env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
 
@@ -52,8 +60,6 @@ impl EventPublisher {
 
         // V321: 默认模式改为 stream（Redis Stream，支持持久化 + ACK + DLQ）
         // 可通过 EVENT_BUS_MODE=pubsub 显式切换回 Pub/Sub 模式
-        let bus_mode = env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "stream".to_string());
-        let use_stream = !bus_mode.eq_ignore_ascii_case("pubsub");
 
         // Stream 模式初始化失败时自动降级到 Pub/Sub，确保向后兼容
         let stream_publisher = if use_stream {
@@ -981,7 +987,8 @@ mod tests {
         use crate::event::schema_registry::SchemaRegistry;
         use std::sync::Arc;
 
-        let publisher = EventPublisher::new("test-facade-schema").unwrap();
+        // new_with_mode 显式指定 stream：避免并行测试 EVENT_BUS_MODE env 污染
+        let publisher = EventPublisher::new_with_mode("test-facade-schema", true).unwrap();
         // 默认 Stream 模式下内部持有 stream_publisher
         assert!(publisher.stream_publisher.is_some());
 
@@ -1019,7 +1026,8 @@ mod tests {
         use crate::event::versioning::{EventVersion, EventVersionEntry, EventVersionRegistry};
         use std::sync::Arc;
 
-        let publisher = EventPublisher::new("test-facade-version").unwrap();
+        // new_with_mode 显式指定 stream：避免并行测试 EVENT_BUS_MODE env 污染
+        let publisher = EventPublisher::new_with_mode("test-facade-version", true).unwrap();
         let versions = Arc::new(EventVersionRegistry::new());
         versions
             .register(EventVersionEntry::new(
