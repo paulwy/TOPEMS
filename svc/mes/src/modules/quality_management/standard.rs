@@ -207,7 +207,7 @@ pub async fn list_standards(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = ANY($1)
@@ -225,8 +225,8 @@ pub async fn list_standards(
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.unwrap_or_default().to_string(),
-                        item_name: v.item_name.unwrap_or_default(),
+                        standard_id: sid.to_string(),
+                        item_name: v.item_name,
                         lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                         unit: v.unit,
@@ -243,7 +243,7 @@ pub async fn list_standards(
             let sid = r.try_get::<Uuid, _>("id").unwrap_or_default();
             let values = values_map.remove(&sid).unwrap_or_default();
             StandardResponse {
-                id: sid.unwrap_or_default().to_string(),
+                id: sid.to_string(),
                 code: r.try_get::<String, _>("code").unwrap_or_default(),
                 name: r.try_get::<String, _>("name").unwrap_or_default(),
                 product_code: r
@@ -355,7 +355,7 @@ pub async fn get_standard(
     let values_result = sqlx::query!(
         r#"
         SELECT
-            qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
+            qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
             qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
         FROM quality_standard_values qsv
         WHERE qsv.standard_id = $1
@@ -371,7 +371,7 @@ pub async fn get_standard(
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
                 standard_id: v.standard_id.unwrap_or_default().to_string(),
-                item_name: v.item_name.unwrap_or_default(),
+                item_name: v.item_name,
                 lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                 upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                 unit: v.unit,
@@ -501,7 +501,7 @@ pub async fn create_standard(
                     unit, inspection_method, remark
                 "#,
                 standard.id,
-                v.item_name.unwrap_or_default(),
+                v.item_name,
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -515,8 +515,8 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
-                        item_name: r.item_name,
+                        standard_id: r.standard_id.unwrap_or_default().to_string(),
+                        item_name: r.item_name.unwrap_or_default(),
                         lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
                         unit: r.unit,
@@ -690,7 +690,7 @@ pub async fn update_standard(
                     unit, inspection_method, remark
                 "#,
                 uuid,
-                v.item_name.unwrap_or_default(),
+                v.item_name,
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -704,8 +704,8 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
-                        item_name: r.item_name,
+                        standard_id: r.standard_id.unwrap_or_default().to_string(),
+                        item_name: r.item_name.unwrap_or_default(),
                         lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
                         unit: r.unit,
@@ -724,7 +724,7 @@ pub async fn update_standard(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = $1
@@ -739,7 +739,7 @@ pub async fn update_standard(
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
                     standard_id: v.standard_id.unwrap_or_default().to_string(),
-                    item_name: v.item_name.unwrap_or_default(),
+                    item_name: v.item_name,
                     lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                     upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                     unit: v.unit,
