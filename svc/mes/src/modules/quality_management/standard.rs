@@ -225,8 +225,8 @@ pub async fn list_standards(
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.to_string(),
-                        item_name: v.item_name,
+                        standard_id: sid.unwrap_or_default().to_string(),
+                        item_name: v.item_name.unwrap_or_default(),
                         lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                         unit: v.unit,
@@ -371,7 +371,7 @@ pub async fn get_standard(
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
                 standard_id: v.standard_id.unwrap_or_default().to_string(),
-                item_name: v.item_name,
+                item_name: v.item_name.unwrap_or_default(),
                 lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                 upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                 unit: v.unit,
@@ -739,7 +739,7 @@ pub async fn update_standard(
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
                     standard_id: v.standard_id.unwrap_or_default().to_string(),
-                    item_name: v.item_name,
+                    item_name: v.item_name.unwrap_or_default(),
                     lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                     upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                     unit: v.unit,
