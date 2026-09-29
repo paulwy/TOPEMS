@@ -209,6 +209,8 @@ pre-commit:
 pre-push:
   # V300: parallel:true → false。四个 cargo 命令共享 target/包缓存锁，并行会竞争
   # 导致随机失败（曾实测 cargo-test-workspace 并行失败、串行全绿）。
+  # P1-4: sccache 加速——已装时自动启用（跨 check/clippy/test 命令共享编译
+  #       产物，冷缓存/全量场景显著提速）；未装时静默跳过，不影响门禁语义。
   parallel: false
   commands:
     # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
@@ -220,6 +222,7 @@ pre-push:
         # pre-push 时代码已提交，直接跑 cargo check，确保编译通过
         # 离线模式验证 .sqlx/ 缓存完整性；不依赖 DB 在线状态，比在线模式更稳
         export SQLX_OFFLINE=true
+        command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
         cargo check --workspace
 
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
@@ -235,6 +238,7 @@ pre-push:
       tags: rust clippy
       run: |
         export SQLX_OFFLINE=true
+        command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
         cargo clippy --workspace --all-targets -- -D clippy::correctness
 # 
     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
@@ -244,4 +248,5 @@ pre-push:
       tags: rust test
       run: |
         export SQLX_OFFLINE=true
+        command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
         cargo test --workspace --lib
