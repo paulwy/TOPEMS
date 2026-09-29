@@ -45,7 +45,10 @@
   - ✅ **11个核心业务模块全部编译通过**：
     - unified-core/SCM/WMS/Finance/ERP/CRM/HRM/Analytics/QMS/PDM/EHS
     - 只有MES模块还有156个错误待修复
-  - ⏳ update.sh前端构建修复：将npm改为pnpm，解决workspace协议错误
+  - ✅ **update.sh前端构建修复完成**（2026-09-30）：
+    - 将npm install改为pnpm install
+    - 将npm run build改为pnpm run build
+    - 解决workspace协议错误，与install.sh保持一致
 - **P1（本机可继续）**：
   - ✅ 报告 M 级遗留复核：40 个脚本 shellcheck 风格告警清理（SC2155/SC2046 类）——**已全量清零 195→0**（ce1512182）
   - ✅ `generate-ai-api.sh` client.ts 生成结构与仓内差异归零（4885f5d20）
