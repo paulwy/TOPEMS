@@ -231,3 +231,9 @@
         验证：tsc rc=0；vitest 5 files 63 tests 全过；实跑冒烟 statistics
         200（device_points/pipelines 真实值）、polygon 围栏创建 200/
         列表读取 200/DELETE 200（临时数据已删）
+  - [x] 连带发现：wms/mes sqlx 类型适配修复（2026-09-30，commit ca514ef65）：
+        .sqlx 离线缓存已按当前 DB schema 生成 NOT NULL/BigDecimal 类型，
+        代码仍假设旧 Option/f64 → 首次真编译（无 sccache 掩盖）暴露 13 处
+        错误；修复 batch/discrepancy/inventory_alert/process_route/
+        quality_traceability 6 文件后 cargo check/clippy --all-targets/
+        test --lib 全绿
