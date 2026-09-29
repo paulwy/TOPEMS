@@ -207,7 +207,7 @@ pub async fn list_standards(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = ANY($1)
@@ -221,12 +221,12 @@ pub async fn list_standards(
             for v in value_rows {
                 let sid = v.standard_id;
                 values_map
-                    .entry(sid)
+                    .entry(sid.unwrap_or_default())
                     .or_default()
                     .push(StandardValueResponse {
                         id: v.id.to_string(),
-                        standard_id: sid.to_string(),
-                        item_name: v.item_name,
+                        standard_id: sid.unwrap_or_default().to_string(),
+                        item_name: v.item_name.unwrap_or_default(),
                         lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                         unit: v.unit,
@@ -243,7 +243,7 @@ pub async fn list_standards(
             let sid = r.try_get::<Uuid, _>("id").unwrap_or_default();
             let values = values_map.remove(&sid).unwrap_or_default();
             StandardResponse {
-                id: sid.to_string(),
+                id: sid.unwrap_or_default().to_string(),
                 code: r.try_get::<String, _>("code").unwrap_or_default(),
                 name: r.try_get::<String, _>("name").unwrap_or_default(),
                 product_code: r
@@ -355,7 +355,7 @@ pub async fn get_standard(
     let values_result = sqlx::query!(
         r#"
         SELECT
-            qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
+            qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
             qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
         FROM quality_standard_values qsv
         WHERE qsv.standard_id = $1
@@ -370,8 +370,8 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.to_string(),
-                item_name: v.item_name,
+                standard_id: v.standard_id.unwrap_or_default().to_string(),
+                item_name: v.item_name.unwrap_or_default(),
                 lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                 upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                 unit: v.unit,
@@ -388,11 +388,11 @@ pub async fn get_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code,
+            code: standard.code.unwrap_or_default(),
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -501,7 +501,7 @@ pub async fn create_standard(
                     unit, inspection_method, remark
                 "#,
                 standard.id,
-                v.item_name,
+                v.item_name.unwrap_or_default(),
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -541,11 +541,11 @@ pub async fn create_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code,
+            code: standard.code.unwrap_or_default(),
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
@@ -690,7 +690,7 @@ pub async fn update_standard(
                     unit, inspection_method, remark
                 "#,
                 uuid,
-                v.item_name,
+                v.item_name.unwrap_or_default(),
                 lower_limit,
                 upper_limit,
                 v.unit,
@@ -724,7 +724,7 @@ pub async fn update_standard(
         let values_result = sqlx::query!(
             r#"
             SELECT
-                qsv.id, qsv.standard_id, qsv.item_name, qsv.lower_limit,
+                qsv.id, qsv.standard_id, qsv.item_name.unwrap_or_default(), qsv.lower_limit,
                 qsv.upper_limit, qsv.unit, qsv.inspection_method, qsv.remark
             FROM quality_standard_values qsv
             WHERE qsv.standard_id = $1
@@ -738,8 +738,8 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.to_string(),
-                    item_name: v.item_name,
+                    standard_id: v.standard_id.unwrap_or_default().to_string(),
+                    item_name: v.item_name.unwrap_or_default(),
                     lower_limit: Some(big_decimal_to_f64(v.lower_limit)),
                     upper_limit: Some(big_decimal_to_f64(v.upper_limit)),
                     unit: v.unit,
@@ -758,11 +758,11 @@ pub async fn update_standard(
     Json(ApiResponse::success(
         StandardResponse {
             id: standard.id.to_string(),
-            code: standard.code,
+            code: standard.code.unwrap_or_default(),
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
