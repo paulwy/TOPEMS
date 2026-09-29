@@ -40,6 +40,11 @@
     - 核心错误类型：Option<String>/String、Option<DateTime>/DateTime类型不匹配
     - 修复策略：逐个文件手动修复，避免全局sed替换改坏文件
     - 当前进度：从344个错误降到156个，修复率55%
+  - ✅ **WMS模块7个编译错误修复完成**（2026-09-30）：
+    - InventoryAlert/WarehouseAlertCount结构体：warehouse_name/location_code都是Option<String>，直接传r.xxx即可
+  - ✅ **11个核心业务模块全部编译通过**：
+    - unified-core/SCM/WMS/Finance/ERP/CRM/HRM/Analytics/QMS/PDM/EHS
+    - 只有MES模块还有156个错误待修复
   - ⏳ update.sh前端构建修复：将npm改为pnpm，解决workspace协议错误
 - **P1（本机可继续）**：
   - ✅ 报告 M 级遗留复核：40 个脚本 shellcheck 风格告警清理（SC2155/SC2046 类）——**已全量清零 195→0**（ce1512182）
