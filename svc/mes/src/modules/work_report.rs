@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Utc, NaiveDateTime, NaiveDate};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -461,14 +461,14 @@ pub async fn get_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: r.work_order_no.unwrap_or_default(),
+                work_order_no: Some(r.work_order_no),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -659,14 +659,14 @@ pub async fn create_work_report(
             Json(ApiResponse::success(
                 WorkReportResponse {
                     id: r.id.to_string(),
-                    report_no: r.report_no,
+                    report_no: r.report_no.unwrap_or_default(),
                     work_order_id: r.work_order_id.map(|u| u.to_string()),
-                    work_order_no: r.work_order_no.unwrap_or_default(),
+                    work_order_no: Some(r.work_order_no),
                     order_id: r.order_id.map(|u| u.to_string()),
                     order_no: r.order_no,
                     work_station_id: r.work_station_id.map(|u| u.to_string()),
                     work_station_name: r.work_station_name,
-                    reporter_name: r.reporter_name,
+                    reporter_name: r.reporter_name.unwrap_or_default(),
                     report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                     shift: r.shift,
                     output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -805,14 +805,14 @@ pub async fn update_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: r.work_order_no.unwrap_or_default(),
+                work_order_no: Some(r.work_order_no),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -945,14 +945,14 @@ pub async fn approve_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: r.work_order_no.unwrap_or_default(),
+                work_order_no: Some(r.work_order_no),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
@@ -1040,14 +1040,14 @@ pub async fn reject_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
-                work_order_no: r.work_order_no.unwrap_or_default(),
+                work_order_no: Some(r.work_order_no),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
