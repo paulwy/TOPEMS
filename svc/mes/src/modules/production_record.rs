@@ -394,10 +394,10 @@ pub async fn get_record(
                 end_time: Some(r.end_time),
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "获取生产记录成功"))
         }
@@ -474,10 +474,10 @@ pub async fn update_record(
                 end_time: Some(r.end_time),
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录更新成功"))
         }
@@ -583,10 +583,10 @@ pub async fn complete_record(
                 end_time: Some(r.end_time),
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 notes: r.notes,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "生产记录完成成功"))
         }

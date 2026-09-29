@@ -797,10 +797,10 @@ pub async fn list_maintenances(
             end_time: Some(r.end_time),
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status.unwrap_or_default(),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.unwrap_or_default(),
-            updated_at: r.updated_at.unwrap_or_default(),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 

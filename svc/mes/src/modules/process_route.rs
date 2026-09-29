@@ -388,17 +388,17 @@ pub async fn get_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code.unwrap_or_default(),
-                    name: r.name.unwrap_or_default(),
+                    code: r.code,
+                    name: r.name,
                     description: Some(r.description),
                     version: None,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: total_estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     process_count,
-                    created_at: r.created_at.unwrap_or_default(),
-                    updated_at: r.updated_at.unwrap_or_default(),
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
                 },
                 "获取工艺路线成功",
             ))
@@ -461,16 +461,16 @@ pub async fn create_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code.unwrap_or_default(),
-                    name: r.name.unwrap_or_default(),
+                    code: r.code,
+                    name: r.name,
                     description: Some(r.description),
                     version: None,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.unwrap_or_default(),
-                    updated_at: r.updated_at.unwrap_or_default(),
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
                 },
                 "创建工艺路线成功",
             ))
@@ -546,16 +546,16 @@ pub async fn update_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code.unwrap_or_default(),
-                    name: r.name.unwrap_or_default(),
+                    code: r.code,
+                    name: r.name,
                     description: Some(r.description),
                     version: None,
-                    status: r.status.unwrap_or_default(),
+                    status: r.status,
                     estimated_time_minutes: None,
                     total_estimated_time_minutes: None,
                     process_count: None,
-                    created_at: r.created_at.unwrap_or_default(),
-                    updated_at: r.updated_at.unwrap_or_default(),
+                    created_at: r.created_at,
+                    updated_at: r.updated_at,
                 },
                 "更新工艺路线成功",
             ))

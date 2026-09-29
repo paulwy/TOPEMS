@@ -94,15 +94,15 @@ impl From<ProductionProcessRow> for ProductionProcessResponse {
         Self {
             id: r.id,
             process_no: r.process_no,
-            name: r.name.unwrap_or_default(),
+            name: r.name,
             description: Some(r.description),
             version: r.version.unwrap_or_else(|| "1.0".to_string()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
             sequence: r.sequence.unwrap_or_default(),
             equipment_required: false,
             estimated_duration: 0,
-            created_at: r.created_at.unwrap_or_default(),
-            updated_at: r.updated_at.unwrap_or_default(),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         }
     }
 }
@@ -537,15 +537,15 @@ pub async fn deactivate_process(
             let process = ProductionProcessResponse {
                 id: r.id,
                 process_no: r.process_no.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                name: r.name,
                 description: Some(r.description),
                 version: r.version.unwrap_or_else(|| "1.0".to_string()),
-                status: r.status.unwrap_or_default(),
+                status: r.status,
                 sequence: r.sequence,
                 equipment_required: false,
                 estimated_duration: 0,
-                created_at: r.created_at.unwrap_or_default(),
-                updated_at: r.updated_at.unwrap_or_default(),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(process, "生产工序停用成功"))
         }

@@ -378,8 +378,8 @@ pub async fn get_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                code: r.code,
+                name: r.name,
                 description: Some(r.description),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
@@ -450,8 +450,8 @@ pub async fn create_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                code: r.code,
+                name: r.name,
                 description: Some(r.description),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
@@ -537,8 +537,8 @@ pub async fn update_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code.unwrap_or_default(),
-                name: r.name.unwrap_or_default(),
+                code: r.code,
+                name: r.name,
                 description: Some(r.description),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
