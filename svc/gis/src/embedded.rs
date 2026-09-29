@@ -258,19 +258,19 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
             "/location-photos/{id}",
             axum::routing::delete(modules::photo::delete_location_photo),
         )
-        .route(
-            "/business-locations",
-            axum::routing::get(modules::business::list_business_locations)
-                .post(modules::business::create_business_location),
-        )
-        .route(
-            "/business-locations/{id}",
-            axum::routing::put(modules::business::update_business_location),
-        )
-        .route(
-            "/business-locations/{id}",
-            axum::routing::delete(modules::business::delete_business_location),
-        )
+//         .route(
+//             "/business-locations",
+//             axum::routing::get(modules::business::list_business_locations)
+//                 .post(modules::business::create_business_location),
+//         )
+//         .route(
+//             "/business-locations/{id}",
+//             axum::routing::put(modules::business::update_business_location),
+//         )
+//         .route(
+//             "/business-locations/{id}",
+//             axum::routing::delete(modules::business::delete_business_location),
+//         )
         .route(
             "/map-markers",
             axum::routing::post(modules::marker::create_map_marker),
