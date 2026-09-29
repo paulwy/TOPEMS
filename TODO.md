@@ -40,7 +40,8 @@
 - push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）
 - 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）
 - 本机无 systemd（部署类验证仅到 dry-run 层）
-- shellcheck 告警已清零（ce1512182），需在 CI/门禁中固化为回归防线（待加）
+- shellcheck 告警已清零且防线已固化：check-shellcheck.sh（全量+changed 双模式）
+  挂 pre-commit/pre-push/CI 三层（d6d232bcd），70 脚本 0 告警为门禁基线
 
 ## ✅ 今日已完成（2026-09-27）
 
