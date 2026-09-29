@@ -1,0 +1,94 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, description, comparison_type, dimension_a, dimension_b,\n               indicators, filters, status, last_run_at, created_by, created_at, updated_at\n        FROM analytics_comparison_analyses\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "comparison_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "dimension_a",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "dimension_b",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "indicators",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "filters",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 8,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_run_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "created_by",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "6d1124415aa218f0ec0cb4eb1203049e4c9e035c330e74f890b031d460f9561e"
+}
