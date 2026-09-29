@@ -278,7 +278,7 @@ pub async fn export_geojson(
     }
 
     if let Ok(warehouses) =
-        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
+        sqlx::query_as::<_, WarehouseLocation>(only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($1::uuid IS NULL OR tenant_id = $1)"))
             .bind(tenant_opt)
             .fetch_all(&pool)
             .await

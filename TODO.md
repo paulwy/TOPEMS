@@ -131,9 +131,8 @@
 
 ---
 
-## ✅ 今日已完成（2026-09-29）——控制台清理+体验优化
+## 🚀 后续优化任务（2026-09-28 端到端测试发现）
 
-<<<<<<< Updated upstream
 ### P1 高优先级（影响业务使用）
 - [x] 修复前端列表字段映射不匹配问题：
   - [x] SCM供应商列表：后端返回data.suppliers，前端期望data.items——源码已修（2e159aa35），
@@ -144,93 +143,38 @@
   - [x] 系统设置按钮正确跳转到/system/settings——补路由注册 + HeaderUserMenu 接入
   - [x] 个人中心按钮正确跳转到/profile——核对已正确
 - [x] 接入全局搜索功能（顶部搜索按钮可用）——searchApi.globalSearch 完整链路核对确认已实现
-=======
-### P1 全部完成 ✅
-- [x] 修复前端列表字段映射不匹配问题：SCM供应商/采购申请列表适配返回结构，新建数据后正常显示
-- [x] 修复顶部导航栏按钮跳转：系统设置正确跳转到/ai/settings
-- [x] 实现全局搜索功能：⌘K命令面板，支持搜索菜单项+回车跳转
-- [x] 清理左侧导航栏底部重复的"系统设置""个人中心"菜单项
-
-### P2 全部完成 ✅
-- [x] 清理MUI elevation={24}主题警告：补全shadows数组长度为25
-- [x] 补全面包屑/标题i18n翻译，消除英文残留
-- [x] 顶部导航栏添加主题切换按钮（太阳/月亮图标）
-- [x] BI即席查询接口返回结构适配
-- [x] 全局错误提示兜底英文改为中文（Data Load Failed → 数据加载失败）
-
-### P3 全部完成 ✅
-- [x] 插件市场401权限问题：前端mock返回空数组，不再发请求报错
-- [x] 数据库全栈类型统一：724个timestamp字段迁移为timestamptz，认证表主键从bigint改为uuid
-- [x] 首页模块卡片补全：从6个扩展到全部12个业务模块，全部显示绿灯
-- [x] 健康面板SCM黄灯：修复硬编码状态，全部绿灯
-
----
-
-## 🎯 当前待办任务（按优先级）
-
-### P1 高优先级（可立即实施）
-- [ ] 修复采购申请创建接口422错误：后端缺少自动生成requisition_no逻辑
-- [ ] 修复财务报表页面类型错误：amount为undefined导致toLocaleString崩溃、projectSummaries.map不是函数
-- [ ] 修复GIS模块业务定位接口405 Method Not Allowed
-- [ ] 补全全局搜索i18n英文残留：下拉菜单显示英文
-- [ ] 修复交互记录列表加载失败错误
->>>>>>> Stashed changes
 
 ### P2 中优先级（体验优化）
-- [ ] 后端server主程序挂载WebSocket路由：当前WS连接404，前端已全局关闭不影响使用
-- [ ] 插件市场正式开发：统一模块鉴权中间件，替换前端mock
-- [ ] 系统健康面板模块卡片从硬编码改成调用后端真实健康接口
-- [ ] 消息队列消费者组监控面板完善
-- [ ] EHS/RD/PM模块前端页面开发（后端API已就绪）
+- [ ] 清理MUI elevation={24}主题警告
+- [ ] 补全面包屑/标题i18n翻译，消除英文残留
+- [ ] 顶部导航栏添加主题切换按钮（太阳/月亮图标）
+- [ ] BI即席查询接口返回结构适配
 
-### P3 低优先级（后续迭代）
-- [ ] 本地部署Ollama大模型：启用AI embedding索引和智能对话功能
-- [ ] 移动端H5前端开发
-- [ ] 完善WebSocket实时推送：MES看板、IM消息、通知推送
-- [ ] 主库半迁移状态最终治理
-
----
-
-## 📋 2026-09-29 控制台清理批次完成记录
-✅ 已完成：
-1. 所有页面空值保护：财务报表/ERP Dashboard/PM资源页/BI Dashboard 崩溃全部修复
-2. 控制台错误清理：WebSocket全局禁用、plugin 401 mock、未完善接口错误通知静默
-3. 顶部导航主题切换按钮添加（待重新修复bug）
-4. 首页模块补全到12个，全部显示绿灯
-5. 所有TypeScript编译错误修复，代码已推送远端
-
-⏳ 待后端实现接口：
-- 财务应收列表（financeReceivable.list）
-- 采购合同列表（purchaseContract.list）
-- 交互记录列表
-- BI即席查询admin_dashboard_base返回结构
-
----
-
-## 📋 全项目待后端实现接口清单
-### 财务模块
-- [ ] 应收应付列表（financeReceivable/financePayable）
-- [ ] 结算中心全系列接口（reconciliations/settlements/differences）
-- [ ] 财务报表统计接口
-### SCM模块
-- [ ] 采购合同列表CRUD
-- [ ] 采购申请创建单号自动生成验证
-### 系统模块
-- [ ] API Key管理接口
-- [ ] 审计日志查询接口
-- [ ] 缓存管理接口
-- [ ] 租户管理全系列接口
-- [ ] 系统参数配置接口
-### BI模块
-- [ ] admin_dashboard_base即席查询接口返回结构修复
-- [ ] BI数据集列表接口适配
-### 其他
-- [ ] 交互记录列表接口
-- [ ] GIS业务定位接口（405错误已修复，待验证数据返回）
-
----
-
-## ✅ 2026-09-30 完成记录
-- [x] 顶部导航栏添加正确的主题切换按钮（三态：亮色/暗色/跟随系统）
-- [x] 首页模块卡片硬编码中文全部替换为i18n翻译
-- [x] 代码同步拉取推送，合并远端冲突
+### P3 低优先级（功能增强）
+- [ ] 实现WebSocket实时推送（MES看板）
+- [ ] 修复插件市场401权限问题
+- [x] GIS地图模块路由完善（2026-09-30，c743ae959 后续批次）：
+  - [x] 列表接口 500 修复×2：business.rs bind 顺序错位（$3/$4 收到 i64→bigint→uuid cast 失败）；
+        warehouse/search/import_export usage_rate NUMERIC→f64 解码失败（SQL cast ::float8）
+  - [x] BFF /api/gis/health 补齐（embedded router 原缺，前端 getHealth() 404）
+  - [x] map-markers/{id} GET 补齐（embedded 聚合时漏注册，PUT/DELETE 在 GET 缺→CRUD 完整）
+  - [x] 写路径冒烟：business/map-markers/factory-maps 全链路 POST/GET/PUT/DELETE 全 200；
+        GET 全端点（statistics/factory-maps/map-markers/fences/business-locations/
+        warehouse-locations/location-photos/pipelines/search/geojson/export/health）全 200
+  - [x] GIS 功能接入专项（2026-09-30，本轮提交）：
+        fence.ts 契约重写对齐后端（GeoFenceRecord：shape_type/coordinates(GeoJSON)/
+        event_types/radius/trigger_cooldown/status）；GisFencePage 删 MOCK_FENCES、
+        列表/删除/新建全接 fenceApi 真接口（表单受控、乐观回滚、失败恢复）；
+        CreatePipelineRequest.code 必填化（BI GisPage 两处调用补 code）+ path 必填
+        （后端 CreatePipeline 要 GeoJSON path，start_point/end_point 前端旧字段）；
+        Pipeline 类型对齐后端（code/path/map_id/properties）+ pathToStartEnd 工具，
+        GisContext 数据入口统一派生 start_point/end_point（地图渲染/表格/编辑回填
+        三处消费点自动修复）；GisContext updatePipeline 签名 Partial 对齐 pipelineApi
+        验证：tsc rc=0；vitest 3 files 53 tests 全过；fence/pipeline 真契约冒烟
+        POST/GET/PUT/DELETE 全 200（临时数据已删）
+  - [ ] 遗留（已知限制，非阻塞）：① fence 列表 GET 返回 {items,total}（分页包装），
+        fence.ts listGeoFences 按数组类型 + 页面 Array.isArray 适配——真实后端当前
+        仅返回 items 数组时可用，若后端开启分页需改类型（同 map-markers adaptResponse）；
+        ② GisFencePage triggerCount 恒 0（后端 Geofence 无触发计数字段）；③ 对话框
+        坐标输入为手动 "lat, lng" 文本（无地图拾取），polygon/rectangle 仅建 circle
+        Point 几何——后续可加地图取点交互

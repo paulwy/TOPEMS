@@ -57,6 +57,7 @@ impl FromRef<AppState> for Arc<WebSocketManager> {
 pub fn build_business_router(state: &AppState) -> Router<AppState> {
     // 认证查询路由（需登录，无需 gis:admin；按 claims 租户过滤）
     let authed_query_routes = Router::new()
+        .route("/health", get(modules::gis_plugin::plugin_health_check))
         .route("/statistics", get(modules::stats::get_statistics))
         .route(
             "/search",
@@ -264,6 +265,10 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         .route(
             "/map-markers",
             axum::routing::post(modules::marker::create_map_marker),
+        )
+        .route(
+            "/map-markers/{id}",
+            axum::routing::get(modules::marker::get_map_marker),
         )
         .route(
             "/map-markers/{id}",
