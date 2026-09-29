@@ -584,7 +584,7 @@ pub async fn get_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
-                equipment_code: Some(r.equipment_no),
+                equipment_code: r.equipment_no.unwrap_or_default(),
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
                 run_time: big_decimal_to_f64(Some(r.actual_run_time)),
@@ -1080,7 +1080,7 @@ pub async fn get_equipment_efficiency_analysis(
             EquipmentEfficiencyAnalysis {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_no: r.equipment_no.flatten().unwrap_or_default(),
+                equipment_no: r.equipment_no.unwrap_or_default(),
                 oee: oee_val,
                 availability: big_decimal_to_f64(r.availability),
                 performance: big_decimal_to_f64(r.performance),
