@@ -448,8 +448,8 @@ pub async fn get_batch_statistics(
         Ok(row) => {
             let statistics = BatchStatistics {
                 total_batches: row.total_batches.unwrap_or(0),
-                total_quantity: row.total_quantity.unwrap_or_default(),
-                total_value: row.total_value.unwrap_or_default(),
+                total_quantity: big_decimal_to_f64(row.total_quantity),
+                total_value: big_decimal_to_f64(row.total_value),
                 expiring_soon_count: row.expiring_soon_count.unwrap_or(0),
                 expired_count: row.expired_count.unwrap_or(0),
                 quality_pending_count: row.quality_pending_count.unwrap_or(0),
