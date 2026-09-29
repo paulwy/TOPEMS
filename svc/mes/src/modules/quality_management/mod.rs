@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use chrono::DateTime<Utc>;
+use chrono::{DateTime, Utc};
 use chrono::{DateTime, Utc};
 
 use crate::AppState;

@@ -1,4 +1,4 @@
-use chrono::DateTime<Utc>;
+use chrono::{DateTime, Utc};
 use chrono::{DateTime, Utc};
 
 pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
