@@ -89,7 +89,7 @@ pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
 #[allow(dead_code)]
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
-        DateTime::<Utc>::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
+        NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
             .map(|dt| dt)
             .ok()
     })
@@ -98,7 +98,7 @@ fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
 #[allow(dead_code)]
 fn parse_opt_date(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
-        DateTime::<Utc>::parse_from_str(&s, "%Y-%m-%d")
+        NaiveDateTime::parse_from_str(&s, "%Y-%m-%d")
             .map(|dt| dt)
             .ok()
     })

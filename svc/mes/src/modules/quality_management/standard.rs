@@ -1,6 +1,5 @@
 use axum::{extract::Extension, extract::Path, extract::Query, extract::State, Json};
 use chrono::{DateTime, Utc};
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -432,7 +431,7 @@ pub async fn create_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)
@@ -593,7 +592,7 @@ pub async fn update_standard(
     };
 
     let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
             .ok()
             .or_else(|| {
                 chrono::DateTime::parse_from_rfc3339(s)

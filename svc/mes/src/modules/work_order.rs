@@ -134,12 +134,12 @@ fn parse_datetime(s: &str) -> Option<DateTime<Utc>> {
         .ok()
         .map(|dt| dt.with_timezone(&Utc))
         .or_else(|| {
-            DateTime::<Utc>::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f")
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M:%S%.f")
                 .map(|dt| dt)
                 .ok()
         })
         .or_else(|| {
-            DateTime::<Utc>::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
                 .map(|dt| dt)
                 .ok()
         })
@@ -1300,7 +1300,7 @@ mod tests {
 
     #[test]
     fn test_naive_to_utc_some() {
-        let naive = DateTime::<Utc>::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 00:00:00", "%Y-%m-%d %H:%M:%S").ok();
         let result = naive_to_utc(naive);
         assert_eq!(result.date_naive().year(), 2024);
     }
@@ -1313,7 +1313,7 @@ mod tests {
 
     #[test]
     fn test_datetime_to_string_returns_nonempty() {
-        let naive = DateTime::<Utc>::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = NaiveDateTime::parse_from_str("2024-01-01 12:00:00", "%Y-%m-%d %H:%M:%S").ok();
         let s = datetime_to_string(naive);
         assert!(!s.is_empty());
         assert!(s.contains("2024"));
@@ -1321,7 +1321,7 @@ mod tests {
 
     #[test]
     fn test_opt_datetime_to_string_some_and_none() {
-        let naive = DateTime::<Utc>::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
+        let naive = NaiveDateTime::parse_from_str("2024-03-15 08:30:00", "%Y-%m-%d %H:%M:%S").ok();
         let some_result = opt_datetime_to_string(naive);
         assert!(some_result.is_some());
         assert!(some_result.unwrap().contains("2024"));
