@@ -33,9 +33,9 @@ if ! curl -sf "$CONSUL_ADDR/v1/status/leader" >/dev/null 2>&1; then
     exit 1
 fi
 
-CONSUL_HEADER=""
+CONSUL_ARGS=()
 if [ -n "$CONSUL_TOKEN" ]; then
-    CONSUL_HEADER="-H 'X-Consul-Token: $CONSUL_TOKEN'"
+    CONSUL_ARGS=(-H "X-Consul-Token: $CONSUL_TOKEN")
 fi
 
 # 注册服务（从 HCL 配置文件加载）
@@ -45,7 +45,7 @@ for hcl_file in /consul/config/*.hcl; do
         echo "  加载配置: $hcl_file"
         curl -s --request PUT \
             --data @"$hcl_file" \
-            $CONSUL_HEADER \
+            "${CONSUL_ARGS[@]}" \
             "$CONSUL_ADDR/v1/agent/service/register" || true
     fi
 done
@@ -58,14 +58,14 @@ echo "🔐 配置服务意图（零信任网络）..."
 # 默认拒绝所有流量
 curl -s --request PUT \
     --data '{"SourceName":"*","DestinationName":"*","Action":"deny"}' \
-    $CONSUL_HEADER \
+    "${CONSUL_ARGS[@]}" \
     "$CONSUL_ADDR/v1/connect/intentions" || true
 
 # 允许网关 → 所有服务
 for service in unified-core erp hrm pm crm mes pdm scm wms srm qms lims ehs; do
     curl -s --request PUT \
         --data "{\"SourceName\":\"traefik\",\"DestinationName\":\"$service\",\"Action\":\"allow\"}" \
-        $CONSUL_HEADER \
+        "${CONSUL_ARGS[@]}" \
         "$CONSUL_ADDR/v1/connect/intentions" || true
     echo "  ✅ traefik → $service"
 done
@@ -95,7 +95,7 @@ for intention in "${INTENTIONS[@]}"; do
     dest="${intention##*:}"
     curl -s --request PUT \
         --data "{\"SourceName\":\"$source\",\"DestinationName\":\"$dest\",\"Action\":\"allow\"}" \
-        $CONSUL_HEADER \
+        "${CONSUL_ARGS[@]}" \
         "$CONSUL_ADDR/v1/connect/intentions" || true
     echo "  ✅ $source → $dest"
 done
@@ -106,7 +106,7 @@ echo "✅ 服务意图配置完成"
 echo "📊 服务网格状态："
 echo ""
 echo "已注册服务："
-curl -s $CONSUL_HEADER "$CONSUL_ADDR/v1/agent/services" | python3 -c "
+curl -s "${CONSUL_ARGS[@]}" "$CONSUL_ADDR/v1/agent/services" | python3 -c "
 import json, sys
 services = json.load(sys.stdin)
 for sid, info in sorted(services.items()):
@@ -116,7 +116,7 @@ for sid, info in sorted(services.items()):
 
 echo ""
 echo "服务意图："
-curl -s $CONSUL_HEADER "$CONSUL_ADDR/v1/connect/intentions" | python3 -c "
+curl -s "${CONSUL_ARGS[@]}" "$CONSUL_ADDR/v1/connect/intentions" | python3 -c "
 import json, sys
 intentions = json.load(sys.stdin)
 for i in intentions:

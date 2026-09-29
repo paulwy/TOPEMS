@@ -31,11 +31,11 @@ while [[ $# -gt 0 ]]; do
     *) SERVICES+=("$1"); shift ;;
   esac
 done
-[[ ${#SERVICES[@]} -eq 0 ]] && SERVICES=($DEFAULT_SERVICES)
+[[ ${#SERVICES[@]} -eq 0 ]] && IFS=' ' read -r -a SERVICES <<< "$DEFAULT_SERVICES" || true
 
 # 断点续跑：跳过 START_FROM 之前的
 if [[ -n "$START_FROM" ]]; then
-  SERVICES=($(printf '%s\n' "${SERVICES[*]:-}" | tr ' ' '\n' | awk -v s="$START_FROM" 'found||$0==s{found=1} found' | tr '\n' ' '))
+  IFS=' ' read -r -a SERVICES <<< "$(printf '%s\n' "${SERVICES[*]:-}" | tr ' ' '\n' | awk -v s="$START_FROM" 'found||$0==s{found=1} found' | tr '\n' ' ')" || true
   echo "→ 从 $START_FROM 续跑：${SERVICES[*]:-}"
 fi
 

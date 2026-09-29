@@ -1,6 +1,12 @@
 pre-commit:
   parallel: true
   commands:
+    # [Gate SC] Shellcheck 回归防线（P1-1 清零后固化）— 暂存变更模式
+    # 无 .sh 变更即秒级跳过；有变更必须 0 告警，否则阻断提交
+    shellcheck-changed:
+      tags: shellcheck
+      run: bash scripts/ci/check-shellcheck.sh --changed-only
+
     # [Gate A] Frontend lint (eslint + prettier)
     frontend-lint:
       tags: frontend lint
@@ -213,6 +219,13 @@ pre-push:
   #       产物，冷缓存/全量场景显著提速）；未装时静默跳过，不影响门禁语义。
   parallel: false
   commands:
+    # [Gate SC] Shellcheck 全量防线（秒级，置于 cargo 门禁前快速失败）
+    # P1-1 清零 195→0 后固化：任何脚本改动带告警，push 直接阻断，
+    # 不浪费后续 cargo check/clippy/test 数分钟时间。
+    shellcheck-workspace:
+      tags: shellcheck
+      run: bash scripts/ci/check-shellcheck.sh
+
     # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
     # V300: SQLX_OFFLINE=false（在线）→ true（离线）。pre-push 是缓存完整性的最后本地防线：
     #       根 .sqlx 缺任何宏查询，离线编译必然失败，push 被阻断，杜绝"本地能过、CI/新环境必炸"。

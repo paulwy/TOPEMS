@@ -141,7 +141,8 @@ jobs:
               - '**/*.md'
             ci:
               - '.github/**'
-              - 'scripts/ci/**'
+              - 'scripts/**'
+              - 'deploy/docker/**'
             migration:
               - 'svc/**/migrations/**'
               - 'database/migrations/**'
@@ -224,6 +225,25 @@ jobs:
 
       - name: Run Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # [Gate SC] Shellcheck 回归防线（P1-1 清零 195→0 后固化）
+  # 全量扫描所有 git 跟踪的 *.sh；任何告警/语法错误即 job 失败。
+  # 触发：scripts/** 或 deploy/docker/** 或 workflow 变更（ci filter 已覆盖）。
+  # ──────────────────────────────────────────────────────────────────────────
+  shellcheck:
+    name: ShellCheck 回归防线
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run shellcheck (all tracked scripts)
+        run: bash scripts/ci/check-shellcheck.sh
 
   # ──────────────────────────────────────────────────────────────────────────
   # [V232-P3 NEW Gate J] Cargo fmt workspace (Rust only, standalone job)
