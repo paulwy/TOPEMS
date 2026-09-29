@@ -9,7 +9,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "lefthook install && node scripts/patch-react-transition-group.js",
+    "prepare": "lefthook install && node scripts/patch-react-transition-group.cjs",
     "dev": "./scripts/start-local.sh",
     "dev:web": "pnpm --filter topems-portal dev",
     "dev:core": "pnpm --filter topems-core dev",

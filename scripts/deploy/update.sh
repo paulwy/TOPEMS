@@ -26,6 +26,7 @@ VERSION=""
 SERVICES=""
 RESTART=false
 SKIP_FRONTEND=false
+DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -45,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             SKIP_FRONTEND=true
             shift
             ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
@@ -58,8 +63,19 @@ echo -e "${BLUE}========================================${NC}"
 echo ""
 
 # Get script directory (project root)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# update.sh 位于 scripts/deploy/，仓库根 = 上移两级（此前 /.. 会落到 scripts/，
+# 导致 cargo build 在错误目录执行、二进制路径判断失效——部署路径缺陷）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${SCRIPT_DIR}"
+
+# 命令执行包装：--dry-run 下仅打印，不实际执行（用于无生产环境的预演验证）
+run() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "\033[1;33m[dry-run]\033[0m $*"
+    else
+        "$@"
+    fi
+}
 
 # Pull latest code if version specified
 if [[ -n "$VERSION" ]]; then
@@ -71,7 +87,12 @@ fi
 
 # Build backend
 echo -e "${YELLOW}Building backend services...${NC}"
-cargo build --release
+# dry-run 预演模式跳过构建（构建非破坏性动作，干跑只验证部署动作流）
+if [[ "$DRY_RUN" != "true" ]]; then
+    cargo build --release
+else
+    echo -e "${YELLOW}[dry-run]${NC} 跳过 cargo build --release"
+fi
 
 # Determine which services to update
 # unified-core 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
@@ -111,30 +132,30 @@ echo -e "${YELLOW}Updating service binaries...${NC}"
 
 for svc in "${UPDATE_SERVICES[@]}"; do
     if [[ -f "target/release/${svc}" ]]; then
-        systemctl stop "topems-${svc}.service" 2>/dev/null || true
-        cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
-        chmod +x "${PREFIX}/bin/${svc}-service"
+        run systemctl stop "topems-${svc}.service" 2>/dev/null || true
+        run cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
+        run chmod +x "${PREFIX}/bin/${svc}-service"
         echo -e "${GREEN}✓ Updated ${svc}-service${NC}"
         if [[ "$RESTART" == true ]]; then
-            systemctl start "topems-${svc}.service"
+            run systemctl start "topems-${svc}.service"
             echo -e "${GREEN}✓ Started ${svc}-service${NC}"
         fi
     elif [[ -f "target/release/topems-${svc}" ]]; then
-        systemctl stop "topems-${svc}.service" 2>/dev/null || true
-        cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
-        chmod +x "${PREFIX}/bin/${svc}-service"
+        run systemctl stop "topems-${svc}.service" 2>/dev/null || true
+        run cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
+        run chmod +x "${PREFIX}/bin/${svc}-service"
         echo -e "${GREEN}✓ Updated ${svc}-service${NC}"
         if [[ "$RESTART" == true ]]; then
-            systemctl start "topems-${svc}.service"
+            run systemctl start "topems-${svc}.service"
             echo -e "${GREEN}✓ Started ${svc}-service${NC}"
         fi
     elif [[ -f "target/release/topems-unified-core" && "$svc" == "unified-core" ]]; then
-        systemctl stop "topems-unified-core.service" 2>/dev/null || true
-        cp "target/release/topems-unified-core" "${PREFIX}/bin/topems-unified-core"
-        chmod +x "${PREFIX}/bin/topems-unified-core"
+        run systemctl stop "topems-unified-core.service" 2>/dev/null || true
+        run cp "target/release/topems-unified-core" "${PREFIX}/bin/topems-unified-core"
+        run chmod +x "${PREFIX}/bin/topems-unified-core"
         echo -e "${GREEN}✓ Updated topems-unified-core${NC}"
         if [[ "$RESTART" == true ]]; then
-            systemctl start "topems-unified-core.service"
+            run systemctl start "topems-unified-core.service"
             echo -e "${GREEN}✓ Started topems-unified-core${NC}"
         fi
     else
@@ -155,8 +176,8 @@ if [[ "$SKIP_FRONTEND" == false ]]; then
         mv "${PREFIX}/web" "${PREFIX}/web.backup.$(date +%Y%m%d%H%M%S)"
     fi
 
-    mkdir -p "${PREFIX}/web"
-    cp -r dist/* "${PREFIX}/web/"
+    run mkdir -p "${PREFIX}/web"
+    run cp -r dist/* "${PREFIX}/web/"
 
     echo -e "${GREEN}✓ Frontend updated${NC}"
 fi

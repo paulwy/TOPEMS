@@ -25,6 +25,7 @@ PREFIX="/opt/topems"
 SERVICE_USER="topems"
 SKIP_BUILD=false
 DEV_MODE=false
+DRY_RUN=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -45,12 +46,20 @@ while [[ $# -gt 0 ]]; do
             DEV_MODE=true
             shift
             ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             exit 1
             ;;
     esac
 done
+
+# 项目根目录（绝对路径，脚本开头单次解析：BASH_SOURCE 相对路径只能在
+# 未发生任何 cd 前可靠解析；后续 PWD 变化不影响本值）
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}TOPEMS Installation Script${NC}"
@@ -61,11 +70,20 @@ echo -e "Service user: ${GREEN}${SERVICE_USER}${NC}"
 echo -e "Development mode: ${GREEN}${DEV_MODE}${NC}"
 echo ""
 
-# Check if running as root
-if [[ $EUID -ne 0 ]]; then
+# Check if running as root（--dry-run 预演模式豁免 root 检查：仅打印将执行的动作）
+if [[ $EUID -ne 0 ]] && [[ "$DRY_RUN" != "true" ]]; then
     echo -e "${RED}This script must be run as root${NC}"
     exit 1
 fi
+
+# 命令执行包装：--dry-run 下仅打印，不实际执行（用于无生产环境的预演验证）
+run() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${YELLOW}[dry-run]${NC} $*"
+    else
+        "$@"
+    fi
+}
 
 # Check prerequisites
 echo -e "${YELLOW}Checking prerequisites...${NC}"
@@ -105,23 +123,23 @@ echo ""
 # Create directories
 echo -e "${YELLOW}Creating directory structure...${NC}"
 
-mkdir -p "${PREFIX}/bin"
-mkdir -p "${PREFIX}/svc"
-mkdir -p "${PREFIX}/config"
-mkdir -p "${PREFIX}/logs"
-mkdir -p "${PREFIX}/data"
-mkdir -p "${PREFIX}/lib"
+run mkdir -p "${PREFIX}/bin"
+run mkdir -p "${PREFIX}/svc"
+run mkdir -p "${PREFIX}/config"
+run mkdir -p "${PREFIX}/logs"
+run mkdir -p "${PREFIX}/data"
+run mkdir -p "${PREFIX}/lib"
 
 # Create service user if not exists
 if ! id "${SERVICE_USER}" &>/dev/null; then
     echo -e "${YELLOW}Creating service user: ${SERVICE_USER}${NC}"
-    useradd -r -s /bin/false -d "${PREFIX}" "${SERVICE_USER}"
+    run useradd -r -s /bin/false -d "${PREFIX}" "${SERVICE_USER}"
 fi
 
 # Set permissions
-chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PREFIX}"
-chmod -R 755 "${PREFIX}"
-chmod 700 "${PREFIX}/config"
+run chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PREFIX}"
+run chmod -R 755 "${PREFIX}"
+run chmod 700 "${PREFIX}/config"
 
 echo -e "${GREEN}✓ Directory structure created${NC}"
 echo ""
@@ -131,7 +149,6 @@ echo ""
         echo -e "${YELLOW}Building backend services...${NC}"
 
         # Get script directory (project root)
-        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
         cd "${SCRIPT_DIR}"
 
@@ -188,41 +205,30 @@ echo ""
 # Build shared packages
 echo -e "${YELLOW}Building shared packages...${NC}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# 复用首处 SCRIPT_DIR（绝对路径，不依赖当前 PWD）
 
 cd "${SCRIPT_DIR}/packages/shared-types"
-pnpm install --legacy-peer-deps
+pnpm install
 pnpm run build
 
 cd "${SCRIPT_DIR}/packages/shared-utils"
-pnpm install --legacy-peer-deps
+pnpm install
 pnpm run build
 
 echo -e "${GREEN}✓ Shared packages built${NC}"
 echo ""
 
-# Build Remote Module (core)
-echo -e "${YELLOW}Building Remote Module (core)...${NC}"
-
-cd "${SCRIPT_DIR}/apps/core"
-pnpm install --legacy-peer-deps
-pnpm run build
-
-mkdir -p "${PREFIX}/core-remote"
-cp -r dist/* "${PREFIX}/core-remote/"
-
-echo -e "${GREEN}✓ Remote Module built and installed${NC}"
-echo ""
-
 # Build Host Shell (web)
+# （注：apps/core Remote Module 已并入 apps/web（V83/V84 构建层根治），
+#  无独立 core 构建/部署步骤，core-remote 目录同步移除）
 echo -e "${YELLOW}Building Host Shell (web)...${NC}"
 
 cd "${SCRIPT_DIR}/apps/web"
-pnpm install --legacy-peer-deps
+pnpm install
 pnpm run build
 
-mkdir -p "${PREFIX}/web"
-cp -r dist/* "${PREFIX}/web/"
+run mkdir -p "${PREFIX}/web"
+run cp -r dist/* "${PREFIX}/web/"
 
 echo -e "${GREEN}✓ Host Shell built and installed${NC}"
 echo ""
@@ -230,20 +236,19 @@ echo ""
 # Copy configuration templates
 echo -e "${YELLOW}Copying configuration templates...${NC}"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Copy systemd service files
-cp -r "${SCRIPT_DIR}/deploy/systemd"/*.service /etc/systemd/system/
-cp "${SCRIPT_DIR}/deploy/systemd/topems.target" /etc/systemd/system/
+run cp -r "${SCRIPT_DIR}/deploy/systemd"/*.service /etc/systemd/system/
+run cp "${SCRIPT_DIR}/deploy/systemd/topems.target" /etc/systemd/system/
 
 # Reload systemd
-systemctl daemon-reload
+run systemctl daemon-reload
 
 echo -e "${GREEN}✓ Systemd services installed${NC}"
 
 # Copy environment templates
-cp "${SCRIPT_DIR}/deploy/env/.env.production.template" "${PREFIX}/config/.env.template"
-cp "${SCRIPT_DIR}/.env.example" "${PREFIX}/config/.env.example"
+run cp "${SCRIPT_DIR}/deploy/env/.env.production.template" "${PREFIX}/config/.env.template"
+run cp "${SCRIPT_DIR}/.env.example" "${PREFIX}/config/.env.example"
 
 echo -e "${GREEN}✓ Configuration templates copied${NC}"
 echo ""
@@ -251,7 +256,7 @@ echo ""
 # Enable services
 echo -e "${YELLOW}Enabling services...${NC}"
 
-systemctl enable topems.target
+run systemctl enable topems.target
 
 echo -e "${GREEN}✓ Services enabled${NC}"
 echo ""
