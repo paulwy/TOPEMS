@@ -389,7 +389,9 @@ mod tests {
         monitor.record_degrade("downstream-x", "500 from mock");
 
         // 等待异步推送送达 mock server
-        let body = tokio::time::timeout(Duration::from_secs(3), async {
+        // 超时放宽至 10s：全量并发测试下偶发调度/网络延迟（隔离跑 <1s 即达），
+        // 与 shared-event subscriber 同模式；链路真损坏时仍会如常断言失败
+        let body = tokio::time::timeout(Duration::from_secs(10), async {
             loop {
                 if let Ok(v) = rx.try_recv() {
                     return v;
