@@ -23,7 +23,7 @@ export const HeaderUserMenu: React.FC = () => {
       <UserMenu
         user={user}
         onProfileClick={() => navigate(DASHBOARD_PATHS.profile)}
-        onAccountSettingsClick={() => navigate(DASHBOARD_PATHS.profile)}
+        onAccountSettingsClick={() => navigate(DASHBOARD_PATHS.systemSettings)}
         onHelpCenterClick={() => navigate(DASHBOARD_PATHS.helpCenter)}
         onLogout={() => {
           logout();

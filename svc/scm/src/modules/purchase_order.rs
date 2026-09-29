@@ -101,7 +101,7 @@ pub async fn list_orders(
 
             Json(ApiResponse::success(
                 serde_json::json!({
-                    "orders": orders,
+                    "items": orders,
                     "total": total,
                     "page": page,
                     "page_size": page_size

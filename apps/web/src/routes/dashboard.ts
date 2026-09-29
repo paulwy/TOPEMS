@@ -13,6 +13,7 @@ export const DASHBOARD_PATHS = {
   helpCenter: '/help/center',
   helpFaq: '/help/faq',
   helpGuide: '/help/guide',
+  systemSettings: '/system/settings',
 } as const;
 
 export const MOBILE_TAB_PATHS = {
@@ -34,6 +35,7 @@ const AttachmentsPage = safeLazy(() => import('../pages/shared/AttachmentsPage')
 const HelpCenterPage = safeLazy(() => import('../pages/help/HelpCenterPage'));
 const FaqPage = safeLazy(() => import('../pages/help/FaqPage'));
 const GuidePage = safeLazy(() => import('../pages/help/GuidePage'));
+const SystemParamsPage = safeLazy(() => import('../pages/system/SystemParamsPage'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -75,5 +77,9 @@ export const dashboardRoutes: RouteConfig[] = [
   {
     path: DASHBOARD_PATHS.helpGuide,
     element: GuidePage,
+  },
+  {
+    path: DASHBOARD_PATHS.systemSettings,
+    element: SystemParamsPage,
   },
 ];
