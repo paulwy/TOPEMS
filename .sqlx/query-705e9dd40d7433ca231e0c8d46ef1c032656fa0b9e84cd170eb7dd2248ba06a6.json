@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
@@ -41,7 +41,7 @@
       {
         "ordinal": 7,
         "name": "owner_id",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 8,
@@ -51,12 +51,12 @@
       {
         "ordinal": 9,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 10,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -74,8 +74,8 @@
       true,
       false,
       true,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "705e9dd40d7433ca231e0c8d46ef1c032656fa0b9e84cd170eb7dd2248ba06a6"

@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -177,7 +177,7 @@ pub async fn list_records(
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         FROM mes.production_records
         {}
         ORDER BY start_time DESC
@@ -217,14 +217,12 @@ pub async fn list_records(
             start_time: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
             end_time: opt_naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("end_time")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
             quantity_produced: big_decimal_to_f64(
                 r.try_get::<Option<BigDecimal>, _>("quantity_produced")
@@ -245,14 +243,12 @@ pub async fn list_records(
             created_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("created_at")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
             updated_at: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("updated_at")
                     .ok()
-                    .flatten()
-                    ,
+                    .flatten(),
             ),
         })
         .collect();
@@ -285,13 +281,13 @@ pub async fn create_record(
             order_id, process_id, work_station_id,
             operator_id, start_time, end_time,
             completed_quantity, status, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8)
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         req.order_id,
         req.process_id,
@@ -364,7 +360,7 @@ pub async fn get_record(
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         FROM mes.production_records
         WHERE id = $1
         "#,
@@ -388,10 +384,10 @@ pub async fn get_record(
                 order_id: r.order_id,
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
-                equipment_id: Some(r.equipment_id),
+                equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: Some(r.start_time),
-                end_time: Some(r.end_time),
+                start_time: r.start_time,
+                end_time: r.end_time,
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
@@ -438,7 +434,7 @@ pub async fn update_record(
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         id,
         req.process_id,
@@ -468,10 +464,10 @@ pub async fn update_record(
                 order_id: r.order_id,
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
-                equipment_id: Some(r.equipment_id),
+                equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: Some(r.start_time),
-                end_time: Some(r.end_time),
+                start_time: r.start_time,
+                end_time: r.end_time,
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,
@@ -554,7 +550,7 @@ pub async fn complete_record(
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
             completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         id,
         now,
@@ -577,10 +573,10 @@ pub async fn complete_record(
                 order_id: r.order_id,
                 process_id: r.process_id,
                 work_station_id: r.work_station_id,
-                equipment_id: Some(r.equipment_id),
+                equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
-                start_time: Some(r.start_time),
-                end_time: Some(r.end_time),
+                start_time: r.start_time,
+                end_time: r.end_time,
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
                 quantity_defective: r.quantity_defective.map(|v| v as f64).unwrap_or_default(),
                 status: r.status,

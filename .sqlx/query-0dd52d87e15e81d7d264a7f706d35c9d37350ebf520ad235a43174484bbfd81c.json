@@ -23,7 +23,7 @@
       "Left": [
         "Bool",
         "Int4",
-        "Timestamptz",
+        "Timestamp",
         "Uuid"
       ]
     },

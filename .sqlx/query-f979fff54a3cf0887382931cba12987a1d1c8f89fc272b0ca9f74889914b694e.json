@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT sti.id, sti.stock_take_id, sti.material_code, sti.material_name,\n               sti.system_quantity, sti.counted_quantity, sti.discrepancy_quantity,\n               i.id as inventory_id\n        FROM wms.stock_take_items sti\n        JOIN wms.inventory i ON sti.material_code = i.material_code\n        WHERE sti.stock_take_id = $1 AND sti.adjustment_status = 'completed' AND sti.discrepancy_quantity != 0\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "stock_take_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "material_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "material_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "system_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 5,
+        "name": "counted_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 6,
+        "name": "discrepancy_quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 7,
+        "name": "inventory_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "f979fff54a3cf0887382931cba12987a1d1c8f89fc272b0ca9f74889914b694e"
+}

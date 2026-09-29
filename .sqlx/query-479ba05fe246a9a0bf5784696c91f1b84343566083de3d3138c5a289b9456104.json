@@ -11,7 +11,7 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
@@ -26,12 +26,12 @@
       {
         "ordinal": 4,
         "name": "preview_image",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 5,
         "name": "category",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 6,
@@ -46,12 +46,12 @@
       {
         "ordinal": 8,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       },
       {
         "ordinal": 9,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamp"
       }
     ],
     "parameters": {
@@ -68,8 +68,8 @@
       true,
       true,
       true,
-      false,
-      false
+      true,
+      true
     ]
   },
   "hash": "479ba05fe246a9a0bf5784696c91f1b84343566083de3d3138c5a289b9456104"

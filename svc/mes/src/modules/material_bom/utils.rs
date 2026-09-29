@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
 
 pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)

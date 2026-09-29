@@ -6,7 +6,7 @@
 //! - `production_scheduling.rs` — 完成率计算（原内联 `completed / total * 100`）
 //! - `models/work_report.rs` — 报工数量汇总（原缺失）
 
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, TimeZone, Utc};
 
 // ── 完成率 & 进度 ──────────────────────────────────
 

@@ -8,7 +8,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -161,14 +161,12 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
         created_at: (r
             .try_get::<Option<DateTime<Utc>>, _>("created_at")
             .ok()
-            .flatten()
-            )
+            .flatten())
         .unwrap_or_default(),
         updated_at: (r
             .try_get::<Option<DateTime<Utc>>, _>("updated_at")
             .ok()
-            .flatten()
-            )
+            .flatten())
         .unwrap_or_default(),
     }
 }
@@ -329,11 +327,11 @@ pub async fn create_work_station(
         INSERT INTO work_stations (
             station_no, name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9)
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
+            status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )
@@ -462,7 +460,7 @@ pub async fn update_work_station(
         WHERE id = $1
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
+            status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )
@@ -564,7 +562,7 @@ pub async fn activate_work_station(
         WHERE id = $1
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
+            status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )
@@ -622,7 +620,7 @@ pub async fn deactivate_work_station(
         WHERE id = $1 AND status = 'active'
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
+            status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )

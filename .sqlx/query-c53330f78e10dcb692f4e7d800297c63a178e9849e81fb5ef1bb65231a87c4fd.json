@@ -11,22 +11,22 @@
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
         "name": "comparison_type",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
         "name": "dimension_a",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 4,
         "name": "dimension_b",
-        "type_info": "Text"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 5,

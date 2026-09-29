@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -277,14 +277,12 @@ pub async fn list_process_routes(
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
             updated_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
         })
         .collect();
@@ -390,7 +388,7 @@ pub async fn get_process_route(
                     id: r.id.to_string(),
                     code: r.code,
                     name: r.name,
-                    description: Some(r.description),
+                    description: r.description,
                     version: None,
                     status: r.status,
                     estimated_time_minutes: None,
@@ -427,7 +425,7 @@ pub async fn create_process_route(
         INSERT INTO process_routes (route_code, route_name, description)
         VALUES ($1, $2, $3)
         RETURNING id, route_code AS code, route_name AS name, description, status,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         body.code,
         body.name,
@@ -463,7 +461,7 @@ pub async fn create_process_route(
                     id: r.id.to_string(),
                     code: r.code,
                     name: r.name,
-                    description: Some(r.description),
+                    description: r.description,
                     version: None,
                     status: r.status,
                     estimated_time_minutes: None,
@@ -511,7 +509,7 @@ pub async fn update_process_route(
             updated_at = NOW()
         WHERE id = $4
         RETURNING id, route_code AS code, route_name AS name, description, status,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         body.name,
         body.description,
@@ -548,7 +546,7 @@ pub async fn update_process_route(
                     id: r.id.to_string(),
                     code: r.code,
                     name: r.name,
-                    description: Some(r.description),
+                    description: r.description,
                     version: None,
                     status: r.status,
                     estimated_time_minutes: None,
@@ -684,7 +682,7 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -773,7 +771,7 @@ pub async fn add_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, String::new()),
+                Err(_) => (None, None),
             };
 
             Json(ApiResponse::success(
@@ -782,7 +780,7 @@ pub async fn add_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code,
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -874,7 +872,7 @@ pub async fn update_route_step(
 
             let (process_name, process_code) = match process_info {
                 Ok(p) => (Some(p.name), p.process_no),
-                Err(_) => (None, String::new()),
+                Err(_) => (None, None),
             };
 
             Json(ApiResponse::success(
@@ -883,7 +881,7 @@ pub async fn update_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code,
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -1039,7 +1037,7 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code,
+                    process_code: s.process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes

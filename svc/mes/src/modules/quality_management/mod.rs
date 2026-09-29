@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 use crate::AppState;
 use topems_shared_db::decimal::big_decimal_to_f64;
@@ -90,7 +90,7 @@ pub fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
 fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
         NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
-            .map(|dt| dt)
+            .map(|dt| dt.and_utc())
             .ok()
     })
 }
@@ -99,7 +99,7 @@ fn parse_opt_datetime(s: Option<String>) -> Option<DateTime<Utc>> {
 fn parse_opt_date(s: Option<String>) -> Option<DateTime<Utc>> {
     s.and_then(|s| {
         NaiveDateTime::parse_from_str(&s, "%Y-%m-%d")
-            .map(|dt| dt)
+            .map(|dt| dt.and_utc())
             .ok()
     })
 }

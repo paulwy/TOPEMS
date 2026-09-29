@@ -63,7 +63,7 @@ pub async fn create_material_return(
         RETURNING 
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         return_no,
         req.order_id,
@@ -71,7 +71,7 @@ pub async fn create_material_return(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now,
+        now.naive_utc(),
     )
     .fetch_one(&mut *tx)
     .await;
@@ -126,15 +126,15 @@ pub async fn create_material_return(
             .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id.map(|u| u.to_string()),
         operator_id: return_record.operator_id.map(|u| u.to_string()),
-        return_time: return_record.return_time.map(|d| d.to_rfc3339()),
+        return_time: return_record.return_time.map(|d| d.and_utc().to_rfc3339()),
         notes: return_record.notes,
         created_at: return_record
             .created_at
-            
+            .map(|d| d.and_utc())
             .unwrap_or_else(Utc::now),
         updated_at: return_record
             .updated_at
-            
+            .map(|d| d.and_utc())
             .unwrap_or_else(Utc::now),
     };
 
@@ -211,7 +211,7 @@ pub async fn list_material_returns(
         SELECT 
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         FROM material_returns
         {}
         ORDER BY created_at DESC
@@ -266,20 +266,17 @@ pub async fn list_material_returns(
                 .try_get::<Option<DateTime<Utc>>, _>("return_time")
                 .ok()
                 .flatten()
-                
                 .map(|d| d.to_rfc3339()),
             notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
             created_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("created_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
             updated_at: (r
                 .try_get::<Option<DateTime<Utc>>, _>("updated_at")
                 .ok()
-                .flatten()
-                )
+                .flatten())
             .unwrap_or_default(),
         })
         .collect();
@@ -322,7 +319,7 @@ pub async fn get_material_return(
         r#"
         SELECT id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         FROM material_returns
         WHERE id = $1
         "#,
@@ -371,8 +368,8 @@ pub async fn get_material_return(
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": return_record.return_time,
         "notes": return_record.notes,
-        "created_at": return_record.created_at.unwrap_or_else(Utc::now),
-        "updated_at": return_record.updated_at.unwrap_or_else(Utc::now),
+        "created_at": return_record.created_at.unwrap_or_else(|| Utc::now().naive_utc()),
+        "updated_at": return_record.updated_at.unwrap_or_else(|| Utc::now().naive_utc()),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "return_id": i.return_id.to_string(),
@@ -416,14 +413,14 @@ pub async fn update_material_return(
         WHERE id = $1
         RETURNING id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at: created_at.unwrap_or_default(), updated_at
+            created_at, updated_at
         "#,
         id,
         req.status,
         req.warehouse_id,
         req.operator_id,
         req.notes,
-now,
+now.naive_utc(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -447,8 +444,8 @@ now,
         "operator_id": return_record.operator_id.map(|u| u.to_string()),
         "return_time": return_record.return_time,
         "notes": return_record.notes,
-        "created_at": return_record.created_at.unwrap_or_else(Utc::now),
-        "updated_at": return_record.updated_at.unwrap_or_else(Utc::now),
+        "created_at": return_record.created_at.unwrap_or_else(|| Utc::now().naive_utc()),
+        "updated_at": return_record.updated_at.unwrap_or_else(|| Utc::now().naive_utc()),
     });
 
     Json(ApiResponse::success(return_json, "物料退库单更新成功"))
