@@ -794,7 +794,7 @@ pub async fn list_maintenances(
             description: r.description.unwrap_or_default(),
             maintainer: r.maintainer,
             start_time: r.start_time.unwrap_or_default(),
-            end_time: Some(r.end_time),
+            end_time: r.end_time.unwrap_or_default(),
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
             status: r.status.unwrap_or_default(),

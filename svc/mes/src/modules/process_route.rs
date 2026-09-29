@@ -389,9 +389,9 @@ pub async fn get_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
-                    description: r.description,
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
+                    description: r.description.unwrap_or_default(),
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
@@ -462,9 +462,9 @@ pub async fn create_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
-                    description: r.description,
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
+                    description: r.description.unwrap_or_default(),
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
@@ -547,9 +547,9 @@ pub async fn update_process_route(
             Json(ApiResponse::success(
                 ProcessRouteResponse {
                     id: r.id.to_string(),
-                    code: r.code,
-                    name: r.name,
-                    description: r.description,
+                    code: r.code.unwrap_or_default(),
+                    name: r.name.unwrap_or_default(),
+                    description: r.description.unwrap_or_default(),
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,

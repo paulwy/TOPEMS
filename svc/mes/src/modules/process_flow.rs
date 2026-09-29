@@ -379,13 +379,13 @@ pub async fn get_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
+                code: r.code.unwrap_or_default(),
+                name: r.name.unwrap_or_default(),
+                description: r.description.unwrap_or_default(),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
-                route_name: Some(r.route_name),
+                route_name: r.route_name.unwrap_or_default(),
                 production_line: r.production_line,
                 capacity: r
                     .capacity
@@ -451,9 +451,9 @@ pub async fn create_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
+                code: r.code.unwrap_or_default(),
+                name: r.name.unwrap_or_default(),
+                description: r.description.unwrap_or_default(),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
@@ -538,9 +538,9 @@ pub async fn update_process_flow(
         Ok(r) => Json(ApiResponse::success(
             ProcessFlowResponse {
                 id: r.id.to_string(),
-                code: r.code,
-                name: r.name,
-                description: r.description,
+                code: r.code.unwrap_or_default(),
+                name: r.name.unwrap_or_default(),
+                description: r.description.unwrap_or_default(),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),

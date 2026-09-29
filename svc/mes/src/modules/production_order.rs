@@ -737,7 +737,7 @@ pub async fn get_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -836,7 +836,7 @@ req.planned_end_date.map(|d| d.date()),
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -978,7 +978,7 @@ now.date(),
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -1068,7 +1068,7 @@ now.date(),
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -1155,7 +1155,7 @@ pub async fn cancel_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),
@@ -1242,7 +1242,7 @@ pub async fn release_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_id: r.product_id,
                 product_name: r.product_name,
                 product_code: r.product_code.unwrap_or_default(),

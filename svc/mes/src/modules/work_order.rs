@@ -414,9 +414,9 @@ pub async fn get_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -525,9 +525,9 @@ pub async fn create_work_order(
         Ok(r) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -658,9 +658,9 @@ pub async fn update_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -806,9 +806,9 @@ pub async fn start_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -896,9 +896,9 @@ pub async fn complete_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -986,9 +986,9 @@ pub async fn cancel_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -1076,9 +1076,9 @@ pub async fn pause_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
@@ -1166,9 +1166,9 @@ pub async fn resume_work_order(
         Ok(Some(r)) => Json(ApiResponse::success(
             WorkOrderResponse {
                 id: r.id.to_string(),
-                work_order_no: r.work_order_no,
+                work_order_no: r.work_order_no.unwrap_or_default(),
                 order_id: r.order_id.map(|u| u.to_string()),
-                order_no: r.order_no,
+                order_no: r.order_no.unwrap_or_default(),
                 product_code: r.product_code.unwrap_or_default(),
                 product_name: r.product_name.unwrap_or_default(),
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
