@@ -40,34 +40,41 @@ log() { echo -e "${GREEN}[TOPEMS]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
-# 域配置
-declare -A DOMAIN_SERVICES=(
-    ["core"]="unified-core postgres redis rabbitmq consul"
-    ["erp"]="erp finance"
-    ["hrm"]="hrm pm"
-    ["crm"]="crm"
-    ["manufacturing"]="mes pdm qms lims ehs"
-    ["supply-chain"]="scm wms srm"
-    ["rd"]="rd"
-    ["analytics"]="bi portal"
-    ["infrastructure"]="mobile gis integration ai"
-    ["monitoring"]="prometheus grafana alertmanager jaeger traefik nginx"
-    ["all"]="unified-core postgres redis rabbitmq consul erp finance hrm pm crm mes pdm qms lims ehs scm wms srm rd bi portal mobile gis integration ai prometheus grafana alertmanager jaeger traefik nginx"
-)
+# 域配置（bash 3.2 兼容：macOS bash 3.2 无关联数组，用 key_of 映射函数替代）
+domain_services_of_core() { echo "unified-core postgres redis rabbitmq consul"; }
+domain_services_of_erp() { echo "erp finance"; }
+domain_services_of_hrm() { echo "hrm pm"; }
+domain_services_of_crm() { echo "crm"; }
+domain_services_of_manufacturing() { echo "mes pdm qms lims ehs"; }
+domain_services_of_supply-chain() { echo "scm wms srm"; }
+domain_services_of_rd() { echo "rd"; }
+domain_services_of_analytics() { echo "bi portal"; }
+domain_services_of_infrastructure() { echo "mobile gis integration ai"; }
+domain_services_of_monitoring() { echo "prometheus grafana alertmanager jaeger traefik nginx"; }
+domain_services_of_all() { echo "unified-core postgres redis rabbitmq consul erp finance hrm pm crm mes pdm qms lims ehs scm wms srm rd bi portal mobile gis integration ai prometheus grafana alertmanager jaeger traefik nginx"; }
+domain_services_of_unknown() { echo ""; }
+domain_key_of() {
+  local d="$1"
+  case "$d" in
+    core|erp|hrm|crm|manufacturing|supply-chain|rd|analytics|infrastructure|monitoring|all) echo "$d";;
+    *) echo unknown;;
+  esac
+}
 
-# 域依赖关系（启动顺序）
-declare -A DOMAIN_DEPENDS=(
-    ["erp"]="core"
-    ["hrm"]="core"
-    ["crm"]="core"
-    ["manufacturing"]="core"
-    ["supply-chain"]="core erp"
-    ["rd"]="core hrm manufacturing"
-    ["analytics"]="core"
-    ["infrastructure"]="core"
-    ["monitoring"]=""
-    ["all"]=""
-)
+# 域依赖关系（启动顺序，bash 3.2 兼容映射）
+domain_depends_of_core() { echo ""; }
+domain_depends_of_erp() { echo "core"; }
+domain_depends_of_hrm() { echo "core"; }
+domain_depends_of_crm() { echo "core"; }
+domain_depends_of_manufacturing() { echo "core"; }
+domain_depends_of_supply-chain() { echo "core erp"; }
+domain_depends_of_rd() { echo "core hrm manufacturing"; }
+domain_depends_of_analytics() { echo "core"; }
+domain_depends_of_infrastructure() { echo "core"; }
+domain_depends_of_monitoring() { echo ""; }
+domain_depends_of_all() { echo ""; }
+domain_depends_of_unknown() { echo ""; }
+domain_depends_key_of() { domain_key_of "$1"; }
 
 show_usage() {
     echo "TOPEMS 域服务管理脚本"
@@ -103,7 +110,7 @@ show_usage() {
 
 check_dependencies() {
     local domain=$1
-    local deps="${DOMAIN_DEPENDS[$domain]}"
+    local deps="$(domain_depends_of_$(domain_depends_key_of "$domain"))"
     
     if [ -z "$deps" ] || [ "$deps" = "" ]; then
         return 0
@@ -122,7 +129,7 @@ check_dependencies() {
 
 start_domain() {
     local domain=$1
-    local services="${DOMAIN_SERVICES[$domain]}"
+    local services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "启动域: ${domain}"
     log "服务列表: ${services}"
@@ -141,7 +148,7 @@ start_domain() {
 
 stop_domain() {
     local domain=$1
-    local services="${DOMAIN_SERVICES[$domain]}"
+    local services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "停止域: ${domain}"
     
@@ -156,7 +163,7 @@ stop_domain() {
 
 show_status() {
     local domain=$1
-    local services="${DOMAIN_SERVICES[$domain]}"
+    local services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "域 ${domain} 服务状态:"
     echo ""
@@ -178,7 +185,7 @@ show_status() {
 
 show_logs() {
     local domain=$1
-    local services="${DOMAIN_SERVICES[$domain]}"
+    local services="$(domain_services_of_$(domain_key_of "$domain"))"
     
     log "域 ${domain} 日志:"
     
@@ -199,7 +206,7 @@ DOMAIN="$1"
 ACTION="$2"
 
 # 验证域
-if [ -z "${DOMAIN_SERVICES[$DOMAIN]}" ]; then
+if [ -z "$(domain_services_of_$(domain_key_of "$DOMAIN"))" ]; then
     error "未知域: ${DOMAIN}"
 fi
 

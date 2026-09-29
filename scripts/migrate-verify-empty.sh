@@ -28,17 +28,21 @@ DB_URL="${DATABASE_URL:?需要设置 DATABASE_URL，例: postgres://user:pass@ho
 
 # --- 解析 DATABASE_URL: postgres://user:pass@host:port/dbname -----------------
 parse_url() {
-  local url="$1" rest user cred host port db
+  local url="$1" rest auth hostdb user cred host port db
   rest="${url#postgres://}"
-  user="${rest%%:*}"
-  rest="${rest#*:}"
-  cred="${rest%%@*}"
-  rest="${rest#*@}"
-  if [[ "$rest" == */* ]]; then
-    host="${rest%%/*}"
-    db="${rest#*/}"
+  # 兼容两种格式：postgres://user@host/db（无密码）与 postgres://user:pass@host/db
+  auth="${rest%%@*}"
+  hostdb="${rest#*@}"
+  if [[ "$auth" == *:* ]]; then
+    user="${auth%%:*}"
+    cred="${auth#*:}"
   else
-    host="$rest"
+    user="$auth"
+    cred=""
+  fi
+  host="${hostdb%%/*}"
+  db="${hostdb#*/}"
+  if [[ "$db" == "$host" ]]; then
     db=""
   fi
   if [[ "$host" == *:* ]]; then
@@ -80,7 +84,7 @@ echo "== 重建空库 $PG_DB =="
 $PSQL -v ON_ERROR_STOP=1 -q \
   -c "DROP DATABASE IF EXISTS \"$PG_DB\";" \
   -c "CREATE DATABASE \"$PG_DB\";" || {
-    echo "错误: 无法重建数据库 $PG_DB（需 postgres 超级用户或同权限）" >&2
+    echo "错误: 无法重建数据库 ${PG_DB}（需 postgres 超级用户或同权限）" >&2
     echo "提示: 本地验证请改用具有建库权限的账号，或先手动 DROP/CREATE" >&2
     exit 3
   }
@@ -95,8 +99,21 @@ RC=$?
 echo "$OUT" | tail -8
 
 if [[ $RC -ne 0 ]]; then
-  echo "❌ 空库迁移验证失败（exit $RC）" >&2
+  echo "❌ 空库迁移验证失败（exit ${RC}）" >&2
   echo "$OUT" | grep -iE "error|错误" | head -10 >&2 || true
+  # 诊断增强：pgvector 扩展类失败（CREATE EXTENSION vector 需超级用户，
+  # topems_app 连接会被 000 迁移的 EXCEPTION 吞掉→后续 vector 类型缺失）
+  if echo "$OUT" | grep -qiE "type .vector. does not exist|pgvector|extension.*vector"; then
+    VEC_AVAIL="$($DB_CONN -t -A -c "SELECT count(*) FROM pg_available_extensions WHERE name='vector';" 2>/dev/null || echo 0)"
+    if [[ "$VEC_AVAIL" != "0" ]]; then
+      echo "⚠️  诊断：pgvector 扩展可用（pg_available_extensions 存在）但未安装到验证库。" >&2
+      echo "    CREATE EXTENSION vector 需超级用户权限，topems_app 无法完成。" >&2
+      echo "    请以超管执行：psql -h $PG_HOST -p $PG_PORT -U postgres -d $PG_DB -c 'CREATE EXTENSION IF NOT EXISTS vector;' 后重跑本脚本。" >&2
+    else
+      echo "⚠️  诊断：本实例未提供 pgvector 扩展（pg_available_extensions 无 vector），" >&2
+      echo "    AI 向量类迁移在空库验证中将失败（生产需 pgvector 镜像）。" >&2
+    fi
+  fi
   exit 1
 fi
 
