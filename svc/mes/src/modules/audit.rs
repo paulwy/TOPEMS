@@ -80,7 +80,7 @@ async fn list_audit_logs(
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status: status.unwrap_or_default(), error_message, ip_address, user_agent, created_at
         FROM mes.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
@@ -171,7 +171,7 @@ async fn get_audit_log(
         r#"
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status: status.unwrap_or_default(), error_message, ip_address, user_agent, created_at
         FROM mes.audit_logs WHERE id = $1
         "#,
     )

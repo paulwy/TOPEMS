@@ -391,7 +391,7 @@ pub async fn get_process_route(
                     id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
                     name: r.name.unwrap_or_default(),
-                    description: r.description.unwrap_or_default(),
+                    description: Some(r.description.unwrap_or_default()),
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
@@ -428,7 +428,7 @@ pub async fn create_process_route(
         INSERT INTO process_routes (route_code, route_name, description)
         VALUES ($1, $2, $3)
         RETURNING id, route_code AS code, route_name AS name, description, status,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.code,
         body.name,
@@ -464,7 +464,7 @@ pub async fn create_process_route(
                     id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
                     name: r.name.unwrap_or_default(),
-                    description: r.description.unwrap_or_default(),
+                    description: Some(r.description.unwrap_or_default()),
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,
@@ -512,7 +512,7 @@ pub async fn update_process_route(
             updated_at = NOW()
         WHERE id = $4
         RETURNING id, route_code AS code, route_name AS name, description, status,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.name,
         body.description,
@@ -549,7 +549,7 @@ pub async fn update_process_route(
                     id: r.id.to_string(),
                     code: r.code.unwrap_or_default(),
                     name: r.name.unwrap_or_default(),
-                    description: r.description.unwrap_or_default(),
+                    description: Some(r.description.unwrap_or_default()),
                     version: None,
                     status: r.status.unwrap_or_default(),
                     estimated_time_minutes: None,

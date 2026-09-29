@@ -64,7 +64,7 @@ pub async fn create_material_issue(
         RETURNING 
             id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         issue_no,
         req.order_id,
@@ -216,7 +216,7 @@ pub async fn list_material_issues(
         SELECT 
             id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         FROM material_issues
         {}
         ORDER BY created_at DESC
@@ -331,7 +331,7 @@ pub async fn get_material_issue(
         r#"
         SELECT id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         FROM material_issues
         WHERE id = $1
         "#,
@@ -426,7 +426,7 @@ pub async fn update_material_issue(
         WHERE id = $1
         RETURNING id, issue_no, order_id, order_no, bom_id, status,
             warehouse_id, operator_id, issue_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         id,
         req.status,

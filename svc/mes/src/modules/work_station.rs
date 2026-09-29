@@ -330,11 +330,11 @@ pub async fn create_work_station(
         INSERT INTO work_stations (
             station_no, name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9)
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status, capacity, equipment_id, process_id,
+            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )
@@ -463,7 +463,7 @@ pub async fn update_work_station(
         WHERE id = $1
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status, capacity, equipment_id, process_id,
+            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )
@@ -565,7 +565,7 @@ pub async fn activate_work_station(
         WHERE id = $1
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status, capacity, equipment_id, process_id,
+            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )
@@ -623,7 +623,7 @@ pub async fn deactivate_work_station(
         WHERE id = $1 AND status = 'active'
         RETURNING 
             id, station_no, name, workshop_id, location,
-            status, capacity, equipment_id, process_id,
+            status: status.unwrap_or_default(), capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
     )

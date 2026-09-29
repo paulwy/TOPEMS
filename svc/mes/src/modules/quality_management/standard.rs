@@ -450,14 +450,14 @@ pub async fn create_standard(
         r#"
         INSERT INTO quality_standards (
             code, name, product_code, product_name, inspection_type,
-            status, version, effective_date, description
+            status: status.unwrap_or_default(), version, effective_date, description
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING
             id, code, name, product_code, product_name,
             inspection_type, status, version,
             effective_date, description,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.code,
         body.name,
@@ -626,7 +626,7 @@ pub async fn update_standard(
             id, code, name, product_code, product_name,
             inspection_type, status, version,
             effective_date, description,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.code,
         body.name,

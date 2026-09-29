@@ -582,8 +582,8 @@ pub async fn create_work_report(
             order_id, order_no, work_station_id, work_station_name,
             reporter_name, report_date, shift,
             output_quantity, defect_quantity, labor_hours, remark,
-            status, approved_by, approved_at, approval_remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), approved_by, approved_at, approval_remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         report_no,
         work_order_id,
@@ -780,8 +780,8 @@ pub async fn update_work_report(
             order_id, order_no, work_station_id, work_station_name,
             reporter_name, report_date, shift,
             output_quantity, defect_quantity, labor_hours, remark,
-            status, approved_by, approved_at, approval_remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), approved_by, approved_at, approval_remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         work_order_id,
         body.work_order_no,
@@ -933,8 +933,8 @@ pub async fn approve_work_report(
             order_id, order_no, work_station_id, work_station_name,
             reporter_name, report_date, shift,
             output_quantity, defect_quantity, labor_hours, remark,
-            status, approved_by, approved_at, approval_remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), approved_by, approved_at, approval_remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         approver,
         uuid,
@@ -1027,8 +1027,8 @@ pub async fn reject_work_report(
             order_id, order_no, work_station_id, work_station_name,
             reporter_name, report_date, shift,
             output_quantity, defect_quantity, labor_hours, remark,
-            status, approved_by, approved_at, approval_remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), approved_by, approved_at, approval_remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         approver,
         remark,

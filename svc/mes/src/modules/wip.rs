@@ -396,14 +396,14 @@ pub async fn create_wip(
         INSERT INTO wips (
             wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
-            status, batch_no, start_time, last_transfer_time, operator, notes,
-            created_at, updated_at
+            status: status.unwrap_or_default(), batch_no, start_time, last_transfer_time, operator, notes,
+            created_at: created_at.unwrap_or_default(), updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'in_progress', $10, $11, $11, $12, $13, $14, $14)
         RETURNING 
             id, wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
-            status, batch_no, start_time, last_transfer_time, operator, notes,
-            created_at, updated_at
+            status: status.unwrap_or_default(), batch_no, start_time, last_transfer_time, operator, notes,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         wip_no,
         req.order_id,
@@ -529,7 +529,7 @@ pub async fn get_wip(
                 current_work_station_name: r.work_station_name.unwrap_or_default(),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no.unwrap_or_default(),
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: Some(r.start_time.unwrap_or_default()),
                 last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
@@ -578,8 +578,8 @@ pub async fn update_wip(
         RETURNING 
             id, wip_no, order_id, order_no, product_id, product_name, product_code,
             quantity, current_process_id, current_work_station_id,
-            status, batch_no, start_time, last_transfer_time, operator, notes,
-            created_at, updated_at
+            status: status.unwrap_or_default(), batch_no, start_time, last_transfer_time, operator, notes,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         id,
         req.quantity
@@ -617,7 +617,7 @@ pub async fn update_wip(
                 current_work_station_name: None,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no.unwrap_or_default(),
-                start_time: r.start_time.unwrap_or_default(),
+                start_time: Some(r.start_time.unwrap_or_default()),
                 last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
@@ -1007,7 +1007,7 @@ pub async fn get_wip_statistics(
     let status_result = sqlx::query(
         r#"
         SELECT 
-            status,
+            status: status.unwrap_or_default(),
             COUNT(*) as count,
             COALESCE(SUM(quantity), 0) as quantity
         FROM wips

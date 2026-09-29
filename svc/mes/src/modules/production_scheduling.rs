@@ -430,7 +430,7 @@ pub async fn create_production_schedule(
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14, $15, $16, $16)
         RETURNING 
             id, schedule_no, order_id, order_no,
@@ -438,8 +438,8 @@ pub async fn create_production_schedule(
             quantity, work_station_id, equipment_id,
             process_id, planned_start_time, planned_end_time,
             actual_start_time, actual_end_time,
-            status, priority, sequence, notes,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, sequence, notes,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         schedule_no,
         req.order_id,
@@ -648,8 +648,8 @@ pub async fn update_production_schedule(
             quantity, work_station_id, equipment_id,
             process_id, planned_start_time, planned_end_time,
             actual_start_time, actual_end_time,
-            status, priority, sequence, notes,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, sequence, notes,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         id,
         req.work_station_id,

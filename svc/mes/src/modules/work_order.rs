@@ -400,8 +400,8 @@ pub async fn get_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         FROM mes.work_orders
         WHERE id = $1
         "#,
@@ -489,7 +489,7 @@ pub async fn create_work_order(
             planned_quantity,
             plan_start_date, plan_end_date,
             team_id, operator,
-            status, priority, remark
+            status: status.unwrap_or_default(), priority, remark
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'pending', $13, $14)
         RETURNING 
@@ -500,8 +500,8 @@ pub async fn create_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.work_order_no,
         order_id,
@@ -631,8 +631,8 @@ pub async fn update_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.work_order_no,
         order_id,
@@ -794,8 +794,8 @@ pub async fn start_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         uuid,
     )
@@ -884,8 +884,8 @@ pub async fn complete_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         uuid,
     )
@@ -974,8 +974,8 @@ pub async fn cancel_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         uuid,
     )
@@ -1064,8 +1064,8 @@ pub async fn pause_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         uuid,
     )
@@ -1154,8 +1154,8 @@ pub async fn resume_work_order(
             plan_start_date, plan_end_date,
             actual_start_date, actual_end_date,
             team_id, operator,
-            status, priority, remark,
-            created_at, updated_at
+            status: status.unwrap_or_default(), priority, remark,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         uuid,
     )

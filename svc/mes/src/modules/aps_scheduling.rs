@@ -858,7 +858,7 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'scheduled', $13, 0, $14, $15, $15
         )

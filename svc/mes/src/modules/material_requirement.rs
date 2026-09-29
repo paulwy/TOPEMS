@@ -182,7 +182,7 @@ pub async fn list_material_requirements(
             id, mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
-            status, source_type, remark, created_at, updated_at
+            status: status.unwrap_or_default(), source_type, remark, created_at, updated_at
         FROM material_requirements
         {}
         ORDER BY created_at DESC
@@ -316,7 +316,7 @@ pub async fn get_material_requirement(
             id, mrp_no, order_id, order_number, product_code, product_name,
             material_code, material_name, specification, unit, required_quantity,
             available_quantity, shortfall_quantity, required_date, priority,
-            status, source_type, remark, created_at, updated_at
+            status: status.unwrap_or_default(), source_type, remark, created_at, updated_at
         FROM material_requirements
         WHERE id = $1
         "#,

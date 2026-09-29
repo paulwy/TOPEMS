@@ -381,7 +381,7 @@ pub async fn get_process_flow(
                 id: r.id.to_string(),
                 code: r.code.unwrap_or_default(),
                 name: r.name.unwrap_or_default(),
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description.unwrap_or_default()),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
@@ -433,7 +433,7 @@ pub async fn create_process_flow(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.code,
         body.name,
@@ -453,7 +453,7 @@ pub async fn create_process_flow(
                 id: r.id.to_string(),
                 code: r.code.unwrap_or_default(),
                 name: r.name.unwrap_or_default(),
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description.unwrap_or_default()),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),
@@ -519,7 +519,7 @@ pub async fn update_process_flow(
         WHERE id = $9
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.name,
         body.description,
@@ -540,7 +540,7 @@ pub async fn update_process_flow(
                 id: r.id.to_string(),
                 code: r.code.unwrap_or_default(),
                 name: r.name.unwrap_or_default(),
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description.unwrap_or_default()),
                 version: r.version,
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 route_id: r.route_id.map(|u| u.to_string()),

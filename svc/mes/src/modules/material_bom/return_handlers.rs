@@ -64,7 +64,7 @@ pub async fn create_material_return(
         RETURNING 
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         return_no,
         req.order_id,
@@ -212,7 +212,7 @@ pub async fn list_material_returns(
         SELECT 
             id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         FROM material_returns
         {}
         ORDER BY created_at DESC
@@ -323,7 +323,7 @@ pub async fn get_material_return(
         r#"
         SELECT id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         FROM material_returns
         WHERE id = $1
         "#,
@@ -417,7 +417,7 @@ pub async fn update_material_return(
         WHERE id = $1
         RETURNING id, return_no, order_id, order_no, status,
             warehouse_id, operator_id, return_time, notes,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         id,
         req.status,

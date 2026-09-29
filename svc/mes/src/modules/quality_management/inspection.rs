@@ -402,7 +402,7 @@ pub async fn create_inspection(
             inspection_type, quantity, qualified_quantity,
             unqualified_quantity, qualification_rate,
             inspector, inspection_time, status, result, memo,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         inspection_no,
         order_id,
@@ -519,7 +519,7 @@ pub async fn update_inspection(
             inspection_type, quantity, qualified_quantity,
             unqualified_quantity, qualification_rate,
             inspector, inspection_time, status, result, memo,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         qualified_quantity,
         unqualified_quantity,

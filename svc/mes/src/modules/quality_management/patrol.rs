@@ -318,8 +318,8 @@ pub async fn create_patrol(
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
-            status, result, findings, memo,
-            created_at, updated_at
+            status: status.unwrap_or_default(), result, findings, memo,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         patrol_no,
         body.production_line,
@@ -415,8 +415,8 @@ pub async fn update_patrol(
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
-            status, result, findings, memo,
-            created_at, updated_at
+            status: status.unwrap_or_default(), result, findings, memo,
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         body.production_line,
         workstation_id,

@@ -451,7 +451,7 @@ pub async fn create_production_order(
             order_number, product_name, product_code,
             quantity, completed_quantity, status,
             planned_start_date, planned_end_date, workshop_id, notes,
-            created_at, updated_at, tenant_id
+            created_at: created_at.unwrap_or_default(), updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, 0, 'pending', $5, $6, $7, $8, $9, $9, $10)
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,
@@ -610,9 +610,9 @@ pub async fn create_from_erp(
         r#"
         INSERT INTO production_orders (
             order_number, product_name, product_code, quantity,
-            status, source_order_id, source_order_number,
+            status: status.unwrap_or_default(), source_order_id, source_order_number,
             planned_start_date, planned_end_date, workshop_id, notes,
-            created_at, updated_at, tenant_id
+            created_at: created_at.unwrap_or_default(), updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8, $9, $10, $11, $11, $12)
         RETURNING 
             id, order_number AS order_no, NULL::uuid AS product_id, product_name, product_code,

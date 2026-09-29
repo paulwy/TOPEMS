@@ -259,7 +259,7 @@ pub async fn list_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_expiry_date,
+            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
@@ -346,7 +346,7 @@ pub async fn create_equipment(
         ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_expiry_date,
+            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
@@ -405,7 +405,7 @@ pub async fn get_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_expiry_date,
+            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
@@ -476,7 +476,7 @@ pub async fn update_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_expiry_date,
+            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
@@ -600,7 +600,7 @@ pub async fn maintenance_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_expiry_date,
+            status: status.unwrap_or_default(), location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
@@ -789,12 +789,12 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: r.equipment_no.unwrap_or_default(),
+            equipment_no: Some(r.equipment_no.unwrap_or_default()),
             maintenance_type: r.maintenance_type,
-            description: r.description.unwrap_or_default(),
+            description: Some(r.description.unwrap_or_default()),
             maintainer: r.maintainer,
-            start_time: r.start_time.unwrap_or_default(),
-            end_time: r.end_time.unwrap_or_default(),
+            start_time: Some(r.start_time.unwrap_or_default()),
+            end_time: Some(r.end_time.unwrap_or_default()),
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
             status: r.status.unwrap_or_default(),
@@ -935,10 +935,10 @@ pub async fn create_maintenance(
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at,
-            updated_at,
+            created_at: created_at.unwrap_or_default(),
+            updated_at: updated_at.unwrap_or_default(),
         },
         "维护记录创建成功",
     ))
@@ -1042,10 +1042,10 @@ pub async fn update_maintenance_status(
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status,
+            status: status.unwrap_or_default(),
             remarks: result.remarks,
-            created_at,
-            updated_at,
+            created_at: created_at.unwrap_or_default(),
+            updated_at: updated_at.unwrap_or_default(),
         },
         "维护状态更新成功",
     ))
@@ -1275,7 +1275,7 @@ pub async fn create_inspection(
             equipment_id, equipment_code, equipment_name,
             inspector, inspection_date, location,
             temperature, vibration, noiselevel,
-            status, items, abnormalities, remarks
+            status: status.unwrap_or_default(), items, abnormalities, remarks
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *

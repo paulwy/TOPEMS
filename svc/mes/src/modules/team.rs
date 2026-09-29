@@ -341,7 +341,7 @@ pub async fn get_team(
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description.unwrap_or_default()),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
@@ -375,12 +375,12 @@ pub async fn create_team(
         INSERT INTO teams (
             team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, 0, 'active', $7, $8, $8)
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         req.team_code,
         req.team_name,
@@ -494,7 +494,7 @@ pub async fn update_team(
         RETURNING 
             id, team_code, team_name, team_type, work_station_id,
             leader_id, leader_name, member_count, status, description,
-            created_at, updated_at
+            created_at: created_at.unwrap_or_default(), updated_at
         "#,
         id,
         req.team_name,
@@ -530,7 +530,7 @@ pub async fn update_team(
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
-                description: r.description.unwrap_or_default(),
+                description: Some(r.description.unwrap_or_default()),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
