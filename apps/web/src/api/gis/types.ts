@@ -67,23 +67,33 @@ export interface CreateDevicePointRequest {
 
 export interface Pipeline {
   id: string;
+  map_id?: string;
   name: string;
+  code: string;
   description?: string;
   pipeline_type: string;
-  start_point: [number, number];
-  end_point: [number, number];
+  /** 后端真实几何字段（GeoJSON LineString）；旧 start_point/end_point 由此派生 */
+  path: unknown;
+  properties?: Record<string, unknown>;
   status: string;
   created_at: string;
   updated_at: string;
-  code?: string;
+  /** 兼容旧消费方（由 pathToStartEnd 从 path 派生）；新代码应直接读 path */
+  start_point?: [number, number];
+  end_point?: [number, number];
 }
 
 export interface CreatePipelineRequest {
+  /** 后端必填（Pipeline.code NOT NULL，缺失会 422） */
+  code: string;
   name: string;
   description?: string;
   pipeline_type: string;
-  start_point: [number, number];
-  end_point: [number, number];
+  /** 后端必填 GeoJSON 路径（如 LineString），缺失会 422 */
+  path: unknown;
+  /** 兼容旧表单：start/end 点，发送前应转成 path */
+  start_point?: [number, number];
+  end_point?: [number, number];
   status?: string;
 }
 

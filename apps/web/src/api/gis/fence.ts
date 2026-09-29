@@ -2,31 +2,47 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 /**
- * V19.0: GIS 围栏管理 Stub API
- * 后端尚未实现，前端先建立接口契约；后端就绪后此文件无需改动。
+ * GIS 围栏管理 API——契约对齐 svc/gis 后端 Geofence 结构
+ * （后端字段：shape_type/coordinates(GeoJSON)/event_types/radius/trigger_cooldown...）
  */
-interface GeoFenceRecord {
+export interface GeoFenceRecord {
   id: string;
   name: string;
-  type: 'circle' | 'polygon' | 'rectangle';
+  description?: string;
+  chat_id?: string;
+  creator_id?: string;
+  shape_type: 'circle' | 'polygon' | 'rectangle';
+  /** GeoJSON：circle 用 {type:'Point',coordinates:[lng,lat]}，polygon 用 FeatureCollection */
+  coordinates: unknown;
   radius?: number;
-  coordinates: string;
-  alertOnEnter: boolean;
-  alertOnExit: boolean;
+  event_types: string[];
   status: 'active' | 'inactive';
-  createdAt: string;
-  lastTriggered?: string;
-  triggerCount: number;
+  trigger_cooldown: number;
+  notify_channels: string[];
+  notify_users: string[];
+  gis_fence_id?: string;
+  start_at?: string;
+  end_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface CreateGeoFenceRequest {
+export interface CreateGeoFenceRequest {
   name: string;
-  type: 'circle' | 'polygon' | 'rectangle';
+  description?: string;
+  chat_id?: string;
+  creator_id?: string;
+  shape_type: 'circle' | 'polygon' | 'rectangle';
+  coordinates: unknown;
   radius?: number;
-  coordinates: string;
-  alertOnEnter: boolean;
-  alertOnExit: boolean;
-  status: 'active' | 'inactive';
+  event_types?: string[];
+  status?: 'active' | 'inactive';
+  trigger_cooldown?: number;
+  notify_channels?: string[];
+  notify_users?: string[];
+  gis_fence_id?: string;
+  start_at?: string;
+  end_at?: string;
 }
 
 const fenceApi = {

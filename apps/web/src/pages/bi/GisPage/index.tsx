@@ -168,9 +168,20 @@ const GisContent: React.FC = () => {
           break;
         case 'pipelines':
           await createPipeline({
+            code: `PL-${Date.now()}`,
             name: formData.name as string,
             description: formData.description as string,
             pipeline_type: formData.pipeline_type as string,
+            path: {
+              type: 'LineString',
+              coordinates: [
+                [
+                  parseFloat(formData.start_lng as string),
+                  parseFloat(formData.start_lat as string),
+                ],
+                [parseFloat(formData.end_lng as string), parseFloat(formData.end_lat as string)],
+              ],
+            },
             start_point: [
               parseFloat(formData.start_lat as string),
               parseFloat(formData.start_lng as string),
@@ -814,8 +825,14 @@ const GisContent: React.FC = () => {
                     id: p.id,
                     name: p.name,
                     type: 'rectangle',
-                    position: p.start_point,
-                    coordinates: [p.start_point, p.end_point],
+                    position: p.start_point ?? p.end_point ?? [0, 0],
+                    coordinates:
+                      p.start_point && p.end_point
+                        ? [p.start_point, p.end_point]
+                        : [
+                            [0, 0],
+                            [0, 0],
+                          ],
                     color: p.status?.toLowerCase().includes('active') ? 'green' : 'grey',
                   }))}
                   onMarkerClick={(marker) => {

@@ -22,6 +22,7 @@ import type {
   CreateBusinessLocationRequest,
 } from '../api/gis';
 import { gisApi } from '../api/gis';
+import { pathToStartEnd } from '../api/gis/utils';
 import { logger } from '@/utils/logger';
 import i18n from '@/i18n';
 
@@ -225,7 +226,7 @@ interface GisContextType {
   updateDevicePoint: (id: string, data: CreateDevicePointRequest) => Promise<void>;
   deleteDevicePoint: (id: string) => Promise<void>;
   createPipeline: (data: CreatePipelineRequest) => Promise<void>;
-  updatePipeline: (id: string, data: CreatePipelineRequest) => Promise<void>;
+  updatePipeline: (id: string, data: Partial<CreatePipelineRequest>) => Promise<void>;
   deletePipeline: (id: string) => Promise<void>;
   createStorageLocation: (data: CreateStorageLocationRequest) => Promise<void>;
   updateStorageLocation: (id: string, data: CreateStorageLocationRequest) => Promise<void>;
@@ -380,7 +381,15 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         const newData = {
           devicePoints: extractData(devicesRes),
-          pipelines: extractData(pipelinesRes),
+          pipelines: (extractData(pipelinesRes) as Pipeline[]).map((p) => {
+            if (!p.start_point && p.path) {
+              const derived = pathToStartEnd(p.path);
+              if (derived) {
+                return { ...p, start_point: derived.start, end_point: derived.end };
+              }
+            }
+            return p;
+          }),
           storageLocations: extractData(storageRes),
           evidenceRecords: extractData(evidenceRes),
           factoryMaps: extractData(mapsRes),
@@ -501,7 +510,7 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const updatePipeline = useCallback(
-    async (id: string, data: CreatePipelineRequest) => {
+    async (id: string, data: Partial<CreatePipelineRequest>) => {
       try {
         const res = await gisApi.updatePipeline(id, data);
         if (res.success && res.data) {

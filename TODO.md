@@ -161,7 +161,20 @@
   - [x] 写路径冒烟：business/map-markers/factory-maps 全链路 POST/GET/PUT/DELETE 全 200；
         GET 全端点（statistics/factory-maps/map-markers/fences/business-locations/
         warehouse-locations/location-photos/pipelines/search/geojson/export/health）全 200
-  - [ ] 遗留（GIS 功能接入专项，非路由层）：fence/pipeline 前端 API 仍为 V19 stub 契约
-        （fence 用 type/coordinates/alertOnEnter，后端用 shape_type/coordinates/event_types；
-        pipeline 缺 code 必填），且 GisFencePage 未调用 fenceApi——页面创建围栏/管道需
-        前后端契约对齐 + 页面接入后端后实跑验证
+  - [x] GIS 功能接入专项（2026-09-30，本轮提交）：
+        fence.ts 契约重写对齐后端（GeoFenceRecord：shape_type/coordinates(GeoJSON)/
+        event_types/radius/trigger_cooldown/status）；GisFencePage 删 MOCK_FENCES、
+        列表/删除/新建全接 fenceApi 真接口（表单受控、乐观回滚、失败恢复）；
+        CreatePipelineRequest.code 必填化（BI GisPage 两处调用补 code）+ path 必填
+        （后端 CreatePipeline 要 GeoJSON path，start_point/end_point 前端旧字段）；
+        Pipeline 类型对齐后端（code/path/map_id/properties）+ pathToStartEnd 工具，
+        GisContext 数据入口统一派生 start_point/end_point（地图渲染/表格/编辑回填
+        三处消费点自动修复）；GisContext updatePipeline 签名 Partial 对齐 pipelineApi
+        验证：tsc rc=0；vitest 3 files 53 tests 全过；fence/pipeline 真契约冒烟
+        POST/GET/PUT/DELETE 全 200（临时数据已删）
+  - [ ] 遗留（已知限制，非阻塞）：① fence 列表 GET 返回 {items,total}（分页包装），
+        fence.ts listGeoFences 按数组类型 + 页面 Array.isArray 适配——真实后端当前
+        仅返回 items 数组时可用，若后端开启分页需改类型（同 map-markers adaptResponse）；
+        ② GisFencePage triggerCount 恒 0（后端 Geofence 无触发计数字段）；③ 对话框
+        坐标输入为手动 "lat, lng" 文本（无地图拾取），polygon/rectangle 仅建 circle
+        Point 几何——后续可加地图取点交互

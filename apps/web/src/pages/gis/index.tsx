@@ -1099,8 +1099,14 @@ const GisContent: React.FC = () => {
                       id: p.id,
                       name: p.name,
                       type: 'rectangle',
-                      position: p.start_point,
-                      coordinates: [p.start_point, p.end_point],
+                      position: p.start_point ?? p.end_point ?? [0, 0],
+                      coordinates:
+                        p.start_point && p.end_point
+                          ? [p.start_point, p.end_point]
+                          : [
+                              [0, 0],
+                              [0, 0],
+                            ],
                       color: p.status?.toLowerCase().includes('active') ? 'green' : 'grey',
                     }))}
                   />

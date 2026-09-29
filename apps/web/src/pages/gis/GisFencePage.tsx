@@ -45,6 +45,7 @@ import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/temp
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { gisApi } from '@/api/gis';
+import fenceApi, { type GeoFenceRecord, type CreateGeoFenceRequest } from '@/api/gis/fence';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -68,58 +69,6 @@ interface FenceData {
   triggerCount: number;
 }
 
-const MOCK_FENCES: FenceData[] = [
-  {
-    id: 'F001',
-    name: i18n.t('gis.gis_fence_page.k0'),
-    type: 'polygon',
-    coordinates: '39.9042, 116.4074',
-    alertOnEnter: true,
-    alertOnExit: true,
-    status: 'active',
-    createdAt: '2024-01-10 09:00:00',
-    lastTriggered: '2024-01-15 14:30:00',
-    triggerCount: 156,
-  },
-  {
-    id: 'F002',
-    name: i18n.t('gis.gis_fence_page.a_1'),
-    type: 'circle',
-    radius: 50,
-    coordinates: '39.9142, 116.4174',
-    alertOnEnter: true,
-    alertOnExit: false,
-    status: 'active',
-    createdAt: '2024-01-12 10:00:00',
-    lastTriggered: '2024-01-15 13:20:00',
-    triggerCount: 89,
-  },
-  {
-    id: 'F003',
-    name: i18n.t('gis.gis_fence_page.k2'),
-    type: 'rectangle',
-    coordinates: '39.9242, 116.4274',
-    alertOnEnter: false,
-    alertOnExit: true,
-    status: 'active',
-    createdAt: '2024-01-08 11:00:00',
-    lastTriggered: '2024-01-15 12:00:00',
-    triggerCount: 45,
-  },
-  {
-    id: 'F004',
-    name: i18n.t('gis.gis_fence_page.k3'),
-    type: 'circle',
-    radius: 30,
-    coordinates: '39.8942, 116.3974',
-    alertOnEnter: true,
-    alertOnExit: true,
-    status: 'inactive',
-    createdAt: '2024-01-05 09:00:00',
-    triggerCount: 12,
-  },
-];
-
 export const GisFencePage: React.FC = () => {
   const { t } = useTranslation('gis');
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -127,6 +76,35 @@ export const GisFencePage: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [fenceForm, setFenceForm] = useState<{
+    name: string;
+    shape_type: 'circle' | 'polygon' | 'rectangle';
+    coordinates: string;
+    radius?: number;
+    eventTypes: { enter: boolean; exit: boolean };
+  }>({ name: '', shape_type: 'circle', coordinates: '', eventTypes: { enter: true, exit: true } });
+
+  /** 后端 GeoFenceRecord → 页面展示结构 */
+  const toFenceData = useCallback((g: GeoFenceRecord): FenceData => {
+    const coords = (g.coordinates as { coordinates?: [number, number] })?.coordinates ?? null;
+    const coordinatesStr = coords
+      ? `${coords[1].toFixed(4)}, ${coords[0].toFixed(4)}`
+      : typeof g.coordinates === 'string'
+        ? g.coordinates
+        : '';
+    return {
+      id: g.id,
+      name: g.name,
+      type: g.shape_type,
+      radius: g.radius,
+      coordinates: coordinatesStr,
+      alertOnEnter: (g.event_types ?? []).includes('enter'),
+      alertOnExit: (g.event_types ?? []).includes('exit'),
+      status: g.status,
+      createdAt: g.created_at,
+      triggerCount: 0,
+    };
+  }, []);
 
   const {
     data: mapMarkers = [],
@@ -145,16 +123,24 @@ export const GisFencePage: React.FC = () => {
     staleTime: CACHE_DURATIONS.MEDIUM,
   });
 
-  const { data: fences = MOCK_FENCES } = useQuery({
+  const { data: fences = [] } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
     queryFn: async () => {
-      return MOCK_FENCES;
+      const res = await fenceApi.listGeoFences();
+      if (res.success && res.data) {
+        return (Array.isArray(res.data) ? res.data : []).map(toFenceData);
+      }
+      throw new Error(res.message || t('gis.gis_fence_page.k4'));
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const deleteFenceMutation = useMutation({
     mutationFn: async (fenceId: string) => {
+      const res = await fenceApi.deleteGeoFence(fenceId);
+      if (!res.success) {
+        throw new Error(res.message || t('gis.gis_fence_page.k5'));
+      }
       return fenceId;
     },
     onMutate: async (fenceId) => {
@@ -176,6 +162,7 @@ export const GisFencePage: React.FC = () => {
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE });
       addNotification({
         title: t('gis.gis_fence_page.k8'),
         message: t('gis.gis_fence_page.k7'),
@@ -343,14 +330,61 @@ export const GisFencePage: React.FC = () => {
     setOpenDialog(true);
   }, []);
 
-  const handleSaveFence = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
-      exact: false,
-      refetchType: 'active',
-    });
-    setOpenDialog(false);
-  }, [queryClient]);
+  const handleSaveFence = useCallback(async () => {
+    if (!fenceForm.name.trim()) {
+      addNotification({
+        title: t('gis.gis_fence_page.k6'),
+        message: t('gis.gis_fence_page.k5'),
+        type: 'error',
+      });
+      return;
+    }
+    const coords = fenceForm.coordinates.split(',').map((c) => parseFloat(c.trim()));
+    const [lat, lng] = coords;
+    const payload: CreateGeoFenceRequest = {
+      name: fenceForm.name.trim(),
+      shape_type: fenceForm.shape_type,
+      coordinates:
+        fenceForm.shape_type === 'circle' && !Number.isNaN(lat) && !Number.isNaN(lng)
+          ? { type: 'Point', coordinates: [lng, lat] }
+          : { type: 'Point', coordinates: [lng ?? 0, lat ?? 0] },
+      radius: fenceForm.radius,
+      event_types: [
+        ...(fenceForm.eventTypes.enter ? ['enter'] : []),
+        ...(fenceForm.eventTypes.exit ? ['exit'] : []),
+      ],
+      status: 'active',
+    };
+    try {
+      const res = await fenceApi.createGeoFence(payload);
+      if (!res.success) {
+        throw new Error(res.message || t('gis.gis_fence_page.k5'));
+      }
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.AD_HOC.GIS_FENCES_BASE,
+        exact: false,
+        refetchType: 'active',
+      });
+      setOpenDialog(false);
+      setFenceForm({
+        name: '',
+        shape_type: 'circle',
+        coordinates: '',
+        eventTypes: { enter: true, exit: true },
+      });
+      addNotification({
+        title: t('gis.gis_fence_page.k8'),
+        message: t('gis.gis_fence_page.k7'),
+        type: 'success',
+      });
+    } catch (e) {
+      addNotification({
+        title: t('gis.gis_fence_page.k6'),
+        message: (e as Error).message,
+        type: 'error',
+      });
+    }
+  }, [fenceForm, queryClient, addNotification, t]);
 
   const handleDeleteFence = useCallback(
     (fenceId: string) => {
@@ -686,12 +720,20 @@ export const GisFencePage: React.FC = () => {
                 label={t('gis.gis_fence_page.k50')}
                 placeholder={t('gis.gis_fence_page.k51')}
                 fullWidth
+                value={fenceForm.name}
+                onChange={(e) => setFenceForm((f) => ({ ...f, name: e.target.value }))}
               />
               <FormControl fullWidth>
                 <InputLabel>{t('gis.gis_fence_page.k52')}</InputLabel>
                 <Select
-                  defaultValue='circle'
+                  value={fenceForm.shape_type}
                   label={t('gis.gis_fence_page.k53')}
+                  onChange={(e) =>
+                    setFenceForm((f) => ({
+                      ...f,
+                      shape_type: e.target.value as 'circle' | 'polygon' | 'rectangle',
+                    }))
+                  }
                 >
                   <MenuItem value='circle'>{t('gis.gis_fence_page.k54')}</MenuItem>
                   <MenuItem value='polygon'>{t('gis.gis_fence_page.k55')}</MenuItem>
@@ -702,12 +744,21 @@ export const GisFencePage: React.FC = () => {
                 label={t('gis.gis_fence_page.k57')}
                 placeholder={t('gis.gis_fence_page.m2')}
                 fullWidth
+                value={fenceForm.coordinates}
+                onChange={(e) => setFenceForm((f) => ({ ...f, coordinates: e.target.value }))}
               />
               <TextField
                 label={t('gis.gis_fence_page.k58')}
                 type='number'
                 placeholder={t('gis.gis_fence_page.k59')}
                 fullWidth
+                value={fenceForm.radius ?? ''}
+                onChange={(e) =>
+                  setFenceForm((f) => ({
+                    ...f,
+                    radius: e.target.value === '' ? undefined : Number(e.target.value),
+                  }))
+                }
               />
               <Typography
                 variant='body2'
@@ -717,11 +768,31 @@ export const GisFencePage: React.FC = () => {
               </Typography>
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <FormControlLabel
-                  control={<Checkbox defaultChecked />}
+                  control={
+                    <Checkbox
+                      checked={fenceForm.eventTypes.enter}
+                      onChange={(e) =>
+                        setFenceForm((f) => ({
+                          ...f,
+                          eventTypes: { ...f.eventTypes, enter: e.target.checked },
+                        }))
+                      }
+                    />
+                  }
                   label={t('gis.gis_fence_page.k60')}
                 />
                 <FormControlLabel
-                  control={<Checkbox defaultChecked />}
+                  control={
+                    <Checkbox
+                      checked={fenceForm.eventTypes.exit}
+                      onChange={(e) =>
+                        setFenceForm((f) => ({
+                          ...f,
+                          eventTypes: { ...f.eventTypes, exit: e.target.checked },
+                        }))
+                      }
+                    />
+                  }
                   label={t('gis.gis_fence_page.k61')}
                 />
               </Box>
