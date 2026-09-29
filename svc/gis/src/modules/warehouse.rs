@@ -53,7 +53,7 @@ pub async fn list_warehouse_locations(
 
     let query = if !search.is_empty() {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND warehouse_name ILIKE $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(format!("%{}%", search))
         .bind(page_size)
@@ -61,7 +61,7 @@ pub async fn list_warehouse_locations(
         .bind(tenant_opt)
     } else {
         sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
         .bind(page_size)
         .bind(offset)
@@ -174,7 +174,7 @@ pub async fn get_warehouse_location(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
     )
     .bind(id)
     .bind(tenant_opt)
@@ -306,7 +306,7 @@ pub async fn list_warehouse_locations_by_map(
             .and_then(|t| uuid::Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, WarehouseLocation>(
-        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
+        only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE deleted_at IS NULL AND map_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC"),
     )
     .bind(map_id)
     .bind(tenant_opt)

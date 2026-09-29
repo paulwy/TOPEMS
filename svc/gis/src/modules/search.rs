@@ -84,7 +84,7 @@ pub async fn search_locations(
 
     if location_type.is_none() || location_type.as_deref() == Some("warehouse") {
         if let Ok(warehouses) = sqlx::query_as::<_, WarehouseLocation>(
-            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE warehouse_name ILIKE $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
+            only_own_schema_query!("gis", "SELECT id, tenant_id, map_id, warehouse_name, zone, position, capacity, usage_rate::float8 AS usage_rate, status, created_at, updated_at FROM gis.warehouse_locations WHERE warehouse_name ILIKE $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(&search_pattern)
         .bind(tenant_opt)

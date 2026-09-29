@@ -60,16 +60,16 @@ pub async fn list_business_locations(
             only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE deleted_at IS NULL AND business_type = $1 AND ($4::uuid IS NULL OR tenant_id = $4) ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(bt)
-        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_opt)
     } else {
         sqlx::query_as::<_, BusinessLocation>(
             only_own_schema_query!("gis", "SELECT id, tenant_id, business_type, business_name, business_code, category, position, address, contact_person, contact_phone, capacity, current_usage, status, properties, description, external_id, external_type, created_at, updated_at FROM gis.business_locations WHERE ($3::uuid IS NULL OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
         )
-        .bind(tenant_opt)
         .bind(page_size)
         .bind(offset)
+        .bind(tenant_opt)
     };
 
     match query.fetch_all(&pool).await {

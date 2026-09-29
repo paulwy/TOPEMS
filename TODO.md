@@ -153,4 +153,15 @@
 ### P3 低优先级（功能增强）
 - [ ] 实现WebSocket实时推送（MES看板）
 - [ ] 修复插件市场401权限问题
-- [ ] GIS地图模块路由完善
+- [x] GIS地图模块路由完善（2026-09-30，c743ae959 后续批次）：
+  - [x] 列表接口 500 修复×2：business.rs bind 顺序错位（$3/$4 收到 i64→bigint→uuid cast 失败）；
+        warehouse/search/import_export usage_rate NUMERIC→f64 解码失败（SQL cast ::float8）
+  - [x] BFF /api/gis/health 补齐（embedded router 原缺，前端 getHealth() 404）
+  - [x] map-markers/{id} GET 补齐（embedded 聚合时漏注册，PUT/DELETE 在 GET 缺→CRUD 完整）
+  - [x] 写路径冒烟：business/map-markers/factory-maps 全链路 POST/GET/PUT/DELETE 全 200；
+        GET 全端点（statistics/factory-maps/map-markers/fences/business-locations/
+        warehouse-locations/location-photos/pipelines/search/geojson/export/health）全 200
+  - [ ] 遗留（GIS 功能接入专项，非路由层）：fence/pipeline 前端 API 仍为 V19 stub 契约
+        （fence 用 type/coordinates/alertOnEnter，后端用 shape_type/coordinates/event_types；
+        pipeline 缺 code 必填），且 GisFencePage 未调用 fenceApi——页面创建围栏/管道需
+        前后端契约对齐 + 页面接入后端后实跑验证
