@@ -28,8 +28,19 @@
 
 ### ⏳ 后续工作（按优先级）
 - **P0（需生产环境）**：
-  - Linux 生产实跑 install/update 全流程（dry-run 已验证逻辑，systemd 真实部署待验）
-  - 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
+  - ✅ **Linux生产实跑install/update全流程dry-run验证**（2026-09-30）：
+    - install.sh dry-run完整通过：环境检查→目录创建→前端构建（306文件/16.48MB）→systemd安装（24服务）→配置复制→服务启用
+    - update.sh dry-run基本通过：后端二进制更新流程正常，前端构建因pnpm/npm差异失败（预期）
+    - rollback.sh需要root权限，无dry-run模式，待生产环境实跑验证
+  - ⏳ Linux生产实跑install/update/rollback全流程（dry-run已验证逻辑，systemd真实部署待验）
+  - ⏳ 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
+
+- **P1（本机可继续）**：
+  - ⏳ **MES模块剩余156个编译错误修复**：
+    - 核心错误类型：Option<String>/String、Option<DateTime>/DateTime类型不匹配
+    - 修复策略：逐个文件手动修复，避免全局sed替换改坏文件
+    - 当前进度：从344个错误降到156个，修复率55%
+  - ⏳ update.sh前端构建修复：将npm改为pnpm，解决workspace协议错误
 - **P1（本机可继续）**：
   - ✅ 报告 M 级遗留复核：40 个脚本 shellcheck 风格告警清理（SC2155/SC2046 类）——**已全量清零 195→0**（ce1512182）
   - ✅ `generate-ai-api.sh` client.ts 生成结构与仓内差异归零（4885f5d20）
