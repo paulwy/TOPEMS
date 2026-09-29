@@ -390,7 +390,7 @@ pub async fn get_process_route(
                     id: r.id.to_string(),
                     code: r.code,
                     name: r.name,
-                    description: Some(r.description),
+                    description: r.description.unwrap_or_default(),
                     version: None,
                     status: r.status,
                     estimated_time_minutes: None,
@@ -463,7 +463,7 @@ pub async fn create_process_route(
                     id: r.id.to_string(),
                     code: r.code,
                     name: r.name,
-                    description: Some(r.description),
+                    description: r.description.unwrap_or_default(),
                     version: None,
                     status: r.status,
                     estimated_time_minutes: None,
@@ -548,7 +548,7 @@ pub async fn update_process_route(
                     id: r.id.to_string(),
                     code: r.code,
                     name: r.name,
-                    description: Some(r.description),
+                    description: r.description.unwrap_or_default(),
                     version: None,
                     status: r.status,
                     estimated_time_minutes: None,
@@ -684,13 +684,13 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name.unwrap_or_default(),
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -772,7 +772,7 @@ pub async fn add_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no.unwrap_or_default()),
+                Ok(p) => (Some(p.name), p.process_no),
                 Err(_) => (None, String::new()),
             };
 
@@ -873,7 +873,7 @@ pub async fn update_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no.unwrap_or_default()),
+                Ok(p) => (Some(p.name), p.process_no),
                 Err(_) => (None, String::new()),
             };
 
@@ -1039,13 +1039,13 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name.unwrap_or_default(),
                     description: s.description,
                     created_at: s.created_at,
                 })
