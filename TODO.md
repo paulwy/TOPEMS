@@ -23,20 +23,24 @@
   - Linux 生产实跑 install/update 全流程（dry-run 已验证逻辑，systemd 真实部署待验）
   - 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
 - **P1（本机可继续）**：
-  - 报告 M 级遗留复核：40 个脚本 shellcheck 风格告警清理（SC2155/SC2046 类）
-  - `generate-ai-api.sh` client.ts 生成结构与仓内差异归零
-  - `topems_mig_verify` 验证库残留核验清理
-  - push 效率优化：pre-push 全量 408s，评估分层门禁（提交层轻量 + 推送层全量）或缓存复用
+  - ✅ 报告 M 级遗留复核：40 个脚本 shellcheck 风格告警清理（SC2155/SC2046 类）——**已全量清零 195→0**（ce1512182）
+  - ✅ `generate-ai-api.sh` client.ts 生成结构与仓内差异归零（4885f5d20）
+  - ✅ `topems_mig_verify` 验证库残留核验清理（核验确认不存在，无需动作）
+  - ✅ push 效率优化：pre-push 全量 408s——sccache 接入 3 个 cargo 门禁（0038e554c）
 - **P2（持续观察）**：
-  - 全量并发 flaky 同类模式巡检（已修 3 例）
-  - bundle 973 chunks 碎片化观察（16.48MB 预算绿）
+  - ✅ 全量并发 flaky 同类模式巡检——审计 timeout/try_recv/set_var 全量：
+    5 处 set_var 全部有锁或唯一命名（无 EVENT_BUS_MODE 式共享污染）；timeout
+    各处合理（10ms tick vs 500ms、已修处 10s）；无新增风险点
+  - ✅ bundle 973 chunks 碎片化观察——分析确认非缺陷：673/973 chunk <10KB
+    系路由/组件懒加载粒度（HTTP/2 并行下载开销小）；大块已归 vendor
+    （exceljs 923K/mui-core 718K/react 221K）；total 16.48MB 预算绿，
+    无需强合并
 
 ### ⚠️ 存在问题（诚实记录）
-- push 阶段 SSH 截断反复出现（keepalive 参数缓解，根因 pre-push 408s 长连接空闲超时未根治）
-- pre-push 全量 408s 偏慢，开发体验成本高
+- push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）
 - 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）
 - 本机无 systemd（部署类验证仅到 dry-run 层）
-- 40 个脚本 shellcheck 告警未清零（无 error 级，风格为主）
+- shellcheck 告警已清零（ce1512182），需在 CI/门禁中固化为回归防线（待加）
 
 ## ✅ 今日已完成（2026-09-27）
 
