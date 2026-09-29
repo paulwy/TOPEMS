@@ -340,7 +340,7 @@ pub async fn get_team(
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
-                description: Some(r.description.unwrap_or_default()),
+                description: Some(r.description),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
@@ -529,7 +529,7 @@ pub async fn update_team(
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
-                description: Some(r.description.unwrap_or_default()),
+                description: Some(r.description),
                 created_at: r.created_at.unwrap_or_else(Utc::now),
                 updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
