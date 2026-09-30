@@ -65,3 +65,5 @@ pub mod srm;
 pub mod gis;
 // TMS: 运输管理系统
 pub mod tms;
+// Master-data: 主数据管理
+pub mod master_data;
