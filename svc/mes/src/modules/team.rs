@@ -333,18 +333,14 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: if r.work_station_name.is_empty() {
-                    None
-                } else {
-                    Some(r.work_station_name)
-                },
+                work_station_name: r.work_station_name,
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -418,7 +414,7 @@ pub async fn create_team(
                 member.employee_name,
                 member.employee_code,
                 member.position,
-                now.naive_utc(),
+                now,
             )
             .execute(&state.pool)
             .await;
@@ -431,7 +427,7 @@ pub async fn create_team(
             ), updated_at = $2 WHERE id = $1
             "#,
             result.id,
-            now.naive_utc(),
+            now,
         )
         .execute(&state.pool)
         .await;
