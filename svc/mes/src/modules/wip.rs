@@ -754,7 +754,7 @@ pub async fn transfer_wip(
         req.to_process_id,
         req.to_work_station_id,
         BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
-        now.naive_utc(),
+        now,
         req.operator.clone(),
         req.transfer_type
             .clone()
@@ -785,7 +785,7 @@ pub async fn transfer_wip(
         req.wip_id,
         req.to_process_id,
         req.to_work_station_id,
-        now.naive_utc(),
+        now,
     )
     .execute(&mut *tx)
     .await;
