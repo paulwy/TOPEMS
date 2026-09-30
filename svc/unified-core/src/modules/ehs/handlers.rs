@@ -33,7 +33,7 @@ pub async fn list_accidents(
         FROM ehs.qa_ehs_accidents
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_accidents(
         r#"
         SELECT COUNT(*) as count
         FROM ehs.qa_ehs_accidents
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -129,7 +129,7 @@ pub async fn list_hazards(
         SELECT COUNT(*) as count
         FROM ehs.qa_ehs_hazards
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -208,7 +208,7 @@ pub async fn list_trainings(
         r#"
         SELECT COUNT(*) as count
         FROM ehs.qa_ehs_trainings
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

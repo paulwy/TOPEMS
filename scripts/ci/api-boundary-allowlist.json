@@ -2504,6 +2504,14 @@
       "file": "wms/sync.ts",
       "type": "prebuilt",
       "reason": "预埋登记"
+    },
+    {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/inventory-real",
+      "file": "wms/inventory.ts",
+      "type": "prebuilt",
+      "reason": "unified-core wms_routes.rs:22 已实现 list_inventory_real（查 wms.inventory），gate 仅扫描各 svc main.rs 的 .route 字面量，模块内 routes/*.rs 路由不在扫描范围——登记放行"
     }
   ]
 }

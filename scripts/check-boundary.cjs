@@ -54,7 +54,7 @@ const SERVICE_SCHEMA = {
   srm: ['srm'],
   ticket: ['ticket'],
   tms: ['tms', 'aps'],
-  'unified-core': ['core', 'iam', 'unified_core', 'public'],
+  'unified-core': ['core', 'iam', 'unified_core', 'public', 'crm', 'ehs', 'erp', 'finance', 'hrm', 'pdm', 'qms', 'scm', 'wms'],
   wms: ['wms', 'plugin_wms'],
   monitor: ['public'],
   'plugin-registry': ['public'],

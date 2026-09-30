@@ -1,9 +1,6 @@
 //! CRM 客户关系管理模块路由
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::modules::crm::handlers;
 use crate::AppState;

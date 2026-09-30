@@ -35,7 +35,7 @@ pub async fn list_suppliers(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -48,7 +48,7 @@ pub async fn list_suppliers(
         SELECT COUNT(*) as count
         FROM scm.suppliers
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -220,7 +220,7 @@ pub async fn list_purchase_requisitions(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -233,7 +233,7 @@ pub async fn list_purchase_requisitions(
         SELECT COUNT(*) as count
         FROM scm.purchase_requisitions
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -302,7 +302,7 @@ pub async fn list_purchase_contracts(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -315,7 +315,7 @@ pub async fn list_purchase_contracts(
         SELECT COUNT(*) as count
         FROM scm.purchase_contracts
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -381,7 +381,7 @@ pub async fn list_materials(
         FROM scm.materials
         ORDER BY updated_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -393,7 +393,7 @@ pub async fn list_materials(
         r#"
         SELECT COUNT(*) as count
         FROM scm.materials
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

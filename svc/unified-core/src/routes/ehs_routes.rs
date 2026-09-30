@@ -1,9 +1,6 @@
 //! EHS 环境健康安全模块路由
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::modules::ehs::handlers;
 use crate::AppState;

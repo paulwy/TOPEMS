@@ -539,6 +539,23 @@ async fn main() -> Result<()> {
         .unwrap_or(8099);
 
     let app = registry.lock().unwrap().merge_routes();
+    // [2026-09-30 P3-WebSocket] MES 看板实时推送/初始数据：server 根层挂载。
+    // unified-core embedded 模式仅含 core 路由（/api/core/*），此前 /api/mes/*
+    // 与 /ws/mes/dashboard 全部 404，前端 ProductionDashboardPage 实时推送不可用。
+    // handler 均为无 state（MesService 惰性初始化），挂根层与前端既有 URL 契约一致。
+    let app = app
+        .route(
+            "/ws/mes/dashboard",
+            axum::routing::get(topems_unified_core::modules::mes::ws::mes_dashboard_ws),
+        )
+        .route(
+            "/api/mes/dashboard/stats",
+            axum::routing::get(topems_unified_core::modules::mes::handlers::dashboard_stats),
+        )
+        .route(
+            "/api/mes/dashboard/initial",
+            axum::routing::get(topems_unified_core::modules::mes::ws::mes_dashboard_initial),
+        );
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

@@ -34,7 +34,7 @@ pub async fn list_customers(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -47,7 +47,7 @@ pub async fn list_customers(
         SELECT COUNT(*) as count
         FROM crm.customers
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -119,7 +119,7 @@ pub async fn list_contacts(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -132,7 +132,7 @@ pub async fn list_contacts(
         SELECT COUNT(*) as count
         FROM crm.contacts
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -210,7 +210,7 @@ pub async fn list_opportunities(
         SELECT COUNT(*) as count
         FROM crm.opportunities
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -291,7 +291,7 @@ pub async fn list_contracts(
         SELECT COUNT(*) as count
         FROM crm.contracts
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -373,7 +373,7 @@ pub async fn list_interactions(
         SELECT COUNT(*) as count
         FROM crm.interactions
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

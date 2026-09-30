@@ -193,7 +193,17 @@
        cargo test 305s 通过）
 
 ### P3 低优先级（功能增强）
-- [ ] 实现WebSocket实时推送（MES看板）
+- [x] 实现WebSocket实时推送（MES看板）（2026-09-30，本轮提交）：
+  - 根因：BFF（topems-server 8099）经 unified-core embedded 模式聚合，仅含
+    core 路由（/api/core/*）；unified-core 完整模式的 /ws/mes/dashboard 与
+    /api/mes/dashboard/* 未挂载到 server 根层 → 前端 ProductionDashboardPage
+    实时推送/初始数据全 404（代码早已实现但从未端到端可用，故长期标 [ ]）
+  - 修复：svc/server main.rs 在 registry.merge_routes() 后根层补挂 3 条路由
+    （/ws/mes/dashboard 5s 实时推送 + /api/mes/dashboard/stats + /initial，
+    handler 无 state，MesService 惰性初始化安全）；前端 URL 契约零改动
+  - 验证：cargo check -p topems-server 0 错；实跑 ws 握手 101、收到
+    dashboard_update 推送（equipment_running=2）；stats/initial 200
+    （total_equipment=5/running=2/idle=1/maintenance=1/fault=1）
 - [x] 修复插件市场401权限问题（2026-09-30，本轮）：
   - 根因：plugin-registry 路由 layer 顺序颠倒——axum 后添加者居外先执行，
         tenant_middleware 在 jwt_auth_middleware 之前运行，扩展中无 Claims →

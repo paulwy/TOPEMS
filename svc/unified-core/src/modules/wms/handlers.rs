@@ -49,7 +49,7 @@ pub async fn list_inventory_real(
         SELECT COUNT(*) as count
         FROM wms.inventory
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -272,7 +272,7 @@ pub async fn list_inbound_orders_real(
         SELECT COUNT(*) as count
         FROM wms.inbound_orders
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -350,7 +350,7 @@ pub async fn list_outbound_orders_real(
         SELECT COUNT(*) as count
         FROM wms.outbound_orders
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -428,7 +428,7 @@ pub async fn list_warehouses_real(
         SELECT COUNT(*) as count
         FROM wms.warehouses
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

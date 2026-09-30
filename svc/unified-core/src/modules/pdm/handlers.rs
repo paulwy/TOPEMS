@@ -34,7 +34,7 @@ pub async fn list_materials(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -47,7 +47,7 @@ pub async fn list_materials(
         SELECT COUNT(*) as count
         FROM pdm.pdm_materials
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -117,7 +117,7 @@ pub async fn list_boms(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -130,7 +130,7 @@ pub async fn list_boms(
         SELECT COUNT(*) as count
         FROM pdm.pdm_boms
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -208,7 +208,7 @@ pub async fn list_documents(
         SELECT COUNT(*) as count
         FROM pdm.pdm_documents
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

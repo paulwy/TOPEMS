@@ -33,7 +33,7 @@ pub async fn list_inspection_items(
         FROM qms.inspection_items
         WHERE deleted_at IS NULL
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -46,7 +46,7 @@ pub async fn list_inspection_items(
         SELECT COUNT(*) as count
         FROM qms.inspection_items
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -125,7 +125,7 @@ pub async fn list_quality_inspections(
         SELECT COUNT(*) as count
         FROM qms.qa_quality_inspections
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -208,7 +208,7 @@ pub async fn list_quality_issues(
         SELECT COUNT(*) as count
         FROM qms.qa_quality_issues
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

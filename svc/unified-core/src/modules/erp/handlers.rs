@@ -52,7 +52,7 @@ pub async fn list_purchase_orders(
         SELECT COUNT(*) as count
         FROM erp.purchase_orders
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -137,7 +137,7 @@ pub async fn list_sales_orders(
         SELECT COUNT(*) as count
         FROM erp.sales_orders
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -213,7 +213,7 @@ pub async fn list_production_orders(
         r#"
         SELECT COUNT(*) as count
         FROM erp.erp_production_orders
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

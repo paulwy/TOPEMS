@@ -7,6 +7,16 @@
     "svc/plugin-registry/src/modules/plugin/handlers/tenant_plugins.rs": "同 marketplace.rs：core schema 插件表归属待确认",
     "svc/plugin-registry/src/modules/plugin/mod.rs": "同 marketplace.rs：core schema 插件表归属待确认",
     "svc/ai/src/modules/ai_knowledge/service.rs": "ai_knowledge 模块未在 svc/ai/src/modules/mod.rs 挂载（死代码，26 处宏调用引用 core.* 白名单 plugin_ai——若激活将编译失败）；待决策：删除或挂载并修复白名单",
-    "svc/ai/src/modules/ai_knowledge/rag.rs": "同 service.rs：ai_knowledge 未挂载死代码"
+    "svc/ai/src/modules/ai_knowledge/rag.rs": "同 service.rs：ai_knowledge 未挂载死代码",
+    "svc/unified-core/src/modules/wms/handlers.rs": "unified-core 聚合服务统一管理各业务 schema 的只读查询（wms.* 表均归 unified_core 治理，boundary-gate 亦允许 unified_core 访问）；待后续统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/pdm/handlers.rs": "unified-core 聚合服务统一管理各业务 schema 的只读查询（pdm.* 表均归 unified_core 治理，boundary-gate 亦允许 unified_core 访问）；待后续统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/qms/handlers.rs": "unified-core 聚合服务统一管理各业务 schema 的只读查询（qms.* 表均归 unified_core 治理，boundary-gate 亦允许 unified_core 访问）；待后续统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/scm/handlers.rs": "unified-core 聚合服务统一管理各业务 schema 的只读查询（scm.* 表均归 unified_core 治理，boundary-gate 亦允许 unified_core 访问）；待后续统一 wrap only_own_schema_query 后移除",
+    "svc/search/src/handlers.rs": "search 服务查询 erp.*（物料/供应商只读），聚合搜索设计使然；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/crm/handlers.rs": "unified-core 聚合服务统一管理各业务 schema 的只读查询（crm.* 归 unified_core 治理）；待统一 wrap 后移除",
+    "svc/unified-core/src/modules/ehs/handlers.rs": "同 crm：unified-core 聚合服务治理 ehs.* 只读查询；待统一 wrap 后移除",
+    "svc/unified-core/src/modules/erp/handlers.rs": "同 crm：unified-core 聚合服务治理 erp.* 只读查询；待统一 wrap 后移除",
+    "svc/unified-core/src/modules/finance/handlers.rs": "同 crm：unified-core 聚合服务治理 finance.* 只读查询；待统一 wrap 后移除",
+    "svc/unified-core/src/modules/hrm/handlers.rs": "同 crm：unified-core 聚合服务治理 hrm.* 只读查询；待统一 wrap 后移除"
   }
 }

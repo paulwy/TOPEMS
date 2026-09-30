@@ -35,7 +35,7 @@ pub async fn list_receivables(
         WHERE deleted_at IS NULL
         ORDER BY id DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -48,7 +48,7 @@ pub async fn list_receivables(
         SELECT COUNT(*) as count
         FROM finance.receivables
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -108,7 +108,7 @@ pub async fn list_payables(
         WHERE deleted_at IS NULL
         ORDER BY id DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -121,7 +121,7 @@ pub async fn list_payables(
         SELECT COUNT(*) as count
         FROM finance.payables
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -194,7 +194,7 @@ pub async fn list_vouchers(
         SELECT COUNT(*) as count
         FROM finance.core_finance_vouchers
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -274,7 +274,7 @@ pub async fn list_budgets(
         SELECT COUNT(*) as count
         FROM finance.budgets
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

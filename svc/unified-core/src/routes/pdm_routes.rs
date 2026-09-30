@@ -1,9 +1,6 @@
 //! PDM 产品数据管理模块路由
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::modules::pdm::handlers;
 use crate::AppState;

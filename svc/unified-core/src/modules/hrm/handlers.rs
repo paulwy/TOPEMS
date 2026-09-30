@@ -34,7 +34,7 @@ pub async fn list_employees(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -47,7 +47,7 @@ pub async fn list_employees(
         SELECT COUNT(*) as count
         FROM hrm.employees
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -118,7 +118,7 @@ pub async fn list_departments(
         WHERE deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -131,7 +131,7 @@ pub async fn list_departments(
         SELECT COUNT(*) as count
         FROM hrm.departments
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -209,7 +209,7 @@ pub async fn list_job_openings(
         SELECT COUNT(*) as count
         FROM hrm.job_openings
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -290,7 +290,7 @@ pub async fn list_training_courses(
         SELECT COUNT(*) as count
         FROM hrm.training_courses
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -372,7 +372,7 @@ pub async fn list_attendance_records(
         SELECT COUNT(*) as count
         FROM hrm.attendance_records
         WHERE deleted_at IS NULL
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
