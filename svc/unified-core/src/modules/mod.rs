@@ -75,3 +75,5 @@ pub mod rd;
 pub mod integration;
 // Portal: 门户
 pub mod portal;
+// Mobile: 移动端
+pub mod mobile;
