@@ -67,3 +67,5 @@ pub mod gis;
 pub mod tms;
 // Master-data: 主数据管理
 pub mod master_data;
+// Ticket: 工单
+pub mod ticket;
