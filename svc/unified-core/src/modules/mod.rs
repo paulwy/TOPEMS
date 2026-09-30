@@ -61,3 +61,5 @@ pub mod pm;
 pub mod lims;
 // SRM: 供应商关系管理
 pub mod srm;
+// GIS: 地理信息系统
+pub mod gis;
