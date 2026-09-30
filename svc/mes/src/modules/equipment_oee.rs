@@ -513,14 +513,8 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: result
-            .created_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
-        updated_at: result
-            .updated_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
+        created_at: result.created_at,
+        updated_at: result.updated_at,
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -582,7 +576,7 @@ pub async fn get_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
-                equipment_code: Some(r.equipment_no),
+                equipment_code: r.equipment_no,
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
                 run_time: big_decimal_to_f64(Some(r.actual_run_time)),
@@ -598,8 +592,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -755,8 +749,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at,
+                updated_at: r.updated_at,
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
