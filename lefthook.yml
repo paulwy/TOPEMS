@@ -262,9 +262,11 @@ pre-push:
     # [2026-09-30] 加 timeout=600s：全量正常约 305s，10min 余量充足；
     # 防止测试偶发挂起（如 shared_event Redis 连接 hang）时 pre-push 无限等待
     # （lefthook timeout 默认 ns，必须带单位 s/m）
+    # [2026-09-30 修订] 600s 曾偶发超时（sccache 冷缓存/本机负载时全量可达 10min+）：
+    # 上调至 900s（15min），同时保留对"测试挂起"的兜底（挂起>15min 仍会阻断）。
     cargo-test-workspace:
       tags: rust test
-      timeout: 600s
+      timeout: 900s
       run: |
         export SQLX_OFFLINE=true
         command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
