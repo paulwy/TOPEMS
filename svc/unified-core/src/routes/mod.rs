@@ -51,6 +51,8 @@ mod ehs_routes;
 mod analytics_routes;
 // PM: 项目管理业务 API
 mod pm_routes;
+// LIMS: 实验室信息管理系统业务 API
+mod lims_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -263,6 +265,8 @@ pub fn create_routes(
             .merge(analytics_routes::analytics_router())
             // PM 业务 API
             .merge(pm_routes::pm_router())
+            // LIMS 业务 API
+            .merge(lims_routes::lims_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(

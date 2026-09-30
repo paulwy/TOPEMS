@@ -57,3 +57,5 @@ pub mod ehs;
 pub mod analytics;
 // PM: 项目管理
 pub mod pm;
+// LIMS: 实验室信息管理系统
+pub mod lims;
