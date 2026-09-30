@@ -3,19 +3,23 @@
 > **版本**: lefthook 2.1.10
 > **配置文件**: [lefthook.yml](../../lefthook.yml)
 > **激活方式**: `package.json` 的 `prepare` 脚本自动执行 `lefthook install`
-> **Gate 总数**: 16（14 pre-commit + 2 pre-push）
+> **Gate 总数**: 25（20 pre-commit + 5 pre-push）
 
 ## 架构概览
 
 ```
-git commit ──→ pre-commit (parallel: false, 顺序执行 14 Gate)
+git commit ──→ pre-commit (parallel: true, 并行执行 20 Gate)
                    │
-                   ├── Gate A-N (原有 10 + P0 迁移 4)
+                   ├── Gate A-S (lint/typecheck/i18n/security/rust 等 20 项)
                    └── 失败时阻止提交
 
-git push ────→ pre-push (parallel: true, 并行执行 2 Gate)
+git push ────→ pre-push (parallel: false, 串行执行 5 Gate)
                    │
-                   ├── Gate J/K (Rust 格式 + Clippy)
+                   ├── Gate SC (shellcheck 全量)
+                   ├── Gate R (cargo check --workspace, 离线模式)
+                   ├── Gate J (cargo fmt --all --check)
+                   ├── Gate K (cargo clippy --workspace -D correctness)
+                   ├── Gate T (cargo test --workspace --lib, timeout 900s)
                    └── 失败时阻止推送
 ```
 
@@ -23,19 +27,28 @@ git push ────→ pre-push (parallel: true, 并行执行 2 Gate)
 
 | 阶段 | 并行模式 | Gate 数 | 说明 |
 |---|---|---|---|
-| `pre-commit` | `parallel: false` | 14 | 顺序执行，避免资源竞争（cargo + tsc + node） |
-| `pre-push` | `parallel: true` | 2 | 并行执行 cargo fmt + clippy，互不依赖 |
+| `pre-commit` | `parallel: true` | 20 | 并行执行，秒级门禁为主（lint/typecheck/i18n/shellcheck 变更模式） |
+| `pre-push` | `parallel: false` | 5 | 串行执行，避免 cargo 共享 target/包缓存锁竞争（曾实测并行随机失败） |
 
-### 跳过 Hook
+### 跳过 Hook（逃生门，需明确纪律）
 
 ```bash
 # 单次跳过
 git commit --no-verify
 git push --no-verify
 
+# 环境变量旁路（lefthook 官方机制）
+LEFTHOOK=0 git commit ...   # 临时禁用本仓库全部 lefthook 钩子
+LEFTHOOK=0 git push ...
+
 # 调试单 Gate
 npx lefthook run pre-commit --command <gate-name> --force
 ```
+
+> ⚠️ **使用纪律（2026-09-30 审计后固化）**：
+> - `--no-verify` / `LEFTHOOK=0` 是**逃生门**，仅允许用于：① 调试钩子本身；② 经评审确认的紧急热修复且 CI 全绿兜底；③ 明确标注 TODO 待补门禁的场景。
+> - **禁止**借逃生门推送已知未通过门禁的代码。CI（`.github/workflows/ci.yml`）是最终防线，与本地门禁同阈值——本地绕过、CI 必拦。
+> - 绕过操作请在提交信息中声明（如 `# skip-verify: 原因`），便于审计追溯。
 
 ---
 
