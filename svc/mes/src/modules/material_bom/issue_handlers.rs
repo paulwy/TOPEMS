@@ -377,8 +377,8 @@ pub async fn get_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.unwrap_or_else(|| Utc::now().naive_utc()),
-        "updated_at": issue.updated_at.unwrap_or_else(|| Utc::now().naive_utc()),
+        "created_at": issue.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        "updated_at": issue.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -454,8 +454,8 @@ now.naive_utc(),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.unwrap_or_else(|| Utc::now().naive_utc()),
-        "updated_at": issue.updated_at.unwrap_or_else(|| Utc::now().naive_utc()),
+        "created_at": issue.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        "updated_at": issue.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

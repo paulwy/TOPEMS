@@ -1,9 +1,6 @@
 //! TMS 运输管理系统模块路由
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::modules::tms::handlers;
 use crate::AppState;

@@ -1,9 +1,6 @@
 //! RD 研发模块路由
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::modules::rd::handlers;
 use crate::AppState;

@@ -33,7 +33,7 @@ pub async fn list_devices(
         FROM mobile.devices
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_devices(
         r#"
         SELECT COUNT(*) as count
         FROM mobile.devices
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_mobile_tasks(
         FROM mobile.mobile_tasks
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_mobile_tasks(
         r#"
         SELECT COUNT(*) as count
         FROM mobile.mobile_tasks
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -175,7 +175,7 @@ pub async fn list_oa_announcements(
         FROM mobile.oa_announcements
         ORDER BY published_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -187,7 +187,7 @@ pub async fn list_oa_announcements(
         r#"
         SELECT COUNT(*) as count
         FROM mobile.oa_announcements
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -246,7 +246,7 @@ pub async fn list_push_notifications(
         FROM mobile.push_notifications
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -258,7 +258,7 @@ pub async fn list_push_notifications(
         r#"
         SELECT COUNT(*) as count
         FROM mobile.push_notifications
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

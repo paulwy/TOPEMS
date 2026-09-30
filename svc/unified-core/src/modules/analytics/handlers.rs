@@ -33,7 +33,7 @@ pub async fn list_dashboards(
         FROM analytics.analytics_dashboards
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_dashboards(
         r#"
         SELECT COUNT(*) as count
         FROM analytics.analytics_dashboards
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_datasets(
         FROM analytics.analytics_datasets
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_datasets(
         r#"
         SELECT COUNT(*) as count
         FROM analytics.analytics_datasets
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -176,7 +176,7 @@ pub async fn list_datasources(
         FROM analytics.analytics_datasources
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -188,7 +188,7 @@ pub async fn list_datasources(
         r#"
         SELECT COUNT(*) as count
         FROM analytics.analytics_datasources
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -250,7 +250,7 @@ pub async fn list_widgets(
         FROM analytics.analytics_widgets
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -262,7 +262,7 @@ pub async fn list_widgets(
         r#"
         SELECT COUNT(*) as count
         FROM analytics.analytics_widgets
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

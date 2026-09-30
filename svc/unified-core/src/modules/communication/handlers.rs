@@ -33,7 +33,7 @@ pub async fn list_notifications(
         FROM communication.core_notifications
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_notifications(
         r#"
         SELECT COUNT(*) as count
         FROM communication.core_notifications
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -105,7 +105,7 @@ pub async fn list_notification_templates(
         FROM communication.core_notification_templates
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -117,7 +117,7 @@ pub async fn list_notification_templates(
         r#"
         SELECT COUNT(*) as count
         FROM communication.core_notification_templates
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -151,7 +151,10 @@ pub async fn list_notification_templates(
             }))
         }
         (Err(e), _) | (_, Err(e)) => {
-            tracing::error!("Failed to query communication notification templates: {}", e);
+            tracing::error!(
+                "Failed to query communication notification templates: {}",
+                e
+            );
             Json(serde_json::json!({
                 "code": 500,
                 "message": format!("获取通知模板列表失败: {}", e),
@@ -177,7 +180,7 @@ pub async fn list_emails(
         FROM communication.core_emails
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -189,7 +192,7 @@ pub async fn list_emails(
         r#"
         SELECT COUNT(*) as count
         FROM communication.core_emails
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -249,7 +252,7 @@ pub async fn list_email_templates(
         FROM communication.core_email_templates
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -261,7 +264,7 @@ pub async fn list_email_templates(
         r#"
         SELECT COUNT(*) as count
         FROM communication.core_email_templates
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

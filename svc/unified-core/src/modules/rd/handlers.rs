@@ -33,7 +33,7 @@ pub async fn list_bugs(
         FROM rd.bugs
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_bugs(
         r#"
         SELECT COUNT(*) as count
         FROM rd.bugs
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -106,7 +106,7 @@ pub async fn list_test_cases(
         FROM rd.test_cases
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -118,7 +118,7 @@ pub async fn list_test_cases(
         r#"
         SELECT COUNT(*) as count
         FROM rd.test_cases
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -179,7 +179,7 @@ pub async fn list_builds(
         FROM rd.builds
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -191,7 +191,7 @@ pub async fn list_builds(
         r#"
         SELECT COUNT(*) as count
         FROM rd.builds
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -250,7 +250,7 @@ pub async fn list_deploys(
         FROM rd.deploys
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -262,7 +262,7 @@ pub async fn list_deploys(
         r#"
         SELECT COUNT(*) as count
         FROM rd.deploys
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

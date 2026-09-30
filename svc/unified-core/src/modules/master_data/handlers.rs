@@ -33,7 +33,7 @@ pub async fn list_dict_types(
         FROM master_data.core_dict_types
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_dict_types(
         r#"
         SELECT COUNT(*) as count
         FROM master_data.core_dict_types
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_dict_items(
         FROM master_data.core_dict_items
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_dict_items(
         r#"
         SELECT COUNT(*) as count
         FROM master_data.core_dict_items
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -176,7 +176,7 @@ pub async fn list_schema_registry(
         FROM master_data.schema_registry
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -188,7 +188,7 @@ pub async fn list_schema_registry(
         r#"
         SELECT COUNT(*) as count
         FROM master_data.schema_registry
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -248,7 +248,7 @@ pub async fn list_dynamic_data(
         FROM master_data.dynamic_data
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -260,7 +260,7 @@ pub async fn list_dynamic_data(
         r#"
         SELECT COUNT(*) as count
         FROM master_data.dynamic_data
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

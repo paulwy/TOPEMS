@@ -33,7 +33,7 @@ pub async fn list_tickets(
         FROM ticket.core_tickets
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_tickets(
         r#"
         SELECT COUNT(*) as count
         FROM ticket.core_tickets
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -106,7 +106,7 @@ pub async fn list_ticket_comments(
         FROM ticket.core_ticket_comments
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -118,7 +118,7 @@ pub async fn list_ticket_comments(
         r#"
         SELECT COUNT(*) as count
         FROM ticket.core_ticket_comments
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -176,7 +176,7 @@ pub async fn list_ticket_sla_policies(
         FROM ticket.core_ticket_sla_policies
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -188,7 +188,7 @@ pub async fn list_ticket_sla_policies(
         r#"
         SELECT COUNT(*) as count
         FROM ticket.core_ticket_sla_policies
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -248,7 +248,7 @@ pub async fn list_knowledge_articles(
         FROM ticket.ticket_knowledge_articles
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -260,7 +260,7 @@ pub async fn list_knowledge_articles(
         r#"
         SELECT COUNT(*) as count
         FROM ticket.ticket_knowledge_articles
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

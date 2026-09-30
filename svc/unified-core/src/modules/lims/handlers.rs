@@ -33,7 +33,7 @@ pub async fn list_samples(
         FROM lims.samples
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_samples(
         r#"
         SELECT COUNT(*) as count
         FROM lims.samples
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_instruments(
         FROM lims.instruments
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_instruments(
         r#"
         SELECT COUNT(*) as count
         FROM lims.instruments
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -175,7 +175,7 @@ pub async fn list_inspection_tasks(
         FROM lims.inspection_tasks
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -187,7 +187,7 @@ pub async fn list_inspection_tasks(
         r#"
         SELECT COUNT(*) as count
         FROM lims.inspection_tasks
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -247,7 +247,7 @@ pub async fn list_inspection_records(
         FROM lims.inspection_records
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -259,7 +259,7 @@ pub async fn list_inspection_records(
         r#"
         SELECT COUNT(*) as count
         FROM lims.inspection_records
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -319,7 +319,7 @@ pub async fn list_reagents(
         FROM lims.reagents
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -331,7 +331,7 @@ pub async fn list_reagents(
         r#"
         SELECT COUNT(*) as count
         FROM lims.reagents
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

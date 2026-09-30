@@ -33,7 +33,7 @@ pub async fn list_devices(
         FROM gis.devices
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_devices(
         r#"
         SELECT COUNT(*) as count
         FROM gis.devices
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_maps(
         FROM gis.maps
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_maps(
         r#"
         SELECT COUNT(*) as count
         FROM gis.maps
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -175,7 +175,7 @@ pub async fn list_geofences(
         FROM gis.geofences
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -187,7 +187,7 @@ pub async fn list_geofences(
         r#"
         SELECT COUNT(*) as count
         FROM gis.geofences
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -246,7 +246,7 @@ pub async fn list_track_records(
         FROM gis.track_records
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -258,7 +258,7 @@ pub async fn list_track_records(
         r#"
         SELECT COUNT(*) as count
         FROM gis.track_records
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -317,7 +317,7 @@ pub async fn list_locations(
         FROM gis.locations
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -329,7 +329,7 @@ pub async fn list_locations(
         r#"
         SELECT COUNT(*) as count
         FROM gis.locations
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

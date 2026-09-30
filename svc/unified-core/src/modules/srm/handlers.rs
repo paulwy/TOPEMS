@@ -33,7 +33,7 @@ pub async fn list_tenders(
         FROM srm.tenders
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_tenders(
         r#"
         SELECT COUNT(*) as count
         FROM srm.tenders
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_bids(
         FROM srm.bids
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_bids(
         r#"
         SELECT COUNT(*) as count
         FROM srm.bids
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -176,7 +176,7 @@ pub async fn list_quotations(
         FROM srm.quotations
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -188,7 +188,7 @@ pub async fn list_quotations(
         r#"
         SELECT COUNT(*) as count
         FROM srm.quotations
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -248,7 +248,7 @@ pub async fn list_supplier_contracts(
         FROM srm.supplier_contracts
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -260,7 +260,7 @@ pub async fn list_supplier_contracts(
         r#"
         SELECT COUNT(*) as count
         FROM srm.supplier_contracts
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -319,7 +319,7 @@ pub async fn list_supplier_evaluations(
         FROM srm.supplier_evaluations
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -331,7 +331,7 @@ pub async fn list_supplier_evaluations(
         r#"
         SELECT COUNT(*) as count
         FROM srm.supplier_evaluations
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

@@ -33,7 +33,7 @@ pub async fn list_announcements(
         FROM portal.portal_announcements
         ORDER BY id
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_announcements(
         r#"
         SELECT COUNT(*) as count
         FROM portal.portal_announcements
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -100,7 +100,7 @@ pub async fn list_faqs(
         FROM portal.core_faqs
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -112,7 +112,7 @@ pub async fn list_faqs(
         r#"
         SELECT COUNT(*) as count
         FROM portal.core_faqs
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -171,7 +171,7 @@ pub async fn list_todos(
         FROM portal.portal_todos
         ORDER BY id
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -183,7 +183,7 @@ pub async fn list_todos(
         r#"
         SELECT COUNT(*) as count
         FROM portal.portal_todos
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -238,7 +238,7 @@ pub async fn list_guides(
         FROM portal.core_guides
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -250,7 +250,7 @@ pub async fn list_guides(
         r#"
         SELECT COUNT(*) as count
         FROM portal.core_guides
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

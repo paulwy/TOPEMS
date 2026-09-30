@@ -1,9 +1,6 @@
 //! GIS 地理信息系统模块路由
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 
 use crate::modules::gis::handlers;
 use crate::AppState;

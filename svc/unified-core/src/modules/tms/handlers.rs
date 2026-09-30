@@ -33,7 +33,7 @@ pub async fn list_carriers(
         FROM tms.tms_carriers
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_carriers(
         r#"
         SELECT COUNT(*) as count
         FROM tms.tms_carriers
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -105,7 +105,7 @@ pub async fn list_drivers(
         FROM tms.tms_drivers
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -117,7 +117,7 @@ pub async fn list_drivers(
         r#"
         SELECT COUNT(*) as count
         FROM tms.tms_drivers
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -177,7 +177,7 @@ pub async fn list_routes(
         FROM tms.tms_routes
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -189,7 +189,7 @@ pub async fn list_routes(
         r#"
         SELECT COUNT(*) as count
         FROM tms.tms_routes
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -249,7 +249,7 @@ pub async fn list_shipments(
         FROM tms.tms_shipments
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -261,7 +261,7 @@ pub async fn list_shipments(
         r#"
         SELECT COUNT(*) as count
         FROM tms.tms_shipments
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -322,7 +322,7 @@ pub async fn list_vehicles(
         FROM tms.tms_vehicles
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -334,7 +334,7 @@ pub async fn list_vehicles(
         r#"
         SELECT COUNT(*) as count
         FROM tms.tms_vehicles
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

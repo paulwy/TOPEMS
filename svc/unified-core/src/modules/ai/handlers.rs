@@ -33,7 +33,7 @@ pub async fn list_ai_models(
         FROM ai.ai_models
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_ai_models(
         r#"
         SELECT COUNT(*) as count
         FROM ai.ai_models
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -104,7 +104,7 @@ pub async fn list_ai_prompt_templates(
         FROM ai.ai_prompt_templates
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -116,7 +116,7 @@ pub async fn list_ai_prompt_templates(
         r#"
         SELECT COUNT(*) as count
         FROM ai.ai_prompt_templates
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -175,7 +175,7 @@ pub async fn list_ai_documents(
         FROM ai.documents
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -187,7 +187,7 @@ pub async fn list_ai_documents(
         r#"
         SELECT COUNT(*) as count
         FROM ai.documents
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -246,7 +246,7 @@ pub async fn list_ai_qa_history(
         FROM ai.qa_history
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -258,7 +258,7 @@ pub async fn list_ai_qa_history(
         r#"
         SELECT COUNT(*) as count
         FROM ai.qa_history
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

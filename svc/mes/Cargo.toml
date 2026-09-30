@@ -28,11 +28,11 @@ rand.workspace = true
 lazy_static.workspace = true
 futures-util.workspace = true
 utoipa.workspace = true
+rust_decimal = "1.35"
 
 [dev-dependencies]
 tower = { workspace = true }
 axum = { workspace = true }
-rust_decimal = "1.35"
 
 [lints]
 workspace = true

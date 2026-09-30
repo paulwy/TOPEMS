@@ -333,14 +333,14 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name,
+                work_station_name: Some(r.work_station_name),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -359,7 +359,7 @@ pub async fn create_team(
         return e;
     }
 
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let work_station_id: Option<Uuid> = req
         .work_station_id
@@ -386,7 +386,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        now.naive_utc(),
+        Utc::now().naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -650,7 +650,7 @@ pub async fn add_team_member(
         return e;
     }
 
-    let now = Utc::now();
+    let now = Utc::now().naive_utc();
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
     let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
@@ -669,7 +669,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        now.naive_utc(),
+        Utc::now().naive_utc(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -689,7 +689,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        now.naive_utc(),
+        Utc::now().naive_utc(),
     )
     .execute(&state.pool)
     .await;

@@ -33,7 +33,7 @@ pub async fn list_projects(
         FROM pm.projects
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_projects(
         r#"
         SELECT COUNT(*) as count
         FROM pm.projects
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -107,7 +107,7 @@ pub async fn list_tasks(
         FROM pm.pm_tasks
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -119,7 +119,7 @@ pub async fn list_tasks(
         r#"
         SELECT COUNT(*) as count
         FROM pm.pm_tasks
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -180,7 +180,7 @@ pub async fn list_project_members(
         FROM pm.project_members
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -192,7 +192,7 @@ pub async fn list_project_members(
         r#"
         SELECT COUNT(*) as count
         FROM pm.project_members
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -251,7 +251,7 @@ pub async fn list_project_resources(
         FROM pm.project_resources
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -263,7 +263,7 @@ pub async fn list_project_resources(
         r#"
         SELECT COUNT(*) as count
         FROM pm.project_resources
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -323,7 +323,7 @@ pub async fn list_project_risks(
         FROM pm.project_risks
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -335,7 +335,7 @@ pub async fn list_project_risks(
         r#"
         SELECT COUNT(*) as count
         FROM pm.project_risks
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;

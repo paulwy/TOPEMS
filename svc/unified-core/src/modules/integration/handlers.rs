@@ -33,7 +33,7 @@ pub async fn list_async_tasks(
         FROM integration.async_tasks
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -45,7 +45,7 @@ pub async fn list_async_tasks(
         r#"
         SELECT COUNT(*) as count
         FROM integration.async_tasks
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -105,7 +105,7 @@ pub async fn list_integration_events(
         FROM integration.integration_events
         ORDER BY created_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -117,7 +117,7 @@ pub async fn list_integration_events(
         r#"
         SELECT COUNT(*) as count
         FROM integration.integration_events
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -177,7 +177,7 @@ pub async fn list_erp_connections(
         FROM integration.erp_connections
         ORDER BY last_sync_at DESC
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -189,7 +189,7 @@ pub async fn list_erp_connections(
         r#"
         SELECT COUNT(*) as count
         FROM integration.erp_connections
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
@@ -247,7 +247,7 @@ pub async fn list_erp_mappings(
         FROM integration.erp_mappings
         ORDER BY id
         LIMIT $1 OFFSET $2
-        "#
+        "#,
     )
     .bind(page_size as i64)
     .bind(offset as i64)
@@ -259,7 +259,7 @@ pub async fn list_erp_mappings(
         r#"
         SELECT COUNT(*) as count
         FROM integration.erp_mappings
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
