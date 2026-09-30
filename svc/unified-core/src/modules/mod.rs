@@ -59,3 +59,5 @@ pub mod analytics;
 pub mod pm;
 // LIMS: 实验室信息管理系统
 pub mod lims;
+// SRM: 供应商关系管理
+pub mod srm;
