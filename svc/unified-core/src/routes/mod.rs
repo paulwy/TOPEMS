@@ -47,6 +47,8 @@ mod qms_routes;
 mod pdm_routes;
 // EHS: 环境健康安全业务 API
 mod ehs_routes;
+// Analytics: 数据分析业务 API
+mod analytics_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -255,6 +257,8 @@ pub fn create_routes(
             .merge(pdm_routes::pdm_router())
             // EHS 业务 API
             .merge(ehs_routes::ehs_router())
+            // Analytics 业务 API
+            .merge(analytics_routes::analytics_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(

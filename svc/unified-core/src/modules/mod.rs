@@ -53,3 +53,5 @@ pub mod qms;
 pub mod pdm;
 // EHS: 环境健康安全
 pub mod ehs;
+// Analytics: 数据分析
+pub mod analytics;
