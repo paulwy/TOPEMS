@@ -471,7 +471,7 @@ pub async fn create_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&state.pool)
     .await;
@@ -497,7 +497,7 @@ pub async fn create_oee_record(
         id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()),
-        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        equipment_code: equipment.as_ref().and_then(|e| e.equipment_no.clone()),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
         run_time: big_decimal_to_f64(Some(result.actual_run_time)),

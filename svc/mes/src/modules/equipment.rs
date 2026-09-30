@@ -785,10 +785,10 @@ pub async fn list_maintenances(
         .map(|r| MaintenanceRecord {
             id: r.id,
             equipment_id: r.equipment_id,
-            equipment_name: Some(r.equipment_name),
-            equipment_no: Some(r.equipment_no),
+            equipment_name: r.equipment_name,
+            equipment_no: r.equipment_no,
             maintenance_type: r.maintenance_type,
-            description: Some(r.description),
+            description: r.description,
             maintainer: r.maintainer,
             start_time: r.start_time,
             end_time: r.end_time,
