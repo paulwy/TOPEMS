@@ -286,3 +286,35 @@
         错误；修复 batch/discrepancy/inventory_alert/process_route/
         quality_traceability 6 文件后 cargo check/clippy --all-targets/
         test --lib 全绿
+- [x] webhook 单测超时根治（2026-09-30，commit 7ca46822d，已推 origin/main）：
+  - 根因：workspace 统一启用 reqwest `system-proxy` feature，`Client::new()` 在
+    受限网络下初始化系统代理探测阻塞 ~10s → 回环 mock 推送必现超时（3s→10s
+    放宽无效，根因不在超时时长）
+  - 修复：回环地址（127.0.0.1/localhost/[::1]）用 `reqwest::Client::builder()
+    .no_proxy()` 直连（注意 reqwest 0.12 无 `use_system_proxy(false)`，
+    须用 no_proxy()）；生产 webhook（非回环）行为不变
+  - 验证：原必现失败测试隔离 3/3 通过 0.05s；附带补登 schema-boundary-allowlist
+    unified-core 聚合层 14 条（ai/analytics/communication/gis/integration/lims/
+    master_data/mobile/pm/portal/rd/srm/ticket/tms），boundary-gate 不再误拦
+- [x] mes 189 个编译错误修复（2026-09-30，commit 6016a041b，已推 origin/main）：
+  - 根因：pre-push cargo-clippy --all-targets 暴露 topems-mes lib 生产代码
+    189 个编译错误（handler 响应构造字段类型与 struct 定义不同步，为 121 错误
+    修复 0f9d6a2df 未覆盖的存量遗留；pre-commit sqlx check 因增量缓存未捕获）
+  - 分布：16 个 modules 文件（process_flow 24/material_requirement 20/
+    equipment_oee 18/production_order 17/standard 16/production_scheduling 16/
+    wip 14/team 12/quality_traceability 9/bom_handlers 9/patrol 7/inspection 7/
+    process_route 6/equipment 6/work_report 4/production_kanban 2）
+  - 修复模式：时间字段 Option<NaiveDateTime>→DateTime<Utc> 用 `.and_utc()`
+    （与兄弟 handler 惯用法一致）；Option<String>/String 双向按目标字段补
+    Some/unwrap_or_default；Uuid 非迭代器直接 to_string()；Option<Option<String>>
+    用 .flatten()；BigDecimal unwrap_or_default；equipment_oee 缺 TimeZone
+    trait 导入统一改 .and_utc()
+  - 验证：cargo check -p topems-mes 0 错（19 警告回存量水平）；cargo test
+    -p topems-mes --lib 458/458 绿；clippy --workspace --all-targets 全绿
+    （9m33s）；workspace lib 全量 30 crate 0 failed
+- [x] pre-push test 门禁 timeout 600s→900s（2026-09-30，commit ac0fcfefa，已推）：
+  - 触发：mes 修复推送时 cargo-test-workspace 10min 超时（本地实测全量 6min，
+    sccache 冷缓存/负载波动导致 >600s；历史 831s 亦曾险过）
+  - 调整：lefthook.yml pre-push cargo-test-workspace timeout 600s→900s，
+    保留对"测试挂起"（如 shared_event Redis hang）的兜底
+  - 验证：下一次全量 push 五门禁全绿，test 实测 750.49s（新门禁下通过）
