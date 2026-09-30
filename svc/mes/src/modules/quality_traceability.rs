@@ -238,7 +238,7 @@ pub async fn forward_traceability(
         id: finished_node_id.clone(),
         node_type: "finished_product".to_string(),
         name: format!("{} 成品", order.product_name.clone()),
-        code: order.order_no.clone(),
+        code: order.order_no.clone().unwrap_or_default(),
         quantity: order
             .completed_quantity
             .clone()
