@@ -1,10 +1,11 @@
 //! WebSocket handler for real-time dashboard data updates
 
 use axum::{
-    extract::{Path, State, WebSocketUpgrade},
+    extract::{Path, Query, State, WebSocketUpgrade},
     response::IntoResponse,
 };
 use futures::{sink::SinkExt, stream::StreamExt};
+use serde::Deserialize;
 use sqlx::types::Uuid;
 use tokio::time::{interval, Duration};
 use tracing::{info, warn};
@@ -12,6 +13,12 @@ use tracing::{info, warn};
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
 use crate::modules::bi::widget::WIDGET_CACHE;
 use crate::shared::AppState;
+
+/// WebSocket 连接 query 参数：`?token=<JWT>`（与 mes/communication WS 模式一致）
+#[derive(Debug, Deserialize)]
+pub struct WsQueryParams {
+    pub token: Option<String>,
+}
 
 /// WebSocket endpoint for real-time dashboard data
 #[utoipa::path(
@@ -25,24 +32,38 @@ use crate::shared::AppState;
 pub async fn dashboard_websocket(
     State(state): State<AppState>,
     Path(dashboard_id): Path<Uuid>,
+    Query(params): Query<WsQueryParams>,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
     info!(
         "WebSocket connection requested for dashboard: {}",
         dashboard_id
     );
-    ws.on_upgrade(move |socket| handle_dashboard_socket(socket, state, dashboard_id))
+    let jwt_secret = state.auth_state.jwt_secret.clone();
+    let token = params.token;
+    ws.on_upgrade(move |socket| {
+        handle_dashboard_socket(socket, state, dashboard_id, jwt_secret, token)
+    })
 }
 
 async fn handle_dashboard_socket(
     socket: axum::extract::ws::WebSocket,
     state: AppState,
     dashboard_id: Uuid,
+    jwt_secret: String,
+    token: Option<String>,
 ) {
     info!(
         "WebSocket connection established for dashboard: {}",
         dashboard_id
     );
+
+    // 认证：URL token 校验（与 mes/communication WS 一致的软认证模式）
+    let _authenticated = if let Some(tok) = token {
+        topems_shared_auth::auth::verify_jwt_token(&tok, &jwt_secret).is_ok()
+    } else {
+        false
+    };
 
     let (mut sender, mut receiver) = socket.split();
 

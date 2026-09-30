@@ -956,8 +956,8 @@ pub async fn generate_payroll_voucher(
     let entries = build_payroll_voucher_entries(&summary);
 
     let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "topems_dev_secret_change_me_long_enough_32".to_string());
+    // 服务间认证密钥：从 ApiState.auth_state 取（已通过 AuthState::from_env 严格校验，无弱默认回退）
+    let jwt_secret = _state.auth_state.jwt_secret.clone();
     let client = reqwest::Client::new();
 
     let payload = serde_json::json!({
