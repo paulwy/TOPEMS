@@ -786,7 +786,7 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: Some(r.equipment_no),
+            equipment_no: r.equipment_no,
             maintenance_type: r.maintenance_type,
             description: r.description,
             maintainer: r.maintainer,
