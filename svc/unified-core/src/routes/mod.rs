@@ -73,6 +73,8 @@ mod integration_routes;
 mod portal_routes;
 // Mobile: 移动业务 API
 mod mobile_routes;
+// AI: 人工智能业务 API
+mod ai_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -307,6 +309,8 @@ pub fn create_routes(
             .merge(portal_routes::portal_router())
             // Mobile 业务 API
             .merge(mobile_routes::mobile_router())
+            // AI 业务 API
+            .merge(ai_routes::ai_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(

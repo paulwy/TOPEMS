@@ -77,3 +77,5 @@ pub mod integration;
 pub mod portal;
 // Mobile: 移动端
 pub mod mobile;
+// AI: 人工智能
+pub mod ai;
