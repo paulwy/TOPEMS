@@ -401,7 +401,7 @@ pub async fn create_production_schedule(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let schedule_no = format!(
         "PS{}{:04}",
         now.format("%Y%m%d"),
@@ -576,21 +576,21 @@ pub async fn get_production_schedule(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
-                work_station_name: Some(r.work_station_name),
+                work_station_name: r.work_station_name,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
                 process_name: Some(r.process_name),
-                planned_start_time: r.planned_start_time.map(|t| t.and_utc()),
-                planned_end_time: r.planned_end_time.map(|t| t.and_utc()),
-                actual_start_time: r.actual_start_time.map(|t| t.and_utc()),
-                actual_end_time: r.actual_end_time.map(|t| t.and_utc()),
+                planned_start_time: r.planned_start_time.map(|t| t),
+                planned_end_time: r.planned_end_time.map(|t| t),
+                actual_start_time: r.actual_start_time.map(|t| t),
+                actual_end_time: r.actual_end_time.map(|t| t),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -791,7 +791,7 @@ pub async fn adjust_schedule(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     for schedule_id in &req.schedule_ids {
         let result = sqlx::query!(
@@ -804,7 +804,7 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-            req.new_start_time.map(|t| t.naive_utc()),
+            req.new_start_time,
             now,
         )
         .execute(&state.pool)
@@ -874,13 +874,10 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-        let start = s
-            .planned_start_time
-            .map(|t| t.and_utc())
-            .unwrap_or_else(Utc::now);
+        let start = s.planned_start_time.map(|t| t).unwrap_or_else(Utc::now);
         let end = s
             .planned_end_time
-            .map(|t| t.and_utc())
+            .map(|t| t)
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
@@ -891,7 +888,7 @@ pub async fn get_gantt_data(
             0.0
         };
 
-        let resource_name = s.work_station_name.clone();
+        let resource_name = s.work_station_name.clone().unwrap_or_default();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
                 id: resource_name.clone(),
@@ -1037,7 +1034,7 @@ async fn transition_schedule(
         ));
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let updated = sqlx::query(
         "UPDATE production_schedules SET status = $1, notes = COALESCE($2, notes), updated_at = $3 WHERE id = $4 AND tenant_id = $5 AND deleted_at IS NULL",
     )

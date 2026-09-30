@@ -168,7 +168,7 @@ pub async fn create_material_bom(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
     let bom_no = format!(
         "BOM{}{:04}",
         now.format("%Y%m%d"),
@@ -286,8 +286,8 @@ pub async fn create_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: bom.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: bom.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        created_at: bom.created_at.map(|t| t).unwrap_or_else(Utc::now),
+        updated_at: bom.updated_at.map(|t| t).unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(
@@ -375,8 +375,8 @@ pub async fn get_material_bom(
         version: bom.version.unwrap_or_else(|| "1.0".to_string()),
         status: bom.status.unwrap_or_else(|| "draft".to_string()),
         description: bom.description,
-        created_at: bom.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: bom.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        created_at: bom.created_at.map(|t| t).unwrap_or_else(Utc::now),
+        updated_at: bom.updated_at.map(|t| t).unwrap_or_else(Utc::now),
     };
 
     let item_responses: Vec<BomItemResponse> = items
@@ -417,7 +417,7 @@ pub async fn update_material_bom(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,

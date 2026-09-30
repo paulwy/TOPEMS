@@ -333,14 +333,14 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: Some(r.work_station_name),
+                work_station_name: r.work_station_name,
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -359,7 +359,7 @@ pub async fn create_team(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let work_station_id: Option<Uuid> = req
         .work_station_id
@@ -627,7 +627,7 @@ pub async fn get_team_members(
             employee_name: r.employee_name,
             employee_code: r.employee_code,
             position: r.position,
-            join_date: r.join_date.map(|d| d.and_utc().to_rfc3339()),
+            join_date: r.join_date.map(|d| d.to_rfc3339()),
             status: r.status.unwrap_or_else(|| "active".to_string()),
         })
         .collect();
@@ -650,7 +650,7 @@ pub async fn add_team_member(
         return e;
     }
 
-    let now = Utc::now().naive_utc();
+    let now = Utc::now();
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
     let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());
@@ -669,7 +669,7 @@ pub async fn add_team_member(
         req.employee_name,
         req.employee_code,
         req.position,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -689,7 +689,7 @@ pub async fn add_team_member(
         ), updated_at = $2 WHERE id = $1
         "#,
         id,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .execute(&state.pool)
     .await;
@@ -701,7 +701,7 @@ pub async fn add_team_member(
         employee_name: result.employee_name,
         employee_code: result.employee_code,
         position: result.position,
-        join_date: result.join_date.map(|d| d.and_utc().to_rfc3339()),
+        join_date: result.join_date.map(|d| d.to_rfc3339()),
         status: result.status.unwrap_or_else(|| "active".to_string()),
     };
 
@@ -760,7 +760,7 @@ pub async fn remove_team_member(
             ), updated_at = $2 WHERE id = $1
             "#,
             id,
-            Utc::now().naive_utc(),
+            Utc::now(),
         )
         .execute(&state.pool)
         .await;

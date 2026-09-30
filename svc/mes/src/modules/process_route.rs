@@ -682,13 +682,13 @@ pub async fn get_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name,
                     description: s.description,
                     created_at: s.created_at,
                 })
@@ -780,7 +780,7 @@ pub async fn add_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code.flatten().unwrap_or_default(),
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -881,7 +881,7 @@ pub async fn update_route_step(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: process_name.unwrap_or_default(),
-                    process_code: process_code.flatten().unwrap_or_default(),
+                    process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
@@ -1037,13 +1037,13 @@ pub async fn reorder_route_steps(
                     route_id: s.route_id.to_string(),
                     process_id: s.process_id.to_string(),
                     process_name: s.process_name,
-                    process_code: s.process_code.unwrap_or_default(),
+                    process_code: s.process_code,
                     sequence: s.sequence,
                     estimated_time_minutes: s
                         .estimated_time_minutes
                         .map(|d| d.to_string().parse::<f64>().unwrap_or_default()),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
-                    work_station_name: Some(s.work_station_name),
+                    work_station_name: s.work_station_name,
                     description: s.description,
                     created_at: s.created_at,
                 })
