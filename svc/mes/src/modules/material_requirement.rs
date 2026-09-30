@@ -723,8 +723,8 @@ pub async fn calculate_requirements(
                         status: r.status.unwrap_or_else(|| "pending".to_string()),
                         source_type: r.source_type,
                         remark: r.remark,
-                        created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                        updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                        created_at: r.created_at.unwrap_or_else(Utc::now),
+                        updated_at: r.updated_at.unwrap_or_else(Utc::now),
                     });
                 }
             }
