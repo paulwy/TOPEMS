@@ -259,3 +259,165 @@ pub async fn list_job_openings(
         }
     }
 }
+
+/// 获取培训课程列表（真实数据库查询）
+pub async fn list_training_courses(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询培训课程列表
+    let courses = sqlx::query(
+        r#"
+        SELECT id, name, code, category, level, description, duration_hours, instructor_name, location, max_participants, status, created_at
+        FROM hrm.training_courses
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM hrm.training_courses
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match courses {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "name": r.get::<String, _>("name"),
+                        "code": r.get::<Option<String>, _>("code"),
+                        "category": r.get::<String, _>("category"),
+                        "level": r.get::<String, _>("level"),
+                        "description": r.get::<Option<String>, _>("description"),
+                        "duration_hours": r.get::<Option<rust_decimal::Decimal>, _>("duration_hours").map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
+                        "instructor_name": r.get::<Option<String>, _>("instructor_name"),
+                        "location": r.get::<Option<String>, _>("location"),
+                        "max_participants": r.get::<Option<i32>, _>("max_participants"),
+                        "status": r.get::<String, _>("status"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query training courses: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取培训课程列表失败"
+            }))
+        }
+    }
+}
+
+/// 获取考勤记录列表（真实数据库查询）
+pub async fn list_attendance_records(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询考勤记录列表
+    let records = sqlx::query(
+        r#"
+        SELECT id, employee_id, date, check_in_time, check_out_time, status, work_hours, overtime_hours, notes, created_at
+        FROM hrm.attendance_records
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM hrm.attendance_records
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match records {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "employee_id": r.get::<uuid::Uuid, _>("employee_id").to_string(),
+                        "date": r.get::<chrono::NaiveDate, _>("date"),
+                        "check_in_time": r.get::<Option<chrono::NaiveTime>, _>("check_in_time"),
+                        "check_out_time": r.get::<Option<chrono::NaiveTime>, _>("check_out_time"),
+                        "status": r.get::<String, _>("status"),
+                        "work_hours": r.get::<Option<rust_decimal::Decimal>, _>("work_hours").map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
+                        "overtime_hours": r.get::<Option<rust_decimal::Decimal>, _>("overtime_hours").map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
+                        "notes": r.get::<Option<String>, _>("notes"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query attendance records: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取考勤记录列表失败"
+            }))
+        }
+    }
+}

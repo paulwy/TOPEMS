@@ -21,4 +21,6 @@ pub fn scm_routes() -> Router<AppState> {
         .route("/api/scm/purchase-requisitions", get(list_purchase_requisitions))
         // 采购合同列表（真实数据库查询）
         .route("/api/scm/purchase-contracts", get(list_purchase_contracts))
+        // 物料列表（真实数据库查询）
+        .route("/api/scm/materials", get(list_materials))
 }

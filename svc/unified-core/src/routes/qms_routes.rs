@@ -15,4 +15,6 @@ pub fn qms_router() -> Router<AppState> {
         .route("/api/qms/inspection-items", get(handlers::list_inspection_items))
         // 质检单列表（真实数据库查询）
         .route("/api/qms/quality-inspections", get(handlers::list_quality_inspections))
+        // 质量问题列表（真实数据库查询）
+        .route("/api/qms/quality-issues", get(handlers::list_quality_issues))
 }

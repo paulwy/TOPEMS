@@ -15,4 +15,6 @@ pub fn erp_router() -> Router<AppState> {
         .route("/api/erp/purchase-orders", get(handlers::list_purchase_orders))
         // 销售订单列表（真实数据库查询）
         .route("/api/erp/sales-orders", get(handlers::list_sales_orders))
+        // 生产订单列表（真实数据库查询）
+        .route("/api/erp/production-orders", get(handlers::list_production_orders))
 }

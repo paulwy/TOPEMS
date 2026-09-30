@@ -177,3 +177,83 @@ pub async fn list_quality_inspections(
         }
     }
 }
+
+/// 获取质量问题列表（真实数据库查询）
+pub async fn list_quality_issues(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询质量问题列表
+    let issues = sqlx::query(
+        r#"
+        SELECT id, issue_no, title, description, severity, status, source, created_by, created_at, resolved_at
+        FROM qms.qa_quality_issues
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM qms.qa_quality_issues
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match issues {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "issue_no": r.get::<String, _>("issue_no"),
+                        "title": r.get::<String, _>("title"),
+                        "description": r.get::<Option<String>, _>("description"),
+                        "severity": r.get::<Option<String>, _>("severity"),
+                        "status": r.get::<String, _>("status"),
+                        "source": r.get::<Option<String>, _>("source"),
+                        "created_by": r.get::<Option<String>, _>("created_by"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                        "resolved_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("resolved_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query quality issues: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取质量问题列表失败"
+            }))
+        }
+    }
+}

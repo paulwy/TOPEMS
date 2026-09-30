@@ -184,3 +184,83 @@ pub async fn list_sales_orders(
         }
     }
 }
+
+/// 获取生产订单列表（真实数据库查询）
+pub async fn list_production_orders(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询生产订单列表
+    let orders = sqlx::query(
+        r#"
+        SELECT id, order_no, product_name, product_code, quantity, completed_quantity, status, planned_start_date, planned_end_date, workshop_name, priority, created_at
+        FROM erp.erp_production_orders
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM erp.erp_production_orders
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match orders {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "order_no": r.get::<String, _>("order_no"),
+                        "product_name": r.get::<String, _>("product_name"),
+                        "product_code": r.get::<Option<String>, _>("product_code"),
+                        "quantity": r.get::<rust_decimal::Decimal, _>("quantity").to_string().parse::<f64>().unwrap_or(0.0),
+                        "completed_quantity": r.get::<rust_decimal::Decimal, _>("completed_quantity").to_string().parse::<f64>().unwrap_or(0.0),
+                        "status": r.get::<String, _>("status"),
+                        "planned_start_date": r.get::<Option<chrono::NaiveDate>, _>("planned_start_date"),
+                        "planned_end_date": r.get::<Option<chrono::NaiveDate>, _>("planned_end_date"),
+                        "workshop_name": r.get::<Option<String>, _>("workshop_name"),
+                        "priority": r.get::<Option<i32>, _>("priority"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query production orders: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取生产订单列表失败"
+            }))
+        }
+    }
+}

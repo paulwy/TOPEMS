@@ -15,4 +15,6 @@ pub fn ehs_router() -> Router<AppState> {
         .route("/api/ehs/accidents", get(handlers::list_accidents))
         // 隐患列表（真实数据库查询）
         .route("/api/ehs/hazards", get(handlers::list_hazards))
+        // 培训列表（真实数据库查询）
+        .route("/api/ehs/trainings", get(handlers::list_trainings))
 }

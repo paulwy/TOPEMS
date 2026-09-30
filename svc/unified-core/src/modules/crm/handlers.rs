@@ -342,3 +342,83 @@ pub async fn list_contracts(
         }
     }
 }
+
+/// 获取互动记录列表（真实数据库查询）
+pub async fn list_interactions(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询互动记录列表
+    let interactions = sqlx::query(
+        r#"
+        SELECT id, interaction_type, subject, content, status, scheduled_at, follow_up_required, completed_at, notes, created_at
+        FROM crm.interactions
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM crm.interactions
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match interactions {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "interaction_type": r.get::<String, _>("interaction_type"),
+                        "subject": r.get::<Option<String>, _>("subject"),
+                        "content": r.get::<Option<String>, _>("content"),
+                        "status": r.get::<String, _>("status"),
+                        "scheduled_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("scheduled_at"),
+                        "follow_up_required": r.get::<bool, _>("follow_up_required"),
+                        "completed_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("completed_at"),
+                        "notes": r.get::<Option<String>, _>("notes"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query interactions: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取互动记录列表失败"
+            }))
+        }
+    }
+}

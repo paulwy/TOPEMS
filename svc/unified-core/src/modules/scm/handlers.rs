@@ -364,3 +364,77 @@ pub async fn list_purchase_contracts(
         }
     }
 }
+
+/// 获取物料列表（真实数据库查询）
+pub async fn list_materials(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询物料列表
+    let materials = sqlx::query(
+        r#"
+        SELECT material_code, material_name, specification, unit, created_at, updated_at
+        FROM scm.materials
+        ORDER BY updated_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM scm.materials
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match materials {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "material_code": r.get::<String, _>("material_code"),
+                        "material_name": r.get::<String, _>("material_name"),
+                        "specification": r.get::<Option<String>, _>("specification"),
+                        "unit": r.get::<Option<String>, _>("unit"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                        "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query materials: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取物料列表失败"
+            }))
+        }
+    }
+}

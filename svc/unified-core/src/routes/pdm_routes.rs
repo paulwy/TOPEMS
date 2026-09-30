@@ -15,4 +15,6 @@ pub fn pdm_router() -> Router<AppState> {
         .route("/api/pdm/materials", get(handlers::list_materials))
         // BOM列表（真实数据库查询）
         .route("/api/pdm/boms", get(handlers::list_boms))
+        // 文档列表（真实数据库查询）
+        .route("/api/pdm/documents", get(handlers::list_documents))
 }

@@ -17,4 +17,8 @@ pub fn hrm_router() -> Router<AppState> {
         .route("/api/hrm/departments", get(handlers::list_departments))
         // 招聘职位列表（真实数据库查询）
         .route("/api/hrm/job-openings", get(handlers::list_job_openings))
+        // 培训课程列表（真实数据库查询）
+        .route("/api/hrm/training-courses", get(handlers::list_training_courses))
+        // 考勤记录列表（真实数据库查询）
+        .route("/api/hrm/attendance-records", get(handlers::list_attendance_records))
 }

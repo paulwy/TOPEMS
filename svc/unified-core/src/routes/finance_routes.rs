@@ -15,4 +15,6 @@ pub fn finance_routes() -> Router<AppState> {
         .route("/api/finance/payables", get(list_payables))
         // 凭证列表（真实数据库查询）
         .route("/api/finance/vouchers", get(list_vouchers))
+        // 预算列表（真实数据库查询）
+        .route("/api/finance/budgets", get(list_budgets))
 }
