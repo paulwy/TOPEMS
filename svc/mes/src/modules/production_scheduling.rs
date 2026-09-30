@@ -804,8 +804,8 @@ pub async fn adjust_schedule(
             "#,
             schedule_id,
             req.new_work_station_id,
-            req.new_start_time.map(|d| d.naive_utc()),
-            now.naive_utc(),
+            req.new_start_time,
+            now,
         )
         .execute(&state.pool)
         .await;
