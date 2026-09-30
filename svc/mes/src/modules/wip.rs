@@ -864,7 +864,7 @@ pub async fn transfer_wip(
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: Some(to_workstation_name.unwrap_or_default()),
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
-        transfer_time: transfer.transfer_time.and_utc(),
+        transfer_time: transfer.transfer_time,
         operator: transfer.operator,
         transfer_type: transfer
             .transfer_type
