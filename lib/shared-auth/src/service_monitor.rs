@@ -280,11 +280,20 @@ fn notify_feishu(webhook_url: String, message: String) {
             "msg_type": "text",
             "content": { "text": format!("⚠️ [服务调用告警] {}", message) },
         });
-        let result = reqwest::Client::new()
-            .post(&webhook_url)
-            .json(&payload)
-            .send()
-            .await;
+        // 回环地址（测试/本机调试）不走系统代理：system-proxy 初始化在本机受限网络
+        // 环境下会阻塞约 10s，导致回环 webhook 推送超时；回环直连是标准语义。
+        let is_loopback = webhook_url.starts_with("http://127.0.0.1:")
+            || webhook_url.starts_with("http://localhost:")
+            || webhook_url.starts_with("http://[::1]:");
+        let client = if is_loopback {
+            reqwest::Client::builder()
+                .no_proxy()
+                .build()
+                .expect("reqwest client 构建失败")
+        } else {
+            reqwest::Client::new()
+        };
+        let result = client.post(&webhook_url).json(&payload).send().await;
         if let Err(e) = result {
             tracing::debug!(target: "service_call_alert", "飞书告警推送失败: {}", e);
         }

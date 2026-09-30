@@ -17,6 +17,20 @@
     "svc/unified-core/src/modules/ehs/handlers.rs": "同 crm：unified-core 聚合服务治理 ehs.* 只读查询；待统一 wrap 后移除",
     "svc/unified-core/src/modules/erp/handlers.rs": "同 crm：unified-core 聚合服务治理 erp.* 只读查询；待统一 wrap 后移除",
     "svc/unified-core/src/modules/finance/handlers.rs": "同 crm：unified-core 聚合服务治理 finance.* 只读查询；待统一 wrap 后移除",
-    "svc/unified-core/src/modules/hrm/handlers.rs": "同 crm：unified-core 聚合服务治理 hrm.* 只读查询；待统一 wrap 后移除"
+    "svc/unified-core/src/modules/hrm/handlers.rs": "同 crm：unified-core 聚合服务治理 hrm.* 只读查询；待统一 wrap 后移除",
+    "svc/unified-core/src/modules/ai/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/analytics/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/communication/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/gis/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/integration/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/lims/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/master_data/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/mobile/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/pm/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/portal/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/rd/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/srm/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/ticket/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除",
+    "svc/unified-core/src/modules/tms/handlers.rs": "同 crm：unified-core 聚合服务治理该业务 schema 只读查询；待统一 wrap only_own_schema_query 后移除"
   }
 }
