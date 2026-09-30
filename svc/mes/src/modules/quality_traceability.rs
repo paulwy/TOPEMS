@@ -171,7 +171,7 @@ pub async fn forward_traceability(
         id: order_node_id.clone(),
         node_type: "order".to_string(),
         name: order.product_name.clone(),
-        code: order.order_no.clone(),
+        code: order.order_no.clone().unwrap_or_default(),
         quantity: Some(
             order
                 .quantity
@@ -182,10 +182,7 @@ pub async fn forward_traceability(
         unit: Some("件".to_string()),
         batch_no: None,
         status: Some(order.status.clone()),
-        timestamp: order.actual_start_date.and_then(|d| {
-            d.and_hms_opt(0, 0, 0)
-                .map(|ndt| DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
-        }),
+        timestamp: order.actual_start_date,
         operator: None,
         description: Some("生产工单".to_string()),
     });
@@ -216,12 +213,12 @@ pub async fn forward_traceability(
             id: record_node_id.clone(),
             node_type: "process".to_string(),
             name: process_name,
-            code: process_no.unwrap_or_default(),
-            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone())),
+            code: process_no,
+            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone().unwrap_or_default())),
             unit: Some("件".to_string()),
             batch_no: None,
             status: Some(record.status.clone()),
-            timestamp: Some(record.start_time),
+            timestamp: record.start_time,
             operator: None,
             description: Some("生产工序记录".to_string()),
         });
@@ -230,7 +227,7 @@ pub async fn forward_traceability(
             from_id: prev_node_id.clone(),
             to_id: record_node_id.clone(),
             link_type: "production".to_string(),
-            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone())),
+            quantity: Some(big_decimal_to_f64_non_opt(record.quantity_produced.clone().unwrap_or_default())),
         });
 
         prev_node_id = record_node_id.clone();
