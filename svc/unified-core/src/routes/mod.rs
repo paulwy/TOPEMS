@@ -67,6 +67,8 @@ mod communication_routes;
 mod ticket_routes;
 // RD: 研发业务 API
 mod rd_routes;
+// Integration: 集成业务 API
+mod integration_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -295,6 +297,8 @@ pub fn create_routes(
             .merge(ticket_routes::ticket_router())
             // RD 业务 API
             .merge(rd_routes::rd_router())
+            // Integration 业务 API
+            .merge(integration_routes::integration_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(

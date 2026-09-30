@@ -71,3 +71,5 @@ pub mod master_data;
 pub mod ticket;
 // RD: 研发
 pub mod rd;
+// Integration: 集成
+pub mod integration;
