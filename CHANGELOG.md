@@ -11,8 +11,7 @@
 
 ### 变更
 
-- **应用自建表固化进迁移链**：ehs/lims 建表逻辑原在 Rust `init_database()` 内、迁移链未覆盖，全新环境跑集成测试会因缺表失败；新增迁移 `20260926120000_app_schema_tables.sql` 固化 ehs 43 + lims 37 + mes 32 张业务表（全 `IF NOT EXISTS` 幂等，迁移链 277 → 278）。`scripts/topems.sh test-backend` 前置 `db_migrate`（失败仅告警）；ehs/lims 集成测试 setup 调 `models::init_database()` 兜底。`cargo test --workspace` 23391 passed / 0 failed
-- **Rust TLS 依赖切换**：`lapin`(AMQP 客户端) 的 TLS feature 从 `rustls`（默认 `aws-lc-rs`，需 CMake/Perl/NASM 等 C 工具链）切换为 `rustls--ring`（纯 Rust ring 加密库），CI/本地编译无需额外 C 工具链即可通过。涉及 `lib/Cargo.toml` 与 `lib/shared-event/Cargo.toml`
+- **应用自建表固化进迁移链**：ehs/lims 建表逻辑原在 Rust `init_database()` 内、迁移链未覆盖，全新环境跑集成测试会因缺表失败；新增迁移 `20260926120000_app_schema_tables.sql` 固化 ehs 43 + lims 37 + mes 32 张业务表（全 `IF NOT EXISTS` 幂等，迁移链 277 → 278）。`scripts/topems.sh test-backend` 前置 `db_migrate`（失败仅告警）；ehs/lims 集成测试 setup 调 `models::init_database()` 兜底。`cargo test --workspace` 23391 passed / 0 failed- **Rust TLS 依赖切换**：`lapin`(AMQP 客户端) 的 TLS feature 从 `rustls`（默认 `aws-lc-rs`，需 CMake/Perl/NASM 等 C 工具链）切换为 `rustls--ring`（纯 Rust ring 加密库），CI/本地编译无需额外 C 工具链即可通过。涉及 `lib/Cargo.toml` 与 `lib/shared-event/Cargo.toml`
 - **审计日志导出三件套**：实现 gzip 压缩导出（`ExportFormat::Gzip`）、NDJSON 流式导出（`stream_export_audit_logs` 端点，分页查询+逐批 yield）、定时增量导出任务（`AuditExportTask`+`AuditExportController`，周期性增量导出+窗口推进）
 - **审计日志导出任务控制 API**：新建 `audit_export_task_api.rs`，提供 6 个 REST 端点（status/start/stop/trigger/config GET+PUT），支持通过 HTTP 控制定时导出任务的启停、手动触发及配置动态更新；AppState 新增 `audit_export_config` + `audit_export_controller` 字段
 - **代码冗余清理**：基于 `cargo-machete` 扫描移除 41 个 `Cargo.toml` 中 257 处未使用 Rust 依赖（tower-http/tracing-subscriber/dotenv/axum-prometheus/prometheus/thiserror 等脚手架模板残留，含 `shared-core` prost 误删恢复）；移除 `apps/web` 26 个零引用 npm 依赖（storybook addon 5、eslint 生态 6、vite/imagemin 插件 9、@axe-core/react 等，均经配置文件引用核对）；补 `@topems/api-client`（workspace 包）与 `sharp`（generate-icons 脚本）依赖声明
@@ -46,6 +45,32 @@
 
 - v1.1.0 功能增强版本开发
 - v1.2.0 集成扩展版本规划
+
+---
+
+## [5.15.0] - 2026-09-30
+
+### 概述
+
+TOPEMS 5.15.0 为当前正式版本（与 README 徽章、`apps/web/package.json` version 一致）。
+
+### 变更
+
+- **阶段一：编译止血**：修复 topems-wms 11 + topems-mes 24 个编译错误，`cargo check --workspace` 0 error；`cargo test -p topems-mes --lib` 458 passed / 0 failed，`-p topems-wms --lib` 550 passed / 0 failed；`cargo fmt --all --check` 通过
+- **阶段二：门禁修复**：移除从未激活的孤儿钩子 `.githooks/pre-push`；修正 `docs/developer/lefthook-guide.md`（Gate 16 → 25，含 pre-commit 20 并行 + pre-push 5 串行与逃生门纪律）；推送时五个 pre-push 门禁全部真实通过
+- **阶段三：安全还债（进行中）**：见 [未发布] 段安全修复条目
+
+---
+
+## [5.14.0] - 2026-07-13
+
+### 概述
+
+TOPEMS 5.14.0（对应 git tag `v5.14.0`）。
+
+### 变更
+
+- 此版本条目由 git tag `v5.14.0`（2026-07-13）对齐补充；早期详细变更见下方 `[1.0.0]` 里程碑记录（版本线历史遗留，1.x 与 5.x 并存为历史原因，当前以 5.x 为主版本线）
 
 ---
 

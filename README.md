@@ -79,9 +79,14 @@
 | React | ^19.2.7 | 前端框架 |
 
 ### API 路径规范
-所有 API 路径统一为 `/api/core/{service}/v1` 格式，例如：
-- `GET /api/core/erp/v1/orders`
-- `POST /api/core/finance/v1/payments`
+API 路径按服务实际挂载前缀暴露，主流格式为 `/api/{service}`，例如：
+- `GET /api/erp/orders`
+- `POST /api/finance/payments`
+- `GET /api/core/iam/users`（unified-core 统一入口，`/api/core` 前缀）
+
+兼容层说明（新增服务请勿依赖，仅存量兼容）：
+- 部分服务仍保留 `/api/core/{service}/v1` 与 `/api/v1/{service}` 遗留别名（经 `register_routes_with_legacy_alias` 挂载，或经 URI 重写中间件转发）；
+- 前端存在历史调用走 `/api/core/{service}/v1`，经 server 兼容层仍可用，新代码一律使用 `/api/{service}` 规范前缀。
 
 ## 📁 项目结构
 
