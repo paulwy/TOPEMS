@@ -1193,7 +1193,7 @@ pub async fn list_inspections(
                     remarks: r.remarks,
                     created_at: r
                         .created_at
-                        .map(|d| d.and_utc().to_rfc3339())
+                        .map(|d| d.to_rfc3339())
                         .unwrap_or_default(),
                 })
                 .collect();
