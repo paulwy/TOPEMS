@@ -103,7 +103,8 @@
       "@vitest/mocker": "4.1.11",
       "qs": "6.16.0",
       "tmp": "0.2.7",
-      "esbuild": "0.28.1"
+      "esbuild": "0.28.1",
+      "@puppeteer/browsers": "3.2.3"
     }
   },
   "type": "module"
