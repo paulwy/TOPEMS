@@ -204,6 +204,17 @@
   - 验证：cargo check -p topems-server 0 错；实跑 ws 握手 101、收到
     dashboard_update 推送（equipment_running=2）；stats/initial 200
     （total_equipment=5/running=2/idle=1/maintenance=1/fault=1）
+- [x] 修复 svc/mes 121 个编译错误（2026-09-30，提交 0f9d6a2df）：
+  - 根因：远端协作方 fix 提交为半成品（基于过时 DB 类型假设），svc/mes 累计
+    121 个编译错误，长期阻塞 pre-push 门禁 cargo check，连带 WS 看板修复无法推送
+  - 修复：批量 6 轮收敛——类型错配（unwrap_or_default 用错/缺 Some/flatten）、
+    时区（NaiveDateTime vs DateTime<Utc> 的 and_utc/naive_utc）、SQL 绑定
+    （f64→i32、DateTime→NaiveDate 的 date_naive）、rust_decimal 依赖段错位
+    （dev-dependencies→dependencies）
+  - 门禁对齐：boundary 白名单补全 unified-core 聚合 schema（tms/srm/lims/gis/
+    analytics/master_data/pm/integration/communication/rd/ticket/ai/mobile）
+  - 验证：SQLX_OFFLINE=true cargo check --workspace 0 错、fmt --check 0 差异、
+    pre-push 全门禁（check/clippy/fmt/test/shellcheck）全绿后推送成功
 - [x] 修复插件市场401权限问题（2026-09-30，本轮）：
   - 根因：plugin-registry 路由 layer 顺序颠倒——axum 后添加者居外先执行，
         tenant_middleware 在 jwt_auth_middleware 之前运行，扩展中无 Claims →
