@@ -61,6 +61,8 @@ mod gis_routes;
 mod tms_routes;
 // Master-data: 主数据管理业务 API
 mod master_data_routes;
+// Communication: 通讯业务 API
+mod communication_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -283,6 +285,8 @@ pub fn create_routes(
             .merge(tms_routes::tms_router())
             // Master-data 业务 API
             .merge(master_data_routes::master_data_router())
+            // Communication 业务 API
+            .merge(communication_routes::communication_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(
