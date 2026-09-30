@@ -62,6 +62,12 @@
     系路由/组件懒加载粒度（HTTP/2 并行下载开销小）；大块已归 vendor
     （exceljs 923K/mui-core 718K/react 221K）；total 16.48MB 预算绿，
     无需强合并
+  - ⏳ `topems_shared_event` 测试二进制偶发挂起观察项（2026-09-30 推送时发现）：
+    cargo test --workspace --lib 中 shared_event 测试二进制挂起 35+ 分钟
+    （0 CPU、无输出推进），终止进程链后原样重推即全绿通过（同一代码此前
+    305s 正常完成）——疑似完全访问/无沙箱环境下的事件时序敏感（event bus
+    等待类测试），非代码回归；待排查：单测必挂率、subscriber/publisher
+    等待超时是否需在无沙箱环境再放宽、是否引入测试级 watchdog
 
 ### ⚠️ 存在问题（诚实记录）
 - BI `/datasets/test-sql` 后端仍为桩实现（恒返回空 columns/data）——前端结果展示链路已通（显示"查询未返回数据"空态），真实 SQL 执行待后端落地
