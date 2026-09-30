@@ -247,7 +247,7 @@ run systemctl daemon-reload
 echo -e "${GREEN}✓ Systemd services installed${NC}"
 
 # Copy environment templates
-run cp "${SCRIPT_DIR}/deploy/env/.env.production.template" "${PREFIX}/config/.env.template"
+run cp "${SCRIPT_DIR}/config/env/.env.production.template" "${PREFIX}/config/.env.template"
 run cp "${SCRIPT_DIR}/.env.example" "${PREFIX}/config/.env.example"
 
 echo -e "${GREEN}✓ Configuration templates copied${NC}"
