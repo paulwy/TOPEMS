@@ -40,7 +40,7 @@ brotli = "3.5"
 sqlx.workspace = true
 
 # ===== 指标依赖 =====
-prometheus = "0.13"
+prometheus.workspace = true
 
 # ===== 日志依赖 =====
 tracing-appender = "0.2"
