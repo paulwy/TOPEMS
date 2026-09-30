@@ -171,6 +171,8 @@ pre-commit:
 
     # [Gate P2] Schema boundary check（Plan v1.0 §4.4 编译时边界 CI 侧强制：
     # 全量扫描 svc 裸 sqlx 查询的 schema.table 引用，跨 schema 违规阻断提交）
+    # V531: 走 allowlist 感知脚本（scripts/ci/check-schema-boundary.cjs）——
+    # 既有 known_gap 登记在 schema-boundary-allowlist.json，新违规仍阻断。
     boundary-gate:
       tags: boundary rust
       run: |
@@ -178,10 +180,10 @@ pre-commit:
         if [ -z "$STAGED" ]; then
           exit 0
         fi
-        if [ -f "scripts/check-boundary.cjs" ]; then
-          node scripts/check-boundary.cjs
+        if [ -f "scripts/ci/check-schema-boundary.cjs" ]; then
+          node scripts/ci/check-schema-boundary.cjs
         else
-          printf '\033[33m[Gate P2] WARN\033[0m scripts/check-boundary.cjs not found, skipping boundary-gate\n'
+          printf '\033[33m[Gate P2] WARN\033[0m scripts/ci/check-schema-boundary.cjs not found, skipping boundary-gate\n'
           exit 0
         fi
 
@@ -257,8 +259,12 @@ pre-push:
     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
     # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）
     # V300: 离线模式（SQLX_OFFLINE=true）——同时验证 .sqlx 缓存完整性
+    # [2026-09-30] 加 timeout=600s：全量正常约 305s，10min 余量充足；
+    # 防止测试偶发挂起（如 shared_event Redis 连接 hang）时 pre-push 无限等待
+    # （lefthook timeout 默认 ns，必须带单位 s/m）
     cargo-test-workspace:
       tags: rust test
+      timeout: 600s
       run: |
         export SQLX_OFFLINE=true
         command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true

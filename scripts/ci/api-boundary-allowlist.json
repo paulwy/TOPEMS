@@ -2,6 +2,14 @@
   "_comment": "API boundary allowlist (2026-09-09). prebuilt=预埋零消费（正常放行）；known_gap 已清零：ai 15 条（2026-09-09 后端补齐）+ crm 7 条（2026-09-09 前端改指 finance+finance 补齐）全部转 matched。",
   "entries": [
     {
+      "svc": "wms",
+      "verb": "GET",
+      "path": "/inventory-real",
+      "file": "wms/inventory.ts",
+      "type": "prebuilt",
+      "reason": "wms 实时库存接口预埋（inventory-real），后端路由待实现——并行工作临时登记，后端实现后移除"
+    },
+    {
       "svc": "ai",
       "verb": "GET",
       "path": "/conversations/",

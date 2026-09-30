@@ -61,12 +61,22 @@
     系路由/组件懒加载粒度（HTTP/2 并行下载开销小）；大块已归 vendor
     （exceljs 923K/mui-core 718K/react 221K）；total 16.48MB 预算绿，
     无需强合并
-  - ⏳ `topems_shared_event` 测试二进制偶发挂起观察项（2026-09-30 推送时发现）：
-    cargo test --workspace --lib 中 shared_event 测试二进制挂起 35+ 分钟
-    （0 CPU、无输出推进），终止进程链后原样重推即全绿通过（同一代码此前
-    305s 正常完成）——疑似完全访问/无沙箱环境下的事件时序敏感（event bus
-    等待类测试），非代码回归；待排查：单测必挂率、subscriber/publisher
-    等待超时是否需在无沙箱环境再放宽、是否引入测试级 watchdog
+  - ✅ `topems_shared_event` 测试二进制偶发挂起——**已根治**（2026-09-30）：
+    - **根因**：redis-rs 连接/命令无超时 + 测试辅助层无兜底。实测黑洞地址
+      （redis://192.0.2.1:6379）下 `get_multiplexed_async_connection().await`
+      无输出挂起 75s（仅靠系统 TCP 超时兜底）；若 TCP 已建立但 Redis 不响应
+      命令（连接竞争/半死），PING/SUBSCRIBE 等待**无限**挂起 → 0 CPU 无输出
+      推进，即 35+ 分钟现象。偶发 = 无沙箱/高并发下的连接时序，代码缺陷 =
+      任何连接 hang 都无超时失败路径
+    - **修复**（lib/shared-event/src/test_helpers/redis_pubsub.rs）：
+      `maybe_connect_redis` 连接+PING 加 5s 超时；`prepare_subscription`
+      订阅端连接/SUBSCRIBE 加 5s 超时、就绪信号 `ready_rx.await` 加 10s
+      超时（超时即 abort 订阅任务并明确 panic）
+    - **验证**：黑洞地址测试 75s 挂起 → 5s 快速跳过；正常 Redis 全量
+      361 passed / 0 failed / 3 ignored；clippy/fmt 全绿
+    - **纵深防御**：lefthook cargo-test-workspace 加 timeout=600（测试级
+      watchdog，正常全量约 305s，挂起时门禁 10min 内快速失败）
+  - ✅ 其余 flaky 观察项无需动作（详见上两条）
 
 ### ⚠️ 存在问题（诚实记录）
 - BI `/datasets/test-sql` 后端仍为桩实现（恒返回空 columns/data）——前端结果展示链路已通（显示"查询未返回数据"空态），真实 SQL 执行待后端落地

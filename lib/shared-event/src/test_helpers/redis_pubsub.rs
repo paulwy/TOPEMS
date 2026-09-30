@@ -30,15 +30,41 @@ use redis::Client;
 use serde::de::DeserializeOwned;
 use std::time::Duration;
 
+/// Redis 连接建立 / 命令响应的统一超时（秒）。
+///
+/// 背景：redis-rs 的 `get_async_connection` / `get_multiplexed_async_connection` /
+/// 命令查询默认**没有连接超时**（TCP connect 依赖系统层兜底，命令响应则无限等待）。
+/// 实测在连接黑洞地址时，测试二进制无输出挂起 75s（系统 TCP 超时）；若 TCP 已建立但
+/// Redis 不响应命令，则**无限挂起**（曾观察 shared_event 测试二进制挂起 35+ 分钟、
+/// 0 CPU）。这里统一加显式超时，让"连接/响应 hang"快速失败并给出清晰错误。
+const CONNECT_TIMEOUT_SECS: u64 = 5;
+/// 订阅建立（SUBSCRIBE 命令 + 就绪信号）统一超时（秒）。
+const SUBSCRIBE_READY_TIMEOUT_SECS: u64 = 10;
+
 /// 异步尝试连接 Redis。成功返回 `Some(client)`（已通过 PING 校验），失败返回 `None`。
+///
+/// 连接建立与 PING 均受 `CONNECT_TIMEOUT_SECS` 超时保护：Redis 不可达 / 半死时
+/// 5s 内快速跳过，而不是无限挂起或依赖系统 TCP 超时（实测 75s）。
 pub async fn maybe_connect_redis() -> Option<Client> {
     let redis_url =
         std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
     let client = Client::open(redis_url).ok()?;
-    let mut con = client.get_multiplexed_async_connection().await.ok()?;
-    let pong: Result<String, _> = redis::cmd("PING").query_async(&mut con).await;
+    let mut con = match tokio::time::timeout(
+        Duration::from_secs(CONNECT_TIMEOUT_SECS),
+        client.get_multiplexed_async_connection(),
+    )
+    .await
+    {
+        Ok(Ok(c)) => c,
+        _ => return None,
+    };
+    let pong = tokio::time::timeout(
+        Duration::from_secs(CONNECT_TIMEOUT_SECS),
+        redis::cmd("PING").query_async::<_, String>(&mut con),
+    )
+    .await;
     match pong {
-        Ok(s) if s == "PONG" => Some(client),
+        Ok(Ok(s)) if s == "PONG" => Some(client),
         _ => None,
     }
 }
@@ -120,12 +146,26 @@ where
     let (ready_tx, ready_rx) = tokio::sync::oneshot::channel::<()>();
 
     let subscriber_task = tokio::spawn(async move {
-        let con = subscriber_client
-            .get_async_connection()
-            .await
-            .expect("订阅端 redis 连接失败");
+        // 连接与 SUBSCRIBE 均加超时：任一环节 hang（网络异常/Redis 半死/连接竞争）
+        // 都必须在 SUBSCRIBE_READY_TIMEOUT_SECS 内失败，而不是无限挂起测试二进制。
+        let con = match tokio::time::timeout(
+            Duration::from_secs(CONNECT_TIMEOUT_SECS),
+            subscriber_client.get_async_connection(),
+        )
+        .await
+        {
+            Ok(Ok(c)) => c,
+            Ok(Err(e)) => panic!("订阅端 redis 连接失败: {e}"),
+            Err(_) => panic!("订阅端 redis 连接超时（{CONNECT_TIMEOUT_SECS}s）"),
+        };
         let mut pubsub = con.into_pubsub();
-        pubsub.subscribe(&ch).await.expect("subscribe 失败");
+        tokio::time::timeout(
+            Duration::from_secs(CONNECT_TIMEOUT_SECS),
+            pubsub.subscribe(&ch),
+        )
+        .await
+        .expect("subscribe 命令响应超时（Redis 半死/连接竞争）")
+        .expect("subscribe 失败");
         let _ = ready_tx.send(());
 
         let mut stream = pubsub.on_message();
@@ -147,9 +187,23 @@ where
         }
     });
 
-    ready_rx
-        .await
-        .expect("订阅任务在发出订阅就绪信号前 panic/结束");
+    // 就绪信号同样加超时：订阅任务若在连接/SUBSCRIBE 环节 hang，这里必须
+    // 中止任务并明确报错（否则测试二进制无限挂起，0 CPU、无输出推进）。
+    match tokio::time::timeout(Duration::from_secs(SUBSCRIBE_READY_TIMEOUT_SECS), ready_rx).await {
+        Ok(Ok(())) => {}
+        Ok(Err(e)) => {
+            subscriber_task.abort();
+            let _ = subscriber_task.await;
+            panic!("订阅任务在发出订阅就绪信号前 panic/结束: {e}");
+        }
+        Err(_) => {
+            subscriber_task.abort();
+            let _ = subscriber_task.await;
+            panic!(
+                "订阅就绪等待超时（{SUBSCRIBE_READY_TIMEOUT_SECS}s）：订阅任务未完成 SUBSCRIBE，可能 Redis 连接 hang"
+            );
+        }
+    }
 
     // 额外探针轮询，确认订阅在 Redis 服务端真正生效
     {
