@@ -11,7 +11,7 @@ SHELL := /bin/bash
 
 .PHONY: help sqlx-prepare sqlx-prepare-pkg sqlx-prepare-mes sqlx-check sqlx-offline-test \
         check-online check-offline check-migrations \
-        clean clean-rust clean-frontend
+        clean clean-debug clean-debug-full clean-sccache clean-rust clean-frontend
 
 # 默认目标
 help: ## 显示本帮助
@@ -51,13 +51,22 @@ check-iam: ## 仅离线 check topems-unified-core（IAM 端口 8000）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-unified-core
 
 check-finance: ## 仅离线 check topems-finance（端口 8011）
-        DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-finance
+	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-finance
 
 # ---------- 磁盘空间 / 构建清理 ----------
 clean: ## 全量清理（推荐，等效 topems clean）
 	./scripts/topems.sh clean
 
-clean-rust: ## 仅清理 Rust 编译产物 + kill 后台 cargo 进程
+clean-debug: ## 只清 Rust 增量缓存 + 嵌套 target 残留（保留 debug/release 产物，日常推荐）
+	./scripts/topems.sh clean --debug
+
+clean-debug-full: ## 清 debug 增量+依赖+构建脚本产物（保留 release，依赖需重编）
+	./scripts/topems.sh clean --debug-full
+
+clean-sccache: ## 清空 sccache 编译缓存（下次构建冷启动）
+	./scripts/topems.sh clean --sccache
+
+clean-rust: ## 全量清理 Rust 编译产物 + kill 后台 cargo 进程（等效 topems clean --rust）
 	./scripts/topems.sh clean --rust
 
 clean-frontend: ## 仅清理前端 dist / .vite / coverage 产物

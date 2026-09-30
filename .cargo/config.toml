@@ -9,7 +9,9 @@
 #   dev: opt-level=1 + codegen-units=256），本文件仅兜底默认值。
 
 [build]
-target-dir = "target"
+# 绝对路径：无论从 workspace 根还是 svc/*、lib/* 子目录构建，产物统一落在根 target/，
+# 避免 13 个嵌套 target 各自重复编译同一批依赖（此前占磁盘 ~332MB 且拖慢构建）
+target-dir = "/Users/xingzhai/TOPEMS/target"
 # sccache 编译缓存：跨 workspace / 跨版本 / 跨分支复用，典型命中命中率 40–70%
 rustc-wrapper = "sccache"
 # 抑制第三方依赖（zookeeper v0.8.0）的未来兼容性警告
