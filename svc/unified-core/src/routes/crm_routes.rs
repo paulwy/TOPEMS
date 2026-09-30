@@ -17,4 +17,6 @@ pub fn crm_router() -> Router<AppState> {
         .route("/api/crm/contacts", get(handlers::list_contacts))
         // 商机列表（真实数据库查询）
         .route("/api/crm/opportunities", get(handlers::list_opportunities))
+        // 合同列表（真实数据库查询）
+        .route("/api/crm/contracts", get(handlers::list_contracts))
 }

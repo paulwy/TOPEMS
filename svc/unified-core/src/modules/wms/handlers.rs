@@ -397,3 +397,84 @@ pub async fn list_outbound_orders_real(
         }
     }
 }
+
+/// 获取仓库列表（真实数据库查询）
+pub async fn list_warehouses_real(
+    State(state): State<AppState>,
+    Query(params): Query<RealListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询仓库列表
+    let warehouses = sqlx::query(
+        r#"
+        SELECT id, warehouse_code, warehouse_name, address, manager, contact_phone, status, warehouse_type, city, province, created_at
+        FROM wms.warehouses
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM wms.warehouses
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match warehouses {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "warehouse_code": r.get::<Option<String>, _>("warehouse_code"),
+                        "warehouse_name": r.get::<Option<String>, _>("warehouse_name"),
+                        "address": r.get::<Option<String>, _>("address"),
+                        "manager": r.get::<Option<String>, _>("manager"),
+                        "contact_phone": r.get::<Option<String>, _>("contact_phone"),
+                        "status": r.get::<Option<String>, _>("status"),
+                        "warehouse_type": r.get::<Option<String>, _>("warehouse_type"),
+                        "city": r.get::<Option<String>, _>("city"),
+                        "province": r.get::<Option<String>, _>("province"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query warehouses: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取仓库列表失败"
+            }))
+        }
+    }
+}

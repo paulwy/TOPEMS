@@ -260,3 +260,85 @@ pub async fn list_opportunities(
         }
     }
 }
+
+/// 获取合同列表（真实数据库查询）
+pub async fn list_contracts(
+    State(state): State<AppState>,
+    Query(params): Query<ListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询合同列表
+    let contracts = sqlx::query(
+        r#"
+        SELECT id, contract_no, title, customer_name, amount, status, sign_date, start_date, end_date, owner, type, created_at
+        FROM crm.contracts
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM crm.contracts
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match contracts {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "contract_no": r.get::<String, _>("contract_no"),
+                        "title": r.get::<String, _>("title"),
+                        "customer_name": r.get::<Option<String>, _>("customer_name"),
+                        "amount": r.get::<Option<rust_decimal::Decimal>, _>("amount").map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
+                        "status": r.get::<String, _>("status"),
+                        "sign_date": r.get::<Option<chrono::NaiveDate>, _>("sign_date"),
+                        "start_date": r.get::<Option<chrono::NaiveDate>, _>("start_date"),
+                        "end_date": r.get::<Option<chrono::NaiveDate>, _>("end_date"),
+                        "owner": r.get::<Option<String>, _>("owner"),
+                        "type": r.get::<Option<String>, _>("type"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query contracts: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取合同列表失败"
+            }))
+        }
+    }
+}
