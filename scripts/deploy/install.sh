@@ -184,20 +184,20 @@ echo ""
 
         for svc in "${SERVICES[@]}"; do
             if [[ -f "target/release/${svc}" ]]; then
-                cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
+                run cp "target/release/${svc}" "${PREFIX}/bin/${svc}-service"
                 echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
             elif [[ -f "target/release/topems-${svc}" ]]; then
-                cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
+                run cp "target/release/topems-${svc}" "${PREFIX}/bin/${svc}-service"
                 echo -e "${GREEN}✓ Installed ${svc}-service${NC}"
             elif [[ -f "target/release/topems-unified-core" && "$svc" == "unified-core" ]]; then
-                cp "target/release/topems-unified-core" "${PREFIX}/bin/topems-unified-core"
+                run cp "target/release/topems-unified-core" "${PREFIX}/bin/topems-unified-core"
                 echo -e "${GREEN}✓ Installed topems-unified-core${NC}"
             else
                 echo -e "${YELLOW}⚠ Binary for ${svc} not found, skipping${NC}"
             fi
         done
 
-        chmod +x "${PREFIX}/bin/*"
+        run chmod +x "${PREFIX}/bin/"*
     fi
 
 echo ""
