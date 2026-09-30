@@ -11,10 +11,9 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
-    types::{BigDecimal, Uuid},
+    types::Uuid,
     Row,
 };
-use std::str::FromStr;
 use topems_shared::auth::Claims;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
@@ -734,10 +733,10 @@ pub async fn get_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no.unwrap_or_default(),
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status,
@@ -812,9 +811,9 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.map(|q| BigDecimal::from_str(&q.to_string()).unwrap_or_default()),
-        req.planned_start_date,
-        req.planned_end_date,
+        req.quantity.map(|q| q as i32),
+        req.planned_start_date.map(|d| d.date_naive()),
+        req.planned_end_date.map(|d| d.date_naive()),
         req.workshop_id,
         req.notes,
         Utc::now(),
@@ -834,10 +833,10 @@ pub async fn update_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no.unwrap_or_default(),
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status,
@@ -958,7 +957,7 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now,
+        now.date_naive(),
         now,
     )
     .fetch_optional(&state.pool)
@@ -976,10 +975,10 @@ pub async fn start_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no.unwrap_or_default(),
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status,
@@ -1048,7 +1047,7 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-        now,
+        now.date_naive(),
         now,
     )
     .fetch_optional(&state.pool)
@@ -1066,10 +1065,10 @@ pub async fn complete_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no.unwrap_or_default(),
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status,
@@ -1153,10 +1152,10 @@ pub async fn cancel_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no.unwrap_or_default(),
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status,
@@ -1240,10 +1239,10 @@ pub async fn release_production_order(
         Some(r) => {
             let order = ProductionOrderResponse {
                 id: r.id,
-                order_no: r.order_no.unwrap_or_default(),
+                order_no: r.order_no,
                 product_id: r.product_id,
                 product_name: r.product_name,
-                product_code: r.product_code,
+                product_code: r.product_code.unwrap_or_default(),
                 quantity: r.quantity.unwrap_or_default(),
                 completed_quantity: r.completed_quantity.unwrap_or_default(),
                 status: r.status,
