@@ -443,7 +443,7 @@ pub async fn update_material_bom(
         req.version,
         req.status,
         req.description,
-        now.naive_utc(),
+        now,
     )
     .fetch_optional(&mut *tx)
     .await;
