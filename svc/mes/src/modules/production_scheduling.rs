@@ -578,9 +578,9 @@ pub async fn get_production_schedule(
                 work_station_id: r.work_station_id,
                 work_station_name: r.work_station_name,
                 equipment_id: r.equipment_id,
-                equipment_name: r.equipment_name,
+                equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
-                process_name: r.process_name,
+                process_name: Some(r.process_name),
                 planned_start_time: r.planned_start_time,
                 planned_end_time: r.planned_end_time,
                 actual_start_time: r.actual_start_time,
@@ -589,8 +589,8 @@ pub async fn get_production_schedule(
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -876,10 +876,10 @@ pub async fn get_gantt_data(
     for s in &schedules {
         let start = s
             .planned_start_time
-            .unwrap_or_else(|| Utc::now().naive_utc());
+            .unwrap_or_else(|| Utc::now());
         let end = s
             .planned_end_time
-            .unwrap_or_else(|| Utc::now().naive_utc() + chrono::Duration::hours(1));
+            .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
