@@ -42,7 +42,7 @@ regex.workspace = true
 
 rand = "0.8"
 async-trait = "0.1"
-trust-dns-resolver = "0.23"
+hickory-resolver = "0.26"
 async-stream = "0.3"
 
 [dev-dependencies]
