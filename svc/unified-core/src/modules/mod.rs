@@ -69,3 +69,5 @@ pub mod tms;
 pub mod master_data;
 // Ticket: 工单
 pub mod ticket;
+// RD: 研发
+pub mod rd;
