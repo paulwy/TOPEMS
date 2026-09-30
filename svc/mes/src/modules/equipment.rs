@@ -785,8 +785,8 @@ pub async fn list_maintenances(
         .map(|r| MaintenanceRecord {
             id: r.id,
             equipment_id: r.equipment_id,
-            equipment_name: r.equipment_name,
-            equipment_no: r.equipment_no,
+            equipment_name: Some(r.equipment_name),
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
             description: r.description,
             maintainer: r.maintainer,
@@ -794,10 +794,10 @@ pub async fn list_maintenances(
             end_time: r.end_time,
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status,
+            status: r.status.unwrap_or_default(),
             remarks: r.remarks,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            created_at: r.created_at.unwrap_or_else(Utc::now),
+            updated_at: r.updated_at.unwrap_or_else(Utc::now),
         })
         .collect();
 
