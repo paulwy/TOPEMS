@@ -1208,7 +1208,7 @@ pub async fn analyze_capacity(
         .map(|s| {
             s.standard_time
                 .clone()
-                .unwrap_or(0.0)
+                .unwrap_or(0)
                 .to_string()
                 .parse::<f64>()
                 .unwrap_or_default()
