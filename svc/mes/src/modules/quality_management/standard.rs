@@ -516,7 +516,7 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
+                        standard_id: r.standard_id.map(|u| u.to_string()).unwrap_or_default(),
                         item_name: r.item_name,
                         lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
@@ -705,7 +705,7 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
+                        standard_id: r.standard_id.map(|u| u.to_string()).unwrap_or_default(),
                         item_name: r.item_name,
                         lower_limit: Some(big_decimal_to_f64(r.lower_limit)),
                         upper_limit: Some(big_decimal_to_f64(r.upper_limit)),
