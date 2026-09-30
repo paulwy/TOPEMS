@@ -36,15 +36,14 @@
   - ⏳ 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
 
 - **P1（本机可继续）**：
-  - ⏳ **MES模块剩余156个编译错误修复**：
-    - 核心错误类型：Option<String>/String、Option<DateTime>/DateTime类型不匹配
-    - 修复策略：逐个文件手动修复，避免全局sed替换改坏文件
-    - 当前进度：从344个错误降到156个，修复率55%
+  - ✅ **MES模块编译错误清零**（2026-09-30 本轮复核）：
+    - SQLX_OFFLINE=true cargo check --workspace 与 -p topems-mes --all-targets 均 0 错误
+    - cargo test -p topems-mes --lib 458/458 全过（0 failed）
+    - 历史修复链：fd227e869（100→98）→ 逐文件 Option/时间类型手动修复 → 17f69004a/7b39aa231/d2f6e7ad8 → ca514ef65（wms/mes sqlx 离线缓存类型适配）——156 为旧记录，现全部清零
   - ✅ **WMS模块7个编译错误修复完成**（2026-09-30）：
     - InventoryAlert/WarehouseAlertCount结构体：warehouse_name/location_code都是Option<String>，直接传r.xxx即可
   - ✅ **11个核心业务模块全部编译通过**：
-    - unified-core/SCM/WMS/Finance/ERP/CRM/HRM/Analytics/QMS/PDM/EHS
-    - 只有MES模块还有156个错误待修复
+    - unified-core/SCM/WMS/Finance/ERP/CRM/HRM/Analytics/QMS/PDM/EHS（含 MES）
   - ✅ **update.sh前端构建修复完成**（2026-09-30）：
     - 将npm install改为pnpm install
     - 将npm run build改为pnpm run build
