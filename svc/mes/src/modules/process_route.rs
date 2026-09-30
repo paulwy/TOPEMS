@@ -770,7 +770,7 @@ pub async fn add_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no),
+                Ok(p) => (Some(p.name), Some(p.process_no)),
                 Err(_) => (None, None),
             };
 
@@ -871,7 +871,7 @@ pub async fn update_route_step(
             .await;
 
             let (process_name, process_code) = match process_info {
-                Ok(p) => (Some(p.name), p.process_no),
+                Ok(p) => (Some(p.name), Some(p.process_no)),
                 Err(_) => (None, None),
             };
 
