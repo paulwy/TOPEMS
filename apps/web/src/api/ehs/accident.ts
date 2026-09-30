@@ -25,7 +25,7 @@ export const accidentApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    return apiClient.ehs.get<PaginatedResponse<Accident>>(`/incidents?${queryParams.toString()}`);
+    return apiClient.ehs.get<PaginatedResponse<Accident>>(`/accidents?${queryParams.toString()}`);
   },
 
   getAccident: async (id: string): Promise<ApiResponse<AccidentDetail>> => {

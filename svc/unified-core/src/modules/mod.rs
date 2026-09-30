@@ -39,3 +39,17 @@ pub mod wms;
 pub mod mes;
 // SCM: 供应链管理
 pub mod scm;
+// Finance: 财务管理
+pub mod finance;
+// ERP: 企业资源计划
+pub mod erp;
+// CRM: 客户关系管理
+pub mod crm;
+// HRM: 人力资源管理
+pub mod hrm;
+// QMS: 质量管理
+pub mod qms;
+// PDM: 产品数据管理
+pub mod pdm;
+// EHS: 环境健康安全
+pub mod ehs;

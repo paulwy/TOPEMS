@@ -1,13 +1,101 @@
 //! WMS API 处理器
 
 use axum::{
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     Json,
 };
 use serde::Deserialize;
+use sqlx::Row;
 
 use super::models::*;
 use super::service::*;
+use crate::AppState;
+
+#[derive(Debug, Deserialize)]
+pub struct RealListParams {
+    #[serde(default)]
+    pub page: Option<u32>,
+    #[serde(default)]
+    pub page_size: Option<u32>,
+}
+
+/// 获取库存列表（真实数据库查询）
+pub async fn list_inventory_real(
+    State(state): State<AppState>,
+    Query(params): Query<RealListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询库存列表
+    let inventory = sqlx::query(
+        r#"
+        SELECT id, material_code, material_name, quantity, unit, available_quantity, quality_status, created_at
+        FROM wms.inventory
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM wms.inventory
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match inventory {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "material_code": r.get::<String, _>("material_code"),
+                        "material_name": r.get::<String, _>("material_name"),
+                        "quantity": r.get::<rust_decimal::Decimal, _>("quantity").to_string().parse::<f64>().unwrap_or(0.0),
+                        "unit": r.get::<String, _>("unit"),
+                        "available_quantity": r.get::<rust_decimal::Decimal, _>("available_quantity").to_string().parse::<f64>().unwrap_or(0.0),
+                        "quality_status": r.get::<String, _>("quality_status"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query inventory: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取库存列表失败"
+            }))
+        }
+    }
+}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationQuery {
@@ -152,4 +240,160 @@ pub async fn analytics_daily_trend() -> Json<serde_json::Value> {
         {"date": "2026-09-15", "inbound": 63, "outbound": 56},
         {"date": "2026-09-16", "inbound": 58, "outbound": 51},
     ]))
+}
+
+/// 获取入库订单列表（真实数据库查询）
+pub async fn list_inbound_orders_real(
+    State(state): State<AppState>,
+    Query(params): Query<RealListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询入库订单列表
+    let orders = sqlx::query(
+        r#"
+        SELECT id, order_number, order_type, warehouse_name, supplier_name, expected_arrival_date, status, created_at
+        FROM wms.inbound_orders
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM wms.inbound_orders
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match orders {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "order_number": r.get::<String, _>("order_number"),
+                        "order_type": r.get::<String, _>("order_type"),
+                        "warehouse_name": r.get::<Option<String>, _>("warehouse_name"),
+                        "supplier_name": r.get::<Option<String>, _>("supplier_name"),
+                        "expected_date": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("expected_arrival_date"),
+                        "status": r.get::<String, _>("status"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query inbound orders: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取入库订单列表失败"
+            }))
+        }
+    }
+}
+
+/// 获取出库订单列表（真实数据库查询）
+pub async fn list_outbound_orders_real(
+    State(state): State<AppState>,
+    Query(params): Query<RealListParams>,
+) -> Json<serde_json::Value> {
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    // 从数据库查询出库订单列表
+    let orders = sqlx::query(
+        r#"
+        SELECT id, order_number, order_type, warehouse_name, customer_name, expected_ship_date, status, created_at
+        FROM wms.outbound_orders
+        WHERE deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        "#
+    )
+    .bind(page_size as i64)
+    .bind(offset as i64)
+    .fetch_all(&state.pool)
+    .await;
+
+    // 查询总数
+    let total_row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as count
+        FROM wms.outbound_orders
+        WHERE deleted_at IS NULL
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let total: i64 = match total_row {
+        Ok(row) => row.get("count"),
+        Err(_) => 0,
+    };
+
+    match orders {
+        Ok(rows) => {
+            let data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<uuid::Uuid, _>("id").to_string(),
+                        "order_number": r.get::<String, _>("order_number"),
+                        "order_type": r.get::<String, _>("order_type"),
+                        "warehouse_name": r.get::<Option<String>, _>("warehouse_name"),
+                        "customer_name": r.get::<Option<String>, _>("customer_name"),
+                        "expected_date": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("expected_ship_date"),
+                        "status": r.get::<String, _>("status"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                    })
+                })
+                .collect();
+
+            Json(serde_json::json!({
+                "data": data,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }))
+        }
+        Err(e) => {
+            tracing::error!("Failed to query outbound orders: {}", e);
+            Json(serde_json::json!({
+                "data": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "error": "获取出库订单列表失败"
+            }))
+        }
+    }
 }

@@ -33,6 +33,20 @@ mod wms_routes;
 mod mes_routes;
 // SCM: 供应链管理业务 API
 mod scm_routes;
+// Finance: 财务管理业务 API
+mod finance_routes;
+// ERP: 企业资源计划业务 API
+mod erp_routes;
+// CRM: 客户关系管理业务 API
+mod crm_routes;
+// HRM: 人力资源管理业务 API
+mod hrm_routes;
+// QMS: 质量管理业务 API
+mod qms_routes;
+// PDM: 产品数据管理业务 API
+mod pdm_routes;
+// EHS: 环境健康安全业务 API
+mod ehs_routes;
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
@@ -227,6 +241,20 @@ pub fn create_routes(
             .merge(mes_routes::mes_routes())
             // SCM 业务 API
             .merge(scm_routes::scm_routes())
+            // Finance 业务 API
+            .merge(finance_routes::finance_routes())
+            // ERP 业务 API
+            .merge(erp_routes::erp_router())
+            // CRM 业务 API
+            .merge(crm_routes::crm_router())
+            // HRM 业务 API
+            .merge(hrm_routes::hrm_router())
+            // QMS 业务 API
+            .merge(qms_routes::qms_router())
+            // PDM 业务 API
+            .merge(pdm_routes::pdm_router())
+            // EHS 业务 API
+            .merge(ehs_routes::ehs_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(

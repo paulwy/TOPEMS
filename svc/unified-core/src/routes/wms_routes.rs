@@ -16,8 +16,14 @@ pub fn wms_routes() -> Router<AppState> {
         .route("/api/wms/inbound-orders/{id}", get(get_inbound_order))
         // 出库订单
         .route("/api/wms/outbound-orders", get(list_outbound_orders))
-        // 库存
+        // 库存（mock数据）
         .route("/api/wms/inventory", get(list_inventory))
+        // 库存（真实数据库查询）
+        .route("/api/wms/inventory-real", get(list_inventory_real))
+        // 入库订单（真实数据库查询）
+        .route("/api/wms/inbound-orders-real", get(list_inbound_orders_real))
+        // 出库订单（真实数据库查询）
+        .route("/api/wms/outbound-orders-real", get(list_outbound_orders_real))
         // 调拨
         .route("/api/wms/transfers", get(list_transfers))
         // Analytics
