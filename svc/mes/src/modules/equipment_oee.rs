@@ -714,7 +714,7 @@ pub async fn update_oee_record(
         req.shift,
         req.operator,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -967,7 +967,7 @@ pub async fn get_oee_statistics(
             .map(|r| OeeEquipmentStat {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_code: r.equipment_code,
+                equipment_code: r.equipment_code.unwrap_or_default(),
                 availability: big_decimal_to_f64(r.availability) * 100.0,
                 performance: big_decimal_to_f64(r.performance) * 100.0,
                 quality: big_decimal_to_f64(r.quality_rate) * 100.0,
