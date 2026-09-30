@@ -889,7 +889,7 @@ pub async fn get_gantt_data(
             0.0
         };
 
-        let resource_name = s.work_station_name.clone();
+        let resource_name = s.work_station_name.clone().unwrap_or_default();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
                 id: resource_name.clone(),
@@ -901,8 +901,8 @@ pub async fn get_gantt_data(
         tasks.push(GanttTask {
             id: s.id.to_string(),
             name: format!("{} - {}", s.schedule_no.clone(), s.product_name.clone()),
-            start: start.and_utc(),
-            end: end.and_utc(),
+            start,
+            end,
             progress,
             status: s.status.clone().unwrap_or_else(|| "pending".to_string()),
             resource: Some(resource_name),
