@@ -362,3 +362,10 @@ export interface FilterConfig {
   placeholder?: string;
   required?: boolean;
 }
+
+/** SQL 测试查询结果（后端 /datasets/test-sql 返回结构） */
+export interface SqlTestResult {
+  columns: string[];
+  data: Array<Record<string, unknown>>;
+  valid: boolean;
+}

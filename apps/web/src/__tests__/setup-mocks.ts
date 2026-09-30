@@ -41,6 +41,7 @@ vi.mock('@/store', () => {
   const themeState = {
     theme: 'light',
     setTheme: vi.fn(),
+    toggleTheme: vi.fn(),
   };
 
   const uiState = {
@@ -110,6 +111,12 @@ vi.mock('@/store', () => {
     useNotificationStore: createStore(notificationState),
     useAuthStore: createStore(authState),
     useThemeStore: createStore(themeState),
+    getThemeList: vi.fn(() => [
+      { value: 'light', label: 'Light', description: '' },
+      { value: 'dark', label: 'Dark', description: '' },
+      { value: 'system', label: 'System', description: '' },
+    ]),
+    THEME_ICON_KEYS: { light: 'light', dark: 'dark', system: 'system' },
     useUIStore: createStore(uiState),
     useWorkflowStore: createStore(workflowState),
     useModuleLoadingStore: createStore(moduleLoadingState),

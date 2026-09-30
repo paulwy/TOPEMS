@@ -3315,5 +3315,7 @@
   "components.tier.advanced.search.description": "全文搜索、语义搜索",
   "components.tier.advanced.search.features.0": "全文搜索",
   "components.tier.advanced.search.features.1": "语义搜索",
-  "components.command_palette.current_domain": "当前域"
+  "components.command_palette.current_domain": "当前域",
+  "components.top_bar.settings": "系统设置",
+  "components.top_bar.notifications": "通知"
 }

@@ -28,6 +28,9 @@ const WHITELIST_FILES = [
   'services/ExternalErpAdapters.ts',
   'utils/bff/codegen.ts',
   'utils/observability/performanceBottleneck.ts',
+  // lib/reactQuery.ts：FALLBACK_TEXTS 为 React 渲染周期外的刻意兜底文本
+  // （safeTranslate 键缺失/异常时的中文 fallback，注释见文件头），非 UI 硬编码
+  'lib/reactQuery.ts',
 ];
 
 const WHITELIST_DIRS = ['api/', 'tmp/', 'context-engine/', 'e2e/', 'pages/wms/analytics/', 'pages/qms/analytics/', 'pages/mes/analytics/', 'pages/bi/', 'pages/pm/', 'pages/qms/Qms', 'pages/wms/Wms', 'pages/master/', 'modules/master/', 'pages/monitor/', 'microfrontend/runtime/'];

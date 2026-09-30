@@ -40,7 +40,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
       {...rest}
     >
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav aria-label='Breadcrumb'>
+        <nav aria-label={t('shared.header_breadcrumbs.k0')}>
           <ol
             style={{
               display: 'flex',

@@ -6657,5 +6657,7 @@
     "tabs": {
       "error": "Error"
     }
-  }
+  },
+  "components.top_bar.settings": "Settings",
+  "components.top_bar.notifications": "Notifications"
 }

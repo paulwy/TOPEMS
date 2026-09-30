@@ -12,6 +12,7 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { Button } from '../primitives';
+import { ThemeSelector } from '@/components/ThemeSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { AUTH_PATHS } from '@/routes/auth';
@@ -155,11 +156,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           </kbd>
         </Button>
 
+        <ThemeSelector showMenu={false} />
+
         <Button
           variant='ghost'
           size='sm'
           onClick={onNotificationsOpen}
-          aria-label='Notifications'
+          aria-label={t('components.top_bar.notifications')}
         >
           <Bell size={18} />
         </Button>
@@ -168,7 +171,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           variant='ghost'
           size='sm'
           onClick={onSettingsOpen}
-          aria-label='Settings'
+          aria-label={t('components.top_bar.settings')}
         >
           <Settings size={18} />
         </Button>
@@ -182,7 +185,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             variant='ghost'
             size='sm'
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            aria-label='Profile'
+            aria-label={t('components.top_bar.profile')}
           >
             <User size={18} />
           </Button>

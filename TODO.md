@@ -36,15 +36,14 @@
   - ⏳ 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
 
 - **P1（本机可继续）**：
-  - ⏳ **MES模块剩余156个编译错误修复**：
-    - 核心错误类型：Option<String>/String、Option<DateTime>/DateTime类型不匹配
-    - 修复策略：逐个文件手动修复，避免全局sed替换改坏文件
-    - 当前进度：从344个错误降到156个，修复率55%
+  - ✅ **MES模块编译错误清零**（2026-09-30 本轮复核）：
+    - SQLX_OFFLINE=true cargo check --workspace 与 -p topems-mes --all-targets 均 0 错误
+    - cargo test -p topems-mes --lib 458/458 全过（0 failed）
+    - 历史修复链：fd227e869（100→98）→ 逐文件 Option/时间类型手动修复 → 17f69004a/7b39aa231/d2f6e7ad8 → ca514ef65（wms/mes sqlx 离线缓存类型适配）——156 为旧记录，现全部清零
   - ✅ **WMS模块7个编译错误修复完成**（2026-09-30）：
     - InventoryAlert/WarehouseAlertCount结构体：warehouse_name/location_code都是Option<String>，直接传r.xxx即可
   - ✅ **11个核心业务模块全部编译通过**：
-    - unified-core/SCM/WMS/Finance/ERP/CRM/HRM/Analytics/QMS/PDM/EHS
-    - 只有MES模块还有156个错误待修复
+    - unified-core/SCM/WMS/Finance/ERP/CRM/HRM/Analytics/QMS/PDM/EHS（含 MES）
   - ✅ **update.sh前端构建修复完成**（2026-09-30）：
     - 将npm install改为pnpm install
     - 将npm run build改为pnpm run build
@@ -62,8 +61,16 @@
     系路由/组件懒加载粒度（HTTP/2 并行下载开销小）；大块已归 vendor
     （exceljs 923K/mui-core 718K/react 221K）；total 16.48MB 预算绿，
     无需强合并
+  - ⏳ `topems_shared_event` 测试二进制偶发挂起观察项（2026-09-30 推送时发现）：
+    cargo test --workspace --lib 中 shared_event 测试二进制挂起 35+ 分钟
+    （0 CPU、无输出推进），终止进程链后原样重推即全绿通过（同一代码此前
+    305s 正常完成）——疑似完全访问/无沙箱环境下的事件时序敏感（event bus
+    等待类测试），非代码回归；待排查：单测必挂率、subscriber/publisher
+    等待超时是否需在无沙箱环境再放宽、是否引入测试级 watchdog
 
 ### ⚠️ 存在问题（诚实记录）
+- BI `/datasets/test-sql` 后端仍为桩实现（恒返回空 columns/data）——前端结果展示链路已通（显示"查询未返回数据"空态），真实 SQL 执行待后端落地
+- BI SQL 测试结果解析路径 `res?.data?.data` 基于 apiClient 已解包一层的假设，后端真实现后需实跑复核字段层级
 - push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）——本次 511s 长推送全程 keepalive 无截断，进一步缓解但非根除
 - 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）——已加 MIGRATE_ALLOW_STALE=1 防护 + 决策文档化
 - 远端半成品批次教训：残缺 .sqlx 缓存 + 无 CI 门禁会导致离线编译假通过——已通过 Gate S（pre-commit/pre-push/CI 三层）+ sqlx-prepare.sh --check 固化防线
@@ -173,14 +180,28 @@
 - [x] 接入全局搜索功能（顶部搜索按钮可用）——searchApi.globalSearch 完整链路核对确认已实现
 
 ### P2 中优先级（体验优化）
-- [ ] 清理MUI elevation={24}主题警告
-- [ ] 补全面包屑/标题i18n翻译，消除英文残留
-- [ ] 顶部导航栏添加主题切换按钮（太阳/月亮图标）
-- [ ] BI即席查询接口返回结构适配
+- [x] 清理MUI elevation={24}主题警告（已确认无残留，theme.ts 用语义 token）
+- [x] 补全面包屑/标题i18n翻译，消除英文残留（TopBar 通知/设置/用户 aria、
+      PageHeader 面包屑 aria 中文化，common/components 键补齐，zh 假 en 清除）
+- [x] 顶部导航栏添加主题切换按钮（太阳/月亮图标）——TopBar 接入 ThemeSelector
+      （showMenu=false 循环切换亮/暗/系统），HeaderUserMenu 原下拉保留
+- [x] BI即席查询接口返回结构适配——后端 /datasets/test-sql 返回 {columns,data,
+      valid}，前端原未展示结果；DatasetPage 增 SQL 测试结果表格（列头+行渲染）
+      + SqlTestResult 类型 + i18n（sql_test_result/sql_test_empty）
+      （a52edd540 验证：tsc rc=0；i18n-quality 0 残留/对齐；vitest redesign+
+       DatasetPage 19/19、store/theme/common 449/449 全过；pre-push 五门禁含
+       cargo test 305s 通过）
 
 ### P3 低优先级（功能增强）
 - [ ] 实现WebSocket实时推送（MES看板）
-- [ ] 修复插件市场401权限问题
+- [x] 修复插件市场401权限问题（2026-09-30，本轮）：
+  - 根因：plugin-registry 路由 layer 顺序颠倒——axum 后添加者居外先执行，
+        tenant_middleware 在 jwt_auth_middleware 之前运行，扩展中无 Claims →
+        全部 /api/plugin/* 401（实测 marketplace 200 而 runtime/list、
+        plugins/{code} 401）；修复 = 交换 layer 顺序（JWT 先注入 Claims）
+  - 重编译 release topems-server 并重启（旧二进制无修复）→ 实测
+        marketplace/marketplace-list/runtime-list/plugins/{code}/tenant/my
+        全部 200（带/不带 token 均通过）
 - [x] GIS地图模块路由完善（2026-09-30，c743ae959 后续批次）：
   - [x] 列表接口 500 修复×2：business.rs bind 顺序错位（$3/$4 收到 i64→bigint→uuid cast 失败）；
         warehouse/search/import_export usage_rate NUMERIC→f64 解码失败（SQL cast ::float8）
@@ -210,7 +231,23 @@
         GisFencePage 对话框坐标输入加"地图拾取"按钮 → 拾取模式（地图 Alert
         提示）→ 点击地图回填 lat,lng 并恢复对话框；i18n zh/en 补 e7-e9
         验证：typecheck rc=0；vitest 4 files 54 tests 全过
-  - [ ] 遗留（非阻塞）：① 对话框坐标输入仍为文本格式（拾取后回填文本），
-        polygon/rectangle 仅建 circle Point 几何——后端 shape_type 支持多边形但
-        前端未提供多点绘制；② 页面顶部统计卡（45/3 等）仍为静态演示值，
-        未接 statistics 接口
+  - [x] GIS 遗留两项（2026-09-30，本轮提交）：
+        ① 多边形/矩形多点绘制：shape_type 切换清坐标；绘制模式分 circle
+        （单点拾取）/polygon（≥3 顶点收集，预览实时渲染，完成按钮回填）/
+        rectangle（2 对角点自动生成 4 顶点）；保存按 shape_type 生成
+        GeoJSON（circle Point、polygon/rectangle Polygon 闭合环）；读取侧
+        extractGeoJSONPoints 解析 Point/Polygon → 地图 Polygon 渲染 +
+        列表点串展示；GisMapTemplate 新增 drawControl prop（页面关闭内置
+        假绘制按钮）；i18n zh/en 补 e10-e15
+        ② 顶部统计卡接 statistics 接口：无源"今日触发/待处理告警"静态值
+        （45/3）删除，改用后端 /api/gis/statistics 真实 device_points/
+        pipelines（i18n k16/k17 语义同步更新）
+        验证：tsc rc=0；vitest 5 files 63 tests 全过；实跑冒烟 statistics
+        200（device_points/pipelines 真实值）、polygon 围栏创建 200/
+        列表读取 200/DELETE 200（临时数据已删）
+  - [x] 连带发现：wms/mes sqlx 类型适配修复（2026-09-30，commit ca514ef65）：
+        .sqlx 离线缓存已按当前 DB schema 生成 NOT NULL/BigDecimal 类型，
+        代码仍假设旧 Option/f64 → 首次真编译（无 sccache 掩盖）暴露 13 处
+        错误；修复 batch/discrepancy/inventory_alert/process_route/
+        quality_traceability 6 文件后 cargo check/clippy --all-targets/
+        test --lib 全绿

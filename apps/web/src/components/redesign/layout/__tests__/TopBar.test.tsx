@@ -37,6 +37,6 @@ describe('TopBar', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByLabelText('Notifications')).toBeInTheDocument();
+    expect(screen.getByLabelText('通知')).toBeInTheDocument();
   });
 });

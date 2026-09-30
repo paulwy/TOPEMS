@@ -48,17 +48,18 @@ impl PluginRegistryRealModule {
 
         // 注册完整路由
         // crate 内部路由自带 /api/plugin/* 完整前缀，直接挂载（不重复 nest）
+        // layer 顺序（axum 后添加者居外、先执行）：JWT 必须在外层先注入 Claims，
+        // 否则 tenant_middleware 先执行时扩展中无 Claims → 对全部 /api/plugin/* 返回 401
+        // （曾实测 marketplace 200 而 runtime/plugins 401，根因即此顺序颠倒）。
         let routes = topems_plugin_registry::modules::plugin::create_routes()
             .with_state(app_state)
-            // 挂载模块自己的JWT中间件，解析token并注入Claims到req.extensions()
-            // 注意：不使用全局的auth_middleware，因为两个模块的Claims类型不匹配
-            .layer(axum::middleware::from_fn_with_state(
-                ctx.auth_state.clone(),
-                topems_plugin_registry::shared::middleware::jwt_auth_middleware,
-            ))
             .layer(axum::middleware::from_fn_with_state(
                 ctx.db.clone(),
                 topems_shared_auth::middleware::tenant::tenant_middleware(),
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                ctx.auth_state.clone(),
+                topems_plugin_registry::shared::middleware::jwt_auth_middleware,
             ));
 
         Ok(Self {
