@@ -1025,8 +1025,9 @@ pub async fn forgot_password(
         reset_token
     );
 
-    let from_email =
-        std::env::var("SMTP_FROM").unwrap_or_else(|_| "noreply@topems.local".to_string());
+    let from_email = std::env::var("SMTP_FROM")
+        .or_else(|_| std::env::var("SMTP_FROM_ADDRESS"))
+        .unwrap_or_else(|_| "noreply@topems.local".to_string());
     send_email_async(
         from_email,
         email.to_string(),

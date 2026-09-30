@@ -1284,7 +1284,9 @@ fn create_mailer() -> Result<SmtpTransport, String> {
         .unwrap_or_else(|_| "587".to_string())
         .parse::<u16>()
         .unwrap_or(587);
-    let smtp_user = std::env::var("SMTP_USER").unwrap_or_else(|_| "".to_string());
+    let smtp_user = std::env::var("SMTP_USER")
+        .or_else(|_| std::env::var("SMTP_USERNAME"))
+        .unwrap_or_else(|_| "".to_string());
     // 安全策略：非 localhost 模式下必须显式配置 SMTP_PASSWORD，否则拒绝创建 mailer
     let smtp_password = match std::env::var("SMTP_PASSWORD") {
         Ok(p) => p,
