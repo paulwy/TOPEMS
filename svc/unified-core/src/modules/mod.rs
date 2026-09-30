@@ -55,3 +55,5 @@ pub mod pdm;
 pub mod ehs;
 // Analytics: 数据分析
 pub mod analytics;
+// PM: 项目管理
+pub mod pm;
