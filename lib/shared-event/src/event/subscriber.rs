@@ -24,6 +24,9 @@ pub type MasterDataEventHandler =
 pub struct EventSubscriber {
     redis_client: Client,
     _service_name: String,
+    /// 是否使用 Redis Stream 模式（构造时确定，不再依赖进程级 EVENT_BUS_MODE 环境变量，
+    /// 避免并行测试间 env 交错导致订阅模式漂移）
+    use_stream: bool,
     handlers: Vec<(Vec<EventType>, EventHandler)>,
     mdm_handlers: Vec<(Vec<MasterDataDomain>, MasterDataEventHandler)>,
     schema_registry: Option<Arc<SchemaRegistry>>,
@@ -33,6 +36,16 @@ pub struct EventSubscriber {
 impl EventSubscriber {
     /// 创建新的事件订阅者
     pub fn new(service_name: &str) -> EventResult<Self> {
+        // V321: 默认模式改为 stream（Redis Stream，支持持久化 + ACK + DLQ）
+        // 可通过 EVENT_BUS_MODE=pubsub 显式切换回 Pub/Sub 模式
+        let bus_mode = env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "stream".to_string());
+        let use_stream = !bus_mode.eq_ignore_ascii_case("pubsub");
+        Self::new_with_mode(service_name, use_stream)
+    }
+
+    /// 显式指定订阅模式的构造器（测试用：不受进程级 EVENT_BUS_MODE 并行污染影响，
+    /// 生产路径仍走 `new` 读环境变量）
+    pub fn new_with_mode(service_name: &str, use_stream: bool) -> EventResult<Self> {
         let redis_url =
             env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
 
@@ -41,6 +54,7 @@ impl EventSubscriber {
         Ok(Self {
             redis_client,
             _service_name: service_name.to_string(),
+            use_stream,
             handlers: Vec::new(),
             mdm_handlers: Vec::new(),
             schema_registry: None,
@@ -107,9 +121,9 @@ impl EventSubscriber {
     /// 启动事件监听（持续运行）
     pub async fn start_listening(self) -> EventResult<()> {
         // V321: 默认模式改为 stream（Redis Stream，支持持久化 + ACK + DLQ）
-        // 可通过 EVENT_BUS_MODE=pubsub 显式切换回 Pub/Sub 模式
-        let bus_mode = std::env::var("EVENT_BUS_MODE").unwrap_or_else(|_| "stream".to_string());
-        let use_stream = !bus_mode.eq_ignore_ascii_case("pubsub");
+        // 构造时已确定 use_stream（`new` 读 EVENT_BUS_MODE，`new_with_mode` 显式指定），
+        // 不再在启动时二次读取环境变量，避免并行测试间 env 交错导致模式漂移
+        let use_stream = self.use_stream;
 
         if use_stream {
             info!(
@@ -476,6 +490,10 @@ mod tests {
             return;
         };
 
+        // 等待重发的总次数上限：订阅链路若真损坏，3 轮（每轮 30s）后断言失败而非无限挂起
+        const MAX_RETRY: usize = 3;
+        let mut retry_count = 0usize;
+
         // —— 准备：生成唯一的事件标识，防止并发测试串扰 ——
         let test_project_id = Uuid::new_v4();
         let test_owner_id = Uuid::new_v4();
@@ -500,7 +518,7 @@ mod tests {
         // —— 步骤三：启动 EventSubscriber，并用 oneshot 从 handler 回传结果 ——
         let (tx, mut rx) = oneshot::channel::<Event>();
         let tx = Arc::new(Mutex::new(Some(tx)));
-        let subscriber = EventSubscriber::new("subscriber-e2e-test")
+        let subscriber = EventSubscriber::new_with_mode("subscriber-e2e-test", false)
             .unwrap()
             .subscribe(vec![EventType::PmProjectCreated], move |event: Event| {
                 let tx = Arc::clone(&tx);
@@ -557,7 +575,10 @@ mod tests {
         }
 
         // —— 步骤五：现在可以安全发布事件，不再存在"发布先于订阅"竞态 ——
-        let publisher = EventPublisher::new("publisher-e2e-test").unwrap();
+        // 显式 pubsub 模式发布（new_with_mode false）：与 skip_without_redis 的 pubsub
+        // 订阅匹配，不受并行测试 EVENT_BUS_MODE env 交错污染（此前的 new() 依赖 env，
+        // 并发下可能读到 stream 模式 → 发布进 Stream 而订阅在 Pub/Sub → 消息永不到达）
+        let publisher = EventPublisher::new_with_mode("publisher-e2e-test", false).unwrap();
         let publish_res = publisher
             .publish_pm_project_created(test_project_id, &project_name, test_owner_id)
             .await;
@@ -568,15 +589,24 @@ mod tests {
 
         // —— 步骤六：等待 Subscriber handler 中 oneshot 回传的事件 ——
         // 本机全量测试并发（pre-push 808s 级）下 redis 事件通道偶发延迟 >30s，
-        // 属环境噪音而非订阅链路缺陷：超时后重发一次事件再等待，验证最终一致
-        // （测试环境重发无副作用；订阅链路若真损坏，重发后仍收不到则断言失败）。
-        // &mut rx 可重复 await（oneshot::Receiver: Future + Unpin），不移动所有权。
+        // 属环境噪音而非订阅链路缺陷：超时后重发一次事件再等待，验证最终一致。
+        // 注意：重发设总次数上限（订阅链路若真损坏，重发 N 次后仍收不到则断言失败，
+        // 而非无限重发导致测试二进制永久挂起——历史 35+ 分钟挂起即源于无界循环）。
         let received = loop {
             match tokio::time::timeout(tokio::time::Duration::from_secs(30), &mut rx).await {
                 Ok(Ok(ev)) => break ev,
                 Ok(Err(_)) => panic!("oneshot 发送端意外关闭"),
                 Err(_) => {
-                    eprintln!("[warn] 30s 内未收到事件，重发一次验证订阅链路（并发环境噪音容错）");
+                    retry_count += 1;
+                    if retry_count >= MAX_RETRY {
+                        panic!(
+                            "订阅链路异常：{MAX_RETRY} 轮（每轮 30s）内未收到事件，\
+                             发布/订阅模式不匹配或通道损坏"
+                        );
+                    }
+                    eprintln!(
+                        "[warn] 30s 内未收到事件（第 {retry_count}/{MAX_RETRY} 轮），重发一次验证订阅链路"
+                    );
                     let retry_res = publisher
                         .publish_pm_project_created(test_project_id, &project_name, test_owner_id)
                         .await;
@@ -638,7 +668,7 @@ mod tests {
         // 步骤二：启动 EventSubscriber，监听 Customer 域 MDM 事件
         let (tx, rx) = oneshot::channel::<MasterDataEvent>();
         let tx = Arc::new(Mutex::new(Some(tx)));
-        let subscriber = EventSubscriber::new("subscriber-mdm-test")
+        let subscriber = EventSubscriber::new_with_mode("subscriber-mdm-test", true)
             .unwrap()
             .subscribe_master_data(
                 vec![MasterDataDomain::Customer],

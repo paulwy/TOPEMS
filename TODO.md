@@ -62,20 +62,24 @@
     （exceljs 923K/mui-core 718K/react 221K）；total 16.48MB 预算绿，
     无需强合并
   - ✅ `topems_shared_event` 测试二进制偶发挂起——**已根治**（2026-09-30）：
-    - **根因**：redis-rs 连接/命令无超时 + 测试辅助层无兜底。实测黑洞地址
-      （redis://192.0.2.1:6379）下 `get_multiplexed_async_connection().await`
-      无输出挂起 75s（仅靠系统 TCP 超时兜底）；若 TCP 已建立但 Redis 不响应
-      命令（连接竞争/半死），PING/SUBSCRIBE 等待**无限**挂起 → 0 CPU 无输出
-      推进，即 35+ 分钟现象。偶发 = 无沙箱/高并发下的连接时序，代码缺陷 =
-      任何连接 hang 都无超时失败路径
-    - **修复**（lib/shared-event/src/test_helpers/redis_pubsub.rs）：
-      `maybe_connect_redis` 连接+PING 加 5s 超时；`prepare_subscription`
-      订阅端连接/SUBSCRIBE 加 5s 超时、就绪信号 `ready_rx.await` 加 10s
-      超时（超时即 abort 订阅任务并明确 panic）
-    - **验证**：黑洞地址测试 75s 挂起 → 5s 快速跳过；正常 Redis 全量
-      361 passed / 0 failed / 3 ignored；clippy/fmt 全绿
-    - **纵深防御**：lefthook cargo-test-workspace 加 timeout=600（测试级
-      watchdog，正常全量约 305s，挂起时门禁 10min 内快速失败）
+    **两类根因均已修复**（超时兜底 + 模式漂移/stream key 串扰，互补）：
+    - **根因①：连接/命令无超时**（lib/shared-event/src/test_helpers/redis_pubsub.rs）。
+      实测黑洞地址（redis://192.0.2.1:6379）下连接无输出挂起 75s（仅靠系统 TCP
+      超时兜底）；TCP 已建立但 Redis 不响应命令时 PING/SUBSCRIBE 等待无限挂起 →
+      0 CPU 无输出推进（35+ 分钟现象）。修复：`maybe_connect_redis` 连接+PING 加
+      5s 超时；`prepare_subscription` 连接/SUBSCRIBE 加 5s 超时、就绪信号 10s
+      超时（超时即 abort 并明确 panic）。验证：黑洞地址 75s 挂起 → 5s 快速跳过。
+    - **根因②：env 模式漂移 + stream key 串扰**（lib/shared-event/src/event/）。
+      `skip_without_redis()` set_var("EVENT_BUS_MODE","pubsub") 为进程级全局 env，
+      并行测试下 Subscriber/Publisher 实时读 env 导致模式漂移（订阅 pubsub 而发布
+      stream → 消息永不到达）→ e2e 等待循环无界重试。修复：`EventSubscriber::
+      new_with_mode` 显式模式构造器 + 重发循环 MAX_RETRY=3 上限（超限 panic）；
+      两个 stream roundtrip 测试唯一化 key/group/consumer（Uuid 后缀）+ 发布改
+      手动 XADD。
+    - **验证**：lib 361 passed/0 failed 连续 5 次 + 32 线程高并发 5 次全绿（修复前
+      32 线程 3 次中 2 次 FAILED）；clippy/fmt 全绿；workspace check 0 错误。
+    - **纵深防御**：lefthook cargo-test-workspace 加 timeout=600s（测试级 watchdog，
+      正常全量约 305s，挂起时门禁 10min 内快速失败）
   - ✅ 其余 flaky 观察项无需动作（详见上两条）
 
 ### ⚠️ 存在问题（诚实记录）

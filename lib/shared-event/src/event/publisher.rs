@@ -640,7 +640,9 @@ mod tests {
             return;
         };
 
-        let publisher = EventPublisher::new("test-publisher-service")
+        // 显式 pubsub 模式发布（new_with_mode false）：与 prepare_subscription 的 pubsub
+        // 订阅匹配，不受并行测试 EVENT_BUS_MODE env 交错污染
+        let publisher = EventPublisher::new_with_mode("test-publisher-service", false)
             .expect("EventPublisher 构造失败（Redis Client::open 惰性初始化通常不会失败）");
 
         let test_project_id = Uuid::new_v4();
@@ -708,7 +710,10 @@ mod tests {
         for i in 0..N {
             let client = client.clone();
             handles.push(tokio::spawn(async move {
-                let publisher = EventPublisher::new(&format!("concurrent-pub-{i}")).unwrap();
+                // 显式 pubsub 模式（new_with_mode false）：与 prepare_subscription 匹配，
+                // 避免并行下 EVENT_BUS_MODE env 交错导致发布模式漂移
+                let publisher =
+                    EventPublisher::new_with_mode(&format!("concurrent-pub-{i}"), false).unwrap();
                 let project_id = Uuid::new_v4();
                 let owner_id = Uuid::new_v4();
                 let project_name = format!("并发项目{i}");

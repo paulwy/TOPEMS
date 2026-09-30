@@ -739,15 +739,20 @@ mod tests {
             return;
         };
 
+        use uuid::Uuid;
+
         let event_type = EventType::PmProjectCreated;
-        let stream_key = "topems:stream:events:PmProjectCreated";
-        let group_name = "test-group-integration";
-        let consumer_name = "test-consumer-1";
+        // 唯一化 stream key / group / consumer：并发测试共享固定 key 时，
+        // 消费者组负载均衡互抢消息 + DEL 竞争清流 → 偶发断言失败（历史 flaky）
+        let test_suffix = Uuid::new_v4().simple().to_string();
+        let stream_key = format!("topems:stream:events:PmProjectCreated:test:{test_suffix}");
+        let group_name = format!("test-group-{test_suffix}");
+        let consumer_name = format!("test-consumer-{test_suffix}");
 
         // 清理旧数据
         let mut cleanup_con = client.get_multiplexed_async_connection().await.unwrap();
         let _: () = redis::cmd("DEL")
-            .arg(stream_key)
+            .arg(&stream_key)
             .query_async(&mut cleanup_con)
             .await
             .unwrap();
@@ -755,8 +760,8 @@ mod tests {
         // 创建消费者组
         let result: Result<String, _> = redis::cmd("XGROUP")
             .arg("CREATE")
-            .arg(stream_key)
-            .arg(group_name)
+            .arg(&stream_key)
+            .arg(&group_name)
             .arg("0")
             .arg("MKSTREAM")
             .query_async(&mut cleanup_con)
@@ -789,24 +794,37 @@ mod tests {
             });
 
         // 单独调用一次读取循环（不进入无限循环），验证消息可被消费
-        // 先发布事件
-        let publisher =
-            super::super::stream_publisher::StreamEventPublisher::new("test-pub").unwrap();
-        let msg_id = publisher
-            .publish_event(event_type, serde_json::json!({"pid": "p-1"}))
-            .await;
+        // 手动 XADD 到唯一 stream key（StreamEventPublisher 内部写固定 key，
+        // 无法用于并发隔离测试）
+        let event = Event::new(event_type, "test-pub", serde_json::json!({"pid": "p-1"}));
+        let event_json = serde_json::to_string(&event).unwrap();
+        let mut xadd_con = client.get_multiplexed_async_connection().await.unwrap();
+        let mut cmd = redis::cmd("XADD");
+        cmd.arg(&stream_key)
+            .arg("*")
+            .arg("event_id")
+            .arg(event.event_id.to_string())
+            .arg("event_type")
+            .arg(format!("{:?}", event.event_type))
+            .arg("payload")
+            .arg(&event_json)
+            .arg("occurred_at")
+            .arg(event.occurred_at.to_rfc3339())
+            .arg("source")
+            .arg(&event.source);
+        let msg_id: Result<String, _> = cmd.query_async(&mut xadd_con).await;
         assert!(msg_id.is_ok(), "发布失败: {:?}", msg_id);
 
         // 读取并处理一条消息
         let mut con = client.get_multiplexed_async_connection().await.unwrap();
         let result: Result<redis::streams::StreamReadReply, _> = redis::cmd("XREADGROUP")
             .arg("GROUP")
-            .arg(group_name)
-            .arg(consumer_name)
+            .arg(&group_name)
+            .arg(&consumer_name)
             .arg("COUNT")
             .arg(10)
             .arg("STREAMS")
-            .arg(stream_key)
+            .arg(&stream_key)
             .arg(">")
             .query_async(&mut con)
             .await;
@@ -837,7 +855,7 @@ mod tests {
 
         // 清理
         let _: () = redis::cmd("DEL")
-            .arg(stream_key)
+            .arg(&stream_key)
             .query_async(&mut cleanup_con)
             .await
             .unwrap();
@@ -865,9 +883,12 @@ mod tests {
             json!({"id": "cust-stream-mdm-001", "name": "Stream MDM 客户"}),
         );
         let expected_event_id = event.event_id;
-        let stream_key = event.stream_key();
-        let group_name = "mdm-test-group";
-        let consumer_name = "mdm-test-consumer-1";
+        // 唯一化 stream key / group / consumer：并发测试共享固定 key 时，
+        // 消费者组负载均衡互抢消息 + DEL 竞争清流 → 偶发断言失败（历史 flaky）
+        let test_suffix = Uuid::new_v4().simple().to_string();
+        let stream_key = format!("topems:stream:master_data:cust:test:{test_suffix}");
+        let group_name = format!("mdm-test-group-{test_suffix}");
+        let consumer_name = format!("mdm-test-consumer-{test_suffix}");
 
         // 清理旧数据 + 创建消费者组
         let mut cleanup_con = client.get_multiplexed_async_connection().await.unwrap();
@@ -879,7 +900,7 @@ mod tests {
         let _: Result<String, _> = redis::cmd("XGROUP")
             .arg("CREATE")
             .arg(&stream_key)
-            .arg(group_name)
+            .arg(&group_name)
             .arg("0")
             .arg("MKSTREAM")
             .query_async(&mut cleanup_con)
@@ -910,15 +931,28 @@ mod tests {
                 }
             });
 
-        // 发布 MDM 事件到 Stream（XADD）
-        event.publish().await.expect("发布 MDM 事件失败");
+        // 手动 XADD 到唯一 stream key（event.publish() 写固定 key，无法用于并发隔离测试）
+        let event_json = serde_json::to_string(&event).unwrap();
+        let mut xadd_con = client.get_multiplexed_async_connection().await.unwrap();
+        let mut cmd = redis::cmd("XADD");
+        cmd.arg(&stream_key)
+            .arg("*")
+            .arg("event_id")
+            .arg(event.event_id.to_string())
+            .arg("payload")
+            .arg(&event_json)
+            .arg("timestamp")
+            .arg(event.timestamp.to_rfc3339())
+            .arg("source")
+            .arg(&event.source_service);
+        let _: Result<String, _> = cmd.query_async(&mut xadd_con).await;
 
         // XREADGROUP 读回并分发到 MDM handler
         let mut con = client.get_multiplexed_async_connection().await.unwrap();
         let result: Result<redis::streams::StreamReadReply, _> = redis::cmd("XREADGROUP")
             .arg("GROUP")
-            .arg(group_name)
-            .arg(consumer_name)
+            .arg(&group_name)
+            .arg(&consumer_name)
             .arg("COUNT")
             .arg(10)
             .arg("BLOCK")
