@@ -808,8 +808,8 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-req.quantity.map(|q| q as i32),        req.planned_start_date.map(|d| d.date_naive()),
-req.planned_end_date.map(|d| d.date_naive()),
+req.quantity,        req.planned_start_date,
+req.planned_end_date,
         req.workshop_id,
         req.notes,
         Utc::now(),
@@ -953,7 +953,7 @@ pub async fn start_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-now.date_naive(),
+now,
         now,
     )
     .fetch_optional(&state.pool)
@@ -1043,7 +1043,7 @@ pub async fn complete_production_order(
             workshop_id, notes, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,
         id,
-now.date_naive(),
+now,
         now,
     )
     .fetch_optional(&state.pool)
