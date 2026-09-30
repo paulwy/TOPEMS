@@ -14,7 +14,7 @@ impl DocumentService {
 
     pub async fn list_documents(&self, tenant_id: Option<Uuid>) -> Result<Vec<Document>> {
         sqlx::query_as::<_, Document>(
-            r#"SELECT id, tenant_id, name, description, document_type, file_path, file_size, version, folder_id, status, created_by, created_at, updated_at, deleted_at FROM core_doc_documents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"#,
+            r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM core_doc_documents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC"#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -27,7 +27,7 @@ impl DocumentService {
         document_id: Uuid,
     ) -> Result<Option<Document>> {
         sqlx::query_as::<_, Document>(
-            r#"SELECT id, tenant_id, name, description, document_type, file_path, file_size, version, folder_id, status, created_by, created_at, updated_at, deleted_at FROM core_doc_documents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
+            r#"SELECT id, tenant_id, title, folder_id, template_id, content, content_type, status, version, tags, description, file_name, file_path, file_size, mime_type, published_at, published_by, archived_at, archived_by, created_by, created_at, updated_at FROM core_doc_documents WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) AND id = $2"#,
         )
         .bind(tenant_id)
         .bind(document_id)
