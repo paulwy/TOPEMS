@@ -73,3 +73,5 @@ pub mod ticket;
 pub mod rd;
 // Integration: 集成
 pub mod integration;
+// Portal: 门户
+pub mod portal;
