@@ -64,6 +64,7 @@ pub fn score_quotes_by_price(unit_prices: &[f64]) -> Vec<f64> {
         .collect()
 }
 
+#[allow(clippy::as_conversions)]
 /// 基于提前期的交付评分（天越少分越高）
 /// 最短交付得 100；交付时间是最短的 2 倍得 50；超 5 倍按 0 分截断
 pub fn score_quotes_by_lead_time(lead_times_days: &[i32]) -> Vec<f64> {

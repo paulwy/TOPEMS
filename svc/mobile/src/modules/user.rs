@@ -299,6 +299,7 @@ pub async fn upload_avatar(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
     // 简单 base64 解码实现，避免额外依赖
     use std::collections::HashMap;

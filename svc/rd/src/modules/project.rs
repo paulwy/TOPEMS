@@ -809,6 +809,7 @@ pub async fn batch_create_projects(
         ("bearer_auth" = [])
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn batch_delete_projects(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1374,6 +1375,11 @@ pub struct ProjectDashboardResponse {
     security(
         ("bearer_auth" = [])
     )
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn get_project_dashboard(
     State(_state): State<super::ApiState>,

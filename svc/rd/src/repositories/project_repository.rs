@@ -249,6 +249,7 @@ impl ProjectRepository {
         Ok(created_projects)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn batch_delete(&self, ids: &[Uuid]) -> Result<i64> {
         if ids.is_empty() {
             return Ok(0);

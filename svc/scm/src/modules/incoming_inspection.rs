@@ -75,6 +75,7 @@ pub fn aql_judge(sample_size: u64, defect_count: u64) -> &'static str {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 批次合格率：passed / total * 100，total=0 返回 0
 pub fn batch_pass_rate(total_items: u64, passed_items: u64) -> f64 {
     if total_items == 0 || passed_items > total_items {

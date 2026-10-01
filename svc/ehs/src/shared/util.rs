@@ -219,6 +219,7 @@ pub fn is_incident_reportable(severity: &str, incident_type: &str) -> bool {
     false
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算事故率（OSHA TRIR：每 200,000 工时的事故数）
 ///
 /// `hours_worked` 为 0 时返回 0.0；负输入按 0 处理。

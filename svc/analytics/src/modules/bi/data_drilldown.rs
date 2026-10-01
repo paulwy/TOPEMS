@@ -90,6 +90,7 @@ pub struct DrilldownHistoryListResponse {
     operation_id = "list_drilldown_paths",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing drilldown paths");
 
@@ -364,6 +365,7 @@ pub async fn delete_drilldown_path(
     operation_id = "drill_down",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn drill_down(
     State(state): State<AppState>,
     Json(req): Json<DrilldownQueryRequest>,
@@ -546,6 +548,7 @@ now.naive_utc(),
     operation_id = "get_drilldown_history",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_drilldown_history(
     State(state): State<AppState>,
     Json(req): Json<DrilldownHistoryRequest>,

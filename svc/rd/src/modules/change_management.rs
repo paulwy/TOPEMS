@@ -55,6 +55,7 @@ pub fn change_priority_weight(priority: &str) -> i32 {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 变更影响评分 = 优先级权重 + 关联文档数×1 + 关联阶段数×2
 pub fn assess_change_impact(priority: &str, scope_docs: u32, scope_phases: u32) -> i32 {
     change_priority_weight(priority) + scope_docs as i32 + (scope_phases as i32) * 2
@@ -148,6 +149,7 @@ const CHANGE_ORDER_RETURN: &str = r#"id, change_request_id, title, execution_pla
 
 // ==================== Handlers ====================
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn create_change_request(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

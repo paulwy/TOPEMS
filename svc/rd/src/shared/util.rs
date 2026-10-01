@@ -93,6 +93,7 @@ pub fn normalize_formula_code(code: &str) -> String {
     topems_shared_core::normalize_code(code)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 根据各阶段 `(progress, weight)` 计算项目加权进度（0-100）。
 /// `progress` 超出 0-100 的会被截断；权重之和为 0 时返回 `None`。
 pub fn calc_project_progress(phases: &[(i32, i32)]) -> Option<i32> {
@@ -113,6 +114,7 @@ pub fn calc_project_progress(phases: &[(i32, i32)]) -> Option<i32> {
     Some((weighted / total_weight) as i32)
 }
 
+#[allow(clippy::as_conversions)]
 /// 计算完成百分比（0.0-1.0）。`total` 为 0 时返回 `None`。
 pub fn calc_progress_percentage(completed: u32, total: u32) -> Option<f64> {
     if total == 0 {
@@ -179,6 +181,7 @@ pub fn validate_material_code(code: &str) -> bool {
         .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算实验时长（小时）。`end < start` 时返回 `None`。
 pub fn calc_experiment_duration_hours(start: NaiveDateTime, end: NaiveDateTime) -> Option<f64> {
     if end < start {

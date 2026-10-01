@@ -751,6 +751,7 @@ pub struct CompareForecastQuery {
     ),
     tag = "sales_forecast"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn compare_sales_forecasts(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -884,6 +885,7 @@ pub async fn compare_sales_forecasts(
     ),
     tag = "sales_forecast"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_accuracy_report(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<

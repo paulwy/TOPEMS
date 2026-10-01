@@ -14,6 +14,7 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn mean(values: &[f64]) -> f64 {
     if values.is_empty() {
         return 0.0;
@@ -21,6 +22,7 @@ fn mean(values: &[f64]) -> f64 {
     values.iter().sum::<f64>() / values.len() as f64
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn std_dev(values: &[f64], avg: f64) -> f64 {
     if values.len() < 2 {
         return 0.0;
@@ -472,6 +474,13 @@ pub async fn add_spc_data_point(
         (status = 500, description = "Internal server error")
     ),
     tag = "spc"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
 )]
 pub async fn calculate_control_limits(
     State(_state): State<crate::AppState>,

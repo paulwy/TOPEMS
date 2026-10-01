@@ -175,6 +175,7 @@ pub async fn get_attendance_stats(
     ),
     tag = "attendance"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_attendance_records(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,
@@ -318,6 +319,7 @@ pub async fn check_out(
     ),
     tag = "attendance"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_leave_applications(
     State(auth_state): State<AuthState>,
     State(client): State<TypedServiceClient<HrmApi>>,

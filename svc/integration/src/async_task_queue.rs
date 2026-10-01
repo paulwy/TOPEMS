@@ -396,6 +396,7 @@ pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, String> {
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 清理已完成的旧任务（软删除）
 pub async fn cleanup_completed_tasks(pool: &PgPool, older_than_days: i64) -> Result<i64, String> {
     let result = sqlx::query(

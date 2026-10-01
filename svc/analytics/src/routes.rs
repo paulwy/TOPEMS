@@ -710,6 +710,7 @@ pub async fn detailed_health(
     operation_id = "reports_center_stats",
     responses((status = 200, description = "Reports center dashboard statistics"))
 )]
+#[allow(clippy::as_conversions)]
 pub async fn reports_center_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

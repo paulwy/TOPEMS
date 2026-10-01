@@ -175,6 +175,7 @@ pub fn evaluate_automation_rules(
     effects
 }
 
+#[allow(clippy::as_conversions)]
 /// 根据 impact 和 urgency 推导工单优先级
 pub fn derive_priority(impact: u8, urgency: u8) -> &'static str {
     let score = impact as u16 + urgency as u16;
@@ -280,6 +281,7 @@ pub fn feedback_priority(affected_users: u32, severity: &str) -> &'static str {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算响应时间（小时），若响应早于或等于创建时间则返回 0
 pub fn calculate_response_time_hours(created_at: i64, responded_at: i64) -> f64 {
     if responded_at <= created_at {
@@ -288,6 +290,7 @@ pub fn calculate_response_time_hours(created_at: i64, responded_at: i64) -> f64 
     (responded_at - created_at) as f64 / 3600.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 判断反馈是否违反 SLA（超出规定响应时间）
 pub fn is_feedback_sla_breached(created_at: i64, sla_hours: i64, now: i64) -> bool {
     if now <= created_at {
@@ -371,6 +374,7 @@ pub fn is_valid_feedback_transition(from: &str, to: &str) -> bool {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算反馈评分统计（平均分、最低分、最高分、数量）
 pub fn feedback_rating_stats(ratings: &[i32]) -> (f64, i32, i32, usize) {
     if ratings.is_empty() {

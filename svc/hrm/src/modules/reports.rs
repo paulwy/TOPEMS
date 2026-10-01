@@ -417,6 +417,7 @@ pub struct TrainingSummaryResponse {
     ),
     tag = "reports"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn training_summary(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -527,6 +528,7 @@ pub struct AttendanceSummaryResponse {
     responses((status = 200, description = "Attendance summary")),
     tag = "reports"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn attendance_summary(
     State(_state): State<ApiState>,
     Query(params): Query<ReportParams>,

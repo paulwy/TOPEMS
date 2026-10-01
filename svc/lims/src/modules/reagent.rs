@@ -175,6 +175,7 @@ pub async fn list_reagents(
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_reagent(
     State(state): State<crate::shared::AppState>,
     Extension(ctx): Extension<TenantContext>,

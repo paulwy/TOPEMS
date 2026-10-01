@@ -124,6 +124,7 @@ pub struct OfflineDataResponse {
 
 // ==================== 批量位置上报 ====================
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 批量上报设备位置（支持离线同步）- 优化版本
 pub async fn batch_upload_positions(
     State(pool): State<PgPool>,

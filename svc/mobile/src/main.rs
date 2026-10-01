@@ -200,6 +200,7 @@ async fn health_check() -> ServiceHealth {
     build_health_response("topems-mobile", true)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_mobile_tasks(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let records = match db_get_mobile_tasks(&state.pool).await {
         Ok(r) => r,

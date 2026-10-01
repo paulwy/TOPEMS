@@ -172,6 +172,7 @@ where
     responses((status = 200, description = "run_optimization OK")),
     tag = "WMS/slotting"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn run_optimization(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -773,6 +774,7 @@ pub async fn list_rules(
     responses((status = 200, description = "create_rule OK")),
     tag = "WMS/slotting"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -863,6 +865,7 @@ pub async fn create_rule(
     responses((status = 200, description = "get_impact_analysis OK")),
     tag = "WMS/slotting"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_impact_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

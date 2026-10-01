@@ -144,6 +144,7 @@ pub async fn list_contracts(
     ),
     tag = "contract"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_expiring_contracts(
     State(_state): State<ApiState>,
     Query(params): Query<ExpiringParams>,

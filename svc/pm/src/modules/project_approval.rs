@@ -226,6 +226,7 @@ async fn submit_approval(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn handle_approval_action(
     State(state): State<ApprovalState>,
     Path(project_id): Path<Uuid>,

@@ -598,6 +598,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route("/oa/stats", axum::routing::get(get_oa_stats))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_patrol_records(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -615,6 +616,7 @@ async fn list_patrol_records(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn list_scan_records(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let records = match db_get_scan_records(&state.pool).await {
         Ok(r) => r,

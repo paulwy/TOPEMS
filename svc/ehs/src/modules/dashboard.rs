@@ -44,6 +44,7 @@ pub struct EhsDashboardStats {
     ),
     tag = "Dashboard"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

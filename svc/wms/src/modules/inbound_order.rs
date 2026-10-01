@@ -688,6 +688,7 @@ pub async fn delete_inbound_order(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_inbound_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

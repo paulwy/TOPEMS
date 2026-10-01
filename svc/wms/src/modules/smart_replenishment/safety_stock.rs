@@ -172,6 +172,7 @@ pub async fn get_safety_stock(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -261,6 +262,11 @@ pub async fn update_safety_stock(
     responses(
         (status = 200, description = "OK"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn batch_update_safety_stock(
     State(state): State<ApiState>,

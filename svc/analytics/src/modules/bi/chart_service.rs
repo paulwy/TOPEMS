@@ -490,6 +490,7 @@ impl ChartService {
         data
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn build_chart(
         &self,
         query: ChartQuery,

@@ -143,6 +143,7 @@ fn return_fsm_enums_variants_debug_not_empty() {
     }
 }
 
+#[allow(clippy::as_conversions)]
 #[test]
 fn return_fsm_clone_eq_partial_ord_sanity() {
     use ReturnStage::*;

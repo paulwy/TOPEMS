@@ -79,6 +79,7 @@ pub fn is_within_working_window(
     hour >= work_start_hour && hour < work_end_hour
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 根据订单量和卸货能力估算卸货时长（分钟）
 /// 每件 2 分钟 + 30 分钟基础准备，超过卡车容量分段加价
 pub fn estimate_unloading_minutes(total_quantity: f64, minutes_per_unit: f64) -> i64 {

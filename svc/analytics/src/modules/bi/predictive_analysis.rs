@@ -138,6 +138,7 @@ pub struct ComparisonMetrics {
     pub variance_percentage: f64,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn simple_moving_average(data: &[f64], window_size: usize) -> Vec<Option<f64>> {
     let mut result = Vec::new();
     for i in 0..data.len() {
@@ -151,6 +152,7 @@ fn simple_moving_average(data: &[f64], window_size: usize) -> Vec<Option<f64>> {
     result
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn forecast_ma(last_values: &[f64], window_size: usize, periods: usize) -> Vec<f64> {
     let mut forecasts = Vec::new();
     let mut current_values: Vec<f64> = last_values
@@ -186,6 +188,7 @@ fn forecast_es(last_value: f64, periods: usize) -> Vec<f64> {
     vec![last_value; periods]
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn calculate_linear_regression(data: &[(f64, f64)]) -> (f64, f64, f64) {
     let n = data.len() as f64;
     if n == 0.0 {
@@ -212,6 +215,7 @@ fn calculate_linear_regression(data: &[(f64, f64)]) -> (f64, f64, f64) {
     (slope, intercept, r_squared)
 }
 
+#[allow(clippy::as_conversions)]
 fn calculate_mape(actual: &[f64], predicted: &[f64]) -> f64 {
     if actual.is_empty() || predicted.is_empty() {
         return 0.0;
@@ -232,6 +236,7 @@ fn calculate_mape(actual: &[f64], predicted: &[f64]) -> f64 {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn calculate_mae(actual: &[f64], predicted: &[f64]) -> f64 {
     if actual.is_empty() || predicted.is_empty() {
         return 0.0;
@@ -241,6 +246,7 @@ fn calculate_mae(actual: &[f64], predicted: &[f64]) -> f64 {
     total / n as f64
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn calculate_mse(actual: &[f64], predicted: &[f64]) -> f64 {
     if actual.is_empty() || predicted.is_empty() {
         return 0.0;
@@ -258,6 +264,7 @@ fn calculate_mse(actual: &[f64], predicted: &[f64]) -> f64 {
     operation_id = "moving_average_forecast",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn moving_average_forecast(
     State(state): State<AppState>,
     Json(req): Json<MovingAverageRequest>,
@@ -378,6 +385,7 @@ pub async fn moving_average_forecast(
     operation_id = "exponential_smoothing_forecast",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn exponential_smoothing_forecast(
     State(state): State<AppState>,
     Json(req): Json<ExponentialSmoothingRequest>,
@@ -484,6 +492,7 @@ pub async fn exponential_smoothing_forecast(
     operation_id = "trend_analysis",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn trend_analysis(
     State(state): State<AppState>,
     Json(req): Json<TrendAnalysisRequest>,
@@ -568,6 +577,7 @@ pub async fn trend_analysis(
     operation_id = "prediction_comparison",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn prediction_comparison(
     State(state): State<AppState>,
     Json(req): Json<PredictionCompareRequest>,

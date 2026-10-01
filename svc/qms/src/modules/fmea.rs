@@ -488,6 +488,7 @@ pub async fn delete_fmea_item(
     ),
     tag = "fmea"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_fmea_statistics(
     State(state): State<crate::AppState>,
     Extension(claims): Extension<Claims>,

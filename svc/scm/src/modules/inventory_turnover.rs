@@ -31,6 +31,7 @@ pub fn calculate_turnover_rate(cost_of_goods_sold: f64, average_inventory: f64) 
     cost_of_goods_sold / average_inventory
 }
 
+#[allow(clippy::as_conversions)]
 /// 周转天数 = period_days / 周转率；周转率 0 返回 period_days（未周转=全期持有）
 pub fn calculate_turnover_days(turnover_rate: f64, period_days: u32) -> f64 {
     if period_days == 0 {

@@ -189,6 +189,7 @@ async fn test_ehs_qms_corrective_action_event_roundtrip() {
     assert_eq!(payload.assigned_to, "安全员");
 }
 
+#[allow(clippy::as_conversions)]
 /// 并发测试：多组 EHS 事件同时发布到同一 channel，验证 event_id 过滤不串扰。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_ehs_concurrent_events_no_crosstalk() {

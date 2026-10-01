@@ -73,6 +73,7 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
     ),
     tag = "doc_integration"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_documents(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<DocRelationQuery>,

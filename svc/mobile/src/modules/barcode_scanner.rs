@@ -118,6 +118,7 @@ pub fn parse_barcode(code: &str) -> Result<ParsedBarcode, String> {
     })
 }
 
+#[allow(clippy::as_conversions)]
 /// 计算 EAN-13 条码的校验位，返回 None 表示输入不是 12 位数字。
 pub fn calculate_ean13_checksum(code: &str) -> Option<u8> {
     if code.len() != 12 || !code.chars().all(|c| c.is_ascii_digit()) {
@@ -304,6 +305,12 @@ fn match_barcode(
         (status = 500, description = "Internal server error")
     ),
     tag = "scan"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn get_scan_history(
     headers: HeaderMap,

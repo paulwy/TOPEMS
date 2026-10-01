@@ -163,6 +163,7 @@ pub async fn sync_offline_data(
     ),
     tag = "offline"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_offline_status(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

@@ -193,6 +193,7 @@ pub async fn get_video(
     ),
     tag = "media"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_media(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

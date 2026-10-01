@@ -261,6 +261,11 @@ async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
         .collect()
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 async fn search_all(
     pool: &PgPool,
     keyword: &str,
@@ -312,6 +317,7 @@ async fn search_all(
         (status = 400, description = "搜索关键词为空"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_handler(
     State(pool): State<PgPool>,
     Query(req): Query<SearchRequest>,

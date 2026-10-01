@@ -227,6 +227,7 @@ pub async fn add_contact(
     ),
     tag = "im"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_online_status(
     State(_pool): State<PgPool>,
     Path(user_id): Path<String>,

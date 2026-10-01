@@ -37,6 +37,7 @@ pub struct TaskStats {
     pub overdue_tasks: i64,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算 (min, max, avg, sum)。空切片时 min/max 返回 0.0、avg 返回 0.0、sum 返回 0.0。
 pub fn mobile_summary_stats(values: &[f64]) -> (f64, f64, f64, f64) {
     if values.is_empty() {
@@ -58,6 +59,7 @@ pub fn mobile_summary_stats(values: &[f64]) -> (f64, f64, f64, f64) {
     (min, max, avg, sum)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算完成率：completed / total * 100.0。total <= 0 时返回 0.0。
 pub fn compute_completion_rate(completed: i64, total: i64) -> f64 {
     if total <= 0 {

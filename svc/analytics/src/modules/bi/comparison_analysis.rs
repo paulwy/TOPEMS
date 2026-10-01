@@ -777,6 +777,7 @@ fn to_rfc3339(dt: chrono::DateTime<Utc>) -> String {
     dt.to_rfc3339()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn generate_comparison_data(
     indicators: &[String],
     dimension_a: &str,

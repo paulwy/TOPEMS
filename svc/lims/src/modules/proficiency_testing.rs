@@ -825,6 +825,7 @@ pub async fn list_plan_samples(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn submit_result(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<CreatePtResultRequest>,

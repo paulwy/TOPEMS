@@ -46,6 +46,7 @@ pub async fn dashboard_websocket(
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn handle_dashboard_socket(
     socket: axum::extract::ws::WebSocket,
     state: AppState,
@@ -303,6 +304,7 @@ async fn handle_dashboard_socket(
     }
 }
 
+#[allow(clippy::as_conversions)]
 async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_json::Value> {
     let widgets = match sqlx::query!(
         r#"

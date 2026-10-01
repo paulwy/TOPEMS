@@ -42,6 +42,7 @@ impl TicketService {
         format!("TK{:}{:06}", now.format("%Y%m%d"), seq)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn create_ticket(
         &self,
         tenant_id: Uuid,
@@ -188,6 +189,7 @@ impl TicketService {
         Ok(ticket)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn list_tickets(
         &self,
         tenant_id: Uuid,

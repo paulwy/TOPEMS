@@ -16,6 +16,7 @@ use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Calculates phase progress as a percentage based on completed vs total tasks.
 ///
 /// Returns a value in the range `[0.0, 100.0]`.
@@ -90,6 +91,7 @@ async fn list_phases(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 async fn create_phase(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,

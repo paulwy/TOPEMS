@@ -1110,6 +1110,11 @@ pub async fn get_opportunity_stats(
     ),
     tag = "opportunity"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn get_opportunity_forecast(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<

@@ -1,3 +1,4 @@
+#[allow(clippy::as_conversions)]
 pub fn calculate_suggested_quantity(
     available_stock: f64,
     max_stock: f64,
@@ -43,6 +44,7 @@ pub fn calculate_trigger_type(rule_id_exists: bool) -> String {
     ),
     tag = "ReplenishmentLogic"
 )]
+#[allow(clippy::as_conversions)]
 pub fn calculate_safety_stock(
     avg_daily_consumption: f64,
     lead_time_days: i32,
@@ -51,6 +53,7 @@ pub fn calculate_safety_stock(
     avg_daily_consumption * lead_time_days as f64 * safety_factor
 }
 
+#[allow(clippy::as_conversions)]
 pub fn calculate_reorder_point(
     avg_daily_consumption: f64,
     lead_time_days: i32,
@@ -59,6 +62,7 @@ pub fn calculate_reorder_point(
     avg_daily_consumption * lead_time_days as f64 + safety_stock
 }
 
+#[allow(clippy::as_conversions)]
 pub fn calculate_min_max_stock(
     avg_daily_consumption: f64,
     lead_time_days: i32,
@@ -85,6 +89,7 @@ pub fn determine_replenishment_needed(
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 mod tests {
     use super::*;
 

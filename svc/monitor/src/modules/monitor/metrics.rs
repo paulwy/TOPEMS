@@ -127,6 +127,7 @@ pub enum AggregationType {
     Count,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 按指定聚合类型对一组数值进行聚合，空切片返回 0.0。
 pub fn aggregate_metrics(values: &[f64], aggregation_type: &AggregationType) -> f64 {
     if values.is_empty() {
@@ -144,6 +145,12 @@ pub fn aggregate_metrics(values: &[f64], aggregation_type: &AggregationType) -> 
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// 计算百分位数（线性插值法）。
 /// - p: 百分比，范围 0.0 ~ 100.0
 /// - 空切片返回 0.0
@@ -167,6 +174,7 @@ pub fn percentile(values: &[f64], p: f64) -> f64 {
     sorted[lower] * (1.0 - fraction) + sorted[upper] * fraction
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算错误率（百分比）：error_count / total_requests * 100
 /// 总请求为 0 时返回 0.0。
 pub fn calculate_error_rate(total_requests: u64, error_count: u64) -> f64 {
@@ -176,6 +184,7 @@ pub fn calculate_error_rate(total_requests: u64, error_count: u64) -> f64 {
     (error_count as f64 / total_requests as f64) * 100.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算可用性（百分比）：(total - errors) / total * 100
 /// 总请求为 0 时返回 100.0（视为完全可用）。
 pub fn calculate_availability(total_requests: u64, error_count: u64) -> f64 {
@@ -332,6 +341,7 @@ fn get_load_averages() -> (f64, f64, f64) {
     (0.0, 0.0, 0.0)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn get_memory_usage() -> (f64, f64, f64, f64) {
     let total_bytes: u64 = std::process::Command::new("sysctl")
         .args(["-n", "hw.memsize"])
@@ -367,6 +377,11 @@ fn get_memory_usage() -> (f64, f64, f64, f64) {
     (total_mb, used_mb, free_mb, usage_percent)
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
+)]
 pub async fn get_realtime_metrics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -532,6 +547,7 @@ pub async fn get_api_performance(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_performance_trend(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -663,6 +679,7 @@ pub async fn get_service_performance(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_performance_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -919,6 +936,7 @@ pub async fn export_performance_data(
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 mod tests {
     use super::*;
 

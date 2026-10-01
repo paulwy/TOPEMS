@@ -175,6 +175,7 @@ pub async fn delete_connection(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn test_connection(
     State(_state): State<AppState>,
     Json(req): Json<TestConnectionRequest>,

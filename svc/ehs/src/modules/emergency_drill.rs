@@ -1015,6 +1015,7 @@ pub fn is_drill_overdue(last_drill: NaiveDate, today: NaiveDate, required_days: 
     delta > required_days
 }
 
+#[allow(clippy::as_conversions)]
 pub fn plan_coverage(covered: u32, total: u32) -> f64 {
     if total == 0 {
         return 0.0;

@@ -429,6 +429,7 @@ pub async fn delete_payroll_run(
     ),
     tag = "payroll"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn calculate_payroll_run(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,

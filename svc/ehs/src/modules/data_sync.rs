@@ -547,6 +547,7 @@ pub async fn list_sync_configs(
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_sync_configs(
     State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,

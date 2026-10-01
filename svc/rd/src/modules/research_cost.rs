@@ -537,6 +537,11 @@ pub async fn list_costs_by_project(
     ),
     tag = "research_cost"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub async fn get_cost_statistics(
     State(_state): State<super::ApiState>,
     Query(params): Query<ListParams>,

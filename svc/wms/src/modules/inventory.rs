@@ -965,6 +965,7 @@ pub async fn get_inventory_statistics(
     ),
     tag = "WMS/inventory"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -49,6 +49,7 @@ pub fn is_valid_chart_type(chart_type: &str) -> bool {
     )
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Calculate an aggregation over a slice of values.
 ///
 /// Supported `agg_type` values: `sum`, `avg`, `min`, `max`, `count`.

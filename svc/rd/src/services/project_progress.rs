@@ -3,6 +3,11 @@ use sqlx::Row;
 use tracing::instrument;
 use uuid::Uuid;
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
+)]
 #[instrument(level = "info", skip(db))]
 pub async fn calculate_project_progress(
     db: &mut sqlx::PgConnection,

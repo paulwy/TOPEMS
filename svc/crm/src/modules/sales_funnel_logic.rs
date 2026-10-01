@@ -2,6 +2,7 @@
 
 use rust_decimal::Decimal;
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算阶段间转换率（基于存量快照，返回百分比 0-100）
 /// 当 from_count == 0 返回 0.0，避免除零
 pub fn calculate_stage_conversion_rate(from_count: i64, to_count: i64) -> f64 {
@@ -11,6 +12,7 @@ pub fn calculate_stage_conversion_rate(from_count: i64, to_count: i64) -> f64 {
     (to_count as f64 / from_count as f64) * 100.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算总体转化率（won / total，返回百分比 0-100）
 pub fn calculate_overall_conversion_rate(total_count: i64, won_count: i64) -> f64 {
     if total_count == 0 {
@@ -82,6 +84,7 @@ pub struct AccuracyRecord {
     pub confidence_level: f64,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 准确率摘要统计（修复 min 用 max 的 bug，且空数据不除零）
 pub fn summarize_accuracy(
     records: &[AccuracyRecord],
@@ -122,6 +125,7 @@ pub fn summarize_accuracy(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 趋势分析（基于最近 N 个点的 accuracy 变化）
 /// 返回 "improving" / "declining" / "stable" / "insufficient_data"
 pub fn analyze_accuracy_trend(recent_accuracies: &[f64], threshold: f64) -> &'static str {

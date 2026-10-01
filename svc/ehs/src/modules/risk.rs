@@ -197,6 +197,7 @@ pub async fn list_risks(
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_risk(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -460,6 +461,7 @@ pub async fn get_risk(
 
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_risk(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -611,6 +613,7 @@ pub async fn update_risk(
 
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn assess_risk(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -1327,6 +1330,7 @@ pub fn matrix_classify(score: u8) -> &'static str {
     }
 }
 
+#[allow(clippy::as_conversions)]
 pub fn lec_score(l: u8, e: u8, c: u8) -> u32 {
     let lv = l.min(10).max(1) as u32;
     let ev = e.min(10).max(1) as u32;
@@ -1344,6 +1348,11 @@ pub fn lec_classify(lec: u32) -> &'static str {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub fn residual_risk(inherent: u8, control_effectiveness: f64) -> u8 {
     let ce = control_effectiveness.clamp(0.0, 1.0);
     let reduced = inherent as f64 * (1.0 - ce);

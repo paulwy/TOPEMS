@@ -157,6 +157,7 @@ pub fn is_valid_route_sequence(stops: &[String]) -> bool {
     true
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// Calculate estimated arrival timestamp (epoch seconds) from departure, distance, and average speed.
 pub fn calc_estimated_arrival(departure: i64, distance_km: f64, avg_speed_kmh: f64) -> i64 {
     if avg_speed_kmh <= 0.0 || distance_km < 0.0 {

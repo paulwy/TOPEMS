@@ -65,6 +65,7 @@ pub fn is_duplicate_event(timestamps: &[u64], window_ms: u64, current_ts: u64) -
         .any(|ts| *ts >= lower && *ts <= current_ts)
 }
 
+#[allow(clippy::as_conversions)]
 /// Compute exponential backoff delay.
 ///
 /// `delay_ms = base_ms * exponential_base^(attempt - 1)`, capped by
@@ -83,6 +84,12 @@ pub fn compute_retry_backoff(
     delay.min(max_ms)
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// Add symmetric random-like jitter to a delay value.
 ///
 /// `jitter_pct` is a fraction in `[0.0, 1.0]` (values outside the
@@ -133,6 +140,7 @@ pub fn validate_field_mapping(
     Ok(())
 }
 
+#[allow(clippy::as_conversions)]
 /// Convert an amount between currency precision scales.
 ///
 /// `from_precision` is the number of decimals the amount is currently
@@ -633,6 +641,12 @@ pub fn resolve_event_version(
     Ok(new_version)
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// 估算死信队列需要多少存储空间（每条消息占用的记录条数）。
 ///
 /// 简化模型：`total_events × failed_ratio × max_retries + dead_letter_buffer`。
@@ -674,6 +688,11 @@ pub fn validate_event_source(
     Ok(())
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 将同步任务的进度百分比做「边界归一化」，保证 [0, 100] 整数。
 pub fn normalize_progress(pct: f64) -> u8 {
     if pct < 0.0 {

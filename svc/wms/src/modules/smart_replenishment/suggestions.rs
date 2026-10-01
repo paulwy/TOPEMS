@@ -200,6 +200,7 @@ pub async fn get_suggestion(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn compute_replenishment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

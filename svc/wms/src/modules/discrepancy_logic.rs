@@ -32,6 +32,7 @@ pub fn calculate_variance_rate(discrepancy_quantity: f64, system_quantity: f64) 
     (discrepancy_quantity / system_quantity).abs() * 100.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算盘点准确率（无差异项数 / 总项数 × 100）
 /// 注意：这是真正的准确率，不是完成率
 pub fn calculate_accuracy_rate(
@@ -44,6 +45,7 @@ pub fn calculate_accuracy_rate(
     (accurate_items as f64 / total_items as f64) * 100.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算完成率（已盘点项数 / 总项数 × 100）
 /// 这是 stock_take.rs 当前错误命名为 accuracy_rate 的逻辑
 pub fn calculate_completion_rate(counted_items: i64, total_items: i64) -> f64 {
@@ -80,6 +82,7 @@ pub struct DiscrepancySummary {
     pub variance_rate: f64,   // 差异率
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 汇总盘点差异
 pub fn summarize_discrepancies(items: &[DiscrepancyItem]) -> DiscrepancySummary {
     let total_items = items.len() as i64;

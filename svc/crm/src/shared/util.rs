@@ -114,6 +114,7 @@ pub fn normalize_phone(s: &str) -> String {
     result
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算客户生命周期价值（CLV）
 ///
 /// 公式：`orders × avg_order_value × retention_months`
@@ -293,6 +294,7 @@ pub fn is_lead_qualified(
     score >= 60 && budget && authority && need && timeline
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算转化率
 ///
 /// `total_leads` 为 0 时返回 0.0；`leads_converted > total_leads` 时返回 1.0。

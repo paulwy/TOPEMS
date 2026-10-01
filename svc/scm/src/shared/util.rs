@@ -36,6 +36,7 @@ pub fn validate_purchase_order_no(po: &str) -> bool {
         .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算再订货点 ROP = 日均需求 × 提前期 + 安全库存。
 /// 任意输入为负时返回 0.0，避免异常库存策略。
 pub fn calc_reorder_point(avg_daily_demand: f64, lead_time_days: i64, safety_stock: f64) -> f64 {
@@ -63,6 +64,7 @@ pub fn calc_inventory_turnover_rate(cogs: f64, avg_inventory: f64) -> Option<f64
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 计算在库供应天数 = 当前库存 / 日均需求。日均需求 ≤ 0 时返回 None。
 pub fn calc_days_of_supply(on_hand: f64, avg_daily_demand: f64) -> Option<i64> {
     if avg_daily_demand <= 0.0 {
@@ -79,6 +81,7 @@ pub fn calc_delivery_date(order_date: NaiveDate, lead_time_days: i64) -> NaiveDa
     order_date + chrono::Duration::days(lead_time_days)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 根据当前库存、日均需求与提前期判定断货风险等级。
 /// - `safe`：可覆盖提前期需求且有富余
 /// - `warning`：可覆盖但无富余（≤ 提前期需求 × 1.2）

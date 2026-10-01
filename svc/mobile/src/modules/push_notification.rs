@@ -172,6 +172,11 @@ pub async fn get_devices(
     ),
     tag = "push"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn send_notification(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -269,6 +274,11 @@ fn render_template(template: &str, params: &serde_json::Value) -> String {
         (status = 500, description = "Internal server error")
     ),
     tag = "push"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn send_broadcast(
     headers: HeaderMap,
@@ -425,6 +435,7 @@ pub struct NotificationListQuery {
     ),
     tag = "push"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_notification_stats(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

@@ -153,6 +153,7 @@ pub async fn get_funnel_data(
     ),
     tag = "sales_funnel"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_funnel_metrics(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -232,6 +233,7 @@ pub async fn get_funnel_metrics(
     ),
     tag = "sales_funnel"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_funnel_conversion(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -369,6 +371,7 @@ pub async fn get_funnel_trend(
     ),
     tag = "sales_funnel"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_stage_opportunities(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<

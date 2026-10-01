@@ -472,6 +472,7 @@ pub async fn get_batch_statistics(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_expiring_soon(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

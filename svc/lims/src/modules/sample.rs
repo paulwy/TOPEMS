@@ -1056,6 +1056,7 @@ pub async fn get_sample_traceability(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn calculate_stage_progress(current_stage: &str) -> f64 {
     let stages_order = [
         "received",

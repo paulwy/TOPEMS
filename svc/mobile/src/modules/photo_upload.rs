@@ -74,6 +74,7 @@ pub struct UploadProgressResponse {
     ),
     tag = "photos"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_photo(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -325,6 +326,12 @@ pub async fn batch_upload_photos(
         (status = 500, description = "Internal server error")
     ),
     tag = "photos"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn get_photo_list(
     headers: HeaderMap,

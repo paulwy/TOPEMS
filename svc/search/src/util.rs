@@ -105,6 +105,7 @@ pub fn pinyin_first_letter(s: &str) -> String {
         .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 简化版 BM25 打分。
 ///
 /// `tf` — 词频；`df` — 文档频率；`total_docs` — 总文档数；
@@ -480,6 +481,7 @@ pub fn highlight_snippet(text: &str, query_term: &str, radius_chars: usize) -> S
     s
 }
 
+#[allow(clippy::as_conversions)]
 /// 生成搜索查询的稳定缓存键：规范化查询 + 模块组合 + 分页参数 → SHA2-like
 /// 短哈希（此处用简化的 FNV-1a 64-bit，hex 编码，**非加密用途**）。
 pub fn build_cache_key(

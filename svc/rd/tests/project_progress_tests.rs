@@ -1,4 +1,9 @@
 #[cfg(test)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
+)]
 mod tests {
     #[test]
     fn test_progress_calculation_with_weights() {

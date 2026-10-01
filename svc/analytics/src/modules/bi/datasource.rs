@@ -651,6 +651,7 @@ pub async fn delete_datasource(
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn test_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -747,6 +748,7 @@ pub async fn test_datasource(
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn refresh_datasource(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

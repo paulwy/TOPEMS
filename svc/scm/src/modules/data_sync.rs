@@ -184,6 +184,7 @@ pub async fn create_inbound_from_purchase(
     result
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn create_inbound_from_purchase_internal(
     state: &ApiState,
     purchase_order_id: Uuid,
@@ -1043,6 +1044,7 @@ pub async fn get_sync_logs(
     ),
     tag = "SCM/sync"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn retry_failed_syncs(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,

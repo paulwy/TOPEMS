@@ -143,6 +143,7 @@ fn compute_status(compliance: f64, burn_rate: f64) -> String {
 
 // ==================== 纯函数（无副作用，便于单元测试） ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 根据 SLO 目标与请求总数/错误数计算错误预算。
 /// 返回 (budget_remaining, budget_consumed_pct)。
 /// - slo_target: SLO 目标百分比，如 99.9 表示 99.9%
@@ -388,6 +389,7 @@ fn seed_violations(_tenant_id: Uuid) -> Vec<SloViolation> {
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_slos(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -605,6 +607,11 @@ pub async fn delete_slo(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 pub async fn get_slo_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -654,6 +661,7 @@ pub async fn get_slo_summary(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_slo_budget(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -708,6 +716,7 @@ pub async fn get_slo_budget(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_slo_trend(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -752,6 +761,12 @@ pub async fn get_slo_trend(
     responses(
         (status = 200, description = "OK"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn list_slo_violations(
     State(_state): State<AppState>,

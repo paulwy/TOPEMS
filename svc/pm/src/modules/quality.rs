@@ -20,6 +20,7 @@ use crate::modules::effective_tenant_id;
 
 // ==================== Pure functions ====================
 
+#[allow(clippy::as_conversions)]
 /// Calculates a quality score as a percentage.
 ///
 /// Formula: `(1 - defects / total_items) * 100`.

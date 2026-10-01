@@ -25,6 +25,11 @@ pub fn sort_plugins_by_popularity(mut plugins: Vec<(String, u32, f64)>) -> Vec<(
     plugins
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// Compute the total pages for a paginated plugin list.
 pub fn calculate_total_pages(total: i64, page_size: u32) -> u32 {
     topems_shared_core::response::total_pages_of(total, page_size as i64) as u32
@@ -152,6 +157,11 @@ pub async fn list_categories(
         (status = 200, description = "List of plugins", body = serde_json::Value),
         (status = 500, description = "Internal server error")
     )
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
 )]
 pub async fn list_plugins(
     State(state): State<AppState>,

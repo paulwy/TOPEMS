@@ -703,6 +703,7 @@ pub async fn start_stock_take(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_stock_take_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -1287,6 +1288,7 @@ pub async fn delete_stock_take_item(
         (status = 500, description = "服务内部错误")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn complete_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

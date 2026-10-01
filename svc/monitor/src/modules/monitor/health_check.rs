@@ -345,6 +345,7 @@ pub struct InfrastructureHealth {
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_infrastructure_health(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<InfrastructureHealth>>> {

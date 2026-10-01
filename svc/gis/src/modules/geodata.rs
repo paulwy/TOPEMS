@@ -36,6 +36,11 @@ pub struct ConvertRequest {
     pub options: Option<serde_json::Value>,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 上传地理数据
 pub async fn upload_geodata(
     State(pool): State<PgPool>,

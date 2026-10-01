@@ -140,6 +140,7 @@ pub static WIDGET_CACHE: Lazy<WidgetCache> = Lazy::new(WidgetCache::new);
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing widgets");
 
@@ -194,6 +195,7 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_widgets_by_dashboard(
     State(state): State<AppState>,
     Path(dashboard_id): Path<Uuid>,
@@ -531,6 +533,7 @@ pub async fn delete_widget(
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_widget_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -655,6 +658,7 @@ pub async fn get_widget_data(
     operation_id = "get_widget_data_realtime",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions)]
 /// Query real-time data for a widget using ChartService with caching
 pub async fn get_widget_data_realtime(
     State(state): State<AppState>,

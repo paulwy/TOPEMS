@@ -80,6 +80,7 @@ pub async fn list_connections(
     ),
     tag = "ExternalErp"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_connection(
     State(state): State<AppState>,
     Json(body): Json<serde_json::Value>,
@@ -156,6 +157,11 @@ pub async fn create_connection(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 async fn test_connection(
     State(_state): State<AppState>,
     Json(body): Json<serde_json::Value>,
@@ -738,6 +744,11 @@ async fn write_to_staging(
         (status = 500, description = "Internal server error")
     ),
     tag = "ExternalErp"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn sync_entity(
     State(state): State<AppState>,

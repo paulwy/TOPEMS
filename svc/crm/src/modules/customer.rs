@@ -1202,6 +1202,7 @@ fn to_bd(v: f64) -> sqlx::types::BigDecimal {
     responses((status = 200, body = CustomerFinanceInfo)),
     tag = "customer"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_customer_finance(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -1310,6 +1311,7 @@ pub async fn get_customer_finance(
     responses((status = 200, body = CustomerFinanceInfo)),
     tag = "customer"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_customer_finance(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<

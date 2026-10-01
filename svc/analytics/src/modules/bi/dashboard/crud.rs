@@ -26,6 +26,7 @@ use super::models::{
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_dashboards(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing dashboards");
 
@@ -338,6 +339,7 @@ pub async fn delete_dashboard(
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing public dashboards");
 
@@ -393,6 +395,7 @@ pub async fn get_public_dashboards(State(state): State<AppState>) -> Json<serde_
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_user_dashboards(
     State(state): State<AppState>,
     Path(owner_id): Path<String>,

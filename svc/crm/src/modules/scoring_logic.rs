@@ -45,6 +45,7 @@ pub fn calculate_revenue_score(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn calculate_opportunity_score(opportunity_count: i64, won_count: i64) -> i32 {
     if opportunity_count == 0 {
         return 10;

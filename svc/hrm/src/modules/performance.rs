@@ -909,6 +909,7 @@ pub async fn delete_goal(
     ),
     tag = "performance"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_employee_reviews(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,
@@ -956,6 +957,7 @@ pub async fn get_employee_reviews(
     ),
     tag = "performance"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_employee_goals(
     State(_state): State<ApiState>,
     Path(id): Path<Uuid>,

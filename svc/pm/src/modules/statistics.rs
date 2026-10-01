@@ -12,6 +12,7 @@ use topems_shared_core::response::ApiResponse;
 
 // ==================== Pure functions ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Calculates the average progress from a slice of progress percentages.
 ///
 /// Returns `0.0` for an empty slice.
@@ -44,6 +45,7 @@ pub fn count_risks_by_level(scores: &[u32]) -> (u64, u64, u64, u64) {
     (low, medium, high, critical)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Calculates a completion rate as a percentage.
 ///
 /// Returns `0.0` when `total` is zero or negative.
@@ -310,6 +312,7 @@ pub fn create_routes(db: PgPool) -> Router {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 mod tests {
     use super::*;
     use sqlx::postgres::PgConnectOptions;
@@ -749,6 +752,7 @@ async fn build_pm_statistics(db: &PgPool) -> PmStatistics {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     let total_projects = query_count(db, "SELECT COUNT(*) FROM pm.projects").await;
 
@@ -822,6 +826,7 @@ async fn build_project_statistics(db: &PgPool) -> ProjectStatistics {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn build_contract_statistics(db: &PgPool) -> ContractStatistics {
     let total_contracts = query_count(db, "SELECT COUNT(*) FROM pm.contracts").await;
 
@@ -920,6 +925,7 @@ async fn build_budget_statistics(db: &PgPool) -> BudgetStatistics {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     let total_risks = query_count(db, "SELECT COUNT(*) FROM pm.risks").await;
     let open_risks = query_count(
@@ -964,6 +970,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn build_task_statistics(db: &PgPool) -> TaskStatistics {
     let total_tasks = query_count(db, "SELECT COUNT(*) FROM pm_tasks").await;
 

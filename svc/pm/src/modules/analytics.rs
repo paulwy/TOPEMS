@@ -88,6 +88,7 @@ pub async fn get_project_trend(
     ),
     tag = "analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_project_status(
     State(pool): State<PgPool>,
     Extension(_claims): Extension<Claims>,

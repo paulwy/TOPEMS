@@ -135,6 +135,7 @@ pub fn normalize_tag(tag: &str) -> String {
         .join("_")
 }
 
+#[allow(clippy::as_conversions)]
 /// Calculate the resolution rate in the range `0.0..=1.0`. Returns `0.0`
 /// when `total` is zero.
 pub fn calc_resolution_rate(resolved: u32, total: u32) -> f64 {

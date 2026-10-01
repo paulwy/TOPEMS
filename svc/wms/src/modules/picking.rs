@@ -211,6 +211,7 @@ pub struct PickingStats {
     ),
     tag = "picking"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn picking_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -850,6 +850,7 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
     operation_id = "reports_center_stats",
     responses((status = 200, description = "Reports center dashboard statistics"))
 )]
+#[allow(clippy::as_conversions)]
 async fn reports_center_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

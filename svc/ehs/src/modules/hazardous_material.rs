@@ -1132,6 +1132,7 @@ pub fn flash_point_class(celsius: f64) -> &'static str {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub fn validate_cas(cas: &str) -> bool {
     let parts: Vec<&str> = cas.split('-').collect();
     if parts.len() != 3 {

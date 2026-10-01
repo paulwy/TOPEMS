@@ -20,6 +20,7 @@ use super::models::SetAutoRefreshRequest;
     operation_id = "query_dashboard_realtime_data",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn query_dashboard_realtime_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

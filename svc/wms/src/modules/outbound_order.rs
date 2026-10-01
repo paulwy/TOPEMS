@@ -570,6 +570,7 @@ pub async fn delete_outbound_order(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_outbound_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

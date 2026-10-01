@@ -10,6 +10,7 @@ use crate::{AppState, CoreResponse};
 // Pure helper functions (no DB / async) — extracted for unit testing
 // ============================================================================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Calculate the weighted average of plugin ratings.
 /// Each review contributes a weight equal to its star value (5★ → weight 5,
 /// 1★ → weight 1), so the weighted average is `Σ(rating²) / Σ(rating)`.
@@ -26,6 +27,7 @@ pub fn calculate_rating_average(ratings: &[u32]) -> f64 {
     (weighted_sum as f64) / (weight_total as f64)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Compute a rating summary: (weighted average, min, max, count).
 /// For empty slices returns (0.0, 0, 0, 0).
 pub fn rating_summary(ratings: &[u32]) -> (f64, u32, u32, usize) {
@@ -46,6 +48,7 @@ pub fn rating_summary(ratings: &[u32]) -> (f64, u32, u32, usize) {
     (avg, min, max, ratings.len())
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Compute the standard average (arithmetic mean) of ratings.
 pub fn arithmetic_rating_mean(ratings: &[u32]) -> f64 {
     if ratings.is_empty() {
@@ -69,6 +72,7 @@ pub fn arithmetic_rating_mean(ratings: &[u32]) -> f64 {
     ),
     tag = "plugin"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_plugin_reviews_by_code(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,

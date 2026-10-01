@@ -137,6 +137,7 @@ pub struct ForecastEvaluation {
 // 预测算法（纯函数，可独立测试）
 // ---------------------------------------------------------------------------
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 简单移动平均：取最近 window_size 个数据点的平均值
 pub fn moving_average(data: &[f64], window_size: usize, periods: usize) -> Vec<f64> {
     if data.is_empty() || window_size == 0 || periods == 0 {
@@ -148,6 +149,7 @@ pub fn moving_average(data: &[f64], window_size: usize, periods: usize) -> Vec<f
     vec![avg; periods]
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 加权移动平均：对最近 window_size 个数据点赋予线性递增权重
 /// 最近的数据权重最大（=window），最远的数据权重最小（=1）
 pub fn weighted_moving_average(data: &[f64], window_size: usize, periods: usize) -> Vec<f64> {
@@ -184,6 +186,7 @@ pub fn exponential_smoothing(data: &[f64], alpha: f64, periods: usize) -> Vec<f6
     vec![smoothed; periods]
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 线性回归（最小二乘法）：拟合 y = a + b*x，外推预测
 pub fn linear_regression(data: &[f64], periods: usize) -> Vec<f64> {
     if data.is_empty() || periods == 0 {
@@ -218,6 +221,7 @@ pub fn linear_regression(data: &[f64], periods: usize) -> Vec<f64> {
 // 误差指标（纯函数，可独立测试）
 // ---------------------------------------------------------------------------
 
+#[allow(clippy::as_conversions)]
 /// 平均绝对百分比误差（MAPE）
 /// actual 和 forecast 必须等长
 pub fn calculate_mape(actual: &[f64], forecast: &[f64]) -> f64 {
@@ -238,6 +242,7 @@ pub fn calculate_mape(actual: &[f64], forecast: &[f64]) -> f64 {
     (sum / count as f64) * 100.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 均方根误差（RMSE）
 pub fn calculate_rmse(actual: &[f64], forecast: &[f64]) -> f64 {
     if actual.is_empty() || actual.len() != forecast.len() {
@@ -252,6 +257,7 @@ pub fn calculate_rmse(actual: &[f64], forecast: &[f64]) -> f64 {
     (sum_sq / n).sqrt()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 决定系数 R²
 pub fn calculate_r_squared(actual: &[f64], forecast: &[f64]) -> f64 {
     if actual.is_empty() || actual.len() != forecast.len() {
@@ -305,6 +311,7 @@ pub fn predict(config: &ForecastConfig) -> ForecastResult {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算 in-sample 误差指标：
 /// 使用 history_data 中前 i 个点预测第 i+1 个点，对比实际值计算 MAPE/RMSE/R²
 fn compute_in_sample_metrics(config: &ForecastConfig) -> (f64, f64, f64) {

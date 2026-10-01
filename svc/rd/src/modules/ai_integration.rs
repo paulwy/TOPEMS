@@ -104,6 +104,7 @@ pub fn create_routes() -> axum::Router<super::ApiState> {
     ),
     tag = "ai_integration"
 )]
+#[allow(clippy::as_conversions)]
 async fn list_analyses(
     State(_state): State<super::ApiState>,
     axum::extract::Query(params): axum::extract::Query<AiAnalysisQuery>,

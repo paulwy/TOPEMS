@@ -97,6 +97,7 @@ pub struct ReportExportQuery {
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing self-service reports");
 
@@ -421,6 +422,7 @@ pub async fn delete_report(
     operation_id = "query_report_data",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn query_report_data(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,

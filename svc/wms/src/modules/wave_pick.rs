@@ -501,6 +501,7 @@ pub struct WavePickItem {
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_wave_pick_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

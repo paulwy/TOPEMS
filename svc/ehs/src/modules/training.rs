@@ -238,6 +238,7 @@ pub async fn get_training(
 
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -552,6 +553,7 @@ pub async fn list_training_records(
     tag = "ehs",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -664,6 +666,7 @@ pub async fn get_training_record(
 
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

@@ -127,6 +127,11 @@ fn format_period(date: NaiveDate, group_by: &str) -> String {
     ),
     tag = "analytics"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 async fn get_inventory_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -261,6 +266,7 @@ async fn get_inventory_turnover(
     ),
     tag = "analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn get_order_fulfillment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -440,6 +446,7 @@ pub struct FlowTrendResponse {
     ),
     responses((status = 200, description = "流量趋势查询成功"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_flow_trend(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
@@ -610,6 +617,11 @@ pub struct AbcAnalysisResponse {
         (status = 500, description = "Internal server error")
     ),
     tag = "analytics"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
 )]
 pub async fn get_abc_analysis(
     State(state): State<ApiState>,
@@ -887,6 +899,7 @@ pub struct LocationUtilizationResponse {
     ),
     tag = "analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_location_utilization(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,

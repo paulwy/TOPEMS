@@ -129,6 +129,7 @@ impl MesErpSyncService {
 
     // ==================== ERP → MES 同步 ====================
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn sync_erp_to_mes(
         &self,
         tenant_id: Uuid,
@@ -267,6 +268,7 @@ impl MesErpSyncService {
 
     // ==================== MES → ERP 进度回传 ====================
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn sync_mes_progress_to_erp(
         &self,
         tenant_id: Uuid,
@@ -389,6 +391,7 @@ impl MesErpSyncService {
 
     // ==================== 辅助方法：获取外部数据 ====================
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn fetch_erp_order(
         &self,
         _tenant_id: Uuid,

@@ -401,6 +401,7 @@ pub fn extract_test_items_from_json(raw_data: &serde_json::Value) -> Vec<TestIte
     items
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn calculate_quality_score(test_items: &[TestItemResult]) -> f64 {
     if test_items.is_empty() {
         return 0.0;

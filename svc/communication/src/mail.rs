@@ -103,6 +103,7 @@ pub fn encode_mail_subject(subject: &str) -> String {
     format!("=?UTF-8?B?{}?=", base64_encode(subject.as_bytes()))
 }
 
+#[allow(clippy::as_conversions)]
 /// 简易 Base64 编码（无外部依赖）
 pub fn base64_encode(input: &[u8]) -> String {
     const TABLE: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -1334,6 +1335,7 @@ fn create_mailer() -> Result<SmtpTransport, String> {
         .build())
 }
 
+#[allow(clippy::as_conversions)]
 fn send_email_with_lettre(
     from: &str,
     to: &str,

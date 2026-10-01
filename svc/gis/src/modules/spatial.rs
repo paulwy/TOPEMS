@@ -67,6 +67,7 @@ pub struct ClusterRequest {
     pub parameters: Option<serde_json::Value>,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 缓冲区分析
 pub async fn buffer_analysis(
     State(pool): State<PgPool>,
@@ -142,6 +143,7 @@ fn calculate_buffer(geometry: &serde_json::Value, distance: f64) -> serde_json::
     serde_json::json!({})
 }
 
+#[allow(clippy::as_conversions)]
 fn create_circle_buffer(x: f64, y: f64, radius: f64) -> Vec<Vec<f64>> {
     let num_points = 32;
     let mut coords: Vec<Vec<f64>> = Vec::new();
@@ -159,6 +161,7 @@ fn create_circle_buffer(x: f64, y: f64, radius: f64) -> Vec<Vec<f64>> {
     coords
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 相交分析
 pub async fn intersect_analysis(
     State(pool): State<PgPool>,
@@ -229,6 +232,7 @@ fn check_intersection(geom1: &serde_json::Value, geom2: &serde_json::Value) -> b
     false
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 合并分析
 pub async fn union_analysis(
     State(pool): State<PgPool>,

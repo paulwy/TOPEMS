@@ -102,6 +102,7 @@ pub fn diff_stats(diff: &[DiffLine]) -> HashMap<&'static str, usize> {
     m
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 文件大小 human-readable 格式
 pub fn humanize_bytes(bytes: i64) -> String {
     if bytes < 0 {
@@ -710,6 +711,7 @@ pub async fn publish_version(
     Json(ApiResponse::success(version, "发布文档版本成功"))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 #[utoipa::path(post, path = "/api/pdm/documents/{documentId}/upload", tag = "pdm", responses((status = 200, description = "OK")), security(("BearerAuth" = ["pdm:document:write"])))]
 pub async fn upload_version(
     State(state): State<AppState>,

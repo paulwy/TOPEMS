@@ -157,6 +157,7 @@ pub struct CreateAlertMessageRequest {
     ),
     tag = "quality_dashboard"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_overview(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<QualityOverview>> {
@@ -317,6 +318,7 @@ pub async fn get_quality_trend(
     ),
     tag = "quality_dashboard"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_defect_distribution(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<QualityDefectDistribution>>> {

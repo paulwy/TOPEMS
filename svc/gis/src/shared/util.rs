@@ -161,6 +161,7 @@ pub fn wkt_parse_point(wkt: &str) -> Result<(f64, f64), GisError> {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 瓦片坐标转经纬度（Web Mercator / Slippy Map 标准）
 ///
 /// 返回瓦片左上角对应的经纬度
@@ -181,6 +182,12 @@ pub fn tile_to_latlng(z: u32, x: u32, y: u32) -> Result<(f64, f64), GisError> {
     Ok((lat, lng))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// 经纬度转瓦片坐标（Web Mercator / Slippy Map 标准）
 pub fn latlng_to_tile(z: u32, lat: f64, lng: f64) -> Result<(u32, u32), GisError> {
     validate_coordinates(lat, lng)?;
@@ -745,6 +752,7 @@ pub fn compute_polygon_bbox(points: &[(f64, f64)]) -> Result<(f64, f64, f64, f64
     Ok((min_lat, min_lng, max_lat, max_lng))
 }
 
+#[allow(clippy::as_conversions)]
 /// POI（兴趣点）位置哈希：将经纬度截断到指定小数位并生成稳定字符串键。
 ///
 /// `precision` 控制截断的小数位数（推荐 5 位 ≈ 1 米精度，4 位 ≈ 11 米）。
@@ -837,6 +845,7 @@ pub fn initial_bearing(lat1: f64, lng1: f64, lat2: f64, lng2: f64) -> Result<f64
     Ok((brng + 360.0) % 360.0)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Web Mercator 像素坐标到经纬度（简化版本，用于展示组件）。
 ///
 /// `px`, `py` — 像素坐标；`tile_size` — 瓦片大小（通常 256 或 512）。

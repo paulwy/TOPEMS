@@ -173,6 +173,7 @@ pub fn calculate_pagination(page: i64, page_size: i64, total: i64) -> (i64, i64,
     (offset, total_pages, current_page)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn calculate_relevance(query_terms: &[String], doc_fields: &[String]) -> f64 {
     if query_terms.is_empty() || doc_fields.is_empty() {
         return 0.0;

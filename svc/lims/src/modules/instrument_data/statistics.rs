@@ -105,6 +105,7 @@ pub async fn get_instrument_data_statistics(
 // 仪器数据统计纯函数
 // ============================================================================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算解析成功率（0.0 ~ 1.0），分母为 0 时返回 0
 pub fn compute_parse_success_rate(success_count: i64, total_count: i64) -> f64 {
     if total_count <= 0 {
@@ -115,6 +116,7 @@ pub fn compute_parse_success_rate(success_count: i64, total_count: i64) -> f64 {
     (sc / tc * 10000.0).round() / 10000.0
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 给定协议分布，计算占比最高的协议名 + 占比（0.0~1.0）
 /// 分布为空时返回 None
 pub fn top_protocol(distribution: &[ProtocolStat]) -> Option<(&str, f64)> {
@@ -127,6 +129,7 @@ pub fn top_protocol(distribution: &[ProtocolStat]) -> Option<(&str, f64)> {
     Some((top.protocol.as_str(), ratio))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 从分布向量计算每个协议的百分比（0~100，保留 2 位小数）
 pub fn protocol_percentages(distribution: &[ProtocolStat]) -> Vec<(String, f64)> {
     let total: i64 = distribution.iter().map(|p| p.count).sum();

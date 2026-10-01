@@ -32,6 +32,7 @@ pub struct DashboardStats {
     ),
     tag = "quality_task"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_today_quality_pass_rate(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

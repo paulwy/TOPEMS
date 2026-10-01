@@ -869,6 +869,7 @@ pub async fn delete_apqp_task(
     ),
     tag = "apqp"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_apqp_risks(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ApqpRiskQuery>,
@@ -1119,6 +1120,7 @@ pub async fn delete_apqp_risk(
     ),
     tag = "apqp"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_apqp_progress(
     State(state): State<crate::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,

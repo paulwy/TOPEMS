@@ -198,6 +198,7 @@ pub async fn get_vehicle_ranking(
     ),
     tag = "TMS - Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_status_distribution(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -250,6 +251,7 @@ pub async fn get_status_distribution(
     ),
     tag = "TMS - Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_carrier_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -386,6 +388,7 @@ pub async fn get_route_efficiency(
     ),
     tag = "TMS - Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_driver_performance(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -525,6 +528,7 @@ pub async fn get_shipment_trend_enhanced(
     ),
     tag = "TMS - Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_vehicle_utilization(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -585,6 +589,7 @@ pub async fn get_vehicle_utilization(
     ),
     tag = "TMS - Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_freight_cost_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

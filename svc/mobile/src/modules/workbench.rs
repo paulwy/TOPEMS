@@ -45,6 +45,7 @@ pub struct Shortcut {
     ),
     tag = "workbench"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_workbench_data(
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,

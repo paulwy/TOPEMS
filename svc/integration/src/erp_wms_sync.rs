@@ -1192,6 +1192,7 @@ pub async fn get_pending_syncs(
     Ok(results)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 执行增量同步（订单 ERP → WMS）
 pub async fn sync_incremental_orders(
     pool: &PgPool,
@@ -1299,6 +1300,7 @@ pub async fn sync_incremental_orders(
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 执行增量同步（库存 WMS → ERP）
 pub async fn sync_incremental_stock(
     pool: &PgPool,

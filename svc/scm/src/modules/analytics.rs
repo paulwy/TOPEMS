@@ -105,6 +105,7 @@ pub async fn get_purchase_trend(
     ),
     tag = "SCM/analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_purchase_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

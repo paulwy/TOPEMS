@@ -93,6 +93,7 @@ async fn test_pdm_material_event_publish_and_subscribe() {
     assert_eq!(received.tenant_id, tenant_id);
 }
 
+#[allow(clippy::as_conversions)]
 /// 并发测试：多组 Material 事件同时发布，验证 event_id 过滤不串扰。
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn test_pdm_material_event_concurrent_no_crosstalk() {

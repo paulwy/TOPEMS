@@ -192,6 +192,7 @@ impl RetryManager {
         false
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 计算下次重试时间
     pub fn calculate_next_retry(&self, retry_count: i32, policy: &RetryPolicy) -> DateTime<Utc> {
         let interval_secs = if policy.exponential_backoff {
@@ -376,6 +377,7 @@ impl CircuitBreaker {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 检查是否允许请求
     pub async fn is_allowed(&self) -> bool {
         let state = self.state.read().await;

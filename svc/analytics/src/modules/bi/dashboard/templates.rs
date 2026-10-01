@@ -20,6 +20,7 @@ use super::models::{
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing dashboard templates");
 

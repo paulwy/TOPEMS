@@ -335,6 +335,7 @@ async fn create_recommendation(
     ),
     tag = "customer_recommendation"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_customer_recommendations(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -404,6 +405,7 @@ async fn generate_recommendations(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_products(
     _state: &ApiState,
     _customer_id: &Uuid,
@@ -443,6 +445,7 @@ async fn recommend_products(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_opportunities(
     _state: &ApiState,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
@@ -494,6 +497,7 @@ async fn recommend_opportunities(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_services(
     _state: &ApiState,
     _customer_id: &Uuid,
@@ -533,6 +537,7 @@ async fn recommend_services(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_cross_sell(
     _state: &ApiState,
     _customer_id: &Uuid,
@@ -572,6 +577,7 @@ async fn recommend_cross_sell(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_upsell(
     _state: &ApiState,
     _customer_id: &Uuid,
@@ -611,6 +617,7 @@ async fn recommend_upsell(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_content(
     _state: &ApiState,
     _customer_id: &Uuid,
@@ -650,6 +657,7 @@ async fn recommend_content(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn recommend_general(
     _state: &ApiState,
     _customer_id: &Uuid,
@@ -689,6 +697,7 @@ async fn recommend_general(
     .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn calculate_overall_confidence(items: &[RecommendationItem]) -> f64 {
     if items.is_empty() {
         return 0.0;

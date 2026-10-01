@@ -25,6 +25,7 @@ pub fn sla_remaining_seconds(created_at: i64, sla_seconds: i64, now: i64) -> i64
     created_at.saturating_add(sla_seconds) - now
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算 SLA 合规率 (0.0 ~ 1.0)
 pub fn sla_compliance_rate(total_tickets: usize, breached: usize) -> f64 {
     if total_tickets == 0 {
@@ -34,6 +35,7 @@ pub fn sla_compliance_rate(total_tickets: usize, breached: usize) -> f64 {
     (total_tickets - breached) as f64 / total_tickets as f64
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算响应时间统计 (min, avg, max)
 pub fn response_time_stats(times: &[f64]) -> (f64, f64, f64) {
     if times.is_empty() {
@@ -83,6 +85,12 @@ impl TicketSlaService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     fn calculate_due_time(
         start_time: DateTime<Utc>,
         hours: f64,
@@ -297,6 +305,11 @@ impl TicketSlaService {
         Ok(events)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub async fn check_and_escalate(
         &self,
         ticket: &Ticket,
@@ -610,6 +623,7 @@ impl TicketSlaService {
         Ok(result.rows_affected() > 0)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_sla_stats(
         &self,
         tenant_id: Option<Uuid>,

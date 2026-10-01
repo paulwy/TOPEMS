@@ -201,6 +201,7 @@ pub struct ProductivityStats {
     responses((status = 200, description = "Labor productivity")),
     tag = "wms"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn labor_productivity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -384,6 +385,7 @@ pub struct PerformanceDashboard {
     ),
     tag = "labor"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn labor_performance_dashboard(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

@@ -115,6 +115,13 @@ impl RetryExecutor {
         result
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     fn calculate_delay(&self, attempt: u32) -> u64 {
         let delay = (self.config.base_delay_ms as f64
             * self.config.exponential_base.powi(attempt as i32 - 1)) as u64;
@@ -163,6 +170,7 @@ impl CircuitBreaker {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn allow_request(&self) -> bool {
         match self.state {
             CircuitState::Closed => true,

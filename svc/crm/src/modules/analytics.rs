@@ -107,6 +107,7 @@ pub struct NameValue {
     ),
     tag = "analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResponse {
     let db = &state.db;
 

@@ -50,6 +50,7 @@ pub struct UpdatePatrolRequest {
     pub status: Option<String>,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算巡逻完成率：visited / total_checkpoints * 100.0。
 /// 当 total_checkpoints 为 0 时返回 0.0 以避免除零。
 pub fn calculate_patrol_completion(total_checkpoints: usize, visited: usize) -> f64 {

@@ -117,6 +117,7 @@ pub fn classify_severity(value: f64, warning: f64, critical: f64) -> &'static st
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 从指标快照中按指标类型提取对应的当前值。
 pub fn extract_metric_value(metric_type: &MetricType, snapshot: &MetricSnapshot) -> f64 {
     match metric_type {
@@ -201,6 +202,7 @@ impl AlertEvaluator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn evaluate_metrics(&self, snapshot: &MetricSnapshot) -> Vec<AlertEvaluationResult> {
         let state = self.state.read().await;
         let mut results = Vec::new();
@@ -273,6 +275,7 @@ impl AlertEvaluator {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn collect_metrics(&self, api_state: &AppState) -> MetricSnapshot {
         MetricSnapshot {
             service_name: "topems-monitor".to_string(),
@@ -543,6 +546,7 @@ pub async fn delete_threshold(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn evaluate_thresholds(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -578,6 +582,7 @@ pub async fn evaluate_thresholds(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_metric_snapshot(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

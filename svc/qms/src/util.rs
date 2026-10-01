@@ -83,6 +83,7 @@ pub fn normalize_batch_no(s: &str) -> String {
     result
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn calc_defect_rate(defect_count: u64, total_count: u64) -> f64 {
     if total_count == 0 {
         return 0.0;
@@ -138,6 +139,11 @@ pub fn is_valid_inspection_status_transition(from: &str, to: &str) -> bool {
     pairs.contains(&(from, to))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub fn calc_sample_size_ansi_zs1_4(
     lot_size: u32,
     aql: &str,
@@ -189,6 +195,11 @@ pub fn calc_sample_size_ansi_zs1_4(
     Ok(adjusted.max(2))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub fn check_aql_pass(defects: u32, sample_size: u32, aql: &str) -> Result<bool, SampleError> {
     if sample_size == 0 {
         return Err(SampleError::InvalidSampleSize("zero".to_string()));

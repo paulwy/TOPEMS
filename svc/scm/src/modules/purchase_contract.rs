@@ -111,6 +111,11 @@ pub async fn list_contracts(
     ),
     tag = "SCM/purchase-contract"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -263,6 +268,11 @@ pub async fn get_contract(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn update_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

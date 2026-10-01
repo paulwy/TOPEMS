@@ -127,6 +127,7 @@ where
     ),
     tag = "WMS/inventory-alerts"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 获取库存预警列表
 pub async fn list_alerts(
     State(state): State<ApiState>,
@@ -462,6 +463,7 @@ pub async fn acknowledge_alert(
     ),
     tag = "WMS/inventory-alerts"
 )]
+#[allow(clippy::as_conversions)]
 /// 获取预警统计信息
 pub async fn get_alert_statistics(
     State(state): State<ApiState>,
@@ -610,6 +612,7 @@ pub async fn get_alert_statistics(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_alert_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -697,6 +700,7 @@ pub async fn get_alert_summary(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_alerts_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

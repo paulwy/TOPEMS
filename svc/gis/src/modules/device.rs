@@ -396,6 +396,12 @@ pub async fn get_device_tracking(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 /// 获取设备历史位置
 pub async fn get_device_history(
     State(pool): State<PgPool>,

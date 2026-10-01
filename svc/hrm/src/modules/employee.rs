@@ -725,6 +725,7 @@ pub async fn delete_employee(
         (status = 403, description = "权限不足")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn export_employees(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,

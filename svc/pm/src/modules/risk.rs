@@ -17,6 +17,7 @@ use crate::services::audit::PmAuditService;
 
 // ==================== Pure functions ====================
 
+#[allow(clippy::as_conversions)]
 /// Calculates a risk score as `probability * impact`.
 ///
 /// Both inputs are on a 1–5 scale. Values outside that range are clamped

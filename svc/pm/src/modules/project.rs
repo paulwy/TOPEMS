@@ -45,6 +45,7 @@ pub fn is_valid_project_transition(from: &str, to: &str) -> bool {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Calculates project completion percentage based on completed vs total phases.
 ///
 /// Returns a value in the range `[0.0, 100.0]`.
@@ -159,6 +160,11 @@ pub fn create_routes(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>)
         (status = 200, description = "获取项目列表成功", body = ApiResponse<ProjectListResponse>),
         (status = 500, description = "服务器内部错误"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 async fn list_projects(
     State(state): State<AppState>,
@@ -638,6 +644,11 @@ async fn delete_project(
         (status = 404, description = "项目不存在"),
         (status = 500, description = "服务器内部错误"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 async fn get_project_dashboard(
     State(state): State<AppState>,

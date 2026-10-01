@@ -133,6 +133,7 @@ pub async fn list_transfers(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -715,6 +716,7 @@ pub async fn receive_transfer(
     tag = "wms",
     responses((status = 200, description = "OK"))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn complete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

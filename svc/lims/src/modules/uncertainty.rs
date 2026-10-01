@@ -1079,6 +1079,7 @@ pub async fn delete_component(
     ),
     tag = "uncertainty"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn calculate_type_a(
     State(state): State<crate::shared::AppState>,
     Json(req): Json<TypeACalculationRequest>,

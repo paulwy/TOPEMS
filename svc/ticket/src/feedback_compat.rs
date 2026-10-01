@@ -41,6 +41,7 @@ pub struct FeedbackCompat {
 }
 
 impl From<Ticket> for FeedbackCompat {
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn from(t: Ticket) -> Self {
         let meta = t.metadata.unwrap_or(serde_json::json!({}));
         FeedbackCompat {
@@ -123,6 +124,7 @@ pub struct ListFeedbackParams {
     ),
     tag = "FeedbackCompat"
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn create_feedback(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

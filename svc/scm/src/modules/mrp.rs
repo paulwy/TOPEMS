@@ -111,6 +111,7 @@ pub fn calculate_order_date(required_date: NaiveDate, lead_time_days: i64) -> Na
     required_date - Duration::days(lead_time_days)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 组合建议：安全库存 + 净需求 + LFL 批量
 /// Returns (suggested_qty, safety_stock, net_requirement)
 pub fn compute_mrp_suggestion(
@@ -374,6 +375,7 @@ pub async fn get_suggestion(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn compute_mrp(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

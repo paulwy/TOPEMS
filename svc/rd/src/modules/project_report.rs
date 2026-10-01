@@ -80,6 +80,7 @@ pub fn create_routes() -> Router<super::ApiState> {
     ),
     tag = "project_report"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_project_summary(
     State(_state): State<super::ApiState>,
     Query(query): Query<ReportQuery>,
@@ -288,6 +289,7 @@ pub async fn get_project_type_stats(
     ),
     tag = "project_report"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_performance_metrics(
     State(_state): State<super::ApiState>,
     Extension(txn_arc): Extension<

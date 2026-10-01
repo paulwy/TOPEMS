@@ -42,6 +42,7 @@ pub struct LimsDashboardStats {
     ),
     tag = "dashboard"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_dashboard(
     State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<LimsDashboardStats>> {

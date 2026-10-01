@@ -44,6 +44,12 @@ impl GeoPosition {
 pub struct TrackStatisticsCalculator;
 
 impl TrackStatisticsCalculator {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 计算轨迹统计信息
     pub fn calculate(points: &[TrackPoint]) -> Option<TrackStatistics> {
         if points.is_empty() {

@@ -115,6 +115,11 @@ pub struct RankItem {
     operation_id = "query_cube",
     responses((status = 200, description = "OK")),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn query_cube(
     State(state): State<AppState>,
     Json(req): Json<CubeQueryRequest>,
@@ -234,6 +239,11 @@ pub async fn query_cube(
     tag = "Multidim",
     operation_id = "slice_cube",
     responses((status = 200, description = "OK")),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn slice_cube(
     State(state): State<AppState>,
@@ -358,6 +368,11 @@ pub async fn slice_cube(
     operation_id = "dice_cube",
     responses((status = 200, description = "OK")),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn dice_cube(
     State(state): State<AppState>,
     Json(req): Json<CubeQueryRequest>,
@@ -481,6 +496,7 @@ pub async fn dice_cube(
     operation_id = "pivot_table",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn pivot_table(
     State(state): State<AppState>,
     Json(req): Json<PivotQueryRequest>,
@@ -575,6 +591,11 @@ pub async fn pivot_table(
     tag = "Multidim",
     operation_id = "rank_data",
     responses((status = 200, description = "OK")),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn rank_data(
     State(state): State<AppState>,

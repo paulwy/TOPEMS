@@ -1008,6 +1008,7 @@ pub async fn list_attachments(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn upload_attachment(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
@@ -1102,6 +1103,7 @@ pub async fn get_attachment(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn update_attachment(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,
@@ -1183,6 +1185,7 @@ async fn delete_attachment(
     ),
     tag = "TicketExt"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn batch_upload_attachments(
     State(pool): State<PgPool>,
     claims: axum::Extension<Claims>,

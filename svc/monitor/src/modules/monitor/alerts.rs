@@ -309,6 +309,12 @@ pub fn create_routes() -> Router<AppState> {
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_alerts(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,

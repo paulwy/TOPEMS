@@ -291,6 +291,7 @@ pub async fn search_locations(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// 附近位置查询
 pub async fn nearby_locations(
     State(pool): State<PgPool>,

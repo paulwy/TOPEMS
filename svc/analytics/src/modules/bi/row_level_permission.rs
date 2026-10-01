@@ -145,6 +145,7 @@ pub struct FilteredDataResponse {
         (status = 500, description = "Internal Server Error"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing row-level permission rules");
 
@@ -585,6 +586,7 @@ pub async fn validate_permission(
     operation_id = "filter_data",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn filter_data(
     State(state): State<AppState>,
     Json(req): Json<FilterDataRequest>,
@@ -660,6 +662,7 @@ pub async fn filter_data(
     operation_id = "get_user_permissions",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_user_permissions(
     State(state): State<AppState>,
     Path(user_id): Path<String>,

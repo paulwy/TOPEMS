@@ -220,6 +220,7 @@ pub async fn get_upgrade_queue(
     ),
     tag = "plugin"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn add_to_upgrade_queue(
     State(_state): State<AppState>,
     Json(req): Json<serde_json::Value>,
@@ -286,6 +287,11 @@ pub async fn cancel_upgrade_queue_item(
         (status = 500, description = "Internal server error")
     ),
     tag = "plugin"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn batch_upgrade(
     State(_state): State<AppState>,

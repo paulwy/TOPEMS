@@ -436,6 +436,7 @@ impl SyncScheduler {
         Ok(connections)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 检查是否需要同步
     fn should_sync(&self, conn: &ErpConnection, now: DateTime<Utc>) -> bool {
         if !conn.isactive {

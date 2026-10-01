@@ -180,6 +180,7 @@ pub struct RawRfm {
 // RFM 核心算法（纯函数，可独立测试）
 // ---------------------------------------------------------------------------
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 对一组数值按五分位（quintile）打分 1-5。
 /// - `higher_is_better = true`：值越大得分越高（F、M）
 /// - `higher_is_better = false`：值越小得分越高（R，recency 越小越好）
@@ -247,6 +248,7 @@ pub fn map_segment(r: u32, f: u32, m: u32) -> RfmSegment {
     RfmSegment::Potential
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 纯函数：基于原始 R/F/M 数据和配置计算 RFM 记录
 pub fn compute_rfm_records(raw: Vec<RawRfm>, config: &RfmConfig) -> Vec<RfmRecord> {
     if raw.is_empty() {
@@ -330,6 +332,7 @@ pub fn create_routes() -> Router<ApiState> {
     ),
     tag = "rfm"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn analyze_rfm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -555,6 +558,7 @@ pub async fn get_segments(
     ),
     tag = "rfm"
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn get_customer_rfm(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -650,6 +654,7 @@ async fn get_customer_rfm(
 // ---------------------------------------------------------------------------
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 mod tests {
     use super::*;
     use uuid::Uuid;

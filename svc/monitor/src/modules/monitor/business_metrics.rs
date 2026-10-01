@@ -677,6 +677,7 @@ pub fn classify_metric_status(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_business_metrics(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -880,6 +881,7 @@ pub async fn delete_business_metric(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_business_metric_summary(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -954,6 +956,7 @@ pub async fn get_business_metric_summary(
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_business_metric_trend(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
