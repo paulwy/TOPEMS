@@ -122,4 +122,23 @@
 - **A 项（e1f73b5a4）**：修正判定确认 ai/erp 生产真实遗留 0（第一波报的 2,454 实为测试代码无 allow，161 个 cfg(test) 模块含 2 个自定义模块名 business_tools_integration_tests/document_intelligence）；测试豁免补全后 ai/erp 三 lint deny 固化。
 - **B 项（5a4d8df34）**：portal/mes 三 lint deny 固化（完整复制 workspace lint 集 + deny，见 Phase 2 补录）。
 - **C 项（b507fe78e）**：lib 11 补 indexing deny → **21 crate 三 lint 全 deny 固化完成**——新增 unwrap/expect/indexing 立即编译失败，闸门闭环。
-- 遗留优化项（非阻塞）：workspace 全量 ~1,000+ 风格 warning（sort_by_key/useless_conversion/manual_div_ceil/needless_borrow 等 8 个非 workspace allow 集 lint，全 workspace 普遍，门禁 `-D clippy::correctness` 不查 warning）；cast 五 lint 未 deny（金额路径已核实安全）。
+- 遗留优化项（非阻塞）：workspace 全量 ~1,000+ 风格 warning（sort_by_key/useless_conversion/manual_div_ceil/needless_borrow 等 8 个非 workspace allow 集 lint，全 workspace 普遍，门禁 `-D clippy::correctness` 不查 warning）；~~cast 五 lint 未 deny~~（已闭环：2026-10-02 全 workspace 41 crate 五 cast deny 生效，见下节）。
+
+## cast deny 全清（2026-10-01~02，批 1-7 收官）
+
+> 命令：`CARGO_INCREMENTAL=0 cargo clippy -p <pkg> --all-targets -- --force-warn clippy::as_conversions --force-warn clippy::cast_precision_loss --force-warn clippy::cast_possible_truncation --force-warn clippy::cast_possible_wrap --force-warn clippy::cast_sign_loss`；全 workspace 基线 `/tmp/cast_ws_sites.txt`（精确位置 `file:line:短lint名`）。
+> 口径：与 D 项同源五 lint、按 `(file,line,lint)` 去重；**5,226 处**（与 D 项 1,098 差异来源：此处含 lib 依赖重复编译与 `/tests/` 目录，且为全 workspace 非金额域限定）。处理原则：**禁止机械替换 cast**（按业务语义选择），存量 cast 全部保留 `as` 语义、以**函数级 `#[allow]`（仅缺失 lint）** 覆盖，cfg(test) 区模块级豁免，顶层 const/静态指针转换用文件级 `#![allow]`。
+
+**统一手法（每次批复用同一内联 Python 脚本）**：force-warn 输出解析（warning 文本关键词分类 + 下一行 `--> file:line:col`）→ LINT_MAP 短名→全名（as_conversions / cast_precision_loss / cast_possible_truncation / cast_possible_wrap / cast_sign_loss）→ test_regions 括号匹配剔除 cfg(test) 区 → 自 cast 行向上找最近 `fn`（FN_RE 含 `pub(...)`/`async`）→ 在 fn 前属性块**末尾**插 `#[allow(clippy::xxx, ...)]`（仅缺失 lint，已有 allow 不重插）→ 从后往前插防行号漂移。测试豁免：文件首个 `#[cfg(test)]` 后插模块级 allow。deny 重建：完整复制根 workspace lint 集剔除 8 键（三 panic + 五 cast allow）+ 本地 deny；`[lints] workspace=true` 与本地子表不能共存（cargo 报 cannot override，须删除继承行）。
+
+- **批 1 finance（a8c61f434，335 处）**：101 函数级 allow / 31 文件；Cargo.toml 重建（完整 workspace 集剔除 8 个 allow + 五 cast deny）+ 删除 `[lints] workspace=true` 继承行。
+- **批 2 erp+srm（858577151，516 处）**：113 函数 / 46 文件；5 测试豁免（fixed_asset ×3 + mdm_v49 ×1 + srm util ×1 模块级）；**erp-e2e-cli.rs 顶层 const fn 指针转换 → 文件级 `#![allow(clippy::as_conversions)]`**（函数外唯一特例，函数级属性无法附着 const 顶层）；erp 三 deny + 五 cast deny 重建、srm 重建本地块 + 五 cast deny。
+- **批 3 portal（567d9b898，1,477 处）**：302 函数 / 41 文件；无测试/顶层（全函数内）；tests 目录少量函数级已由脚本标注；重建三 deny + 五 cast deny。单 crate 最大批一次过、无残留。
+- **批 4 ai+unified-core（76b03025f，1,091 处）**：312 函数 / 119 文件；39 测试 → 7 文件模块级豁免（business_copilot / business_intelligence / governance_dashboard / multi_agent / provider / recorded / rag + unified-core audit_archiver）；**2 处 jwt 时间戳真修复**（iam/auth.rs `timestamp() as usize` → `usize::try_from(...).unwrap_or(0)`）——根因 `#[axum::debug_handler]` 宏吞函数属性（allow 放宏前后均无法覆盖宏展开体），时间戳非负数学安全 → try_from 恒成功。
+- **批 5 master-data+lib（c4e677664，610 处）**：master-data 264 + lib 346；157 函数 / 58 文件；33 测试 → 10 文件模块级豁免（auth / api_security / service_config / storage / cluster / delayed_message / master_data / publisher / alerting / slo）；master-data 五 cast deny、lib 11 重建三 deny + 五 cast deny。lib 基线沿用 10-01 全量量化（lib 代码此前未改、行号有效）。
+- **批 6 mes（01cb2e9b3，191 处）**：57 函数 / 26 文件；1 测试豁免（anomaly_detection.rs）；重建三 deny + 五 cast deny。
+- **批 7 其余 20 crate（6f6bb3977，1,006 处）**：crm 123 / wms 113 / analytics 107 / monitor 99 / integration 66 / rd 61 / qms 60 / mobile 56 / ticket 53 / gis 49 / ehs 44 / pm 35 / scm 30 / plugin-registry 29 / lims 24 / search 17 / hrm 13 / tms 12 / communication 8 / pdm 7；316 函数 / 148 文件；25 测试 → 5 文件豁免（crm rfm / monitor metrics / pm statistics / **rd/tests/project_progress_tests.rs（唯一 /tests/ 目录内）** / wms replenishment_logic）；20 crate 重建（五 cast deny，非 21-deny 组不追加三 deny）。
+
+**收官效果（2026-10-02）**：**5,226 处全覆盖**（7 批 4,220 → 合计 5,226）；全 workspace clippy **0 error**（warn=1 仅 zookeeper 依赖未来兼容警告）；测试 42 套件全绿。**deny 版图**：21-deny 组（ai/erp/portal/mes/unified-core + lib 11）+ finance/master-data/srm + 其余 20 crate = **全 workspace 41 crate 五 cast deny 生效**——新增 cast 立即编译失败，数值安全闸门闭环（金额路径 D 项已核实数学安全，非金额存量以 allow 明确标注语义保留）。
+
+**踩坑记录（防重试）**：① 短 lint 名插入无效，必须全名（如 `truncation` → `cast_possible_truncation`）；② FN_RE 必须支持 `pub(super)`（voucher.rs 曾漏归 8 处）；③ `#[axum::debug_handler]` 等宏吞函数属性 → 改 try_from 真修复而非 allow；④ workspace 集含 8 个需剔除 allow 键（三 panic 272-274 行 + 五 cast 226-230 行）；⑤ `[lints] workspace=true` 与本地子表不能共存；⑥ cargo test `--lib` 不可重复（多 `-p` 时仅末位带 `--lib`）；⑦ lib 包名为 `topems-shared-*`（`-p shared-ai` 不匹配）；⑧ 顶层 const 用文件级 `#![allow]`；⑨ 批 7 脚本路径切片 `split('/')[2]` 误取 src → `[1]` 修正；⑩ 期间磁盘满（No space left）阻塞测试输出，用户清理后恢复（环境故障非代码问题）。
