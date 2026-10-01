@@ -52,7 +52,7 @@ lazy_static::lazy_static! {
 
 #[allow(clippy::expect_used)] // tokio::main 宏展开内含 runtime.build().expect()，启动失败即崩溃属预期
 #[tokio::main]
-#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
+#[allow(clippy::indexing_slicing)] // tokio::main 宏展开渲染（runtime/lazy_static 内部索引），真实源码无索引
 async fn main() -> Result<()> {
     std::env::set_var("SEARCH_PATH", "erp, public");
 
