@@ -223,13 +223,6 @@ pre-push:
   #       产物，冷缓存/全量场景显著提速）；未装时静默跳过，不影响门禁语义。
   parallel: false
   commands:
-    # [2026-10-02] stale-base 守卫（第一个跑，秒级）——拒绝基于落后 base 的推送
-    # 多机协作事故（TRAE 机）：fetch 过时/本地残留导致门禁编译旧 base 报错，
-    # 错误无法归类且 push 会 non-fast-forward rejected。先同步再推。
-    stale-base-check:
-      tags: git sync
-      run: bash scripts/ci/check-stale-base.sh
-
     # [Gate SC] Shellcheck 全量防线（秒级，置于 cargo 门禁前快速失败）
     # P1-1 清零 195→0 后固化：任何脚本改动带告警，push 直接阻断，
     # 不浪费后续 cargo check/clippy/test 数分钟时间。
@@ -242,9 +235,12 @@ pre-push:
     #       根 .sqlx 缺任何宏查询，离线编译必然失败，push 被阻断，杜绝"本地能过、CI/新环境必炸"。
     # [2026-10-02] 内联逻辑移入 run-cargo-check.sh：失败时按来源归类
     #       （错误文件 ⊆ base → 提示先同步，勿修不属于本次提交的错误）。
+    # [2026-10-02 修订] stale-base 检查并入本命令前置（lefthook 2.1.10 对独立
+    #       stale-base-check 按 pushed files 过滤会 skip，而本命令实证必跑）——
+    #       旧 base 时先拦截再编译，杜绝"门禁编译旧 base 假报错"。
     cargo-check-workspace:
       tags: rust check
-      run: bash scripts/ci/run-cargo-check.sh
+      run: bash scripts/ci/check-stale-base.sh && bash scripts/ci/run-cargo-check.sh
 
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
     cargo-fmt-check:

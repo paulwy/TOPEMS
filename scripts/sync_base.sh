@@ -17,8 +17,12 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-echo "==> [3/4] git pull --rebase origin main"
-git pull --rebase origin main
+# [2026-10-02 修订] git pull --rebase 的 fork-point 推断在"本地刚提交"场景会把
+#   新提交误判为"已在上游"而丢弃（实证：HEAD 被 reset 回旧 base，工作区文件消失）。
+#   改为显式 git rebase --no-fork-point origin/main：只做"基于 origin/main 重放本地提交"，
+#   不做基于 reflog 的 fork-point 推断，杜绝误丢提交。fetch 已在 [1/4] 完成。
+echo "==> [3/4] git rebase --no-fork-point origin/main"
+git rebase --no-fork-point origin/main
 
 echo "==> [4/4] 编译快验（SQLX_OFFLINE=true，全 targets）"
 export SQLX_OFFLINE=true
