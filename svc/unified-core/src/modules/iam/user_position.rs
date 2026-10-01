@@ -212,6 +212,7 @@ mod tests {
         assert_eq!(json["position_id"], "00000000-0000-0000-0000-000000000000");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_batch_assign_positions_request() {
         let json = r#"{
@@ -229,6 +230,7 @@ mod tests {
         );
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_batch_assign_positions_request_empty_users() {
         let json = r#"{

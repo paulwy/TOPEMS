@@ -228,7 +228,9 @@ fn validate_against_schema(
     if !schema.is_object() {
         return result;
     }
-    let obj = schema.as_object().unwrap();
+    let Some(obj) = schema.as_object() else {
+        return result;
+    };
 
     // type
     if let Some(type_val) = obj.get("type") {

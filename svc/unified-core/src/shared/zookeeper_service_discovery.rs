@@ -390,6 +390,7 @@ mod tests {
         assert!(config.ephemeral);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_service_path() {
         let config = ZkConfig::default();
@@ -398,6 +399,7 @@ mod tests {
         assert_eq!(path, "/services/crm");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_service_path_custom_base() {
         let config = ZkConfig {
@@ -409,6 +411,7 @@ mod tests {
         assert_eq!(path, "/topems/services/crm");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_connect_and_disconnect() {
         let discovery = ZkServiceDiscovery::new(ZkConfig::default()).unwrap();
@@ -421,6 +424,7 @@ mod tests {
         assert!(!discovery.is_connected().await);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_register_and_discover() {
         let discovery = ZkServiceDiscovery::new(ZkConfig::default()).unwrap();
@@ -436,6 +440,7 @@ mod tests {
         assert_eq!(discovered.base_url, "http://localhost:8001");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_deregister() {
         let discovery = ZkServiceDiscovery::new(ZkConfig::default()).unwrap();
@@ -450,6 +455,7 @@ mod tests {
         assert!(discovered.is_none());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_list_services() {
         let discovery = ZkServiceDiscovery::new(ZkConfig::default()).unwrap();
@@ -464,6 +470,7 @@ mod tests {
         assert_eq!(services.len(), 2);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_heartbeat() {
         let discovery = ZkServiceDiscovery::new(ZkConfig::default()).unwrap();

@@ -310,6 +310,7 @@ mod tests {
         assert_eq!(req.permissions[1].tenant_id, "t2");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_batch_delete_request_deserialization() {
         let json = r#"{
@@ -338,7 +339,8 @@ mod tests {
                 error: Some("Already exists".to_string()),
             }],
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":3"));
         assert!(json.contains("\"succeeded\":2"));
         assert!(json.contains("\"failed\":1"));
@@ -353,7 +355,8 @@ mod tests {
             success: true,
             error: None,
         };
-        let json = serde_json::to_string(&result).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&result)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":true"));
         assert!(!json.contains("error")); // None should be skipped
     }
@@ -366,7 +369,8 @@ mod tests {
             success: false,
             error: Some("Not found".to_string()),
         };
-        let json = serde_json::to_string(&result).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&result)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":false"));
         assert!(json.contains("Not found"));
     }
@@ -407,7 +411,8 @@ mod tests {
             tenant_id: "t1".to_string(),
             user_id: "u1".to_string(),
         };
-        let json = serde_json::to_string(&item).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&item).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"tenant_id\":\"t1\""));
         assert!(json.contains("\"user_id\":\"u1\""));
     }
@@ -421,7 +426,8 @@ mod tests {
             updated: vec![],
             errors: vec![],
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":2"));
         assert!(json.contains("\"succeeded\":1"));
         assert!(json.contains("\"failed\":1"));
@@ -435,7 +441,8 @@ mod tests {
             failed: 1,
             errors: vec![],
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":5"));
         assert!(json.contains("\"succeeded\":4"));
         assert!(json.contains("\"failed\":1"));

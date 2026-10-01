@@ -468,7 +468,7 @@ mod tests {
 
     #[test]
     fn test_from_env_fallback() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("FAKE_SERVICE_URL");
         let client = TypedServiceClient::from_env(FakeApi).unwrap();
         assert_eq!(client.base_url(), "http://localhost:9999");
@@ -476,7 +476,7 @@ mod tests {
 
     #[test]
     fn test_from_env_override() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::set_var("FAKE_SERVICE_URL", "http://10.0.0.1:7777");
         let client = TypedServiceClient::from_env(FakeApi).unwrap();
         assert_eq!(client.base_url(), "http://10.0.0.1:7777");

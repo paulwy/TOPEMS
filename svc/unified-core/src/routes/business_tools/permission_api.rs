@@ -758,6 +758,7 @@ mod tests {
         assert!(req.tool_permissions.is_empty());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tool_permission_request_defaults() {
         let json = r#"{"tool":"crm"}"#;
@@ -825,7 +826,8 @@ mod tests {
             reason: None,
         };
 
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"allowed\":true"));
         assert!(!json.contains("reason"));
     }
@@ -841,7 +843,8 @@ mod tests {
             reason: Some("Permission denied".to_string()),
         };
 
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"allowed\":false"));
         assert!(json.contains("Permission denied"));
     }
@@ -853,7 +856,8 @@ mod tests {
             code: Some("INTERNAL_ERROR".to_string()),
         };
 
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("Something went wrong"));
         assert!(json.contains("INTERNAL_ERROR"));
     }
@@ -865,7 +869,8 @@ mod tests {
             permissions: vec![],
         };
 
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":2"));
     }
 }

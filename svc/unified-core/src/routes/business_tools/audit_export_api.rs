@@ -452,6 +452,7 @@ mod tests {
         assert!(csv.contains("id,tenant_id,user_id,action"));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_entries_to_json() {
         let entries = vec![AuditLogEntry {

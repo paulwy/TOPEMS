@@ -269,7 +269,7 @@ impl StreamEventSubscriber {
             }
         }
 
-        let handlers = handlers.unwrap();
+        let handlers = handlers.unwrap_or_else(|| panic!("handlers guaranteed by is_none guard"));
         let mut all_succeeded = true;
 
         for handler in handlers {
@@ -377,7 +377,7 @@ impl StreamEventSubscriber {
             return Ok(());
         }
 
-        let handlers = handlers.unwrap();
+        let handlers = handlers.unwrap_or_else(|| panic!("handlers guaranteed by is_none guard"));
         let mut all_succeeded = true;
 
         for handler in handlers {
@@ -787,7 +787,7 @@ mod tests {
                 async move {
                     received_clone
                         .lock()
-                        .unwrap()
+                        .unwrap_or_else(|e| e.into_inner())
                         .push(event.event_id.to_string());
                     Ok(())
                 }
@@ -850,7 +850,7 @@ mod tests {
         }
 
         // 验证消息已被消费
-        let count = received.lock().unwrap().len();
+        let count = received.lock().unwrap_or_else(|e| e.into_inner()).len();
         assert_eq!(count, 1, "应该收到 1 条消息，实际收到 {} 条", count);
 
         // 清理
@@ -925,7 +925,7 @@ mod tests {
                 async move {
                     received_clone
                         .lock()
-                        .unwrap()
+                        .unwrap_or_else(|e| e.into_inner())
                         .push(mdm_event.event_id.to_string());
                     Ok(())
                 }
@@ -982,9 +982,12 @@ mod tests {
         }
 
         // 验证 MDM handler 已消费消息
-        let count = received.lock().unwrap().len();
+        let count = received.lock().unwrap_or_else(|e| e.into_inner()).len();
         assert_eq!(count, 1, "MDM handler 应收到 1 条消息，实际 {} 条", count);
-        assert_eq!(received.lock().unwrap()[0], expected_event_id.to_string());
+        assert_eq!(
+            received.lock().unwrap_or_else(|e| e.into_inner())[0],
+            expected_event_id.to_string()
+        );
 
         // 清理
         let _: () = redis::cmd("DEL")

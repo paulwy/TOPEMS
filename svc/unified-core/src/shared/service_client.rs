@@ -435,7 +435,7 @@ impl StaticServiceDiscovery {
             discovery
                 .services
                 .lock()
-                .unwrap()
+                .unwrap_or_else(|e| e.into_inner())
                 .insert(config.name, registration);
         }
         discovery
@@ -443,22 +443,37 @@ impl StaticServiceDiscovery {
 
     /// Get a service registration by name (synchronous).
     pub fn get(&self, name: &str) -> Option<ServiceRegistration> {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).get(name).cloned()
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(name)
+            .cloned()
     }
 
     /// List all service registrations (synchronous).
     pub fn list(&self) -> Vec<ServiceRegistration> {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).values().cloned().collect()
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .values()
+            .cloned()
+            .collect()
     }
 
     /// Check if a service is registered (synchronous).
     pub fn has(&self, name: &str) -> bool {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).contains_key(name)
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .contains_key(name)
     }
 
     /// Get the number of registered services (synchronous).
     pub fn count(&self) -> usize {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).len()
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .len()
     }
 }
 
@@ -473,13 +488,16 @@ impl ServiceDiscovery for StaticServiceDiscovery {
     async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
         self.services
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .insert(registration.name.clone(), registration);
         Ok(())
     }
 
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).remove(name);
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(name);
         Ok(())
     }
 
@@ -487,15 +505,31 @@ impl ServiceDiscovery for StaticServiceDiscovery {
         &self,
         name: &str,
     ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
-        Ok(self.services.lock().unwrap_or_else(|e| e.into_inner()).get(name).cloned())
+        Ok(self
+            .services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(name)
+            .cloned())
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
-        Ok(self.services.lock().unwrap_or_else(|e| e.into_inner()).values().cloned().collect())
+        Ok(self
+            .services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .values()
+            .cloned()
+            .collect())
     }
 
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
-        if let Some(registration) = self.services.lock().unwrap_or_else(|e| e.into_inner()).get_mut(name) {
+        if let Some(registration) = self
+            .services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_mut(name)
+        {
             registration.heartbeat();
             Ok(())
         } else {
@@ -636,22 +670,37 @@ impl EnvServiceDiscovery {
 
     /// Get a service registration by name (synchronous).
     pub fn get(&self, name: &str) -> Option<ServiceRegistration> {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).get(name).cloned()
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(name)
+            .cloned()
     }
 
     /// List all service registrations (synchronous).
     pub fn list(&self) -> Vec<ServiceRegistration> {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).values().cloned().collect()
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .values()
+            .cloned()
+            .collect()
     }
 
     /// Check if a service is registered (synchronous).
     pub fn has(&self, name: &str) -> bool {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).contains_key(name)
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .contains_key(name)
     }
 
     /// Get the number of registered services (synchronous).
     pub fn count(&self) -> usize {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).len()
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .len()
     }
 
     /// Get the environment variable prefix.
@@ -671,13 +720,16 @@ impl ServiceDiscovery for EnvServiceDiscovery {
     async fn register(&self, registration: ServiceRegistration) -> Result<(), ServiceClientError> {
         self.services
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .insert(registration.name.clone(), registration);
         Ok(())
     }
 
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
-        self.services.lock().unwrap_or_else(|e| e.into_inner()).remove(name);
+        self.services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(name);
         Ok(())
     }
 
@@ -685,15 +737,31 @@ impl ServiceDiscovery for EnvServiceDiscovery {
         &self,
         name: &str,
     ) -> Result<Option<ServiceRegistration>, ServiceClientError> {
-        Ok(self.services.lock().unwrap_or_else(|e| e.into_inner()).get(name).cloned())
+        Ok(self
+            .services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(name)
+            .cloned())
     }
 
     async fn list_services(&self) -> Result<Vec<ServiceRegistration>, ServiceClientError> {
-        Ok(self.services.lock().unwrap_or_else(|e| e.into_inner()).values().cloned().collect())
+        Ok(self
+            .services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .values()
+            .cloned()
+            .collect())
     }
 
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
-        if let Some(registration) = self.services.lock().unwrap_or_else(|e| e.into_inner()).get_mut(name) {
+        if let Some(registration) = self
+            .services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .get_mut(name)
+        {
             registration.heartbeat();
             Ok(())
         } else {
@@ -1182,7 +1250,7 @@ impl ServiceClient {
                 // V443: Record circuit breaker rejection
                 self.statistics
                     .lock()
-                    .unwrap()
+                    .unwrap_or_else(|e| e.into_inner())
                     .record_circuit_breaker_rejected();
                 return Err(e);
             }
@@ -1192,7 +1260,10 @@ impl ServiceClient {
         if self.config.rate_limit_enabled {
             if let Err(e) = self.check_rate_limit() {
                 // V443: Record rate limited request
-                self.statistics.lock().unwrap_or_else(|e| e.into_inner()).record_rate_limited();
+                self.statistics
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .record_rate_limited();
                 return Err(e);
             }
         }
@@ -1215,7 +1286,7 @@ impl ServiceClient {
                     // V443: Record successful request
                     self.statistics
                         .lock()
-                        .unwrap()
+                        .unwrap_or_else(|e| e.into_inner())
                         .record_success(response.duration_ms);
                     return Ok(response);
                 }
@@ -1234,7 +1305,10 @@ impl ServiceClient {
                     }
 
                     // V443: Record failed request (after all retries exhausted)
-                    self.statistics.lock().unwrap_or_else(|e| e.into_inner()).record_failure(0);
+                    self.statistics
+                        .lock()
+                        .unwrap_or_else(|e| e.into_inner())
+                        .record_failure(0);
                 }
             }
         }
@@ -1324,7 +1398,10 @@ impl ServiceClient {
 
     /// Check if the circuit breaker allows requests.
     fn check_circuit_breaker(&self) -> Result<(), ServiceClientError> {
-        let mut cb = self.circuit_breaker.lock().unwrap_or_else(|e| e.into_inner());
+        let mut cb = self
+            .circuit_breaker
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         // Check if circuit is open and reset timeout has passed
         if cb.state == CircuitBreakerState::Open {
@@ -1348,7 +1425,10 @@ impl ServiceClient {
 
     /// Record a successful request.
     fn record_success(&self) {
-        let mut cb = self.circuit_breaker.lock().unwrap_or_else(|e| e.into_inner());
+        let mut cb = self
+            .circuit_breaker
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         cb.failure_count = 0;
         cb.success_count += 1;
 
@@ -1361,7 +1441,10 @@ impl ServiceClient {
 
     /// Record a failed request.
     fn record_failure(&self) {
-        let mut cb = self.circuit_breaker.lock().unwrap_or_else(|e| e.into_inner());
+        let mut cb = self
+            .circuit_breaker
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         cb.failure_count += 1;
         cb.success_count = 0;
 
@@ -1374,7 +1457,10 @@ impl ServiceClient {
 
     /// Get the circuit breaker status.
     pub fn get_circuit_breaker_status(&self) -> CircuitBreakerStatus {
-        let cb = self.circuit_breaker.lock().unwrap_or_else(|e| e.into_inner());
+        let cb = self
+            .circuit_breaker
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         CircuitBreakerStatus {
             state: format!("{:?}", cb.state),
             failure_count: cb.failure_count,
@@ -1386,7 +1472,10 @@ impl ServiceClient {
 
     /// Reset the circuit breaker to closed state.
     pub fn reset_circuit_breaker(&self) {
-        let mut cb = self.circuit_breaker.lock().unwrap_or_else(|e| e.into_inner());
+        let mut cb = self
+            .circuit_breaker
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         cb.state = CircuitBreakerState::Closed;
         cb.failure_count = 0;
         cb.success_count = 0;
@@ -1446,7 +1535,11 @@ impl ServiceClient {
 
     /// Get the request statistics.
     pub fn get_statistics(&self) -> RequestStatistics {
-        let mut stats = self.statistics.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        let mut stats = self
+            .statistics
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
         // Update uptime
         stats.update_uptime(self.created_at.elapsed().as_secs());
         stats
@@ -1454,7 +1547,10 @@ impl ServiceClient {
 
     /// Reset the request statistics.
     pub fn reset_statistics(&self) {
-        self.statistics.lock().unwrap_or_else(|e| e.into_inner()).reset();
+        self.statistics
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .reset();
     }
 
     /// Get the connection pool configuration.

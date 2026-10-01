@@ -179,10 +179,22 @@ pub async fn list_transfers(
 
 /// WMS 仪表盘统计
 pub async fn dashboard_stats() -> Json<ApiResponse<serde_json::Value>> {
-    let inbound_count = inbound_orders().lock().unwrap_or_else(|e| e.into_inner()).len();
-    let outbound_count = outbound_orders().lock().unwrap_or_else(|e| e.into_inner()).len();
-    let inventory_count = inventory_items().lock().unwrap_or_else(|e| e.into_inner()).len();
-    let transfer_count = transfer_orders().lock().unwrap_or_else(|e| e.into_inner()).len();
+    let inbound_count = inbound_orders()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
+    let outbound_count = outbound_orders()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
+    let inventory_count = inventory_items()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
+    let transfer_count = transfer_orders()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
 
     Json(ApiResponse {
         success: true,

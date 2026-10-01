@@ -399,6 +399,7 @@ mod tests {
         assert_eq!(aggregate_health(&[]), HealthStatus::Healthy);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn health_status_roundtrip() {
         for s in [
@@ -406,12 +407,14 @@ mod tests {
             HealthStatus::Degraded,
             HealthStatus::Unhealthy,
         ] {
-            let j = serde_json::to_string(&s).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+            let j =
+                serde_json::to_string(&s).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
             let d: HealthStatus = serde_json::from_str(&j).unwrap();
             assert_eq!(d, s);
         }
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn component_health_roundtrip() {
         let c = ComponentHealth {
@@ -454,6 +457,7 @@ mod tests {
         assert_eq!(p.offset, 20);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn pagination_roundtrip() {
         let p = build_pagination(Some(5), Some(25), 100);
@@ -627,6 +631,7 @@ mod tests {
         assert_eq!(r[0].field, "a");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn filter_clause_and_op_roundtrip() {
         let fc = FilterClause {
@@ -634,7 +639,8 @@ mod tests {
             op: FilterOp::Lt,
             value: "30".into(),
         };
-        let j = serde_json::to_string(&fc).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let j =
+            serde_json::to_string(&fc).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: FilterClause = serde_json::from_str(&j).unwrap();
         assert_eq!(d, fc);
 
@@ -647,7 +653,8 @@ mod tests {
             FilterOp::Lte,
             FilterOp::Contains,
         ] {
-            let j = serde_json::to_string(&op).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+            let j = serde_json::to_string(&op)
+                .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
             let d: FilterOp = serde_json::from_str(&j).unwrap();
             assert_eq!(d, op);
         }
@@ -698,10 +705,12 @@ mod tests {
         id: i32,
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn api_list_resp_roundtrip() {
         let resp = ApiListResp::<Item>::new(vec![Item { id: 1 }, Item { id: 2 }], 42, 2, 20);
-        let j = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let j =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: ApiListResp<Item> = serde_json::from_str(&j).unwrap();
         assert_eq!(d.items, resp.items);
         assert_eq!(d.total, resp.total);
@@ -710,6 +719,7 @@ mod tests {
         assert_eq!(d.total_pages, resp.total_pages);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn tenant_scope_roundtrip_and_eq() {
         let t = TenantScope {

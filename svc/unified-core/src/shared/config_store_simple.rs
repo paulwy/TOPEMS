@@ -232,10 +232,12 @@ mod tests {
         assert_eq!(policy.cleanup_interval_hours, 24);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_retention_policy_serialization() {
         let policy = RetentionPolicy::new(30);
-        let json = serde_json::to_string(&policy).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&policy)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let deserialized: RetentionPolicy = serde_json::from_str(&json).unwrap();
         assert_eq!(policy.retention_days, deserialized.retention_days);
         assert_eq!(policy.archive_enabled, deserialized.archive_enabled);

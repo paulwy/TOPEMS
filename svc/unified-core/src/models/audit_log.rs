@@ -66,6 +66,7 @@ mod tests {
         assert_eq!(params.status, "success");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_audit_log_serde_roundtrip() {
         let log = AuditLog {

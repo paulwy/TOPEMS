@@ -1382,7 +1382,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_default_fallback() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("SERVER_PORT");
         std::env::remove_var("PORT");
         std::env::remove_var("ERP_PORT");
@@ -1398,7 +1398,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_custom_env_var() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("SERVER_PORT");
         std::env::remove_var("PORT");
         std::env::set_var("ERP_PORT", "19000");
@@ -1415,7 +1415,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_server_port_fallback() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("ERP_PORT");
         std::env::remove_var("PORT");
         std::env::set_var("SERVER_PORT", "28000");
@@ -1432,7 +1432,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_invalid_env_ignored() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("SERVER_PORT");
         std::env::remove_var("PORT");
         std::env::set_var("ERP_PORT", "not-a-number");
@@ -1816,7 +1816,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_port_env_var() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("ERP_PORT");
         std::env::remove_var("SERVER_PORT");
         std::env::set_var("PORT", "38000");
@@ -1833,7 +1833,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_priority_order_custom_server_port() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::set_var("CUSTOM_PORT", "1111");
         std::env::set_var("SERVER_PORT", "2222");
         std::env::set_var("PORT", "3333");
@@ -2117,7 +2117,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_without_port_env_var_uses_server_port() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("SERVER_PORT");
         std::env::remove_var("PORT");
         std::env::set_var("SERVER_PORT", "17000");
@@ -2133,7 +2133,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_invalid_server_port_falls_through_to_default() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("PORT");
         std::env::set_var("SERVER_PORT", "NaN");
         let cfg = ServiceConfig {
@@ -2182,7 +2182,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_bad_custom_env_then_server_port() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("PORT");
         std::env::set_var("BAD_CUSTOM", "notport");
         std::env::set_var("SERVER_PORT", "4567");
@@ -2201,7 +2201,7 @@ mod tests {
     #[serial]
     #[test]
     fn test_resolve_port_all_env_invalid_uses_default() {
-        let _lock = ENV_LOCK.lock().unwrap();
+        let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         std::env::set_var("MY_PORT", "xyz");
         std::env::set_var("SERVER_PORT", "abc");
         std::env::set_var("PORT", "not-a-u16");

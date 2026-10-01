@@ -70,7 +70,9 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
 
 /// MES 仪表盘初始数据（HTTP 端点，用于首次加载）
 pub async fn mes_dashboard_initial() -> Json<serde_json::Value> {
-    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
+    let service = MesService::instance()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let stats = service.get_dashboard_stats();
     let wip = service.get_wip_statistics();
 

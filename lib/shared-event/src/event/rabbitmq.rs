@@ -1247,14 +1247,14 @@ mod tests {
         let counter = std::sync::Arc::new(std::sync::Mutex::new(0u32));
         let counter_clone = counter.clone();
         let handler: CacheInvalidationHandler = Arc::new(move |_pattern: &str, _level: &str| {
-            *counter_clone.lock().unwrap() += 1;
+            *counter_clone.lock().unwrap_or_else(|e| e.into_inner()) += 1;
         });
 
         handler("key1", "specific");
         handler("key2:*", "pattern");
         handler("*", "all");
 
-        assert_eq!(*counter.lock().unwrap(), 3);
+        assert_eq!(*counter.lock().unwrap_or_else(|e| e.into_inner()), 3);
     }
 
     // === Publisher/Subscriber struct trait bounds ===
@@ -1390,7 +1390,7 @@ mod tests {
         let counter = std::sync::Arc::new(std::sync::Mutex::new(0u32));
         let counter_clone = counter.clone();
         let handler = move |_event: Event| -> EventResult<()> {
-            *counter_clone.lock().unwrap() += 1;
+            *counter_clone.lock().unwrap_or_else(|e| e.into_inner()) += 1;
             Ok(())
         };
 
@@ -1398,7 +1398,7 @@ mod tests {
             let event = Event::new(EventType::HealthCheck, "test", serde_json::json!({}));
             assert!(handler(event).is_ok());
         }
-        assert_eq!(*counter.lock().unwrap(), 5);
+        assert_eq!(*counter.lock().unwrap_or_else(|e| e.into_inner()), 5);
     }
 
     // === Unicode/嵌套 payload ===

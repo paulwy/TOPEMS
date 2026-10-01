@@ -186,10 +186,14 @@ impl InMemoryPermissionStore {
 
         // Add a default owner permission for the default tenant
         let default_permission = TenantPermission::owner("default", "admin");
-        store.permissions.lock().unwrap_or_else(|e| e.into_inner()).insert(
-            ("default".to_string(), "admin".to_string()),
-            default_permission,
-        );
+        store
+            .permissions
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(
+                ("default".to_string(), "admin".to_string()),
+                default_permission,
+            );
 
         store
     }
@@ -198,7 +202,7 @@ impl InMemoryPermissionStore {
     fn get_internal(&self, tenant_id: &str, user_id: &str) -> Option<TenantPermission> {
         self.permissions
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .get(&(tenant_id.to_string(), user_id.to_string()))
             .cloned()
     }
@@ -312,7 +316,11 @@ impl PermissionStore for InMemoryPermissionStore {
     }
 
     async fn count(&self) -> Result<usize, PermissionStoreError> {
-        Ok(self.permissions.lock().unwrap_or_else(|e| e.into_inner()).len())
+        Ok(self
+            .permissions
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .len())
     }
 }
 
@@ -413,6 +421,7 @@ mod tests {
         assert!(matches!(retrieved.role, TenantRole::Owner));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_duplicate_permission_error() {
         let store = InMemoryPermissionStore::new();
@@ -424,6 +433,7 @@ mod tests {
         assert!(result.is_err());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_update_permission() {
         let store = InMemoryPermissionStore::new();
@@ -443,6 +453,7 @@ mod tests {
         assert!(!retrieved.active);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_delete_permission() {
         let store = InMemoryPermissionStore::new();
@@ -455,6 +466,7 @@ mod tests {
         assert!(retrieved.is_none());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_check_permission() {
         let store = InMemoryPermissionStore::new();
@@ -575,7 +587,10 @@ impl PermissionChangeNotifier {
     /// Subscribe to permission change events. Returns a receiver.
     pub fn subscribe(&self) -> tokio::sync::mpsc::UnboundedReceiver<PermissionChangeEvent> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-        self.subscribers.lock().unwrap_or_else(|e| e.into_inner()).push(tx);
+        self.subscribers
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(tx);
         rx
     }
 
@@ -587,7 +602,10 @@ impl PermissionChangeNotifier {
 
     /// Number of active subscribers.
     pub fn subscriber_count(&self) -> usize {
-        self.subscribers.lock().unwrap_or_else(|e| e.into_inner()).len()
+        self.subscribers
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .len()
     }
 }
 

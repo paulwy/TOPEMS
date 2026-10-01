@@ -643,12 +643,14 @@ mod tests {
                 tool_permissions: vec![],
             }],
         };
-        let json = serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"version\":\"1.0\""));
         assert!(json.contains("\"count\":1"));
         assert!(json.contains("\"tenant_id\":\"t1\""));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_import_request_full_format() {
         let json = r#"{
@@ -671,6 +673,7 @@ mod tests {
         }
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_import_request_bare_format() {
         // Bare format is a direct array of permission items
@@ -718,7 +721,8 @@ mod tests {
                 },
             ],
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":3"));
         assert!(json.contains("\"created\":1"));
         assert!(json.contains("\"failed\":1"));
@@ -733,7 +737,8 @@ mod tests {
             allowed_operations: vec!["read".to_string(), "write".to_string()],
             denied_operations: vec!["delete".to_string()],
         };
-        let json = serde_json::to_string(&item).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&item).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"tool\":\"crm\""));
         assert!(json.contains("\"max_permission\":\"write\""));
     }

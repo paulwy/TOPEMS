@@ -231,12 +231,14 @@ mod tests {
             endpoint: "/api/sse/session/sess-001".to_string(),
             expires_in: 1800,
         };
-        let json = serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"session_id\":\"sess-001\""));
         assert!(json.contains("\"endpoint\":\"/api/sse/session/sess-001\""));
         assert!(json.contains("\"expires_in\":1800"));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_endpoint_event_data_deserialization() {
         let json =
@@ -247,6 +249,7 @@ mod tests {
         assert_eq!(data.expires_in, 900);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_endpoint_event_data_round_trip() {
         let original = EndpointEventData {
@@ -254,13 +257,15 @@ mod tests {
             endpoint: "/api/sse/session/rt-001".to_string(),
             expires_in: 3600,
         };
-        let json = serde_json::to_string(&original).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&original)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let parsed: EndpointEventData = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed.session_id, original.session_id);
         assert_eq!(parsed.endpoint, original.endpoint);
         assert_eq!(parsed.expires_in, original.expires_in);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_endpoint_event_data_field_order() {
         // 确保字段顺序稳定（前端 SDK 按字段名解析，不依赖顺序但记录基线）
@@ -269,7 +274,8 @@ mod tests {
             endpoint: "e".to_string(),
             expires_in: 0,
         };
-        let json = serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         // session_id 应出现在 endpoint 之前（结构体声明顺序）
         let sid_pos = json.find("session_id").unwrap();
         let ep_pos = json.find("endpoint").unwrap();
@@ -280,6 +286,7 @@ mod tests {
 
     // ===== SseSessionRequest tests =====
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_default_event_type() {
         let json = r#"{"data":{"msg":"hello"}}"#;
@@ -288,6 +295,7 @@ mod tests {
         assert_eq!(req.data["msg"], "hello");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_custom_event_type() {
         let json = r#"{"event_type":"update","data":{"count":42}}"#;
@@ -296,6 +304,7 @@ mod tests {
         assert_eq!(req.data["count"], 42);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_null_data() {
         let json = r#"{"event_type":"ping","data":null}"#;
@@ -304,6 +313,7 @@ mod tests {
         assert!(req.data.is_null());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_nested_data() {
         let json = r#"{"event_type":"notify","data":{"user":{"id":"u1","name":"Alice"},"tags":["a","b"]}}"#;
@@ -338,7 +348,8 @@ mod tests {
             session_id: "sess-ok".to_string(),
             message: "Event sent successfully".to_string(),
         };
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":true"));
         assert!(json.contains("\"session_id\":\"sess-ok\""));
         assert!(json.contains("\"Event sent successfully\""));
@@ -351,7 +362,8 @@ mod tests {
             session_id: "sess-fail".to_string(),
             message: "Session not found or expired".to_string(),
         };
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":false"));
         assert!(json.contains("\"session_id\":\"sess-fail\""));
         assert!(json.contains("\"Session not found or expired\""));
@@ -364,13 +376,15 @@ mod tests {
             session_id: "s3".to_string(),
             message: "Client disconnected".to_string(),
         };
-        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("Client disconnected"));
     }
 
     // ===== Event construction logic tests =====
     // 验证从 SseSessionRequest 构造 Event 的逻辑（不依赖 AppState / channel）
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_event_construction_from_request() {
         let req = SseSessionRequest {

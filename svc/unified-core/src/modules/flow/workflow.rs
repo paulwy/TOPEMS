@@ -193,6 +193,7 @@ pub async fn get_workflow(
         (status = 500, description = "创建失败"),
     ),
 )]
+#[allow(clippy::unwrap_used)]
 pub async fn create_workflow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -767,6 +768,7 @@ pub async fn list_workflow_versions(
         (status = 500, description = "创建失败"),
     ),
 )]
+#[allow(clippy::unwrap_used)]
 pub async fn create_workflow_version(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

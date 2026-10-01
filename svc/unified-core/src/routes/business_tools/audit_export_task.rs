@@ -685,7 +685,8 @@ mod tests {
             last_export_count: 42,
             last_export_at: Some("2026-08-31T10:00:00Z".to_string()),
         };
-        let json = serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"running\":true"));
         assert!(json.contains("\"interval_secs\":3600"));
         assert!(json.contains("\"last_export_count\":42"));
@@ -700,7 +701,8 @@ mod tests {
             window_start: "2026-08-31T10:00:00Z".to_string(),
             error: None,
         };
-        let json = serde_json::to_string(&result).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&result)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":true"));
         assert!(json.contains("\"exported\":5"));
         assert!(!json.contains("error"));

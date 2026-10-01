@@ -248,7 +248,8 @@ mod tests {
             cleanup_interval_hours: 24,
             retention_days: 90,
         };
-        let json = serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"running\":true"));
         assert!(json.contains("\"cleanup_interval_hours\":24"));
         assert!(json.contains("\"retention_days\":90"));

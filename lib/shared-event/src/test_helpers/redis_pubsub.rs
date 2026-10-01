@@ -176,7 +176,9 @@ where
             }
             let next = tokio::time::timeout_at(deadline, stream.next()).await;
             let Ok(Some(msg)) = next else { continue };
-            let payload: String = msg.get_payload().unwrap();
+            let Ok(payload) = msg.get_payload::<String>() else {
+                continue;
+            };
             let parsed: T = match serde_json::from_str(&payload) {
                 Ok(v) => v,
                 Err(_) => continue,

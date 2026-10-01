@@ -342,7 +342,7 @@ mod tests {
         assert!(monitor
             .last_alerts
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .contains_key(&"erp-service:high_frequency".to_string()));
     }
 
@@ -363,7 +363,11 @@ mod tests {
         monitor.record("ghost-service");
         monitor.record("ghost-service");
         let key = "ghost-service:unknown_service".to_string();
-        assert!(monitor.last_alerts.lock().unwrap().contains_key(&key));
+        assert!(monitor
+            .last_alerts
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .contains_key(&key));
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -432,7 +436,7 @@ mod tests {
         assert!(monitor
             .last_alerts
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .contains_key(&"ghost-service:unknown_service".to_string()));
     }
 }

@@ -120,7 +120,9 @@ impl SLOManager {
             _ => return SLOStatus::InsufficientData,
         };
 
-        let latest = entries.last().unwrap();
+        let latest = entries
+            .last()
+            .unwrap_or_else(|| panic!("entries non-empty guarded by match"));
         SLOStatus::from_measurement(latest.current_value, def.target, def.alert_threshold)
     }
 

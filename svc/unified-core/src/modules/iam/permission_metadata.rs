@@ -100,6 +100,7 @@ mod tests {
         assert_eq!(json["action"], "read");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_permission_metadata_item_deserialization() {
         let json = r#"{

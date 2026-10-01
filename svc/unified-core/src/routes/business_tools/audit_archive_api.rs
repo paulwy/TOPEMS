@@ -326,6 +326,7 @@ mod tests {
         assert_eq!(query.date.as_deref(), Some("2026-01"));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_list_archives_query_default() {
         let query: ListArchivesQuery = serde_json::from_str("{}").unwrap();
@@ -333,6 +334,7 @@ mod tests {
         assert!(query.date.is_none());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_cleanup_archives_query_default() {
         let query: CleanupArchivesQuery = serde_json::from_str("{}").unwrap();
@@ -351,7 +353,8 @@ mod tests {
             total: 2,
             archives: vec![],
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":2"));
         assert!(json.contains("\"archives\":[]"));
     }
@@ -359,7 +362,8 @@ mod tests {
     #[test]
     fn test_cleanup_archives_response_serialization() {
         let response = CleanupArchivesResponse { deleted_count: 5 };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"deleted_count\":5"));
     }
 
@@ -371,7 +375,8 @@ mod tests {
             archive_dir: "/tmp/archives".to_string(),
             compress: false,
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total_files\":10"));
         assert!(json.contains("\"total_size\":102400"));
         assert!(json.contains("/tmp/archives"));

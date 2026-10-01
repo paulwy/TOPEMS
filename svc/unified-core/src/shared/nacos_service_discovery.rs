@@ -418,21 +418,30 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         }
 
         // Track registered service
-        self.registered_services.lock().unwrap_or_else(|e| e.into_inner()).insert(
-            registration.name.clone(),
-            RegisteredServiceInfo {
-                name: registration.name.clone(),
-                ip,
-                port,
-                base_url: registration.base_url,
-            },
-        );
+        self.registered_services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(
+                registration.name.clone(),
+                RegisteredServiceInfo {
+                    name: registration.name.clone(),
+                    ip,
+                    port,
+                    base_url: registration.base_url,
+                },
+            );
 
         Ok(())
     }
 
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = { self.registered_services.lock().unwrap_or_else(|e| e.into_inner()).get(name).cloned() };
+        let service_info = {
+            self.registered_services
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(name)
+                .cloned()
+        };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -463,7 +472,10 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         }
 
         // Remove from tracking
-        self.registered_services.lock().unwrap_or_else(|e| e.into_inner()).remove(name);
+        self.registered_services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(name);
 
         Ok(())
     }
@@ -513,7 +525,11 @@ impl ServiceDiscovery for NacosServiceDiscovery {
         // Nacos doesn't have a direct "list all services" API in the same way.
         // We return the registered services we know about.
         // For a full implementation, we'd need to query the service list API.
-        let registered = self.registered_services.lock().unwrap_or_else(|e| e.into_inner()).clone();
+        let registered = self
+            .registered_services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
         let mut services = Vec::new();
 
         for (name, _) in registered {
@@ -526,7 +542,13 @@ impl ServiceDiscovery for NacosServiceDiscovery {
     }
 
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = { self.registered_services.lock().unwrap_or_else(|e| e.into_inner()).get(name).cloned() };
+        let service_info = {
+            self.registered_services
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(name)
+                .cloned()
+        };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));

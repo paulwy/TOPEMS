@@ -378,6 +378,7 @@ mod tests {
         assert_eq!(req.role_ids.len(), 1);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_position_request_minimal() {
         let json = r#"{"code": "MANAGER", "name": "经理", "permissions": [], "role_ids": []}"#;
@@ -390,6 +391,7 @@ mod tests {
         assert!(req.role_ids.is_empty());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_update_position_request_all_fields() {
         let json = r#"{

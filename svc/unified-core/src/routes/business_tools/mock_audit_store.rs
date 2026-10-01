@@ -25,12 +25,18 @@ impl MockAuditLogStore {
 
     /// 添加一条日志（测试辅助方法）
     pub fn add_entry(&self, entry: AuditLogEntry) {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).push(entry);
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(entry);
     }
 
     /// 获取所有日志（测试辅助方法）
     pub fn get_all(&self) -> Vec<AuditLogEntry> {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     /// 获取日志数量（测试辅助方法）
@@ -40,12 +46,18 @@ impl MockAuditLogStore {
 
     /// 是否为空
     pub fn is_empty(&self) -> bool {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).is_empty()
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .is_empty()
     }
 
     /// 清空所有日志
     pub fn clear(&self) {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
     }
 }
 
@@ -58,7 +70,10 @@ impl Default for MockAuditLogStore {
 #[async_trait]
 impl AuditLogStore for MockAuditLogStore {
     async fn record(&self, entry: AuditLogEntry) -> Result<(), AuditLogError> {
-        self.entries.lock().unwrap_or_else(|e| e.into_inner()).push(entry);
+        self.entries
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(entry);
         Ok(())
     }
 

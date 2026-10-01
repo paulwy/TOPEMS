@@ -120,6 +120,7 @@ mod tests {
             .with_timezone(&chrono::Utc)
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_group_serde() {
         let mg = MenuGroup {
@@ -135,12 +136,14 @@ mod tests {
         };
         let cloned = mg.clone();
         assert_eq!(cloned.code, "system");
-        let json = serde_json::to_string(&mg).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&mg).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: MenuGroup = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "系统管理");
         assert_eq!(de.sort_order, 1);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_serde() {
         let m = Menu {
@@ -158,12 +161,14 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json = serde_json::to_string(&m).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&m).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: Menu = serde_json::from_str(&json).unwrap();
         assert_eq!(de.code, "iam:users");
         assert!(de.permissions.is_some());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_requests_serde() {
         let cmgr = CreateMenuGroupRequest {
@@ -172,7 +177,8 @@ mod tests {
             icon: None,
             sort_order: Some(2),
         };
-        let json = serde_json::to_string(&cmgr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&cmgr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateMenuGroupRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.code, "flow");
 
@@ -183,7 +189,8 @@ mod tests {
             sort_order: Some(3),
             status: Some("inactive".to_string()),
         };
-        let json2 = serde_json::to_string(&umgr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json2 =
+            serde_json::to_string(&umgr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: UpdateMenuGroupRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.status, Some("inactive".to_string()));
 
@@ -197,7 +204,8 @@ mod tests {
             sort_order: Some(5),
             permissions: None,
         };
-        let json3 = serde_json::to_string(&cmr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json3 =
+            serde_json::to_string(&cmr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de3: CreateMenuRequest = serde_json::from_str(&json3).unwrap();
         assert_eq!(de3.code, "flow:tasks");
 
@@ -212,11 +220,13 @@ mod tests {
             status: Some("active".to_string()),
             permissions: Some(serde_json::json!([])),
         };
-        let json4 = serde_json::to_string(&umr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json4 =
+            serde_json::to_string(&umr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de4: UpdateMenuRequest = serde_json::from_str(&json4).unwrap();
         assert_eq!(de4.status, Some("active".to_string()));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_queries_and_list_responses() {
         let mgq = MenuGroupQuery {
@@ -225,7 +235,8 @@ mod tests {
             page: Some(1),
             page_size: Some(10),
         };
-        let json = serde_json::to_string(&mgq).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&mgq).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: MenuGroupQuery = serde_json::from_str(&json).unwrap();
         assert_eq!(de.search, Some("系统".to_string()));
 
@@ -237,7 +248,8 @@ mod tests {
             page: None,
             page_size: None,
         };
-        let json2 = serde_json::to_string(&mq).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json2 =
+            serde_json::to_string(&mq).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: MenuQuery = serde_json::from_str(&json2).unwrap();
         assert!(de2.group_id.is_some());
 
@@ -247,7 +259,8 @@ mod tests {
             page: 1,
             page_size: 10,
         };
-        let json3 = serde_json::to_string(&mglr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json3 =
+            serde_json::to_string(&mglr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de3: MenuGroupListResponse = serde_json::from_str(&json3).unwrap();
         assert_eq!(de3.total, 0);
 
@@ -257,7 +270,8 @@ mod tests {
             page: 1,
             page_size: 20,
         };
-        let json4 = serde_json::to_string(&mlr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json4 =
+            serde_json::to_string(&mlr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de4: MenuListResponse = serde_json::from_str(&json4).unwrap();
         assert_eq!(de4.total, 5);
     }

@@ -1337,6 +1337,7 @@ mod tests {
         assert_eq!(cloned.username, "test_user");
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_login_response_data_serde() {
         let lrd = LoginResponseData {
@@ -1356,7 +1357,8 @@ mod tests {
                 permissions: vec!["iam:read".to_string()],
             },
         };
-        let json = serde_json::to_string(&lrd).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&lrd).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: LoginResponseData = serde_json::from_str(&json).unwrap();
         assert_eq!(de.token_type, "Bearer");
         assert_eq!(de.expires_in, 3600);

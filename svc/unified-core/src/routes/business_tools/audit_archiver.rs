@@ -482,7 +482,8 @@ mod tests {
             archived_at: "2026-01-15T10:00:00Z".to_string(),
             entry: make_test_entry("1", "2026-01-15T10:00:00Z"),
         };
-        let json = serde_json::to_string(&entry).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&entry).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"archived_at\""));
         assert!(json.contains("\"id\":\"1\""));
     }
@@ -496,7 +497,8 @@ mod tests {
             created_at: "2026-01-15T10:00:00Z".to_string(),
             compressed: false,
         };
-        let json = serde_json::to_string(&info).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json =
+            serde_json::to_string(&info).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"path\""));
         assert!(json.contains("\"size\":1024"));
     }

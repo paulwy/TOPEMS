@@ -230,7 +230,7 @@ mod tests {
     fn test_metrics_disabled_by_default() {
         let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
             .lock()
-            .unwrap();
+            .unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let guard = init_metrics("test-service", TelemetryExporter::Stdout);
         assert!(!guard.enabled);
@@ -240,7 +240,7 @@ mod tests {
     fn test_meter_returns_noop_when_disabled() {
         let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
             .lock()
-            .unwrap();
+            .unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let _guard = init_metrics("test-service", TelemetryExporter::Stdout);
         let meter = meter("test");
@@ -303,7 +303,7 @@ mod tests {
     fn test_metrics_guard_disabled_drop_is_no_op() {
         let _env_lock = crate::telemetry::test_support::OTEL_ENV_LOCK
             .lock()
-            .unwrap();
+            .unwrap_or_else(|e| e.into_inner());
         std::env::remove_var("OTEL_METRICS_ENABLED");
         let guard = init_metrics("test-service-disabled", TelemetryExporter::Stdout);
         assert!(!guard.enabled);

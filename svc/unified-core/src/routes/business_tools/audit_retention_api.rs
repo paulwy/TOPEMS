@@ -220,6 +220,7 @@ mod tests {
         assert_eq!(req.cleanup_interval_hours, Some(12));
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_update_retention_policy_request_partial() {
         let json = r#"{"retention_days": 30}"#;
@@ -231,6 +232,7 @@ mod tests {
         assert!(req.cleanup_interval_hours.is_none());
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_trigger_cleanup_request_deserialization() {
         let json = r#"{"retention_days": 7}"#;
@@ -248,7 +250,8 @@ mod tests {
     fn test_retention_policy_response_serialization() {
         let policy = RetentionPolicy::new(30);
         let response = RetentionPolicyResponse { policy };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"retention_days\":30"));
     }
 
@@ -258,7 +261,8 @@ mod tests {
             triggered: true,
             result: None,
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"triggered\":true"));
         assert!(!json.contains("result")); // None should be skipped
     }
@@ -276,7 +280,8 @@ mod tests {
             triggered: true,
             result: Some(result),
         };
-        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"triggered\":true"));
         assert!(json.contains("\"deleted_count\":10"));
     }

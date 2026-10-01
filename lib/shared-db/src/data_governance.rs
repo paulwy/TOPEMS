@@ -1358,6 +1358,7 @@ impl ClassificationEngine {
         engine
     }
 
+    #[allow(clippy::unwrap_used)]
     fn load_builtin_rules(&mut self) {
         let builtins = vec![
             // 身份证号
