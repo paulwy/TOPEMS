@@ -223,6 +223,13 @@ pre-push:
   #       产物，冷缓存/全量场景显著提速）；未装时静默跳过，不影响门禁语义。
   parallel: false
   commands:
+    # [2026-10-02] stale-base 守卫（第一个跑，秒级）——拒绝基于落后 base 的推送
+    # 多机协作事故（TRAE 机）：fetch 过时/本地残留导致门禁编译旧 base 报错，
+    # 错误无法归类且 push 会 non-fast-forward rejected。先同步再推。
+    stale-base-check:
+      tags: git sync
+      run: bash scripts/ci/check-stale-base.sh
+
     # [Gate SC] Shellcheck 全量防线（秒级，置于 cargo 门禁前快速失败）
     # P1-1 清零 195→0 后固化：任何脚本改动带告警，push 直接阻断，
     # 不浪费后续 cargo check/clippy/test 数分钟时间。
@@ -233,14 +240,11 @@ pre-push:
     # [NEW] cargo check workspace — 确保代码编译通过（DB schema 和代码同步）
     # V300: SQLX_OFFLINE=false（在线）→ true（离线）。pre-push 是缓存完整性的最后本地防线：
     #       根 .sqlx 缺任何宏查询，离线编译必然失败，push 被阻断，杜绝"本地能过、CI/新环境必炸"。
+    # [2026-10-02] 内联逻辑移入 run-cargo-check.sh：失败时按来源归类
+    #       （错误文件 ⊆ base → 提示先同步，勿修不属于本次提交的错误）。
     cargo-check-workspace:
       tags: rust check
-      run: |
-        # pre-push 时代码已提交，直接跑 cargo check，确保编译通过
-        # 离线模式验证 .sqlx/ 缓存完整性；不依赖 DB 在线状态，比在线模式更稳
-        export SQLX_OFFLINE=true
-        command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
-        cargo check --workspace
+      run: bash scripts/ci/run-cargo-check.sh
 
     # [V232-P3 NEW Gate J] cargo fmt workspace check — Rust-only
     cargo-fmt-check:
