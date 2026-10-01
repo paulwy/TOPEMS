@@ -240,6 +240,7 @@ impl GeminiClient {
     }
 
     /// 将 Gemini 响应转换为标准格式
+    #[allow(clippy::indexing_slicing)]
     fn convert_from_gemini_response(&self, response: serde_json::Value) -> ChatCompletionResponse {
         let contents = response["candidates"][0]["content"].clone();
         let role = contents["role"].as_str().unwrap_or("assistant");
@@ -298,6 +299,7 @@ impl AIClient for GeminiClient {
         Ok(self.convert_from_gemini_response(response_json))
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn chat_completion_stream(
         &self,
         request: ChatCompletionRequest,
@@ -375,6 +377,7 @@ impl AIClient for GeminiClient {
         Ok(Box::pin(stream))
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn embeddings(
         &self,
         request: EmbeddingRequest,
@@ -414,6 +417,7 @@ impl AIClient for GeminiClient {
         })
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError> {
         let url = format!("{}/models", self.config.get_base_url());
         let mut request = self.client.get(&url);
@@ -561,6 +565,7 @@ impl AIClient for OllamaClient {
         Ok(result)
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError> {
         let url = format!("{}/models", self.config.get_base_url());
         let response = self.client.get(&url).send().await?;

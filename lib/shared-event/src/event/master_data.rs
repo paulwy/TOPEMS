@@ -20,6 +20,7 @@ pub fn generate_master_data_id(domain: MasterDataDomain) -> String {
 }
 
 /// 解析 master_data_id 获取域信息
+#[allow(clippy::indexing_slicing)]
 pub fn parse_master_data_id(id: &str) -> Option<(MasterDataDomain, String)> {
     let parts: Vec<&str> = id.split('-').collect();
     if parts.is_empty() {

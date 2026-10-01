@@ -339,6 +339,7 @@ impl DataMasking {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn id_card(id: &str) -> String {
         let chars: Vec<char> = id.chars().collect();
         if chars.len() >= 18 {
@@ -374,6 +375,7 @@ impl DataMasking {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn address(address: &str) -> String {
         let chars: Vec<char> = address.chars().collect();
         if chars.len() <= 6 {
@@ -388,6 +390,7 @@ impl DataMasking {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn name(name: &str) -> String {
         let chars: Vec<char> = name.chars().collect();
         match chars.len() {
@@ -402,6 +405,7 @@ impl DataMasking {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn tax_number(tax: &str) -> String {
         let chars: Vec<char> = tax.chars().collect();
         if chars.len() >= 15 {
@@ -550,6 +554,7 @@ fn is_production_mode() -> bool {
 }
 
 /// 从 ENCRYPTION_MASTER_KEY（hex 编码）构造 FieldEncryptionService
+#[allow(clippy::indexing_slicing)]
 fn build_from_hex_key(master_key_hex: &str, is_production: bool) -> FieldEncryptionService {
     use sha2::Digest;
 

@@ -455,6 +455,7 @@ impl BloomFilter {
         hasher.finish() as usize % bits_len
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn insert(&self, key: &str) {
         let mut bits = self.bits.write();
         let bits_len = bits.len();
@@ -464,6 +465,7 @@ impl BloomFilter {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn might_contain(&self, key: &str) -> bool {
         let bits = self.bits.read();
         let bits_len = bits.len();

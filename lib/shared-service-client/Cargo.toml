@@ -8,6 +8,7 @@ description = "TOPEMS shared service client library - typed HTTP clients for int
 [lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
+indexing_slicing = "deny"
 
 [dependencies]
 topems-shared-auth = { path = "../shared-auth" }

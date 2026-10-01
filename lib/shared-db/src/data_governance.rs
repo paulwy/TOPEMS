@@ -833,6 +833,7 @@ impl DataSubjectRightsManager {
     }
 
     /// 处理查询权请求（导出个人数据）
+    #[allow(clippy::indexing_slicing)]
     pub async fn process_access_request(
         &self,
         request_id: Uuid,

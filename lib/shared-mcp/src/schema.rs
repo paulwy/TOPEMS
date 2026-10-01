@@ -186,6 +186,7 @@ impl SchemaBuilder {
     }
 
     /// 构建 JSON Schema
+    #[allow(clippy::indexing_slicing)]
     pub fn build(&self) -> Value {
         let mut schema = json!({
             "type": self.schema_type.as_str(),

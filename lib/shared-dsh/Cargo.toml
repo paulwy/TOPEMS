@@ -9,6 +9,7 @@ license = "MIT"
 [lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
+indexing_slicing = "deny"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

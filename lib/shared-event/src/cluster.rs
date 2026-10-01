@@ -361,6 +361,7 @@ impl ClusterManager {
         Ok(())
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn select_node(
         &self,
         algorithm: LoadBalancingAlgorithm,

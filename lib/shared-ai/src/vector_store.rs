@@ -221,6 +221,7 @@ impl VectorStore for RedisVectorStore {
         Ok(search_results)
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn get(&self, key: &str) -> Result<Option<(Vec<f32>, VectorMetadata)>> {
         let mut conn = self.conn.clone();
         let full_key = self.make_key(key);

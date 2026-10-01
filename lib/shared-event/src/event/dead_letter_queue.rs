@@ -199,6 +199,7 @@ impl DeadLetterQueue {
     ///
     /// - 当 `event_type` 为 `Some` 时，仅返回该事件类型的死信
     /// - `page` 从 0 开始计数，`page_size` 不能为 0
+    #[allow(clippy::indexing_slicing)]
     pub async fn list_dead_letters(
         &self,
         event_type: Option<&str>,
@@ -466,6 +467,7 @@ impl DeadLetterQueue {
     }
 
     /// V23.0: 获取死信队列统计
+    #[allow(clippy::indexing_slicing)]
     pub async fn get_stats(&self) -> EventResult<DeadLetterStats> {
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
         let keys = self.list_dlq_keys(None).await?;

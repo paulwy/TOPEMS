@@ -8,6 +8,7 @@ description = "TOPEMS shared MCP (Model Context Protocol) library - JSON-RPC 2.0
 [lints.clippy]
 unwrap_used = "deny"
 expect_used = "deny"
+indexing_slicing = "deny"
 
 [dependencies]
 

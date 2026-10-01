@@ -555,6 +555,7 @@ impl ConsulDiscoveryClient {
     }
 
     /// 获取单个服务地址（带简单负载均衡 - 随机选择）
+    #[allow(clippy::indexing_slicing)]
     pub async fn get_service_url(&self, service_name: &str) -> Option<String> {
         let instances = self.get_healthy_instances(service_name).await.ok()?;
         if instances.is_empty() {

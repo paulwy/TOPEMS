@@ -244,6 +244,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 /// - IP（X-Forwarded-For / X-Real-IP / peer addr）
 /// - User-Agent
 /// - trace_id（从 `traceparent` 头提取）
+#[allow(clippy::indexing_slicing)]
 pub fn extract_audit_context(request: &Request<Body>) -> AuditContext {
     let headers = request.headers();
 

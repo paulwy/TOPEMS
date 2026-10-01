@@ -667,6 +667,7 @@ fn matches_pattern(key: &str, pattern: &str) -> bool {
 }
 
 /// 简单通配符匹配实现（不依赖正则表达式）
+#[allow(clippy::indexing_slicing)]
 fn simple_wildcard_match(text: &str, pattern: &str) -> bool {
     let text_bytes = text.as_bytes();
     let pattern_bytes = pattern.as_bytes();

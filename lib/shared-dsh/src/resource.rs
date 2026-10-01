@@ -75,6 +75,7 @@ impl ResourceDefinition {
     }
 
     /// 验证 URI 格式
+    #[allow(clippy::indexing_slicing)]
     pub fn validate_uri(&self) -> Result<(), String> {
         if self.uri.is_empty() {
             return Err("资源 URI 不能为空".to_string());
@@ -104,6 +105,7 @@ impl ResourceDefinition {
     }
 
     /// 解析 URI
+    #[allow(clippy::indexing_slicing)]
     pub fn parse_uri(&self) -> Option<ResourceUriParts> {
         if !self.uri.contains("://") {
             return None;
