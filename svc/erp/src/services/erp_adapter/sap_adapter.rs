@@ -414,6 +414,7 @@ impl SapApiClient {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn query_assets(&self) -> ErpResult<Vec<ErpAssetDto>> {
         let result = self.call_odata("FIXEDASSETMASTER", "GET", None);
 

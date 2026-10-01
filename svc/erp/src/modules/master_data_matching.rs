@@ -246,6 +246,7 @@ fn levenshtein(a: &str, b: &str) -> usize {
     prev[n]
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Levenshtein 相似度（0-1）
 fn levenshtein_similarity(a: &str, b: &str) -> f64 {
     if a.is_empty() && b.is_empty() {
@@ -259,6 +260,7 @@ fn levenshtein_similarity(a: &str, b: &str) -> f64 {
     1.0 - (dist as f64 / max_len as f64)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Jaro-Winkler 相似度（0-1）
 #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn jaro_winkler(s1: &str, s2: &str) -> f64 {
@@ -313,6 +315,7 @@ fn jaro_winkler(s1: &str, s2: &str) -> f64 {
     jaro + prefix * 0.1 * (1.0 - jaro)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 拼音匹配（简化版：基于字符集重叠 + 首字母）
 fn phonetic_similarity(a: &str, b: &str) -> f64 {
     if a.is_empty() || b.is_empty() {
@@ -335,6 +338,7 @@ fn phonetic_similarity(a: &str, b: &str) -> f64 {
     (jaccard + first_bonus).min(1.0)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 缩写匹配：source 的首字母序列是否为 target 缩写
 #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn abbreviation_similarity(source: &str, target: &str) -> f64 {
@@ -566,6 +570,12 @@ pub async fn matching_find_matches(
     responses(
         (status = 200, description = "操作成功"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 pub async fn matching_find_duplicates(

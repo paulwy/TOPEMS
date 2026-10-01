@@ -593,6 +593,7 @@ pub fn weighted_score(dims: &[(f64, f64)]) -> Result<f64, String> {
     Ok(weighted_sum.clamp(0.0_f64, 100.0_f64))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn score_consistency(dims: &[f64]) -> f64 {
     if dims.is_empty() {
         return 0.0_f64;

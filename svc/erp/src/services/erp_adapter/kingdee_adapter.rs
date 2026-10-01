@@ -237,6 +237,7 @@ impl KingdeeApiClient {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn query_accounts(&self) -> ErpResult<Vec<ErpAccountDto>> {
         let query_data = serde_json::json!({
             "FormId": "BD_ACCOUNT",
@@ -552,6 +553,7 @@ impl KingdeeApiClient {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn query_assets(&self) -> ErpResult<Vec<ErpAssetDto>> {
         let query_data = serde_json::json!({
             "FormId": "FA_ASSET",
@@ -632,6 +634,7 @@ impl KingdeeApiClient {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn query_financial_statement(
         &self,
         report_type: &str,

@@ -11,6 +11,7 @@
 //!
 //! Exit code: 全部通过=0；任一失败=1；参数错误=2。
 
+#![allow(clippy::as_conversions)]
 use topems_erp::modules::procurement_e2e::{
     sample_happy_cny, sample_multi_currency_usd_cny, validate_procurement_chain,
     validate_procurement_chain_with_rates, ErpE2eError,
@@ -109,6 +110,7 @@ fn scenario_period_close() -> Result<(), String> {
     }
 }
 
+#[allow(clippy::as_conversions)]
 fn scenario_multi_currency() -> Result<(), String> {
     let req = sample_multi_currency_usd_cny();
     let r = validate_procurement_chain_with_rates(

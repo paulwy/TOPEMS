@@ -262,6 +262,7 @@ pub async fn fetch_entries_by_type(
     ),
     tag = "ERP/addressbook"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 #[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn get_contacts(
     State(state): State<ApiState>,
@@ -428,6 +429,7 @@ pub struct ContactDetailParams {
     ),
     tag = "ERP/addressbook"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn search_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookSearchParams>,

@@ -44,6 +44,12 @@ pub struct QualityTrendQuery {
     params(QualityTrendQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 pub async fn get_quality_trend(
     State(_state): State<ApiState>,
     Query(params): Query<QualityTrendQuery>,

@@ -88,6 +88,7 @@ pub fn ranges_overlap(
     a_start < b_end && b_start < a_end
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 预约时长（小时），非法时间（start ≥ end）返回 0
 pub fn booking_duration_hours(start: DateTime<Utc>, end: DateTime<Utc>) -> f64 {
     if !is_time_range_valid(start, end) {

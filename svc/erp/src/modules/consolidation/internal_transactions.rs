@@ -121,6 +121,7 @@ pub async fn get_internal_transaction(
     tag = "Consolidation",
     responses((status = 200, description = "执行内部交易抵消成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn execute_elimination(
     State(state): State<ApiState>,
     headers: HeaderMap,

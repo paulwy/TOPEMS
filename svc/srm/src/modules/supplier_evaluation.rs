@@ -195,6 +195,7 @@ pub async fn list_evaluations(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn create_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1025,6 +1026,7 @@ pub async fn get_score_trend(
     ),
     tag = "SRM/supplier_evaluation"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_evaluation_statistics(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1145,6 +1147,7 @@ pub fn supplier_performance_grade(score: f64) -> &'static str {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn evaluate_kpi_pass_rate(passed: i64, total: i64) -> f64 {
     if total <= 0 {
         return 0.0_f64;

@@ -17,6 +17,7 @@ use super::mdm_v49_types::*;
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_lifecycle_stats(
     State(_state): State<ApiState>,
 ) -> Json<ApiResponse<LifecycleStats>> {
@@ -76,6 +77,7 @@ pub async fn get_lifecycle_stats(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiResponse<ArchiveStats>> {
     ensure_initialized().await;
     let store = get_lifecycle_store();
@@ -146,6 +148,7 @@ pub async fn get_archive_stats(State(_state): State<ApiState>) -> Json<ApiRespon
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_retirement_stats(
     State(_state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

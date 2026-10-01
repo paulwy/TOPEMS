@@ -40,6 +40,11 @@ pub struct GovernanceDashboardStats {
     operation_id = "get_governance_dashboard",
     responses((status = 200, description = "OK")),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 pub async fn get_governance_dashboard(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

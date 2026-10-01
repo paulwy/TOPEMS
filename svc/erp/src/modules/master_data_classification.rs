@@ -334,6 +334,7 @@ fn build_preset_rules() -> Vec<ClassificationRule> {
     ]
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// TF-IDF 简化版：基于关键词的词频加权打分
 /// 返回 (category_id, score, matched_keywords)
 fn tfidf_score(text: &str, categories: &[Category]) -> Vec<(String, f64, Vec<String>)> {
@@ -373,6 +374,7 @@ fn tfidf_score(text: &str, categories: &[Category]) -> Vec<(String, f64, Vec<Str
     results
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 规则推理：检查规则条件是否命中
 fn apply_rules(profile: &EntityProfile, rules: &[ClassificationRule]) -> Vec<(String, f64)> {
     let mut hits: Vec<(String, f64)> = Vec::new();
@@ -817,6 +819,7 @@ pub async fn classification_learn_rule(
     tag = "Master Data",
     responses((status = 200, description = "获取分类统计成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn classification_get_stats(
     State(state): State<ApiState>,
     Query(params): Query<ClassificationStatsQuery>,

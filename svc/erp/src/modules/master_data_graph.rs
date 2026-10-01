@@ -245,6 +245,7 @@ pub fn get_knowledge_graph_store() -> &'static KnowledgeGraphStore {
     &KNOWLEDGE_GRAPH_STORE
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 async fn ensure_knowledge_graph_initialized() {
     let store = get_knowledge_graph_store();
@@ -776,6 +777,7 @@ fn count_connected_components(nodes: &[GraphNode], edges: &[GraphEdge]) -> usize
     count
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn calculate_graph_stats(nodes: &[GraphNode], edges: &[GraphEdge]) -> GraphStats {
     let node_count = nodes.len();
     let edge_count = edges.len();
@@ -859,6 +861,7 @@ fn calculate_graph_stats(nodes: &[GraphNode], edges: &[GraphEdge]) -> GraphStats
 
 // ==================== 推荐引擎实现 ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn calculate_similarity(
     nodes: &[GraphNode],
     edges: &[GraphEdge],
@@ -979,6 +982,7 @@ fn calculate_similarity(
     similarities.into_iter().take(top_k).collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn find_associations(
     nodes: &[GraphNode],
     edges: &[GraphEdge],
@@ -1056,6 +1060,7 @@ fn find_associations(
     recommendations.into_iter().take(top_k).collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn suggest_completions(
     nodes: &[GraphNode],
     edges: &[GraphEdge],
@@ -1148,6 +1153,7 @@ fn suggest_completions(
     tag = "Master Data",
     responses((status = 200, description = "获取主数据图谱成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_master_data_graph(
     State(state): State<ApiState>,
     Query(params): Query<GraphQuery>,
@@ -1428,6 +1434,12 @@ pub async fn get_concept(
     tag = "Master Data",
     responses((status = 200, description = "获取概念列表成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_concepts(
     State(state): State<ApiState>,
     Query(params): Query<ConceptQuery>,
@@ -1487,6 +1499,12 @@ pub async fn list_concepts(
     path = "/erp/master-data/knowledge/triples",
     tag = "Master Data",
     responses((status = 200, description = "获取知识三元组成功", body = ApiResponse<serde_json::Value>))
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn list_triples(
     State(state): State<ApiState>,

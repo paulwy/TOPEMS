@@ -174,6 +174,7 @@ impl YonyouApiClient {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn query_accounts(&self) -> ErpResult<Vec<ErpAccountDto>> {
         let query_data = serde_json::json!({
             "acc_id": self.config.tenant_id.as_deref().unwrap_or("001")
@@ -435,6 +436,7 @@ impl YonyouApiClient {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn query_assets(&self) -> ErpResult<Vec<ErpAssetDto>> {
         let query_data = serde_json::json!({
             "acc_id": self.config.tenant_id.as_deref().unwrap_or("001")

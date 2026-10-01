@@ -139,6 +139,7 @@ pub async fn record_version(
     params(VersionQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_versions(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,

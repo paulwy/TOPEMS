@@ -175,6 +175,7 @@ pub fn get_domain_fields(domain: &str) -> Vec<DataAssetField> {
     params(DataAssetQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn list_data_assets(
     State(_state): State<ApiState>,
     Query(params): Query<DataAssetQuery>,
@@ -256,6 +257,7 @@ pub async fn list_data_assets(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn calculate_domain_quality_score(db: &mut sqlx::PgConnection, domain: &str) -> f64 {
     let result = sqlx::query(only_own_schema_query!(
         "erp",
@@ -294,6 +296,7 @@ async fn calculate_domain_quality_score(db: &mut sqlx::PgConnection, domain: &st
     operation_id = "get_data_asset_detail",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn get_data_asset_detail(
     State(_state): State<ApiState>,
     Path(domain): Path<String>,

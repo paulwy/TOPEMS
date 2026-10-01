@@ -75,6 +75,12 @@ pub async fn create_retirement_plan(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_retirement_plans(
     State(_state): State<ApiState>,
     Query(params): Query<RetirementPlanQuery>,
@@ -185,6 +191,7 @@ pub async fn get_retirement_plan(
     operation_id = "assess_impact",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn assess_impact(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,
@@ -303,6 +310,7 @@ pub async fn confirm_retirement_plan(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn execute_retirement_plan(
     State(_state): State<ApiState>,
     Path(plan_id): Path<String>,

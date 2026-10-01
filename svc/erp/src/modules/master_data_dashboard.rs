@@ -264,6 +264,11 @@ async fn ensure_dashboard_initialized() {
     *initialized = true;
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 创建仪表盘
 async fn create_dashboard(req: &DashboardRequest) -> DashboardLayout {
     ensure_dashboard_initialized().await;
@@ -323,6 +328,11 @@ pub async fn get_dashboard(dashboard_id: &str) -> Option<DashboardLayout> {
         .cloned()
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 更新仪表盘
 async fn update_dashboard(dashboard_id: &str, req: &DashboardRequest) -> Option<DashboardLayout> {
     ensure_dashboard_initialized().await;
@@ -372,6 +382,7 @@ async fn delete_dashboard(dashboard_id: &str) -> bool {
     dashboards.len() < before
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 获取仪表盘数据（聚合各 widget 数据）
 async fn get_dashboard_data(dashboard_id: &str) -> Option<DashboardData> {
     ensure_dashboard_initialized().await;
@@ -533,6 +544,7 @@ async fn refresh_dashboard(dashboard_id: &str) -> Option<DashboardData> {
     get_dashboard_data(dashboard_id).await
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 获取仪表盘统计
 async fn get_dashboard_stats() -> DashboardStats {
     ensure_dashboard_initialized().await;

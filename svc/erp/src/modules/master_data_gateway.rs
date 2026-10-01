@@ -123,6 +123,7 @@ impl ApiGatewayStore {
     tag = "Master Data",
     responses((status = 200, description = "MDM 网关路由成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions)]
 pub async fn mdm_gateway_route(
     State(state): State<ApiState>,
     Json(req): Json<GatewayRouteRequest>,
@@ -164,6 +165,7 @@ pub async fn mdm_gateway_route(
     tag = "Master Data",
     responses((status = 200, description = "MDM 网关批处理成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions)]
 pub async fn mdm_gateway_batch(
     State(state): State<ApiState>,
     Json(req): Json<GatewayBatchRequest>,
@@ -245,6 +247,7 @@ pub async fn mdm_gateway_aggregate(
     tag = "Master Data",
     responses((status = 200, description = "获取 MDM 网关统计成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn mdm_gateway_stats(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

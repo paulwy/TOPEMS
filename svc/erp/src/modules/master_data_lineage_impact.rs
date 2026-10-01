@@ -167,6 +167,11 @@ fn get_lineage_trace_store() -> &'static LineageTraceStore {
     &STORE
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 async fn ensure_lineage_trace_initialized() {
     let store = get_lineage_trace_store();
     let mut initialized = store.initialized.lock().await;
@@ -646,6 +651,7 @@ pub async fn find_data_origin_handler(
 
 // ==================== Part 2: 影响分析功能 ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn analyze_impact(request: &ImpactAnalysisRequest) -> ImpactAnalysisResult {
     ensure_lineage_trace_initialized().await;
     let store = get_lineage_trace_store();
@@ -941,6 +947,7 @@ async fn filter_graph(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn get_lineage_graph_stats() -> LineageGraphStats {
     let graph = build_lineage_graph().await;
 

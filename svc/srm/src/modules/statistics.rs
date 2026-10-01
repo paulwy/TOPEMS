@@ -128,6 +128,7 @@ pub fn contract_expiry_alerts(
     m
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 统计数据：总数、有效数量（非 None 且有效）、平均值、最小值、最大值（浮点数）
 pub fn summary_stats(values: &[Option<f64>]) -> (usize, usize, f64, f64, f64) {
     let total = values.len();

@@ -210,6 +210,11 @@ fn get_sync_store() -> Arc<SyncStore> {
     tag = "Master Data",
     responses((status = 200, description = "创建同步任务成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn create_sync_job(
     State(state): State<ApiState>,
     Json(payload): Json<CreateSyncJobRequest>,
@@ -268,6 +273,11 @@ pub async fn create_sync_job(
     Json(ApiResponse::success(job, "同步任务创建成功"))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 #[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn execute_sync_job(job_id: String) {
     let store = get_sync_store();
@@ -402,6 +412,12 @@ pub async fn get_sync_job(
     path = "/erp/master-data/sync/jobs",
     tag = "Master Data",
     responses((status = 200, description = "获取同步任务列表成功", body = ApiResponse<serde_json::Value>))
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn list_sync_jobs(
     Query(params): Query<ListSyncJobsParams>,
@@ -629,6 +645,7 @@ fn simulate_compensation(target_system: &str, operation: &str) -> bool {
     tag = "Master Data",
     responses((status = 200, description = "获取同步统计成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<SyncStats>> {
     let _ = &state;
     let store = get_sync_store();
@@ -741,6 +758,11 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
     path = "/erp/master-data/sync/dead-letters",
     tag = "Master Data",
     responses((status = 200, description = "获取死信队列成功", body = ApiResponse<serde_json::Value>))
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
 )]
 pub async fn list_dead_letters(
     Query(params): Query<ListDeadLettersParams>,

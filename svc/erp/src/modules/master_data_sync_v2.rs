@@ -308,6 +308,12 @@ pub async fn create_sync_job_v2(
     tag = "Master Data",
     responses((status = 200, description = "获取 V2 同步任务列表成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_sync_jobs_v2(
     State(state): State<ApiState>,
     Query(params): Query<ListSyncJobsV2Params>,
@@ -502,6 +508,7 @@ pub async fn batch_retry_dead_letters(
     tag = "Master Data",
     responses((status = 200, description = "获取 V2 同步引擎统计成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn sync_engine_stats_v2(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<SyncEngineStatsV2>> {

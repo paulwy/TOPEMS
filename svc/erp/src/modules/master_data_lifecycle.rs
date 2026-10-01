@@ -660,6 +660,7 @@ pub async fn destroy_master_data_ref(
     params(LifecycleQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_archived(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,
@@ -742,6 +743,7 @@ pub async fn list_archived(
     params(LifecycleQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_pending_destruction(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleQuery>,

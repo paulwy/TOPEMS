@@ -115,6 +115,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
 

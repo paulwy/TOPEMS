@@ -160,6 +160,7 @@ struct EntityProfile {
     last_synced_days_ago: i64,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn ensure_quality_ai_initialized() {
     let store = get_quality_ai_store();
     let mut initialized = store.initialized.lock().await;
@@ -316,6 +317,7 @@ fn domain_required_fields(domain: &str) -> Vec<&'static str> {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算完整性评分：必填字段填充率
 fn score_completeness(profile: &EntityProfile) -> f64 {
     let required = domain_required_fields(&profile.domain);
@@ -414,6 +416,7 @@ fn score_consistency(profile: &EntityProfile) -> f64 {
     score.max(0.0)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算时效性评分：基于 last_synced_at 新鲜度
 fn score_timeliness(profile: &EntityProfile) -> f64 {
     let days = profile.last_synced_days_ago;
@@ -563,6 +566,7 @@ fn score_entity_internal(profile: &EntityProfile) -> QualityAiScore {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 异常检测：Z-Score + IQR + 阈值规则
 #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> {
@@ -680,6 +684,7 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
     anomalies
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 简单线性回归（最小二乘法）返回 (斜率, 截距)
 fn linear_regression(points: &[(f64, f64)]) -> (f64, f64) {
     let n = points.len() as f64;
@@ -699,6 +704,7 @@ fn linear_regression(points: &[(f64, f64)]) -> (f64, f64) {
     (slope, intercept)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 质量预测：基于历史趋势线性回归
 fn predict_quality_internal(
     entity_id: &str,
@@ -876,6 +882,12 @@ pub async fn quality_ai_batch_score(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn quality_ai_get_anomalies(
     State(state): State<ApiState>,
     Query(params): Query<QualityAnomalyQuery>,
@@ -966,6 +978,7 @@ pub async fn quality_ai_predict_quality(
     tag = "Master Data",
     responses((status = 200, description = "获取质量 AI 统计成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn quality_ai_get_stats(
     State(state): State<ApiState>,
     Query(params): Query<QualityAiStatsQuery>,

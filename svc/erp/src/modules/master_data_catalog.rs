@@ -138,6 +138,7 @@ fn get_catalog_store() -> &'static DataCatalogStore {
     &STORE
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn ensure_catalog_initialized() {
     let store = get_catalog_store();
     let mut initialized = store.initialized.lock().await;
@@ -301,6 +302,12 @@ fn parse_classification(s: &str) -> Option<CatalogClassification> {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 /// 搜索数据目录
 #[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn search_catalog(query: &CatalogSearchQuery) -> CatalogSearchResult {
@@ -496,6 +503,7 @@ async fn delete_catalog_entry(entry_id: &str) -> bool {
     entries.len() < before
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 获取目录统计
 async fn get_catalog_stats() -> CatalogStats {
     ensure_catalog_initialized().await;

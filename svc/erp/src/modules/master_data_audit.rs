@@ -132,6 +132,7 @@ pub async fn record_audit_event(
     params(AuditTrailQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_audit_trail(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,

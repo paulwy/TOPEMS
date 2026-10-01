@@ -404,6 +404,12 @@ pub async fn create_quality_ticket(
     tag = "Master Data",
     responses((status = 200, description = "获取质量工单列表成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_quality_tickets(
     Query(params): Query<ListQualityTicketsQuery>,
     State(state): State<ApiState>,
@@ -985,6 +991,11 @@ pub async fn execute_repair_workflow(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 内部：执行修复工作流（模拟 SQL UPDATE 占位实现）
 #[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn execute_repair_workflow_internal(workflow_id: String) {
@@ -1181,6 +1192,12 @@ pub async fn get_repair_workflow(
     path = "/erp/master-data/quality/repair-workflows",
     tag = "Master Data",
     responses((status = 200, description = "获取修复工作流列表成功", body = ApiResponse<serde_json::Value>))
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn list_repair_workflows(
     Query(params): Query<ListQualityTicketsQuery>,
@@ -1513,6 +1530,7 @@ pub async fn get_entity_owner(
     tag = "Master Data",
     responses((status = 200, description = "获取质量闭环统计成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_loop_stats(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<QualityLoopStats>> {

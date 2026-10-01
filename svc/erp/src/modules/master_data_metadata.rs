@@ -555,6 +555,11 @@ async fn get_record(record_id: &str) -> Option<MetadataRecord> {
     records.iter().find(|r| r.record_id == record_id).cloned()
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 查询记录
 #[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn query_records(query: &RecordQuery) -> Vec<MetadataRecord> {

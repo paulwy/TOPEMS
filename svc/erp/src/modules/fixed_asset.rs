@@ -619,6 +619,7 @@ pub struct DepreciationCalculation {
     pub is_fully_depreciated: bool,
 }
 
+#[allow(clippy::as_conversions)]
 /// 直线法月度折旧额计算
 ///
 /// # 返回
@@ -819,6 +820,7 @@ pub async fn depreciate_assets(
 // ============ 单元测试 ============
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

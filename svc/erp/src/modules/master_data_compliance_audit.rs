@@ -621,6 +621,11 @@ async fn run_compliance_check(req: &ComplianceCheckRequest) -> Vec<AuditFinding>
     new_findings
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 获取审计发现
 #[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn get_audit_findings(query: &AuditFindingQuery) -> Vec<AuditFinding> {
@@ -682,6 +687,7 @@ async fn resolve_finding(finding_id: &str, req: &ResolveFindingRequest) -> Optio
     Some(finding.clone())
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 生成审计报告
 async fn generate_audit_report(framework: Option<&str>) -> ComplianceAuditReport {
     ensure_compliance_audit_initialized().await;
@@ -748,6 +754,7 @@ async fn generate_audit_report(framework: Option<&str>) -> ComplianceAuditReport
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 获取审计评分卡
 async fn get_audit_scorecard(framework: Option<&str>) -> AuditScorecard {
     ensure_compliance_audit_initialized().await;
@@ -804,6 +811,7 @@ async fn get_audit_scorecard(framework: Option<&str>) -> AuditScorecard {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 获取合规审计统计
 async fn get_compliance_audit_stats() -> ComplianceAuditStats {
     ensure_compliance_audit_initialized().await;

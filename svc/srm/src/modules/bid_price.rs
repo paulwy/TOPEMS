@@ -977,6 +977,7 @@ pub async fn delete_bid(
     ),
     tag = "SRM/bid_price"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_bid_comparison(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,

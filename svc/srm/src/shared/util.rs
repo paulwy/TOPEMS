@@ -183,6 +183,7 @@ pub fn is_contract_expired(end_date_days: i64, current_date_days: i64) -> bool {
     end_date_days < current_date_days
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算评分列表的算术平均
 ///
 /// 空列表返回 0.0；各元素 clamp 到 [0, 100]。
@@ -240,6 +241,7 @@ pub fn is_preferred_supplier(rating: f64, on_time_rate: f64) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 mod tests {
     use super::*;
 

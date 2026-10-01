@@ -78,6 +78,11 @@ pub struct SearchResult {
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 async fn global_search(
     State(_state): State<ApiState>,
     Query(params): Query<SearchParams>,

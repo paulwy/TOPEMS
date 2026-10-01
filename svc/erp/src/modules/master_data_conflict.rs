@@ -354,6 +354,7 @@ pub async fn detect_conflicts(
     params(ConflictQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_conflicts(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<

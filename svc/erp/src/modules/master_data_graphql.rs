@@ -265,6 +265,12 @@ pub async fn graphql_endpoint(
     })
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 async fn handle_master_data_query(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
@@ -397,6 +403,11 @@ async fn handle_master_data_by_code(req: &GraphqlRequest) -> Json<GraphqlRespons
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 async fn handle_master_data_quality(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
@@ -469,6 +480,13 @@ async fn handle_master_data_lineage(req: &GraphqlRequest) -> Json<GraphqlRespons
     })
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 async fn handle_master_data_graph(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
@@ -510,6 +528,12 @@ async fn handle_master_data_graph(req: &GraphqlRequest) -> Json<GraphqlResponse>
     })
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 async fn handle_similar_entities(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);
@@ -589,6 +613,7 @@ async fn handle_completion_suggestions(req: &GraphqlRequest) -> Json<GraphqlResp
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn handle_mdm_stats(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let _ = req;
     let store = MDM_GRAPHQL_STORE.lock().await;
@@ -769,6 +794,7 @@ async fn handle_merge_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse>
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 async fn handle_sync_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse> {
     let store = MDM_GRAPHQL_STORE.lock().await;
     let vars = req.variables.as_ref().unwrap_or(&serde_json::Value::Null);

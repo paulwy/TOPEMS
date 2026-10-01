@@ -201,6 +201,7 @@ fn quality_rule_from_row(row: &sqlx::postgres::PgRow) -> Result<QualityRule, sql
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 fn quality_report_from_row(row: &sqlx::postgres::PgRow) -> Result<QualityReport, sqlx::Error> {
     use sqlx::Row;
     let issues_val: serde_json::Value = row.try_get("issues")?;
@@ -332,6 +333,7 @@ pub async fn create_quality_rule(
     params(ListQualityRulesQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn list_quality_rules(
     State(_state): State<ApiState>,
     Query(params): Query<ListQualityRulesQuery>,
@@ -651,6 +653,7 @@ pub async fn delete_quality_rule(
     operation_id = "run_quality_check",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn run_quality_check(
     State(_state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -755,6 +758,7 @@ pub async fn run_quality_check(
     params(QualityReportQuery),
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_quality_report(
     State(_state): State<ApiState>,
     Query(params): Query<QualityReportQuery>,

@@ -45,6 +45,7 @@ pub struct DataLineageResponse {
     operation_id = "get_data_lineage",
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_data_lineage(
     State(_state): State<ApiState>,
     Path(master_data_id): Path<String>,

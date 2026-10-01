@@ -195,6 +195,12 @@ pub fn create_routes() -> Router<ApiState> {
     params(DictTypeQueryParams),
     responses((status = 200, description = "OK")),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_dict_types(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

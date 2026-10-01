@@ -1155,6 +1155,7 @@ pub async fn get_score_level_distribution(
     ),
     tag = "SRM/supplier_performance"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
@@ -1297,6 +1298,7 @@ pub async fn get_performance_summary(
     Json(ApiResponse::success(result, "获取绩效汇总成功"))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn moving_average_quarters(scores: &[Option<f64>]) -> f64 {
     if scores.is_empty() {
         return 0.0_f64;

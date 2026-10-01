@@ -17,6 +17,12 @@ use super::mdm_v49_types::*;
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_lifecycle_entities(
     State(_state): State<ApiState>,
     Query(params): Query<LifecycleEntityQuery>,

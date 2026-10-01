@@ -208,6 +208,7 @@ async fn ensure_maturity_initialized() {
     *initialized = true;
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 基于偏移量合成一次评估（base_score 控制整体水位）
 fn build_synthetic_assessment(assessment_id: &str, base_score: f64) -> MaturityAssessment {
     let now = chrono::Utc::now();
@@ -349,6 +350,7 @@ async fn get_maturity_history() -> Vec<MaturityAssessment> {
     store.assessments.lock().await.clone()
 }
 
+#[allow(clippy::as_conversions)]
 /// 对比两次评估结果
 async fn compare_assessments(baseline_id: &str, current_id: &str) -> Option<AssessmentComparison> {
     ensure_maturity_initialized().await;
@@ -398,6 +400,7 @@ async fn compare_assessments(baseline_id: &str, current_id: &str) -> Option<Asse
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 生成改进计划
 async fn generate_improvement_plan() -> ImprovementPlan {
     ensure_maturity_initialized().await;
