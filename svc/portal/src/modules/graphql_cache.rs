@@ -663,6 +663,7 @@ fn access_patterns() -> &'static Mutex<Vec<AccessPattern>> {
 }
 
 /// V41.0: 记录查询访问（用于模式学习）
+#[allow(clippy::unwrap_used)]
 pub fn record_query_access(query_name: &str) {
     let mut patterns = access_patterns().lock().unwrap_or_else(|e| e.into_inner());
     if patterns.is_empty() {

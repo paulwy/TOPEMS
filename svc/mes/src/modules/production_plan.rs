@@ -583,6 +583,7 @@ pub async fn reject_plan(
 // ==================== Tests ====================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

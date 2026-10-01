@@ -198,6 +198,7 @@ pub fn naive_to_utc(ndt: DateTime<Utc>) -> DateTime<Utc> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::TimeZone;

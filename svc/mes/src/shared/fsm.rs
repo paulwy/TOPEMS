@@ -123,6 +123,7 @@ pub const QUALITY_INSPECTION_FSM: FsmDef = FsmDef {
 };
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

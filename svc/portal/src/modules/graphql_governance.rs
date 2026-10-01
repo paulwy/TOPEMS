@@ -621,6 +621,7 @@ impl ContractTestRunner {
     }
 
     /// 模拟执行契约测试
+    #[allow(clippy::indexing_slicing)]
     fn execute_test(&mut self, test: &ContractTestGql) -> ContractTestResultGql {
         let start = std::time::Instant::now();
         let now = Utc::now().to_rfc3339();

@@ -915,6 +915,7 @@ pub async fn get_gantt_data(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};
@@ -1063,6 +1064,7 @@ async fn transition_schedule(
     }
 }
 
+#[allow(clippy::unwrap_used)]
 fn get_schedule_tenant_id(claims: &Claims) -> Uuid {
     match &claims.tenant_id {
         Some(t) => Uuid::parse_str(t)

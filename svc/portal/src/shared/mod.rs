@@ -62,6 +62,7 @@ impl AppState {
         }
     }
 
+    #[allow(clippy::unwrap_used)]
     pub async fn new(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         let aggregator = PortalServiceAggregator::new();
         aggregator.init_default_services().await;

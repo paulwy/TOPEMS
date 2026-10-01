@@ -39,6 +39,7 @@ use crate::modules::graphql_edge_v2::uuid_simple;
 // ----------------------------------------------------------------------------
 
 /// V48.0: 通用 HMAC 计算（RFC 2104），block_size 由调用方指定
+#[allow(clippy::indexing_slicing)]
 fn v48_hmac<F>(key: &[u8], msg: &[u8], block_size: usize, hash_fn: F) -> Vec<u8>
 where
     F: Fn(&[u8]) -> Vec<u8>,

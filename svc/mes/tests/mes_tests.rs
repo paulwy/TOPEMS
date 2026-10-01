@@ -1,4 +1,5 @@
 #![allow(unexpected_cfgs)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 // V267: test fixture, allow unknown `http_endpoint_tests` cfg until Cargo.toml declares feature
 
 use serde::{Deserialize, Serialize};

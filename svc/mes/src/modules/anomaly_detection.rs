@@ -458,6 +458,7 @@ async fn collect_all_alerts(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 }
 
 /// 设备异常检测
+#[allow(clippy::indexing_slicing, clippy::unwrap_used)]
 async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
 
@@ -1026,6 +1027,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 // ==================== Helper Functions ====================
 
 /// 判断数据是否呈持续上升趋势
+#[allow(clippy::indexing_slicing)]
 fn is_increasing_trend(data: &[f64]) -> bool {
     if data.len() < 3 {
         return false;
@@ -1346,6 +1348,7 @@ pub async fn reject_anomaly_handling(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

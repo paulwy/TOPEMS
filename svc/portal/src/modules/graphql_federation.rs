@@ -1938,6 +1938,7 @@ impl FederationV3Planner {
         format!("{:x}", hasher.finalize())
     }
 
+    #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
     fn build_dependency_graph(nodes: &[PlanNode]) -> (QueryDependencyGraph, Vec<String>) {
         let node_ids: Vec<String> = nodes.iter().map(|n| n.id.clone()).collect();
         let mut edges: Vec<(String, String)> = Vec::new();
@@ -2025,6 +2026,7 @@ impl FederationV3Planner {
         groups
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn calculate_critical_path(nodes: &[PlanNode], _graph: &QueryDependencyGraph) -> Vec<String> {
         let mut longest: HashMap<String, u64> = HashMap::new();
         let mut prev: HashMap<String, Option<String>> = HashMap::new();

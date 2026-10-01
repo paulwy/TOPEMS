@@ -655,6 +655,7 @@ fn prefetch_engine_state() -> &'static Mutex<PrefetchEngineState> {
 pub struct PrefetchEngine;
 
 impl PrefetchEngine {
+    #[allow(clippy::indexing_slicing)]
     pub fn predict(trigger_query: &str, user_id: Option<&str>) -> Vec<PrefetchPredictionGql> {
         let state = prefetch_engine_state()
             .lock()
@@ -1560,6 +1561,7 @@ impl DeprecationManager {
             })
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn add_deprecated_field(input: DeprecatedFieldInput) -> DeprecatedFieldGql {
         let mut state = deprecation_manager_state()
             .lock()
@@ -2391,11 +2393,15 @@ impl DeploymentManager {
         gql
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn promote_canary(deployment_id: &str) -> DeploymentStatusGql {
         let mut state = deployment_manager_state()
             .lock()
             .unwrap_or_else(|e| e.into_inner());
         let steps = state.config.canary.steps.clone();
+        if steps.is_empty() {
+            return DeploymentStatusGql::Failed;
+        }
         if let Some(d) = state
             .deployments
             .iter_mut()

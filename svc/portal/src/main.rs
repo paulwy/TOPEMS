@@ -27,6 +27,7 @@ fn get_uptime() -> u64 {
 }
 
 #[tokio::main]
+#[allow(clippy::expect_used)]
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("SEARCH_PATH", "portal, public");
 

@@ -1234,6 +1234,7 @@ pub async fn reject_rework(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};

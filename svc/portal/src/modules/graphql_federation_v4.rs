@@ -306,6 +306,7 @@ pub struct DistributedExecutionEngine;
 
 impl DistributedExecutionEngine {
     /// 将查询分解为分布式任务
+    #[allow(clippy::indexing_slicing)]
     pub fn plan_distributed_execution(
         query: &str,
         variables: &serde_json::Value,

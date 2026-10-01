@@ -488,6 +488,7 @@ impl SmartRouterInner {
         self.routes.remove(route_id).is_some()
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn match_route(
         &self,
         path: &str,
@@ -1504,6 +1505,7 @@ pub fn init_smart_gateway() {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

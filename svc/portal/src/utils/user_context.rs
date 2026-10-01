@@ -26,6 +26,7 @@ pub fn extract_bearer_token(headers: &HeaderMap) -> Option<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::http::HeaderValue;

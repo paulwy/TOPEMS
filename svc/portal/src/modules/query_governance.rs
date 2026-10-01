@@ -454,6 +454,7 @@ impl PersistedQueryManager {
         }
     }
 
+    #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
     fn list(
         &self,
         page: u32,
@@ -646,6 +647,7 @@ impl QueryAuditStore {
         stats
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn query(
         &self,
         filter: &QueryAuditFilterInput,
@@ -1757,6 +1759,7 @@ impl QueryGovernanceMutationRoot {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! BFF Finance HTTP 集成测试
 //!
 //! 用途：调用 finance 服务的真实 HTTP 端点，验证 BFF 下游服务可达性。

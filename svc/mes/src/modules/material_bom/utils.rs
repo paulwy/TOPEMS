@@ -17,6 +17,7 @@ pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};

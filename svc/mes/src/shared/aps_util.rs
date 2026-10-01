@@ -149,6 +149,7 @@ pub fn validate_production_order_no(order_no: &str) -> Result<(), ApsError> {
 }
 
 /// Check that routing step sequence is strictly increasing with no duplicates.
+#[allow(clippy::indexing_slicing)]
 pub fn is_valid_routing_step(step_sequence: &[u32]) -> bool {
     if step_sequence.is_empty() {
         return false;
@@ -176,6 +177,7 @@ pub fn calc_throughput_rate(units_produced: f64, time_hours: f64) -> f64 {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::TimeZone;
@@ -590,6 +592,7 @@ mod tests {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod additional_tests {
     use super::*;
     use chrono::Duration;

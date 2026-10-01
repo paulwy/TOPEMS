@@ -312,6 +312,7 @@ impl RealtimeStreamManager {
     }
 
     /// 压缩流（清理旧数据，保留最新快照）
+    #[allow(clippy::unwrap_used)]
     pub fn compact_stream(entity_type: &str) -> bool {
         let mut state = realtime_stream_state()
             .lock()
@@ -497,6 +498,7 @@ impl IncrementalUpdateEngine {
     }
 
     /// 应用增量到基础数据
+    #[allow(clippy::indexing_slicing)]
     pub fn apply_delta(
         entity_type: &str,
         entity_id: &str,
@@ -520,6 +522,7 @@ impl IncrementalUpdateEngine {
     }
 
     /// 批量应用增量（自 since_version 起）
+    #[allow(clippy::indexing_slicing)]
     pub fn batch_apply(
         entity_type: &str,
         entity_id: &str,

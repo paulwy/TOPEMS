@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! SLA 升级机制集成测试
 //!
 //! 测试 SLA（服务等级协议）的关键业务路径：

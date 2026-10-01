@@ -127,6 +127,7 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
     ),
     tag = "Traceability"
 )]
+#[allow(clippy::unwrap_used)]
 pub async fn forward_traceability(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -722,6 +723,7 @@ pub async fn list_quality_records(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone, Timelike};

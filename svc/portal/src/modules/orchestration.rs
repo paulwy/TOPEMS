@@ -768,6 +768,7 @@ impl ServiceDiscoveryEngine {
 pub struct DynamicRouter;
 
 impl DynamicRouter {
+    #[allow(clippy::indexing_slicing)]
     pub async fn route_request(
         request_id: String,
         path: String,
@@ -1428,6 +1429,7 @@ pub async fn get_routing_stats_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

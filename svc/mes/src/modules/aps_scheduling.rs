@@ -394,6 +394,7 @@ fn calculate_risk_level(
 // ==================== APS Core Algorithm ====================
 
 /// 主排程算法
+#[allow(clippy::indexing_slicing)]
 async fn run_aps_scheduling(
     pool: &sqlx::PgPool,
     request: &ApsScheduleRequest,
@@ -1232,6 +1233,7 @@ pub async fn check_schedule_constraints(
     ),
     tag = "APS"
 )]
+#[allow(clippy::indexing_slicing)]
 pub async fn get_optimization_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1578,6 +1580,7 @@ pub async fn check_order_feasibility(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::TimeZone;

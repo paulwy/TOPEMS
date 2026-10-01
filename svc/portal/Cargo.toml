@@ -40,5 +40,30 @@ topems-shared-bootstrap = { workspace = true }
 name = "topems-portal"
 path = "src/main.rs"
 
-[lints]
-workspace = true
+[lints.rust]
+unknown_lints = "allow"
+renamed_and_removed_lints = "allow"
+dead_code = "allow"
+
+[lints.clippy]
+# workspace allow 集（等价继承）+ 三 lint deny（Phase 4/B 项固化）
+should_implement_trait = "allow"
+too_many_arguments = "allow"
+type_complexity = "allow"
+module_inception = "allow"
+manual_clamp = "allow"
+unwrap_or_default = "allow"
+doc_markdown = "allow"
+clone_on_copy = "allow"
+if_same_then_else = "allow"
+inconsistent_digit_grouping = "allow"
+is_digit_ascii_radix = "allow"
+single_range_in_vec_init = "allow"
+needless_range_loop = "allow"
+filter_map_next = "allow"
+unnecessary_lazy_evaluations = "allow"
+get_first = "allow"
+ptr_as_ptr = "allow"
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"

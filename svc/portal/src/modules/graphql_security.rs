@@ -1000,6 +1000,7 @@ pub struct PerformanceAnalysisGql {
 }
 
 /// V41.0: 获取性能调优建议
+#[allow(clippy::indexing_slicing)]
 pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGql> {
     let audit_logs = get_query_audit_logs(200);
     let mut suggestions = Vec::new();
@@ -1146,6 +1147,7 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
 }
 
 /// V41.0: 获取完整性能分析
+#[allow(clippy::indexing_slicing)]
 pub fn get_performance_analysis() -> PerformanceAnalysisGql {
     let suggestions = get_performance_tuning_suggestions();
     let audit_logs = get_query_audit_logs(200);

@@ -1285,6 +1285,7 @@ pub async fn analyze_capacity(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{NaiveDate, TimeZone};
