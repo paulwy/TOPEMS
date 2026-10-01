@@ -397,8 +397,14 @@ pub async fn get_standard(
             version: standard.version.map(|v| v.to_string()),
             effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
-            created_at: standard.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: standard.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: standard
+                .created_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
+            updated_at: standard
+                .updated_at
+                .map(|d| d.and_utc())
+                .unwrap_or_else(Utc::now),
         },
         "获取质量标准成功",
     ))

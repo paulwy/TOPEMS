@@ -271,8 +271,14 @@ pub async fn get_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc)).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc)).unwrap_or_else(Utc::now),
+                created_at: r
+                    .created_at
+                    .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
+                    .unwrap_or_else(Utc::now),
+                updated_at: r
+                    .updated_at
+                    .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
+                    .unwrap_or_else(Utc::now),
             },
             "获取巡检记录成功",
         )),

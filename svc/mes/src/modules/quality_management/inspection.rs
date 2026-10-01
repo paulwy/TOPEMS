@@ -339,8 +339,14 @@ pub async fn get_inspection(
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
-                created_at: r.created_at.map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc)).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc)).unwrap_or_else(Utc::now),
+                created_at: r
+                    .created_at
+                    .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
+                    .unwrap_or_else(Utc::now),
+                updated_at: r
+                    .updated_at
+                    .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
+                    .unwrap_or_else(Utc::now),
             },
             "获取检验记录成功",
         )),
