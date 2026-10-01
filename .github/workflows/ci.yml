@@ -2460,3 +2460,63 @@ jobs:
               title: `[CI Nightly] ${today} 夜间回归失败 — ${failed.length} 个门禁`,
               body,
             });
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # [2026-10-02 L4-B] environment-check：多机环境一致性自检（远端暴露漂移）
+  # 验证：YAML 语法（ci/lefthook）、rust-toolchain 锁定、.cargo 相对 target-dir、
+  #       关键门禁脚本存在——任何漂移在此红，配合夜间通知自动开 Issue。
+  # 注意：若升级 rust-toolchain.toml 的 channel，本 job 的断言需同步修改。
+  # 触发：ci.yml/lefthook.yml 等配置变更 或 夜间调度（全量）
+  # ──────────────────────────────────────────────────────────────────────────
+  environment-check:
+    name: Gate · environment consistency check
+    needs: changes
+    if: needs.changes.outputs.ci == 'true' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install python yaml
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml >/dev/null
+
+      - name: Run environment consistency checks
+        run: |
+          python3 - <<'PYEOF'
+          import yaml, pathlib, re, sys
+          root = pathlib.Path('.')
+          errs = []
+          # 1. YAML 语法（ci.yml + lefthook.yml）
+          for f in ['.github/workflows/ci.yml', 'lefthook.yml']:
+              try:
+                  yaml.safe_load((root / f).read_text())
+              except Exception as e:
+                  errs.append(f'YAML 解析失败 {f}: {e}')
+          # 2. rust-toolchain 锁定版本（多机工具链一致性）
+          rt = root / 'rust-toolchain.toml'
+          if not rt.exists():
+              errs.append('rust-toolchain.toml 缺失（多机工具链锁定失效）')
+          else:
+              ch = re.search(r'channel\s*=\s*"([^"]+)"', rt.read_text())
+              if not ch or ch.group(1) != 'nightly-2026-07-01':
+                  errs.append(f'rust-toolchain channel 非锁定版本: {ch.group(1) if ch else "无"}')
+          # 3. .cargo/config.toml target-dir 必须相对路径（防他人机器绝对路径泄漏）
+          cc = root / '.cargo/config.toml'
+          if cc.exists():
+              for m in re.finditer(r'target-dir\s*=\s*"([^"]+)"', cc.read_text()):
+                  p = m.group(1)
+                  if p.startswith('/'):
+                      errs.append(f'.cargo/config.toml target-dir 是绝对路径: {p}')
+          else:
+              errs.append('.cargo/config.toml 缺失')
+          # 4. 关键门禁脚本存在（L2/L3 防线完整性）
+          for s in ['scripts/ci/check-stale-base.sh', 'scripts/ci/run-cargo-check.sh',
+                    'scripts/ci/check-shellcheck.sh', 'scripts/sync_base.sh']:
+              if not (root / s).exists():
+                  errs.append(f'门禁脚本缺失: {s}')
+          if errs:
+              print('❌ 环境一致性检查失败:')
+              for e in errs:
+                  print('  -', e)
+              sys.exit(1)
+          print('✅ 环境一致性检查通过（YAML / 工具链 / target-dir / 门禁脚本）')
+          PYEOF

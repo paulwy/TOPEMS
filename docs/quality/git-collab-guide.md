@@ -11,8 +11,28 @@
 | L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⬜ 待用户在 GitHub Settings 开启（唯一能「永远阻止坏提交进 main」的远端硬闸） |
 | L2 | 本地 push 守卫：stale-base 检查 + cargo check 错误归类 | ✅ 已落地（pre-push 第一道，并入 cargo-check 门禁） |
 | L3 | 开发起点：`scripts/sync_base.sh`（fetch + rebase --no-fork-point + 编译快验） | ✅ 已落地 |
-| L4 | CI 全量验证：Gate L `cargo check --all-targets` + 夜间回归失败自动开 Issue | ✅ 已落地（2026-10-02） |
+| L4 | CI 全量验证：Gate L `cargo check --all-targets` + 夜间回归失败自动开 Issue + 环境一致性自检 | ✅ 已落地（2026-10-02） |
 | L5 | 环境锁定：rust-toolchain.toml + .cargo/config.toml 相对 target-dir | ✅ 已具备 |
+
+## 新机器 onboarding（一次性的）
+
+```bash
+bash scripts/topems.sh doctor    # 检测+安装 lefthook、注册 git 钩子、核对工具链、校验配置
+bash scripts/sync_base.sh        # 同步 base + 编译快验（首次必跑）
+```
+
+- doctor 把本地门禁钩子注册到 **git 层面**（.git/hooks）——此后该机**任何 `git push` 都触发 pre-push 门禁**，无论是否走 `topems.sh push`。
+- 若 doctor 报 lefthook/工具链缺失，按其提示安装后重跑。
+- 之后每次开工只需 `bash scripts/sync_base.sh`。
+
+## 推送入口（推荐）
+
+```bash
+bash scripts/topems.sh push              # 先自检门禁钩子，再走完整门禁 + 传输
+bash scripts/topems.sh push --skip-check # 门禁刚全绿、仅传输失败时跳过自检
+```
+
+- 直接 `git push` 也受本地门禁约束（钩子已注册）——`topems.sh push` 只是多了"钩子存在性"前置检查，防止"以为有门禁其实没有"。
 
 **L1 开启步骤（一次性的）**：GitHub → Settings → Branches → main → Add rule：
 - ✅ Require status checks to pass before merging（勾选 Gate L / Gate K / cargo-test / rust-test）

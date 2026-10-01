@@ -3297,6 +3297,134 @@ clean_project() {
     fi
 }
 
+# ============================================================================
+# [2026-10-02 A] doctor：多机环境自举（门禁一致性）
+# 新机器 / 换机器 / 门禁失效后跑一次：
+#   检测 git/lefthook → 注册 git 钩子（pre-commit/pre-push）→ 核对 rust 工具链
+#   → sccache（可选）→ lefthook.yml 配置校验 → 提示 sync_base
+# 效果：钩子注册在 git 层面（.git/hooks），此后该机任何 git push 都触发
+#   本地 pre-push 门禁——TRAE 事故（无门禁机器直推坏提交）的本地根治。
+# ============================================================================
+doctor_env() {
+    local fail=0
+    local REPO_ROOT="$SCRIPT_DIR/.."
+
+    echo "==> TOPEMS 环境自检（doctor）"
+
+    echo "    [1/6] git"
+    if command -v git &> /dev/null; then
+        info "  git: $(git --version)"
+    else
+        error "  git 未安装 — 请先安装: brew install git"
+        fail=1
+    fi
+
+    echo "    [2/6] lefthook（本地门禁引擎）"
+    local lf=""
+    if command -v lefthook &> /dev/null; then
+        lf="lefthook"
+    else
+        lf=$(ls "$REPO_ROOT"/node_modules/.pnpm/lefthook-*/node_modules/lefthook-*/bin/lefthook 2>/dev/null | head -1)
+    fi
+    if [ -z "$lf" ]; then
+        error "  lefthook 未安装 — 安装: brew install lefthook；或 cd $REPO_ROOT && pnpm add -D lefthook"
+        fail=1
+    else
+        info "  lefthook: $("$lf" version 2>/dev/null | head -1 || echo 'found')"
+
+        echo "    [3/6] 注册 git 钩子（pre-commit / pre-push）"
+        if (cd "$REPO_ROOT" && "$lf" install) &> /dev/null; then
+            if [ -x "$REPO_ROOT/.git/hooks/pre-push" ] && [ -x "$REPO_ROOT/.git/hooks/pre-commit" ]; then
+                info "  钩子已注册: .git/hooks/pre-commit + pre-push（此后任何 git push 都触发门禁）"
+            else
+                error "  钩子文件缺失（lefthook install 声称成功但文件不在）"
+                fail=1
+            fi
+        else
+            error "  lefthook install 失败"
+            fail=1
+        fi
+    fi
+
+    echo "    [4/6] rust 工具链（rust-toolchain.toml 锁定 nightly-2026-07-01）"
+    if command -v rustup &> /dev/null; then
+        local want
+        want=$(grep -E '^channel\s*=' "$REPO_ROOT/rust-toolchain.toml" 2>/dev/null | head -1 | sed 's/.*= *"//; s/"$//')
+        if [ -z "$want" ]; then
+            warn "  rust-toolchain.toml 缺失或 channel 未解析 — 仓库异常，请检查"
+        elif rustup toolchain list 2>/dev/null | grep -q "$want"; then
+            info "  工具链 $want 已安装"
+        else
+            warn "  工具链 $want 未安装，尝试安装..."
+            if rustup toolchain install "$want" &> /dev/null; then
+                info "  $want 安装完成"
+            else
+                error "  工具链安装失败 — 手动: rustup toolchain install $want"
+                fail=1
+            fi
+        fi
+    else
+        warn "  rustup 未安装 — 手动: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    fi
+
+    echo "    [5/6] 编译缓存（sccache，可选）"
+    if command -v sccache &> /dev/null; then
+        info "  sccache: $(sccache --version | head -1)"
+    else
+        warn "  sccache 未安装（可选，加速重复编译）— brew install sccache"
+    fi
+
+    echo "    [6/6] 配置校验"
+    if [ -n "$lf" ] && (cd "$REPO_ROOT" && "$lf" validate) &> /dev/null; then
+        info "  lefthook.yml 配置有效"
+    else
+        error "  lefthook.yml 配置校验失败"
+        fail=1
+    fi
+
+    if [ "$fail" -eq 0 ]; then
+        info "✅ 环境就绪。"
+        echo "    下一步（每次开工必跑，新机器必跑）: bash scripts/sync_base.sh"
+    else
+        error "❌ 环境存在问题，按上述提示修复后重跑: topems doctor"
+        return 1
+    fi
+}
+
+# ============================================================================
+# [2026-10-02 C] push：收敛推送入口（先自检门禁，再 git push）
+# 用法: topems push [--skip-check] [git push 参数...]
+#   --skip-check  跳过前置自检（仅门禁刚全绿、纯传输场景用）
+# ============================================================================
+push_guard() {
+    local skip=false
+    local args=()
+    local REPO_ROOT="$SCRIPT_DIR/.."
+    for arg in "$@"; do
+        case "$arg" in
+            --skip-check) skip=true ;;
+            *) args+=("$arg") ;;
+        esac
+    done
+
+    if [ "$skip" = false ]; then
+        echo "==> push 前自检（门禁钩子 + lefthook 可用性）"
+        if [ ! -x "$REPO_ROOT/.git/hooks/pre-push" ] || [ ! -x "$REPO_ROOT/.git/hooks/pre-commit" ]; then
+            error "本地门禁钩子未注册 — 先运行: topems doctor"
+            return 1
+        fi
+        if ! command -v lefthook &> /dev/null \
+            && [ -z "$(ls "$REPO_ROOT"/node_modules/.pnpm/lefthook-*/node_modules/lefthook-*/bin/lefthook 2>/dev/null | head -1)" ]; then
+            error "lefthook 不可用 — 先运行: topems doctor"
+            return 1
+        fi
+        info "  自检通过（钩子已注册、lefthook 可用），进入门禁+传输"
+    fi
+
+    echo "==> git push ${args[*]:-}"
+    git push "${args[@]}"
+}
+
 show_help() {
     cat << EOF
 TOPEMS 服务管理工具
@@ -3404,6 +3532,8 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 开发环境:
   dev                     启动开发环境 (macOS)
   install-deps            安装依赖
+  doctor                  环境自检/自举（多机门禁一致性：装 lefthook、注册钩子、核对工具链）
+  push [--skip-check]     推送入口：先自检门禁钩子再 git push（--skip-check 跳过自检）
 
 AI模型管理:
   ai start                启动 Ollama 服务
@@ -3710,6 +3840,12 @@ case "${1:-help}" in
         ;;
     clean)
         clean_project "${@:2}"
+        ;;
+    doctor)
+        doctor_env
+        ;;
+    push)
+        push_guard "${@:2}"
         ;;
     *)
         run_cli "$@"
