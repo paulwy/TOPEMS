@@ -513,8 +513,14 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: result.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        created_at: result
+            .created_at
+            .map(|t| t.and_utc())
+            .unwrap_or_else(Utc::now),
+        updated_at: result
+            .updated_at
+            .map(|t| t.and_utc())
+            .unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))

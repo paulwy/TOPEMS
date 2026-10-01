@@ -1191,7 +1191,10 @@ pub async fn list_inspections(
                     items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
-                    created_at: r.created_at.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()).unwrap_or_default(),
+                    created_at: r
+                        .created_at
+                        .map(|d| Utc.from_utc_datetime(&d).to_rfc3339())
+                        .unwrap_or_default(),
                 })
                 .collect();
 
