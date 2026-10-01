@@ -16,8 +16,10 @@
 # /Users/xingzhai/TOPEMS/target，导致本机构建目标目录失效（cargo metadata 解析到
 # 不存在的路径，target/ 不再更新）。相对路径自动随机器/仓库位置解析，跨机器可移植。
 target-dir = "target"
-# sccache 编译缓存：跨 workspace / 跨版本 / 跨分支复用，典型命中命中率 40–70%
-rustc-wrapper = "sccache"
+# [2026-10-02] rustc-wrapper=sccache 已移除：sccache 0.16/0.17 与 rustc 1.95.0 不兼容
+# （spawn/编译 exit 254，全 workspace 构建失败）。本机改为直编（稍慢但稳定）；
+# 恢复前请先验证 sccache 与当前工具链兼容再重新启用。pre-push 门禁脚本仍会
+# 自行设置 RUSTC_WRAPPER=sccache，其行为不受本配置影响。
 # 抑制第三方依赖（zookeeper v0.8.0）的未来兼容性警告
 # zookeeper 0.8.0 为最新版本，使用了未来 Rust 将拒绝的语法，无法通过升级解决
 rustflags = ["-A", "future_incompatible"]

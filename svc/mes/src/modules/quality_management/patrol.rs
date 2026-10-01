@@ -271,8 +271,14 @@ pub async fn get_patrol(
                 result: r.result,
                 findings: r.findings,
                 memo: r.memo,
-                created_at: r.created_at.unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.unwrap_or_else(Utc::now),
+                created_at: r
+                    .created_at
+                    .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
+                    .unwrap_or_else(Utc::now),
+                updated_at: r
+                    .updated_at
+                    .map(|d| DateTime::<Utc>::from_naive_utc_and_offset(d, Utc))
+                    .unwrap_or_else(Utc::now),
             },
             "获取巡检记录成功",
         )),
@@ -588,7 +594,7 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
+                    patrol_id: r.patrol_id.to_string(),
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value,
@@ -650,7 +656,7 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
+                patrol_id: r.patrol_id.to_string(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value,
@@ -733,7 +739,7 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
+                patrol_id: r.patrol_id.to_string(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value,
