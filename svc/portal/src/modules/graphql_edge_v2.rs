@@ -253,6 +253,7 @@ impl FederatedQueryCacheV2 {
         None
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn set(
         key: &str,
         query_hash: &str,
@@ -322,6 +323,7 @@ impl FederatedQueryCacheV2 {
         removed
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub fn invalidate_by_query_hash(query_hash: &str) -> i64 {
         let mut state = federated_cache_v2_state()
             .lock()
@@ -369,6 +371,11 @@ impl FederatedQueryCacheV2 {
         count
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub fn get_stats() -> CacheStatsV2Gql {
         let state = federated_cache_v2_state()
             .lock()
@@ -425,6 +432,7 @@ impl FederatedQueryCacheV2 {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub fn update_config(input: FederatedCacheConfigInput) -> bool {
         let mut state = federated_cache_v2_state()
             .lock()
@@ -450,6 +458,7 @@ impl FederatedQueryCacheV2 {
         true
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn to_gql(entry: &FederatedCacheEntry) -> FederatedCacheEntryGql {
         FederatedCacheEntryGql {
             key: entry.key.clone(),
@@ -655,6 +664,11 @@ fn prefetch_engine_state() -> &'static Mutex<PrefetchEngineState> {
 pub struct PrefetchEngine;
 
 impl PrefetchEngine {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn predict(trigger_query: &str, user_id: Option<&str>) -> Vec<PrefetchPredictionGql> {
         let state = prefetch_engine_state()
@@ -775,6 +789,7 @@ impl PrefetchEngine {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn list_rules() -> Vec<PrefetchRuleGql> {
         let state = prefetch_engine_state()
             .lock()
@@ -797,6 +812,11 @@ impl PrefetchEngine {
             .collect()
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     pub fn add_rule(input: PrefetchRuleInput) -> PrefetchRuleGql {
         let mut state = prefetch_engine_state()
             .lock()
@@ -851,6 +871,12 @@ impl PrefetchEngine {
         state.rules.len() < before
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub fn get_stats() -> PrefetchStatsGql {
         let state = prefetch_engine_state()
             .lock()
@@ -1107,6 +1133,7 @@ impl EdgeOrchestratorState {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     fn select_best_node(&self) -> Option<&EdgeOrchNodeData> {
         self.nodes
             .iter()
@@ -1151,6 +1178,7 @@ impl EdgeFunctionOrchestrator {
             .map(Self::fn_to_gql)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub fn register_function(input: EdgeOrchFunctionInput) -> EdgeOrchFunctionGql {
         let mut state = edge_orchestrator_state()
             .lock()
@@ -1267,6 +1295,7 @@ impl EdgeFunctionOrchestrator {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn fn_to_gql(f: &EdgeOrchFunctionData) -> EdgeOrchFunctionGql {
         EdgeOrchFunctionGql {
             id: f.id.clone(),
@@ -1283,6 +1312,7 @@ impl EdgeFunctionOrchestrator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn node_to_gql(n: &EdgeOrchNodeData) -> EdgeOrchNodeGql {
         EdgeOrchNodeGql {
             id: n.id.clone(),
@@ -1501,6 +1531,7 @@ fn deprecation_manager_state() -> &'static Mutex<DeprecationManagerState> {
 pub struct DeprecationManager;
 
 impl DeprecationManager {
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn list_deprecated_fields(
         type_filter: Option<String>,
         severity: Option<String>,
@@ -1539,6 +1570,7 @@ impl DeprecationManager {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_field(field_path: &str) -> Option<DeprecatedFieldGql> {
         let state = deprecation_manager_state()
             .lock()
@@ -1561,6 +1593,7 @@ impl DeprecationManager {
             })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     #[allow(clippy::indexing_slicing)]
     pub fn add_deprecated_field(input: DeprecatedFieldInput) -> DeprecatedFieldGql {
         let mut state = deprecation_manager_state()
@@ -1626,6 +1659,11 @@ impl DeprecationManager {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub fn get_stats() -> DeprecationStatsGql {
         let state = deprecation_manager_state()
             .lock()
@@ -1666,6 +1704,7 @@ impl DeprecationManager {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_policy() -> DeprecationPolicyGql {
         let state = deprecation_manager_state()
             .lock()
@@ -1679,6 +1718,7 @@ impl DeprecationManager {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub fn update_policy(input: DeprecationPolicyInput) -> bool {
         let mut state = deprecation_manager_state()
             .lock()
@@ -1993,6 +2033,7 @@ impl MigrationToolkit {
         state.scripts.iter().map(Self::script_to_gql).collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn check_compatibility(old_version: &str, new_version: &str) -> CompatibilityCheckGql {
         let state = migration_toolkit_state()
             .lock()
@@ -2047,6 +2088,11 @@ impl MigrationToolkit {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn diff_to_gql(d: &SchemaDiffData) -> SchemaDiffGql {
         let breaking = d.changes.iter().filter(|c| c.is_breaking).count();
         SchemaDiffGql {
@@ -2299,6 +2345,7 @@ fn deployment_manager_state() -> &'static Mutex<DeploymentManagerState> {
 pub struct DeploymentManager;
 
 impl DeploymentManager {
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_config() -> DeploymentConfigGql {
         let state = deployment_manager_state()
             .lock()
@@ -2323,6 +2370,7 @@ impl DeploymentManager {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub fn update_config(input: DeploymentConfigInput) -> bool {
         let mut state = deployment_manager_state()
             .lock()
@@ -2471,6 +2519,7 @@ impl DeploymentManager {
         state.deployments.iter().map(Self::record_to_gql).collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn record_traffic_sample(deployment_id: &str, errors: u64, total: u64, avg_latency: f64) {
         let mut state = deployment_manager_state()
             .lock()
@@ -2508,6 +2557,11 @@ impl DeploymentManager {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     fn record_to_gql(d: &DeploymentRecordData) -> DeploymentRecordGql {
         let error_rate = if d.total_requests > 0 {
             d.error_count as f64 / d.total_requests as f64
@@ -2539,6 +2593,7 @@ impl DeploymentManager {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub fn uuid_simple() -> String {
     let now = Utc::now().timestamp_millis() as u64;
     let rand = {

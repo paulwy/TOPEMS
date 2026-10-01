@@ -50,6 +50,7 @@ pub async fn fetch_erp_stats(state: &AppState) -> Option<ServiceStatsGql> {
     })
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn fetch_crm_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.crm_client.get_health().await.unwrap_or(false);
     // total：客户数；active：进行中商机数
@@ -79,6 +80,7 @@ pub async fn fetch_crm_stats(state: &AppState) -> Option<ServiceStatsGql> {
     })
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn fetch_hrm_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.hrm_client.get_health().await.unwrap_or(false);
     // total：员工总数；active：在职（active）员工数
@@ -103,6 +105,7 @@ pub async fn fetch_hrm_stats(state: &AppState) -> Option<ServiceStatsGql> {
     })
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn fetch_finance_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.finance_client.get_health().await.unwrap_or(false);
     // total：总账科目/凭证数；active：待审批数
@@ -132,6 +135,7 @@ pub async fn fetch_finance_stats(state: &AppState) -> Option<ServiceStatsGql> {
     })
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn fetch_mes_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.mes_client.get_health().await.unwrap_or(false);
     // total：生产订单数；active：在制品（WIP）数量
@@ -161,6 +165,7 @@ pub async fn fetch_mes_stats(state: &AppState) -> Option<ServiceStatsGql> {
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn fetch_workflow_stats(state: &AppState) -> Option<ServiceStatsGql> {
     let available = state.workflow_client.get_health().await.unwrap_or(false);
     // total：流程实例总数；active：运行中实例数

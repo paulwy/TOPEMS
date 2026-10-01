@@ -488,6 +488,7 @@ impl SmartRouterInner {
         self.routes.remove(route_id).is_some()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     #[allow(clippy::indexing_slicing)]
     fn match_route(
         &self,

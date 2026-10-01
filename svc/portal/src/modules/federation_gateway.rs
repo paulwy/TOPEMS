@@ -470,6 +470,7 @@ impl FederationGatewayV5 {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn execute_federated_query(
         query: String,
         variables: Option<serde_json::Value>,
@@ -521,6 +522,11 @@ impl FederationGatewayV5 {
         Self::create_query_plan_internal(query).await
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     async fn health_check_subgraphs() -> FederationHealthReport {
         let store = get_federation_store();
         let subgraphs = store.subgraphs.lock().await;
@@ -549,6 +555,7 @@ impl FederationGatewayV5 {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn create_query_plan_internal(query: &str) -> FederatedQueryPlan {
         let store = get_federation_store();
         let subgraphs = store.subgraphs.lock().await;
@@ -703,6 +710,12 @@ impl TransactionCoordinator {
             .ok_or_else(|| "未找到事务".to_string())
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     async fn list_transactions(
         state: Option<String>,
         page: i64,

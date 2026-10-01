@@ -458,6 +458,7 @@ impl ServiceLoad {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn score(&self) -> f64 {
         let load_score = self.cpu_usage * 0.4 + self.memory_usage * 0.3;
         let latency_penalty = if self.latency_ms > 1000 {
@@ -526,6 +527,7 @@ pub struct CacheEntry {
 }
 
 impl CacheEntry {
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn new(key: String, value: serde_json::Value, ttl: u64) -> Self {
         let now = chrono::Utc::now();
         let expires = now + chrono::Duration::milliseconds(ttl as i64);
@@ -871,6 +873,7 @@ impl SmartRouter {
         load
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_routing_history(
         limit: Option<u32>,
         target_service: Option<&str>,
@@ -899,6 +902,7 @@ impl SmartRouter {
         Self::route_query(query_hash, operation_name).await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_route_stats() -> RouteStats {
         let store = get_smart_router_store();
         let decisions = store.decisions.lock().await;
@@ -944,6 +948,7 @@ impl SmartRouter {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     fn calculate_confidence(
         rule: &RoutingRule,
         query_hash: Option<&str>,
@@ -1046,6 +1051,7 @@ impl AutoCacheManager {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn invalidate_cache(
         cache_key: String,
         reason: String,
@@ -1079,6 +1085,7 @@ impl AutoCacheManager {
         Ok(removed)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_cache_stats() -> CacheStats {
         let store = get_auto_cache_store();
         let entries = store.entries.lock().await;
@@ -1106,6 +1113,7 @@ impl AutoCacheManager {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn cleanup_expired() -> u64 {
         let store = get_auto_cache_store();
         let mut entries = store.entries.lock().await;
@@ -1120,6 +1128,7 @@ impl AutoCacheManager {
         removed
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_cache_hit_rate() -> f64 {
         let store = get_auto_cache_store();
         let hits = *store.total_hits.lock().await;
@@ -1132,6 +1141,7 @@ impl AutoCacheManager {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn evict_cache(max_size: u64) -> u64 {
         let store = get_auto_cache_store();
         let mut entries = store.entries.lock().await;
@@ -1249,6 +1259,7 @@ impl SelfHealingEngine {
         action
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_healing_history(
         trigger: Option<HealingTrigger>,
         status: Option<HealingStatus>,
@@ -1292,6 +1303,7 @@ impl SelfHealingEngine {
             .ok_or_else(|| format!("恢复计划 '{}' 不存在", plan_id))
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_health_summary() -> HealthSummary {
         let store = get_self_healing_store();
         let checks = store.health_checks.lock().await;

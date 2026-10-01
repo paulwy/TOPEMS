@@ -197,6 +197,7 @@ pub async fn get_unified_todos(
     ))
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_erp_stats(state: &AppState) -> ErpStats {
     let client = state.erp_client.clone();
 
@@ -254,6 +255,7 @@ async fn fetch_erp_stats(state: &AppState) -> ErpStats {
     }
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_crm_stats(state: &AppState) -> CrmStats {
     let client = state.crm_client.clone();
 
@@ -292,6 +294,7 @@ async fn fetch_crm_stats(state: &AppState) -> CrmStats {
     }
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_hrm_stats(state: &AppState) -> HrmStats {
     let client = state.hrm_client.clone();
 
@@ -318,6 +321,7 @@ async fn fetch_hrm_stats(state: &AppState) -> HrmStats {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_finance_stats(state: &AppState, user_id: &str, token: Option<&str>) -> FinanceStats {
     let client = state.finance_client.clone();
 
@@ -346,6 +350,7 @@ async fn fetch_finance_stats(state: &AppState, user_id: &str, token: Option<&str
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_mes_stats(state: &AppState) -> MesStats {
     let client = state.mes_client.clone();
 
@@ -370,6 +375,7 @@ async fn fetch_mes_stats(state: &AppState) -> MesStats {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_workflow_stats(
     state: &AppState,
     user_id: &str,

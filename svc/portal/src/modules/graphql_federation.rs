@@ -782,6 +782,7 @@ pub fn cache_federation_v2_plan(query_hash: &str, plan: &FederationQueryPlan) {
         .insert(query_hash.to_string(), plan.clone());
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V42.0: 联邦查询计划器
 /// 解析查询 → 识别实体/服务 → 构建依赖图 → 生成执行计划
 pub fn plan_federation_query(query: &str, _variables: &serde_json::Value) -> FederationQueryPlan {
@@ -943,6 +944,7 @@ async fn execute_step(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// V42.0: 查询执行器 — 按并行组执行，组内并行，组间顺序
 pub async fn execute_federation_plan(
     plan: &FederationQueryPlan,
@@ -1197,6 +1199,7 @@ fn record_federation_v2_auto_resolver() {
     s.auto_resolvers_used += 1;
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub fn get_federation_v2_stats() -> FederationV2StatsGql {
     let s = federation_v2_stats_internal()
         .lock()
@@ -1231,6 +1234,7 @@ pub fn get_federation_v2_stats() -> FederationV2StatsGql {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub fn simple_random_u64() -> u64 {
     use std::sync::atomic::{AtomicU64, Ordering};
     static COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -1244,6 +1248,7 @@ pub fn simple_random_u64() -> u64 {
         .wrapping_add(count)
 }
 
+#[allow(clippy::as_conversions)]
 pub fn simple_random_u128() -> u128 {
     let high = simple_random_u64() as u128;
     let low = simple_random_u64() as u128;
@@ -1527,6 +1532,12 @@ impl FederationServiceStats {
         self.update_p95();
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     fn update_p95(&mut self) {
         if self.latencies.is_empty() {
             self.p95_latency_ms = 0;
@@ -1814,6 +1825,7 @@ pub struct FederationCacheStatsGql {
 pub struct FederationV3Planner;
 
 impl FederationV3Planner {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn build_plan_v3(query: &str, _variables: &serde_json::Value) -> FederationV3Plan {
         let query_hash = Self::query_hash(query);
         let lower = query.to_lowercase();
@@ -2070,6 +2082,7 @@ impl FederationV3Planner {
 
 // --- V3: 熔断器控制 ---
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// V44.0: 检查熔断器状态
 pub fn check_circuit_breaker(service: &str) -> bool {
     let breakers = federation_v3_circuit_breakers()
@@ -2165,6 +2178,7 @@ pub fn reset_circuit_breaker(service: &str) -> bool {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// V44.0: 设置熔断器配置
 pub fn set_circuit_breaker_config(service: &str, config: CircuitBreakerConfigInputGql) -> bool {
     let mut breakers = federation_v3_circuit_breakers()
@@ -2207,6 +2221,7 @@ impl FederatedCacheManager {
         None
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn set_query_cache(
         query_hash: &str,
         variables_hash: &str,
@@ -2334,6 +2349,7 @@ impl FederatedCacheManager {
 pub struct FederationV3Executor;
 
 impl FederationV3Executor {
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_plan_v3(plan: &FederationV3Plan) -> Result<serde_json::Value, String> {
         let mut results: HashMap<String, serde_json::Value> = HashMap::new();
         let mut step_traces: Vec<PlanStepTrace> = Vec::new();
@@ -2435,6 +2451,7 @@ impl FederationV3Executor {
         Ok(serde_json::json!(results))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn execute_with_fallback(
         service: Option<&str>,
         entity: Option<&str>,
@@ -2543,6 +2560,12 @@ pub fn v3_variables_hash(variables: &serde_json::Value) -> String {
     format!("{:x}", hasher.finalize())
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 pub fn get_federation_v3_stats() -> FederationV3StatsGql {
     let stats = federation_v3_stats_internal()
         .lock()
@@ -2614,6 +2637,7 @@ pub fn get_federation_v3_stats() -> FederationV3StatsGql {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub fn get_all_circuit_breakers() -> Vec<CircuitBreakerStateGqlSimple> {
     let breakers = federation_v3_circuit_breakers()
         .lock()
@@ -2633,6 +2657,7 @@ pub fn get_all_circuit_breakers() -> Vec<CircuitBreakerStateGqlSimple> {
         .collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub fn get_v3_traces(limit: usize) -> Vec<PlanExecutionTraceGql> {
     let traces = federation_v3_traces()
         .lock()
@@ -2667,6 +2692,12 @@ pub fn get_v3_traces(limit: usize) -> Vec<PlanExecutionTraceGql> {
         .collect()
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 pub fn get_v3_cache_stats() -> FederationCacheStatsGql {
     let stats = federation_v3_stats_internal()
         .lock()
@@ -2696,6 +2727,11 @@ pub fn get_v3_cache_stats() -> FederationCacheStatsGql {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub fn plan_to_gql(plan: &FederationV3Plan) -> FederationV3PlanGql {
     FederationV3PlanGql {
         plan_id: plan.plan_id.clone(),

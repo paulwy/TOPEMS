@@ -364,6 +364,7 @@ pub fn cancel_subscription_by_id(subscription_id: &str) -> bool {
     false
 }
 
+#[allow(clippy::as_conversions)]
 /// 取消指定连接的所有订阅
 pub fn cancel_all_subscriptions_by_connection(connection_id: &str) -> u64 {
     let mut sessions = subscription_sessions()
@@ -495,6 +496,7 @@ pub fn record_event_published(_channel: SubscriptionChannel) {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算每秒事件数（过去 60 秒滑动窗口）
 #[allow(clippy::unwrap_used)]
 pub fn get_events_per_second() -> f64 {
@@ -546,6 +548,7 @@ fn channel_name(channel: SubscriptionChannel) -> String {
     .to_string()
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取完整订阅统计
 pub fn get_subscription_stats() -> SubscriptionStats {
     let sessions = subscription_sessions()
@@ -755,6 +758,7 @@ impl From<SubscriptionInfo> for SubscriptionInfoGql {
 }
 
 impl From<SubscriptionSession> for SubscriptionSessionGql {
+    #[allow(clippy::as_conversions)]
     fn from(session: SubscriptionSession) -> Self {
         let subscriptions: Vec<SubscriptionInfoGql> = session
             .subscriptions

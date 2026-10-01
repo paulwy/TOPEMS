@@ -400,6 +400,13 @@ impl DistributedExecutionEngine {
         gql
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 执行分布式计划
     pub fn execute_distributed(plan_id: &str) -> DistV4ExecutionTraceGql {
         let mut state = distributed_execution_engine_state()
@@ -509,6 +516,7 @@ impl DistributedExecutionEngine {
         Self::select_node_internal(&state, target_service)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn select_node_internal(
         state: &DistributedExecutionEngineState,
         _target_service: &str,
@@ -562,6 +570,11 @@ impl DistributedExecutionEngine {
             .map(Self::trace_to_gql)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取分布式执行统计
     pub fn get_stats() -> DistV4ExecutionStatsGql {
         let state = distributed_execution_engine_state()
@@ -621,6 +634,11 @@ impl DistributedExecutionEngine {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn node_to_gql(n: &DistV4NodeData) -> DistV4ExecutionNodeGql {
         DistV4ExecutionNodeGql {
             node_id: n.node_id.clone(),
@@ -633,6 +651,11 @@ impl DistributedExecutionEngine {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn plan_to_gql(p: &DistV4PlanData) -> DistV4ExecutionPlanGql {
         DistV4ExecutionPlanGql {
             plan_id: p.plan_id.clone(),
@@ -655,6 +678,11 @@ impl DistributedExecutionEngine {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn trace_to_gql(t: &DistV4ExecutionTraceData) -> DistV4ExecutionTraceGql {
         DistV4ExecutionTraceGql {
             plan_id: t.plan_id.clone(),
@@ -1038,6 +1066,7 @@ impl AdaptiveQueryOptimizer {
         Some((transformed, suggestion))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn apply_rule_internal(query: &str, rule: &AdaptiveRuleData) -> (String, f64, f64) {
         let before_cost = query.len() as f64 / 10.0;
         let after_cost = before_cost * (1.0 - rule.estimated_benefit.min(0.9));
@@ -1053,6 +1082,11 @@ impl AdaptiveQueryOptimizer {
         (format!("/* {} */ {}", tag, query), before_cost, after_cost)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取查询性能画像
     pub fn get_query_profile(query: &str) -> Option<AdaptiveQueryProfileGql> {
         let state = adaptive_query_optimizer_state()
@@ -1080,6 +1114,12 @@ impl AdaptiveQueryOptimizer {
             })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取优化统计
     pub fn get_optimization_stats() -> AdaptiveOptStatsGql {
         let state = adaptive_query_optimizer_state()
@@ -1415,6 +1455,7 @@ impl MultiClusterRouter {
         state.clusters.len() < before
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 跨集群路由查询（基于数据位置/延迟/负载）
     pub fn route_query(query: &str) -> MultiClusterRoutingDecisionGql {
         let state = multi_cluster_router_state()
@@ -1498,6 +1539,7 @@ impl MultiClusterRouter {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 跨集群联邦查询
     pub fn federate_query(query: &str, target_clusters: Vec<String>) -> CrossClusterQueryGql {
         let mut state = multi_cluster_router_state()
@@ -1530,6 +1572,11 @@ impl MultiClusterRouter {
         gql
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     /// 同步集群间 Schema
     pub fn sync_schema() -> i32 {
         let mut state = multi_cluster_router_state()
@@ -1571,6 +1618,12 @@ impl MultiClusterRouter {
         None
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取集群统计
     pub fn get_cluster_stats() -> MultiClusterStatsGql {
         let state = multi_cluster_router_state()
@@ -1650,6 +1703,7 @@ impl MultiClusterRouter {
         state.clusters.iter().map(Self::cluster_to_gql).collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn cluster_to_gql(c: &ClusterInfoData) -> MultiClusterInfoGql {
         MultiClusterInfoGql {
             cluster_id: c.cluster_id.clone(),
@@ -1664,6 +1718,11 @@ impl MultiClusterRouter {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn cross_cluster_query_to_gql(q: &CrossClusterQueryData) -> CrossClusterQueryGql {
         CrossClusterQueryGql {
             query_id: q.query_id.clone(),

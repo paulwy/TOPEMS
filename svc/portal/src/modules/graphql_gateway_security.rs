@@ -386,6 +386,7 @@ fn zero_trust_state() -> &'static Mutex<ZeroTrustState> {
 pub struct ZeroTrustGateway;
 
 impl ZeroTrustGateway {
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// 评估信任等级（综合已知上下文 + 风险因子，写入信任上下文）
     pub fn assess_trust(
         client_id: &str,
@@ -561,6 +562,12 @@ impl ZeroTrustGateway {
         (allowed, missing)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     /// 要求额外验证（触发验证挑战并补齐验证因子）
     pub fn require_verification(
         client_id: &str,
@@ -627,6 +634,11 @@ impl ZeroTrustGateway {
         existed
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取零信任统计
     pub fn get_stats() -> ZeroTrustStatsGql {
         let state = zero_trust_state().lock().unwrap_or_else(|e| e.into_inner());
@@ -770,6 +782,7 @@ struct SignatureKey {
 }
 
 impl SignatureKey {
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn to_gql(&self) -> KeyInfoGql {
         KeyInfoGql {
             key_id: self.key_id.clone(),
@@ -793,6 +806,11 @@ struct SignatureConfig {
 }
 
 impl SignatureConfig {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     fn to_gql(&self) -> SignatureConfigGql {
         SignatureConfigGql {
             algorithm: self.algorithm,
@@ -904,6 +922,7 @@ impl RequestSignatureV2 {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// 验证签名（时间窗口 + nonce 防重放 + 哈希匹配 + 签名匹配）
     pub fn verify_signature(req: &SignedRequestGql, body: &str) -> Result<(), RejectionReasonGql> {
         let started = Utc::now().timestamp_millis();
@@ -985,6 +1004,7 @@ impl RequestSignatureV2 {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// 记录拒绝并返回拒绝原因
     fn record_rejection(
         state: &mut RequestSignatureState,
@@ -1002,6 +1022,7 @@ impl RequestSignatureV2 {
         Self::generate_nonce_inner()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     fn generate_nonce_inner() -> String {
         let now = Utc::now().timestamp_millis() as u64;
         let rand = {
@@ -1102,6 +1123,11 @@ impl RequestSignatureV2 {
         state.config.to_gql()
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取签名统计
     pub fn get_stats() -> SignatureStatsGql {
         let state = request_signature_state()
@@ -1585,6 +1611,7 @@ impl DataLevelPermissions {
         allowed
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取权限列表（可按主体/资源类型过滤）
     pub fn get_permissions(
         principal_type: Option<PrincipalTypeGql>,
@@ -1731,6 +1758,7 @@ impl DataLevelPermissions {
         matching.iter().map(|p| p.to_gql()).collect()
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取权限审计日志（按时间倒序）
     pub fn get_audit_logs(limit: Option<u32>) -> Vec<PermissionAuditLogGql> {
         let state = data_permission_state()
@@ -1746,6 +1774,7 @@ impl DataLevelPermissions {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取数据权限统计
     pub fn get_stats() -> DataPermissionStatsGql {
         let state = data_permission_state()

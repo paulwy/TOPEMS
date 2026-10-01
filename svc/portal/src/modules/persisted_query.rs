@@ -422,6 +422,7 @@ impl PersistedQueryV2 {
         Ok(entry.clone())
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn list_queries(
         page: u32,
         per_page: u32,
@@ -551,6 +552,7 @@ impl VersionedCache {
         entries.get(key).cloned()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn set(
         key: String,
         value: serde_json::Value,
@@ -596,6 +598,7 @@ impl VersionedCache {
         Ok(entry)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn invalidate_version(version_id: &str) -> Result<u64, String> {
         let store = get_persisted_query_store();
 
@@ -653,6 +656,7 @@ impl VersionedCache {
         list
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_cache_stats() -> CacheStats {
         let store = get_persisted_query_store();
         let entries = store.cache_entries.lock().await;
@@ -681,6 +685,7 @@ impl VersionedCache {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn purge_expired() -> u64 {
         let store = get_persisted_query_store();
         let mut entries = store.cache_entries.lock().await;
@@ -802,6 +807,7 @@ impl EdgePersistence {
         Ok(success_count)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_edge_status() -> Vec<EdgeStatusInfo> {
         let store = get_persisted_query_store();
         let entries = store.edge_entries.lock().await;
@@ -836,6 +842,7 @@ impl EdgePersistence {
         statuses
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn invalidate_edge(
         key: Option<String>,
         location: Option<EdgeCacheLocation>,
@@ -863,6 +870,7 @@ impl EdgePersistence {
         Ok((before - entries.len()) as u64)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_edge_replication_stats() -> EdgeReplicationStats {
         let store = get_persisted_query_store();
         let replications = store.edge_replications.lock().await;

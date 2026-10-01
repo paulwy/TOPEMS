@@ -542,6 +542,7 @@ impl GatewayMonitor {
         metric
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_metrics(
         name: Option<&str>,
         metric_type: Option<MetricType>,
@@ -563,6 +564,7 @@ impl GatewayMonitor {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_health() -> GatewayHealth {
         let store = get_monitoring_store();
 
@@ -602,6 +604,7 @@ impl GatewayMonitor {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_dashboard() -> Dashboard {
         let store = get_monitoring_store();
 
@@ -731,6 +734,12 @@ impl GatewayMonitor {
         *connections = n;
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     fn percentile(data: &[f64], p: f64) -> f64 {
         if data.is_empty() {
@@ -813,6 +822,7 @@ impl PerformanceTracer {
         traces.iter().find(|t| t.id == trace_id).cloned()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn list_traces(query_hash: Option<&str>, limit: Option<u32>) -> Vec<Trace> {
         let store = get_monitoring_store();
         let traces = store.traces.lock().await;
@@ -827,6 +837,7 @@ impl PerformanceTracer {
             .collect()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_slow_queries(threshold_ms: Option<u64>, limit: Option<u32>) -> Vec<Trace> {
         let store = get_monitoring_store();
         let traces = store.traces.lock().await;
@@ -851,6 +862,12 @@ impl PerformanceTracer {
         slow
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub async fn get_performance_summary() -> PerformanceSummary {
         let store = get_monitoring_store();
@@ -925,6 +942,7 @@ impl PerformanceTracer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn export_traces(
         format: &str,
         query_hash: Option<&str>,
@@ -974,6 +992,7 @@ impl PerformanceTracer {
 pub struct AnomalyDetector;
 
 impl AnomalyDetector {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn detect_anomalies(metric_name: &str, model_id: Option<&str>) -> Vec<Anomaly> {
         let store = get_monitoring_store();
         let metrics = store.metrics.lock().await;
@@ -1062,6 +1081,7 @@ impl AnomalyDetector {
         anomalies
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_anomalies(
         anomaly_type: Option<AnomalyType>,
         severity: Option<AnomalySeverity>,
@@ -1161,6 +1181,7 @@ impl AnomalyDetector {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn train_model(model_id: &str) -> Result<DetectionModel, String> {
         let store = get_monitoring_store();
         let mut models = store.detection_models.lock().await;

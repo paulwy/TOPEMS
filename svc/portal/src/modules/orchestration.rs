@@ -387,6 +387,7 @@ impl GatewayOrchestrator {
         Ok(plan)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_plan(plan_id: &str) -> Result<OrchestrationPlan, String> {
         let store = get_orchestration_store();
 
@@ -484,6 +485,11 @@ impl GatewayOrchestrator {
         Ok(updated)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub async fn get_plan_status(plan_id: &str) -> Result<PlanStatusInfo, String> {
         let store = get_orchestration_store();
         let plans = store.plans.lock().await;
@@ -541,6 +547,7 @@ impl GatewayOrchestrator {
         Ok(updated)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_execution_history(
         query_id: Option<&str>,
         limit: Option<u32>,
@@ -588,6 +595,7 @@ impl GatewayOrchestrator {
         Ok(updated)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn estimate_cost(steps: &[ExecutionStep]) -> f64 {
         let base_cost = steps.len() as f64 * 0.1;
         let dependency_penalty = steps
@@ -716,6 +724,7 @@ impl ServiceDiscoveryEngine {
         Ok(heartbeat)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn get_registry_stats() -> RegistryStats {
         let store = get_orchestration_store();
         let services = store.services.lock().await;
@@ -768,6 +777,7 @@ impl ServiceDiscoveryEngine {
 pub struct DynamicRouter;
 
 impl DynamicRouter {
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     #[allow(clippy::indexing_slicing)]
     pub async fn route_request(
         request_id: String,
@@ -903,6 +913,7 @@ impl DynamicRouter {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_routing_stats() -> RoutingStats {
         let store = get_orchestration_store();
 
@@ -944,6 +955,7 @@ impl DynamicRouter {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn reload_rules() -> Result<u32, String> {
         let store = get_orchestration_store();
         let rules = store.route_rules.lock().await;

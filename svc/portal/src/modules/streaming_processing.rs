@@ -539,6 +539,7 @@ impl StreamManagerV2 {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_stream_events(
         stream_id: &str,
         limit: Option<u32>,
@@ -581,6 +582,7 @@ impl StreamManagerV2 {
         Ok(true)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_stream_stats(stream_id: &str) -> Result<StreamStats, String> {
         let store = get_streaming_store();
 
@@ -654,6 +656,7 @@ impl DeduplicationEngine {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn check_duplicate(
         stream_id: &str,
         event_id: String,
@@ -835,6 +838,7 @@ impl DeduplicationEngine {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_dedup_history(
         rule_id: Option<&str>,
         limit: Option<u32>,
@@ -932,6 +936,7 @@ impl BackpressureController {
             .ok_or_else(|| format!("背压状态不存在: {}", stream_id))
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn apply_backpressure(stream_id: &str, event_id: String) -> Result<bool, String> {
         let store = get_streaming_store();
 
@@ -1039,6 +1044,7 @@ impl BackpressureController {
         Ok(drained)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_dropped_events(
         stream_id: Option<&str>,
         limit: Option<u32>,
@@ -1057,6 +1063,7 @@ impl BackpressureController {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_backpressure_stats(stream_id: Option<&str>) -> Vec<BackpressureStats> {
         let store = get_streaming_store();
         let counters = store.bp_counters.lock().await;

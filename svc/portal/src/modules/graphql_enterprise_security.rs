@@ -378,6 +378,12 @@ pub fn apply_masking(
     mask_value(value, &rule.mask_type)
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// V42.0: 对单个值应用掩码
 pub fn mask_value(value: &serde_json::Value, mask_type: &MaskType) -> serde_json::Value {
     match mask_type {

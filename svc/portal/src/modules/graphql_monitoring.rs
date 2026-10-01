@@ -144,6 +144,7 @@ fn traces() -> &'static Mutex<VecDeque<QueryTrace>> {
     TRACES.get_or_init(|| Mutex::new(VecDeque::new()))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// V44.0: 生成 ULID 风格的 trace_id
 fn generate_trace_id() -> String {
     let timestamp = Utc::now().timestamp_millis() as u64;
@@ -217,6 +218,7 @@ pub fn start_span(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V44.0: 结束一个 Span
 pub fn end_span(trace_id: &str, span_id: &str, error: Option<String>) {
     let mut traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
@@ -236,6 +238,7 @@ pub fn end_span(trace_id: &str, span_id: &str, error: Option<String>) {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V44.0: 结束追踪
 pub fn end_trace(trace_id: &str, error: Option<String>) {
     let mut traces_lock = traces().lock().unwrap_or_else(|e| e.into_inner());
@@ -535,6 +538,12 @@ pub fn set_ws_connections(count: u64) {
     state.ws_connections = count;
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// V44.0: 计算百分位
 #[allow(clippy::indexing_slicing)]
 fn percentile(sorted: &[f64], p: f64) -> f64 {
@@ -546,6 +555,7 @@ fn percentile(sorted: &[f64], p: f64) -> f64 {
     sorted[idx]
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V44.0: 获取指定窗口的指标
 pub fn get_metrics(window: MetricsWindow) -> GraphqlMetricsGql {
     let state = metrics_collector()
@@ -1087,6 +1097,7 @@ pub fn get_alert_rules() -> Vec<AlertRuleGql> {
     state.rules.iter().map(|r| r.to_gql()).collect()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V44.0: 检查告警规则
 pub fn check_alerts() {
     let rules_to_check = {
@@ -1220,6 +1231,7 @@ pub struct ErrorRateTrendGql {
     pub interval_seconds: i64,
 }
 
+#[allow(clippy::as_conversions)]
 /// V44.0: 获取监控仪表盘概览
 pub fn get_monitoring_dashboard() -> MonitoringDashboardStatsGql {
     let metrics = get_metrics(MetricsWindow::FiveMinutes);
@@ -1300,6 +1312,7 @@ pub fn get_query_latency_distribution(window: MetricsWindow) -> QueryLatencyDist
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V44.0: 获取慢查询 Top N
 pub fn get_top_slow_queries(limit: Option<usize>, window: MetricsWindow) -> Vec<TopSlowQueryGql> {
     let limit = limit.unwrap_or(10);
@@ -1359,6 +1372,13 @@ struct SlowQueryStats {
     max_duration_ms: f64,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// V44.0: 获取错误率趋势
 #[allow(clippy::indexing_slicing)]
 pub fn get_error_rate_trend(

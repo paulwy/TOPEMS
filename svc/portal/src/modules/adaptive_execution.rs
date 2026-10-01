@@ -356,6 +356,7 @@ impl AdaptiveExecutorInner {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn analyze_complexity(&self, query: &str) -> (f64, usize, usize, usize) {
         let field_count = query.matches('{').count() + query.matches("field").count();
         let depth = Self::estimate_depth(query);
@@ -391,6 +392,12 @@ impl AdaptiveExecutorInner {
         max_depth
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     fn compute_timeout(&self, complexity: f64, base_timeout: u64) -> u64 {
         let factor = match self.strategy {
             AdaptiveStrategy::PerformanceFirst => 1.0,
@@ -453,6 +460,7 @@ impl AdaptiveExecutorInner {
         profile
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn record_execution(
         &mut self,
         success: bool,
@@ -527,6 +535,7 @@ impl AdaptiveExecutor {
     }
 }
 
+#[allow(clippy::as_conversions)]
 fn simple_hash(input: &str) -> u64 {
     let mut hash: u64 = 5381;
     for byte in input.bytes() {

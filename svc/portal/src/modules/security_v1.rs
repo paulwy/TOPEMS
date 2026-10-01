@@ -492,6 +492,7 @@ impl SecurityGateway {
         })
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn check_rate_limit(
         identifier: &str,
         policy_id: Option<&str>,
@@ -536,6 +537,7 @@ impl SecurityGateway {
         Ok(true)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_security_events(
         event_type: Option<SecurityEventType>,
         limit: Option<u64>,
@@ -618,6 +620,7 @@ impl SecurityGateway {
         max_depth
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn estimate_query_complexity(query: &str) -> u32 {
         let open_braces = query.chars().filter(|&c| c == '{').count() as u32;
         let close_braces = query.chars().filter(|&c| c == '}').count() as u32;
@@ -919,6 +922,12 @@ impl DataMasker {
         Some(current)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     fn apply_mask(value: &serde_json::Value, rule: &MaskingRule) -> serde_json::Value {
         match rule.mask_type {
             MaskType::Full => serde_json::Value::String("***".to_string()),

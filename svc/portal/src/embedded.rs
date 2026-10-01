@@ -45,6 +45,7 @@ fn decrement_ws_connections() {
     WS_CONNECTION_COUNT.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 构建 Portal 业务路由（业务 API + GraphQL 聚合层 + 事件总线 + 遗留别名 + CORS）
 ///
 /// - `db`：portal schema 连接池（search_path=portal,public）

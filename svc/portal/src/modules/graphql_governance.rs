@@ -210,6 +210,11 @@ pub struct ServiceGovernanceInfoGql {
 
 // --- V45.0: SDL 文本解析（用于 Breaking Change 检测） ---
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// V45.0: 从 SDL 文本中提取类型定义
 /// 返回 (type_name -> Vec<field_name>) 的映射
 /// 支持 type / enum / interface / input 定义，自动跳过 "extend " 前缀
@@ -620,6 +625,7 @@ impl ContractTestRunner {
         Some(self.execute_test(&test))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 模拟执行契约测试
     #[allow(clippy::indexing_slicing)]
     fn execute_test(&mut self, test: &ContractTestGql) -> ContractTestResultGql {
@@ -763,6 +769,7 @@ impl ContractTestRunner {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn get_stats(&self) -> (u32, u32, u32) {
         let total = self.tests.len() as u32;
         let mut passing = 0u32;
@@ -801,6 +808,7 @@ impl SchemaVersionManager {
         format!("{:x}", hasher.finalize())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 发布新版本
     pub fn publish(
         &mut self,
@@ -1000,6 +1008,7 @@ impl SchemaVersionManager {
         false
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn get_stats(&self) -> (u32, u32, u32) {
         let total_services = self.versions.len() as u32;
         let total_versions: u32 = self.versions.values().map(|v| v.len() as u32).sum();
@@ -1065,6 +1074,7 @@ fn governance_stats() -> &'static Mutex<GovernanceStatsInternal> {
 
 // --- V45.0: 治理统计查询函数 ---
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// V45.0: 获取治理统计
 pub fn get_schema_governance_stats() -> SchemaGovernanceStatsGql {
     let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
@@ -1091,6 +1101,11 @@ pub fn get_schema_governance_stats() -> SchemaGovernanceStatsGql {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
+)]
 /// V45.0: 获取各服务治理信息
 pub fn get_service_governance_info() -> Vec<ServiceGovernanceInfoGql> {
     let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());

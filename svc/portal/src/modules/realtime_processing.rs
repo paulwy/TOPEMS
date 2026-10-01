@@ -511,6 +511,7 @@ impl PersistentSubscription {
         Ok(true)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_pending_events(
         subscription_id: &str,
         limit: Option<u32>,
@@ -623,6 +624,7 @@ impl MessageReplayEngine {
         Ok(request)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_replay(request_id: &str) -> Result<ReplayResult, String> {
         let store = get_realtime_store();
 
@@ -689,6 +691,7 @@ impl MessageReplayEngine {
         Ok(result.clone())
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_replay_history(
         subscription_id: Option<&str>,
         limit: Option<u32>,
@@ -917,6 +920,11 @@ impl RealtimeAggregator {
         PersistentSubscription::create_subscription(subscriber_id, config.topic, None).await
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub async fn compute_window(config_id: &str) -> Result<AggregationResult, String> {
         let store = get_realtime_store();

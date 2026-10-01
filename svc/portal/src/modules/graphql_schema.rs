@@ -626,6 +626,7 @@ pub fn get_federation_stats() -> FederationStatsGql {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// V40.0: 按服务分组批量解析实体
 /// 相同服务的多个实体查询合并为一个批量 REST 请求
 async fn batch_resolve_entities(
@@ -935,6 +936,7 @@ impl QueryRoot {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 获取统一待办列表（聚合 workflow + portal + notification）
     async fn unified_todos(&self, ctx: &Context<'_>) -> async_graphql::Result<Vec<UnifiedTodoGql>> {
         let state = ctx.data::<AppState>()?;
@@ -1668,6 +1670,11 @@ impl QueryRoot {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     /// V38.0: 查询当前活跃订阅数
     async fn subscription_count(&self, _ctx: &Context<'_>) -> async_graphql::Result<i32> {
         Ok(get_active_subscriptions() as i32)
@@ -1881,6 +1888,7 @@ impl QueryRoot {
         Ok(get_masking_rules(entity_type.as_deref()))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// V42.0 Track E: 获取字段访问审计（按时间倒序，可按 entity_type 过滤）
     async fn field_access_audits(
         &self,
@@ -1892,6 +1900,7 @@ impl QueryRoot {
         Ok(get_field_access_audits(limit, entity_type.as_deref()))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// V42.0 Track E: 获取数据变更审计（按时间倒序，可按 entity_type 过滤）
     async fn data_change_audits(
         &self,
@@ -1908,6 +1917,7 @@ impl QueryRoot {
         Ok(get_security_config())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// V42.0 Track B: 获取联邦查询计划（不执行）
     /// 解析查询字符串，生成执行计划（步骤 + 并行组 + 估算成本）
     async fn federation_v2_plan(
@@ -1926,6 +1936,7 @@ impl QueryRoot {
         Ok(plan.to_gql())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// V42.0 Track B: 执行联邦查询（计划 → 并发执行 → 合并结果）
     async fn federation_v2_execute(
         &self,
@@ -2077,6 +2088,7 @@ impl QueryRoot {
         Ok(get_ai_optimization_stats())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// V44.0 Track B: 生成 V3 联邦查询计划
     async fn federation_v3_plan(
         &self,
@@ -2159,6 +2171,7 @@ impl QueryRoot {
         Ok(get_federation_v3_stats())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// V44.0 Track B: 执行轨迹列表
     async fn federation_v3_traces(
         &self,
@@ -2338,6 +2351,7 @@ impl QueryRoot {
         Ok(CdnCacheManager::get_stats())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// V45.0: CDN 缓存条目列表（可按标签过滤）
     async fn cdn_cache_entries(
         &self,
@@ -3032,6 +3046,7 @@ impl MutationRoot {
         Ok(update_auto_approval_policy(policy))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// V41.0 Track E: 手动触发自动审批扫描
     async fn run_auto_approval_scan(&self, _ctx: &Context<'_>) -> async_graphql::Result<i32> {
         Ok(run_auto_approval_scan() as i32)
@@ -4853,6 +4868,7 @@ static QUERY_AUDIT_LOGS: RwLock<Vec<QueryAuditLog>> = RwLock::new(Vec::new());
 /// 审计日志最大保留条数
 const MAX_AUDIT_LOGS: usize = 1000;
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 记录一条查询审计日志
 /// 超过上限时移除最旧的条目
 /// V44.0: 同时记录指标和追踪

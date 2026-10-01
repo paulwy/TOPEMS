@@ -411,6 +411,7 @@ pub struct DiscoveredQuery {
 }
 
 impl DiscoveredQuery {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn avg_duration_ms(&self) -> f64 {
         if self.call_count > 0 {
             self.total_duration_ms as f64 / self.call_count as f64
@@ -419,6 +420,7 @@ impl DiscoveredQuery {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn avg_complexity(&self) -> f64 {
         if self.call_count > 0 {
             self.total_complexity as f64 / self.call_count as f64
@@ -519,6 +521,7 @@ fn auto_approval_policy() -> &'static RwLock<AutoApprovalPolicy> {
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// V41.0: 记录发现的查询
 pub fn record_discovered_query(
     query_hash: &str,
@@ -597,6 +600,11 @@ pub fn record_discovered_query(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// V41.0: 获取发现的查询列表
 pub fn get_discovered_queries(status: Option<DiscoveryStatus>) -> Vec<DiscoveredQueryGql> {
     let queries = discovered_queries()
@@ -655,6 +663,11 @@ pub fn reject_discovered_query(hash: &str, reviewer: Option<&str>) -> bool {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// V41.0: 获取自动审批策略
 pub fn get_auto_approval_policy() -> AutoApprovalPolicyGql {
     let policy = auto_approval_policy()
@@ -670,6 +683,7 @@ pub fn get_auto_approval_policy() -> AutoApprovalPolicyGql {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// V41.0: 更新自动审批策略
 pub fn update_auto_approval_policy(input: AutoApprovalPolicyInput) -> bool {
     let mut policy = auto_approval_policy()
@@ -696,6 +710,7 @@ pub fn update_auto_approval_policy(input: AutoApprovalPolicyInput) -> bool {
     true
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// V41.0: 手动触发自动审批扫描
 pub fn run_auto_approval_scan() -> u64 {
     let mut approved_count = 0u64;
@@ -732,6 +747,12 @@ pub fn run_auto_approval_scan() -> u64 {
     approved_count
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 /// V41.0: 获取白名单健康度
 pub fn get_whitelist_health() -> WhitelistHealthGql {
     let queries = discovered_queries()
@@ -828,6 +849,12 @@ pub struct SecurityAuditReportGql {
     pub recommendations: Vec<String>,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 /// V41.0: 生成安全审计报表
 pub fn generate_security_report(period: &str) -> SecurityAuditReportGql {
     let now = Utc::now();
@@ -999,6 +1026,12 @@ pub struct PerformanceAnalysisGql {
     pub performance_baseline: PerformanceBaselineGql,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// V41.0: 获取性能调优建议
 #[allow(clippy::indexing_slicing)]
 pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGql> {
@@ -1146,6 +1179,13 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
     suggestions
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// V41.0: 获取完整性能分析
 #[allow(clippy::indexing_slicing)]
 pub fn get_performance_analysis() -> PerformanceAnalysisGql {

@@ -506,6 +506,7 @@ impl SemanticCacheEngine {
         None
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 设置缓存
     pub fn set_cached(query: &str, result: &str, tags: Vec<String>) -> SemanticCacheEntryGql {
         let mut state = semantic_cache_state()
@@ -550,6 +551,7 @@ impl SemanticCacheEngine {
         gql
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 失效缓存（支持按 tag 批量失效，或按 query_hash 精确失效）
     pub fn invalidate(tag: Option<&str>, query_hash: Option<&str>) -> i64 {
         let mut state = semantic_cache_state()
@@ -572,6 +574,11 @@ impl SemanticCacheEngine {
         (before - state.entries.len()) as i64
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取缓存统计
     pub fn get_cache_stats() -> SemanticCacheStatsGql {
         let state = semantic_cache_state()
@@ -760,6 +767,13 @@ fn compression_algorithm_name(a: CompressionAlgorithmGql) -> &'static str {
 pub struct QueryResultCompressor;
 
 impl QueryResultCompressor {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 压缩查询结果
     pub fn compress_result(data: &str) -> CompressedResultGql {
         let mut state = query_result_compressor_state()
@@ -921,6 +935,7 @@ impl QueryResultCompressor {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 分析数据画像
     #[allow(clippy::indexing_slicing)]
     pub fn profile_data(data: &str) -> DataProfileGql {
@@ -1010,6 +1025,11 @@ impl QueryResultCompressor {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取压缩统计
     pub fn get_compression_stats() -> CompressionStatsGql {
         let state = query_result_compressor_state()
@@ -1282,6 +1302,11 @@ impl OfflineFirstEngine {
         Some(Self::mutation_to_gql(m))
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 获取离线统计
     pub fn get_offline_stats() -> OfflineStatsGql {
         let state = offline_first_state()

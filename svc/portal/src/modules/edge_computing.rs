@@ -432,6 +432,12 @@ fn get_edge_store() -> &'static EdgeStore {
 pub struct EdgeRenderer;
 
 impl EdgeRenderer {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub async fn render_at_edge(req: RenderRequest) -> Result<RenderResult, String> {
         let store = get_edge_store();
 
@@ -546,6 +552,7 @@ impl EdgeRenderer {
             .collect()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn invalidate_edge_cache(
         location: Option<EdgeLocation>,
         cache_key: Option<String>,
@@ -565,6 +572,7 @@ impl EdgeRenderer {
         Ok((before - cache.len()) as u64)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn get_render_history(limit: u64) -> Vec<RenderHistoryEntry> {
         let store = get_edge_store();
         let history = store.render_history.lock().await;
@@ -680,6 +688,7 @@ impl GlobalAccelerator {
         stats.clone()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn select_location(
         config: &AccelConfig,
         client_location: Option<EdgeLocation>,
@@ -751,6 +760,12 @@ impl GlobalAccelerator {
 pub struct LatencyOptimizer;
 
 impl LatencyOptimizer {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub async fn optimize_response(
         data: serde_json::Value,
@@ -815,6 +830,7 @@ impl LatencyOptimizer {
             .unwrap_or_default()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn precompute_response(
         template_id: String,
         data: serde_json::Value,
@@ -858,6 +874,7 @@ impl LatencyOptimizer {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_latency_stats() -> LatencyStats {
         let store = get_edge_store();
         let stats = store.latency_stats.lock().await;

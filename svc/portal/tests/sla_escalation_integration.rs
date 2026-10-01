@@ -36,6 +36,12 @@ fn default_sla_hours(severity: &str) -> (f64, f64) {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 /// 复现 TicketSlaService::calculate_due_time
 /// 计算工作时间内的截止时间
 fn calculate_due_time(
@@ -159,6 +165,11 @@ struct TestTicket {
     created_at: DateTime<Utc>,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 复现 check_and_escalate 中的升级级别计算逻辑
 /// 返回应触发的升级级别列表
 fn compute_escalation_levels(
@@ -293,6 +304,7 @@ fn test_calculate_due_time_zero_hours() {
     assert_eq!(due, start, "0 小时应返回开始时间");
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 #[test]
 fn test_calculate_due_time_fractional_hours() {
     let start = Utc::now();

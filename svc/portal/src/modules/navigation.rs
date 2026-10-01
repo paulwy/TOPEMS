@@ -19,6 +19,7 @@ use crate::{
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn get_navigation_menu(
     State(state): State<AppState>,
 ) -> AxumJson<ApiResponse<Vec<NavigationMenu>>> {
@@ -86,6 +87,7 @@ fn get_default_menu() -> Vec<NavigationMenu> {
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_pinned_apps(
     State(state): State<AppState>,
 ) -> AxumJson<ApiResponse<Vec<PinnedApp>>> {

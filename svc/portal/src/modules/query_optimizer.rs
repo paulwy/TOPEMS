@@ -498,6 +498,7 @@ impl QueryCompiler {
         Ok(rule.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_compilation_stats() -> CompilationStats {
         let store = get_query_optimizer_store();
         let queries = store.compiled_queries.lock().await;
@@ -590,6 +591,7 @@ impl QueryCompiler {
         result.join("\n")
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn estimate_complexity(query: &str) -> f64 {
         let base = query.len() as f64;
         let depth_estimate = query.matches('{').count() as f64;
@@ -597,6 +599,7 @@ impl QueryCompiler {
         (base * 0.01) + (depth_estimate * 10.0) + (breadth_estimate * 5.0)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn estimate_cost(query: &str, complexity: f64) -> f64 {
         let base_cost = query.len() as f64 * 0.001;
         let complexity_cost = complexity * 0.5;
@@ -609,6 +612,7 @@ impl QueryCompiler {
 pub struct QueryPlanner;
 
 impl QueryPlanner {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     #[allow(clippy::indexing_slicing)]
     pub async fn create_plan(
         query_hash: String,
@@ -726,6 +730,11 @@ impl QueryPlanner {
         Ok(plan.estimated_cost)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss
+    )]
     pub async fn optimize_plan(plan_id: &str) -> Result<ExecutionPlan, String> {
         let store = get_query_optimizer_store();
         let mut plans = store.execution_plans.lock().await;
@@ -771,6 +780,7 @@ impl QueryPlanner {
         Ok(plan.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_planner_stats() -> PlannerStats {
         let store = get_query_optimizer_store();
         let plans = store.execution_plans.lock().await;
@@ -816,6 +826,7 @@ impl QueryPlanner {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn calculate_parallelism(steps: &[PlanStep]) -> u32 {
         let mut services = std::collections::HashSet::new();
         for step in steps {
@@ -824,6 +835,7 @@ impl QueryPlanner {
         services.len() as u32
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn calculate_plan_score(steps: &[PlanStep], cost: f64, parallelism: u32) -> f64 {
         let step_count = steps.len() as f64;
         let strategy_bonus: f64 = steps
@@ -849,6 +861,12 @@ impl QueryPlanner {
 pub struct ExecutionAccelerator;
 
 impl ExecutionAccelerator {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     pub async fn accelerate(
         original_time_ms: u64,
         field_count: u32,
@@ -920,6 +938,7 @@ impl ExecutionAccelerator {
         results.clone()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_acceleration_history(limit: Option<u32>) -> Vec<AccelerationResult> {
         let store = get_query_optimizer_store();
         let results = store.acceleration_results.lock().await;
@@ -953,6 +972,7 @@ impl ExecutionAccelerator {
         Ok(config.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_performance_profile() -> PerformanceProfile {
         let store = get_query_optimizer_store();
         let results = store.acceleration_results.lock().await;

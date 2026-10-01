@@ -712,6 +712,7 @@ impl GatewaySecurityV2 {
         incidents.push(incident);
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_incidents(
         incident_type: Option<IncidentType>,
         severity: Option<Severity>,
@@ -733,6 +734,7 @@ impl GatewaySecurityV2 {
         filtered.into_iter().rev().take(limit).collect()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn check_rate_limit(
         identifier: &str,
         policy_id: Option<&str>,
@@ -1000,6 +1002,7 @@ impl AuditTrailV2 {
         exports.clone()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_entries(limit: Option<u64>) -> Vec<AuditEntryV2> {
         let store = get_gateway_security_store();
         let entries = store.audit_entries.lock().await;

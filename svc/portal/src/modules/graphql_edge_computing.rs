@@ -347,6 +347,11 @@ impl EdgeComputeManager {
         id
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub fn execute_at_edge(
         function_name: &str,
         input: &serde_json::Value,
@@ -465,6 +470,12 @@ impl EdgeComputeManager {
         })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub fn get_stats() -> EdgeComputeStatsGql {
         let state = edge_compute_state()
             .lock()
@@ -513,6 +524,7 @@ impl EdgeComputeManager {
     }
 }
 
+#[allow(clippy::as_conversions)]
 fn rand_u32() -> u32 {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
@@ -849,6 +861,7 @@ impl CdnCacheManager {
         true
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_entries(tags: Option<&[String]>, limit: usize) -> Vec<CdnCacheEntryGql> {
         let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let mut entries: Vec<CdnCacheEntryGql> = Vec::new();
@@ -880,6 +893,12 @@ impl CdnCacheManager {
         entries
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub fn get_stats() -> CdnStatsGql {
         let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let total = state.hits + state.misses;
@@ -942,6 +961,12 @@ impl CdnCacheManager {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub fn get_layers() -> Vec<CdnCacheLayerGql> {
         let state = cdn_cache_state().lock().unwrap_or_else(|e| e.into_inner());
         let total = state.hits + state.misses;
@@ -1185,6 +1210,12 @@ impl StreamingResponseManager {
         result
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     pub fn chunk_response(query_hash: &str, data: &serde_json::Value) -> Vec<StreamChunkGql> {
         let mut state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         let session_id = format!("stream-{}-{}", query_hash, state.total_streams);
@@ -1244,6 +1275,12 @@ impl StreamingResponseManager {
         chunks
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub fn get_stats() -> StreamStatsGql {
         let state = stream_state().lock().unwrap_or_else(|e| e.into_inner());
         let active = state.sessions.iter().filter(|s| s.active).count();

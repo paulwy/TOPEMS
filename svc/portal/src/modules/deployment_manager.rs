@@ -666,6 +666,7 @@ impl DeploymentManager {
             .ok_or_else(|| format!("部署 '{}' 不存在", id))
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn list_deployments(
         environment: Option<Environment>,
         status: Option<DeploymentStatus>,
@@ -755,6 +756,7 @@ impl DeploymentManager {
         Ok(deployment.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn get_deployment_status(id: &str) -> Result<DeploymentStatusInfo, String> {
         let store = get_deployment_store();
 
@@ -856,6 +858,7 @@ impl DeploymentManager {
         Ok(deployment.clone())
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_deployment_history(
         environment: Option<Environment>,
         limit: Option<u32>,
@@ -1000,6 +1003,7 @@ impl ConfigurationManager {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_config_diff(config_id: &str, limit: Option<u32>) -> Vec<ConfigDiff> {
         let store = get_deployment_store();
         let diffs = store.config_diffs.lock().await;
@@ -1014,6 +1018,7 @@ impl ConfigurationManager {
             .collect()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_config_history(
         environment: Option<Environment>,
         limit: Option<u32>,
@@ -1211,6 +1216,7 @@ impl RollbackManager {
         Ok(action)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_rollback_history(
         policy_id: Option<&str>,
         limit: Option<u32>,

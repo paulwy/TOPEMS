@@ -571,6 +571,7 @@ impl AIQueryRouter {
         QueryIntent::Read
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn compute_service_score(
         service_id: &str,
         intent: &QueryIntent,
@@ -739,6 +740,12 @@ impl AIQueryRouter {
         Ok(decision)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     async fn get_routing_table(
         intent: Option<String>,
         service_id: Option<String>,
@@ -1101,6 +1108,7 @@ impl AutoSchemaStitcher {
         Ok(plan.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn validate_stitch(plan_id: &str) -> Result<serde_json::Value, String> {
         let store = get_intelligent_gw_store();
         let plans = store.stitch_plans.lock().await;
@@ -1238,6 +1246,12 @@ impl AutoSchemaStitcher {
         Ok(plan_cloned)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     async fn list_conflicts(
         status: Option<String>,
         type_name: Option<String>,

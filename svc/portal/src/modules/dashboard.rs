@@ -112,6 +112,12 @@ async fn get_public_stats(state: &AppState) -> PublicDashboardStats {
     stats
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 async fn fetch_public_stats(state: &AppState) -> PublicDashboardStats {
     let (monitor_healthy, user_count, (total_services, healthy_services)) = tokio::join!(
         fetch_monitor_healthy_count(state),
@@ -154,6 +160,7 @@ pub async fn get_cache_stats(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_user_notification_unread(state: &AppState, headers: &HeaderMap) -> u64 {
     let token = match extract_bearer_token(headers) {
         Some(t) => t,
@@ -179,6 +186,7 @@ async fn fetch_user_notification_unread(state: &AppState, headers: &HeaderMap) -
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_user_pending_approvals(state: &AppState, user_id: &str, headers: &HeaderMap) -> u64 {
     let token = match extract_bearer_token(headers) {
         Some(t) => t,
@@ -191,6 +199,7 @@ async fn fetch_user_pending_approvals(state: &AppState, user_id: &str, headers: 
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 async fn fetch_user_local_pending_tasks(state: &AppState, claims: &Claims) -> u64 {
     let user_id = &claims.sub;
     match sqlx::query(
@@ -211,6 +220,7 @@ async fn fetch_user_local_pending_tasks(state: &AppState, claims: &Claims) -> u6
     }
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
     let client = state.mes_client.clone();
 
@@ -243,6 +253,7 @@ async fn fetch_mes_stats(state: &AppState) -> (u64, u64) {
     (orders_result, wip_result)
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_monitor_healthy_count(state: &AppState) -> Option<u64> {
     match state.monitor_client.get_service_status().await {
         Ok(resp) => {
@@ -268,6 +279,7 @@ async fn fetch_monitor_healthy_count(state: &AppState) -> Option<u64> {
     }
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_user_count(state: &AppState) -> u64 {
     match state.iam_client.list_users().await {
         Ok(users) => users.len() as u64,
@@ -278,6 +290,7 @@ async fn fetch_user_count(state: &AppState) -> u64 {
     }
 }
 
+#[allow(clippy::as_conversions)]
 async fn fetch_service_counts(state: &AppState) -> (u64, u64) {
     use topems_shared_event::service_discovery::ServiceRegistryStatus;
     let services = state.service_registry.list_all().await;

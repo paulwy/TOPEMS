@@ -105,6 +105,7 @@ pub struct SearchSuggestionsResponse {
         (status = 500, description = "Internal server error")
     )
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn global_search(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

@@ -356,6 +356,7 @@ impl PersistedQueryEntry {
         format!("{:x}", hasher.finalize())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn to_gql(&self) -> PersistedQueryGql {
         let usage = self.usage_count.load(Ordering::Relaxed);
         let total_latency = self.total_latency_ms.load(Ordering::Relaxed);
@@ -454,6 +455,7 @@ impl PersistedQueryManager {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
     fn list(
         &self,
@@ -487,6 +489,7 @@ impl PersistedQueryManager {
         self.queries.remove(query_hash).is_some()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn estimate_complexity(query: &str) -> u32 {
         let field_count = query.matches(['{', '(']).count() as u32;
         let nesting = query.matches('{').count() as u32;
@@ -581,6 +584,7 @@ impl QueryAuditStore {
         self.entries.push(entry);
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn update_stats(&self, entry: &QueryAuditEntryGql) {
         let mut stats = self.stats.lock().unwrap_or_else(|e| e.into_inner());
         match entry.event_type {
@@ -611,6 +615,7 @@ impl QueryAuditStore {
             .or_insert(0) += 1;
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn get_stats(&self) -> AuditStatsGql {
         let mut stats = self.stats.lock().unwrap_or_else(|e| e.into_inner()).clone();
         let mut user_counts: HashMap<String, u64> = HashMap::new();
@@ -647,6 +652,7 @@ impl QueryAuditStore {
         stats
     }
 
+    #[allow(clippy::as_conversions)]
     #[allow(clippy::indexing_slicing)]
     fn query(
         &self,
@@ -891,6 +897,7 @@ impl ApprovalWorkflow {
         request
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn review(&mut self, input: ApprovalReviewInput) -> Option<QueryApprovalRequestGql> {
         let request = self.requests.get_mut(&input.request_id)?;
         if request.status != ApprovalStatus::Pending {

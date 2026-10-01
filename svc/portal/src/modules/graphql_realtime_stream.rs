@@ -163,6 +163,7 @@ fn realtime_stream_state() -> &'static Mutex<RealtimeStreamManagerState> {
 pub struct RealtimeStreamManager;
 
 impl RealtimeStreamManager {
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// 注册数据流（entity_type → stream 配置）
     pub fn register_stream(entity_type: &str, config: RealtimeStreamConfigGql) -> bool {
         let mut state = realtime_stream_state()
@@ -180,6 +181,7 @@ impl RealtimeStreamManager {
         true
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 发布实时更新
     pub fn publish_update(
         entity_type: &str,
@@ -219,6 +221,7 @@ impl RealtimeStreamManager {
         Some(gql)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取指定流的增量更新（since_sequence 之后的更新）
     pub fn get_stream_updates(
         entity_type: &str,
@@ -242,6 +245,7 @@ impl RealtimeStreamManager {
             .unwrap_or_default()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取流统计信息
     pub fn get_stream_stats(entity_type: &str) -> Option<RealtimeStreamStatsGql> {
         let state = realtime_stream_state()
@@ -330,6 +334,7 @@ impl RealtimeStreamManager {
         true
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取当前流全局配置
     pub fn get_config() -> RealtimeStreamConfigGql {
         let state = realtime_stream_state()
@@ -569,6 +574,7 @@ impl IncrementalUpdateEngine {
         false
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 对账（检测客户端与服务端版本差异）
     pub fn reconcile(
         entity_type: &str,
@@ -625,6 +631,7 @@ impl IncrementalUpdateEngine {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取增量更新统计
     pub fn get_stats() -> IncrementalStatsGql {
         let state = incremental_update_state()
@@ -853,6 +860,7 @@ impl StateSyncManager {
         Some(Self::conflict_to_gql(conflict))
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取同步历史（可按 client_id 过滤）
     pub fn get_sync_history(client_id: Option<&str>, limit: Option<u32>) -> Vec<SyncSessionGql> {
         let state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());
@@ -874,6 +882,7 @@ impl StateSyncManager {
         true
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取同步统计
     pub fn get_sync_stats() -> SyncStatsGql {
         let state = state_sync_state().lock().unwrap_or_else(|e| e.into_inner());

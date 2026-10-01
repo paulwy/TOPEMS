@@ -506,6 +506,7 @@ fn get_deep_federation_store() -> &'static DeepFederationStore {
 pub struct ConsistencyManager;
 
 impl ConsistencyManager {
+    #[allow(clippy::as_conversions)]
     pub async fn check_consistency(
         entity_ids: Vec<String>,
         model: ConsistencyModel,
@@ -805,6 +806,7 @@ impl ConsistencyManager {
         }))
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_consistency_report() -> ConsistencyReport {
         let store = get_deep_federation_store();
         let checks = store.consistency_checks.lock().await;
@@ -886,6 +888,7 @@ impl DistributedQueryEngine {
         Ok(query)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_distributed_query(query_id: &str) -> Result<DistributedQuery, String> {
         let store = get_deep_federation_store();
         let mut queries = store.distributed_queries.lock().await;
@@ -941,6 +944,11 @@ impl DistributedQueryEngine {
         Ok(updated)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub async fn get_query_status(query_id: &str) -> Result<QueryStatusInfo, String> {
         let store = get_deep_federation_store();
         let queries = store.distributed_queries.lock().await;
@@ -995,6 +1003,7 @@ impl DistributedQueryEngine {
         Ok(query.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn merge_results(query_id: &str) -> Result<MergedResult, String> {
         let store = get_deep_federation_store();
         let queries = store.distributed_queries.lock().await;
@@ -1027,6 +1036,7 @@ impl DistributedQueryEngine {
         })
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_query_history(limit: Option<u32>) -> Vec<QueryHistoryEntry> {
         let store = get_deep_federation_store();
         let history = store.query_history.lock().await;

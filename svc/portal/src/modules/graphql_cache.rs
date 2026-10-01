@@ -227,6 +227,7 @@ impl MultiLevelCache {
         None
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn set(&self, key: String, value: String, tier: CacheTier, ttl_seconds: u64) {
         let now = Utc::now();
         let expires_at = now + chrono::Duration::seconds(ttl_seconds as i64);
@@ -440,6 +441,12 @@ fn cache_strategy() -> &'static RwLock<CacheStrategy> {
     CACHE_STRATEGY.get_or_init(|| RwLock::new(CacheStrategy::default()))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// V41.0: 根据访问频率计算自适应 TTL
 fn adaptive_ttl_seconds(base_tier: CacheTier, hit_count: u64) -> u64 {
     let base = match base_tier {
@@ -772,6 +779,7 @@ pub struct CacheOptimizationSuggestionGql {
     pub expected_improvement: String,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V41.0: 获取缓存统计
 pub fn get_cache_stats() -> CacheStatsV41Gql {
     let stats = cache_stats_internal()

@@ -261,6 +261,7 @@ impl QueryOptimizer {
         suggestions
     }
 
+    #[allow(clippy::as_conversions)]
     fn calculate_metrics(query: &str) -> QueryAnalysisMetrics {
         let complexity = estimate_query_complexity(query);
         let depth = estimate_query_depth(query);
@@ -355,6 +356,11 @@ let results = batch_resolve_entities(service, entity_type, ids).await;"#
         suggestions
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss
+    )]
     /// 检测过度获取
     pub(crate) fn detect_overfetching(
         query_hash: &str,
@@ -567,6 +573,11 @@ fn count_cross_service_patterns(query: &str) -> usize {
 
 // ---------------- V43.0: 查询健康度计算 ----------------
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// V43.0: 计算查询健康度评分
 pub fn calculate_query_health_score(query_hash: &str, query: &str) -> QueryHealthScoreGql {
     let suggestions = QueryOptimizer::analyze_query(query_hash, query);
@@ -652,6 +663,11 @@ pub fn calculate_query_health_score(query_hash: &str, query: &str) -> QueryHealt
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// V43.0: 生成优化路线图
 pub fn generate_optimization_roadmap() -> OptimizationRoadmapGql {
     let all_suggestions = get_all_optimization_suggestions();
@@ -1348,6 +1364,7 @@ pub fn record_nl2graphql_query(confidence: f64) {
     stats.total_confidence += confidence;
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// V43.0: 获取 NL2GraphQL 统计
 fn get_nl2graphql_stats() -> (u64, f64) {
     let stats = nl2graphql_stats_internal()
@@ -1378,6 +1395,12 @@ pub(crate) struct QueryAccessPattern {
 pub struct CacheRecommendationEngine;
 
 impl CacheRecommendationEngine {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 分析所有查询并生成缓存推荐报告
     pub fn analyze() -> CacheRecommendationReportGql {
         let patterns = Self::collect_access_patterns();
@@ -1425,6 +1448,7 @@ impl CacheRecommendationEngine {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 计算缓存适合度分数
     pub(crate) fn calculate_cache_suitability(pattern: &QueryAccessPattern) -> f64 {
         let frequency_score = if pattern.access_count > 1000 {
@@ -1527,6 +1551,7 @@ impl CacheRecommendationEngine {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     fn collect_access_patterns() -> Vec<QueryAccessPattern> {
         let mut patterns = Vec::new();
         let now = Utc::now();
@@ -1616,6 +1641,7 @@ fn cache_recommendations_store() -> &'static Mutex<Option<CacheRecommendationRep
     CACHE_RECOMMENDATIONS.get_or_init(|| Mutex::new(None))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 /// V43.0: 生成缓存推荐
 pub fn generate_cache_recommendations() -> u32 {
     let report = CacheRecommendationEngine::analyze();
@@ -1658,6 +1684,12 @@ pub fn accept_cache_recommendation(query_hash: &str) -> bool {
 
 // ---------------- V43.0: AI 优化统计 ----------------
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 /// V43.0: 获取 AI 优化统计
 pub fn get_ai_optimization_stats() -> AiOptimizationStatsGql {
     let suggestions = get_all_optimization_suggestions();

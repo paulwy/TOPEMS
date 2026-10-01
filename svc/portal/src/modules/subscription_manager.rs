@@ -458,6 +458,7 @@ impl SubscriptionGateway {
         subscribers.clone()
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_channel_stats() -> Vec<ChannelStats> {
         let store = get_subscription_store();
         let subscribers = store.subscribers.lock().await;
@@ -562,6 +563,7 @@ impl MessageQueueBridge {
         Ok(config)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_queue_stats(queue_name: Option<&str>) -> Vec<QueueStats> {
         let store = get_subscription_store();
         let queues = store.queues.lock().await;
@@ -597,6 +599,7 @@ impl MessageQueueBridge {
         stats
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn purge_queue(queue_name: &str) -> Result<u64, String> {
         let store = get_subscription_store();
         let mut queues = store.queues.lock().await;
@@ -648,6 +651,7 @@ impl MessageQueueBridge {
 pub struct PushOptimizer;
 
 impl PushOptimizer {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn optimize_push(
         messages: Vec<SubscriptionMessage>,
         _priority: PushPriority,

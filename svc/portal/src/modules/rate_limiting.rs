@@ -235,6 +235,7 @@ struct TokenBucket {
 }
 
 impl TokenBucket {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn new(capacity: u64, refill_rate: f64) -> Self {
         Self {
             capacity,
@@ -247,6 +248,7 @@ impl TokenBucket {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn try_acquire(&mut self) -> bool {
         self.total_requests.fetch_add(1, Ordering::Relaxed);
         let now = std::time::Instant::now();
@@ -269,6 +271,7 @@ impl TokenBucket {
         self.refill_rate = rate;
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn set_capacity(&mut self, capacity: u64) {
         self.capacity = capacity;
         if self.tokens > capacity as f64 {
@@ -333,6 +336,11 @@ impl AdaptiveRateLimiter {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn get_statuses(&self) -> Vec<RateLimiterStatusGql> {
         self.buckets
             .iter()
@@ -414,6 +422,7 @@ impl CircuitBreaker {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn record_failure(&mut self) {
         self.total_requests += 1;
         self.failure_count += 1;
@@ -483,6 +492,7 @@ impl CircuitBreaker {
         self.transition_to(CircuitState::Closed);
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn get_state_gql(&self, service: &str, degradation_active: bool) -> CircuitBreakerStateGql {
         let failure_rate = if self.total_requests > 0 {
             self.failure_count as f64 / self.total_requests as f64
@@ -729,6 +739,7 @@ impl LoadAwareRouter {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn update_metrics(
         &mut self,
         service: &str,
@@ -825,6 +836,11 @@ impl LoadAwareRouter {
         })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn make_decision(&mut self, service: &str) -> RoutingDecisionGql {
         self.global_stats.total_requests_routed += 1;
         let instance = self.select_instance(service);
@@ -868,6 +884,7 @@ impl LoadAwareRouter {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn update_service_stats(&mut self, service: &str, latency_ms: u64) {
         self.global_stats.successful_routes += 1;
         self.global_stats.avg_latency_ms =
@@ -935,6 +952,7 @@ impl LoadAwareRouter {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn get_service_load_score(&self, service: &str) -> f64 {
         self.instances
             .get(service)
@@ -1840,6 +1858,7 @@ impl IntelligentCache {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn put(&mut self, key: &str, value: Vec<u8>, pattern: &str, ttl_sec: Option<u64>) {
         let size = value.len() as u64;
         if self.total_size() + size > self.max_total_size {
@@ -1880,6 +1899,7 @@ impl IntelligentCache {
         removed
     }
 
+    #[allow(clippy::as_conversions)]
     pub fn invalidate_pattern(&mut self, pattern: &str) -> u64 {
         let before = self.entries.len();
         self.entries
@@ -1889,6 +1909,7 @@ impl IntelligentCache {
         removed
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn set_policy(
         &mut self,
         key_pattern: &str,
@@ -1978,6 +1999,7 @@ impl IntelligentCache {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn stats(&self) -> CacheStatsGql {
         let total = self.total_hits + self.total_misses;
         let hit_rate = if total > 0 {
