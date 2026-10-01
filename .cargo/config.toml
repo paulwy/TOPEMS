@@ -9,9 +9,13 @@
 #   dev: opt-level=1 + codegen-units=256），本文件仅兜底默认值。
 
 [build]
-# 绝对路径：无论从 workspace 根还是 svc/*、lib/* 子目录构建，产物统一落在根 target/，
-# 避免 13 个嵌套 target 各自重复编译同一批依赖（此前占磁盘 ~332MB 且拖慢构建）
-target-dir = "/Users/xingzhai/TOPEMS/target"
+# 相对路径（相对本文件所在目录的父目录，即仓库根）：无论从 workspace 根还是
+# svc/*、lib/* 子目录构建，产物统一落在根 target/，避免 13 个嵌套 target 各自
+# 重复编译同一批依赖（此前占磁盘 ~332MB 且拖慢构建）。
+# 注意：勿写成硬编码绝对路径——2026-10-01 曾误配为他人机器路径
+# /Users/xingzhai/TOPEMS/target，导致本机构建目标目录失效（cargo metadata 解析到
+# 不存在的路径，target/ 不再更新）。相对路径自动随机器/仓库位置解析，跨机器可移植。
+target-dir = "target"
 # sccache 编译缓存：跨 workspace / 跨版本 / 跨分支复用，典型命中命中率 40–70%
 rustc-wrapper = "sccache"
 # 抑制第三方依赖（zookeeper v0.8.0）的未来兼容性警告
