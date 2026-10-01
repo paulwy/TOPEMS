@@ -175,6 +175,7 @@ fn parse_opt_big_decimal(v: &Option<f64>) -> Option<BigDecimal> {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_work_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

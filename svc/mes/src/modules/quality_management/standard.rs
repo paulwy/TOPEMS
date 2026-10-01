@@ -99,6 +99,7 @@ pub struct StandardResponse {
     ),
     tag = "Quality"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_standards(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

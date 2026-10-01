@@ -131,6 +131,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     ),
     tag = "Team"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_teams(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

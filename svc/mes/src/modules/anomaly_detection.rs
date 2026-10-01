@@ -421,6 +421,11 @@ pub async fn trigger_anomaly_scan(
     ),
     tag = "AnomalyDetection"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub async fn get_anomaly_trend(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -457,6 +462,7 @@ async fn collect_all_alerts(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     alerts
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 设备异常检测
 #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
 async fn detect_equipment_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
@@ -890,6 +896,7 @@ async fn detect_quality_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     alerts
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 生产异常检测
 async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
     let mut alerts = Vec::new();
@@ -1026,6 +1033,7 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
 
 // ==================== Helper Functions ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 判断数据是否呈持续上升趋势
 #[allow(clippy::indexing_slicing)]
 fn is_increasing_trend(data: &[f64]) -> bool {
@@ -1047,6 +1055,12 @@ async fn get_recent_anomaly_trend(pool: &sqlx::PgPool) -> Vec<DailyAnomalyCount>
     get_recent_anomaly_trend_days(pool, 7).await
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 /// 获取最近 N 天的异常趋势（基于质量记录和设备巡检异常）
 async fn get_recent_anomaly_trend_days(pool: &sqlx::PgPool, days: usize) -> Vec<DailyAnomalyCount> {
     let mut result = Vec::new();
@@ -1348,6 +1362,7 @@ pub async fn reject_anomaly_handling(
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

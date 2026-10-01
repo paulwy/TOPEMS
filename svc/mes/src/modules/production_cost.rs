@@ -238,6 +238,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 
 // ==================== Cost Calculation Logic ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(unused_assignments)]
 async fn calculate_work_order_cost_detail_db(
     pool: &sqlx::PgPool,
@@ -749,6 +750,7 @@ pub async fn get_period_cost_report(
     ),
     tag = "Cost"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_cost_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -825,6 +827,7 @@ pub async fn get_cost_trend(
     ),
     tag = "Cost"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_cost_comparison(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -886,6 +889,7 @@ pub async fn get_cost_comparison(
     ),
     tag = "Cost"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_cost_forecast(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

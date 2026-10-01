@@ -117,6 +117,7 @@ fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
     ),
     tag = "Record"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -264,6 +265,7 @@ pub async fn list_records(
     ))
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn create_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -345,6 +347,7 @@ pub async fn create_record(
     ),
     tag = "Record"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn get_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -401,6 +404,7 @@ pub async fn get_record(
     }
 }
 
+#[allow(clippy::as_conversions)]
 pub async fn update_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -528,6 +532,7 @@ pub async fn delete_record(
     ),
     tag = "Record"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn complete_record(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

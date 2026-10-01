@@ -177,6 +177,11 @@ pub fn create_routes() -> Router<AppState> {
     ),
     tag = "Analytics"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 pub async fn get_capacity_utilization(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -387,6 +392,7 @@ pub async fn get_energy_cost(
     ),
     tag = "Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_equipment_mtbf(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -518,6 +524,7 @@ pub async fn get_equipment_mtbf(
     ),
     tag = "Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_delivery_analytics(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -601,6 +608,7 @@ pub async fn get_delivery_analytics(
     ),
     tag = "Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_oee_dashboard(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,
@@ -727,6 +735,7 @@ pub async fn get_oee_dashboard(
     ),
     tag = "Analytics"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_quality_pareto(
     State(state): State<AppState>,
     Query(query): Query<AnalyticsQuery>,

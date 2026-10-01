@@ -183,6 +183,7 @@ fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse
     ),
     tag = "Equipment"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_work_stations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

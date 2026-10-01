@@ -198,6 +198,7 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn list_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -308,6 +309,7 @@ pub async fn list_equipment(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn create_equipment(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1106,6 +1108,7 @@ pub struct InspectionResponse {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_inspections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

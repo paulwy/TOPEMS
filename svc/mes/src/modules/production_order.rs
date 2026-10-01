@@ -213,6 +213,7 @@ pub fn validate_state_transition(current_status: &str, target_status: &str) -> R
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_production_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -394,6 +395,7 @@ pub async fn list_production_orders(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -558,6 +560,7 @@ req.planned_end_date.map(|d| d.date_naive()),
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_from_erp(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

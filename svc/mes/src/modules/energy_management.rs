@@ -221,6 +221,7 @@ async fn get_real_time_consumption(
     ),
     tag = "Energy"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn get_consumption_history(
     State(state): State<AppState>,
     Query(_params): Query<QueryParams>,
@@ -382,6 +383,7 @@ async fn get_energy_report(
     ),
     tag = "Energy"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 async fn get_energy_forecast(
     State(state): State<AppState>,
     Query(params): Query<ForecastParams>,

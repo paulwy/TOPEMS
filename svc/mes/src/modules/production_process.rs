@@ -131,6 +131,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     ),
     tag = "Process"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_processes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

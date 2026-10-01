@@ -180,6 +180,7 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_production_schedules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

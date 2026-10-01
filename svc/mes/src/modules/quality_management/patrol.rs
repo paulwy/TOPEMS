@@ -69,6 +69,7 @@ pub struct PatrolResponse {
     ),
     tag = "Quality"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_patrols(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

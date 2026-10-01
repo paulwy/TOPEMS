@@ -459,6 +459,11 @@ fn test_production_process_versions() {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 #[test]
 fn test_production_process_sequence() {
     let processes: Vec<ProductionProcess> = (1..=5)

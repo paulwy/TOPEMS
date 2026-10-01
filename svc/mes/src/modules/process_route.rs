@@ -142,6 +142,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     ),
     tag = "Process"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_process_routes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -950,6 +951,11 @@ pub async fn remove_route_step(
         (status = 500, description = "Internal server error")
     ),
     tag = "Process"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn reorder_route_steps(
     State(state): State<AppState>,

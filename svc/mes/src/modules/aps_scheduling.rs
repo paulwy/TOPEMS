@@ -355,6 +355,7 @@ fn calculate_processing_time(quantity: f64, base_time_per_unit_hours: f64) -> f6
     setup_time + processing
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算风险等级
 fn calculate_risk_level(
     planned_end: DateTime<Utc>,
@@ -393,6 +394,12 @@ fn calculate_risk_level(
 
 // ==================== APS Core Algorithm ====================
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 /// 主排程算法
 #[allow(clippy::indexing_slicing)]
 async fn run_aps_scheduling(
@@ -642,6 +649,7 @@ async fn run_aps_scheduling(
     })
 }
 
+#[allow(clippy::as_conversions)]
 fn calculate_feasibility_score(
     material_ready: bool,
     equipment_available: bool,
@@ -942,6 +950,7 @@ pub async fn execute_aps_schedule(
     ),
     tag = "APS"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn simulate_aps_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1233,6 +1242,11 @@ pub async fn check_schedule_constraints(
     ),
     tag = "APS"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
+)]
 #[allow(clippy::indexing_slicing)]
 pub async fn get_optimization_report(
     State(state): State<AppState>,
@@ -1382,6 +1396,11 @@ pub async fn get_optimization_report(
         (status = 500, description = "Internal server error")
     ),
     tag = "APS"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
 )]
 pub async fn get_bottleneck_analysis(
     State(state): State<AppState>,

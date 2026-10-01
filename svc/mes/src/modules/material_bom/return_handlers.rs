@@ -151,6 +151,7 @@ pub async fn create_material_return(
     ),
     tag = "Material"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_material_returns(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

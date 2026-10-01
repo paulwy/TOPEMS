@@ -23,6 +23,7 @@ use super::models::*;
     ),
     tag = "Material"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_material_boms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -157,6 +158,11 @@ pub async fn list_material_boms(
     ))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn create_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -405,6 +411,11 @@ pub async fn get_material_bom(
     ))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn update_material_bom(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

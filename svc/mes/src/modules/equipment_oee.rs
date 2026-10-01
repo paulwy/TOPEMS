@@ -216,6 +216,7 @@ fn calculate_oee(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_oee_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1006,6 +1007,11 @@ pub async fn get_oee_statistics(
         (status = 200, description = "设备效率分析", body = ApiResponse<Vec<EquipmentEfficiencyAnalysis>>),
         (status = 500, description = "服务器内部错误"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn get_equipment_efficiency_analysis(
     State(state): State<AppState>,

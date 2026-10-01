@@ -168,6 +168,7 @@ pub struct TodayOutputQuery {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_today_production_output(
     State(state): State<AppState>,
     Query(query): Query<TodayOutputQuery>,
@@ -226,6 +227,7 @@ pub async fn get_today_production_output(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_work_reports(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

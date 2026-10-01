@@ -155,6 +155,7 @@ pub async fn create_material_issue(
     ),
     tag = "Material"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_material_issues(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

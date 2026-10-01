@@ -124,6 +124,7 @@ fn datetime_to_string(dt: Option<DateTime<Utc>>) -> String {
     ),
     tag = "Material"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn list_material_requirements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
