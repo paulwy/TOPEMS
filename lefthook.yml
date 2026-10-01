@@ -71,11 +71,13 @@ pre-commit:
     # [Gate S] SQLx offline cache integrity (V300: WARN-only → BLOCKING)
     # 历史教训：静态启发式（文件数/脏标记）抓不住"缓存缺查询"（53 个文件也曾全 PASS）。
     # 真正可靠的验证只有离线编译：SQLX_OFFLINE=true cargo check 宏服务，缓存缺失必报错。
-    # 触发条件：.rs/.sql/.sqlx 变更。失败时运行 ./scripts/dev/sqlx-prepare.sh 刷新缓存后重提。
+    # 触发条件：.sql/.sqlx 变更（V538：纯 .rs 变更不再触发——重型 cargo check 27 包已由
+    # pre-push 的 cargo-check-workspace SQLX_OFFLINE 全量兜底）。失败时运行
+    # ./scripts/dev/sqlx-prepare.sh 刷新缓存后重提。
     sqlx-cache-freshness:
       tags: rust sqlx cache
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(rs|sql)$|^\.sqlx/' || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sql)$|^\.sqlx/' || true)
         [ -z "$STAGED" ] && exit 0
         bash scripts/dev/sqlx-prepare.sh --check || {
           echo "❌ [Gate S] SQLx 离线缓存不完整或不一致，提交已阻断。"
