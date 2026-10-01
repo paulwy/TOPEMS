@@ -316,15 +316,21 @@ fn generate_mock_dashboards(
             })
         })
         .filter(|d| {
-            (category_filter.is_empty() || d.get("category").and_then(|v| v.as_str()) == Some(category_filter))
-                && (status_filter.is_empty() || d.get("status").and_then(|v| v.as_str()) == Some(status_filter))
-                && (owner_filter.is_empty() || d.get("owner").and_then(|v| v.as_str()) == Some(owner_filter))
+            (category_filter.is_empty()
+                || d.get("category").and_then(|v| v.as_str()) == Some(category_filter))
+                && (status_filter.is_empty()
+                    || d.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (owner_filter.is_empty()
+                    || d.get("owner").and_then(|v| v.as_str()) == Some(owner_filter))
                 && (keyword_filter.is_empty()
                     || d["dashboard_number"]
                         .as_str()
                         .unwrap_or("")
                         .contains(keyword_filter)
-                    || d.get("name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
+                    || d.get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .contains(keyword_filter))
         })
         .collect()
 }
@@ -598,7 +604,11 @@ mod tests {
             assert_eq!(parsed["granularity"], "daily");
             assert!(parsed["summary"].is_object());
             assert!(parsed["data_points"].is_array());
-            assert!(!parsed.get("data_points").and_then(|v| v.as_array()).unwrap().is_empty());
+            assert!(!parsed
+                .get("data_points")
+                .and_then(|v| v.as_array())
+                .unwrap()
+                .is_empty());
         } else {
             panic!("Expected text content");
         }

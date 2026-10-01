@@ -5,7 +5,6 @@
 //! 包含：事件发布订阅、领域事件、消息代理（内存/Redis/RabbitMQ）、
 //! Saga 编排器、分布式缓存、集群管理、配置中心、服务发现等。
 
-
 pub mod cache;
 pub mod cluster;
 pub mod config_center;

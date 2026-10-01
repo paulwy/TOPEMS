@@ -207,7 +207,10 @@ fn generate_mock_receivables(status_filter: &str) -> Vec<Value> {
                 "aging_days": (i * 7) % 180,
             })
         })
-        .filter(|r| status_filter.is_empty() || r.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+        .filter(|r| {
+            status_filter.is_empty()
+                || r.get("status").and_then(|v| v.as_str()) == Some(status_filter)
+        })
         .collect()
 }
 

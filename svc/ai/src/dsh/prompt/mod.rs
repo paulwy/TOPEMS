@@ -492,15 +492,9 @@ impl PromptEngine {
         };
 
         let (template_id, _version) = if group == "A" {
-            (
-                config.template_a_id.clone(),
-                config.template_a_version,
-            )
+            (config.template_a_id.clone(), config.template_a_version)
         } else {
-            (
-                config.template_b_id.clone(),
-                config.template_b_version,
-            )
+            (config.template_b_id.clone(), config.template_b_version)
         };
 
         let result = self.render(&template_id, variables)?;

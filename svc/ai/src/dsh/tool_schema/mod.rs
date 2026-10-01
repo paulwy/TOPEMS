@@ -784,7 +784,10 @@ impl ToolSchemaAdapter {
 
         if let Some(desc) = &schema.description {
             if let Some(obj) = json.as_object_mut() {
-                obj.insert("description".to_string(), serde_json::Value::String(desc.clone()));
+                obj.insert(
+                    "description".to_string(),
+                    serde_json::Value::String(desc.clone()),
+                );
             }
         }
 
@@ -794,7 +797,10 @@ impl ToolSchemaAdapter {
                 props_json.insert(key.clone(), self.schema_to_json(value));
             }
             if let Some(obj) = json.as_object_mut() {
-                obj.insert("properties".to_string(), serde_json::Value::Object(props_json));
+                obj.insert(
+                    "properties".to_string(),
+                    serde_json::Value::Object(props_json),
+                );
             }
         }
 
@@ -814,7 +820,10 @@ impl ToolSchemaAdapter {
 
         if let Some(enum_values) = &schema.enum_values {
             if let Some(obj) = json.as_object_mut() {
-                obj.insert("enum".to_string(), serde_json::Value::Array(enum_values.clone()));
+                obj.insert(
+                    "enum".to_string(),
+                    serde_json::Value::Array(enum_values.clone()),
+                );
             }
         }
 

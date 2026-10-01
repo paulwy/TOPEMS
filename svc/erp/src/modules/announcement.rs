@@ -61,7 +61,10 @@ pub async fn list_announcements(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Announcement>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -150,7 +153,10 @@ pub async fn create_announcement(
     Json(req): Json<CreateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("公告标题", &req.title) {
         return Json(api_error(400, &e));
     }
@@ -259,7 +265,10 @@ pub async fn get_announcement(
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -316,7 +325,10 @@ pub async fn update_announcement(
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -441,7 +453,10 @@ pub async fn delete_announcement(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -532,7 +547,10 @@ pub async fn publish_announcement(
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -632,7 +650,10 @@ pub async fn unpublish_announcement(
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {

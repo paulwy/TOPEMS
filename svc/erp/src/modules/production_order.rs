@@ -70,7 +70,10 @@ pub async fn list_production_orders(
     >,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let _page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -151,7 +154,10 @@ pub async fn create_production_order(
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let now = Utc::now();
     let order_no = format!(
         "ERP-PO{}{:04}",
@@ -233,7 +239,10 @@ pub async fn get_production_order(
     >,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
         SELECT id, order_no, product_id, product_name, product_code,
@@ -281,7 +290,10 @@ pub async fn update_production_order(
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
         UPDATE erp.erp_production_orders SET
@@ -348,7 +360,10 @@ pub async fn delete_production_order(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
@@ -401,7 +416,10 @@ pub async fn update_production_progress(
     Json(req): Json<UpdateProductionProgressRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, ProductionOrder>(
         only_own_schema_query!("erp", r#"
         UPDATE erp.erp_production_orders SET
@@ -464,7 +482,10 @@ pub async fn update_production_status(
     Json(req): Json<UpdateStatusRequest>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionOrder>(
@@ -564,7 +585,10 @@ pub async fn receive_mes_progress(
     Json(req): Json<MesProgressUpdate>,
 ) -> Json<ApiResponse<ProductionOrder>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = match guard.as_mut() { Some(_txn) => _txn, None => unreachable!("rls txn missing") };
+    let _txn = match guard.as_mut() {
+        Some(_txn) => _txn,
+        None => unreachable!("rls txn missing"),
+    };
     // 服务间调用（service token）：事务内设置 nil 租户上下文，确保同连接（RLS 放行）
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,

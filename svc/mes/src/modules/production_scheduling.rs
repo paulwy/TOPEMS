@@ -877,7 +877,6 @@ pub async fn get_gantt_data(
         let start = s.planned_start_time.unwrap_or_else(Utc::now);
         let end = s
             .planned_end_time
-            
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));

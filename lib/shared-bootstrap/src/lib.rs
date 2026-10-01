@@ -55,7 +55,6 @@
 //! **警告**：V1 遗留的 `BootstrapConfig / AppState / ServiceBootstrap` 结构已被 Pattern B/C 取代，
 //! 仅保留向后兼容引用。新项目请使用 `ServiceConfig → bootstrap_service → build_application → run` 三段式。
 
-
 pub mod audit;
 
 use anyhow::Result;

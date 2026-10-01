@@ -255,8 +255,14 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
             "cs:write",
             |params| {
                 let title = params.get("title").and_then(|v| v.as_str()).unwrap_or("");
-                let customer_id = params.get("customer_id").and_then(|v| v.as_str()).unwrap_or("");
-                let ticket_type = params.get("ticket_type").and_then(|v| v.as_str()).unwrap_or("");
+                let customer_id = params
+                    .get("customer_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let ticket_type = params
+                    .get("ticket_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
 
                 if title.is_empty() {
                     return Err(ToolExecutionError::Validation(

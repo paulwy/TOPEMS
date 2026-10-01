@@ -145,8 +145,16 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 if items.is_empty() {
                     return Err(ToolExecutionError::Validation("items 不能为空".to_string()));
                 }
-                let expected_date = params.get("expected_date").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let remark = params.get("remark").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let expected_date = params
+                    .get("expected_date")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let remark = params
+                    .get("remark")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
 
                 let payload = json!({
                     "supplier_id": supplier_id,
@@ -249,7 +257,8 @@ fn generate_mock_orders(status_filter: &str, customer_filter: &str) -> Vec<Value
             })
         })
         .filter(|o| {
-            (status_filter.is_empty() || o.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+            (status_filter.is_empty()
+                || o.get("status").and_then(|v| v.as_str()) == Some(status_filter))
                 && (customer_filter.is_empty()
                     || o.get("customer_id").and_then(|v| v.as_str()) == Some(customer_filter))
         })

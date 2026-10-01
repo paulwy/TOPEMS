@@ -661,7 +661,14 @@ mod tests {
             assert_eq!(parsed["total_amount"], 11000.0);
             assert_eq!(parsed["status"], "draft");
             assert!(parsed["items"].is_array());
-            assert_eq!(parsed.get("items").and_then(|v| v.as_array()).unwrap().len(), 2);
+            assert_eq!(
+                parsed
+                    .get("items")
+                    .and_then(|v| v.as_array())
+                    .unwrap()
+                    .len(),
+                2
+            );
             assert!(parsed["order_id"].is_string());
         } else {
             panic!("Expected text content");

@@ -47,7 +47,10 @@ pub async fn list_inventory(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Inventory>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -138,7 +141,10 @@ pub async fn get_inventory(
     >,
 ) -> Json<ApiResponse<Inventory>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -179,7 +185,10 @@ pub async fn create_inventory(
     Json(body): Json<CreateInventoryRequest>,
 ) -> Json<ApiResponse<Inventory>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -253,7 +262,10 @@ pub async fn update_inventory(
     Json(body): Json<UpdateInventoryRequest>,
 ) -> Json<ApiResponse<Inventory>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -304,7 +316,10 @@ pub async fn delete_inventory(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -350,7 +365,10 @@ pub async fn get_low_stock(
     >,
 ) -> Json<ApiResponse<Vec<Inventory>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }

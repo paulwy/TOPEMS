@@ -946,7 +946,7 @@ pub async fn get_cost_forecast(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{TimeZone};
+    use chrono::TimeZone;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

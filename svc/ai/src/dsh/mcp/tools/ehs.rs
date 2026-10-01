@@ -499,9 +499,12 @@ fn generate_mock_hazards(
             })
         })
         .filter(|h| {
-            (risk_filter.is_empty() || h.get("risk_level").and_then(|v| v.as_str()) == Some(risk_filter))
-                && (status_filter.is_empty() || h.get("status").and_then(|v| v.as_str()) == Some(status_filter))
-                && (location_filter.is_empty() || h.get("location").and_then(|v| v.as_str()) == Some(location_filter))
+            (risk_filter.is_empty()
+                || h.get("risk_level").and_then(|v| v.as_str()) == Some(risk_filter))
+                && (status_filter.is_empty()
+                    || h.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (location_filter.is_empty()
+                    || h.get("location").and_then(|v| v.as_str()) == Some(location_filter))
         })
         .collect()
 }

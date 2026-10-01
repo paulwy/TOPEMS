@@ -420,11 +420,7 @@ pub fn split_deductions_into_social_security(
     } else {
         zero.clone()
     };
-    let safe_ratio = if ratio_lo < one {
-        ratio_lo
-    } else {
-        one
-    };
+    let safe_ratio = if ratio_lo < one { ratio_lo } else { one };
 
     let social_security = &safe_total * &safe_ratio;
     let housing_fund_raw = &safe_total - &social_security;

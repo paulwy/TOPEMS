@@ -5,7 +5,6 @@
 //! 包含：基础服务客户端、各业务服务客户端（Iam/Hrm/Finance/Erp 等）、
 //! 泛型客户端、trait 定义、API trait 定义等。
 
-
 pub mod notification;
 pub mod service_client;
 

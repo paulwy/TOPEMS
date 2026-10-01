@@ -65,7 +65,10 @@ pub async fn list_vehicles(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Vehicle>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -142,7 +145,10 @@ pub async fn create_vehicle(
     Json(req): Json<CreateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("车牌号", &req.plate_number) {
         return Json(api_error(400, &e));
     }
@@ -242,7 +248,10 @@ pub async fn get_vehicle(
     >,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", r#"
         SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at
@@ -286,7 +295,10 @@ pub async fn update_vehicle(
     Json(req): Json<UpdateVehicleRequest>,
 ) -> Json<ApiResponse<Vehicle>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = sqlx::query_as::<_, Vehicle>(
         only_own_schema_query!("erp", "SELECT id, plate_number, brand, model, vehicle_type, status, driver, last_service, mileage, fuel_type, created_at, updated_at FROM vehicles WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -407,7 +419,10 @@ pub async fn delete_vehicle(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE vehicles SET deleted_at = NOW() WHERE id = $1"
@@ -489,7 +504,10 @@ pub async fn list_vehicle_requests(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<VehicleApplication>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -562,7 +580,10 @@ pub async fn create_vehicle_request(
     Json(req): Json<CreateVehicleRequestRequest>,
 ) -> Json<ApiResponse<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("申请人", &req.requester) {
         return Json(api_error(400, &e));
     }
@@ -695,7 +716,10 @@ pub async fn get_vehicle_request(
     >,
 ) -> Json<ApiResponse<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at
@@ -739,7 +763,10 @@ pub async fn update_vehicle_request(
     Json(req): Json<UpdateVehicleRequestRequest>,
 ) -> Json<ApiResponse<VehicleApplication>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", "SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at FROM vehicle_requests WHERE id = $1"),
     )
@@ -850,7 +877,10 @@ pub async fn delete_vehicle_request(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE vehicle_requests SET deleted_at = NOW() WHERE id = $1"
@@ -935,7 +965,10 @@ pub async fn get_vehicle_requests(
     >,
 ) -> Json<ApiResponse<Vec<VehicleApplication>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, VehicleApplication>(
         only_own_schema_query!("erp", r#"
         SELECT id, vehicle_id, vehicle_plate, requester, purpose, start_time, end_time, driver_required, status, approved_by, approved_at, rejected_reason, created_at, updated_at

@@ -86,7 +86,10 @@ async fn global_search(
     >,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let limit = params.page_size_or_default();
     let query = params.query.to_lowercase();
     let search_pattern = format!("%{}%", query);

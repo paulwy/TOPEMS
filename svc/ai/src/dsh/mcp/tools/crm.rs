@@ -138,7 +138,9 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                         tracing::warn!("CRM get_customer API 调用失败（降级 mock）: {}", e);
                         let mock = generate_mock_customers("")
                             .into_iter()
-                            .find(|c| c.get("id").and_then(|v| v.as_str()) == Some(customer_id.as_str()))
+                            .find(|c| {
+                                c.get("id").and_then(|v| v.as_str()) == Some(customer_id.as_str())
+                            })
                             .unwrap_or_else(|| {
                                 json!({
                                     "id": customer_id,
@@ -195,10 +197,17 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| ToolExecutionError::Validation("name 不能为空".to_string()))?
                     .to_string();
-                let amount = params.get("amount").and_then(|v| v.as_f64()).ok_or_else(|| {
-                    ToolExecutionError::Validation("amount 必须是数字".to_string())
-                })?;
-                let stage = params.get("stage").and_then(|v| v.as_str()).unwrap_or("lead").to_string();
+                let amount = params
+                    .get("amount")
+                    .and_then(|v| v.as_f64())
+                    .ok_or_else(|| {
+                        ToolExecutionError::Validation("amount 必须是数字".to_string())
+                    })?;
+                let stage = params
+                    .get("stage")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("lead")
+                    .to_string();
 
                 let payload = json!({
                     "customer_id": customer_id,

@@ -53,7 +53,10 @@ pub async fn get_data_lineage(
     >,
 ) -> Json<ApiResponse<DataLineageResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     // 查询主数据引用本身
     let ref_row = sqlx::query(only_own_schema_query!(
         "erp",

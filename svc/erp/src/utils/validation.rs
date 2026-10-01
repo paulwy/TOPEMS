@@ -5,16 +5,23 @@ use lazy_static::lazy_static;
 use regex::Regex;
 
 lazy_static! {
-    static ref EMAIL_REGEX: Regex = match Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$") {
+    static ref EMAIL_REGEX: Regex =
+        match Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$") {
+            Ok(r) => r,
+            Err(_) => panic!("invalid EMAIL_REGEX pattern"),
+        };
+    static ref PHONE_REGEX: Regex = match Regex::new(r"^1[3-9]\d{9}$") {
         Ok(r) => r,
-        Err(_) => panic!("invalid EMAIL_REGEX pattern"),
+        Err(_) => panic!("invalid PHONE_REGEX pattern"),
     };
-    static ref PHONE_REGEX: Regex =
-        match Regex::new(r"^1[3-9]\d{9}$") { Ok(r) => r, Err(_) => panic!("invalid PHONE_REGEX pattern") };
-    static ref EMPLOYEE_NUMBER_REGEX: Regex =
-        match Regex::new(r"^[A-Za-z0-9_]{2,20}$") { Ok(r) => r, Err(_) => panic!("invalid EMPLOYEE_NUMBER_REGEX pattern") };
-    static ref ASSET_NUMBER_REGEX: Regex =
-        match Regex::new(r"^[A-Za-z0-9_-]{2,25}$") { Ok(r) => r, Err(_) => panic!("invalid ASSET_NUMBER_REGEX pattern") };
+    static ref EMPLOYEE_NUMBER_REGEX: Regex = match Regex::new(r"^[A-Za-z0-9_]{2,20}$") {
+        Ok(r) => r,
+        Err(_) => panic!("invalid EMPLOYEE_NUMBER_REGEX pattern"),
+    };
+    static ref ASSET_NUMBER_REGEX: Regex = match Regex::new(r"^[A-Za-z0-9_-]{2,25}$") {
+        Ok(r) => r,
+        Err(_) => panic!("invalid ASSET_NUMBER_REGEX pattern"),
+    };
 }
 
 #[allow(dead_code)]

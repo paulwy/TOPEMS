@@ -298,9 +298,15 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
             "pm:write",
             |params| {
                 let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
-                let project_type = params.get("project_type").and_then(|v| v.as_str()).unwrap_or("");
+                let project_type = params
+                    .get("project_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
                 let manager = params.get("manager").and_then(|v| v.as_str()).unwrap_or("");
-                let start_date = params.get("start_date").and_then(|v| v.as_str()).unwrap_or("");
+                let start_date = params
+                    .get("start_date")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
 
                 if name.is_empty() {
                     return Err(ToolExecutionError::Validation(
@@ -342,7 +348,11 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 } else {
                     format!("{}T00:00:00Z", start_date)
                 };
-                let end_ts = params.get("end_date").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let end_ts = params
+                    .get("end_date")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
                 let end_ts = if end_ts.is_empty() || end_ts.contains('T') {
                     end_ts
                 } else {
@@ -456,15 +466,21 @@ fn generate_mock_projects(
             })
         })
         .filter(|p| {
-            (status_filter.is_empty() || p.get("status").and_then(|v| v.as_str()) == Some(status_filter))
-                && (type_filter.is_empty() || p.get("project_type").and_then(|v| v.as_str()) == Some(type_filter))
-                && (manager_filter.is_empty() || p.get("manager").and_then(|v| v.as_str()) == Some(manager_filter))
+            (status_filter.is_empty()
+                || p.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (type_filter.is_empty()
+                    || p.get("project_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (manager_filter.is_empty()
+                    || p.get("manager").and_then(|v| v.as_str()) == Some(manager_filter))
                 && (keyword_filter.is_empty()
                     || p["project_number"]
                         .as_str()
                         .unwrap_or("")
                         .contains(keyword_filter)
-                    || p.get("name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
+                    || p.get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .contains(keyword_filter))
         })
         .collect()
 }

@@ -5,7 +5,6 @@
 //! 包含：OpenTelemetry 集成、链路追踪、指标采集、SLO 管理、
 //! 日志查询、告警管理、性能监控等。
 
-
 pub mod monitoring;
 pub mod observability;
 pub mod performance;

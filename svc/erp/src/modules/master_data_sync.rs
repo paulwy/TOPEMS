@@ -661,7 +661,10 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
 
     let total_duration: i64 = jobs
         .iter()
-        .filter_map(|j| j.completed_at.map(|c| (c - j.created_at).num_milliseconds()))
+        .filter_map(|j| {
+            j.completed_at
+                .map(|c| (c - j.created_at).num_milliseconds())
+        })
         .sum();
     let completed_count = jobs.iter().filter(|j| j.completed_at.is_some()).count() as f64;
     let avg_duration_ms = if completed_count > 0.0 {

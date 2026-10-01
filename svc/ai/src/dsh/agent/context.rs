@@ -274,13 +274,19 @@ impl AgentContext {
 
             if let Some(tool_name) = &msg.tool_name {
                 if let Some(obj) = entry.as_object_mut() {
-                    obj.insert("name".to_string(), serde_json::Value::String(tool_name.clone()));
+                    obj.insert(
+                        "name".to_string(),
+                        serde_json::Value::String(tool_name.clone()),
+                    );
                 }
             }
 
             if let Some(tool_call_id) = &msg.tool_call_id {
                 if let Some(obj) = entry.as_object_mut() {
-                    obj.insert("tool_call_id".to_string(), serde_json::Value::String(tool_call_id.clone()));
+                    obj.insert(
+                        "tool_call_id".to_string(),
+                        serde_json::Value::String(tool_call_id.clone()),
+                    );
                 }
             }
 

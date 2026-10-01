@@ -5,7 +5,6 @@
 //! 包含：向量存储（Redis/Postgres）、嵌入服务、AI 客户端（统一接口）、
 //! Ollama 客户端、File 服务客户端等。
 
-
 pub mod ai_client;
 pub mod embedding;
 pub mod file_client;

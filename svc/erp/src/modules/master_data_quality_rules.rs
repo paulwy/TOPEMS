@@ -260,7 +260,10 @@ pub async fn create_quality_rule(
     Json(req): Json<CreateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
     let description = req.description.unwrap_or_default();
@@ -337,7 +340,10 @@ pub async fn list_quality_rules(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<QualityRule>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -433,7 +439,10 @@ pub async fn get_quality_rule(
     >,
 ) -> Json<ApiResponse<QualityRule>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
@@ -477,7 +486,10 @@ pub async fn update_quality_rule(
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
@@ -585,7 +597,10 @@ pub async fn delete_quality_rule(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let rid = match uuid::Uuid::parse_str(&rule_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的规则 ID")),
@@ -644,7 +659,10 @@ pub async fn run_quality_check(
     Json(req): Json<RunQualityCheckRequest>,
 ) -> Json<ApiResponse<QualityReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     // 1. 加载规则
     let rules = load_quality_rules(txn, req.domain.as_deref(), req.rule_ids.as_deref()).await;
     if rules.is_empty() {
@@ -745,7 +763,10 @@ pub async fn get_quality_report(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<QualityReport>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

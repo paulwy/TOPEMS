@@ -204,7 +204,10 @@ pub async fn list_dict_types(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<DictType>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -321,7 +324,10 @@ pub async fn create_dict_type(
     Json(req): Json<CreateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("字典类型编码", &req.code) {
         return Json(api_error(400, &e));
     }
@@ -444,7 +450,10 @@ pub async fn get_dict_type(
     >,
 ) -> Json<ApiResponse<DictType>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, DictType>(only_own_schema_query!(
         "erp",
         r#"
@@ -485,7 +494,10 @@ pub async fn update_dict_type(
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = sqlx::query_as::<_, DictType>(
         only_own_schema_query!("erp", "SELECT id, code, name, category, description, status, created_at, updated_at FROM erp.dict_types WHERE id = $1"),
     )
@@ -620,7 +632,10 @@ pub async fn delete_dict_type(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.dict_items SET deleted_at = NOW() WHERE dict_type_id = $1"
@@ -743,7 +758,10 @@ pub async fn list_dict_items(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<DictItem>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(100).min(500);
     let offset = (page - 1) * page_size;
@@ -813,7 +831,10 @@ pub async fn create_dict_item(
     Json(req): Json<CreateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
     let sort_order = req.sort_order.unwrap_or(0);
@@ -906,7 +927,10 @@ pub async fn get_dict_item(
     >,
 ) -> Json<ApiResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
@@ -945,7 +969,10 @@ pub async fn update_dict_item(
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -1058,7 +1085,10 @@ pub async fn delete_dict_item(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.dict_items SET deleted_at = NOW() WHERE id = $1"
@@ -1140,7 +1170,10 @@ pub async fn batch_create_dict_items(
     Json(req): Json<BatchCreateDictItemRequest>,
 ) -> Json<ApiResponse<Vec<DictItem>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let mut created_items = Vec::new();
     let now = Utc::now();
 
@@ -1227,7 +1260,10 @@ pub async fn export_dict_items(
     >,
 ) -> Response<String> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at

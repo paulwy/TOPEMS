@@ -2,7 +2,6 @@
 //!
 //! 数据库相关模块，提供数据库连接、迁移、仓储模式、Schema 管理等能力。
 
-
 pub mod approval;
 pub mod audit;
 pub mod audit_soft_delete;

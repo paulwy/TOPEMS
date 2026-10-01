@@ -335,7 +335,10 @@ impl McpServer {
             }
         };
 
-        let arguments = params.get("arguments").cloned().unwrap_or(serde_json::Value::Null);
+        let arguments = params
+            .get("arguments")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
 
         // 安全检查：校验工具输入
         if let Err(e) = self
@@ -397,7 +400,9 @@ impl McpServer {
 
     /// 处理 resources/read 请求
     async fn handle_resources_read(&self, id: Value, params: Option<Value>) -> JsonRpcResponse {
-        let uri = match params.and_then(|p| p.get("uri").and_then(|v| v.as_str()).map(|s| s.to_string())) {
+        let uri = match params
+            .and_then(|p| p.get("uri").and_then(|v| v.as_str()).map(|s| s.to_string()))
+        {
             Some(uri) => uri,
             None => {
                 return JsonRpcResponse::error(
@@ -485,7 +490,13 @@ mod tests {
         let request = JsonRpcRequest::new("resources/list", json!(1), None);
         let response = server.handle_request(request).await.unwrap();
         let body = response.result.clone().unwrap();
-        assert_eq!(body.get("resources").and_then(|v| v.as_array()).unwrap().len(), 3);
+        assert_eq!(
+            body.get("resources")
+                .and_then(|v| v.as_array())
+                .unwrap()
+                .len(),
+            3
+        );
         let uris: Vec<&str> = body["resources"]
             .as_array()
             .unwrap()

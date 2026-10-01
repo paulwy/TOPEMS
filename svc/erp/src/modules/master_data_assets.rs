@@ -183,7 +183,10 @@ pub async fn list_data_assets(
     >,
 ) -> Json<ApiResponse<Vec<DataAssetSummary>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let db = &mut **txn;
 
     let rows = if let Some(ref domain) = params.domain {
@@ -299,7 +302,10 @@ pub async fn get_data_asset_detail(
     >,
 ) -> Json<ApiResponse<DataAssetSummary>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let db = &mut **txn;
 
     let row = sqlx::query(only_own_schema_query!(

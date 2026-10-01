@@ -221,7 +221,10 @@ pub async fn plugin_health_check(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let db_healthy = sqlx::query(only_own_schema_query!("erp", "SELECT 1"))
         .fetch_one(&mut **txn)
         .await

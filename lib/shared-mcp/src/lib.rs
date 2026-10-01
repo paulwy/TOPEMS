@@ -16,8 +16,6 @@
 //! └── schema.rs     # JSON Schema 生成工具
 //! ```
 
-
-
 pub mod jsonrpc;
 pub mod protocol;
 pub mod schema;

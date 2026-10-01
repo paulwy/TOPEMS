@@ -178,7 +178,7 @@ pub fn calc_throughput_rate(units_produced: f64, time_hours: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{TimeZone};
+    use chrono::TimeZone;
 
     #[test]
     fn test_validate_resource_id_valid() {
@@ -592,7 +592,7 @@ mod tests {
 #[cfg(test)]
 mod additional_tests {
     use super::*;
-    use chrono::{Duration};
+    use chrono::Duration;
 
     #[test]
     fn test_validate_resource_id_valid() {

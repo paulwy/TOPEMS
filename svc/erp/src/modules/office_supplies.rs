@@ -51,7 +51,10 @@ pub async fn list_supplies(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<OfficeSupply>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -130,7 +133,10 @@ pub async fn create_supply(
     Json(req): Json<CreateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("用品名称", &req.name) {
         return Json(api_error(400, &e));
     }
@@ -221,7 +227,10 @@ pub async fn get_supply(
     >,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, OfficeSupply>(only_own_schema_query!(
         "erp",
         r#"
@@ -266,7 +275,10 @@ pub async fn update_supply(
     Json(req): Json<UpdateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = sqlx::query_as::<_, OfficeSupply>(
         only_own_schema_query!("erp", "SELECT id, name, category, quantity, unit, price, location, status, created_at, updated_at FROM office_supplies WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -375,7 +387,10 @@ pub async fn delete_supply(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE office_supplies SET deleted_at = NOW() WHERE id = $1"

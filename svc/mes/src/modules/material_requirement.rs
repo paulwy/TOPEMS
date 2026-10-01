@@ -902,7 +902,7 @@ pub async fn release_requirement(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{TimeZone};
+    use chrono::TimeZone;
     use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
     #[test]
