@@ -727,6 +727,7 @@ impl PermissionStore for DatabasePermissionStore {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -788,7 +789,7 @@ mod tests {
             cache_size: 5,
             cache_ttl_secs: 300,
         };
-        let json = serde_json::to_string(&m).unwrap();
+        let json = serde_json::to_string(&m).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total_lookups\":10"));
         assert!(json.contains("\"cache_hit_rate\":0.8"));
         assert!(json.contains("\"cache_size\":5"));

@@ -565,6 +565,7 @@ pub fn permission_export_import_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -642,7 +643,7 @@ mod tests {
                 tool_permissions: vec![],
             }],
         };
-        let json = serde_json::to_string(&data).unwrap();
+        let json = serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"version\":\"1.0\""));
         assert!(json.contains("\"count\":1"));
         assert!(json.contains("\"tenant_id\":\"t1\""));
@@ -717,7 +718,7 @@ mod tests {
                 },
             ],
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":3"));
         assert!(json.contains("\"created\":1"));
         assert!(json.contains("\"failed\":1"));
@@ -732,7 +733,7 @@ mod tests {
             allowed_operations: vec!["read".to_string(), "write".to_string()],
             denied_operations: vec!["delete".to_string()],
         };
-        let json = serde_json::to_string(&item).unwrap();
+        let json = serde_json::to_string(&item).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"tool\":\"crm\""));
         assert!(json.contains("\"max_permission\":\"write\""));
     }

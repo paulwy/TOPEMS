@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! Nacos 服务发现集成测试（真实 Nacos server）
 //!
 //! 环境变量 `NACOS_TEST_ADDRESS`（如 http://127.0.0.1:8848）未设置或不可达时自动跳过。

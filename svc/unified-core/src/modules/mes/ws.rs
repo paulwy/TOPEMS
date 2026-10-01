@@ -26,7 +26,7 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
             _ = ticker.tick() => {
                 // 获取数据后立即释放锁，避免 MutexGuard 跨 await 导致不 Send
                 let stats = {
-                    let service = MesService::instance().lock().unwrap();
+                    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
                     service.get_dashboard_stats()
                 };
 
@@ -70,7 +70,7 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
 
 /// MES 仪表盘初始数据（HTTP 端点，用于首次加载）
 pub async fn mes_dashboard_initial() -> Json<serde_json::Value> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let stats = service.get_dashboard_stats();
     let wip = service.get_wip_statistics();
 

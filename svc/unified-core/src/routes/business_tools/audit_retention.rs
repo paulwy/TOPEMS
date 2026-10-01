@@ -325,6 +325,7 @@ pub struct RetentionStats {
 // ===== Tests =====
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
@@ -382,7 +383,7 @@ mod tests {
     #[test]
     fn test_retention_policy_serialization() {
         let policy = RetentionPolicy::new(30).with_archive("/tmp/archive");
-        let json = serde_json::to_string(&policy).unwrap();
+        let json = serde_json::to_string(&policy).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"retention_days\":30"));
         assert!(json.contains("\"archive_enabled\":true"));
         assert!(json.contains("/tmp/archive"));
@@ -407,7 +408,7 @@ mod tests {
             success: true,
             error: None,
         };
-        let json = serde_json::to_string(&result).unwrap();
+        let json = serde_json::to_string(&result).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"deleted_count\":10"));
         assert!(json.contains("\"archived_count\":5"));
         assert!(json.contains("\"success\":true"));
@@ -424,7 +425,7 @@ mod tests {
             batch_size: 1000,
             cleanup_interval_hours: 24,
         };
-        let json = serde_json::to_string(&stats).unwrap();
+        let json = serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"retention_days\":90"));
         assert!(json.contains("\"entries_older_than_cutoff\":100"));
     }

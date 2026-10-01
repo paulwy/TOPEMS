@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! Workflow 模块权限测试
 //!
 //! 覆盖测试用例清单中的 WF-001 到 WF-008

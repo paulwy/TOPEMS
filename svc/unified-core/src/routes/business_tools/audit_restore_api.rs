@@ -184,6 +184,7 @@ pub fn audit_restore_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -229,7 +230,7 @@ mod tests {
                 "audit_log_2026-01-16.json".to_string(),
             ],
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":2"));
         assert!(json.contains("audit_log_2026-01-15.json"));
     }
@@ -260,7 +261,7 @@ mod tests {
             success: true,
             error: None,
         };
-        let json = serde_json::to_string(&result).unwrap();
+        let json = serde_json::to_string(&result).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"restored_count\":10"));
         assert!(json.contains("\"skipped_count\":5"));
         assert!(json.contains("\"success\":true"));

@@ -194,6 +194,7 @@ pub fn check_module_access(subscription: &TenantSubscription, module: &str) -> b
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::body::Body;
@@ -350,7 +351,7 @@ mod tests {
             current_tier: Some("basic".to_string()),
             module: "ai".to_string(),
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("tier_insufficient"));
         assert!(json.contains("advanced"));
         assert!(json.contains("basic"));

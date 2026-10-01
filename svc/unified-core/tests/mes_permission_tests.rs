@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! MES 模块权限测试
 //!
 //! 覆盖制造执行系统模块的核心权限场景

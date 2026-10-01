@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! SSE (Server-Sent Events) 端点测试
 //!
 //! 覆盖测试用例：

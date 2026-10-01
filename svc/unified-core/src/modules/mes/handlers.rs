@@ -25,7 +25,7 @@ fn default_page_size() -> i32 {
 
 /// 仪表盘统计
 pub async fn dashboard_stats() -> Json<ApiResponse<serde_json::Value>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let stats = service.get_dashboard_stats();
     Json(ApiResponse {
         success: true,
@@ -38,7 +38,7 @@ pub async fn dashboard_stats() -> Json<ApiResponse<serde_json::Value>> {
 pub async fn list_equipment(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Equipment>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_equipment(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -51,7 +51,7 @@ pub async fn list_equipment(
 pub async fn list_work_orders(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<WorkOrder>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_work_orders(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -62,7 +62,7 @@ pub async fn list_work_orders(
 
 /// WIP 统计
 pub async fn wip_statistics() -> Json<ApiResponse<WipStatistics>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let stats = service.get_wip_statistics();
     Json(ApiResponse {
         success: true,
@@ -75,7 +75,7 @@ pub async fn wip_statistics() -> Json<ApiResponse<WipStatistics>> {
 pub async fn list_quality_inspections(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<QualityInspection>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_quality_inspections(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -88,7 +88,7 @@ pub async fn list_quality_inspections(
 pub async fn list_production_orders(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ProductionOrder>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_production_orders(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -101,7 +101,7 @@ pub async fn list_production_orders(
 pub async fn list_workstations(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<WorkStation>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_workstations(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -114,7 +114,7 @@ pub async fn list_workstations(
 pub async fn list_production_records(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ProductionRecord>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_production_records(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -127,7 +127,7 @@ pub async fn list_production_records(
 pub async fn list_production_schedules(
     Query(params): Query<ListParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ProductionSchedule>>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let result = service.list_production_schedules(params.page, params.page_size);
     Json(ApiResponse {
         success: true,
@@ -138,7 +138,7 @@ pub async fn list_production_schedules(
 
 /// 设备统计
 pub async fn equipment_statistics() -> Json<ApiResponse<serde_json::Value>> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
     let stats = service.get_equipment_statistics();
     Json(ApiResponse {
         success: true,

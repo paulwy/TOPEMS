@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! File 模块权限测试
 //!
 //! 覆盖测试用例清单中的 FILE-001 到 FILE-008

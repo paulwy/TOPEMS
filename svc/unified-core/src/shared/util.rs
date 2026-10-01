@@ -324,6 +324,7 @@ pub fn system_time_to_ms(st: SystemTime) -> i64 {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use std::time::Duration;
@@ -405,7 +406,7 @@ mod tests {
             HealthStatus::Degraded,
             HealthStatus::Unhealthy,
         ] {
-            let j = serde_json::to_string(&s).unwrap();
+            let j = serde_json::to_string(&s).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
             let d: HealthStatus = serde_json::from_str(&j).unwrap();
             assert_eq!(d, s);
         }
@@ -419,7 +420,7 @@ mod tests {
             latency_ms: Some(250),
             message: Some("slow".into()),
         };
-        let j = serde_json::to_string(&c).unwrap();
+        let j = serde_json::to_string(&c).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: ComponentHealth = serde_json::from_str(&j).unwrap();
         assert_eq!(d, c);
     }
@@ -456,7 +457,7 @@ mod tests {
     #[test]
     fn pagination_roundtrip() {
         let p = build_pagination(Some(5), Some(25), 100);
-        let j = serde_json::to_string(&p).unwrap();
+        let j = serde_json::to_string(&p).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: Pagination = serde_json::from_str(&j).unwrap();
         assert_eq!(d, p);
     }
@@ -633,7 +634,7 @@ mod tests {
             op: FilterOp::Lt,
             value: "30".into(),
         };
-        let j = serde_json::to_string(&fc).unwrap();
+        let j = serde_json::to_string(&fc).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: FilterClause = serde_json::from_str(&j).unwrap();
         assert_eq!(d, fc);
 
@@ -646,7 +647,7 @@ mod tests {
             FilterOp::Lte,
             FilterOp::Contains,
         ] {
-            let j = serde_json::to_string(&op).unwrap();
+            let j = serde_json::to_string(&op).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
             let d: FilterOp = serde_json::from_str(&j).unwrap();
             assert_eq!(d, op);
         }
@@ -700,7 +701,7 @@ mod tests {
     #[test]
     fn api_list_resp_roundtrip() {
         let resp = ApiListResp::<Item>::new(vec![Item { id: 1 }, Item { id: 2 }], 42, 2, 20);
-        let j = serde_json::to_string(&resp).unwrap();
+        let j = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: ApiListResp<Item> = serde_json::from_str(&j).unwrap();
         assert_eq!(d.items, resp.items);
         assert_eq!(d.total, resp.total);
@@ -716,7 +717,7 @@ mod tests {
             user_id: "u-007".to_string(),
             roles: vec!["admin".into(), "user".into()],
         };
-        let j = serde_json::to_string(&t).unwrap();
+        let j = serde_json::to_string(&t).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let d: TenantScope = serde_json::from_str(&j).unwrap();
         assert_eq!(d, t);
     }

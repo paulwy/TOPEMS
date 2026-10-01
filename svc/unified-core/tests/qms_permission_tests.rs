@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! QMS 模块权限测试
 //!
 //! 覆盖质量管理模块的核心权限场景：

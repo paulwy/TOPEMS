@@ -82,6 +82,7 @@ pub(crate) struct PreferenceRow {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -143,7 +144,7 @@ mod tests {
         assert_eq!(cloned.username, "testuser");
         assert_eq!(cloned.roles.len(), 2);
 
-        let json = serde_json::to_string(&ur).unwrap();
+        let json = serde_json::to_string(&ur).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: UserResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(de.id, ur.id);
         assert!(de.is_active);

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! IM 模块权限测试
 //!
 //! 覆盖测试用例清单中的 IM-001 到 IM-007

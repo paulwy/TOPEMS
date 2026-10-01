@@ -382,6 +382,7 @@ pub struct CreateRuleRequest {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use serde_json;
@@ -432,7 +433,7 @@ mod tests {
             published_at: Some(sample_time()),
             code: Some("EXPENSE-REIMBURSEMENT".to_string()),
         };
-        let json = serde_json::to_string(&wf).unwrap();
+        let json = serde_json::to_string(&wf).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: Workflow = serde_json::from_str(&json).unwrap();
         assert_eq!(de.id, wf.id);
         assert_eq!(de.name, wf.name);
@@ -449,7 +450,7 @@ mod tests {
             status: Some("draft".to_string()),
             created_by: Some(Uuid::new_v4()),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateWorkflowRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "采购申请");
         assert!(de.description.is_some());
@@ -463,7 +464,7 @@ mod tests {
             definition: Some(serde_json::json!({"updated": true})),
             status: Some("published".to_string()),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: UpdateWorkflowRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, Some("新名称".to_string()));
         assert!(de.description.is_none());
@@ -485,7 +486,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json = serde_json::to_string(&inst).unwrap();
+        let json = serde_json::to_string(&inst).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowInstance = serde_json::from_str(&json).unwrap();
         assert_eq!(de.title, inst.title);
         assert_eq!(de.status, "running");
@@ -501,7 +502,7 @@ mod tests {
             initiator_id: Some(Uuid::new_v4()),
             variables: Some(serde_json::json!({"key": "value"})),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateInstanceRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.title, "测试实例");
     }
@@ -522,7 +523,7 @@ mod tests {
             completed_at: None,
             claimed_at: None,
         };
-        let json = serde_json::to_string(&task).unwrap();
+        let json = serde_json::to_string(&task).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowTask = serde_json::from_str(&json).unwrap();
         assert_eq!(de.node_id, "approve_1");
         assert_eq!(de.status, "pending");
@@ -535,7 +536,7 @@ mod tests {
             comment: Some("同意，符合规定".to_string()),
             variables: Some(serde_json::json!({"approved": true})),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: TaskActionRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.comment, Some("同意，符合规定".to_string()));
     }
@@ -547,7 +548,7 @@ mod tests {
             comment: Some("批量审批".to_string()),
             action: "approve".to_string(),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de_req: TaskBatchRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de_req.task_ids.len(), 3);
         assert_eq!(de_req.action, "approve");
@@ -560,7 +561,7 @@ mod tests {
                 error: "任务不存在".to_string(),
             }],
         };
-        let json2 = serde_json::to_string(&result).unwrap();
+        let json2 = serde_json::to_string(&result).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de_res: TaskBatchResult = serde_json::from_str(&json2).unwrap();
         assert_eq!(de_res.success_count, 2);
         assert_eq!(de_res.failed_tasks[0].task_id, "t2");
@@ -579,7 +580,7 @@ mod tests {
             my_created: 6,
             candidate: 1,
         };
-        let json = serde_json::to_string(&stats).unwrap();
+        let json = serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: TaskStats = serde_json::from_str(&json).unwrap();
         assert_eq!(de.todo, 5);
         assert_eq!(de.done, 10);
@@ -598,7 +599,7 @@ mod tests {
             is_active: true,
             created_at: sample_time(),
         };
-        let json = serde_json::to_string(&cat).unwrap();
+        let json = serde_json::to_string(&cat).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowCategory = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "财务类");
         assert!(de.is_active);
@@ -612,7 +613,7 @@ mod tests {
             description: Some("人力资源流程".to_string()),
             sort_order: Some(2),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateCategoryRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.code, Some("hr".to_string()));
     }
@@ -633,7 +634,7 @@ mod tests {
             is_active: true,
             created_at: sample_time(),
         };
-        let json = serde_json::to_string(&delegate).unwrap();
+        let json = serde_json::to_string(&delegate).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowDelegate = serde_json::from_str(&json).unwrap();
         assert_eq!(de.delegator_name, Some("张三".to_string()));
         assert!(de.is_active);
@@ -649,7 +650,7 @@ mod tests {
             workflow_ids: Some(vec!["wf-uuid-1".to_string()]),
             reason: Some("休假".to_string()),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json = serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateDelegateRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.reason, Some("休假".to_string()));
     }
@@ -670,7 +671,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json = serde_json::to_string(&fd).unwrap();
+        let json = serde_json::to_string(&fd).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de_fd: FormDefinition = serde_json::from_str(&json).unwrap();
         assert_eq!(de_fd.name, "请假单");
         assert!(de_fd.is_active);
@@ -688,7 +689,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json2 = serde_json::to_string(&fi).unwrap();
+        let json2 = serde_json::to_string(&fi).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de_fi: FormInstance = serde_json::from_str(&json2).unwrap();
         assert_eq!(de_fi.status, "submitted");
     }
@@ -703,7 +704,7 @@ mod tests {
             layout: None,
             is_active: Some(true),
         };
-        let json = serde_json::to_string(&cfd).unwrap();
+        let json = serde_json::to_string(&cfd).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateFormDefinitionRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "报销单");
 
@@ -712,7 +713,7 @@ mod tests {
             workflow_instance_id: None,
             data: serde_json::json!({"amount": 500}),
         };
-        let json2 = serde_json::to_string(&cfi).unwrap();
+        let json2 = serde_json::to_string(&cfi).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: CreateFormInstanceRequest = serde_json::from_str(&json2).unwrap();
         assert!(de2.workflow_instance_id.is_none());
     }
@@ -736,7 +737,7 @@ mod tests {
             data: Some(serde_json::json!({"action": "pass"})),
             created_at: sample_time(),
         };
-        let json = serde_json::to_string(&h).unwrap();
+        let json = serde_json::to_string(&h).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowHistory = serde_json::from_str(&json).unwrap();
         assert_eq!(de.action, "approve");
         assert_eq!(de.actor_name, Some("主管A".to_string()));
@@ -754,7 +755,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json = serde_json::to_string(&s).unwrap();
+        let json = serde_json::to_string(&s).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowSetting = serde_json::from_str(&json).unwrap();
         assert_eq!(de.key, "auto_approve_threshold");
 
@@ -764,7 +765,7 @@ mod tests {
             description: "附件最大大小".to_string(),
             category: "file".to_string(),
         };
-        let json2 = serde_json::to_string(&csr).unwrap();
+        let json2 = serde_json::to_string(&csr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: CreateSettingRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.category, "file");
     }
@@ -785,7 +786,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json = serde_json::to_string(&t).unwrap();
+        let json = serde_json::to_string(&t).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowTemplate = serde_json::from_str(&json).unwrap();
         assert_eq!(de.usage_count, Some(120));
         assert_eq!(de.is_active, Some(true));
@@ -821,7 +822,7 @@ mod tests {
                 approvals_processed: 350,
             }],
         };
-        let json = serde_json::to_string(&sr).unwrap();
+        let json = serde_json::to_string(&sr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: StatisticsResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(de.total_workflows, 25);
         assert_eq!(de.approval_rate, 0.8857);
@@ -848,7 +849,7 @@ mod tests {
             duration: Some(500),
             created_at: sample_time(),
         };
-        let json = serde_json::to_string(&pl).unwrap();
+        let json = serde_json::to_string(&pl).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: ProcessLog = serde_json::from_str(&json).unwrap();
         assert_eq!(de.action, "enter");
         assert_eq!(de.duration, Some(500));
@@ -870,7 +871,7 @@ mod tests {
             created_at: sample_time(),
             updated_at: sample_time(),
         };
-        let json = serde_json::to_string(&rule).unwrap();
+        let json = serde_json::to_string(&rule).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: WorkflowRule = serde_json::from_str(&json).unwrap();
         assert_eq!(de.rule_type, "escalation");
         assert!(de.is_active);
@@ -884,7 +885,7 @@ mod tests {
             action: Some(serde_json::json!({"notify": true})),
             is_active: Some(false),
         };
-        let json2 = serde_json::to_string(&crr).unwrap();
+        let json2 = serde_json::to_string(&crr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: CreateRuleRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.rule_type, "reminder");
     }

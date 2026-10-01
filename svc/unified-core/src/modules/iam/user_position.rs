@@ -189,6 +189,7 @@ pub async fn get_position_users(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

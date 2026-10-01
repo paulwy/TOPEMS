@@ -1252,6 +1252,7 @@ fn verify_password(password: &str, password_hash: &str) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -1355,7 +1356,7 @@ mod tests {
                 permissions: vec!["iam:read".to_string()],
             },
         };
-        let json = serde_json::to_string(&lrd).unwrap();
+        let json = serde_json::to_string(&lrd).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: LoginResponseData = serde_json::from_str(&json).unwrap();
         assert_eq!(de.token_type, "Bearer");
         assert_eq!(de.expires_in, 3600);

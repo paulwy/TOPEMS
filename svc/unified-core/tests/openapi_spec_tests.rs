@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! OpenAPI spec 完整性守卫：权限管理 API 路径必须出现在生成的 spec 中。
 //! 新增/删除 IAM 权限端点时同步维护 `expect_*` 断言，防止文档悄悄缺失。
 

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! IAM 模块权限测试
 //!
 //! 覆盖测试用例清单中的 IAM-001 到 IAM-009

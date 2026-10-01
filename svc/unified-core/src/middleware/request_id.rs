@@ -36,6 +36,7 @@ pub async fn request_id_middleware(
 pub struct RequestId(pub String);
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

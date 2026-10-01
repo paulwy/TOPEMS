@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! CRM 模块权限测试
 //!
 //! 覆盖 CRM 客户关系管理模块的核心权限场景

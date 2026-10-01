@@ -186,7 +186,7 @@ impl InMemoryPermissionStore {
 
         // Add a default owner permission for the default tenant
         let default_permission = TenantPermission::owner("default", "admin");
-        store.permissions.lock().unwrap().insert(
+        store.permissions.lock().unwrap_or_else(|e| e.into_inner()).insert(
             ("default".to_string(), "admin".to_string()),
             default_permission,
         );
@@ -218,7 +218,7 @@ impl PermissionStore for InMemoryPermissionStore {
     ) -> Result<(), PermissionStoreError> {
         let key = (permission.tenant_id.clone(), permission.user_id.clone());
 
-        let mut permissions = self.permissions.lock().unwrap();
+        let mut permissions = self.permissions.lock().unwrap_or_else(|e| e.into_inner());
         if permissions.contains_key(&key) {
             return Err(PermissionStoreError::AlreadyExists(
                 permission.tenant_id,
@@ -244,7 +244,7 @@ impl PermissionStore for InMemoryPermissionStore {
     ) -> Result<(), PermissionStoreError> {
         let key = (permission.tenant_id.clone(), permission.user_id.clone());
 
-        let mut permissions = self.permissions.lock().unwrap();
+        let mut permissions = self.permissions.lock().unwrap_or_else(|e| e.into_inner());
         if !permissions.contains_key(&key) {
             return Err(PermissionStoreError::NotFound(
                 permission.tenant_id,
@@ -263,7 +263,7 @@ impl PermissionStore for InMemoryPermissionStore {
     ) -> Result<(), PermissionStoreError> {
         let key = (tenant_id.to_string(), user_id.to_string());
 
-        let mut permissions = self.permissions.lock().unwrap();
+        let mut permissions = self.permissions.lock().unwrap_or_else(|e| e.into_inner());
         if permissions.remove(&key).is_none() {
             return Err(PermissionStoreError::NotFound(
                 tenant_id.to_string(),
@@ -278,7 +278,7 @@ impl PermissionStore for InMemoryPermissionStore {
         &self,
         tenant_id: &str,
     ) -> Result<Vec<TenantPermission>, PermissionStoreError> {
-        let permissions = self.permissions.lock().unwrap();
+        let permissions = self.permissions.lock().unwrap_or_else(|e| e.into_inner());
         Ok(permissions
             .values()
             .filter(|p| p.tenant_id == tenant_id)
@@ -290,7 +290,7 @@ impl PermissionStore for InMemoryPermissionStore {
         &self,
         user_id: &str,
     ) -> Result<Vec<TenantPermission>, PermissionStoreError> {
-        let permissions = self.permissions.lock().unwrap();
+        let permissions = self.permissions.lock().unwrap_or_else(|e| e.into_inner());
         Ok(permissions
             .values()
             .filter(|p| p.user_id == user_id)
@@ -312,7 +312,7 @@ impl PermissionStore for InMemoryPermissionStore {
     }
 
     async fn count(&self) -> Result<usize, PermissionStoreError> {
-        Ok(self.permissions.lock().unwrap().len())
+        Ok(self.permissions.lock().unwrap_or_else(|e| e.into_inner()).len())
     }
 }
 
@@ -355,7 +355,7 @@ pub struct PermissionStoreSummary {
 impl InMemoryPermissionStore {
     /// Get a summary of the permission store statistics.
     pub fn summary(&self) -> PermissionStoreSummary {
-        let permissions = self.permissions.lock().unwrap();
+        let permissions = self.permissions.lock().unwrap_or_else(|e| e.into_inner());
 
         let mut unique_tenants = std::collections::HashSet::new();
         let mut unique_users = std::collections::HashSet::new();
@@ -390,6 +390,7 @@ impl InMemoryPermissionStore {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::super::TenantRole;
     use super::*;
@@ -574,19 +575,19 @@ impl PermissionChangeNotifier {
     /// Subscribe to permission change events. Returns a receiver.
     pub fn subscribe(&self) -> tokio::sync::mpsc::UnboundedReceiver<PermissionChangeEvent> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-        self.subscribers.lock().unwrap().push(tx);
+        self.subscribers.lock().unwrap_or_else(|e| e.into_inner()).push(tx);
         rx
     }
 
     /// Publish an event to all subscribers. Dropped subscribers are pruned.
     pub fn publish(&self, event: PermissionChangeEvent) {
-        let mut subs = self.subscribers.lock().unwrap();
+        let mut subs = self.subscribers.lock().unwrap_or_else(|e| e.into_inner());
         subs.retain(|tx| tx.send(event.clone()).is_ok());
     }
 
     /// Number of active subscribers.
     pub fn subscriber_count(&self) -> usize {
-        self.subscribers.lock().unwrap().len()
+        self.subscribers.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 }
 

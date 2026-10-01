@@ -96,6 +96,7 @@ pub fn infer_module_and_operation(method: &str, path: &str) -> (String, String, 
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

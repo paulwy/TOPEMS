@@ -25,27 +25,27 @@ impl MockAuditLogStore {
 
     /// 添加一条日志（测试辅助方法）
     pub fn add_entry(&self, entry: AuditLogEntry) {
-        self.entries.lock().unwrap().push(entry);
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).push(entry);
     }
 
     /// 获取所有日志（测试辅助方法）
     pub fn get_all(&self) -> Vec<AuditLogEntry> {
-        self.entries.lock().unwrap().clone()
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     /// 获取日志数量（测试辅助方法）
     pub fn len(&self) -> usize {
-        self.entries.lock().unwrap().len()
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     /// 是否为空
     pub fn is_empty(&self) -> bool {
-        self.entries.lock().unwrap().is_empty()
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).is_empty()
     }
 
     /// 清空所有日志
     pub fn clear(&self) {
-        self.entries.lock().unwrap().clear();
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).clear();
     }
 }
 
@@ -58,12 +58,12 @@ impl Default for MockAuditLogStore {
 #[async_trait]
 impl AuditLogStore for MockAuditLogStore {
     async fn record(&self, entry: AuditLogEntry) -> Result<(), AuditLogError> {
-        self.entries.lock().unwrap().push(entry);
+        self.entries.lock().unwrap_or_else(|e| e.into_inner()).push(entry);
         Ok(())
     }
 
     async fn query(&self, query: &AuditLogQuery) -> Result<AuditLogResponse, AuditLogError> {
-        let entries = self.entries.lock().unwrap();
+        let entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         let mut filtered: Vec<AuditLogEntry> = entries
             .iter()
             .filter(|e| {
@@ -119,12 +119,12 @@ impl AuditLogStore for MockAuditLogStore {
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<AuditLogEntry>, AuditLogError> {
-        let entries = self.entries.lock().unwrap();
+        let entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         Ok(entries.iter().find(|e| e.id == id).cloned())
     }
 
     async fn count(&self) -> Result<usize, AuditLogError> {
-        Ok(self.entries.lock().unwrap().len())
+        Ok(self.entries.lock().unwrap_or_else(|e| e.into_inner()).len())
     }
 
     async fn query_logs(
@@ -138,7 +138,7 @@ impl AuditLogStore for MockAuditLogStore {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Result<Vec<AuditLogEntry>, AuditLogError> {
-        let entries = self.entries.lock().unwrap();
+        let entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         let mut filtered: Vec<AuditLogEntry> = entries
             .iter()
             .filter(|e| {
@@ -174,7 +174,7 @@ impl AuditLogStore for MockAuditLogStore {
     }
 
     async fn delete_log(&self, id: &str) -> Result<(), AuditLogError> {
-        let mut entries = self.entries.lock().unwrap();
+        let mut entries = self.entries.lock().unwrap_or_else(|e| e.into_inner());
         entries.retain(|e| e.id != id);
         Ok(())
     }

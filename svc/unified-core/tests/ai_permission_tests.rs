@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 //! AI 模块权限测试
 //!
 //! 覆盖人工智能模块的核心权限场景

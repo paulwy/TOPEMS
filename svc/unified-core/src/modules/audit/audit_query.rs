@@ -977,6 +977,7 @@ pub async fn list_audit_sources() -> Json<ApiResponse<serde_json::Value>> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

@@ -11,13 +11,14 @@ use topems_shared_auth::auth::{verify_jwt_token, Claims};
 use crate::AppState;
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::http::Uri;
 
     fn create_test_request(path: &str, tenant_id: Option<&str>) -> Request<Body> {
         let mut req = Request::builder()
-            .uri(Uri::try_from(path).unwrap())
+            .uri(Uri::try_from(path).unwrap_or_else(|e| panic!("invalid uri: {e}")))
             .body(Body::empty())
             .unwrap();
 
