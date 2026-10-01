@@ -111,6 +111,7 @@ pub mod option_date_time {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{Datelike, Timelike};

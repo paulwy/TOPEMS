@@ -1145,6 +1145,7 @@ pub async fn cancel_leave_request(
 // ============ 单元测试 ============
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

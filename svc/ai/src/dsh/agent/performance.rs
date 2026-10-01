@@ -543,6 +543,7 @@ fn percentile(sorted_data: &[u64], percentile: f64) -> f64 {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

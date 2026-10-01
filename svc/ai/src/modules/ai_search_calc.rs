@@ -210,6 +210,7 @@ pub fn term_frequency(tokens: &[String]) -> HashMap<String, usize> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

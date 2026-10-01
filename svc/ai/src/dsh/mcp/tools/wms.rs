@@ -473,6 +473,7 @@ fn generate_mock_warehouses(status_filter: &str, type_filter: &str) -> Vec<Value
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use topems_shared_mcp::protocol::McpContent;

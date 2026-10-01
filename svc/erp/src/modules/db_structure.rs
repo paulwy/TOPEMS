@@ -618,6 +618,7 @@ fn extract_user_from_headers(headers: &HeaderMap) -> Option<String> {
         .map(|s| s.to_string())
 }
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::http::HeaderValue;

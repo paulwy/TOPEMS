@@ -282,6 +282,7 @@ pub fn validate_elimination_params(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use rust_decimal::prelude::FromPrimitive;

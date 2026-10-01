@@ -418,6 +418,7 @@ pub async fn enhance_for_form(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use async_trait::async_trait;

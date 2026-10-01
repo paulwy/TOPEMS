@@ -426,6 +426,7 @@ fn extract_final_message_end(body: &str) -> Option<DifyChatResponse> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::models::DifyConfig;

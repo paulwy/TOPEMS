@@ -498,6 +498,7 @@ fn generate_mock_oee_dashboard(from: &str, to: &str) -> Value {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

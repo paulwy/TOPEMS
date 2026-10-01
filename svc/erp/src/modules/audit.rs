@@ -247,6 +247,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

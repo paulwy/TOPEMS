@@ -363,6 +363,7 @@ pub fn http_call(base: &str, method: &str, path: &str, body: Option<Value>) -> O
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use topems_shared_mcp::protocol::McpContent;

@@ -52,5 +52,7 @@ path = "src/main.rs"
 name = "erp-e2e-cli"
 path = "src/bin/erp-e2e-cli.rs"
 
-[lints]
-workspace = true
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"

@@ -195,6 +195,7 @@ fn apply_env_overrides(config: &mut ProviderConfig, prefix: &str) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

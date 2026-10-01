@@ -499,6 +499,7 @@ pub fn vector_to_pgvector_string(vector: &[f32]) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

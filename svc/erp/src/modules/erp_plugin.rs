@@ -379,6 +379,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

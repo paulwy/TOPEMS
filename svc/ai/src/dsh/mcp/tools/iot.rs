@@ -439,6 +439,7 @@ fn generate_mock_device_data(device_id: &str, type_filter: &str) -> Vec<Value> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

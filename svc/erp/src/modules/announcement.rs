@@ -731,6 +731,7 @@ pub async fn unpublish_announcement(
     response
 }
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     #[test]

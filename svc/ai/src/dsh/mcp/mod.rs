@@ -36,6 +36,7 @@ pub use tools::{
 };
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod business_tools_integration_tests {
     use super::resources::{register_business_resources, ResourceRegistry};
     use super::*;

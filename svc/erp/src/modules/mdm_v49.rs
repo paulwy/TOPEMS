@@ -115,6 +115,7 @@ pub fn create_routes() -> axum::Router<ApiState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
 
     // types 模块定义了 LifecycleStage/TaskStatus 等类型，
