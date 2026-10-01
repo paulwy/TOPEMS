@@ -1287,6 +1287,7 @@ pub async fn analyze_capacity(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::{NaiveDate, TimeZone};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

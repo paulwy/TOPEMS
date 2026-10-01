@@ -1338,6 +1338,7 @@ pub async fn create_inspection(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::{NaiveDate, TimeZone};
 
     // ---- naive_to_utc ----
     #[test]
