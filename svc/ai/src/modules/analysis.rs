@@ -219,6 +219,11 @@ pub async fn extract_keywords(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// GET /api/analysis/history - 获取分析历史
 pub async fn history(
     State(state): State<AppState>,

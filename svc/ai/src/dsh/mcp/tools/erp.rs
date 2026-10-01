@@ -25,6 +25,11 @@ fn erp_client(jwt_secret: &str) -> Result<TypedServiceClient<ErpApi>, ToolExecut
         .map_err(|e| ToolExecutionError::Execution(format!("ERP 客户端初始化失败: {}", e)))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 注册 ERP 业务工具（4 个）
 pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
     // &'static str：MCP 工具注册仅一次，leak 生命周期与进程一致（Fn 闭包需 'static 捕获）
@@ -236,6 +241,7 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
 
 // ============ Mock 降级数据 ============
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_orders(status_filter: &str, customer_filter: &str) -> Vec<Value> {
     let statuses = ["pending", "confirmed", "shipped", "completed", "cancelled"];

@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取物料列表（真实数据库查询）
 pub async fn list_materials(
     State(state): State<AppState>,
@@ -100,6 +101,7 @@ pub async fn list_materials(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取BOM列表（真实数据库查询）
 pub async fn list_boms(
     State(state): State<AppState>,
@@ -178,6 +180,7 @@ pub async fn list_boms(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取文档列表（真实数据库查询）
 pub async fn list_documents(
     State(state): State<AppState>,

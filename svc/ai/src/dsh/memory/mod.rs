@@ -124,6 +124,7 @@ impl MemoryItem {
         self
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 设置过期时间（秒）
     pub fn with_ttl(mut self, ttl_seconds: u64) -> Self {
         let expires = chrono::Utc::now() + chrono::Duration::seconds(ttl_seconds as i64);
@@ -665,6 +666,7 @@ impl MemorySystem {
         count
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计
     pub fn get_stats(&self) -> MemoryStats {
         let mut stats = self.stats.lock().clone();

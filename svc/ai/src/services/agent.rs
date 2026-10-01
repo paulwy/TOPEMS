@@ -997,6 +997,7 @@ impl WorkflowOrchestrator {
         self.workflows.get(id)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_workflow(
         &self,
         request: WorkflowExecutionRequest,

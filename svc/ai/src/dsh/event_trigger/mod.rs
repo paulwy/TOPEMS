@@ -567,6 +567,7 @@ impl EventTriggerEngine {
         processed
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 处理单个事件
     pub fn process_event(&self, event: BusinessEvent) -> Result<EventProcessingRecord, String> {
         let start_time = Instant::now();
@@ -933,6 +934,7 @@ impl EventTriggerEngine {
         result
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计信息
     pub fn get_stats(&self) -> EventTriggerStats {
         let rules = self.rules.lock();

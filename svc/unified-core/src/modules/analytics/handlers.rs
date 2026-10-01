@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取仪表板列表（真实数据库查询）
 pub async fn list_dashboards(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_dashboards(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取数据集列表（真实数据库查询）
 pub async fn list_datasets(
     State(state): State<AppState>,
@@ -160,6 +162,7 @@ pub async fn list_datasets(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取数据源列表（真实数据库查询）
 pub async fn list_datasources(
     State(state): State<AppState>,
@@ -234,6 +237,7 @@ pub async fn list_datasources(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取组件列表（真实数据库查询）
 pub async fn list_widgets(
     State(state): State<AppState>,

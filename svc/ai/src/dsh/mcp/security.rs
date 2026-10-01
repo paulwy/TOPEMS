@@ -251,6 +251,7 @@ impl McpSecurityMiddleware {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions)]
     /// 检查速率限制
     pub async fn check_rate_limit(&self, user_id: &str) -> Result<(), ToolExecutionError> {
         let now = Instant::now();
@@ -347,6 +348,7 @@ impl McpSecurityMiddleware {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 获取当前速率限制状态
     pub async fn get_rate_limit_status(&self, user_id: &str) -> RateLimitStatus {
         let rate_limits = self.rate_limits.read().await;

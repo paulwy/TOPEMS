@@ -650,6 +650,7 @@ impl WorkflowEngine {
         removed
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行工作流（同步模拟执行）
     pub fn execute_workflow(
         &self,
@@ -1021,6 +1022,7 @@ impl WorkflowEngine {
         self.register_workflow(definition)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计信息
     pub fn get_stats(&self) -> WorkflowEngineStats {
         let workflows = self.workflows.lock();

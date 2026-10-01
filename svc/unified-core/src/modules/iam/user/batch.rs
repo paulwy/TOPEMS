@@ -23,6 +23,7 @@ struct EffectivePermissionRow {
     action: Option<String>,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// GET /users/{userId}/effective-permissions — 返回用户有效权限（direct + role + total）
 pub async fn get_effective_permissions(
     State(state): State<AppState>,

@@ -262,6 +262,7 @@ impl AgentOrchestrator {
         &self.context_manager
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行 Agent 请求（非流式）
     pub async fn execute(&self, request: AgentExecuteRequest) -> AgentExecuteResponse {
         let start_time = Instant::now();
@@ -619,6 +620,7 @@ impl AgentOrchestrator {
         Ok(response)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 思考步骤
     async fn think_step(
         &self,
@@ -841,6 +843,7 @@ impl AgentOrchestrator {
         (None, None, "基于已有信息生成答案".to_string())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行工具步骤
     async fn execute_tool_step(
         &self,

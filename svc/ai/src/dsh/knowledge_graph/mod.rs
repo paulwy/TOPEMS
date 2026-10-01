@@ -690,6 +690,7 @@ impl KnowledgeGraph {
         results
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 社区发现（简化实现：基于连通分量）
     pub fn detect_communities(&self) -> Vec<CommunityResult> {
         let max_communities = self.config.max_communities;
@@ -769,6 +770,7 @@ impl KnowledgeGraph {
         communities
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 获取知识图谱统计
     pub fn get_stats(&self) -> KnowledgeGraphStats {
         // 第一部分：持有锁计算基本统计信息
@@ -890,6 +892,7 @@ impl EntityRelationExtractor {
         Self::new(KnowledgeGraphConfig::default())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 从文本中提取实体和关系（简化实现，基于规则）
     pub fn extract(&self, text: &str) -> ExtractionResult {
         let start_time = std::time::Instant::now();

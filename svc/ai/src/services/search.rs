@@ -5,6 +5,7 @@
 use crate::models::{VectorEmbedding, VECTORS};
 use crate::services::embedding::generate_embeddings;
 
+#[allow(clippy::as_conversions)]
 pub fn cosine_similarity(vec1: &[f32], vec2: &[f32]) -> f64 {
     if vec1.is_empty() || vec2.is_empty() || vec1.len() != vec2.len() {
         return 0.0;

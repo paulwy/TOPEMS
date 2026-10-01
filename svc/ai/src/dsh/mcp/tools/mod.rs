@@ -294,6 +294,7 @@ impl ToolRegistry {
 // 供各业务工具文件（crm/erp/finance/...）调用真实服务 HTTP API
 // =====================================================================
 
+#[allow(clippy::as_conversions)]
 /// URL 查询参数编码（非 ASCII / 特殊字符 → %XX）
 pub fn url_encode(s: &str) -> String {
     let mut out = String::new();

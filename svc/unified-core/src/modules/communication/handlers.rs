@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取通知列表（真实数据库查询）
 pub async fn list_notifications(
     State(state): State<AppState>,
@@ -89,6 +90,7 @@ pub async fn list_notifications(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取通知模板列表（真实数据库查询）
 pub async fn list_notification_templates(
     State(state): State<AppState>,
@@ -164,6 +166,7 @@ pub async fn list_notification_templates(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取邮件列表（真实数据库查询）
 pub async fn list_emails(
     State(state): State<AppState>,
@@ -236,6 +239,7 @@ pub async fn list_emails(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取邮件模板列表（真实数据库查询）
 pub async fn list_email_templates(
     State(state): State<AppState>,

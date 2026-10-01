@@ -51,6 +51,7 @@ pub fn apply_operator(numbers: &mut Vec<f64>, op: char) {
     numbers.push(result);
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 计算字符串表达式结果
 ///
 /// 提取自 `services/agent.rs:372-429`

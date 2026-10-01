@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取招标列表（真实数据库查询）
 pub async fn list_tenders(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_tenders(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取投标列表（真实数据库查询）
 pub async fn list_bids(
     State(state): State<AppState>,
@@ -160,6 +162,7 @@ pub async fn list_bids(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取报价列表（真实数据库查询）
 pub async fn list_quotations(
     State(state): State<AppState>,
@@ -232,6 +235,7 @@ pub async fn list_quotations(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取供应商合同列表（真实数据库查询）
 pub async fn list_supplier_contracts(
     State(state): State<AppState>,
@@ -303,6 +307,7 @@ pub async fn list_supplier_contracts(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取供应商评估列表（真实数据库查询）
 pub async fn list_supplier_evaluations(
     State(state): State<AppState>,

@@ -272,6 +272,7 @@ pub async fn list_documents(
     ),
     tag = "ai"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_document(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

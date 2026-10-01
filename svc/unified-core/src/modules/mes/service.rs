@@ -284,6 +284,11 @@ impl MesService {
         MES_SERVICE.get_or_init(|| Mutex::new(Self::new()))
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_equipment(&self, page: i32, page_size: i32) -> PaginatedResponse<Equipment> {
         let start = ((page - 1) * page_size) as usize;
@@ -301,6 +306,11 @@ impl MesService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_work_orders(&self, page: i32, page_size: i32) -> PaginatedResponse<WorkOrder> {
         let start = ((page - 1) * page_size) as usize;
@@ -353,6 +363,11 @@ impl MesService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_quality_inspections(
         &self,
@@ -374,6 +389,11 @@ impl MesService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_production_orders(
         &self,
@@ -395,6 +415,11 @@ impl MesService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_workstations(&self, page: i32, page_size: i32) -> PaginatedResponse<WorkStation> {
         let start = ((page - 1) * page_size) as usize;
@@ -412,6 +437,11 @@ impl MesService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_production_records(
         &self,
@@ -433,6 +463,11 @@ impl MesService {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub fn list_production_schedules(
         &self,
@@ -454,6 +489,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_equipment_statistics(&self) -> serde_json::Value {
         let running = self
             .equipment
@@ -482,6 +518,11 @@ impl MesService {
         })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub fn get_dashboard_stats(&self) -> serde_json::Value {
         let equipment_running = self
             .equipment

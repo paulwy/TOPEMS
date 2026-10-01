@@ -458,6 +458,7 @@ impl SmartFormEngine {
             .collect()
     }
 
+    #[allow(clippy::as_conversions)]
     /// 验证表单数据
     pub fn validate_form(
         &self,
@@ -2181,6 +2182,7 @@ impl DocumentIntelligenceEngine {
         self.documents.lock().get(document_id).cloned()
     }
 
+    #[allow(clippy::as_conversions)]
     /// 解析文档
     pub fn parse_document(
         &self,
@@ -2220,6 +2222,7 @@ impl DocumentIntelligenceEngine {
         Ok(result)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 提取文档结构
     fn extract_structure(&self, content: &str) -> DocumentStructure {
         let mut sections = Vec::new();
@@ -2313,6 +2316,7 @@ impl DocumentIntelligenceEngine {
         tables
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 生成文档摘要
     pub fn generate_summary(
         &self,
@@ -2365,6 +2369,7 @@ impl DocumentIntelligenceEngine {
         })
     }
 
+    #[allow(clippy::as_conversions)]
     /// 提取关键词
     fn extract_keywords(&self, content: &str, top_n: usize) -> Vec<KeywordWeight> {
         let mut word_freq: HashMap<String, u32> = HashMap::new();
@@ -2393,6 +2398,7 @@ impl DocumentIntelligenceEngine {
         keywords
     }
 
+    #[allow(clippy::as_conversions)]
     /// 生成文档
     pub fn generate_document(
         &self,
@@ -2552,6 +2558,7 @@ fn extract_date(text: &str) -> Option<String> {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

@@ -256,6 +256,11 @@ impl AuditLogStore for DatabaseAuditLogStore {
         Ok(())
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     async fn query(&self, query: &AuditLogQuery) -> Result<AuditLogResponse, AuditLogError> {
         let (where_clause, _params) = Self::build_where_clause(query);
 
@@ -314,6 +319,11 @@ impl AuditLogStore for DatabaseAuditLogStore {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     async fn count(&self) -> Result<usize, AuditLogError> {
         let row = sqlx::query("SELECT COUNT(*) as count FROM permission_audit_logs")
             .fetch_one(&*self.pool)

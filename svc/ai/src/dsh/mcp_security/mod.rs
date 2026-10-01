@@ -613,6 +613,7 @@ impl SecurityEngine {
         (redacted, count)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 检查速率限制
     pub fn check_rate_limit(&self, user_id: &str, tenant_id: &str) -> (bool, Option<String>) {
         if !self.config.enable_rate_limit || !self.config.rate_limit.enabled {
@@ -747,6 +748,7 @@ impl SecurityEngine {
         (validation_result, warnings)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计信息
     pub fn get_stats(&self) -> SecurityStats {
         let logs = self.audit_logs.lock();

@@ -155,6 +155,7 @@ impl LlmProvider for OllamaProvider {
         &self.config
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn ask(&self, request: LlmRequest) -> Result<LlmResponse, LlmProviderError> {
         let model = request
             .model

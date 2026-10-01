@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取承运人列表（真实数据库查询）
 pub async fn list_carriers(
     State(state): State<AppState>,
@@ -89,6 +90,7 @@ pub async fn list_carriers(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取司机列表（真实数据库查询）
 pub async fn list_drivers(
     State(state): State<AppState>,
@@ -161,6 +163,7 @@ pub async fn list_drivers(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取路线列表（真实数据库查询）
 pub async fn list_routes(
     State(state): State<AppState>,
@@ -233,6 +236,7 @@ pub async fn list_routes(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取货运列表（真实数据库查询）
 pub async fn list_shipments(
     State(state): State<AppState>,
@@ -306,6 +310,7 @@ pub async fn list_shipments(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取车辆列表（真实数据库查询）
 pub async fn list_vehicles(
     State(state): State<AppState>,

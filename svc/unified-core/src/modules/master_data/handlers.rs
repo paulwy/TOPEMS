@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取字典类型列表（真实数据库查询）
 pub async fn list_dict_types(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_dict_types(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取字典项列表（真实数据库查询）
 pub async fn list_dict_items(
     State(state): State<AppState>,
@@ -160,6 +162,7 @@ pub async fn list_dict_items(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取Schema注册表列表（真实数据库查询）
 pub async fn list_schema_registry(
     State(state): State<AppState>,
@@ -232,6 +235,7 @@ pub async fn list_schema_registry(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取动态数据列表（真实数据库查询）
 pub async fn list_dynamic_data(
     State(state): State<AppState>,

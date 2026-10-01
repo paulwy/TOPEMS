@@ -156,6 +156,7 @@ impl QAService {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 提问并获取答案
     pub async fn ask(
         &self,
@@ -204,6 +205,7 @@ impl QAService {
         Ok((answer, vec![], qa_id, confidence))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 基于文档上下文提问
     pub async fn ask_with_context(
         &self,
@@ -269,6 +271,7 @@ impl QAService {
         self.get_qa_history_paged(0, limit, tenant_id).await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取问答历史（分页版本）
     pub async fn get_qa_history_paged(
         &self,
@@ -333,6 +336,7 @@ impl QAService {
         Ok(count)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 搜索问答历史
     pub async fn search_qa_history(
         &self,
@@ -427,6 +431,7 @@ impl QAService {
         Ok(result.rows_affected() > 0)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 批量删除问答历史
     pub async fn batch_delete_qa_history(
         &self,
@@ -496,6 +501,7 @@ impl QAService {
             .map_err(|e| format!("调用 AI API 失败: {}", e))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 写入 usage 日志（token/延迟；失败仅告警，不影响主流程）
     async fn save_usage_log(
         &self,
@@ -946,6 +952,7 @@ impl QAService {
         Ok(enhanced_results.into_iter().take(top_k).collect())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 语义搜索 - 基于查询文本生成嵌入并搜索
     pub async fn semantic_search(
         &self,
@@ -1008,6 +1015,7 @@ impl QAService {
         Ok(search_results)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 混合检索 - 结合向量搜索和关键词搜索
     pub async fn hybrid_search(
         &self,

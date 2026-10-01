@@ -10,6 +10,7 @@ use std::collections::HashMap;
 
 // ── 向量相似度 ─────────────────────────────────────
 
+#[allow(clippy::as_conversions)]
 /// 余弦相似度
 ///
 /// 提取自 `services/search.rs:8`
@@ -41,6 +42,7 @@ pub fn cosine_similarity(vec1: &[f32], vec2: &[f32]) -> f64 {
     dot_product / (norm_a * norm_b)
 }
 
+#[allow(clippy::as_conversions)]
 /// 欧氏距离（平方）
 pub fn euclidean_distance_sq(vec1: &[f32], vec2: &[f32]) -> f64 {
     if vec1.is_empty() || vec2.is_empty() || vec1.len() != vec2.len() {
@@ -54,6 +56,7 @@ pub fn euclidean_distance_sq(vec1: &[f32], vec2: &[f32]) -> f64 {
     sum_sq
 }
 
+#[allow(clippy::as_conversions)]
 /// 点积相似度（归一化向量时等同余弦）
 pub fn dot_product_similarity(vec1: &[f32], vec2: &[f32]) -> f64 {
     if vec1.is_empty() || vec2.is_empty() || vec1.len() != vec2.len() {
@@ -98,6 +101,7 @@ pub fn filter_and_rank<T>(
     filtered
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// RAG 混合检索融合：向量分数 + BM25 关键字分数加权
 ///
 /// - vector_weight + keyword_weight 建议 ≈ 1.0
@@ -185,6 +189,7 @@ pub fn needs_context(question: &str) -> bool {
 
 // ── 向量归一化 ─────────────────────────────────────
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// L2 归一化：v / ||v||。零向量返回全零
 pub fn normalize_l2(vec: &[f32]) -> Vec<f32> {
     if vec.is_empty() {

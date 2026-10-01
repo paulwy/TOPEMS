@@ -21,6 +21,7 @@ pub struct ListParams {
     pub status: Option<String>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取采购订单列表（真实数据库查询）
 pub async fn list_purchase_orders(
     State(state): State<AppState>,
@@ -106,6 +107,7 @@ pub async fn list_purchase_orders(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取销售订单列表（真实数据库查询）
 pub async fn list_sales_orders(
     State(state): State<AppState>,
@@ -184,6 +186,7 @@ pub async fn list_sales_orders(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取生产订单列表（真实数据库查询）
 pub async fn list_production_orders(
     State(state): State<AppState>,

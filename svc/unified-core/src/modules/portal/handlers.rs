@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取公告列表（真实数据库查询）
 pub async fn list_announcements(
     State(state): State<AppState>,
@@ -84,6 +85,7 @@ pub async fn list_announcements(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取常见问题列表（真实数据库查询）
 pub async fn list_faqs(
     State(state): State<AppState>,
@@ -155,6 +157,7 @@ pub async fn list_faqs(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取待办事项列表（真实数据库查询）
 pub async fn list_todos(
     State(state): State<AppState>,
@@ -222,6 +225,7 @@ pub async fn list_todos(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取指南列表（真实数据库查询）
 pub async fn list_guides(
     State(state): State<AppState>,

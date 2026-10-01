@@ -373,6 +373,12 @@ fn split_sentences(text: &str) -> Vec<String> {
     sentences
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// 粗略估算 token 数
 ///
 /// 启发式规则：
@@ -395,6 +401,7 @@ pub fn estimate_tokens(text: &str) -> usize {
     (cjk_tokens + other_tokens).max(1)
 }
 
+#[allow(clippy::as_conversions)]
 fn is_cjk_char(ch: char) -> bool {
     let code = ch as u32;
     // CJK 统一表意文字基本区 + 扩展A + 兼容表意文字

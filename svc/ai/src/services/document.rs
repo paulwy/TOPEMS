@@ -83,6 +83,7 @@ impl DocumentService {
         self.vector_service.read().await.db().pool().clone()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 处理文档上传
     pub async fn process_upload(
         &self,
@@ -293,6 +294,11 @@ impl DocumentService {
         serde_json::to_value(metadata).unwrap_or(serde_json::json!({}))
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     /// 保存分块和向量
     async fn save_chunks_and_vectors(
         &self,
@@ -876,6 +882,7 @@ impl DocumentService {
         Ok(Vec::new())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 计算文本相似度（简单的关键词匹配）
     fn calculate_text_similarity(&self, query: &str, text: &str) -> f64 {
         let query_words: std::collections::HashSet<_> = query.split_whitespace().collect();
@@ -891,6 +898,7 @@ impl DocumentService {
         intersection_size as f64 / union_size as f64
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 高级置信度计算
     fn calculate_confidence_advanced(&self, answer: &str, context_chunks: &[SearchResult]) -> f64 {
         let length_score = if answer.len() > 200 {

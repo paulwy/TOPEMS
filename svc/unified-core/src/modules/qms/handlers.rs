@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取检验项目列表（真实数据库查询）
 pub async fn list_inspection_items(
     State(state): State<AppState>,
@@ -94,6 +95,7 @@ pub async fn list_inspection_items(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取质检单列表（真实数据库查询）
 pub async fn list_quality_inspections(
     State(state): State<AppState>,
@@ -178,6 +180,7 @@ pub async fn list_quality_inspections(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取质量问题列表（真实数据库查询）
 pub async fn list_quality_issues(
     State(state): State<AppState>,

@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取员工列表（真实数据库查询）
 pub async fn list_employees(
     State(state): State<AppState>,
@@ -101,6 +102,7 @@ pub async fn list_employees(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取部门列表（真实数据库查询）
 pub async fn list_departments(
     State(state): State<AppState>,
@@ -179,6 +181,7 @@ pub async fn list_departments(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取招聘职位列表（真实数据库查询）
 pub async fn list_job_openings(
     State(state): State<AppState>,
@@ -260,6 +263,7 @@ pub async fn list_job_openings(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取培训课程列表（真实数据库查询）
 pub async fn list_training_courses(
     State(state): State<AppState>,
@@ -342,6 +346,7 @@ pub async fn list_training_courses(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取考勤记录列表（真实数据库查询）
 pub async fn list_attendance_records(
     State(state): State<AppState>,

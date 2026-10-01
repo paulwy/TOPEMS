@@ -67,6 +67,7 @@ impl RecordingProvider {
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 简单成本估算（每 1K token 固定单价，真实环境应接入模型定价表）
 fn estimate_cost(input_tokens: u32, output_tokens: u32) -> f64 {
     const INPUT_PER_1K: f64 = 0.001;
@@ -84,6 +85,7 @@ impl LlmProvider for RecordingProvider {
         self.inner.config()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn ask(&self, request: LlmRequest) -> Result<LlmResponse, LlmProviderError> {
         let model = request
             .model
@@ -97,6 +99,7 @@ impl LlmProvider for RecordingProvider {
         result
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn ask_stream(
         &self,
         request: LlmRequest,
@@ -141,6 +144,7 @@ impl LlmProvider for RecordingProvider {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

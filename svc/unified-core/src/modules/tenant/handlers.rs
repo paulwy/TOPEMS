@@ -629,6 +629,7 @@ pub async fn suspend_tenant(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// Get tenant quota and usage
 pub async fn get_tenant_quota(
     State(state): State<AppState>,
@@ -1303,6 +1304,11 @@ pub struct SwitchTenantResponse {
     pub tenant: Tenant,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// Switch tenant
 pub async fn switch_tenant(
     State(state): State<AppState>,

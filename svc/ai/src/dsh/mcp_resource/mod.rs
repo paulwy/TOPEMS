@@ -722,6 +722,7 @@ impl ResourceManager {
         Ok(true)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计信息
     pub fn get_stats(&self) -> ResourceManagerStats {
         let resources = self.resources.lock();

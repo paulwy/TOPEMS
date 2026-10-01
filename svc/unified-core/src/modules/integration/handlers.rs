@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取异步任务列表（真实数据库查询）
 pub async fn list_async_tasks(
     State(state): State<AppState>,
@@ -89,6 +90,7 @@ pub async fn list_async_tasks(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取集成事件列表（真实数据库查询）
 pub async fn list_integration_events(
     State(state): State<AppState>,
@@ -161,6 +163,7 @@ pub async fn list_integration_events(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取ERP连接列表（真实数据库查询）
 pub async fn list_erp_connections(
     State(state): State<AppState>,
@@ -231,6 +234,7 @@ pub async fn list_erp_connections(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取ERP映射列表（真实数据库查询）
 pub async fn list_erp_mappings(
     State(state): State<AppState>,

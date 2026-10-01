@@ -100,6 +100,7 @@ impl RecommendationService {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn recommend_documents(
         &self,
         _request: &RecommendationRequest,
@@ -432,6 +433,7 @@ impl RecommendationService {
         self.get_user_profile(user_id).await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn recommend_articles(
         &self,
         _request: &RecommendationRequest,

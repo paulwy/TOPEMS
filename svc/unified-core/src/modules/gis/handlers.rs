@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取设备列表（真实数据库查询）
 pub async fn list_devices(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_devices(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取地图列表（真实数据库查询）
 pub async fn list_maps(
     State(state): State<AppState>,
@@ -159,6 +161,7 @@ pub async fn list_maps(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取电子围栏列表（真实数据库查询）
 pub async fn list_geofences(
     State(state): State<AppState>,
@@ -230,6 +233,7 @@ pub async fn list_geofences(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取轨迹记录列表（真实数据库查询）
 pub async fn list_track_records(
     State(state): State<AppState>,
@@ -301,6 +305,7 @@ pub async fn list_track_records(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取位置列表（真实数据库查询）
 pub async fn list_locations(
     State(state): State<AppState>,

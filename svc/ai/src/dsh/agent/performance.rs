@@ -177,6 +177,7 @@ impl AgentPerformanceMonitor {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 记录工具调用
     pub fn record_tool_call(&self, tool_name: &str, duration_ms: u64, success: bool) {
         if !self.config.enabled {
@@ -215,6 +216,7 @@ impl AgentPerformanceMonitor {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 记录执行完成
     fn record_execution(
         &self,
@@ -489,6 +491,7 @@ impl ExecutionTimer {
         self.iterations = count;
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 完成执行（成功）
     pub fn finish_success(self) -> Duration {
         let duration = self.start_time.elapsed();
@@ -502,6 +505,7 @@ impl ExecutionTimer {
         duration
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 完成执行（失败）
     pub fn finish_failure(self) -> Duration {
         let duration = self.start_time.elapsed();
@@ -525,6 +529,12 @@ impl ExecutionTimer {
 // 工具函数
 // ============================================================================
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// 计算百分位数（最近秩法）
 fn percentile(sorted_data: &[u64], percentile: f64) -> f64 {
     if sorted_data.is_empty() {

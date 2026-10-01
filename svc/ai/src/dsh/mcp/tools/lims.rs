@@ -17,6 +17,7 @@ use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 use super::super::tools::{http_call, service_base_url, url_encode};
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 注册 LIMS 业务工具到 MCP Server
 ///
 /// # 参数

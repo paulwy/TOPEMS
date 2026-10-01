@@ -26,6 +26,11 @@ fn finance_client(jwt_secret: &str) -> Result<TypedServiceClient<FinanceApi>, To
         .map_err(|e| ToolExecutionError::Execution(format!("Finance 客户端初始化失败: {}", e)))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 注册 Finance 业务工具（3 个）
 pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
     // &'static str：MCP 工具注册仅一次，leak 生命周期与进程一致（Fn 闭包需 'static 捕获）
@@ -179,6 +184,7 @@ fn generate_mock_account_balance(subject_code: Option<&str>) -> Value {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_receivables(status_filter: &str) -> Vec<Value> {
     let statuses = ["unpaid", "partial", "paid", "overdue"];

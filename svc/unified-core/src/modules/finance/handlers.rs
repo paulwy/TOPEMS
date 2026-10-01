@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取应收列表（真实数据库查询）
 pub async fn list_receivables(
     State(state): State<AppState>,
@@ -90,6 +91,7 @@ pub async fn list_receivables(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取应付列表（真实数据库查询）
 pub async fn list_payables(
     State(state): State<AppState>,
@@ -163,6 +165,7 @@ pub async fn list_payables(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取凭证列表（真实数据库查询）
 pub async fn list_vouchers(
     State(state): State<AppState>,
@@ -243,6 +246,7 @@ pub async fn list_vouchers(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取预算列表（真实数据库查询）
 pub async fn list_budgets(
     State(state): State<AppState>,

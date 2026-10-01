@@ -164,6 +164,7 @@ impl TokenBucket {
 // 5. 幂等键哈希（FNV-1a 64-bit + salt → hex）
 // ============================================================================
 
+#[allow(clippy::as_conversions)]
 pub fn idempotency_key_hash(tenant_id: &str, endpoint: &str, client_key: &str) -> String {
     const FNV_OFFSET: u64 = 14_695_981_039_346_656_037;
     const FNV_PRIME: u64 = 1_099_511_628_211;
@@ -194,6 +195,7 @@ pub enum TimeBucket {
     Day,
 }
 
+#[allow(clippy::as_conversions)]
 /// 把毫秒时间戳向下取整到给定 bucket 的毫秒边界。
 pub fn truncate_timestamp_ms(ts_ms: i64, bucket: TimeBucket) -> i64 {
     let sec = bucket_seconds(bucket);
@@ -308,6 +310,7 @@ pub struct TenantScope {
     pub roles: Vec<String>,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 将 SystemTime 转为毫秒 UNIX 时间戳（纯函数，无 panics）。
 pub fn system_time_to_ms(st: SystemTime) -> i64 {
     match st.duration_since(UNIX_EPOCH) {

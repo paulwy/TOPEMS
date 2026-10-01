@@ -106,6 +106,7 @@ pub async fn store(
     ),
     tag = "ai"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn search(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -243,6 +244,11 @@ pub async fn delete(
     ),
     tag = "ai"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn batch_store(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -324,6 +330,7 @@ pub async fn batch_store(
     ),
     tag = "ai"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn hybrid_search(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

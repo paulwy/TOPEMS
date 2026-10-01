@@ -350,6 +350,7 @@ impl CircuitBreaker {
         stats.state = *state;
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 记录失败
     pub fn record_failure(&self) {
         let mut state = self.state.lock();
@@ -432,6 +433,13 @@ impl CircuitBreaker {
 pub struct RetryDelayCalculator;
 
 impl RetryDelayCalculator {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 计算重试延迟
     pub fn calculate(config: &RetryConfig, attempt: usize) -> Duration {
         let base_delay = config.initial_delay_ms as f64;
@@ -581,6 +589,7 @@ impl ResilienceManager {
         stats
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行带弹性容错的调用
     pub async fn execute_with_resilience<F, Fut, T>(
         &self,

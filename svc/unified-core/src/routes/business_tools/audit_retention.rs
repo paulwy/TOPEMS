@@ -90,11 +90,13 @@ impl RetentionPolicy {
         self
     }
 
+    #[allow(clippy::as_conversions)]
     /// Calculate the cutoff timestamp for retention.
     pub fn cutoff_time(&self) -> DateTime<Utc> {
         Utc::now() - Duration::from_secs(self.retention_days as u64 * 86400)
     }
 
+    #[allow(clippy::as_conversions)]
     /// Get the cleanup interval as a Duration.
     pub fn cleanup_interval(&self) -> Duration {
         Duration::from_secs(self.cleanup_interval_hours as u64 * 3600)
@@ -180,6 +182,7 @@ impl<S: AuditLogStore + ?Sized> RetentionManager<S> {
         self.policy = policy;
     }
 
+    #[allow(clippy::as_conversions)]
     /// Run a cleanup operation.
     pub async fn cleanup(&self) -> CleanupResult {
         let cutoff = self.policy.cutoff_time();

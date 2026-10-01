@@ -21,6 +21,7 @@ pub struct EmbeddingResponse {
 
 pub struct EmbeddingApi;
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn generate_embedding(text: &str, dimension: usize) -> Vec<f32> {
     let mut embedding = Vec::with_capacity(dimension);
 

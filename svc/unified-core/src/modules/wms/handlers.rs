@@ -19,6 +19,7 @@ pub struct RealListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取库存列表（真实数据库查询）
 pub async fn list_inventory_real(
     State(state): State<AppState>,
@@ -254,6 +255,7 @@ pub async fn analytics_daily_trend() -> Json<serde_json::Value> {
     ]))
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取入库订单列表（真实数据库查询）
 pub async fn list_inbound_orders_real(
     State(state): State<AppState>,
@@ -332,6 +334,7 @@ pub async fn list_inbound_orders_real(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取出库订单列表（真实数据库查询）
 pub async fn list_outbound_orders_real(
     State(state): State<AppState>,
@@ -410,6 +413,7 @@ pub async fn list_outbound_orders_real(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取仓库列表（真实数据库查询）
 pub async fn list_warehouses_real(
     State(state): State<AppState>,

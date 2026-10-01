@@ -292,6 +292,7 @@ impl AuditLogArchiver {
         Ok(archives.iter().map(|a| a.size).sum())
     }
 
+    #[allow(clippy::as_conversions)]
     /// Clean up archives older than the given number of days.
     pub fn cleanup_old_archives(&self, max_age_days: u32) -> Result<usize, ArchiveError> {
         let archives = self.list_archives()?;
@@ -362,6 +363,11 @@ fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
 // ===== Tests =====
 
 #[cfg(test)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

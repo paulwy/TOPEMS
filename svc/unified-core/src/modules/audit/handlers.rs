@@ -497,6 +497,7 @@ pub async fn get_access_log(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_access_log_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {

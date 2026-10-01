@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取项目列表（真实数据库查询）
 pub async fn list_projects(
     State(state): State<AppState>,
@@ -91,6 +92,7 @@ pub async fn list_projects(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取任务列表（真实数据库查询）
 pub async fn list_tasks(
     State(state): State<AppState>,
@@ -164,6 +166,7 @@ pub async fn list_tasks(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取项目成员列表（真实数据库查询）
 pub async fn list_project_members(
     State(state): State<AppState>,
@@ -235,6 +238,7 @@ pub async fn list_project_members(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取项目资源列表（真实数据库查询）
 pub async fn list_project_resources(
     State(state): State<AppState>,
@@ -307,6 +311,7 @@ pub async fn list_project_resources(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取项目风险列表（真实数据库查询）
 pub async fn list_project_risks(
     State(state): State<AppState>,

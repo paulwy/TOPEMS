@@ -140,6 +140,7 @@ impl LlmProvider for DeepSeekProvider {
         &self.config
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn ask(&self, request: LlmRequest) -> Result<LlmResponse, LlmProviderError> {
         let api_key = self.api_key()?.to_string();
         let model = request

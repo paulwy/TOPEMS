@@ -434,6 +434,7 @@ impl Reranker {
         documents
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 基于交叉编码器的重排序（简化实现，实际需要外部模型）
     fn cross_encoder_rerank(
         &self,
@@ -544,6 +545,7 @@ impl Reranker {
         selected
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 计算两个文本的相似度（简化实现：词重叠率）
     fn calculate_similarity(&self, text1: &str, text2: &str) -> f64 {
         let words1: std::collections::HashSet<&str> = text1.split_whitespace().collect();
@@ -625,6 +627,11 @@ impl RagEngine {
         &self.reranker
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss
+    )]
     /// 处理检索请求
     pub async fn retrieve(&self, request: RetrievalRequest) -> RetrievalResponse {
         let start_time = std::time::Instant::now();
@@ -798,6 +805,7 @@ impl RagEngine {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

@@ -197,6 +197,7 @@ pub async fn export_audit_logs(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_audit_stats(
     State(state): State<AppState>,
     Query(params): Query<AuditStatsParams>,

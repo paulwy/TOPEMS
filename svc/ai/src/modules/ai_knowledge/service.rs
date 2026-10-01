@@ -276,6 +276,7 @@ pub async fn get_document_detail(
     Ok(Some(DocumentDetail { document, chunks }))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 通过文本内容创建文档（不走 multipart 上传）
 ///
 /// 流程：
@@ -516,6 +517,11 @@ pub async fn delete_document(
 // 文档处理流程
 // ============================================================
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 处理文档：解析 → 分块 → 向量化 → 入库
 ///
 /// 此函数为文档处理的核心，可同步调用或异步 spawn。

@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取工单列表（真实数据库查询）
 pub async fn list_tickets(
     State(state): State<AppState>,
@@ -90,6 +91,7 @@ pub async fn list_tickets(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取工单评论列表（真实数据库查询）
 pub async fn list_ticket_comments(
     State(state): State<AppState>,
@@ -160,6 +162,7 @@ pub async fn list_ticket_comments(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取SLA策略列表（真实数据库查询）
 pub async fn list_ticket_sla_policies(
     State(state): State<AppState>,
@@ -232,6 +235,7 @@ pub async fn list_ticket_sla_policies(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取知识库文章列表（真实数据库查询）
 pub async fn list_knowledge_articles(
     State(state): State<AppState>,

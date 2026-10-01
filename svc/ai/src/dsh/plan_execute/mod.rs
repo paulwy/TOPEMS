@@ -552,6 +552,7 @@ impl PlanExecuteOrchestrator {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取可执行的子任务
     pub fn get_ready_subtasks(&self, plan_id: &str) -> Result<Vec<Subtask>, String> {
         let plans = self.plans.lock();
@@ -676,6 +677,7 @@ impl PlanExecuteOrchestrator {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 失败子任务
     pub fn fail_subtask(
         &self,
@@ -831,6 +833,7 @@ impl PlanExecuteOrchestrator {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 生成执行报告
     pub fn generate_report(&self, plan_id: &str) -> Result<ExecutionReport, String> {
         let plans = self.plans.lock();
@@ -931,6 +934,7 @@ impl PlanExecuteOrchestrator {
         Ok(report)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 获取统计信息
     pub fn get_stats(&self) -> PlanExecuteStats {
         let plans = self.plans.lock();

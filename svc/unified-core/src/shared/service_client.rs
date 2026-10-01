@@ -784,6 +784,7 @@ pub struct RateLimiter {
 }
 
 impl RateLimiter {
+    #[allow(clippy::as_conversions)]
     /// Create a new rate limiter.
     pub fn new(max_requests_per_second: u32) -> Self {
         Self {
@@ -793,6 +794,7 @@ impl RateLimiter {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// Try to acquire a token. Returns true if acquired, false if rate limited.
     pub fn try_acquire(&mut self) -> bool {
         let now = std::time::Instant::now();
@@ -1044,6 +1046,7 @@ impl RequestStatistics {
         self.update_calculated_fields();
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// Update calculated fields (avg, success_rate, rps).
     fn update_calculated_fields(&mut self) {
         if self.total_requests > 0 {
@@ -1321,6 +1324,7 @@ impl ServiceClient {
         )
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// V437: Send a single request without retry.
     async fn request_once<T: DeserializeOwned, B: Serialize>(
         &self,
@@ -1397,6 +1401,7 @@ impl ServiceClient {
 
     // ===== V437: Circuit Breaker Methods =====
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// Check if the circuit breaker allows requests.
     fn check_circuit_breaker(&self) -> Result<(), ServiceClientError> {
         let mut cb = self
@@ -1700,6 +1705,7 @@ impl ServiceRegistry {
 
     // ===== V435: Service Health Check & Status Management =====
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// Check the health of a single service.
     ///
     /// Sends a GET request to the service's `/health` endpoint and returns

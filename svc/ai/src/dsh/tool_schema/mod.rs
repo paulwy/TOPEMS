@@ -625,6 +625,11 @@ impl ToolSchemaAdapter {
         result
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     /// 更新分组计数
     fn update_category_count(&self, category_name: &str, delta: i32) {
         if let Some(category) = self.categories.lock().get_mut(category_name) {
@@ -836,6 +841,7 @@ impl ToolSchemaAdapter {
         json
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计信息
     pub fn get_stats(&self) -> ToolSchemaStats {
         let tools = self.tools.lock();

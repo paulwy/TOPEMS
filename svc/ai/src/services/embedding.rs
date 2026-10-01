@@ -184,6 +184,11 @@ pub async fn generate_embeddings(
     Ok(embeddings)
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn process_document_for_embedding(
     doc: &Document,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

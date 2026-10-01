@@ -141,6 +141,7 @@ pub fn split_into_chunks(content: &str, chunk_size: usize, overlap: usize) -> Ve
 
 // ── Token 估算 ─────────────────────────────────────
 
+#[allow(clippy::as_conversions)]
 /// 判断字符是否为 CJK（中日韩统一字符/标点/全角）
 ///
 /// 提取自 `modules/ai_knowledge/document_processor.rs:382-390`
@@ -153,6 +154,12 @@ pub fn is_cjk_char(ch: char) -> bool {
         || (0xFF00..=0xFFEF).contains(&code)
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss
+)]
 /// 粗略估算 token 数
 ///
 /// 提取自 `modules/ai_knowledge/document_processor.rs:366-380`
@@ -180,6 +187,7 @@ pub fn estimate_tokens(text: &str) -> usize {
 
 // ── 类别分数归一化 (softmax-ish) ──────────────────
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 将一组类别分数归一化为和为 1.0 的概率分布
 ///
 /// 使用数值稳定的 softmax：各分数减去最大值后再 exp → 归一化
@@ -210,6 +218,7 @@ pub struct KeywordScore {
     pub score: f64,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 对一组 token 进行简单 TF 评分，并取 Top-N（停用词过滤）
 pub fn extract_top_keywords(
     tokens: &[String],

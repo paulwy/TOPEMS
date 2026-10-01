@@ -47,6 +47,7 @@ impl ModelPricing {
         self
     }
 
+    #[allow(clippy::as_conversions)]
     /// 计算单次调用成本
     pub fn calculate_cost(&self, input_tokens: u32, output_tokens: u32) -> f64 {
         let input_cost = (input_tokens as f64 / 1000.0) * self.input_price_per_1k;
@@ -165,6 +166,7 @@ pub struct CostStatistics {
 }
 
 impl CostStatistics {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 计算平均值
     pub fn calculate_averages(&mut self) {
         if self.total_calls > 0 {
@@ -472,6 +474,7 @@ impl CostMeter {
         self.calculate_statistics(&model_records)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 计算统计数据
     fn calculate_statistics(&self, records: &[AiCallRecord]) -> CostStatistics {
         let mut stats = CostStatistics::default();
@@ -506,6 +509,12 @@ impl CostMeter {
         records
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 估算 Token 数（简单估算）
     pub fn estimate_tokens(text: &str) -> u32 {
         // 简单估算：英文约 4 字符/token，中文约 1.5 字符/token

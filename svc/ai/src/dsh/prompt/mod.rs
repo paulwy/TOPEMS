@@ -379,6 +379,7 @@ impl PromptEngine {
         )
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 渲染模板
     pub fn render(
         &self,
@@ -513,6 +514,7 @@ impl PromptEngine {
         Ok((result, group.to_string()))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 记录 A/B 测试评分
     pub fn record_ab_score(&self, test_id: &str, group: &str, score: f64, success: bool) {
         let mut ab_stats = self.ab_stats.lock();

@@ -18,6 +18,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取供应商列表（真实数据库查询）
 pub async fn list_suppliers(
     State(state): State<AppState>,
@@ -202,6 +203,7 @@ pub async fn get_scm_overview(State(_state): State<AppState>) -> Json<ScmOvervie
     })
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取采购申请列表（真实数据库查询）
 pub async fn list_purchase_requisitions(
     State(state): State<AppState>,
@@ -284,6 +286,7 @@ pub async fn list_purchase_requisitions(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取采购合同列表（真实数据库查询）
 pub async fn list_purchase_contracts(
     State(state): State<AppState>,
@@ -365,6 +368,7 @@ pub async fn list_purchase_contracts(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取物料列表（真实数据库查询）
 pub async fn list_materials(
     State(state): State<AppState>,

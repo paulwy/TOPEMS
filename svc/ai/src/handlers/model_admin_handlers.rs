@@ -202,6 +202,7 @@ pub async fn get_activity_trend(
     ),
     tag = "ai"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_feature_usage(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

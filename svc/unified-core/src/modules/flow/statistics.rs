@@ -14,6 +14,7 @@ use super::models::{MonthlyData, StatisticsResponse, WorkflowStat};
         (status = 500, description = "查询失败"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_statistics(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<StatisticsResponse>> {

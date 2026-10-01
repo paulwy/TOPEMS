@@ -119,6 +119,11 @@ impl TokenBucket {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn refill(&mut self) {
         let now = Instant::now();
         let elapsed = now.duration_since(self.last_refill).as_secs_f64();
@@ -140,6 +145,11 @@ impl TokenBucket {
         bucket.tokens
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn reset_seconds(&self) -> u64 {
         let tokens_needed = self.max_tokens.saturating_sub(self.tokens);
         if tokens_needed == 0 {
@@ -168,6 +178,7 @@ impl RateLimitStore {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn check_and_acquire(
         &self,
         key: &str,

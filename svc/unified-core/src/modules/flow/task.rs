@@ -494,6 +494,11 @@ pub async fn delegate_task(
         (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn batch_approve(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -567,6 +572,11 @@ pub async fn batch_approve(
         (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn batch_complete(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -639,6 +649,11 @@ pub async fn batch_complete(
     responses(
         (status = 200, description = "批量操作完成", body = ApiResponse<TaskBatchResult>),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn batch_delegate(
     State(state): State<AppState>,

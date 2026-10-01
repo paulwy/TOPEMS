@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取样本列表（真实数据库查询）
 pub async fn list_samples(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_samples(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取仪器列表（真实数据库查询）
 pub async fn list_instruments(
     State(state): State<AppState>,
@@ -159,6 +161,7 @@ pub async fn list_instruments(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取检验任务列表（真实数据库查询）
 pub async fn list_inspection_tasks(
     State(state): State<AppState>,
@@ -231,6 +234,7 @@ pub async fn list_inspection_tasks(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取检验记录列表（真实数据库查询）
 pub async fn list_inspection_records(
     State(state): State<AppState>,
@@ -303,6 +307,7 @@ pub async fn list_inspection_records(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取试剂列表（真实数据库查询）
 pub async fn list_reagents(
     State(state): State<AppState>,

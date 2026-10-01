@@ -18,6 +18,7 @@ use crate::dsh::provider::{LlmProvider, LlmRequest};
 pub struct SmartFormEngine;
 
 impl SmartFormEngine {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// AI 填充表单字段
     ///
     /// 策略（按优先级）：
@@ -129,6 +130,7 @@ impl SmartFormEngine {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 校验表单数据
     ///
     /// - 必填检查：required 字段缺失/空 → Error（阻塞）

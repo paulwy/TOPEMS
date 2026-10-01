@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取事故列表（真实数据库查询）
 pub async fn list_accidents(
     State(state): State<AppState>,
@@ -99,6 +100,7 @@ pub async fn list_accidents(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取隐患列表（真实数据库查询）
 pub async fn list_hazards(
     State(state): State<AppState>,
@@ -180,6 +182,7 @@ pub async fn list_hazards(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取培训列表（真实数据库查询）
 pub async fn list_trainings(
     State(state): State<AppState>,

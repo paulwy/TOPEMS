@@ -251,6 +251,7 @@ impl AiSecurityGuard {
         result
     }
 
+    #[allow(clippy::as_conversions)]
     /// 检测提示词注入
     fn detect_prompt_injection(&self, input: &str) -> Option<&str> {
         let input_lower = input.to_lowercase();
@@ -274,6 +275,7 @@ impl AiSecurityGuard {
         detected
     }
 
+    #[allow(clippy::as_conversions)]
     /// 检查速率限制
     async fn check_rate_limit(&self, user_id: &str) -> Result<(), String> {
         let now = Instant::now();

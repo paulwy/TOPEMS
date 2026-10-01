@@ -276,6 +276,7 @@ pub async fn suspended_instances(
 
 // ─── Handlers: Statistics ────────────────────────────────────────────────────
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/statistics
 pub async fn get_monitor_statistics(
     State(state): State<AppState>,
@@ -371,6 +372,7 @@ pub async fn get_monitor_statistics(
 
 // ─── Handlers: Analysis ──────────────────────────────────────────────────────
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/analysis/{workflow_id}
 pub async fn get_workflow_analysis(
     State(state): State<AppState>,
@@ -527,6 +529,7 @@ pub async fn get_bottleneck_analysis(
     Json(ApiResponse::success(bottlenecks, "查询成功"))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/analysis/efficiency
 pub async fn get_efficiency_analysis(
     State(state): State<AppState>,
@@ -982,6 +985,7 @@ pub async fn get_realtime_stats(State(state): State<AppState>) -> Json<ApiRespon
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/dashboard
 pub async fn get_dashboard_data(
     State(state): State<AppState>,
@@ -1111,6 +1115,7 @@ pub async fn get_dashboard_data(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/performance
 pub async fn get_performance_metrics(
     State(state): State<AppState>,
@@ -1178,6 +1183,7 @@ pub async fn get_performance_metrics(
     ))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// GET /monitor/sla-compliance
 pub async fn get_sla_compliance(
     State(state): State<AppState>,

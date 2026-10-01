@@ -17,6 +17,7 @@ use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 use super::super::tools::{http_call, service_base_url, url_encode};
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 注册 WMS 业务工具到 MCP Server
 ///
 /// # 参数
@@ -427,6 +428,12 @@ fn generate_mock_inventory_detail(material_id: &str, warehouse_id: &str) -> Valu
     })
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 /// 生成 Mock 仓库列表
 #[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_warehouses(status_filter: &str, type_filter: &str) -> Vec<Value> {

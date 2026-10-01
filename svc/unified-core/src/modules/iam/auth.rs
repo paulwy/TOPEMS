@@ -120,6 +120,11 @@ struct UserInfo {
     security(),
 )]
 #[axum::debug_handler]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub async fn login(
     State(state): State<crate::AppState>,
     headers: HeaderMap,
@@ -285,7 +290,8 @@ pub async fn login(
 
     // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let now = chrono::Utc::now();
-    let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
+    let exp = usize::try_from((now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp())
+        .unwrap_or(0);
     let claims = Claims {
         sub: user.id.to_string(),
         username: user.username.clone(),
@@ -298,7 +304,7 @@ pub async fn login(
         permissions: user_permissions.clone(),
         is_superuser: user.is_superuser,
         exp,
-        iat: now.timestamp() as usize,
+        iat: usize::try_from(now.timestamp()).unwrap_or(0),
         email: Some(user.email.clone()),
         department: None,
         tenant_id,
@@ -586,6 +592,11 @@ pub async fn register(
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub async fn refresh_token(
     State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
@@ -650,7 +661,8 @@ pub async fn refresh_token(
     // 生成新的 access_token
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
     let now = chrono::Utc::now();
-    let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
+    let exp = usize::try_from((now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp())
+        .unwrap_or(0);
 
     let user_roles: Vec<String> = row
         .try_get::<Option<Vec<String>>, _>("roles")
@@ -692,7 +704,7 @@ pub async fn refresh_token(
         permissions: user_permissions,
         is_superuser,
         exp,
-        iat: now.timestamp() as usize,
+        iat: usize::try_from(now.timestamp()).unwrap_or(0),
         email: Some(email),
         department: None,
         tenant_id,

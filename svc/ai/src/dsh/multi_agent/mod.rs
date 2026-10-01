@@ -611,6 +611,7 @@ impl MultiAgentCoordinator {
         score
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行任务（分配 + 执行）
     pub async fn execute_task(&self, task_id: &str) -> Result<serde_json::Value, String> {
         // 分配任务
@@ -774,6 +775,7 @@ impl MultiAgentCoordinator {
         self.tasks.lock().len()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 获取协调器统计
     pub fn get_stats(&self) -> CollaborationGroupStats {
         let tasks = self.tasks.lock();
@@ -856,6 +858,7 @@ impl MultiAgentCoordinator {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

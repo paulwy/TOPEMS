@@ -201,6 +201,7 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
         info!(cache = %self.name, cleared = count, "Cache cleared");
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn stats(&self) -> CacheStats {
         let entries = self.entries.lock();
         let stats = self.stats.lock();
@@ -248,6 +249,7 @@ impl<K: Eq + Hash + Clone, V: Clone> LruCache<K, V> {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub fn cleanup_expired(&self) -> usize {
         let mut entries = self.entries.lock();
         let before = entries.len();
@@ -497,6 +499,7 @@ impl CacheManager {
 // 工具函数
 // ============================================================================
 
+#[allow(clippy::as_conversions)]
 fn fnv_hash(input: &str) -> u64 {
     let mut hash: u64 = 0xcbf29ce484222325;
     for byte in input.bytes() {

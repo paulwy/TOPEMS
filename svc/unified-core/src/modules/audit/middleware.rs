@@ -32,6 +32,7 @@ const SKIP_PATH_PREFIXES: &[&str] = &[
     "/api/core/audit/operations",
 ];
 
+#[allow(clippy::as_conversions)]
 #[allow(clippy::indexing_slicing)]
 pub async fn operation_audit_middleware(
     State(state): State<AppState>,

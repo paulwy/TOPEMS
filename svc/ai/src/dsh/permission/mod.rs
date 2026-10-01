@@ -434,6 +434,7 @@ impl PermissionMapper {
         result
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 检查权限
     pub fn check_permission(&self, request: PermissionCheckRequest) -> PermissionCheckResponse {
         let start = Instant::now();
@@ -619,6 +620,7 @@ impl PermissionMapper {
         info!("Permission cache cleared");
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 获取统计信息
     pub fn get_stats(&self) -> PermissionMapperStats {
         let mut stats = self.stats.lock().clone();

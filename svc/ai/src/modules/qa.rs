@@ -642,6 +642,7 @@ pub async fn classify(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// GET /api/qa/history - 获取问答历史（支持分页和搜索）
 pub async fn history(
     State(state): State<AppState>,
@@ -727,6 +728,7 @@ pub async fn delete_history(
     ),
     tag = "ai"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn batch_delete_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

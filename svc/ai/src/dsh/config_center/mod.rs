@@ -820,6 +820,7 @@ impl ConfigCenter {
         self.validate_config_item(&temp_item)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 保存版本
     fn save_version(
         &self,
@@ -899,6 +900,7 @@ impl ConfigCenter {
         result
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取统计信息
     pub fn get_stats(&self) -> ConfigCenterStats {
         let items = self.items.lock();

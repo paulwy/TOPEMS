@@ -699,6 +699,7 @@ impl CopilotSessionManager {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 处理 Copilot 请求
     pub async fn process_request(
         &self,
@@ -982,6 +983,7 @@ impl CopilotSessionManager {
         self.sessions.lock().len()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 清理过期会话
     pub fn cleanup_expired_sessions(&self, max_age_hours: u64) -> usize {
         let mut sessions = self.sessions.lock();
@@ -1010,6 +1012,7 @@ impl CopilotSessionManager {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

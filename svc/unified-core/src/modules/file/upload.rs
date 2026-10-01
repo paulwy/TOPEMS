@@ -37,6 +37,7 @@ struct FileUploadResponse {
         (status = 500, description = "服务器错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -230,6 +231,7 @@ pub async fn upload_file(
         (status = 500, description = "服务器错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn upload_multiple(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

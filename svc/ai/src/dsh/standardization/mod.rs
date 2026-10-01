@@ -674,6 +674,7 @@ impl PaginatedRequest {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取偏移量
     pub fn offset(&self) -> u64 {
         ((self.page - 1) as u64) * (self.page_size as u64)

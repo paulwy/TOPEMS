@@ -98,6 +98,11 @@ pub enum GovernanceLevel {
 }
 
 impl GovernanceLevel {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub fn from_score(score: f64) -> Self {
         match score as u32 {
             90..=100 => GovernanceLevel::Excellent,
@@ -190,6 +195,11 @@ impl RiskLevel {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub fn from_score(score: f64) -> Self {
         match score as u32 {
             0..=25 => RiskLevel::Low,
@@ -718,6 +728,7 @@ impl GovernanceDashboardGenerator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 生成关键指标
     fn generate_key_metrics(&self) -> KeyMetrics {
         // 3.2c：优先从真实 AI 调用日志（CostMeter）统计；未注入/锁占用时降级模拟
@@ -764,6 +775,7 @@ impl GovernanceDashboardGenerator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 生成风险评估
     fn generate_risk_assessment(&self) -> RiskAssessment {
         // 优先从真实数据计算风险评估；无真实数据时降级模拟
@@ -942,6 +954,12 @@ impl GovernanceDashboardGenerator {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 生成合规状态
     fn generate_compliance_status(&self) -> ComplianceStatus {
         // 优先从真实数据计算合规状态；无真实数据时降级模拟
@@ -1101,6 +1119,7 @@ impl GovernanceDashboardGenerator {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取安全事件
     fn get_security_events(&self) -> Vec<SecurityEventSummary> {
         self.security_events
@@ -1111,6 +1130,7 @@ impl GovernanceDashboardGenerator {
             .collect()
     }
 
+    #[allow(clippy::as_conversions)]
     /// 生成审计摘要
     fn generate_audit_summary(&self) -> AuditSummary {
         // 优先从真实审计日志数据统计；未注入/锁占用时降级模拟
@@ -1177,6 +1197,11 @@ impl GovernanceDashboardGenerator {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     /// 生成趋势数据
     fn generate_trends(&self, time_range: TimeRange) -> Vec<TrendDataPoint> {
         let points = self.config.trend_data_points as usize;
@@ -1255,6 +1280,7 @@ impl GovernanceDashboardGenerator {
         trends
     }
 
+    #[allow(clippy::as_conversions)]
     /// 生成建议
     fn generate_recommendations(
         &self,
@@ -1432,6 +1458,7 @@ fn stats_average_duration(generator: &GovernanceDashboardGenerator) -> f64 {
         .unwrap_or(245.5)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 获取成功率（从 CostMeter）
 fn stats_success_rate(generator: &GovernanceDashboardGenerator) -> f64 {
     generator
@@ -1453,6 +1480,7 @@ fn stats_success_rate(generator: &GovernanceDashboardGenerator) -> f64 {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

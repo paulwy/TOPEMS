@@ -16,6 +16,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 注册 CS 业务工具到 MCP Server
 ///
 /// # 参数

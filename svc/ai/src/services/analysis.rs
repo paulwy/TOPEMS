@@ -140,6 +140,7 @@ impl AnalysisService {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 实体提取
     pub async fn extract_entities(
         &self,
@@ -194,6 +195,7 @@ impl AnalysisService {
         Ok(ExtractEntitiesResponse { entities })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 关键词提取
     pub async fn extract_keywords(
         &self,
@@ -239,6 +241,7 @@ impl AnalysisService {
         Ok(ExtractKeywordsResponse { keywords })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取分析历史
     pub async fn get_analysis_history(
         &self,

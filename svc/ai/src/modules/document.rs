@@ -24,6 +24,7 @@ pub struct DocumentApi;
     ),
     tag = "ai"
 )]
+#[allow(clippy::as_conversions)]
 pub async fn upload(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

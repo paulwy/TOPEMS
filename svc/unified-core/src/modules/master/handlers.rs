@@ -492,6 +492,7 @@ impl MasterDataService {
 
     // ==================== V31.0 质量看板 ====================
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 生成主数据质量报告
     pub async fn get_quality_report(
         &self,

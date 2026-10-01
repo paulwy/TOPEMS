@@ -16,6 +16,7 @@ use topems_shared_mcp::schema::SchemaBuilder;
 use super::super::server::McpServer;
 use super::super::tools::ToolExecutionError;
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 注册 IoT 业务工具到 MCP Server
 ///
 /// # 参数
@@ -394,6 +395,7 @@ fn generate_mock_device_detail(device_id: &str) -> Value {
     })
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 生成 Mock 设备数据
 #[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_device_data(device_id: &str, type_filter: &str) -> Vec<Value> {

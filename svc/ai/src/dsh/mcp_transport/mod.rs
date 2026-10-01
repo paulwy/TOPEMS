@@ -474,6 +474,7 @@ impl TransportManager {
         Ok(session.status)
     }
 
+    #[allow(clippy::as_conversions)]
     /// 发送消息
     pub fn send_message(&self, session_id: &str, message: TransportMessage) -> Result<(), String> {
         let mut sessions = self.sessions.lock();
@@ -517,6 +518,7 @@ impl TransportManager {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 接收消息
     pub fn receive_message(&self, session_id: &str) -> Option<TransportMessage> {
         let mut sessions = self.sessions.lock();
@@ -684,6 +686,7 @@ impl TransportManager {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// 获取管理器统计
     pub fn get_manager_stats(&self) -> TransportManagerStats {
         let sessions = self.sessions.lock();

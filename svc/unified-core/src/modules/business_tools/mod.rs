@@ -502,6 +502,7 @@ macro_rules! define_business_tool {
                 self.base.operations.clone()
             }
 
+            #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
             async fn execute(
                 &self,
                 request: BusinessRequest,

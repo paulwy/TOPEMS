@@ -139,6 +139,7 @@ impl DatabasePermissionStore {
         self.cache_ttl_secs
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// Return a snapshot of runtime metrics.
     pub async fn metrics(&self) -> PermissionStoreMetrics {
         let total = self.total_lookups.load(Ordering::Relaxed);
@@ -409,6 +410,11 @@ impl DatabasePermissionStore {
         Ok(permissions)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     /// Count all active permissions.
     async fn count_from_db(&self) -> Result<usize, PermissionStoreError> {
         let record = sqlx::query!(

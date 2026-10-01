@@ -25,6 +25,11 @@ fn crm_client(jwt_secret: &str) -> Result<TypedServiceClient<CrmApi>, ToolExecut
         .map_err(|e| ToolExecutionError::Execution(format!("CRM 客户端初始化失败: {}", e)))
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 注册 CRM 业务工具（3 个，均通过 TypedServiceClient 真实调用）
 pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
     // &'static str：MCP 工具注册仅一次，leak 生命周期与进程一致（Fn 闭包需 'static 捕获）

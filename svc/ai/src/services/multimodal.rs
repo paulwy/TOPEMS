@@ -457,6 +457,7 @@ pub struct Emotion {
 }
 
 impl MultimodalService {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn assess_image_quality(
         &self,
         image_base64: &str,
@@ -564,6 +565,11 @@ impl MultimodalService {
         })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss
+    )]
     pub async fn detect_faces(&self, image_base64: &str) -> Result<FaceDetectionResult, String> {
         let face_count = (image_base64.len() % 4).min(3);
 
@@ -607,6 +613,7 @@ impl MultimodalService {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn compare_images(
         &self,
         image1_base64: &str,

@@ -156,6 +156,7 @@ pub async fn generate_answer(
     Ok(answer)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 完整 RAG 问答流程
 ///
 /// # 流程

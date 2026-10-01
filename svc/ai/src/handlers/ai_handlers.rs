@@ -660,6 +660,7 @@ pub async fn chat(Json(req): Json<ChatRequest>) -> Json<ApiResponse<ChatResponse
         (status = 200, description = "OK"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiSearchResponse>> {
     let start_time = std::time::Instant::now();
 
@@ -909,6 +910,11 @@ pub async fn flow_assistant(
     responses(
         (status = 200, description = "OK"),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn anomaly_predict(
     Json(req): Json<AnomalyPredictRequest>,

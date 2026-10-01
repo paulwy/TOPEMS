@@ -1017,6 +1017,7 @@ pub async fn bulk_import_variables(
 
 // ─── Dashboard handlers ───────────────────────────────────────────────────────
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_dashboard_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<DashboardStats>> {

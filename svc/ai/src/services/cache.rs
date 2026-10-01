@@ -147,6 +147,7 @@ impl AiCacheService {
 
     // ==================== 统计信息 ====================
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn get_stats(&self) -> CacheStats {
         CacheStats {
             document_count: self.document_cache.entry_count() as usize,

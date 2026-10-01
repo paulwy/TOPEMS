@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取AI模型列表（真实数据库查询）
 pub async fn list_ai_models(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_ai_models(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取AI提示词模板列表（真实数据库查询）
 pub async fn list_ai_prompt_templates(
     State(state): State<AppState>,
@@ -159,6 +161,7 @@ pub async fn list_ai_prompt_templates(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取AI文档列表（真实数据库查询）
 pub async fn list_ai_documents(
     State(state): State<AppState>,
@@ -230,6 +233,7 @@ pub async fn list_ai_documents(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取AI问答历史列表（真实数据库查询）
 pub async fn list_ai_qa_history(
     State(state): State<AppState>,

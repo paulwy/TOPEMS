@@ -233,6 +233,7 @@ impl VectorService {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 向量相似度搜索
     pub async fn search_similar(
         &self,
@@ -288,6 +289,11 @@ impl VectorService {
         Ok(results)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     /// 获取统计信息
     pub async fn get_stats(&self) -> Result<VectorStats, sqlx::Error> {
         let doc_count: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -338,6 +344,7 @@ impl VectorService {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 关键词搜索（全文检索）
     pub async fn keyword_search(
         &self,

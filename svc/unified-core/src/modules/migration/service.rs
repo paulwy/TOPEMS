@@ -228,6 +228,7 @@ impl MigrationServiceLayer {
         Ok(MigrationStatus { pending, applied })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn apply_migration(
         &self,
         service_name: &str,

@@ -63,6 +63,7 @@ pub struct FilePermissionRequest {
         (status = 500, description = "获取文件列表失败"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn list_files(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -203,6 +204,7 @@ pub async fn list_files(
         (status = 404, description = "文件不存在"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn get_file(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

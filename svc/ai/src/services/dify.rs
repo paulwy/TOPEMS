@@ -367,6 +367,7 @@ impl DifyService {
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 简单 URL 编码（仅替换必要字符，避免引入额外 crate）
 fn urlenc(s: &str) -> String {
     let mut out = String::with_capacity(s.len());

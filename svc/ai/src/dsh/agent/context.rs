@@ -97,6 +97,12 @@ impl AgentMessage {
         msg
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 估算消息的 Token 数（简单估算）
     pub fn estimate_tokens(&self) -> usize {
         // 简单估算：英文约 4 字符/token，中文约 1.5 字符/token

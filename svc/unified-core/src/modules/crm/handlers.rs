@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取客户列表（真实数据库查询）
 pub async fn list_customers(
     State(state): State<AppState>,
@@ -102,6 +103,7 @@ pub async fn list_customers(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取联系人列表（真实数据库查询）
 pub async fn list_contacts(
     State(state): State<AppState>,
@@ -180,6 +182,7 @@ pub async fn list_contacts(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取商机列表（真实数据库查询）
 pub async fn list_opportunities(
     State(state): State<AppState>,
@@ -261,6 +264,7 @@ pub async fn list_opportunities(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取合同列表（真实数据库查询）
 pub async fn list_contracts(
     State(state): State<AppState>,
@@ -343,6 +347,7 @@ pub async fn list_contracts(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取互动记录列表（真实数据库查询）
 pub async fn list_interactions(
     State(state): State<AppState>,

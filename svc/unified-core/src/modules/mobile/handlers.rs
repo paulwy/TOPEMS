@@ -17,6 +17,7 @@ pub struct ListParams {
     pub page_size: Option<u32>,
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取移动设备列表（真实数据库查询）
 pub async fn list_devices(
     State(state): State<AppState>,
@@ -88,6 +89,7 @@ pub async fn list_devices(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取移动任务列表（真实数据库查询）
 pub async fn list_mobile_tasks(
     State(state): State<AppState>,
@@ -159,6 +161,7 @@ pub async fn list_mobile_tasks(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取OA公告列表（真实数据库查询）
 pub async fn list_oa_announcements(
     State(state): State<AppState>,
@@ -230,6 +233,7 @@ pub async fn list_oa_announcements(
     }
 }
 
+#[allow(clippy::as_conversions)]
 /// 获取推送通知列表（真实数据库查询）
 pub async fn list_push_notifications(
     State(state): State<AppState>,
