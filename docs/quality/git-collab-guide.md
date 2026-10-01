@@ -8,7 +8,7 @@
 
 | 层 | 防线 | 状态 |
 |---|---|---|
-| L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⬜ 待用户在 GitHub Settings 开启（唯一能「永远阻止坏提交进 main」的远端硬闸） |
+| L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⚠️ 已创建规则但**不生效**：免费个人账户的私有仓库不强制执行分支保护（GitHub 限制）；升级 Team/Enterprise 组织（需 transfer 仓库）后规则自动启用 |
 | L2 | 本地 push 守卫：stale-base 检查 + cargo check 错误归类 | ✅ 已落地（pre-push 第一道，并入 cargo-check 门禁） |
 | L3 | 开发起点：`scripts/sync_base.sh`（fetch + rebase --no-fork-point + 编译快验） | ✅ 已落地 |
 | L4 | CI 全量验证：Gate L `cargo check --all-targets` + 夜间回归失败自动开 Issue + 环境一致性自检 | ✅ 已落地（2026-10-02） |
@@ -34,16 +34,18 @@ bash scripts/topems.sh push --skip-check # 门禁刚全绿、仅传输失败时�
 
 - 直接 `git push` 也受本地门禁约束（钩子已注册）——`topems.sh push` 只是多了"钩子存在性"前置检查，防止"以为有门禁其实没有"。
 
-**L1 开启步骤（一次性的）**：GitHub → Settings → Branches → main → Add rule：
+**L1 开启步骤（升级组织后按此启用，规则已创建留档）**：GitHub → Settings → Branches → main → Add rule：
 - ✅ Require status checks to pass before merging（勾选 Gate L / Gate K / cargo-test / rust-test）
 - ✅ Require branches to be up to date before merging
 - ❌ 不勾 Allow force pushes / Allow deletions（禁 bypass）
+- ⚠️ 免费个人账户私有仓库不强制执行（创建页面顶部有明确警告）——**当前实际防线 = L2–L5 本地机制**
 
 ## 核心原则
 
 1. **远端 CI 是 main 健康的唯一权威**——本地编译状态 ≠ main 状态。
 2. **开工前必须同步**——stale-base（旧 base）是 push 事故的最大来源。
 3. **push 被门禁拦，先判断来源再决定动作**——勿直接修改编译错误。
+4. **GitHub 层 L1 当前不生效 → 本地 pre-push 门禁是每台机器 push 的唯一防线**——每台机器必须跑过 `doctor`（钩子注册到 git 层面）；TRAE 两次事故均因无门禁机器直推。
 
 ## 开工 / 换机器拉取
 
@@ -53,6 +55,7 @@ bash scripts/sync_base.sh     # fetch + rebase + 编译快验（全 targets，�
 
 - 工作区有未提交改动会被脚本拦下（先 `git stash` / commit，同步后再 pop）。
 - 工具链由 `rust-toolchain.toml` 锁定 **nightly-2026-07-01**（多机一致，勿手动覆盖）。
+- 编译快验默认启用 sccache 包装；**sccache <0.18 配该工具链可能编译失败**——脚本已加自动降级（失败去包装重跑一次）。手动跳过包装：`RUSTC_WRAPPER='' cargo check ...`。
 
 ## Push 前（pre-push 门禁 6 项）
 

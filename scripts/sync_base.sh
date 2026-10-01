@@ -26,8 +26,17 @@ git rebase --no-fork-point origin/main
 
 echo "==> [4/4] 编译快验（SQLX_OFFLINE=true，全 targets）"
 export SQLX_OFFLINE=true
-command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
-cargo check --workspace --all-targets
+# sccache 包装：本机 0.18+ 与 nightly-2026-07-01 兼容；部分机器（实证：sccache 0.17.0）
+# 在 RUSTC_WRAPPER 下编译会失败。失败时自动去掉包装降级重跑一次，避免"门禁误导"。
+if command -v sccache >/dev/null; then
+    echo "    （检测到 sccache，启用 RUSTC_WRAPPER 包装；失败将自动降级重试）"
+    if ! RUSTC_WRAPPER=sccache cargo check --workspace --all-targets; then
+        echo "    ⚠️ sccache 包装下编译失败，降级重试（RUSTC_WRAPPER=）..."
+        RUSTC_WRAPPER='' cargo check --workspace --all-targets
+    fi
+else
+    cargo check --workspace --all-targets
+fi
 
 echo "✅ base 已同步且编译通过，可以开始开发。"
 echo "   提示：工具链由 rust-toolchain.toml 锁定（nightly-2026-07-01），多机一致。"
