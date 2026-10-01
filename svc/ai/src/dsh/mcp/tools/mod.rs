@@ -403,7 +403,7 @@ mod tests {
                     .property("message", SchemaBuilder::string())
                     .build(),
                 |params| {
-                    let msg = params["message"].as_str().unwrap_or("");
+                    let msg = params.get("message").and_then(|v| v.as_str()).unwrap_or("");
                     Ok(McpToolResult {
                         content: vec![McpContent::text(msg.to_string())],
                         is_error: None,

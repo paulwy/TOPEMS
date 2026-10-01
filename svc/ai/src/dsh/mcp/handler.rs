@@ -271,7 +271,7 @@ async fn mcp_auth_middleware(
             .body(axum::body::Body::from(
                 r#"{"jsonrpc":"2.0","error":{"code":-32001,"message":"Authentication required: valid Bearer JWT"},"id":null}"#,
             ))
-            .unwrap();
+            .unwrap_or_else(|_| Response::new(axum::body::Body::from("internal error")));
     }
     next.run(req).await
 }

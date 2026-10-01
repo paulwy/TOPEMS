@@ -65,10 +65,10 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "mes:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let status = params["status"].as_str().unwrap_or("");
-                let workshop = params["workshop"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let workshop = params.get("workshop").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("MES_SERVICE_URL", 8030);
                 let mut path = format!("/api/mes/orders?page={}&page_size={}", page, page_size);
@@ -84,13 +84,13 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                         }));
                     }
                 }
-                let orders = real.map(|r| r["orders"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                let orders = real.map(|r| r.get("orders").and_then(|v| v.as_array()).cloned().unwrap_or_default()).unwrap_or_else(|| {
                     generate_mock_production_orders(status, workshop)
                 });
                 let total = orders.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_orders = &orders[start.min(total)..end];
+                let page_orders = orders.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -121,7 +121,7 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "mes:read",
 
             |params| {
-                let order_id = params["order_id"].as_str().unwrap_or("");
+                let order_id = params.get("order_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if order_id.is_empty() {
                     return Err(ToolExecutionError::Validation("order_id is required".to_string()));
@@ -177,10 +177,10 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "mes:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let status = params["status"].as_str().unwrap_or("");
-                let process = params["process"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let process = params.get("process").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("MES_SERVICE_URL", 8030);
                 let mut path = format!("/api/mes/work-orders?page={}&page_size={}", page, page_size);
@@ -196,13 +196,13 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                         }));
                     }
                 }
-                let work_orders = real.map(|r| r["work_orders"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                let work_orders = real.map(|r| r.get("work_orders").and_then(|v| v.as_array()).cloned().unwrap_or_default()).unwrap_or_else(|| {
                     generate_mock_work_orders(status, process)
                 });
                 let total = work_orders.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_work_orders = &work_orders[start.min(total)..end];
+                let page_work_orders = work_orders.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -245,8 +245,8 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "mes:read",
 
             |params| {
-                let from = params["from"].as_str().unwrap_or("");
-                let to = params["to"].as_str().unwrap_or("");
+                let from = params.get("from").and_then(|v| v.as_str()).unwrap_or("");
+                let to = params.get("to").and_then(|v| v.as_str()).unwrap_or("");
 
                 if from.is_empty() {
                     return Err(ToolExecutionError::Validation("from is required".to_string()));
@@ -280,6 +280,7 @@ pub async fn register_mes_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 生产订单列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_production_orders(status_filter: &str, workshop_filter: &str) -> Vec<Value> {
     let statuses = [
         "planned",
@@ -327,13 +328,14 @@ fn generate_mock_production_orders(status_filter: &str, workshop_filter: &str) -
             })
         })
         .filter(|o| {
-            (status_filter.is_empty() || o["status"].as_str() == Some(status_filter))
-                && (workshop_filter.is_empty() || o["workshop"].as_str() == Some(workshop_filter))
+            (status_filter.is_empty() || o.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (workshop_filter.is_empty() || o.get("workshop").and_then(|v| v.as_str()) == Some(workshop_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 生产订单详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_production_order_detail(order_id: &str) -> Value {
     json!({
         "order_id": order_id,
@@ -383,6 +385,7 @@ fn generate_mock_production_order_detail(order_id: &str) -> Value {
 }
 
 /// 生成 Mock 工单列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_work_orders(status_filter: &str, process_filter: &str) -> Vec<Value> {
     let statuses = ["pending", "in_progress", "paused", "completed", "scrapped"];
     let processes = ["SMT贴片", "焊接", "组装", "测试", "包装", "调试"];
@@ -426,13 +429,14 @@ fn generate_mock_work_orders(status_filter: &str, process_filter: &str) -> Vec<V
             })
         })
         .filter(|w| {
-            (status_filter.is_empty() || w["status"].as_str() == Some(status_filter))
-                && (process_filter.is_empty() || w["process_name"].as_str() == Some(process_filter))
+            (status_filter.is_empty() || w.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (process_filter.is_empty() || w.get("process_name").and_then(|v| v.as_str()) == Some(process_filter))
         })
         .collect()
 }
 
 /// 生成 Mock OEE 仪表盘数据
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_oee_dashboard(from: &str, to: &str) -> Value {
     json!({
         "period": {

@@ -96,7 +96,7 @@ fn parse_docx(content: &[u8]) -> Result<String, ProcessorError> {
     if content.len() < 4 {
         return Err(ProcessorError::ParseError("docx 文件内容过短".to_string()));
     }
-    if &content[0..2] != b"PK" {
+    if content.get(0..2) != Some(&b"PK"[..]) {
         return Err(ProcessorError::ParseError(
             "无效的 docx 文件（缺少 ZIP 魔数头）".to_string(),
         ));
@@ -165,19 +165,29 @@ fn parse_html(content: &[u8]) -> Result<String, ProcessorError> {
 /// 去除 HTML 标签，提取纯文本
 fn strip_html_tags(html: &str) -> String {
     // 移除 script/style 块及其内容（Rust regex 不支持反向引用 \1，改为两次独立替换）
-    let script_re = Regex::new(r"(?is)<script[^>]*>.*?</script>")
-        .expect("hardcoded regex should always compile");
+    let script_re = match Regex::new(r"(?is)<script[^>]*>.*?</script>") {
+        Ok(re) => re,
+        Err(err) => panic!("hardcoded regex failed to compile: {err}"),
+    };
     let html = script_re.replace_all(html, "");
-    let style_re =
-        Regex::new(r"(?is)<style[^>]*>.*?</style>").expect("hardcoded regex should always compile");
+    let style_re = match Regex::new(r"(?is)<style[^>]*>.*?</style>") {
+        Ok(re) => re,
+        Err(err) => panic!("hardcoded regex failed to compile: {err}"),
+    };
     let html = style_re.replace_all(&html, "");
 
     // 移除 HTML 注释
-    let comment_re = Regex::new(r"(?s)<!--.*?-->").expect("hardcoded regex should always compile");
+    let comment_re = match Regex::new(r"(?s)<!--.*?-->") {
+        Ok(re) => re,
+        Err(err) => panic!("hardcoded regex failed to compile: {err}"),
+    };
     let html = comment_re.replace_all(&html, "");
 
     // 移除所有 HTML 标签
-    let tag_re = Regex::new(r"<[^>]+>").expect("hardcoded regex should always compile");
+    let tag_re = match Regex::new(r"<[^>]+>") {
+        Ok(re) => re,
+        Err(err) => panic!("hardcoded regex failed to compile: {err}"),
+    };
     let text = tag_re.replace_all(&html, " ");
 
     // 解码常见 HTML 实体
@@ -337,7 +347,10 @@ fn apply_overlap(tokens: &mut Vec<String>, overlap: usize) {
 
 /// 简单的句子切分（按中英文句号/问号/叹号切分）
 fn split_sentences(text: &str) -> Vec<String> {
-    let re = Regex::new(r"[。！？.!?]").expect("hardcoded regex should always compile");
+    let re = match Regex::new(r"[。！？.!?]") {
+        Ok(re) => re,
+        Err(err) => panic!("hardcoded regex failed to compile: {err}"),
+    };
     let mut sentences = Vec::new();
     let mut last = 0;
     for mat in re.find_iter(text) {

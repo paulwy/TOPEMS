@@ -60,9 +60,9 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),            "crm:read",
 
             move |params| async move {
-                let page = params["page"].as_u64().unwrap_or(1) as i32;
-                let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as i32;
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20) as i32;
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let result = match crm_client(jwt_secret)?.list_customers(page, page_size).await {
                     Ok(customers) => {
@@ -72,8 +72,8 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                             customers
                                 .into_iter()
                                 .filter(|c| {
-                                    let name = c["name"].as_str().unwrap_or("");
-                                    let contact = c["contact"].as_str().unwrap_or("");
+                                    let name = c.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                                    let contact = c.get("contact").and_then(|v| v.as_str()).unwrap_or("");
                                     name.contains(keyword) || contact.contains(keyword)
                                 })
                                 .collect()
@@ -96,7 +96,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                             "total": total,
                             "page": page,
                             "page_size": page_size,
-                            "customers": &all[start.min(total)..end],
+                            "customers": all.get(start.min(total)..end),
                             "source": "mock_fallback"
                         })
                     }
@@ -124,8 +124,9 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),
             "crm:read",
             move |params| async move {
-                let customer_id = params["customer_id"]
-                    .as_str()
+                let customer_id = params
+                    .get("customer_id")
+                    .and_then(|v| v.as_str())
                     .ok_or_else(|| {
                         ToolExecutionError::Validation("customer_id 不能为空".to_string())
                     })?
@@ -137,7 +138,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                         tracing::warn!("CRM get_customer API 调用失败（降级 mock）: {}", e);
                         let mock = generate_mock_customers("")
                             .into_iter()
-                            .find(|c| c["id"].as_str() == Some(customer_id.as_str()))
+                            .find(|c| c.get("id").and_then(|v| v.as_str()) == Some(customer_id.as_str()))
                             .unwrap_or_else(|| {
                                 json!({
                                     "id": customer_id,
@@ -182,20 +183,22 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),
             "crm:write",
             move |params| async move {
-                let customer_id = params["customer_id"]
-                    .as_str()
+                let customer_id = params
+                    .get("customer_id")
+                    .and_then(|v| v.as_str())
                     .ok_or_else(|| {
                         ToolExecutionError::Validation("customer_id 不能为空".to_string())
                     })?
                     .to_string();
-                let name = params["name"]
-                    .as_str()
+                let name = params
+                    .get("name")
+                    .and_then(|v| v.as_str())
                     .ok_or_else(|| ToolExecutionError::Validation("name 不能为空".to_string()))?
                     .to_string();
-                let amount = params["amount"].as_f64().ok_or_else(|| {
+                let amount = params.get("amount").and_then(|v| v.as_f64()).ok_or_else(|| {
                     ToolExecutionError::Validation("amount 必须是数字".to_string())
                 })?;
-                let stage = params["stage"].as_str().unwrap_or("lead").to_string();
+                let stage = params.get("stage").and_then(|v| v.as_str()).unwrap_or("lead").to_string();
 
                 let payload = json!({
                     "customer_id": customer_id,
@@ -241,6 +244,7 @@ pub async fn register_crm_tools(server: &McpServer, jwt_secret: &str) {
 
 // ============ Mock 降级数据 ============
 
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_customers(keyword: &str) -> Vec<Value> {
     let all_customers = vec![
         json!({
@@ -323,9 +327,9 @@ fn generate_mock_customers(keyword: &str) -> Vec<Value> {
         all_customers
             .into_iter()
             .filter(|c| {
-                let name = c["name"].as_str().unwrap_or("");
-                let contact = c["contact"].as_str().unwrap_or("");
-                let phone = c["phone"].as_str().unwrap_or("");
+                let name = c.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                let contact = c.get("contact").and_then(|v| v.as_str()).unwrap_or("");
+                let phone = c.get("phone").and_then(|v| v.as_str()).unwrap_or("");
                 name.contains(keyword) || contact.contains(keyword) || phone.contains(keyword)
             })
             .collect()

@@ -745,7 +745,9 @@ impl RecommendationService {
 
             let mut metadata = item.metadata.unwrap_or(serde_json::json!({}));
             if let Some(reason_str) = &reason {
-                metadata["reason"] = serde_json::json!(reason_str);
+                if let Some(obj) = metadata.as_object_mut() {
+                    obj.insert("reason".to_string(), serde_json::json!(reason_str));
+                }
             }
 
             enhanced_items.push(RecommendationItem {

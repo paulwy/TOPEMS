@@ -2269,6 +2269,7 @@ impl DocumentIntelligenceEngine {
     }
 
     /// 提取表格
+    #[allow(clippy::indexing_slicing)] // Markdown 表格解析：while 循环 i+1<len 边界已显式校验，数学上安全
     fn extract_tables(&self, content: &str) -> Vec<DocumentTable> {
         let mut tables = Vec::new();
         let lines: Vec<&str> = content.lines().collect();
@@ -2518,6 +2519,7 @@ fn extract_number(text: &str) -> Option<f64> {
 }
 
 /// 从文本中提取日期
+#[allow(clippy::indexing_slicing)] // 日期检测：while i+10<=len 保证 i..i+10 全部在界内，数学上安全
 fn extract_date(text: &str) -> Option<String> {
     // 简单的日期提取：匹配 YYYY-MM-DD 或 YYYY/MM/DD 格式
     let separators = ['-', '/'];

@@ -535,7 +535,7 @@ fn percentile(sorted_data: &[u64], percentile: f64) -> f64 {
     let n = sorted_data.len() as f64;
     let rank = (percentile / 100.0 * n).ceil() as usize;
     let index = rank.saturating_sub(1).min(sorted_data.len() - 1);
-    sorted_data[index] as f64
+    sorted_data.get(index).copied().unwrap_or(0) as f64
 }
 
 // ============================================================================

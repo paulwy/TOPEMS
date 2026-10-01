@@ -752,13 +752,13 @@ impl WorkflowEngine {
                 .filter(|e| e.source_node_id == current_node_id)
                 .collect();
 
-            if next_edges.is_empty() {
+            let Some(first_edge) = next_edges.first() else {
                 execution.status = WorkflowExecutionStatus::Completed;
                 break;
-            }
+            };
 
             // 简单选择第一条边（实际实现中会根据条件选择）
-            current_node_id = next_edges[0].target_node_id.clone();
+            current_node_id = first_edge.target_node_id.clone();
             execution.current_node_id = Some(current_node_id.clone());
         }
 

@@ -24,6 +24,7 @@ use topems_ai::dsh::mcp::{
 
 /// MCP stdio 服务器主入口
 #[tokio::main]
+#[allow(clippy::expect_used)] // tokio::main 宏展开内含 runtime.build().expect()，启动失败即崩溃属预期
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 初始化日志（stderr，不干扰 stdout 的 JSON-RPC 通信）
     tracing_subscriber::fmt()

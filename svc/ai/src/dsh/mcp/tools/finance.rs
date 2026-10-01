@@ -51,25 +51,25 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),
             "finance:write",
             move |params| async move {
-                let voucher_date = params["voucher_date"].as_str()
+                let voucher_date = params.get("voucher_date").and_then(|v| v.as_str())
                     .ok_or_else(|| ToolExecutionError::Validation("voucher_date 不能为空".to_string()))?.to_string();
-                let summary = params["summary"].as_str()
+                let summary = params.get("summary").and_then(|v| v.as_str())
                     .ok_or_else(|| ToolExecutionError::Validation("summary 不能为空".to_string()))?.to_string();
-                let entries = params["entries"].as_array()
+                let entries = params.get("entries").and_then(|v| v.as_array())
                     .ok_or_else(|| ToolExecutionError::Validation("entries 必须是数组".to_string()))?.clone();
                 if entries.is_empty() {
                     return Err(ToolExecutionError::Validation("entries 不能为空".to_string()));
                 }
                 // 借贷平衡校验
-                let debit: f64 = entries.iter().filter(|e| e["direction"] == "debit").map(|e| e["amount"].as_f64().unwrap_or(0.0)).sum();
-                let credit: f64 = entries.iter().filter(|e| e["direction"] == "credit").map(|e| e["amount"].as_f64().unwrap_or(0.0)).sum();
+                let debit: f64 = entries.iter().filter(|e| e["direction"] == "debit").map(|e| e.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0)).sum();
+                let credit: f64 = entries.iter().filter(|e| e["direction"] == "credit").map(|e| e.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0)).sum();
                 if (debit - credit).abs() > 0.01 {
                     return Err(ToolExecutionError::Validation(format!("借贷不平衡：借方={}，贷方={}", debit, credit)));
                 }
 
                 let payload = json!({ "voucher_date": voucher_date, "summary": summary, "entries": entries });
 
-                let language = params["language"].as_str().unwrap_or("zh").to_string();
+                let language = params.get("language").and_then(|v| v.as_str()).unwrap_or("zh").to_string();
 
                 let result = match finance_client(jwt_secret)?.create_voucher(&payload, Some(language.as_str())).await {
                     Ok(voucher) => json!({ "success": true, "voucher": voucher, "source": "real_api" }),
@@ -107,7 +107,7 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),            "finance:read",
 
             move |params| async move {
-                let subject_code = params["subject_code"].as_str().map(|s| s.to_string());
+                let subject_code = params.get("subject_code").and_then(|v| v.as_str()).map(|s| s.to_string());
 
                 let result = match finance_client(jwt_secret)?.get_account_balance(subject_code.as_deref()).await {
                     Ok(balance) => json!({ "balance": balance, "source": "real_api" }),
@@ -134,14 +134,14 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),            "finance:read",
 
             move |params| async move {
-                let page = params["page"].as_u64().unwrap_or(1) as i32;
-                let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
-                let status = params["status"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as i32;
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20) as i32;
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
 
                 let result = match finance_client(jwt_secret)?.list_receivables(page, page_size).await {
                     Ok(receivables) => {
                         let filtered: Vec<Value> = if status.is_empty() { receivables } else {
-                            receivables.into_iter().filter(|r| r["status"].as_str() == Some(status)).collect()
+                            receivables.into_iter().filter(|r| r.get("status").and_then(|v| v.as_str()) == Some(status)).collect()
                         };
                         json!({ "total": filtered.len(), "page": page, "page_size": page_size, "receivables": filtered, "source": "real_api" })
                     }
@@ -151,7 +151,7 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
                         let total = all.len();
                         let start = ((page - 1) * page_size).max(0) as usize;
                         let end = (start + page_size as usize).min(total);
-                        json!({ "total": total, "page": page, "page_size": page_size, "receivables": &all[start.min(total)..end], "source": "mock_fallback" })
+                        json!({ "total": total, "page": page, "page_size": page_size, "receivables": all.get(start.min(total)..end), "source": "mock_fallback" })
                     }
                 };
                 Ok(McpToolResult { content: vec![McpContent::text(result.to_string())], is_error: None })
@@ -164,6 +164,7 @@ pub async fn register_finance_tools(server: &McpServer, jwt_secret: &str) {
 
 // ============ Mock 降级数据 ============
 
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_account_balance(subject_code: Option<&str>) -> Value {
     let all = vec![
         json!({ "subject_code": "1001", "subject_name": "库存现金", "debit_balance": 50000.00, "credit_balance": 0.00 }),
@@ -178,6 +179,7 @@ fn generate_mock_account_balance(subject_code: Option<&str>) -> Value {
     }
 }
 
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_receivables(status_filter: &str) -> Vec<Value> {
     let statuses = ["unpaid", "partial", "paid", "overdue"];
     let customers = ["CUST-001", "CUST-002", "CUST-003", "CUST-004", "CUST-005"];
@@ -205,7 +207,7 @@ fn generate_mock_receivables(status_filter: &str) -> Vec<Value> {
                 "aging_days": (i * 7) % 180,
             })
         })
-        .filter(|r| status_filter.is_empty() || r["status"].as_str() == Some(status_filter))
+        .filter(|r| status_filter.is_empty() || r.get("status").and_then(|v| v.as_str()) == Some(status_filter))
         .collect()
 }
 

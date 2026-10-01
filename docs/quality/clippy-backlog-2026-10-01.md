@@ -2,6 +2,7 @@
 
 > 命令：`cargo clippy --workspace --no-deps --message-format=short -- --force-warn <13 个高危 lint>`，原始日志 `/tmp/clippy_hidden.txt`。
 > 口径：按 `(文件, 消息)` 去重后的真实诊断数；同一位置在 lib/bin/多 feature 编译下的重复报告已合并。
+> **口径补注（2026-10-01 修订）**：按 `(path:line:col)` 精确位置重新统计 **panic 类（unwrap/expect/indexing）为全工作区 3,085 条**（indexing_slicing 1,252 / unwrap_used 624 / expect_used 1,209）——同一条诊断在 lib/bin/多 feature 编译下重复报告，`(文件,消息)` 口径 2,227 低于精确值。本文档其余统计沿用 2,227 口径（对修复排序列无影响；panic 类逐服务推进时以该服务 force-warn 精确清单为准，方法见 Phase 2）。
 
 ## 结论
 
@@ -91,6 +92,7 @@
 - `indexing_slicing`(201) + `unwrap_used`(128) + `expect_used`(212)
 - 分类原则：启动/配置路径可保留并局部 allow；请求处理路径改为错误传播（`?` / `map_err`）；测试代码单独审计。
 - 顺序：按服务从高到低（ai → erp → unified-core → mes → portal → finance）。
+- **ai 服务已清盘（2026-10-01）**：force-warn 精确口径 483 条（indexing 467 / unwrap 9 / expect 7）→ 修复后真实待修 **0 条**。手法：① 431 处 `X["k"].as_Y()` → `X.get("k").and_then(|v| v.as_Y())`（缺失键 panic 实修）；② 28 处分页切片 → `.get(start.min(total)..end)`（Option 序列化语义等价）；③ 66 处 unwrap/expect/裸索引 → match/first/get/as_object_mut/let-else 等错误传播或防御式改写；④ 数学上安全但 clippy 无法证明的模运算 mock 生成器（46 个函数）与有界循环解析函数（2 个）加**函数级** `#[allow]` 并注明不变量；⑤ 2 个 bin 的 `#[tokio::main]` 宏展开内 `runtime.build().expect()` 加函数级 allow（启动失败即崩溃属预期）。验证：默认 clippy 0 告警；`cargo test -p topems-ai --lib` 1,171 通过；force-warn 剩余 105 条全部落在上述窄范围 allow 内。
 
 ### Phase 3 — 数值安全（1,487 条，需人工，最大面）
 - `as_conversions`(458)：`as` → `try_from`/`From` 或显式 `saturating_*`/`wrapping_*`

@@ -501,7 +501,11 @@ impl MultimodalService {
 
     pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, String> {
         let chart_types = ["line", "bar", "pie", "scatter", "area"];
-        let chart_type = chart_types[image_base64.len() % chart_types.len()].to_string();
+        let chart_type = chart_types
+            .get(image_base64.len() % chart_types.len())
+            .copied()
+            .unwrap_or("line")
+            .to_string();
 
         let data_points = vec![
             DataPoint {

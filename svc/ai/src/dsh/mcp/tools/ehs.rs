@@ -71,11 +71,11 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "ehs:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let level = params["level"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let incident_type = params["incident_type"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let level = params.get("level").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let incident_type = params.get("incident_type").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("EHS_SERVICE_URL", 8052);
                 let mut path = format!("/api/ehs/incidents?page={}&page_size={}", page, page_size);
@@ -90,7 +90,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = incidents.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_incidents = &incidents[start.min(total)..end];
+                let page_incidents = incidents.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -121,7 +121,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "ehs:read",
 
             |params| {
-                let incident_id = params["incident_id"].as_str().unwrap_or("");
+                let incident_id = params.get("incident_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if incident_id.is_empty() {
                     return Err(ToolExecutionError::Validation("incident_id is required".to_string()));
@@ -183,11 +183,11 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "ehs:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let risk_level = params["risk_level"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let location = params["location"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let risk_level = params.get("risk_level").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let location = params.get("location").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("EHS_SERVICE_URL", 8052);
                 let mut path = format!("/api/ehs/hazards?page={}&page_size={}", page, page_size);
@@ -201,7 +201,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = hazards.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_hazards = &hazards[start.min(total)..end];
+                let page_hazards = hazards.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -260,11 +260,11 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "ehs:write",
 
             |params| {
-                let title = params["title"].as_str().unwrap_or("");
-                let incident_type = params["incident_type"].as_str().unwrap_or("");
-                let level = params["level"].as_str().unwrap_or("");
-                let occurred_at = params["occurred_at"].as_str().unwrap_or("");
-                let location = params["location"].as_str().unwrap_or("");
+                let title = params.get("title").and_then(|v| v.as_str()).unwrap_or("");
+                let incident_type = params.get("incident_type").and_then(|v| v.as_str()).unwrap_or("");
+                let level = params.get("level").and_then(|v| v.as_str()).unwrap_or("");
+                let occurred_at = params.get("occurred_at").and_then(|v| v.as_str()).unwrap_or("");
+                let location = params.get("location").and_then(|v| v.as_str()).unwrap_or("");
 
                 if title.is_empty() {
                     return Err(ToolExecutionError::Validation("title is required".to_string()));
@@ -289,14 +289,14 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                     "level": level,
                     "occurred_at": occurred_at,
                     "location": location,
-                    "description": params["description"].as_str().unwrap_or(""),
-                    "reporter": params["reporter"].as_str().unwrap_or(""),
+                    "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
+                    "reporter": params.get("reporter").and_then(|v| v.as_str()).unwrap_or(""),
                 });
                 let result = http_call(&base, "POST", "/api/ehs/incidents", Some(body))
                     .map(|data| {
                         let mut d = data;
-                        if d.get("message").is_none() {
-                            d["message"] = json!("安全事件创建成功");
+                        if let Some(obj) = d.as_object_mut() {
+                            obj.entry("message").or_insert(json!("安全事件创建成功"));
                         }
                         d
                     })
@@ -311,8 +311,8 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
                             "level": level,
                             "occurred_at": occurred_at,
                             "location": location,
-                            "description": params["description"].as_str().unwrap_or(""),
-                            "reporter": params["reporter"].as_str().unwrap_or(""),
+                            "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
+                            "reporter": params.get("reporter").and_then(|v| v.as_str()).unwrap_or(""),
                             "status": "reported",
                             "created_at": chrono::Utc::now().to_rfc3339(),
                             "message": "安全事件创建成功，已通知EHS负责人",
@@ -333,6 +333,7 @@ pub async fn register_ehs_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 安全事件列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_incidents(
     level_filter: &str,
     status_filter: &str,
@@ -370,14 +371,15 @@ fn generate_mock_incidents(
             })
         })
         .filter(|inc| {
-            (level_filter.is_empty() || inc["level"].as_str() == Some(level_filter))
-                && (status_filter.is_empty() || inc["status"].as_str() == Some(status_filter))
-                && (type_filter.is_empty() || inc["incident_type"].as_str() == Some(type_filter))
+            (level_filter.is_empty() || inc.get("level").and_then(|v| v.as_str()) == Some(level_filter))
+                && (status_filter.is_empty() || inc.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (type_filter.is_empty() || inc.get("incident_type").and_then(|v| v.as_str()) == Some(type_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 安全事件详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_incident_detail(incident_id: &str) -> Value {
     json!({
         "incident_id": incident_id,
@@ -452,6 +454,7 @@ fn generate_mock_incident_detail(incident_id: &str) -> Value {
 }
 
 /// 生成 Mock 隐患列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_hazards(
     risk_filter: &str,
     status_filter: &str,
@@ -496,9 +499,9 @@ fn generate_mock_hazards(
             })
         })
         .filter(|h| {
-            (risk_filter.is_empty() || h["risk_level"].as_str() == Some(risk_filter))
-                && (status_filter.is_empty() || h["status"].as_str() == Some(status_filter))
-                && (location_filter.is_empty() || h["location"].as_str() == Some(location_filter))
+            (risk_filter.is_empty() || h.get("risk_level").and_then(|v| v.as_str()) == Some(risk_filter))
+                && (status_filter.is_empty() || h.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (location_filter.is_empty() || h.get("location").and_then(|v| v.as_str()) == Some(location_filter))
         })
         .collect()
 }

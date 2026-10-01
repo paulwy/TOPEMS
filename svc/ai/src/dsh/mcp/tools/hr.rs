@@ -69,11 +69,11 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "hr:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let department = params["department"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let department = params.get("department").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 // 真实调用 HRM API（GET /api/hrm/employees，降级 mock）
                 let mut path = format!("/api/hrm/employees?page={}&page_size={}", page, page_size);
@@ -99,7 +99,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = employees.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_employees = &employees[start.min(total)..end];
+                let page_employees = employees.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -130,7 +130,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "hr:read",
 
             |params| {
-                let employee_id = params["employee_id"].as_str().unwrap_or("");
+                let employee_id = params.get("employee_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if employee_id.is_empty() {
                     return Err(ToolExecutionError::Validation("employee_id is required".to_string()));
@@ -180,9 +180,9 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),
             "hr:write",
             |params| {
-                let name = params["name"].as_str().unwrap_or("");
-                let department = params["department"].as_str().unwrap_or("");
-                let position = params["position"].as_str().unwrap_or("");
+                let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                let department = params.get("department").and_then(|v| v.as_str()).unwrap_or("");
+                let position = params.get("position").and_then(|v| v.as_str()).unwrap_or("");
 
                 if name.is_empty() {
                     return Err(ToolExecutionError::Validation(
@@ -204,10 +204,10 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                 let base = service_base_url("HRM_SERVICE_URL", 8020);
                 let body = json!({
                     "name": name,
-                    "employee_number": params["employee_no"].as_str().unwrap_or(""),
-                    "email": params["email"].as_str().unwrap_or(""),
-                    "phone": params["phone"].as_str().unwrap_or(""),
-                    "hire_date": params["hire_date"].as_str().unwrap_or(""),
+                    "employee_number": params.get("employee_no").and_then(|v| v.as_str()).unwrap_or(""),
+                    "email": params.get("email").and_then(|v| v.as_str()).unwrap_or(""),
+                    "phone": params.get("phone").and_then(|v| v.as_str()).unwrap_or(""),
+                    "hire_date": params.get("hire_date").and_then(|v| v.as_str()).unwrap_or(""),
                 });
                 if let Some(data) = http_call(&base, "POST", "/api/hrm/employees", Some(body)) {
                     let result =
@@ -227,12 +227,13 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                         .unwrap_or("00000000")
                 );
                 let default_employee_no = format!("EMP{:06}", 10001);
-                let employee_no = params["employee_no"]
-                    .as_str()
+                let employee_no = params
+                    .get("employee_no")
+                    .and_then(|v| v.as_str())
                     .unwrap_or(&default_employee_no);
 
                 let default_hire_date = chrono::Utc::now().format("%Y-%m-%d").to_string();
-                let hire_date = params["hire_date"].as_str().unwrap_or(&default_hire_date);
+                let hire_date = params.get("hire_date").and_then(|v| v.as_str()).unwrap_or(&default_hire_date);
 
                 let result = json!({
                     "employee_id": employee_id,
@@ -240,8 +241,8 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                     "name": name,
                     "department": department,
                     "position": position,
-                    "email": params["email"].as_str().unwrap_or(""),
-                    "phone": params["phone"].as_str().unwrap_or(""),
+                    "email": params.get("email").and_then(|v| v.as_str()).unwrap_or(""),
+                    "phone": params.get("phone").and_then(|v| v.as_str()).unwrap_or(""),
                     "hire_date": hire_date,
                     "status": "probation",
                     "created_at": chrono::Utc::now().to_rfc3339(),
@@ -296,7 +297,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "hr:write",
 
             |params| {
-                let employee_id = params["employee_id"].as_str().unwrap_or("");
+                let employee_id = params.get("employee_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if employee_id.is_empty() {
                     return Err(ToolExecutionError::Validation("employee_id is required".to_string()));
@@ -304,23 +305,35 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
 
                 // 收集要更新的字段
                 let mut updates = json!({});
-                if let Some(dept) = params["department"].as_str() {
-                    updates["department"] = json!(dept);
+                if let Some(dept) = params.get("department").and_then(|v| v.as_str()) {
+                    if let Some(obj) = updates.as_object_mut() {
+                        obj.insert("department".to_string(), json!(dept));
+                    }
                 }
-                if let Some(pos) = params["position"].as_str() {
-                    updates["position"] = json!(pos);
+                if let Some(pos) = params.get("position").and_then(|v| v.as_str()) {
+                    if let Some(obj) = updates.as_object_mut() {
+                        obj.insert("position".to_string(), json!(pos));
+                    }
                 }
-                if let Some(email) = params["email"].as_str() {
-                    updates["email"] = json!(email);
+                if let Some(email) = params.get("email").and_then(|v| v.as_str()) {
+                    if let Some(obj) = updates.as_object_mut() {
+                        obj.insert("email".to_string(), json!(email));
+                    }
                 }
-                if let Some(phone) = params["phone"].as_str() {
-                    updates["phone"] = json!(phone);
+                if let Some(phone) = params.get("phone").and_then(|v| v.as_str()) {
+                    if let Some(obj) = updates.as_object_mut() {
+                        obj.insert("phone".to_string(), json!(phone));
+                    }
                 }
-                if let Some(status) = params["status"].as_str() {
-                    updates["status"] = json!(status);
+                if let Some(status) = params.get("status").and_then(|v| v.as_str()) {
+                    if let Some(obj) = updates.as_object_mut() {
+                        obj.insert("status".to_string(), json!(status));
+                    }
                 }
-                if let Some(salary) = params["salary"].as_f64() {
-                    updates["salary"] = json!(salary);
+                if let Some(salary) = params.get("salary").and_then(|v| v.as_f64()) {
+                    if let Some(obj) = updates.as_object_mut() {
+                        obj.insert("salary".to_string(), json!(salary));
+                    }
                 }
 
                 if updates.as_object().is_none_or(|o| o.is_empty()) {
@@ -359,6 +372,7 @@ pub async fn register_hr_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 员工列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_employees(dept_filter: &str, status_filter: &str, keyword: &str) -> Vec<Value> {
     let departments = [
         "研发部",
@@ -402,16 +416,17 @@ fn generate_mock_employees(dept_filter: &str, status_filter: &str, keyword: &str
             })
         })
         .filter(|e| {
-            (dept_filter.is_empty() || e["department"].as_str() == Some(dept_filter))
-                && (status_filter.is_empty() || e["status"].as_str() == Some(status_filter))
+            (dept_filter.is_empty() || e.get("department").and_then(|v| v.as_str()) == Some(dept_filter))
+                && (status_filter.is_empty() || e.get("status").and_then(|v| v.as_str()) == Some(status_filter))
                 && (keyword.is_empty()
-                    || e["name"].as_str().unwrap_or("").contains(keyword)
-                    || e["employee_no"].as_str().unwrap_or("").contains(keyword))
+                    || e.get("name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword)
+                    || e.get("employee_no").and_then(|v| v.as_str()).unwrap_or("").contains(keyword))
         })
         .collect()
 }
 
 /// 生成 Mock 员工详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_employee_detail(employee_id: &str) -> Value {
     json!({
         "employee_id": employee_id,
@@ -495,7 +510,7 @@ mod tests {
             _ => String::new(),
         };
         let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-        let total = parsed["total"].as_u64().unwrap_or(0);
+        let total = parsed.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         assert!(total > 0, "真实 API 应返回员工，total={}", total);
         eprintln!("hr.list_employees 真实调用返回 total = {}", total);
     }

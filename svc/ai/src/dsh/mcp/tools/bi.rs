@@ -74,18 +74,18 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "bi:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let category = params["category"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let owner = params["owner"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let category = params.get("category").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let owner = params.get("owner").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let dashboards = generate_mock_dashboards(category, status, owner, keyword);
                 let total = dashboards.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_dashboards = &dashboards[start.min(total)..end];
+                let page_dashboards = dashboards.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -116,7 +116,7 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "bi:read",
 
             |params| {
-                let dashboard_id = params["dashboard_id"].as_str().unwrap_or("");
+                let dashboard_id = params.get("dashboard_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if dashboard_id.is_empty() {
                     return Err(ToolExecutionError::Validation("dashboard_id is required".to_string()));
@@ -179,18 +179,18 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "bi:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let report_type = params["report_type"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let schedule = params["schedule"].as_str().unwrap_or("");
-                let owner = params["owner"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let report_type = params.get("report_type").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let schedule = params.get("schedule").and_then(|v| v.as_str()).unwrap_or("");
+                let owner = params.get("owner").and_then(|v| v.as_str()).unwrap_or("");
 
                 let reports = generate_mock_reports(report_type, status, schedule, owner);
                 let total = reports.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_reports = &reports[start.min(total)..end];
+                let page_reports = reports.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -244,10 +244,10 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "bi:read",
 
             |params| {
-                let metric_id = params["metric_id"].as_str().unwrap_or("");
-                let start_date = params["start_date"].as_str().unwrap_or("");
-                let end_date = params["end_date"].as_str().unwrap_or("");
-                let granularity = params["granularity"].as_str().unwrap_or("daily");
+                let metric_id = params.get("metric_id").and_then(|v| v.as_str()).unwrap_or("");
+                let start_date = params.get("start_date").and_then(|v| v.as_str()).unwrap_or("");
+                let end_date = params.get("end_date").and_then(|v| v.as_str()).unwrap_or("");
+                let granularity = params.get("granularity").and_then(|v| v.as_str()).unwrap_or("daily");
 
                 if metric_id.is_empty() {
                     return Err(ToolExecutionError::Validation("metric_id is required".to_string()));
@@ -275,6 +275,7 @@ pub async fn register_bi_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 仪表盘列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_dashboards(
     category_filter: &str,
     status_filter: &str,
@@ -315,20 +316,21 @@ fn generate_mock_dashboards(
             })
         })
         .filter(|d| {
-            (category_filter.is_empty() || d["category"].as_str() == Some(category_filter))
-                && (status_filter.is_empty() || d["status"].as_str() == Some(status_filter))
-                && (owner_filter.is_empty() || d["owner"].as_str() == Some(owner_filter))
+            (category_filter.is_empty() || d.get("category").and_then(|v| v.as_str()) == Some(category_filter))
+                && (status_filter.is_empty() || d.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (owner_filter.is_empty() || d.get("owner").and_then(|v| v.as_str()) == Some(owner_filter))
                 && (keyword_filter.is_empty()
                     || d["dashboard_number"]
                         .as_str()
                         .unwrap_or("")
                         .contains(keyword_filter)
-                    || d["name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || d.get("name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 仪表盘详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_dashboard_detail(dashboard_id: &str) -> Value {
     json!({
         "dashboard_id": dashboard_id,
@@ -373,6 +375,7 @@ fn generate_mock_dashboard_detail(dashboard_id: &str) -> Value {
 }
 
 /// 生成 Mock 报表列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_reports(
     type_filter: &str,
     status_filter: &str,
@@ -408,15 +411,16 @@ fn generate_mock_reports(
             })
         })
         .filter(|r| {
-            (type_filter.is_empty() || r["report_type"].as_str() == Some(type_filter))
-                && (status_filter.is_empty() || r["status"].as_str() == Some(status_filter))
-                && (schedule_filter.is_empty() || r["schedule"].as_str() == Some(schedule_filter))
-                && (owner_filter.is_empty() || r["owner"].as_str() == Some(owner_filter))
+            (type_filter.is_empty() || r.get("report_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (status_filter.is_empty() || r.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (schedule_filter.is_empty() || r.get("schedule").and_then(|v| v.as_str()) == Some(schedule_filter))
+                && (owner_filter.is_empty() || r.get("owner").and_then(|v| v.as_str()) == Some(owner_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 指标数据
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_metric_data(
     metric_id: &str,
     start_date: &str,
@@ -453,16 +457,16 @@ fn generate_mock_metric_data(
 
     let total: f64 = data_points
         .iter()
-        .map(|p| p["value"].as_f64().unwrap_or(0.0))
+        .map(|p| p.get("value").and_then(|v| v.as_f64()).unwrap_or(0.0))
         .sum();
     let avg = total / points as f64;
     let max = data_points
         .iter()
-        .map(|p| p["value"].as_f64().unwrap_or(0.0))
+        .map(|p| p.get("value").and_then(|v| v.as_f64()).unwrap_or(0.0))
         .fold(f64::NEG_INFINITY, f64::max);
     let min = data_points
         .iter()
-        .map(|p| p["value"].as_f64().unwrap_or(0.0))
+        .map(|p| p.get("value").and_then(|v| v.as_f64()).unwrap_or(0.0))
         .fold(f64::INFINITY, f64::min);
 
     json!({
@@ -594,7 +598,7 @@ mod tests {
             assert_eq!(parsed["granularity"], "daily");
             assert!(parsed["summary"].is_object());
             assert!(parsed["data_points"].is_array());
-            assert!(!parsed["data_points"].as_array().unwrap().is_empty());
+            assert!(!parsed.get("data_points").and_then(|v| v.as_array()).unwrap().is_empty());
         } else {
             panic!("Expected text content");
         }

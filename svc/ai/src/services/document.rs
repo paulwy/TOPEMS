@@ -521,7 +521,7 @@ impl DocumentService {
             if n == 0 {
                 break;
             }
-            let part = String::from_utf8_lossy(&buffer[..n]).into_owned();
+            let part = String::from_utf8_lossy(buffer.get(..n).unwrap_or(&[])).into_owned();
             text.push_str(&part);
         }
 

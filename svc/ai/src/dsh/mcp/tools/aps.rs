@@ -83,12 +83,12 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "aps:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let schedule_type = params["schedule_type"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let resource_id = params["resource_id"].as_str().unwrap_or("");
-                let order_id = params["order_id"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let schedule_type = params.get("schedule_type").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let resource_id = params.get("resource_id").and_then(|v| v.as_str()).unwrap_or("");
+                let order_id = params.get("order_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("APS_SERVICE_URL", 8074);
                 let mut path = format!("/api/aps/schedules?page={}&page_size={}", page, page_size);
@@ -104,13 +104,13 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                         }));
                     }
                 }
-                let schedules = real.map(|r| r["schedules"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                let schedules = real.map(|r| r.get("schedules").and_then(|v| v.as_array()).cloned().unwrap_or_default()).unwrap_or_else(|| {
                     generate_mock_schedules(schedule_type, status, resource_id, order_id)
                 });
                 let total = schedules.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_schedules = &schedules[start.min(total)..end];
+                let page_schedules = schedules.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -141,7 +141,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "aps:read",
 
             |params| {
-                let schedule_id = params["schedule_id"].as_str().unwrap_or("");
+                let schedule_id = params.get("schedule_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if schedule_id.is_empty() {
                     return Err(ToolExecutionError::Validation("schedule_id is required".to_string()));
@@ -207,12 +207,12 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "aps:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let resource_type = params["resource_type"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let workshop = params["workshop"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let resource_type = params.get("resource_type").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let workshop = params.get("workshop").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("APS_SERVICE_URL", 8074);
                 let path = format!("/api/aps/capacities?page={}&page_size={}", page, page_size);
@@ -227,13 +227,13 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                         }));
                     }
                 }
-                let resources = real.map(|r| r["resources"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                let resources = real.map(|r| r.get("resources").and_then(|v| v.as_array()).cloned().unwrap_or_default()).unwrap_or_else(|| {
                     generate_mock_resources(resource_type, status, workshop, keyword)
                 });
                 let total = resources.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_resources = &resources[start.min(total)..end];
+                let page_resources = resources.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -301,10 +301,10 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "aps:write",
 
             |params| {
-                let schedule_type = params["schedule_type"].as_str().unwrap_or("");
-                let order_id = params["order_id"].as_str().unwrap_or("");
-                let resource_id = params["resource_id"].as_str().unwrap_or("");
-                let start_time = params["start_time"].as_str().unwrap_or("");
+                let schedule_type = params.get("schedule_type").and_then(|v| v.as_str()).unwrap_or("");
+                let order_id = params.get("order_id").and_then(|v| v.as_str()).unwrap_or("");
+                let resource_id = params.get("resource_id").and_then(|v| v.as_str()).unwrap_or("");
+                let start_time = params.get("start_time").and_then(|v| v.as_str()).unwrap_or("");
 
                 if schedule_type.is_empty() {
                     return Err(ToolExecutionError::Validation("schedule_type is required".to_string()));
@@ -326,11 +326,11 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                 let base = service_base_url("APS_SERVICE_URL", 8074);
                 let body = json!({
                     "schedule_no": format!("APS-MCP-{}", chrono::Utc::now().format("%Y%m%d%H%M%S")),
-                    "product_name": params["remark"].as_str().unwrap_or("MCP 排程"),
-                    "work_center_name": params["operator"].as_str().unwrap_or("机加工车间-01"),
+                    "product_name": params.get("remark").and_then(|v| v.as_str()).unwrap_or("MCP 排程"),
+                    "work_center_name": params.get("operator").and_then(|v| v.as_str()).unwrap_or("机加工车间-01"),
                     "planned_start": start_time,
-                    "quantity": params["quantity"].as_i64().unwrap_or(0),
-                    "priority": match params["priority"].as_str().unwrap_or("medium") {
+                    "quantity": params.get("quantity").and_then(|v| v.as_i64()).unwrap_or(0),
+                    "priority": match params.get("priority").and_then(|v| v.as_str()).unwrap_or("medium") {
                         "low" => 1, "high" => 9, "urgent" => 10, _ => 5,
                     },
                     "status": "pending",
@@ -339,8 +339,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                 let mut body = body;
                 if let Some(Value::String(st)) = body.get_mut("planned_start") {
                     if !st.is_empty() && !st.contains('T') {
-                        let norm = st.trim().replace(' ', "T");
-                        body["planned_start"] = json!(format!("{}Z", norm));
+                        *st = format!("{}Z", st.trim().replace(' ', "T"));
                     }
                 }
                 if let Some(data) = http_call(&base, "POST", "/api/aps/schedules", Some(body)) {
@@ -357,11 +356,11 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
                     "order_id": order_id,
                     "resource_id": resource_id,
                     "start_time": start_time,
-                    "end_time": params["end_time"].as_str().unwrap_or(""),
-                    "quantity": params["quantity"].as_i64().unwrap_or(0),
-                    "priority": params["priority"].as_str().unwrap_or("medium"),
-                    "operator": params["operator"].as_str().unwrap_or(""),
-                    "remark": params["remark"].as_str().unwrap_or(""),
+                    "end_time": params.get("end_time").and_then(|v| v.as_str()).unwrap_or(""),
+                    "quantity": params.get("quantity").and_then(|v| v.as_i64()).unwrap_or(0),
+                    "priority": params.get("priority").and_then(|v| v.as_str()).unwrap_or("medium"),
+                    "operator": params.get("operator").and_then(|v| v.as_str()).unwrap_or(""),
+                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
                     "status": "planned",
                     "created_at": chrono::Utc::now().to_rfc3339(),
                     "message": "排程创建成功，已分配排程编号，等待排程引擎确认",
@@ -381,6 +380,7 @@ pub async fn register_aps_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 排程列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_schedules(
     type_filter: &str,
     status_filter: &str,
@@ -430,15 +430,16 @@ fn generate_mock_schedules(
             })
         })
         .filter(|s| {
-            (type_filter.is_empty() || s["schedule_type"].as_str() == Some(type_filter))
-                && (status_filter.is_empty() || s["status"].as_str() == Some(status_filter))
-                && (resource_filter.is_empty() || s["resource_id"].as_str() == Some(resource_filter))
-                && (order_filter.is_empty() || s["order_id"].as_str() == Some(order_filter))
+            (type_filter.is_empty() || s.get("schedule_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (status_filter.is_empty() || s.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (resource_filter.is_empty() || s.get("resource_id").and_then(|v| v.as_str()) == Some(resource_filter))
+                && (order_filter.is_empty() || s.get("order_id").and_then(|v| v.as_str()) == Some(order_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 排程详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_schedule_detail(schedule_id: &str) -> Value {
     json!({
         "schedule_id": schedule_id,
@@ -503,6 +504,7 @@ fn generate_mock_schedule_detail(schedule_id: &str) -> Value {
 }
 
 /// 生成 Mock 资源列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_resources(
     type_filter: &str,
     status_filter: &str,
@@ -536,12 +538,12 @@ fn generate_mock_resources(
             })
         })
         .filter(|r| {
-            (type_filter.is_empty() || r["resource_type"].as_str() == Some(type_filter))
-                && (status_filter.is_empty() || r["status"].as_str() == Some(status_filter))
-                && (workshop_filter.is_empty() || r["workshop"].as_str() == Some(workshop_filter))
+            (type_filter.is_empty() || r.get("resource_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (status_filter.is_empty() || r.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (workshop_filter.is_empty() || r.get("workshop").and_then(|v| v.as_str()) == Some(workshop_filter))
                 && (keyword_filter.is_empty()
-                    || r["resource_code"].as_str().unwrap_or("").contains(keyword_filter)
-                    || r["resource_name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || r.get("resource_code").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || r.get("resource_name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
@@ -724,7 +726,7 @@ mod tests {
             _ => String::new(),
         };
         let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-        let total = parsed["total"].as_u64().unwrap_or(0);
+        let total = parsed.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         assert!(
             total > 0,
             "aps.list_schedules 真实服务应返回 total>0，实际: {}",
@@ -742,7 +744,7 @@ mod tests {
             _ => String::new(),
         };
         let parsed2: Value = serde_json::from_str(&text2).unwrap_or(json!({}));
-        let total2 = parsed2["total"].as_u64().unwrap_or(0);
+        let total2 = parsed2.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         assert!(
             total2 > 0,
             "aps.list_resources 真实服务应返回 total>0，实际: {}",

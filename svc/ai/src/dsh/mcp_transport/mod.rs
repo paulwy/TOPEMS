@@ -668,8 +668,7 @@ impl TransportManager {
 
         // 找到当前传输类型的索引，降级到下一个
         if let Some(current_index) = preferred.iter().position(|t| *t == current_type) {
-            if current_index + 1 < preferred.len() {
-                let downgrade_type = preferred[current_index + 1];
+            if let Some(&downgrade_type) = preferred.get(current_index + 1) {
                 info!(
                     session_id = %session_id,
                     from = %current_type.as_str(),

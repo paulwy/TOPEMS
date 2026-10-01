@@ -315,7 +315,18 @@ pub async fn suggest_for_form(
             ),
         ));
     }
-    let cfg = registry.get(&form_type).unwrap();
+    let cfg = match registry.get(&form_type) {
+        Some(cfg) => cfg,
+        None => {
+            return Json(api_error(
+                404,
+                &format!(
+                    "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
+                    form_type
+                ),
+            ));
+        }
+    };
     if !cfg.supports("suggest") {
         return Json(api_error(
             400,
@@ -377,7 +388,18 @@ pub async fn enhance_for_form(
             ),
         ));
     }
-    let cfg = registry.get(&form_type).unwrap();
+    let cfg = match registry.get(&form_type) {
+        Some(cfg) => cfg,
+        None => {
+            return Json(api_error(
+                404,
+                &format!(
+                    "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
+                    form_type
+                ),
+            ));
+        }
+    };
     if !cfg.supports("enhance") {
         return Json(api_error(
             400,

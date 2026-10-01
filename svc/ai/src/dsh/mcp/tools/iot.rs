@@ -74,18 +74,18 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "iot:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let device_type = params["device_type"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let location = params["location"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let device_type = params.get("device_type").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let location = params.get("location").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let devices = generate_mock_devices(device_type, status, location, keyword);
                 let total = devices.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_devices = &devices[start.min(total)..end];
+                let page_devices = devices.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -116,7 +116,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "iot:read",
 
             |params| {
-                let device_id = params["device_id"].as_str().unwrap_or("");
+                let device_id = params.get("device_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if device_id.is_empty() {
                     return Err(ToolExecutionError::Validation("device_id is required".to_string()));
@@ -173,10 +173,10 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "iot:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(100);
-                let device_id = params["device_id"].as_str().unwrap_or("");
-                let data_type = params["data_type"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(100);
+                let device_id = params.get("device_id").and_then(|v| v.as_str()).unwrap_or("");
+                let data_type = params.get("data_type").and_then(|v| v.as_str()).unwrap_or("");
 
                 if device_id.is_empty() {
                     return Err(ToolExecutionError::Validation("device_id is required".to_string()));
@@ -186,7 +186,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = data.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_data = &data[start.min(total)..end];
+                let page_data = data.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -236,8 +236,8 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "iot:write",
 
             |params| {
-                let device_id = params["device_id"].as_str().unwrap_or("");
-                let command = params["command"].as_str().unwrap_or("");
+                let device_id = params.get("device_id").and_then(|v| v.as_str()).unwrap_or("");
+                let command = params.get("command").and_then(|v| v.as_str()).unwrap_or("");
 
                 if device_id.is_empty() {
                     return Err(ToolExecutionError::Validation("device_id is required".to_string()));
@@ -252,11 +252,11 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
                     "command_id": command_id,
                     "device_id": device_id,
                     "command": command,
-                    "parameters": params["parameters"].as_object().unwrap_or(&serde_json::Map::new()),
+                    "parameters": params.get("parameters").and_then(|v| v.as_object()).unwrap_or(&serde_json::Map::new()),
                     "status": "sent",
                     "sent_at": chrono::Utc::now().to_rfc3339(),
-                    "operator": params["operator"].as_str().unwrap_or(""),
-                    "timeout": params["timeout"].as_i64().unwrap_or(30),
+                    "operator": params.get("operator").and_then(|v| v.as_str()).unwrap_or(""),
+                    "timeout": params.get("timeout").and_then(|v| v.as_i64()).unwrap_or(30),
                     "message": format!("命令已发送到设备{}，等待设备响应", device_id),
                 });
 
@@ -274,6 +274,7 @@ pub async fn register_iot_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 设备列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_devices(
     type_filter: &str,
     status_filter: &str,
@@ -323,17 +324,18 @@ fn generate_mock_devices(
             })
         })
         .filter(|d| {
-            (type_filter.is_empty() || d["device_type"].as_str() == Some(type_filter))
-                && (status_filter.is_empty() || d["status"].as_str() == Some(status_filter))
-                && (location_filter.is_empty() || d["location"].as_str() == Some(location_filter))
+            (type_filter.is_empty() || d.get("device_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (status_filter.is_empty() || d.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (location_filter.is_empty() || d.get("location").and_then(|v| v.as_str()) == Some(location_filter))
                 && (keyword_filter.is_empty()
-                    || d["device_code"].as_str().unwrap_or("").contains(keyword_filter)
-                    || d["device_name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || d.get("device_code").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || d.get("device_name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 设备详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_device_detail(device_id: &str) -> Value {
     json!({
         "device_id": device_id,
@@ -393,6 +395,7 @@ fn generate_mock_device_detail(device_id: &str) -> Value {
 }
 
 /// 生成 Mock 设备数据
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_device_data(device_id: &str, type_filter: &str) -> Vec<Value> {
     let data_types = [
         "temperature",

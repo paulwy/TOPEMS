@@ -75,12 +75,12 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "lims:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let status = params["status"].as_str().unwrap_or("");
-                let sample_type = params["sample_type"].as_str().unwrap_or("");
-                let submitter = params["submitter"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let sample_type = params.get("sample_type").and_then(|v| v.as_str()).unwrap_or("");
+                let submitter = params.get("submitter").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("LIMS_SERVICE_URL", 8051);
                 let mut path = format!("/api/lims/samples?page={}&page_size={}", page, page_size);
@@ -95,7 +95,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = samples.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_samples = &samples[start.min(total)..end];
+                let page_samples = samples.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -126,7 +126,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "lims:read",
 
             |params| {
-                let sample_id = params["sample_id"].as_str().unwrap_or("");
+                let sample_id = params.get("sample_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if sample_id.is_empty() {
                     return Err(ToolExecutionError::Validation("sample_id is required".to_string()));
@@ -190,12 +190,12 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "lims:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let sample_id = params["sample_id"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let test_method = params["test_method"].as_str().unwrap_or("");
-                let tester = params["tester"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let sample_id = params.get("sample_id").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let test_method = params.get("test_method").and_then(|v| v.as_str()).unwrap_or("");
+                let tester = params.get("tester").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("LIMS_SERVICE_URL", 8051);
                 let mut path = format!("/api/lims/tasks?page={}&page_size={}", page, page_size);
@@ -208,7 +208,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = tests.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_tests = &tests[start.min(total)..end];
+                let page_tests = tests.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -269,10 +269,10 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),
             "lims:write",
             |params| {
-                let name = params["name"].as_str().unwrap_or("");
-                let sample_type = params["sample_type"].as_str().unwrap_or("");
-                let source = params["source"].as_str().unwrap_or("");
-                let submitter = params["submitter"].as_str().unwrap_or("");
+                let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                let sample_type = params.get("sample_type").and_then(|v| v.as_str()).unwrap_or("");
+                let source = params.get("source").and_then(|v| v.as_str()).unwrap_or("");
+                let submitter = params.get("submitter").and_then(|v| v.as_str()).unwrap_or("");
 
                 if name.is_empty() {
                     return Err(ToolExecutionError::Validation(
@@ -301,15 +301,15 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                     "sample_type": sample_type,
                     "source": source,
                     "submitter": submitter,
-                    "quantity": params["quantity"].as_f64().unwrap_or(0.0),
-                    "unit": params["unit"].as_str().unwrap_or(""),
-                    "description": params["description"].as_str().unwrap_or(""),
+                    "quantity": params.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                    "unit": params.get("unit").and_then(|v| v.as_str()).unwrap_or(""),
+                    "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
                 });
                 let result = http_call(&base, "POST", "/api/lims/samples", Some(body))
                     .map(|data| {
                         let mut d = data;
-                        if d.get("message").is_none() {
-                            d["message"] = json!("样品创建成功，已分配样品编号，等待检测安排");
+                        if let Some(obj) = d.as_object_mut() {
+                            obj.entry("message").or_insert(json!("样品创建成功，已分配样品编号，等待检测安排"));
                         }
                         d
                     })
@@ -331,10 +331,10 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
                             "sample_type": sample_type,
                             "source": source,
                             "submitter": submitter,
-                            "quantity": params["quantity"].as_f64().unwrap_or(0.0),
-                            "unit": params["unit"].as_str().unwrap_or(""),
-                            "description": params["description"].as_str().unwrap_or(""),
-                            "test_items": params["test_items"].as_array().unwrap_or(&vec![]),
+                            "quantity": params.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                            "unit": params.get("unit").and_then(|v| v.as_str()).unwrap_or(""),
+                            "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
+                            "test_items": params.get("test_items").and_then(|v| v.as_array()).unwrap_or(&vec![]),
                             "status": "received",
                             "received_at": chrono::Utc::now().to_rfc3339(),
                             "created_at": chrono::Utc::now().to_rfc3339(),
@@ -356,6 +356,7 @@ pub async fn register_lims_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 样品列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_samples(
     status_filter: &str,
     type_filter: &str,
@@ -405,17 +406,18 @@ fn generate_mock_samples(
             })
         })
         .filter(|s| {
-            (status_filter.is_empty() || s["status"].as_str() == Some(status_filter))
-                && (type_filter.is_empty() || s["sample_type"].as_str() == Some(type_filter))
-                && (submitter_filter.is_empty() || s["submitter"].as_str() == Some(submitter_filter))
+            (status_filter.is_empty() || s.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (type_filter.is_empty() || s.get("sample_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (submitter_filter.is_empty() || s.get("submitter").and_then(|v| v.as_str()) == Some(submitter_filter))
                 && (keyword_filter.is_empty()
-                    || s["sample_number"].as_str().unwrap_or("").contains(keyword_filter)
-                    || s["name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || s.get("sample_number").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || s.get("name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 样品详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_sample_detail(sample_id: &str) -> Value {
     json!({
         "sample_id": sample_id,
@@ -460,6 +462,7 @@ fn generate_mock_sample_detail(sample_id: &str) -> Value {
 }
 
 /// 生成 Mock 检测项目列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_tests(
     sample_filter: &str,
     status_filter: &str,
@@ -527,10 +530,10 @@ fn generate_mock_tests(
             })
         })
         .filter(|t| {
-            (sample_filter.is_empty() || t["sample_id"].as_str() == Some(sample_filter))
-                && (status_filter.is_empty() || t["status"].as_str() == Some(status_filter))
-                && (method_filter.is_empty() || t["method"].as_str() == Some(method_filter))
-                && (tester_filter.is_empty() || t["tester"].as_str() == Some(tester_filter))
+            (sample_filter.is_empty() || t.get("sample_id").and_then(|v| v.as_str()) == Some(sample_filter))
+                && (status_filter.is_empty() || t.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (method_filter.is_empty() || t.get("method").and_then(|v| v.as_str()) == Some(method_filter))
+                && (tester_filter.is_empty() || t.get("tester").and_then(|v| v.as_str()) == Some(tester_filter))
         })
         .collect()
 }

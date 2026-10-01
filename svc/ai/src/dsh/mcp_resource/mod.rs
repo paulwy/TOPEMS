@@ -476,19 +476,28 @@ impl ResourceManager {
         let resources = self.resources.lock();
 
         let build_tree = |uri: &str| -> ResourceTreeNode {
-            let resource = resources.get(uri).unwrap();
+            let Some(resource) = resources.get(uri) else {
+                // 资源缺失时返回仅含 URI 的占位节点，避免 panic
+                return ResourceTreeNode {
+                    uri: uri.to_string(),
+                    name: uri.to_string(),
+                    resource_type: ResourceType::Custom,
+                    children: Vec::new(),
+                    has_children: false,
+                };
+            };
             let children_uris = self.get_children(uri);
             let children: Vec<ResourceTreeNode> = children_uris
                 .iter()
-                .map(|child_uri| {
-                    let child = resources.get(child_uri).unwrap();
-                    ResourceTreeNode {
+                .filter_map(|child_uri| {
+                    let child = resources.get(child_uri)?;
+                    Some(ResourceTreeNode {
                         uri: child.uri.clone(),
                         name: child.name.clone(),
                         resource_type: child.resource_type,
                         children: Vec::new(),
                         has_children: !self.get_children(child_uri).is_empty(),
-                    }
+                    })
                 })
                 .collect();
 

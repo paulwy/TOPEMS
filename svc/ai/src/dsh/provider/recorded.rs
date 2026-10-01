@@ -109,17 +109,16 @@ impl LlmProvider for RecordingProvider {
         let start = Instant::now();
         let result = self.inner.ask_stream(request).await;
         let duration_ms = start.elapsed().as_millis() as u64;
-        let outcome = if result.is_ok() {
-            Ok(LlmResponse {
+        let outcome = match result.as_ref() {
+            Ok(_) => Ok(LlmResponse {
                 content: String::new(),
                 model: model.clone(),
                 prompt_tokens: None,
                 completion_tokens: None,
                 total_tokens: None,
                 latency_ms: Some(duration_ms),
-            })
-        } else {
-            Err(result.as_ref().unwrap_err().clone())
+            }),
+            Err(err) => Err(err.clone()),
         };
         self.record(&model, duration_ms, &outcome).await;
         result

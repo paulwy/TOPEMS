@@ -78,19 +78,19 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "oa:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let approval_type = params["approval_type"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let applicant = params["applicant"].as_str().unwrap_or("");
-                let current_approver = params["current_approver"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let approval_type = params.get("approval_type").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let applicant = params.get("applicant").and_then(|v| v.as_str()).unwrap_or("");
+                let current_approver = params.get("current_approver").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let requests = generate_mock_approval_requests(approval_type, status, applicant, current_approver, keyword);
                 let total = requests.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_requests = &requests[start.min(total)..end];
+                let page_requests = requests.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -121,7 +121,7 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "oa:read",
 
             |params| {
-                let request_id = params["request_id"].as_str().unwrap_or("");
+                let request_id = params.get("request_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if request_id.is_empty() {
                     return Err(ToolExecutionError::Validation("request_id is required".to_string()));
@@ -180,18 +180,18 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "oa:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let department = params["department"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let position = params["position"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let department = params.get("department").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let position = params.get("position").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let employees = generate_mock_employees(department, status, position, keyword);
                 let total = employees.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_employees = &employees[start.min(total)..end];
+                let page_employees = employees.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -256,10 +256,10 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "oa:write",
 
             |params| {
-                let approval_type = params["approval_type"].as_str().unwrap_or("");
-                let title = params["title"].as_str().unwrap_or("");
-                let applicant = params["applicant"].as_str().unwrap_or("");
-                let approver = params["approver"].as_str().unwrap_or("");
+                let approval_type = params.get("approval_type").and_then(|v| v.as_str()).unwrap_or("");
+                let title = params.get("title").and_then(|v| v.as_str()).unwrap_or("");
+                let applicant = params.get("applicant").and_then(|v| v.as_str()).unwrap_or("");
+                let approver = params.get("approver").and_then(|v| v.as_str()).unwrap_or("");
 
                 if approval_type.is_empty() {
                     return Err(ToolExecutionError::Validation("approval_type is required".to_string()));
@@ -284,11 +284,11 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
                     "title": title,
                     "applicant": applicant,
                     "approver": approver,
-                    "amount": params["amount"].as_f64().unwrap_or(0.0),
-                    "start_date": params["start_date"].as_str().unwrap_or(""),
-                    "end_date": params["end_date"].as_str().unwrap_or(""),
-                    "reason": params["reason"].as_str().unwrap_or(""),
-                    "remark": params["remark"].as_str().unwrap_or(""),
+                    "amount": params.get("amount").and_then(|v| v.as_f64()).unwrap_or(0.0),
+                    "start_date": params.get("start_date").and_then(|v| v.as_str()).unwrap_or(""),
+                    "end_date": params.get("end_date").and_then(|v| v.as_str()).unwrap_or(""),
+                    "reason": params.get("reason").and_then(|v| v.as_str()).unwrap_or(""),
+                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
                     "status": "pending",
                     "current_step": 1,
                     "total_steps": 3,
@@ -310,6 +310,7 @@ pub async fn register_oa_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 审批单列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_approval_requests(
     type_filter: &str,
     status_filter: &str,
@@ -363,18 +364,19 @@ fn generate_mock_approval_requests(
             })
         })
         .filter(|r| {
-            (type_filter.is_empty() || r["approval_type"].as_str() == Some(type_filter))
-                && (status_filter.is_empty() || r["status"].as_str() == Some(status_filter))
-                && (applicant_filter.is_empty() || r["applicant"].as_str() == Some(applicant_filter))
-                && (approver_filter.is_empty() || r["current_approver"].as_str() == Some(approver_filter))
+            (type_filter.is_empty() || r.get("approval_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (status_filter.is_empty() || r.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (applicant_filter.is_empty() || r.get("applicant").and_then(|v| v.as_str()) == Some(applicant_filter))
+                && (approver_filter.is_empty() || r.get("current_approver").and_then(|v| v.as_str()) == Some(approver_filter))
                 && (keyword_filter.is_empty()
-                    || r["request_number"].as_str().unwrap_or("").contains(keyword_filter)
-                    || r["title"].as_str().unwrap_or("").contains(keyword_filter))
+                    || r.get("request_number").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || r.get("title").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 审批单详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_approval_request_detail(request_id: &str) -> Value {
     json!({
         "request_id": request_id,
@@ -426,6 +428,7 @@ fn generate_mock_approval_request_detail(request_id: &str) -> Value {
 }
 
 /// 生成 Mock 员工列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_employees(
     department_filter: &str,
     status_filter: &str,
@@ -469,12 +472,12 @@ fn generate_mock_employees(
             })
         })
         .filter(|e| {
-            (department_filter.is_empty() || e["department"].as_str() == Some(department_filter))
-                && (status_filter.is_empty() || e["status"].as_str() == Some(status_filter))
-                && (position_filter.is_empty() || e["position"].as_str() == Some(position_filter))
+            (department_filter.is_empty() || e.get("department").and_then(|v| v.as_str()) == Some(department_filter))
+                && (status_filter.is_empty() || e.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (position_filter.is_empty() || e.get("position").and_then(|v| v.as_str()) == Some(position_filter))
                 && (keyword_filter.is_empty()
-                    || e["employee_code"].as_str().unwrap_or("").contains(keyword_filter)
-                    || e["name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || e.get("employee_code").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || e.get("name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }

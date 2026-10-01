@@ -119,7 +119,7 @@ pub fn split_into_chunks(content: &str, chunk_size: usize, overlap: usize) -> Ve
 
     while start < char_count {
         let end = std::cmp::min(start + chunk_size, char_count);
-        let chunk: String = chars[start..end].iter().collect();
+        let chunk: String = chars.get(start..end).map(|s| s.iter().collect()).unwrap_or_default();
         chunks.push(chunk);
 
         if end >= char_count {

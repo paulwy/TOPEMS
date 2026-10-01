@@ -27,6 +27,7 @@ use topems_shared_ai::ai_client::{AIModelConfig, AIProviderType};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 
 #[tokio::main]
+#[allow(clippy::expect_used)] // tokio::main 宏展开内含 runtime.build().expect()，启动失败即崩溃属预期
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("SEARCH_PATH", "ai, public"); // shared schema 已清理（2026-09-08，死表 + 历史数据，全仓零引用）
 

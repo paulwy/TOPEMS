@@ -73,11 +73,11 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "qms:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let inspection_type = params["inspection_type"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let result = params["result"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let inspection_type = params.get("inspection_type").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let result = params.get("result").and_then(|v| v.as_str()).unwrap_or("");
 
                 // 真实调用 QMS API（GET /checks，降级 mock）
                 let mut path = format!("/api/qms/checks?page={}&page_size={}", page, page_size);
@@ -94,7 +94,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                     let total = inspections.len();
                     let start = ((page - 1) * page_size) as usize;
                     let end = (start + page_size as usize).min(total);
-                    let page_inspections = &inspections[start.min(total)..end];
+                    let page_inspections = inspections.get(start.min(total)..end);
                     json!({
                         "total": total,
                         "page": page,
@@ -125,7 +125,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "qms:read",
 
             |params| {
-                let inspection_id = params["inspection_id"].as_str().unwrap_or("");
+                let inspection_id = params.get("inspection_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if inspection_id.is_empty() {
                     return Err(ToolExecutionError::Validation("inspection_id is required".to_string()));
@@ -187,11 +187,11 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "qms:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let severity = params["severity"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let disposition = params["disposition"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let severity = params.get("severity").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let disposition = params.get("disposition").and_then(|v| v.as_str()).unwrap_or("");
 
                 // 真实调用 QMS API（GET /issues，降级 mock）
                 let mut path = format!("/api/qms/issues?page={}&page_size={}", page, page_size);
@@ -208,7 +208,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                     let total = nonconformances.len();
                     let start = ((page - 1) * page_size) as usize;
                     let end = (start + page_size as usize).min(total);
-                    let page_nc = &nonconformances[start.min(total)..end];
+                    let page_nc = nonconformances.get(start.min(total)..end);
                     json!({
                         "total": total,
                         "page": page,
@@ -265,9 +265,9 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "qms:write",
 
             |params| {
-                let inspection_type = params["inspection_type"].as_str().unwrap_or("");
-                let material_id = params["material_id"].as_str().unwrap_or("");
-                let quantity = params["quantity"].as_i64().unwrap_or(0);
+                let inspection_type = params.get("inspection_type").and_then(|v| v.as_str()).unwrap_or("");
+                let material_id = params.get("material_id").and_then(|v| v.as_str()).unwrap_or("");
+                let quantity = params.get("quantity").and_then(|v| v.as_i64()).unwrap_or(0);
 
                 if inspection_type.is_empty() {
                     return Err(ToolExecutionError::Validation("inspection_type is required".to_string()));
@@ -283,11 +283,11 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                 let payload = json!({
                     "inspection_type": inspection_type,
                     "material_id": material_id,
-                    "material_code": params["material_code"].as_str().unwrap_or(""),
+                    "material_code": params.get("material_code").and_then(|v| v.as_str()).unwrap_or(""),
                     "quantity": quantity,
-                    "inspector": params["inspector"].as_str().unwrap_or(""),
-                    "reference_order": params["reference_order"].as_str().unwrap_or(""),
-                    "remark": params["remark"].as_str().unwrap_or(""),
+                    "inspector": params.get("inspector").and_then(|v| v.as_str()).unwrap_or(""),
+                    "reference_order": params.get("reference_order").and_then(|v| v.as_str()).unwrap_or(""),
+                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
                 });
                 let base = service_base_url("QMS_SERVICE_URL", 8050);
                 let result = http_call(&base, "POST", "/api/qms/checks", Some(payload)).unwrap_or_else(|| {
@@ -298,11 +298,11 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
                         "inspection_number": inspection_number,
                         "inspection_type": inspection_type,
                         "material_id": material_id,
-                        "material_code": params["material_code"].as_str().unwrap_or(""),
+                        "material_code": params.get("material_code").and_then(|v| v.as_str()).unwrap_or(""),
                         "quantity": quantity,
-                        "inspector": params["inspector"].as_str().unwrap_or(""),
-                        "reference_order": params["reference_order"].as_str().unwrap_or(""),
-                        "remark": params["remark"].as_str().unwrap_or(""),
+                        "inspector": params.get("inspector").and_then(|v| v.as_str()).unwrap_or(""),
+                        "reference_order": params.get("reference_order").and_then(|v| v.as_str()).unwrap_or(""),
+                        "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
                         "status": "pending",
                         "created_at": chrono::Utc::now().to_rfc3339(),
                         "message": "检验单创建成功（mock 降级），已通知检验员",
@@ -323,6 +323,7 @@ pub async fn register_qms_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 检验单列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_inspections(
     type_filter: &str,
     status_filter: &str,
@@ -364,14 +365,15 @@ fn generate_mock_inspections(
             })
         })
         .filter(|ins| {
-            (type_filter.is_empty() || ins["inspection_type"].as_str() == Some(type_filter))
-                && (status_filter.is_empty() || ins["status"].as_str() == Some(status_filter))
-                && (result_filter.is_empty() || ins["result"].as_str() == Some(result_filter))
+            (type_filter.is_empty() || ins.get("inspection_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (status_filter.is_empty() || ins.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (result_filter.is_empty() || ins.get("result").and_then(|v| v.as_str()) == Some(result_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 检验单详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_inspection_detail(inspection_id: &str) -> Value {
     json!({
         "inspection_id": inspection_id,
@@ -418,6 +420,7 @@ fn generate_mock_inspection_detail(inspection_id: &str) -> Value {
 }
 
 /// 生成 Mock 不合格品列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_nonconformances(
     severity_filter: &str,
     status_filter: &str,
@@ -469,9 +472,9 @@ fn generate_mock_nonconformances(
             })
         })
         .filter(|nc| {
-            (severity_filter.is_empty() || nc["severity"].as_str() == Some(severity_filter))
-                && (status_filter.is_empty() || nc["status"].as_str() == Some(status_filter))
-                && (disposition_filter.is_empty() || nc["disposition"].as_str() == Some(disposition_filter))
+            (severity_filter.is_empty() || nc.get("severity").and_then(|v| v.as_str()) == Some(severity_filter))
+                && (status_filter.is_empty() || nc.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (disposition_filter.is_empty() || nc.get("disposition").and_then(|v| v.as_str()) == Some(disposition_filter))
         })
         .collect()
 }
@@ -500,7 +503,7 @@ mod tests {
             _ => String::new(),
         };
         let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-        let total = parsed["total"].as_u64().unwrap_or(0);
+        let total = parsed.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         assert!(total > 0, "真实 API 应返回检查单，total={}", total);
         eprintln!("qms.list_inspections 真实调用返回 total = {}", total);
     }
