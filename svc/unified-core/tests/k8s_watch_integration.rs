@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! Kubernetes 服务发现集成测试（真实 K8s 集群）
 //!
 //! 环境变量 `K8S_TEST_API_SERVER`（如 https://127.0.0.1:6443）、

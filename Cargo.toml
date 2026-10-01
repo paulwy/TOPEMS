@@ -332,11 +332,12 @@ uuid = { version = "1", features = ["serde", "v4"] }
 bigdecimal = { version = "0.4", features = ["serde"] }
 
 axum-prometheus = "0.8"
-prometheus = "0.13"
+prometheus = "0.14"
 
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-dotenv = "0.15"
+# dotenv 已停止维护（crate 名保留为 dotenv 避免代码全量改名，实际解析到 dotenvy）
+dotenv = { package = "dotenvy", version = "0.15" }
 thiserror = "2"
 anyhow = "1"
 bcrypt = "0.15"
@@ -364,12 +365,12 @@ axum-test = "21"
 bytes = "1"
 futures-util = "0.3"
 http = "1"
-lopdf = "0.34"
+lopdf = "0.45"
 md5 = "0.7"
 url = "2"
 mime = "0.3"
 mime_guess = "2"
-pdf-extract = "0.7"
+pdf-extract = "0.12"
 rust_decimal = { version = "1", features = ["serde"] }
 rand = "0.8"
 

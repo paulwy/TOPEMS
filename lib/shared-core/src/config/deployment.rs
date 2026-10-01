@@ -70,6 +70,7 @@ impl Default for DeploymentConfig {
 
 impl DeploymentConfig {
     /// 从环境变量加载配置
+    #[allow(clippy::unwrap_used)]
     pub fn from_env() -> Self {
         let mode = match env::var("DEPLOYMENT_MODE")
             .unwrap_or_else(|_| "on-premise".to_string())
@@ -166,6 +167,7 @@ impl DeploymentConfig {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serial_test::serial;

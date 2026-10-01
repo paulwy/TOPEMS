@@ -115,6 +115,7 @@ impl SagaOrchestrator {
     /// 4. 每个 step 执行前后更新状态并持久化
     /// 5. 事件发布：当前 EventType 没有 Saga 相关类型，仅记录日志
     /// 6. 返回 saga_id
+    #[allow(clippy::indexing_slicing)]
     pub async fn execute_saga(
         &self,
         saga_type: &str,
@@ -353,6 +354,7 @@ impl SagaOrchestrator {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::saga::store::InMemorySagaStore;

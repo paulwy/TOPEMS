@@ -745,6 +745,7 @@ pub fn permission_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -824,7 +825,8 @@ mod tests {
             reason: None,
         };
 
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"allowed\":true"));
         assert!(!json.contains("reason"));
     }
@@ -840,7 +842,8 @@ mod tests {
             reason: Some("Permission denied".to_string()),
         };
 
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"allowed\":false"));
         assert!(json.contains("Permission denied"));
     }
@@ -852,7 +855,8 @@ mod tests {
             code: Some("INTERNAL_ERROR".to_string()),
         };
 
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("Something went wrong"));
         assert!(json.contains("INTERNAL_ERROR"));
     }
@@ -864,7 +868,8 @@ mod tests {
             permissions: vec![],
         };
 
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":2"));
     }
 }

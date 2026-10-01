@@ -158,6 +158,7 @@ impl<S: AuditLogStore + Send + Sync + 'static + ?Sized> RetentionCleanupTask<S> 
 // ===== Tests =====
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
@@ -247,7 +248,8 @@ mod tests {
             cleanup_interval_hours: 24,
             retention_days: 90,
         };
-        let json = serde_json::to_string(&stats).unwrap();
+        let json =
+            serde_json::to_string(&stats).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"running\":true"));
         assert!(json.contains("\"cleanup_interval_hours\":24"));
         assert!(json.contains("\"retention_days\":90"));

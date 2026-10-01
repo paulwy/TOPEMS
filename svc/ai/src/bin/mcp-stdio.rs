@@ -24,6 +24,7 @@ use topems_ai::dsh::mcp::{
 
 /// MCP stdio 服务器主入口
 #[tokio::main]
+#[allow(clippy::expect_used)] // tokio::main 宏展开内含 runtime.build().expect()，启动失败即崩溃属预期
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 初始化日志（stderr，不干扰 stdout 的 JSON-RPC 通信）
     tracing_subscriber::fmt()
@@ -36,21 +37,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tracing::info!("TOPEMS MCP stdio server starting...");
 
-    // 1. 创建 McpServer 实例
-    let server = McpServer::new(
-        "topems-mcp",
-        env!("CARGO_PKG_VERSION"),
-        std::env::var("JWT_SECRET").unwrap_or_else(|_| "test-jwt-secret".to_string()),
-    );
+    // 1. 服务间认证密钥：fail-closed。JWT_SECRET 缺失时拒绝启动，
+    //    不落入任何硬编码默认值（历史 "test-jwt-secret" 回退已在安全审计中移除）。
+    let jwt_secret = std::env::var("JWT_SECRET").map_err(|_| {
+        "JWT_SECRET environment variable is required for TOPEMS MCP server (service-to-service auth)"
+            .to_string()
+    })?;
+
+    // 2. 创建 McpServer 实例
+    let server = McpServer::new("topems-mcp", env!("CARGO_PKG_VERSION"), jwt_secret.clone());
     tracing::info!(
         "MCP Server created: name={}, version={}",
         "topems-mcp",
         env!("CARGO_PKG_VERSION")
     );
 
-    // 2. 注册系统工具和所有业务工具（同步等待注册完成）
+    // 3. 注册系统工具和所有业务工具（同步等待注册完成）
     //    服务间认证：从 JWT_SECRET 读取签发密钥，ai-service 身份调用下游业务 API
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_default();
     server.register_system_tools().await;
     register_crm_tools(&server, &jwt_secret).await;
     register_erp_tools(&server, &jwt_secret).await;

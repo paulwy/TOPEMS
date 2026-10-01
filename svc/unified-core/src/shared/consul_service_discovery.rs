@@ -299,7 +299,10 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         }
 
         // Track registered service for deregistration
-        self.registered_services.lock().unwrap().push(service_id);
+        self.registered_services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push(service_id);
 
         Ok(())
     }
@@ -307,7 +310,10 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
         // Find the service ID from registered services
         let service_id = {
-            let mut registered = self.registered_services.lock().unwrap();
+            let mut registered = self
+                .registered_services
+                .lock()
+                .unwrap_or_else(|e| e.into_inner());
             if let Some(pos) = registered
                 .iter()
                 .position(|id| id.starts_with(&format!("{}-", name)))
@@ -340,6 +346,7 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         Ok(())
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn discover(
         &self,
         name: &str,
@@ -430,7 +437,11 @@ impl Drop for ConsulServiceDiscovery {
         if self.config.deregister_on_drop {
             // Deregister all registered services
             // Note: This is a best-effort operation since we can't await in drop
-            let services = self.registered_services.lock().unwrap().clone();
+            let services = self
+                .registered_services
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .clone();
             for service_id in services {
                 tracing::debug!("Would deregister service from Consul: {}", service_id);
             }
@@ -508,6 +519,7 @@ impl Default for ConsulServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -73,6 +73,7 @@ pub async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -221,7 +221,7 @@ impl RetryManager {
             id: Uuid::new_v4(),
             tenant_id,
             execution_id,
-            rule_code: rule_code.clone(),
+            rule_code,
             retry_count: 0,
             status: RetryTaskStatus::Pending,
             error_message: None,

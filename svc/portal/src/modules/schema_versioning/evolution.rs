@@ -39,7 +39,7 @@ impl SchemaEvolutionManager {
             id: id.clone(),
             version: version.clone(),
             schema_definition,
-            change_type: change_type.clone(),
+            change_type,
             created_at: now,
             change_description,
             approved_by,

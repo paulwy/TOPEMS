@@ -119,6 +119,7 @@ pub async fn get_monitoring_metrics(
     }
 }
 
+#[allow(clippy::indexing_slicing)]
 fn parse_metrics(data: Option<Vec<serde_json::Value>>) -> MonitoringMetrics {
     let arr = data.unwrap_or_default();
     let d = if arr.is_empty() {

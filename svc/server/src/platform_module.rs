@@ -42,7 +42,7 @@ impl Module for PlatformModule {
             .route(
                 "/api/server/health",
                 get({
-                    let registry = registry.clone();
+                    let registry = registry;
                     move || {
                         let reg = registry.lock().unwrap();
                         let modules = reg.list_modules();
@@ -61,7 +61,7 @@ impl Module for PlatformModule {
             .route(
                 "/api/server/modules",
                 get({
-                    let registry = registry2.clone();
+                    let registry = registry2;
                     move || {
                         let reg = registry.lock().unwrap();
                         let modules = reg.list_modules();

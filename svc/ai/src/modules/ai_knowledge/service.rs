@@ -421,8 +421,8 @@ pub async fn update_document(
     }
 
     if let Some(new_kb_id) = req.kb_id {
-        let old_kb_id = existing.as_ref().unwrap().document.kb_id;
-        if old_kb_id != new_kb_id {
+        let old_kb_id = existing.as_ref().map(|e| e.document.kb_id);
+        if old_kb_id != Some(new_kb_id) {
             let _ = sqlx::query(only_own_schema_query!(
                 "ai",
                 r#"UPDATE core.knowledge_bases

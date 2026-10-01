@@ -596,7 +596,7 @@ impl EventTriggerEngine {
                                     None,
                                     Some("冷却时间内".to_string()),
                                     Some(rule.rule_id.clone()),
-                                    Some(rule.name.clone()),
+                                    Some(rule.name),
                                 )
                             } else {
                                 cooldown.insert(event_type.clone(), Instant::now());
@@ -648,7 +648,7 @@ impl EventTriggerEngine {
 
         // 更新历史索引
         let mut index = self.history_index.lock();
-        index.push_back(record_id.clone());
+        index.push_back(record_id);
         if index.len() > self.config.max_processing_history {
             if let Some(old_id) = index.pop_front() {
                 self.processing_history.lock().remove(&old_id);
@@ -992,6 +992,7 @@ pub struct RuleUpdate {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

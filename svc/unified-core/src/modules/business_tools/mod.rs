@@ -362,25 +362,25 @@ impl BusinessToolRegistry {
 
     /// Check if a tool is registered.
     pub fn has(&self, name: &str) -> bool {
-        let tools = self.tools.lock().unwrap();
+        let tools = self.tools.lock().unwrap_or_else(|e| e.into_inner());
         tools.contains_key(name)
     }
 
     /// Remove a tool from the registry.
     pub fn remove(&self, name: &str) -> Option<Arc<dyn BusinessTool>> {
-        let mut tools = self.tools.lock().unwrap();
+        let mut tools = self.tools.lock().unwrap_or_else(|e| e.into_inner());
         tools.remove(name)
     }
 
     /// List all registered tool names.
     pub fn list(&self) -> Vec<String> {
-        let tools = self.tools.lock().unwrap();
+        let tools = self.tools.lock().unwrap_or_else(|e| e.into_inner());
         tools.keys().cloned().collect()
     }
 
     /// Get the number of registered tools.
     pub fn count(&self) -> usize {
-        let tools = self.tools.lock().unwrap();
+        let tools = self.tools.lock().unwrap_or_else(|e| e.into_inner());
         tools.len()
     }
 
@@ -396,7 +396,7 @@ impl BusinessToolRegistry {
     /// Run health checks on all tools.
     pub async fn health_check_all(&self) -> HashMap<String, bool> {
         let tools = {
-            let tools = self.tools.lock().unwrap();
+            let tools = self.tools.lock().unwrap_or_else(|e| e.into_inner());
             tools.clone()
         };
 
@@ -451,7 +451,7 @@ pub fn create_default_tools(service_registry: Arc<ServiceRegistry>) -> Vec<Arc<d
         // IoT - Internet of Things
         Arc::new(IotTool::new(service_registry.clone())),
         // OA - Office Automation
-        Arc::new(OaTool::new(service_registry.clone())),
+        Arc::new(OaTool::new(service_registry)),
     ]
 }
 
@@ -916,6 +916,7 @@ define_business_tool!(
 );
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

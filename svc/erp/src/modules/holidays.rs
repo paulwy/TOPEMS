@@ -277,6 +277,7 @@ fn build_date_set_single(dates: &[(i32, u32, u32)]) -> HashSet<NaiveDate> {
 // ============ 单元测试 ============
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

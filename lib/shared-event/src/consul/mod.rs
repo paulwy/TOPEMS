@@ -159,6 +159,7 @@ impl HealthCheck {
         self
     }
 
+    #[allow(clippy::expect_used)]
     pub fn with_deregister_after(mut self, seconds: u64) -> Self {
         self.deregister_critical_service_after = format!("{}s", seconds);
         self
@@ -189,6 +190,7 @@ pub struct ConsulClient {
 
 impl ConsulClient {
     /// 创建新的 Consul 客户端
+    #[allow(clippy::expect_used)]
     pub fn new(config: ConsulConfig) -> Self {
         let client = Client::builder()
             .timeout(Duration::from_secs(10))
@@ -580,6 +582,7 @@ impl Drop for ConsulRegistrationGuard {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

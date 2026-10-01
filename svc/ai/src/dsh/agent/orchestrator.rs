@@ -437,7 +437,7 @@ impl AgentOrchestrator {
                     );
 
                     if error_retries >= self.config.max_error_retries {
-                        error_msg = tool_step.error.clone();
+                        error_msg = tool_step.error;
                         success = false;
                         break;
                     }
@@ -987,6 +987,7 @@ impl AgentOrchestrator {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

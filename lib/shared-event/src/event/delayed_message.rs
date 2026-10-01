@@ -253,7 +253,7 @@ impl DelayedMessageSubscriber {
             .await
             .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
 
-        let consumer_tag = consumer.tag().clone();
+        let consumer_tag = consumer.tag();
 
         tokio::spawn(async move {
             let mut consumer = consumer;
@@ -335,7 +335,7 @@ impl DelayedMessageSubscriber {
             .await
             .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
 
-        let consumer_tag = consumer.tag().clone();
+        let consumer_tag = consumer.tag();
 
         tokio::spawn(async move {
             let mut consumer = consumer;
@@ -380,6 +380,7 @@ impl DelayedMessageSubscriber {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::event::error::{EventError, EventResult};

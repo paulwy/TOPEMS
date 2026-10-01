@@ -13,6 +13,10 @@
 #   ./scripts/clean_target.sh --check  # 只统计不清理（查看占用）
 #   ./scripts/clean_target.sh --auto   # 超阈值(默认 25G)自动清增量缓存
 #
+# 2026-10-01: 主入口已集成到 scripts/topems.sh clean --debug / --debug-full / --sccache；
+#             svc/*/target 与 lib/*/target 嵌套残留由 topems.sh clean 一并处理。
+#             本脚本保留用于脚本/CI 的阈值自动清理（--auto）。
+#
 # 阈值可通过环境变量 TARGET_WARN_GB 覆盖（默认 25G）。
 # =============================================================================
 set -uo pipefail

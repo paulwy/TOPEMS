@@ -268,15 +268,14 @@ pub async fn create_sync_job(
     Json(ApiResponse::success(job, "同步任务创建成功"))
 }
 
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn execute_sync_job(job_id: String) {
     let store = get_sync_store();
     let mut jobs = store.jobs.lock().await;
 
-    let job_pos = jobs.iter().position(|j| j.id == job_id);
-    if job_pos.is_none() {
+    let Some(job_pos) = jobs.iter().position(|j| j.id == job_id) else {
         return;
-    }
-    let job_pos = job_pos.unwrap();
+    };
 
     jobs[job_pos].status = SyncStatus::Running;
     jobs[job_pos].updated_at = chrono::Utc::now();
@@ -467,6 +466,7 @@ pub async fn list_sync_jobs(
     params(("id" = String, Path, description = "同步任务ID")),
     responses((status = 200, description = "重试同步任务成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn retry_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -518,6 +518,7 @@ pub async fn retry_sync_job(
     params(("id" = String, Path, description = "同步任务ID")),
     responses((status = 200, description = "取消同步任务成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn cancel_sync_job(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -556,6 +557,7 @@ pub async fn cancel_sync_job(
     params(("id" = String, Path, description = "同步任务ID")),
     responses((status = 200, description = "触发同步补偿成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn trigger_compensation(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -659,8 +661,10 @@ pub async fn get_sync_stats(State(state): State<ApiState>) -> Json<ApiResponse<S
 
     let total_duration: i64 = jobs
         .iter()
-        .filter(|j| j.completed_at.is_some())
-        .map(|j| (j.completed_at.unwrap() - j.created_at).num_milliseconds())
+        .filter_map(|j| {
+            j.completed_at
+                .map(|c| (c - j.created_at).num_milliseconds())
+        })
         .sum();
     let completed_count = jobs.iter().filter(|j| j.completed_at.is_some()).count() as f64;
     let avg_duration_ms = if completed_count > 0.0 {
@@ -786,6 +790,7 @@ pub async fn list_dead_letters(
     params(("id" = String, Path, description = "死信ID")),
     responses((status = 200, description = "重放死信成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn replay_dead_letter(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -827,6 +832,7 @@ pub async fn replay_dead_letter(
     tag = "Master Data",
     responses((status = 200, description = "批量重放死信成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn batch_replay_dead_letters(
     State(state): State<ApiState>,
     Json(payload): Json<BatchReplayRequest>,
@@ -893,6 +899,7 @@ pub async fn delete_dead_letter(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

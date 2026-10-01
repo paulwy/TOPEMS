@@ -1,3 +1,4 @@
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests_disabled {
     use super::*;
     use serde::{Deserialize, Serialize};

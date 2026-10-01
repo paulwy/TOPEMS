@@ -501,7 +501,11 @@ impl MultimodalService {
 
     pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, String> {
         let chart_types = ["line", "bar", "pie", "scatter", "area"];
-        let chart_type = chart_types[image_base64.len() % chart_types.len()].to_string();
+        let chart_type = chart_types
+            .get(image_base64.len() % chart_types.len())
+            .copied()
+            .unwrap_or("line")
+            .to_string();
 
         let data_points = vec![
             DataPoint {
@@ -641,7 +645,7 @@ impl MultimodalService {
     pub async fn generate_image_tags(&self, image_base64: &str) -> Result<Vec<String>, String> {
         let features = self.extract_image_features(image_base64);
 
-        let mut tags = features.features.clone();
+        let mut tags = features.features;
 
         tags.push("高质量".to_string());
         tags.push("专业".to_string());
@@ -655,6 +659,7 @@ impl MultimodalService {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -361,6 +361,7 @@ impl ClusterManager {
         Ok(())
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn select_node(
         &self,
         algorithm: LoadBalancingAlgorithm,
@@ -546,6 +547,7 @@ pub enum ClusterError {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

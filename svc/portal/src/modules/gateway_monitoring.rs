@@ -731,6 +731,7 @@ impl GatewayMonitor {
         *connections = n;
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn percentile(data: &[f64], p: f64) -> f64 {
         if data.is_empty() {
             return 0.0;
@@ -850,6 +851,7 @@ impl PerformanceTracer {
         slow
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn get_performance_summary() -> PerformanceSummary {
         let store = get_monitoring_store();
         let traces = store.traces.lock().await;
@@ -1816,6 +1818,7 @@ pub async fn train_model_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

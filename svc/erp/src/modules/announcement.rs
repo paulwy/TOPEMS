@@ -61,7 +61,10 @@ pub async fn list_announcements(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Announcement>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -150,7 +153,10 @@ pub async fn create_announcement(
     Json(req): Json<CreateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("公告标题", &req.title) {
         return Json(api_error(400, &e));
     }
@@ -163,7 +169,7 @@ pub async fn create_announcement(
         .tenant_id
         .as_deref()
         .and_then(|t| uuid::Uuid::parse_str(t).ok())
-        .unwrap_or(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+        .unwrap_or(uuid::Uuid::from_u128(1));
     let result = sqlx::query_as::<_, Announcement>(
         only_own_schema_query!("erp", r#"
         INSERT INTO announcements (id, title, content, author, priority, expire_at, status, created_at, updated_at, tenant_id, title_en, content_en)
@@ -259,7 +265,10 @@ pub async fn get_announcement(
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -316,7 +325,10 @@ pub async fn update_announcement(
     Json(req): Json<UpdateAnnouncementRequest>,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -441,7 +453,10 @@ pub async fn delete_announcement(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -532,7 +547,10 @@ pub async fn publish_announcement(
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -632,7 +650,10 @@ pub async fn unpublish_announcement(
     >,
 ) -> Json<ApiResponse<Announcement>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -710,6 +731,7 @@ pub async fn unpublish_announcement(
     response
 }
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     #[test]

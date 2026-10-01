@@ -425,7 +425,7 @@ impl AgentService {
         }
 
         if numbers.len() == 1 {
-            Ok(numbers[0].to_string())
+            Ok(numbers.first().map_or(String::new(), |n| n.to_string()))
         } else {
             Err("表达式错误".to_string())
         }
@@ -486,6 +486,7 @@ impl AgentService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)] // mock 天气数据：gen_range 已限制 0..len，数学上安全
     fn get_weather_data(&self, _city: &str) -> WeatherData {
         let weather_conditions = ["晴", "多云", "阴", "小雨", "中雨", "大雨", "雷阵雨", "雾霾"];
         let mut rng = rand::thread_rng();
@@ -1189,8 +1190,16 @@ impl WorkflowOrchestrator {
             return true;
         }
 
-        let step_id = parts[0].trim().split('.').next().unwrap_or("").trim();
-        let expected = parts[1].trim().trim_matches(|c| c == '\'' || c == '"');
+        let step_id = parts
+            .get(0)
+            .copied()
+            .map(|p| p.trim().split('.').next().unwrap_or("").trim())
+            .unwrap_or("");
+        let expected = parts
+            .get(1)
+            .copied()
+            .map(|p| p.trim().trim_matches(|c| c == '\'' || c == '"'))
+            .unwrap_or("");
 
         results
             .iter()
@@ -1199,6 +1208,7 @@ impl WorkflowOrchestrator {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -302,6 +302,7 @@ fn parse_classification(s: &str) -> Option<CatalogClassification> {
 }
 
 /// 搜索数据目录
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn search_catalog(query: &CatalogSearchQuery) -> CatalogSearchResult {
     ensure_catalog_initialized().await;
     let store = get_catalog_store();

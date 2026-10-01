@@ -131,6 +131,7 @@ impl Default for InMemoryLogStore {
 
 #[async_trait::async_trait]
 impl LogQueryProvider for InMemoryLogStore {
+    #[allow(clippy::indexing_slicing)]
     async fn query(&self, query: &LogQuery) -> Result<LogQueryResult, LogQueryError> {
         let entries = self.entries.read();
         let mut filtered: Vec<LogEntry> = entries
@@ -275,6 +276,7 @@ impl LogQueryProvider for InMemoryLogStore {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -124,6 +124,7 @@ pub struct UpdateFolderRequest {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde_json;
@@ -160,7 +161,8 @@ mod tests {
             created_at: Some(sample_time()),
             updated_at: Some(sample_time()),
         };
-        let json = serde_json::to_string(&doc).unwrap();
+        let json =
+            serde_json::to_string(&doc).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: Document = serde_json::from_str(&json).unwrap();
         assert_eq!(de.title, "2024年度计划");
         assert_eq!(de.version, Some(2));
@@ -184,7 +186,8 @@ mod tests {
             created_at: Some(sample_time()),
             updated_at: Some(sample_time()),
         };
-        let json = serde_json::to_string(&t).unwrap();
+        let json =
+            serde_json::to_string(&t).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: Template = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "标准合同模板");
         assert_eq!(de.is_enabled, Some(true));
@@ -204,7 +207,8 @@ mod tests {
             created_at: Some(sample_time()),
             updated_at: Some(sample_time()),
         };
-        let json = serde_json::to_string(&folder).unwrap();
+        let json = serde_json::to_string(&folder)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: Folder = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "市场部文档");
         assert!(de.parent_id.is_none());
@@ -222,7 +226,8 @@ mod tests {
             tags: Some(vec!["草稿".to_string()]),
             description: None,
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json =
+            serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateDocumentRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.title, "新建文档");
         assert!(de.template_id.is_some());
@@ -237,7 +242,8 @@ mod tests {
             tags: Some(vec!["已更新".to_string()]),
             description: Some("更新说明".to_string()),
         };
-        let json = serde_json::to_string(&req).unwrap();
+        let json =
+            serde_json::to_string(&req).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: UpdateDocumentRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.title, Some("更新后的标题".to_string()));
     }
@@ -254,7 +260,8 @@ mod tests {
             is_enabled: Some(true),
             is_default: Some(false),
         };
-        let json = serde_json::to_string(&ctr).unwrap();
+        let json =
+            serde_json::to_string(&ctr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de1: CreateTemplateRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de1.name, "报销单模板");
 
@@ -268,7 +275,8 @@ mod tests {
             is_enabled: Some(true),
             is_default: Some(true),
         };
-        let json2 = serde_json::to_string(&utr).unwrap();
+        let json2 =
+            serde_json::to_string(&utr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: UpdateTemplateRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.is_default, Some(true));
     }
@@ -282,7 +290,8 @@ mod tests {
             sort_order: Some(5),
             is_enabled: Some(true),
         };
-        let json = serde_json::to_string(&cfr).unwrap();
+        let json =
+            serde_json::to_string(&cfr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateFolderRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.name, "新文件夹");
 
@@ -293,7 +302,8 @@ mod tests {
             sort_order: Some(3),
             is_enabled: Some(false),
         };
-        let json2 = serde_json::to_string(&ufr).unwrap();
+        let json2 =
+            serde_json::to_string(&ufr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: UpdateFolderRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.is_enabled, Some(false));
     }

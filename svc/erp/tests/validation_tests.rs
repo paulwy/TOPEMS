@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use topems_erp::utils::validation::{
     validate_asset_number, validate_email, validate_employee_number, validate_phone,
     validate_required_field, validate_string_length,

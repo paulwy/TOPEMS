@@ -751,6 +751,7 @@ impl GlobalAccelerator {
 pub struct LatencyOptimizer;
 
 impl LatencyOptimizer {
+    #[allow(clippy::indexing_slicing)]
     pub async fn optimize_response(
         data: serde_json::Value,
         budget_name: Option<&str>,
@@ -1276,6 +1277,7 @@ pub async fn get_latency_stats_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

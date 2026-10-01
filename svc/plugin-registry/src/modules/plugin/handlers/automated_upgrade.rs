@@ -103,7 +103,7 @@ pub async fn get_upgrade_schedule(
 
     let schedule = UpgradeSchedule {
         id: uuid::Uuid::new_v4(),
-        plugin_code: plugin_code.clone(),
+        plugin_code,
         strategy: UpgradeStrategy::MaintenanceWindow,
         enabled: true,
         cron_expression: Some("0 2 * * *".to_string()),
@@ -145,7 +145,7 @@ pub async fn configure_upgrade_schedule(
 
     let schedule = UpgradeSchedule {
         id: uuid::Uuid::new_v4(),
-        plugin_code: plugin_code.clone(),
+        plugin_code,
         strategy: req.strategy,
         enabled: req.enabled.unwrap_or(true),
         cron_expression: req.cron_expression,
@@ -365,7 +365,7 @@ pub async fn get_upgrade_history(
         },
         UpgradeHistory {
             id: uuid::Uuid::new_v4(),
-            plugin_code: plugin_code.clone(),
+            plugin_code,
             from_version: "1.1.0".to_string(),
             to_version: "1.2.0".to_string(),
             strategy: UpgradeStrategy::Scheduled,

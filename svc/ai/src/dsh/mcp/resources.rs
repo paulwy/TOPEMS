@@ -189,6 +189,7 @@ pub async fn register_business_resources(registry: &ResourceRegistry) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

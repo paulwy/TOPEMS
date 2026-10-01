@@ -4,8 +4,11 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 lazy_static! {
-    static ref EMAIL_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        .expect("invalid EMAIL_REGEX pattern");
+    static ref EMAIL_REGEX: Regex =
+        match Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$") {
+            Ok(re) => re,
+            Err(e) => panic!("invalid EMAIL_REGEX pattern: {e}"),
+        };
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -82,6 +85,7 @@ pub(crate) struct PreferenceRow {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -143,7 +147,8 @@ mod tests {
         assert_eq!(cloned.username, "testuser");
         assert_eq!(cloned.roles.len(), 2);
 
-        let json = serde_json::to_string(&ur).unwrap();
+        let json =
+            serde_json::to_string(&ur).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: UserResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(de.id, ur.id);
         assert!(de.is_active);

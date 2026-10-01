@@ -8,7 +8,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -647,8 +647,10 @@ pub async fn deactivate_work_station(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

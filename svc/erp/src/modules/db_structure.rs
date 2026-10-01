@@ -66,7 +66,10 @@ pub async fn list_tables(
     >,
 ) -> Json<ApiResponse<Vec<TableInfo>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let schema = params.schema.unwrap_or_else(|| "public".to_string());
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let result = sqlx::query_as::<_, TableInfo>(only_own_schema_query!(
@@ -107,7 +110,10 @@ pub async fn get_table_detail(
     >,
 ) -> Json<ApiResponse<TableDetail>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let columns_result = sqlx::query_as::<_, ColumnInfo>(only_own_schema_query!(
         "erp",
         r#"
@@ -171,7 +177,10 @@ pub async fn preview_add_column(
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<SqlPreview>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let _txn = match guard.as_mut() {
+        Some(_txn) => _txn,
+        None => unreachable!("rls txn missing"),
+    };
     let column = &req.column;
     let data_type = build_data_type(
         &column.data_type,
@@ -248,7 +257,10 @@ pub async fn execute_add_column(
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let column = &req.column;
     let data_type = build_data_type(
         &column.data_type,
@@ -355,7 +367,10 @@ pub async fn execute_modify_column(
     Json(req): Json<crate::models::ModifyColumnRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let column = &req.column;
     let data_type = build_data_type(
         &column.data_type,
@@ -467,7 +482,10 @@ pub async fn execute_drop_column(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let sql = format!(
         "ALTER TABLE \"{}\" DROP COLUMN \"{}\"",
         table_name, column_name
@@ -547,7 +565,10 @@ pub async fn list_db_changes(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<DbChange>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -597,6 +618,7 @@ fn extract_user_from_headers(headers: &HeaderMap) -> Option<String> {
         .map(|s| s.to_string())
 }
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::http::HeaderValue;

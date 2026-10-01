@@ -28,7 +28,10 @@ pub async fn list_scope_companies(
     >,
 ) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         SELECT * FROM erp.consolidation_scope_companies
@@ -64,7 +67,10 @@ pub async fn add_scope_company(
     Json(req): Json<AddScopeCompanyRequest>,
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
@@ -123,7 +129,10 @@ pub async fn update_scope_company(
     Json(req): Json<UpdateScopeCompanyRequest>,
 ) -> Json<ApiResponse<ConsolidationScopeCompany>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         UPDATE erp.consolidation_scope_companies
@@ -181,7 +190,10 @@ pub async fn remove_scope_company(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query(
         "UPDATE erp.consolidation_scope_companies SET deleted_at = NOW() WHERE id = $1",
     )

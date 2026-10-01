@@ -1060,6 +1060,7 @@ pub async fn get_approval(
         (status = 500, description = "创建失败"),
     ),
 )]
+#[allow(clippy::unwrap_used)]
 pub async fn create_approval(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

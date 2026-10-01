@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use crate::modules::oee_logic::{
         calculate_availability, calculate_efficiency_trend, calculate_oee, calculate_performance,

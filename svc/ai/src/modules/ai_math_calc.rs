@@ -136,7 +136,7 @@ pub fn calculate(expression: &str) -> Result<String, String> {
     }
 
     if numbers.len() == 1 {
-        let v = numbers[0];
+        let v = numbers.first().copied().unwrap_or(0.0);
         // 整数时不带小数
         if v.fract() == 0.0 && v.abs() < 1e15 {
             Ok(format!("{}", v as i64))
@@ -157,6 +157,7 @@ pub fn calculate_f64(expression: &str) -> f64 {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

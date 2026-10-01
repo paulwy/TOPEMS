@@ -854,7 +854,10 @@ impl EventBus {
         &self,
         channel: SubscriptionChannel,
     ) -> broadcast::Receiver<serde_json::Value> {
-        self.channels.get(&channel).unwrap().subscribe()
+        self.channels
+            .get(&channel)
+            .unwrap_or_else(|| panic!("unknown subscription channel: {channel:?}"))
+            .subscribe()
     }
 }
 
@@ -1296,6 +1299,7 @@ impl QueryRoot {
     /// V37.0 Phase 7: 批量解析联邦实体（_entities）
     /// V38.0: 优化 - 按服务分组、错误处理、超时控制
     /// 接受一组实体表示（__typename + id），按服务分组后从各服务解析实体详情。
+    #[allow(clippy::indexing_slicing)]
     async fn federation_entities(
         &self,
         _ctx: &Context<'_>,
@@ -5012,7 +5016,7 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     );
 
     // 订阅主数据事件 → MasterDataChanged 频道
-    let eb_md = event_bus.clone();
+    let eb_md = event_bus;
     let subscriber = subscriber.subscribe_master_data(
         vec![
             topems_shared_event::event::MasterDataDomain::Customer,
@@ -5491,6 +5495,7 @@ pub fn build_schema(state: AppState) -> PortalSchema {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::modules::graphql_cache::CacheTier;

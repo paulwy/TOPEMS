@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! ERP 模块权限测试
 //!
 //! 覆盖 ERP 企业资源计划模块的核心权限场景

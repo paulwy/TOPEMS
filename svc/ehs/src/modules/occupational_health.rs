@@ -787,7 +787,7 @@ pub async fn get_health_archive(
     tracing::debug!("Getting health archive for employee: {}", employee_id);
     Json(ApiResponse::success(
         HealthArchive {
-            employee_id: employee_id.clone(),
+            employee_id,
             employee_name: "张三".to_string(),
             department: Some("生产部".to_string()),
             position: Some("操作工".to_string()),

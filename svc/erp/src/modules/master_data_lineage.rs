@@ -53,7 +53,10 @@ pub async fn get_data_lineage(
     >,
 ) -> Json<ApiResponse<DataLineageResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     // 查询主数据引用本身
     let ref_row = sqlx::query(only_own_schema_query!(
         "erp",
@@ -102,7 +105,7 @@ pub async fn get_data_lineage(
                 domain: domain.clone(),
                 code: code.clone(),
                 name: name.clone(),
-                status: status.clone(),
+                status,
                 local_entity_type,
                 local_entity_id: local_entity_id.map(|id| id.to_string()),
                 last_synced_at: last_synced_at.to_rfc3339(),
@@ -132,6 +135,7 @@ pub async fn get_data_lineage(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

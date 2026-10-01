@@ -2614,8 +2614,9 @@ _kill_background_cargo() {
     [ "$1" = "--dry-run" ] && dry_run=true
 
     local cargo_pids
+    # 覆盖: cargo test/build/bench/run/check/clippy/fmt（空格分隔）+ cargo-nextest/llvm-cov（连字符）+ rustc 编译进程
     cargo_pids=$(ps aux | grep -v grep \
-        | grep -E "cargo-(llvm-cov|test|bench|build)" \
+        | grep -E "cargo (nextest )?(test|build|bench|run|check|clippy|fmt)|cargo-(llvm-cov|nextest|test|build|bench)|rustc" \
         | grep -v "grep" \
         | awk '{print $2}' | tr '\n' ' ')
 
@@ -2644,11 +2645,13 @@ _kill_background_cargo() {
     fi
     pkill -9 -f "cargo-llvm-cov" 2>/dev/null || true
     pkill -9 -f "cargo test.*llvm-cov" 2>/dev/null || true
+    pkill -9 -f "cargo nextest" 2>/dev/null || true
     success "后台 cargo 进程已终止"
     return 1
 }
 
-# 清理 coverage 独立 target 目录（cargo clean 不会碰它）
+# 清理独立 target 残留目录（cargo clean 不会碰它们；2026-10-01 起 target-dir 已为绝对路径，
+# svc/*/target 与 lib/*/target 均为历史/子目录单独构建残留，删除可消除依赖重复编译）
 # 用法: _clean_cov_remnants [--dry-run]
 # 返回: 0=无残留, 1=已清理或 dry-run 预览
 _clean_cov_remnants() {
@@ -2657,7 +2660,8 @@ _clean_cov_remnants() {
 
     local cov_dirs=(
         "$PROJECT_ROOT/target/llvm-cov-target"
-        "$PROJECT_ROOT/lib/target"
+        "$PROJECT_ROOT/lib"/*/target
+        "$PROJECT_ROOT/svc"/*/target
     )
     local cleaned=0
     for cov_dir in "${cov_dirs[@]}"; do
@@ -2808,12 +2812,18 @@ clean_project() {
     local clean_ollama=false
     local clean_all=false
     local clean_deep=false
+    local clean_debug=false
+    local clean_debug_full=false
+    local clean_sccache=false
     local dry_run=false
     local preflight=false
 
     for arg in "$@"; do
         case "$arg" in
             --rust)         clean_rust=true ;;
+            --debug)        clean_debug=true ;;
+            --debug-full)   clean_debug_full=true ;;
+            --sccache)      clean_sccache=true ;;
             --frontend)     clean_frontend=true ;;
             --cache)        clean_cache=true ;;
             --system-cache) clean_system_cache=true ;;
@@ -2825,7 +2835,7 @@ clean_project() {
             --preflight)    preflight=true ;;
             *)
                 error "未知参数: $arg"
-                echo "可用选项: --rust --frontend --cache --system-cache --ollama --logs --all --deep --dry-run --preflight"
+                echo "可用选项: --rust --debug --debug-full --sccache --frontend --cache --system-cache --ollama --logs --all --deep --dry-run --preflight"
                 return 1
                 ;;
         esac
@@ -2858,7 +2868,9 @@ clean_project() {
     fi
 
     # 默认全量清理（仅项目级，system-cache/ollama 需显式指定）
-    if [ "$clean_rust" = false ] && [ "$clean_frontend" = false ] && \
+    if [ "$clean_rust" = false ] && [ "$clean_debug" = false ] && \
+       [ "$clean_debug_full" = false ] && [ "$clean_sccache" = false ] && \
+       [ "$clean_frontend" = false ] && \
        [ "$clean_cache" = false ] && [ "$clean_system_cache" = false ] && \
        [ "$clean_ollama" = false ] && [ "$clean_logs" = false ] && \
        [ "$clean_all" = false ]; then
@@ -2894,13 +2906,20 @@ clean_project() {
     info "================================================"
     echo ""
 
-    if [ "$clean_rust" = true ]; then
-        # ── 杀后台 cargo 进程 + 清 coverage 残留（公共函数）──────────
+    # ── 空间基线（用于结束报告 target/ 前后对比）──────────────
+    local target_before_kb=0
+    [ -d "$PROJECT_ROOT/target" ] && target_before_kb=$(du -sk "$PROJECT_ROOT/target" 2>/dev/null | awk '{print $1}')
+
+    # ── 公共前置：杀后台 cargo/rustc 进程 + 清独立 target 残留 ──
+    #    （rust/debug/debug-full 均需避免与运行中构建冲突、避免残留目录复发）
+    if [ "$clean_rust" = true ] || [ "$clean_debug" = true ] || [ "$clean_debug_full" = true ]; then
         # shellcheck disable=SC2046
         _kill_background_cargo $( $dry_run && echo --dry-run ) && did_clean=true
         # shellcheck disable=SC2046
         _clean_cov_remnants $( $dry_run && echo --dry-run ) && did_clean=true
+    fi
 
+    if [ "$clean_rust" = true ]; then
         # target/ 完整清理
         local dir="$PROJECT_ROOT/target"
         if [ -d "$dir" ]; then
@@ -2939,6 +2958,59 @@ clean_project() {
         else
             detail "默认跳过 .sqlx 缓存清理（已入库git，删除会导致离线编译失败）"
             detail "  如需强制清理.sqlx，请执行: CLEAN_SQLX=true ./scripts/topems.sh clean --sqlx"
+        fi
+    fi
+
+    # ── --debug / --debug-full：只清 Rust 增量/依赖缓存，保留 release 产物 ──
+    if [ "$clean_debug" = true ] || [ "$clean_debug_full" = true ]; then
+        local debug_dirs=(
+            "$PROJECT_ROOT/target/debug/incremental"
+            "$PROJECT_ROOT/target/release/incremental"
+            "$PROJECT_ROOT/target/tmp"
+        )
+        if [ "$clean_debug_full" = true ]; then
+            debug_dirs+=(
+                "$PROJECT_ROOT/target/debug/deps"
+                "$PROJECT_ROOT/target/debug/build"
+                "$PROJECT_ROOT/target/debug/examples"
+            )
+        fi
+        for dir in "${debug_dirs[@]}"; do
+            if [ -d "$dir" ]; then
+                local size
+                size=$(du -sh "$dir" 2>/dev/null | awk '{print $1}')
+                if [ "$dry_run" = true ]; then
+                    info "[DRY-RUN] 将删除: $dir ($size)"
+                else
+                    rm -rf "$dir"
+                    detail "已删除 $dir ($size)"
+                    did_clean=true
+                fi
+            fi
+        done
+        if [ "$dry_run" = false ]; then
+            local debug_mode="Rust 增量缓存（debug+release incremental）"
+            [ "$clean_debug_full" = true ] && debug_mode="debug 产物（增量+依赖+构建脚本+examples）"
+            info "已清理 $debug_mode；target/release 产物与 target/debug 二进制保留"
+        fi
+    fi
+
+    # ── --sccache：清空 sccache 编译缓存（下次构建冷启动）─────────
+    if [ "$clean_sccache" = true ]; then
+        local sccache_dir="$HOME/Library/Caches/Mozilla.sccache"
+        local sccache_size
+        sccache_size=$(du -sh "$sccache_dir" 2>/dev/null | awk '{print $1}')
+        if [ -n "$sccache_size" ] && [ "$sccache_size" != "0B" ]; then
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将清空 sccache 缓存: $sccache_dir ($sccache_size)"
+            else
+                sccache --stop-server >/dev/null 2>&1 || true
+                rm -rf "${sccache_dir:?}/"* 2>/dev/null
+                detail "已清空 sccache 编译缓存 ($sccache_size)"
+                did_clean=true
+            fi
+        else
+            detail "sccache 缓存为空或不存在，跳过"
         fi
     fi
 
@@ -3205,6 +3277,16 @@ clean_project() {
     elif [ "$did_clean" = true ]; then
         success "清理完成！"
         echo ""
+        # 空间报告：target/ 前后对比 + 磁盘可用
+        local target_after_kb=0
+        [ -d "$PROJECT_ROOT/target" ] && target_after_kb=$(du -sk "$PROJECT_ROOT/target" 2>/dev/null | awk '{print $1}')
+        local freed_kb=$(( target_before_kb - target_after_kb ))
+        [ "$freed_kb" -lt 0 ] && freed_kb=0
+        info "target/ 占用: $(awk -v b="$target_before_kb" 'BEGIN{printf "%.1fG", b/1024/1024}') → $(awk -v a="$target_after_kb" 'BEGIN{printf "%.1fG", a/1024/1024}')（本次节省 $(awk -v f="$freed_kb" 'BEGIN{printf "%.1fG", f/1024/1024}')）"
+        local avail_kb
+        avail_kb=$(df -k "$PROJECT_ROOT" 2>/dev/null | awk 'NR==2 {print $4}')
+        [ -n "$avail_kb" ] && info "磁盘当前可用: $(awk -v a="$avail_kb" 'BEGIN{printf "%.1fGiB", a/1024/1024}')"
+        echo ""
         detail "后续建议:"
         detail "  Rust:    cargo build  (重建 target/)"
         detail "  前端:    pnpm install && pnpm build"
@@ -3306,7 +3388,10 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 
 清理:
   clean [选项]            清理编译产物、缓存、日志
-                            --rust         清理 Rust 编译产物 (target/, .sqlx, llvm-cov-target, lib/target) + 终止后台 cargo 进程
+                            --rust         全量清理 Rust 编译产物 (target/ 含 release, .sqlx, 嵌套 target 残留) + 终止后台 cargo/rustc 进程
+                            --debug        只清 Rust 增量缓存 + 嵌套 target 残留（保留 debug/release 产物，日常推荐，恢复最快）
+                            --debug-full   清 debug 增量+依赖+构建脚本产物（保留 release；依赖需重编，配合 sccache 可接受）
+                            --sccache      停止 sccache 守护进程并清空编译缓存（下次构建冷启动）
                             --frontend     清理前端产物 (dist/, coverage/, .vite 缓存)
                             --deep         深度清理所有 node_modules + pnpm store prune（解决 dual versions / lockfile 漂移）
                             --cache        清理项目级缓存 (.lighthouseci, .venv, .storybook 等)

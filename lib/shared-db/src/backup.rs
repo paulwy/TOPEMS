@@ -155,6 +155,7 @@ impl BackupManager {
         self.config.read().await.clone()
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn create_backup(
         &self,
         request: BackupRequest,
@@ -272,6 +273,7 @@ impl BackupManager {
         Ok(format!("{:x}", digest))
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn restore(&self, request: RestoreRequest) -> Result<(), BackupError> {
         let backups = self.backups.read().await;
         let backup = backups
@@ -447,6 +449,7 @@ pub enum BackupError {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

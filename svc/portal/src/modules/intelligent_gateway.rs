@@ -901,6 +901,7 @@ impl AutoSchemaStitcher {
         Ok(subgraphs)
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn generate_stitch_plan(
         subgraph_ids: Option<Vec<String>>,
         resolution_strategy: Option<String>,
@@ -1592,6 +1593,7 @@ pub async fn list_conflicts_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

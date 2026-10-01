@@ -211,7 +211,7 @@ impl SagaCoordinator {
             return Ok(snapshot.status);
         }
 
-        let mut current = snapshot.clone();
+        let mut current = snapshot;
         current.status = SagaStatus::Running;
 
         while current.current_step < current.steps.len() {
@@ -272,7 +272,7 @@ impl SagaCoordinator {
             return Ok(SagaStatus::Completed);
         }
 
-        let mut current = snapshot.clone();
+        let mut current = snapshot;
         current.status = SagaStatus::Compensating;
 
         // 从 current_step - 1 倒退到 0，对每个 Completed 步骤执行补偿

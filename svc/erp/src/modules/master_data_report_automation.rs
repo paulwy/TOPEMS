@@ -681,7 +681,7 @@ async fn schedule_report(req: &ScheduleReportRequest) -> Option<ReportTemplate> 
     let frequency = parse_report_frequency(&req.frequency).unwrap_or(ReportFrequency::OnDemand);
     let next_run = calculate_next_run(&frequency);
     template.schedule = Some(ReportSchedule {
-        frequency: frequency.clone(),
+        frequency,
         day_of_week: req.day_of_week,
         day_of_month: req.day_of_month,
         time: req.time.clone(),

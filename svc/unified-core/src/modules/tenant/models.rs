@@ -444,6 +444,7 @@ pub struct OverageItem {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde_json;
@@ -456,7 +457,8 @@ mod tests {
     #[test]
     fn test_tenant_type_default_and_serde() {
         assert_eq!(TenantType::default(), TenantType::Shared);
-        let json = serde_json::to_string(&TenantType::Independent).unwrap();
+        let json = serde_json::to_string(&TenantType::Independent)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert_eq!(json, "\"independent\"");
         let de: TenantType = serde_json::from_str("\"shared\"").unwrap();
         assert_eq!(de, TenantType::Shared);
@@ -471,7 +473,8 @@ mod tests {
             TenantPlan::Enterprise,
         ];
         for plan in all.iter() {
-            let json = serde_json::to_string(plan).unwrap();
+            let json = serde_json::to_string(plan)
+                .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
             let de: TenantPlan = serde_json::from_str(&json).unwrap();
             assert_eq!(&de, plan);
         }
@@ -487,7 +490,8 @@ mod tests {
             TenantStatus::Expired,
         ];
         for s in statuses.iter() {
-            let json = serde_json::to_string(s).unwrap();
+            let json =
+                serde_json::to_string(s).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
             let de: TenantStatus = serde_json::from_str(&json).unwrap();
             assert_eq!(&de, s);
         }
@@ -496,7 +500,8 @@ mod tests {
     #[test]
     fn test_license_type_default_and_variants() {
         assert_eq!(LicenseType::default(), LicenseType::Subscription);
-        let json = serde_json::to_string(&LicenseType::Perpetual).unwrap();
+        let json = serde_json::to_string(&LicenseType::Perpetual)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert_eq!(json, "\"perpetual\"");
         let de: LicenseType = serde_json::from_str("\"subscription\"").unwrap();
         assert_eq!(de, LicenseType::Subscription);
@@ -529,7 +534,8 @@ mod tests {
         };
         let cloned = tenant.clone();
         assert_eq!(cloned.name, tenant.name);
-        let json = serde_json::to_string(&tenant).unwrap();
+        let json = serde_json::to_string(&tenant)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: Tenant = serde_json::from_str(&json).unwrap();
         assert_eq!(de.code, "TEST001");
         assert_eq!(de.quota_users, 50);
@@ -552,7 +558,8 @@ mod tests {
             total_cost_cents: Some(12400),
             created_at: sample_naive_dt(),
         };
-        let json = serde_json::to_string(&usage).unwrap();
+        let json =
+            serde_json::to_string(&usage).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: TenantUsage = serde_json::from_str(&json).unwrap();
         assert_eq!(de.users_count, 30);
 
@@ -566,7 +573,8 @@ mod tests {
             activated_at: sample_naive_dt(),
             expires_at: None,
         };
-        let json2 = serde_json::to_string(&tm).unwrap();
+        let json2 =
+            serde_json::to_string(&tm).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: TenantModule = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.tier, "advanced");
         assert!(de2.is_active);
@@ -583,7 +591,8 @@ mod tests {
             license_expires_at: None,
             trial_expires_at: Some(chrono::Utc::now()),
         };
-        let json = serde_json::to_string(&ctr).unwrap();
+        let json =
+            serde_json::to_string(&ctr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: CreateTenantRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.code, "NEW001");
 
@@ -596,7 +605,8 @@ mod tests {
             quota_api_calls: Some(1_000_000),
             features: Some(serde_json::json!({"sso": true})),
         };
-        let json2 = serde_json::to_string(&utr).unwrap();
+        let json2 =
+            serde_json::to_string(&utr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: UpdateTenantRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.plan, Some("enterprise".to_string()));
     }
@@ -613,7 +623,8 @@ mod tests {
             created_at: sample_naive_dt(),
             last_login: Some(sample_naive_dt()),
         };
-        let json = serde_json::to_string(&tu).unwrap();
+        let json =
+            serde_json::to_string(&tu).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: TenantUser = serde_json::from_str(&json).unwrap();
         assert_eq!(de.role, "admin");
 
@@ -625,7 +636,8 @@ mod tests {
             monthly_active_users: 45,
             last_30d_logins: 1200,
         };
-        let json2 = serde_json::to_string(&ts).unwrap();
+        let json2 =
+            serde_json::to_string(&ts).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: TenantStats = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.total_users, 50);
     }
@@ -644,7 +656,8 @@ mod tests {
             default_department_name: "总部".to_string(),
             default_department_description: Some("总部部门".to_string()),
         };
-        let json = serde_json::to_string(&otr).unwrap();
+        let json =
+            serde_json::to_string(&otr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: OnboardTenantRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.admin_username, "admin");
 
@@ -676,7 +689,8 @@ mod tests {
             admin_username: "admin".to_string(),
             admin_email: "admin@newcorp.com".to_string(),
         };
-        let json2 = serde_json::to_string(&resp).unwrap();
+        let json2 =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: OnboardTenantResponse = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.admin_email, "admin@newcorp.com");
     }
@@ -707,7 +721,8 @@ mod tests {
                 }),
             },
         };
-        let json = serde_json::to_string(&qr).unwrap();
+        let json =
+            serde_json::to_string(&qr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: TenantQuotaResponse = serde_json::from_str(&json).unwrap();
         assert_eq!(de.quota.users, 50);
         assert!(de.overage.api_calls.is_some());
@@ -718,7 +733,8 @@ mod tests {
             page: 1,
             page_size: 20,
         };
-        let json2 = serde_json::to_string(&ltr).unwrap();
+        let json2 =
+            serde_json::to_string(&ltr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: ListTenantsResponse = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.total, 0);
 
@@ -728,7 +744,8 @@ mod tests {
             page: 1,
             page_size: 10,
         };
-        let json3 = serde_json::to_string(&ltusr).unwrap();
+        let json3 =
+            serde_json::to_string(&ltusr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de3: ListTenantUsersResponse = serde_json::from_str(&json3).unwrap();
         assert_eq!(de3.total, 5);
     }
@@ -742,7 +759,8 @@ mod tests {
             status: Some("active".to_string()),
             plan: Some("enterprise".to_string()),
         };
-        let json = serde_json::to_string(&lq).unwrap();
+        let json =
+            serde_json::to_string(&lq).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: ListTenantsQuery = serde_json::from_str(&json).unwrap();
         assert_eq!(de.search, Some("tech".to_string()));
 
@@ -753,14 +771,16 @@ mod tests {
             role: Some("admin".to_string()),
             status: None,
         };
-        let json2 = serde_json::to_string(&luq).unwrap();
+        let json2 =
+            serde_json::to_string(&luq).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: ListTenantUsersQuery = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.role, Some("admin".to_string()));
 
         let str = SwitchTenantRequest {
             tenant_id: "tenant-uuid-123".to_string(),
         };
-        let json3 = serde_json::to_string(&str).unwrap();
+        let json3 =
+            serde_json::to_string(&str).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de3: SwitchTenantRequest = serde_json::from_str(&json3).unwrap();
         assert_eq!(de3.tenant_id, "tenant-uuid-123");
     }
@@ -771,14 +791,16 @@ mod tests {
             email: "new@member.com".to_string(),
             role: "member".to_string(),
         };
-        let json = serde_json::to_string(&imr).unwrap();
+        let json =
+            serde_json::to_string(&imr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: InviteMemberRequest = serde_json::from_str(&json).unwrap();
         assert_eq!(de.role, "member");
 
         let umrr = UpdateMemberRoleRequest {
             role: "admin".to_string(),
         };
-        let json2 = serde_json::to_string(&umrr).unwrap();
+        let json2 =
+            serde_json::to_string(&umrr).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de2: UpdateMemberRoleRequest = serde_json::from_str(&json2).unwrap();
         assert_eq!(de2.role, "admin");
     }

@@ -95,6 +95,7 @@ pub fn default_purchase_order_status() -> &'static str {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use uuid::Uuid;

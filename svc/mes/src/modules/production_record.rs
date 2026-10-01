@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -591,8 +591,10 @@ pub async fn complete_record(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::{Datelike, TimeZone, Timelike};
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

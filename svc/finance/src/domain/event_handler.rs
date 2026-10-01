@@ -211,7 +211,7 @@ impl DomainEventHandler for VoucherPostedHandler {
         result.side_effects.push(SideEffect::TriggerSync {
             target_service: "ledger".to_string(),
             entity_type: "Voucher".to_string(),
-            entity_id: voucher_id.clone(),
+            entity_id: voucher_id,
         });
         result.side_effects.push(SideEffect::UpdateCache {
             cache_key: format!("voucher:{}:posted", aggregate_id),
@@ -220,7 +220,7 @@ impl DomainEventHandler for VoucherPostedHandler {
             view_name: "voucher_summary".to_string(),
         });
         result.side_effects.push(SideEffect::SendNotification {
-            recipient: posted_by.clone(),
+            recipient: posted_by,
             message: format!("凭证 {} 已过账", voucher_no),
         });
         Ok(result)
@@ -277,7 +277,7 @@ impl DomainEventHandler for VoucherReversedHandler {
         result.side_effects.push(SideEffect::TriggerSync {
             target_service: "ledger".to_string(),
             entity_type: "VoucherReversal".to_string(),
-            entity_id: voucher_id.clone(),
+            entity_id: voucher_id,
         });
         result.side_effects.push(SideEffect::UpdateCache {
             cache_key: format!("voucher:{}:reversed", aggregate_id),
@@ -286,7 +286,7 @@ impl DomainEventHandler for VoucherReversedHandler {
             view_name: "voucher_summary".to_string(),
         });
         result.side_effects.push(SideEffect::SendNotification {
-            recipient: reversed_by.clone(),
+            recipient: reversed_by,
             message: format!("凭证 {} 已冲销，原因：{}", voucher_no, reason),
         });
         Ok(result)

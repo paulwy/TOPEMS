@@ -222,6 +222,7 @@ pub struct DuplicateGroupsQuery {
 // ==================== 智能匹配算法 ====================
 
 /// Levenshtein 编辑距离
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn levenshtein(a: &str, b: &str) -> usize {
     let a: Vec<char> = a.chars().collect();
     let b: Vec<char> = b.chars().collect();
@@ -259,6 +260,7 @@ fn levenshtein_similarity(a: &str, b: &str) -> f64 {
 }
 
 /// Jaro-Winkler 相似度（0-1）
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn jaro_winkler(s1: &str, s2: &str) -> f64 {
     let a: Vec<char> = s1.chars().collect();
     let b: Vec<char> = s2.chars().collect();
@@ -334,6 +336,7 @@ fn phonetic_similarity(a: &str, b: &str) -> f64 {
 }
 
 /// 缩写匹配：source 的首字母序列是否为 target 缩写
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn abbreviation_similarity(source: &str, target: &str) -> f64 {
     let s: Vec<char> = source.chars().filter(|c| c.is_alphabetic()).collect();
     let t: Vec<char> = target.chars().filter(|c| c.is_alphabetic()).collect();
@@ -564,6 +567,7 @@ pub async fn matching_find_matches(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 pub async fn matching_find_duplicates(
     State(state): State<ApiState>,
     Query(params): Query<FindDuplicatesQuery>,
@@ -707,6 +711,7 @@ pub async fn matching_suggest_merge(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -322,7 +322,9 @@ impl QueryRewriter {
         }
 
         // 取第一个子查询作为主要查询
-        let main_query = parts[0].trim().to_string();
+        let main_query = parts
+            .first()
+            .map_or(String::new(), |s| s.trim().to_string());
         debug!(original = %query, decomposed = %main_query, "Query decomposed");
         main_query
     }
@@ -796,6 +798,7 @@ impl RagEngine {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

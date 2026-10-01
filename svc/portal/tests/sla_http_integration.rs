@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! SLA HTTP 集成测试
 //!
 //! 用途：调用 unified-core 的真实 SLA HTTP 端点，验证端到端可达性和响应格式。

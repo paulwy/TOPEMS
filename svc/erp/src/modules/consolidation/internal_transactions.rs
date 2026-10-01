@@ -27,7 +27,10 @@ pub async fn list_internal_transactions(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<InternalTransaction>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -91,7 +94,10 @@ pub async fn get_internal_transaction(
     >,
 ) -> Json<ApiResponse<InternalTransaction>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query_as::<_, InternalTransaction>(
         "SELECT * FROM erp.internal_transactions WHERE id = $1",
     )
@@ -124,7 +130,10 @@ pub async fn execute_elimination(
     Json(req): Json<ExecuteEliminationRequest>,
 ) -> Json<ApiResponse<EliminationResult>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let rules: Vec<EliminationRule> = if let Some(rule_ids) = req.rule_ids {
         sqlx::query_as::<_, EliminationRule>(
             "SELECT * FROM erp.elimination_rules WHERE id = ANY($1) AND scope_id = $2 AND status = 'active' ORDER BY priority ASC",

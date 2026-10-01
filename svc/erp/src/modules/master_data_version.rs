@@ -62,7 +62,10 @@ pub async fn record_version(
     Json(req): Json<RecordVersionRequest>,
 ) -> Json<ApiResponse<MasterDataVersion>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
 
@@ -145,7 +148,10 @@ pub async fn get_versions(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataVersion>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -223,7 +229,10 @@ pub async fn get_version(
     >,
 ) -> Json<ApiResponse<MasterDataVersion>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let rows = sqlx::query(only_own_schema_query!(
         "erp",
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
@@ -291,7 +300,10 @@ pub async fn rollback_to_version(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     // 1. 获取目标版本快照
     let version_row = sqlx::query(only_own_schema_query!(
         "erp",
@@ -390,6 +402,7 @@ pub async fn rollback_to_version(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

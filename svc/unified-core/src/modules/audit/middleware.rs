@@ -32,6 +32,7 @@ const SKIP_PATH_PREFIXES: &[&str] = &[
     "/api/core/audit/operations",
 ];
 
+#[allow(clippy::indexing_slicing)]
 pub async fn operation_audit_middleware(
     State(state): State<AppState>,
     request: Request<Body>,
@@ -175,6 +176,7 @@ fn extract_resource_id(path: &str) -> Option<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

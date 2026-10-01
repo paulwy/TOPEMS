@@ -289,10 +289,10 @@ impl EurekaServiceDiscovery {
             .insert("enabled".to_string(), registration.enabled.to_string());
 
         Ok(EurekaInstanceInfo {
-            instance_id: instance_id.clone(),
+            instance_id,
             app: registration.name.to_uppercase(),
             host_name: host.clone(),
-            ip_addr: host.clone(),
+            ip_addr: host,
             port: EurekaPort {
                 value: port,
                 enabled: true,
@@ -457,22 +457,31 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
 
         // Track registered service
         let (host, port) = Self::extract_host_port(&registration.base_url)?;
-        self.registered_services.lock().unwrap().insert(
-            registration.name.clone(),
-            RegisteredServiceInfo {
-                name: registration.name.clone(),
-                instance_id: instance.instance_id,
-                host,
-                port,
-                base_url: registration.base_url,
-            },
-        );
+        self.registered_services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(
+                registration.name.clone(),
+                RegisteredServiceInfo {
+                    name: registration.name.clone(),
+                    instance_id: instance.instance_id,
+                    host,
+                    port,
+                    base_url: registration.base_url,
+                },
+            );
 
         Ok(())
     }
 
     async fn deregister(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = { self.registered_services.lock().unwrap().get(name).cloned() };
+        let service_info = {
+            self.registered_services
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(name)
+                .cloned()
+        };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -500,7 +509,10 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
         }
 
         // Remove from tracking
-        self.registered_services.lock().unwrap().remove(name);
+        self.registered_services
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(name);
 
         Ok(())
     }
@@ -586,7 +598,13 @@ impl ServiceDiscovery for EurekaServiceDiscovery {
     }
 
     async fn heartbeat(&self, name: &str) -> Result<(), ServiceClientError> {
-        let service_info = { self.registered_services.lock().unwrap().get(name).cloned() };
+        let service_info = {
+            self.registered_services
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(name)
+                .cloned()
+        };
 
         let Some(info) = service_info else {
             return Err(ServiceClientError::ServiceNotFound(name.to_string()));
@@ -681,6 +699,7 @@ impl Default for EurekaServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

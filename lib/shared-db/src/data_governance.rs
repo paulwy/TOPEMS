@@ -833,6 +833,7 @@ impl DataSubjectRightsManager {
     }
 
     /// 处理查询权请求（导出个人数据）
+    #[allow(clippy::indexing_slicing)]
     pub async fn process_access_request(
         &self,
         request_id: Uuid,
@@ -1358,6 +1359,7 @@ impl ClassificationEngine {
         engine
     }
 
+    #[allow(clippy::unwrap_used)]
     fn load_builtin_rules(&mut self) {
         let builtins = vec![
             // 身份证号
@@ -1493,6 +1495,7 @@ impl Default for ClassificationEngine {
 // =============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -107,7 +107,10 @@ pub async fn list_fixed_assets(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<FixedAsset>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
         return e;
     }
@@ -202,7 +205,10 @@ pub async fn create_fixed_asset(
     Json(req): Json<CreateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
@@ -327,7 +333,10 @@ pub async fn get_fixed_asset(
     >,
 ) -> Json<ApiResponse<FixedAsset>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetRead).await {
         return e;
     }
@@ -375,7 +384,10 @@ pub async fn update_fixed_asset(
     Json(req): Json<UpdateFixedAssetRequest>,
 ) -> Json<ApiResponse<FixedAsset>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
@@ -520,7 +532,10 @@ pub async fn delete_fixed_asset(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FixedAssetWrite).await {
         return e;
     }
@@ -671,7 +686,10 @@ pub async fn depreciate_assets(
     Json(req): Json<DepreciateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) =
         check_permission(&state.db, &claims, &ModulePermission::FixedAssetDepreciate).await
     {
@@ -801,6 +819,7 @@ pub async fn depreciate_assets(
 // ============ 单元测试 ============
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

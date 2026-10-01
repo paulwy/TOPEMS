@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Timelike, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -458,26 +458,26 @@ pub async fn get_work_report(
         Ok(r) => Json(ApiResponse::success(
             WorkReportResponse {
                 id: r.id.to_string(),
-                report_no: r.report_no,
+                report_no: r.report_no.unwrap_or_default(),
                 work_order_id: r.work_order_id.map(|u| u.to_string()),
                 work_order_no: Some(r.work_order_no.unwrap_or_default()),
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_no: r.order_no,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
                 work_station_name: r.work_station_name,
-                reporter_name: r.reporter_name,
+                reporter_name: r.reporter_name.unwrap_or_default(),
                 report_date: r.report_date.map(|d| d.to_string()).unwrap_or_default(),
                 shift: r.shift,
                 output_quantity: big_decimal_to_f64(r.output_quantity),
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
-                approved_by: r.approved_by.map(|u| u.to_string()),
+                status: r.status.unwrap_or_default(),
+                approved_by: r.approved_by,
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
-                created_at: r.created_at,
-                updated_at: r.updated_at,
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取工报成功",
         )),
@@ -670,7 +670,7 @@ pub async fn create_work_report(
                     defect_quantity: big_decimal_to_f64(r.defect_quantity),
                     labor_hours: big_decimal_to_f64(r.labor_hours),
                     remark: r.remark,
-                    status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                    status: r.status.unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
                     approved_at: opt_datetime_to_string(r.approved_at),
                     approval_remark: r.approval_remark,
@@ -816,7 +816,7 @@ pub async fn update_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
@@ -956,7 +956,7 @@ pub async fn approve_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
@@ -1051,7 +1051,7 @@ pub async fn reject_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
@@ -1234,8 +1234,10 @@ pub async fn reject_rework(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::{Datelike, TimeZone, Timelike};
 
     // ---- naive_to_utc ----
     #[test]

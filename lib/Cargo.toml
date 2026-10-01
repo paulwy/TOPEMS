@@ -86,7 +86,7 @@ redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 http = "1"
 
 [dev-dependencies]
-tempdir = "0.3"
+tempfile = "3"
 
 [build-dependencies]
 tonic-build = "0.14"

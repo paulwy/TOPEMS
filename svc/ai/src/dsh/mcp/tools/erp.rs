@@ -45,16 +45,16 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),            "erp:read",
 
             move |params| async move {
-                let page = params["page"].as_u64().unwrap_or(1) as i32;
-                let page_size = params["page_size"].as_u64().unwrap_or(20) as i32;
-                let status = params["status"].as_str().unwrap_or("");
-                let customer_id = params["customer_id"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1) as i32;
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20) as i32;
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let customer_id = params.get("customer_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 let result = match erp_client(jwt_secret)?.list_sales_orders(page, page_size).await {
                     Ok(orders) => {
                         let filtered: Vec<Value> = orders.into_iter().filter(|o| {
-                            (status.is_empty() || o["status"].as_str() == Some(status))
-                                && (customer_id.is_empty() || o["customer_id"].as_str() == Some(customer_id))
+                            (status.is_empty() || o.get("status").and_then(|v| v.as_str()) == Some(status))
+                                && (customer_id.is_empty() || o.get("customer_id").and_then(|v| v.as_str()) == Some(customer_id))
                         }).collect();
                         json!({ "total": filtered.len(), "page": page, "page_size": page_size, "orders": filtered, "source": "real_api" })
                     }
@@ -64,7 +64,7 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                         let total = all.len();
                         let start = ((page - 1) * page_size).max(0) as usize;
                         let end = (start + page_size as usize).min(total);
-                        json!({ "total": total, "page": page, "page_size": page_size, "orders": &all[start.min(total)..end], "source": "mock_fallback" })
+                        json!({ "total": total, "page": page, "page_size": page_size, "orders": all.get(start.min(total)..end), "source": "mock_fallback" })
                     }
                 };
 
@@ -130,21 +130,31 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),
             "erp:write",
             move |params| async move {
-                let supplier_id = params["supplier_id"]
-                    .as_str()
+                let supplier_id = params
+                    .get("supplier_id")
+                    .and_then(|v| v.as_str())
                     .ok_or_else(|| {
                         ToolExecutionError::Validation("supplier_id 不能为空".to_string())
                     })?
                     .to_string();
-                let items = params["items"]
-                    .as_array()
+                let items = params
+                    .get("items")
+                    .and_then(|v| v.as_array())
                     .ok_or_else(|| ToolExecutionError::Validation("items 必须是数组".to_string()))?
                     .clone();
                 if items.is_empty() {
                     return Err(ToolExecutionError::Validation("items 不能为空".to_string()));
                 }
-                let expected_date = params["expected_date"].as_str().unwrap_or("").to_string();
-                let remark = params["remark"].as_str().unwrap_or("").to_string();
+                let expected_date = params
+                    .get("expected_date")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                let remark = params
+                    .get("remark")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
 
                 let payload = json!({
                     "supplier_id": supplier_id,
@@ -168,8 +178,8 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                         let total: f64 = items
                             .iter()
                             .map(|it| {
-                                it["quantity"].as_f64().unwrap_or(0.0)
-                                    * it["unit_price"].as_f64().unwrap_or(0.0)
+                                it.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0)
+                                    * it.get("unit_price").and_then(|v| v.as_f64()).unwrap_or(0.0)
                             })
                             .sum();
                         json!({
@@ -206,7 +216,7 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
                 .build(),            "erp:read",
 
             move |params| async move {
-                let order_id = params["order_id"].as_str()
+                let order_id = params.get("order_id").and_then(|v| v.as_str())
                     .ok_or_else(|| ToolExecutionError::Validation("order_id 不能为空".to_string()))?.to_string();
 
                 let result = match erp_client(jwt_secret)?.get_sales_order(&order_id).await {
@@ -226,6 +236,7 @@ pub async fn register_erp_tools(server: &McpServer, jwt_secret: &str) {
 
 // ============ Mock 降级数据 ============
 
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_orders(status_filter: &str, customer_filter: &str) -> Vec<Value> {
     let statuses = ["pending", "confirmed", "shipped", "completed", "cancelled"];
     let customers = ["CUST-001", "CUST-002", "CUST-003", "CUST-004", "CUST-005"];
@@ -246,13 +257,15 @@ fn generate_mock_orders(status_filter: &str, customer_filter: &str) -> Vec<Value
             })
         })
         .filter(|o| {
-            (status_filter.is_empty() || o["status"].as_str() == Some(status_filter))
+            (status_filter.is_empty()
+                || o.get("status").and_then(|v| v.as_str()) == Some(status_filter))
                 && (customer_filter.is_empty()
-                    || o["customer_id"].as_str() == Some(customer_filter))
+                    || o.get("customer_id").and_then(|v| v.as_str()) == Some(customer_filter))
         })
         .collect()
 }
 
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_order_detail(order_id: &str) -> Value {
     json!({
         "order_id": order_id,
@@ -275,6 +288,7 @@ fn generate_mock_order_detail(order_id: &str) -> Value {
     })
 }
 
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_inventory_summary() -> Value {
     json!({
         "total_skus": 1256,
@@ -288,6 +302,7 @@ fn generate_mock_inventory_summary() -> Value {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -783,7 +783,12 @@ impl ToolSchemaAdapter {
         });
 
         if let Some(desc) = &schema.description {
-            json["description"] = serde_json::Value::String(desc.clone());
+            if let Some(obj) = json.as_object_mut() {
+                obj.insert(
+                    "description".to_string(),
+                    serde_json::Value::String(desc.clone()),
+                );
+            }
         }
 
         if let Some(props) = &schema.properties {
@@ -791,24 +796,41 @@ impl ToolSchemaAdapter {
             for (key, value) in props {
                 props_json.insert(key.clone(), self.schema_to_json(value));
             }
-            json["properties"] = serde_json::Value::Object(props_json);
+            if let Some(obj) = json.as_object_mut() {
+                obj.insert(
+                    "properties".to_string(),
+                    serde_json::Value::Object(props_json),
+                );
+            }
         }
 
         if let Some(required) = &schema.required {
-            json["required"] = serde_json::Value::Array(
-                required
-                    .iter()
-                    .map(|s| serde_json::Value::String(s.clone()))
-                    .collect(),
-            );
+            if let Some(obj) = json.as_object_mut() {
+                obj.insert(
+                    "required".to_string(),
+                    serde_json::Value::Array(
+                        required
+                            .iter()
+                            .map(|s| serde_json::Value::String(s.clone()))
+                            .collect(),
+                    ),
+                );
+            }
         }
 
         if let Some(enum_values) = &schema.enum_values {
-            json["enum"] = serde_json::Value::Array(enum_values.clone());
+            if let Some(obj) = json.as_object_mut() {
+                obj.insert(
+                    "enum".to_string(),
+                    serde_json::Value::Array(enum_values.clone()),
+                );
+            }
         }
 
         if let Some(default) = &schema.default_value {
-            json["default"] = default.clone();
+            if let Some(obj) = json.as_object_mut() {
+                obj.insert("default".to_string(), default.clone());
+            }
         }
 
         json
@@ -848,6 +870,7 @@ impl ToolSchemaAdapter {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

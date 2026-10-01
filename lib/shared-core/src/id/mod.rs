@@ -79,6 +79,7 @@ pub fn generate_master_data_id(domain: MasterDataDomain) -> String {
 /// 解析主数据 ID
 ///
 /// 返回 `Some((domain, uuid))` 如果 ID 格式正确，否则返回 `None`。
+#[allow(clippy::indexing_slicing)]
 pub fn parse_master_data_id(id: &str) -> Option<(MasterDataDomain, Uuid)> {
     let parts: Vec<&str> = id.splitn(2, '-').collect();
     if parts.len() != 2 {
@@ -107,6 +108,7 @@ pub fn extract_uuid(master_data_id: &str) -> Option<Uuid> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

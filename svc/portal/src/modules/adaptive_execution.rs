@@ -814,7 +814,7 @@ impl StreamManagerInner {
         self.subscribers
             .insert(id.clone(), StreamSubscribers::new());
         self.events.insert(id.clone(), Vec::new());
-        self.sequence_counters.insert(id.clone(), AtomicU64::new(0));
+        self.sequence_counters.insert(id, AtomicU64::new(0));
 
         info
     }
@@ -1554,6 +1554,7 @@ pub fn init_adaptive_execution() {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

@@ -47,7 +47,10 @@ pub async fn get_governance_dashboard(
     >,
 ) -> Json<ApiResponse<GovernanceDashboardStats>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let db = &mut **txn;
 
     let total_domains: i64 = sqlx::query_scalar(only_own_schema_query!(
@@ -206,6 +209,7 @@ pub async fn get_governance_dashboard(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

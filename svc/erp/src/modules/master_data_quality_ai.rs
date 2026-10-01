@@ -564,6 +564,7 @@ fn score_entity_internal(profile: &EntityProfile) -> QualityAiScore {
 }
 
 /// 异常检测：Z-Score + IQR + 阈值规则
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut anomalies = Vec::new();
@@ -645,7 +646,7 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
         .filter_map(|p| p.name.as_ref().map(|n| n.chars().count() as f64))
         .collect();
     if lengths.len() >= 4 {
-        let mut sorted = lengths.clone();
+        let mut sorted = lengths;
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         let q1 = sorted[sorted.len() / 4];
         let q3 = sorted[sorted.len() * 3 / 4];
@@ -1068,6 +1069,7 @@ pub async fn quality_ai_get_stats(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

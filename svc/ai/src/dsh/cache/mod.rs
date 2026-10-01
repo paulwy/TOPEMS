@@ -368,19 +368,19 @@ impl CacheManager {
         let tool_call_config = CacheConfig {
             max_entries: config.max_entries,
             default_ttl_secs: config.tool_call_ttl_secs,
-            ..config.clone()
+            ..config
         };
 
         let llm_config = CacheConfig {
             max_entries: config.max_entries,
             default_ttl_secs: config.llm_response_ttl_secs,
-            ..config.clone()
+            ..config
         };
 
         let session_config = CacheConfig {
             max_entries: config.max_entries,
             default_ttl_secs: config.session_context_ttl_secs,
-            ..config.clone()
+            ..config
         };
 
         Self {
@@ -511,6 +511,7 @@ fn fnv_hash(input: &str) -> u64 {
 // ============================================================================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

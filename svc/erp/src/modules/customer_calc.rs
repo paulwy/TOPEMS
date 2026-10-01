@@ -107,6 +107,7 @@ pub fn credit_utilization_ratio(credit_limit: f64, used_credit: f64) -> f64 {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

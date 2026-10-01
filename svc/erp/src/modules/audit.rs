@@ -61,7 +61,10 @@ pub async fn list_audit_logs(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -152,7 +155,10 @@ pub async fn get_audit_log(
     >,
 ) -> Json<ApiResponse<AuditLog>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "erp",
         r#"
@@ -241,6 +247,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

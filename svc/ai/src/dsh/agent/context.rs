@@ -219,8 +219,7 @@ impl AgentContext {
                 .iter()
                 .position(|m| m.role != MessageRole::System)
             {
-                removed_tokens += self.messages[pos].estimate_tokens();
-                self.messages.remove(pos);
+                removed_tokens += self.messages.remove(pos).estimate_tokens();
             } else {
                 break;
             }
@@ -274,11 +273,21 @@ impl AgentContext {
             });
 
             if let Some(tool_name) = &msg.tool_name {
-                entry["name"] = serde_json::Value::String(tool_name.clone());
+                if let Some(obj) = entry.as_object_mut() {
+                    obj.insert(
+                        "name".to_string(),
+                        serde_json::Value::String(tool_name.clone()),
+                    );
+                }
             }
 
             if let Some(tool_call_id) = &msg.tool_call_id {
-                entry["tool_call_id"] = serde_json::Value::String(tool_call_id.clone());
+                if let Some(obj) = entry.as_object_mut() {
+                    obj.insert(
+                        "tool_call_id".to_string(),
+                        serde_json::Value::String(tool_call_id.clone()),
+                    );
+                }
             }
 
             formatted.push(entry);
@@ -398,6 +407,7 @@ impl ContextManager {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

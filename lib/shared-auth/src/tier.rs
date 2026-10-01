@@ -141,6 +141,7 @@ pub fn modules_to_disable_for_tier(tier: Tier, enabled: &[&str]) -> Vec<String> 
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

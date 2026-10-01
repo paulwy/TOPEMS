@@ -419,7 +419,7 @@ impl PersistedQueryManager {
         self.version_index
             .entry(query_hash.clone())
             .or_default()
-            .push(query_hash.clone());
+            .push(query_hash);
         gql
     }
 
@@ -454,6 +454,7 @@ impl PersistedQueryManager {
         }
     }
 
+    #[allow(clippy::indexing_slicing, clippy::unwrap_used)]
     fn list(
         &self,
         page: u32,
@@ -566,7 +567,7 @@ impl QueryAuditStore {
         let timestamp = Utc::now().timestamp();
 
         self.index_by_user
-            .entry(user_id.clone())
+            .entry(user_id)
             .or_default()
             .push(audit_id.clone());
         if let Some(hash) = &query_hash {
@@ -575,7 +576,7 @@ impl QueryAuditStore {
                 .or_default()
                 .push(audit_id.clone());
         }
-        self.index_by_time.push((timestamp, audit_id.clone()));
+        self.index_by_time.push((timestamp, audit_id));
         self.update_stats(&entry);
         self.entries.push(entry);
     }
@@ -646,6 +647,7 @@ impl QueryAuditStore {
         stats
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn query(
         &self,
         filter: &QueryAuditFilterInput,
@@ -1757,6 +1759,7 @@ impl QueryGovernanceMutationRoot {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Utc};
 
 pub(crate) fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
     dt.unwrap_or_else(Utc::now)
@@ -17,8 +17,10 @@ pub(crate) fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::{Datelike, TimeZone, Timelike};
     use sqlx::types::BigDecimal;
     use topems_shared_db::decimal::big_decimal_to_f64;
 

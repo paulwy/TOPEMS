@@ -111,7 +111,10 @@ pub async fn list_customers(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Customer>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -213,7 +216,10 @@ pub async fn get_customer(
     >,
 ) -> Json<ApiResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -256,7 +262,10 @@ pub async fn create_customer(
     Json(body): Json<CreateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -319,7 +328,10 @@ pub async fn update_customer(
     Json(body): Json<UpdateCustomerRequest>,
 ) -> Json<ApiResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -379,7 +391,10 @@ pub async fn delete_customer(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -509,7 +524,10 @@ pub async fn batch_list_customers(
     Json(body): Json<BatchListRequest>,
 ) -> Json<ApiResponse<Vec<Customer>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -563,7 +581,10 @@ pub async fn batch_create_customers(
     Json(body): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<Vec<Customer>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -604,7 +625,10 @@ async fn batch_update_customers(
     Json(body): Json<BatchUpdateRequest>,
 ) -> Json<ApiResponse<Vec<Customer>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -642,7 +666,10 @@ async fn batch_delete_customers(
     Json(body): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -701,7 +728,10 @@ pub async fn change_customer_status(
     Json(body): Json<StatusUpdateRequest>,
 ) -> Json<ApiResponse<Customer>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -744,7 +774,10 @@ pub async fn batch_change_status(
     Json(body): Json<BatchStatusRequest>,
 ) -> Json<ApiResponse<Vec<Customer>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -796,7 +829,10 @@ pub async fn batch_change_category(
     Json(body): Json<BatchCategoryRequest>,
 ) -> Json<ApiResponse<Vec<Customer>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -846,7 +882,10 @@ pub async fn get_customer_stats(
     >,
 ) -> Json<ApiResponse<CustomerStatsResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -910,7 +949,10 @@ pub async fn list_recent_customers(
     >,
 ) -> Json<ApiResponse<CustomerRecentResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -935,6 +977,7 @@ pub async fn list_recent_customers(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

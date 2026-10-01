@@ -95,7 +95,10 @@ pub async fn list_opening_balances(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<OpeningBalance>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -177,7 +180,10 @@ pub async fn create_opening_balance(
     Json(req): Json<CreateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -281,7 +287,10 @@ pub async fn get_opening_balance(
     >,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", r#"
         SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
@@ -320,7 +329,10 @@ pub async fn update_opening_balance(
     Json(req): Json<UpdateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", "SELECT id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at FROM erp.opening_balances WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -422,7 +434,10 @@ pub async fn delete_opening_balance(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE erp.opening_balances SET deleted_at = NOW() WHERE id = $1"
@@ -503,7 +518,10 @@ pub async fn import_opening_balances(
     Json(req): Json<Vec<CreateOpeningBalanceRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let mut success_count = 0;
     let mut failed_count = 0;
     let mut errors = Vec::new();
@@ -610,7 +628,10 @@ pub async fn carry_forward_opening_balance(
     Json(req): Json<CarryForwardRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let request_data = serde_json::to_value(&req).ok();
 
     let query = r#"
@@ -679,6 +700,7 @@ pub async fn carry_forward_opening_balance(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

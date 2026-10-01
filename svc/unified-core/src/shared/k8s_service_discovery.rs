@@ -275,6 +275,7 @@ impl K8sServiceDiscovery {
     }
 
     /// Convert Kubernetes Endpoints to ServiceRegistration.
+    #[allow(clippy::indexing_slicing)]
     fn endpoints_to_registration(endpoints: &K8sEndpoints) -> Option<ServiceRegistration> {
         let subsets = endpoints.subsets.as_ref()?;
 
@@ -352,6 +353,7 @@ impl K8sServiceDiscovery {
     }
 
     /// Convert Kubernetes Service to ServiceRegistration (using ClusterIP).
+    #[allow(clippy::indexing_slicing)]
     fn service_to_registration(service: &K8sService) -> Option<ServiceRegistration> {
         let spec = service.spec.as_ref()?;
         let cluster_ip = spec.cluster_ip.as_ref()?;
@@ -680,6 +682,7 @@ impl Default for K8sServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

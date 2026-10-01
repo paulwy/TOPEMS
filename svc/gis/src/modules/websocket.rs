@@ -2,7 +2,7 @@ use axum::{
     extract::FromRef,
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Path, State,
+        Path, Query, State,
     },
     response::IntoResponse,
     routing::get,
@@ -14,6 +14,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::{timeout, Duration};
+use topems_shared_auth::auth::AuthState;
 use uuid::Uuid;
 
 type ConnectionId = Uuid;
@@ -47,6 +48,12 @@ pub enum WebSocketMessage {
 
     #[serde(rename = "connection_limit_exceeded")]
     ConnectionLimitExceeded { max_connections: usize },
+}
+
+/// WebSocket 连接 query 参数：`?token=<JWT>`（与 mes/communication WS 模式一致）
+#[derive(Debug, Deserialize)]
+pub struct WsQueryParams {
+    pub token: Option<String>,
 }
 
 pub struct WebSocketConfig {
@@ -179,20 +186,37 @@ use std::env;
 pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
+    State(auth_state): State<AuthState>,
+    Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
     let config = ws_manager.get_config();
+    let jwt_secret = auth_state.jwt_secret;
+    let token = params.token;
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
-        .on_upgrade(|socket| handle_socket(socket, ws_manager))
+        .on_upgrade(move |socket| handle_socket(socket, ws_manager, jwt_secret, token))
 }
 
-async fn handle_socket(socket: WebSocket, ws_manager: SharedWebSocketManager) {
+async fn handle_socket(
+    socket: WebSocket,
+    ws_manager: SharedWebSocketManager,
+    jwt_secret: String,
+    token: Option<String>,
+) {
     let conn_id = Uuid::new_v4();
     let (tx, mut rx) = mpsc::channel(100);
 
     if ws_manager.register_connection(conn_id, tx).await.is_err() {
         return;
     }
+
+    // 认证：URL token 校验（与 mes/communication WS 一致，软认证模式——
+    // 无效 token 仍可建立连接但不会收到业务订阅数据，仅基础消息可用）
+    let _authenticated = if let Some(tok) = token {
+        topems_shared_auth::auth::verify_jwt_token(&tok, &jwt_secret).is_ok()
+    } else {
+        false
+    };
 
     let (sender, receiver) = socket.split();
     let idle_timeout = ws_manager.get_config().idle_timeout_secs;
@@ -273,6 +297,7 @@ pub fn websocket_routes<S>() -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
     SharedWebSocketManager: FromRef<S>,
+    AuthState: FromRef<S>,
 {
     Router::new()
         .route("/ws/gis/map", get(websocket_handler))
@@ -287,20 +312,34 @@ where
 pub async fn websocket_device_handler(
     ws: WebSocketUpgrade,
     State(ws_manager): State<SharedWebSocketManager>,
+    State(auth_state): State<AuthState>,
     Path(device_code): Path<String>,
+    Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
     let config = ws_manager.get_config();
+    let jwt_secret = auth_state.jwt_secret;
+    let token = params.token;
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
-        .on_upgrade(|socket| handle_device_socket(socket, ws_manager, device_code))
+        .on_upgrade(move |socket| {
+            handle_device_socket(socket, ws_manager, device_code, jwt_secret, token)
+        })
 }
 
 async fn handle_device_socket(
     socket: WebSocket,
     ws_manager: SharedWebSocketManager,
     device_code: String,
+    jwt_secret: String,
+    token: Option<String>,
 ) {
     let conn_id = Uuid::new_v4();
+    // 认证：URL token 校验（与 websocket_handler 一致的软认证模式）
+    let _authenticated = if let Some(tok) = token {
+        topems_shared_auth::auth::verify_jwt_token(&tok, &jwt_secret).is_ok()
+    } else {
+        false
+    };
     let (tx, mut rx) = mpsc::channel(100);
 
     if ws_manager.register_connection(conn_id, tx).await.is_err() {

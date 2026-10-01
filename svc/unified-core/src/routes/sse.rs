@@ -218,6 +218,7 @@ pub fn sse_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -230,7 +231,8 @@ mod tests {
             endpoint: "/api/sse/session/sess-001".to_string(),
             expires_in: 1800,
         };
-        let json = serde_json::to_string(&data).unwrap();
+        let json =
+            serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"session_id\":\"sess-001\""));
         assert!(json.contains("\"endpoint\":\"/api/sse/session/sess-001\""));
         assert!(json.contains("\"expires_in\":1800"));
@@ -253,7 +255,8 @@ mod tests {
             endpoint: "/api/sse/session/rt-001".to_string(),
             expires_in: 3600,
         };
-        let json = serde_json::to_string(&original).unwrap();
+        let json = serde_json::to_string(&original)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let parsed: EndpointEventData = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed.session_id, original.session_id);
         assert_eq!(parsed.endpoint, original.endpoint);
@@ -268,7 +271,8 @@ mod tests {
             endpoint: "e".to_string(),
             expires_in: 0,
         };
-        let json = serde_json::to_string(&data).unwrap();
+        let json =
+            serde_json::to_string(&data).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         // session_id 应出现在 endpoint 之前（结构体声明顺序）
         let sid_pos = json.find("session_id").unwrap();
         let ep_pos = json.find("endpoint").unwrap();
@@ -337,7 +341,8 @@ mod tests {
             session_id: "sess-ok".to_string(),
             message: "Event sent successfully".to_string(),
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":true"));
         assert!(json.contains("\"session_id\":\"sess-ok\""));
         assert!(json.contains("\"Event sent successfully\""));
@@ -350,7 +355,8 @@ mod tests {
             session_id: "sess-fail".to_string(),
             message: "Session not found or expired".to_string(),
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":false"));
         assert!(json.contains("\"session_id\":\"sess-fail\""));
         assert!(json.contains("\"Session not found or expired\""));
@@ -363,7 +369,8 @@ mod tests {
             session_id: "s3".to_string(),
             message: "Client disconnected".to_string(),
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json =
+            serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("Client disconnected"));
     }
 

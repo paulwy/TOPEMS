@@ -156,7 +156,7 @@ pub async fn create_lifecycle_entity(
             .and_then(|v| v.as_str())
             .map(String::from),
         stage_entered_at: now.clone(),
-        last_transition_at: now.clone(),
+        last_transition_at: now,
         tasks: default_tasks_for(&LifecycleStage::Proposed),
         transition_count: 0,
         sla_deadline: None,
@@ -224,7 +224,7 @@ pub async fn transition_lifecycle_stage(
     let now = chrono::Utc::now().to_rfc3339();
     entity.stage = target.clone();
     entity.stage_entered_at = now.clone();
-    entity.last_transition_at = now.clone();
+    entity.last_transition_at = now;
     entity.transition_count += 1;
     entity.tasks = default_tasks_for(&target);
 

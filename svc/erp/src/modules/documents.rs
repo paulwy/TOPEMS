@@ -51,7 +51,10 @@ pub async fn list_documents(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Document>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -122,7 +125,10 @@ pub async fn create_document(
     Json(payload): Json<CreateDocumentRequest>,
 ) -> Json<ApiResponse<Document>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = validate_required_field("标题", &payload.title) {
         return Json(api_error(400, &e));
     }
@@ -171,7 +177,10 @@ pub async fn get_document(
     >,
 ) -> Json<ApiResponse<Document>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query_as::<_, Document>("SELECT * FROM erp.documents WHERE id = $1")
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -205,7 +214,10 @@ pub async fn update_document(
     Json(payload): Json<UpdateDocumentRequest>,
 ) -> Json<ApiResponse<Document>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let existing = match sqlx::query_as::<_, Document>("SELECT * FROM erp.documents WHERE id = $1")
         .bind(id)
         .fetch_optional(&mut **txn)
@@ -267,7 +279,10 @@ pub async fn delete_document(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query("DELETE FROM erp.documents WHERE id = $1")
         .bind(id)
         .execute(&mut **txn)

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! WMS 模块权限测试
 //!
 //! 覆盖仓储管理系统模块的核心权限场景

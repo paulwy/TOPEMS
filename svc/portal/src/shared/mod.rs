@@ -62,6 +62,7 @@ impl AppState {
         }
     }
 
+    #[allow(clippy::unwrap_used)]
     pub async fn new(pool: PgPool, event_publisher: Option<Arc<EventPublisher>>) -> Self {
         let aggregator = PortalServiceAggregator::new();
         aggregator.init_default_services().await;
@@ -69,13 +70,14 @@ impl AppState {
         let cache_config = CacheConfig::default();
         let dashboard_cache = CacheManager::new(&cache_config);
 
-        let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_default();
+        let auth_state = AuthState::from_env();
+        let jwt_secret = auth_state.jwt_secret.clone();
         // 全局注册 service token 签发密钥（联邦实体解析 / 跨服务聚合读统一走 portal-service 身份）
         crate::modules::graphql_helpers::init_service_auth(&jwt_secret);
         // 模块化单体模式统一服务入口（由 topems-server 在 portal_real_module 构建时设置）
         let mono_base = std::env::var("MONOLITH_SERVICE_URL").ok();
         Self {
-            auth_state: AuthState::from_env(),
+            auth_state,
             service_registry: Arc::new(LocalServiceRegistry::new()),
             service_aggregator: Arc::new(aggregator),
             http_client: Client::new(),

@@ -34,7 +34,7 @@ export const inventoryApi = {
   list: async (
     params?: AdaptedQuery<'wms_list_inventory'> | PaginationParams
   ): Promise<TypedPaginatedResponse<InventoryItem>> => {
-    return apiClient.wms.get('/inventory-real', {
+    return apiClient.wms.get('/inventory', {
       params: params ? toOpenApiParams(params as Record<string, unknown>) : undefined,
     });
   },

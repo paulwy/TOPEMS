@@ -202,13 +202,13 @@ impl ZkClient {
             current.push('/');
             current.push_str(part);
             let exists = {
-                let zk = self.inner.lock().unwrap();
+                let zk = self.inner.lock().unwrap_or_else(|e| e.into_inner());
                 zk.exists(&current, false)
             };
             match exists {
                 Ok(Some(_)) => {}
                 Ok(None) | Err(_) => {
-                    let zk = self.inner.lock().unwrap();
+                    let zk = self.inner.lock().unwrap_or_else(|e| e.into_inner());
                     let _ = zk.create(
                         &current,
                         Vec::new(),
@@ -239,9 +239,12 @@ impl ZkClient {
 
         let zk = self.inner.clone();
         tokio::task::spawn_blocking(move || {
-            zk.lock()
-                .unwrap()
-                .create(&create_path, value.into_bytes(), acl, CreateMode::Ephemeral)
+            zk.lock().unwrap_or_else(|e| e.into_inner()).create(
+                &create_path,
+                value.into_bytes(),
+                acl,
+                CreateMode::Ephemeral,
+            )
         })
         .await
         .map_err(|e| ZkError::Task(e.to_string()))?
@@ -269,9 +272,13 @@ impl ZkClient {
     pub async fn deregister_service(&self, name: &str, id: &str) -> Result<(), ZkError> {
         let path = self.instance_path(name, id);
         let zk = self.inner.clone();
-        let result = tokio::task::spawn_blocking(move || zk.lock().unwrap().delete(&path, None))
-            .await
-            .map_err(|e| ZkError::Task(e.to_string()))?;
+        let result = tokio::task::spawn_blocking(move || {
+            zk.lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .delete(&path, None)
+        })
+        .await
+        .map_err(|e| ZkError::Task(e.to_string()))?;
 
         // 节点不存在视为已注销（幂等）
         match result {
@@ -290,11 +297,14 @@ impl ZkClient {
     pub async fn discover_service(&self, name: &str) -> Result<Vec<ServiceInstance>, ZkError> {
         let path = self.service_path(name);
         let zk = self.inner.clone();
-        let children =
-            tokio::task::spawn_blocking(move || zk.lock().unwrap().get_children(&path, false))
-                .await
-                .map_err(|e| ZkError::Task(e.to_string()))?
-                .map_err(|e| ZkError::DiscoveryFailed(e.to_string()))?;
+        let children = tokio::task::spawn_blocking(move || {
+            zk.lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get_children(&path, false)
+        })
+        .await
+        .map_err(|e| ZkError::Task(e.to_string()))?
+        .map_err(|e| ZkError::DiscoveryFailed(e.to_string()))?;
 
         let mut instances = Vec::new();
         for child in children {
@@ -309,9 +319,13 @@ impl ZkClient {
     async fn get_instance(&self, name: &str, id: &str) -> Result<Option<ServiceInstance>, ZkError> {
         let path = self.instance_path(name, id);
         let zk = self.inner.clone();
-        let data = tokio::task::spawn_blocking(move || zk.lock().unwrap().get_data(&path, false))
-            .await
-            .map_err(|e| ZkError::Task(e.to_string()))?;
+        let data = tokio::task::spawn_blocking(move || {
+            zk.lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get_data(&path, false)
+        })
+        .await
+        .map_err(|e| ZkError::Task(e.to_string()))?;
 
         match data {
             Ok((bytes, _stat)) => {
@@ -338,7 +352,9 @@ impl ZkClient {
         let prefix_path_clone = prefix_path.trim_end_matches('/').to_string();
 
         let children = tokio::task::spawn_blocking(move || {
-            zk.lock().unwrap().get_children(&prefix_path_clone, false)
+            zk.lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get_children(&prefix_path_clone, false)
         })
         .await
         .map_err(|e| ZkError::Task(e.to_string()))?;
@@ -353,10 +369,13 @@ impl ZkClient {
         for name in names {
             let path = format!("{}{}", prefix_path, name);
             let zk = self.inner.clone();
-            let ids =
-                tokio::task::spawn_blocking(move || zk.lock().unwrap().get_children(&path, false))
-                    .await
-                    .map_err(|e| ZkError::Task(e.to_string()))?;
+            let ids = tokio::task::spawn_blocking(move || {
+                zk.lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .get_children(&path, false)
+            })
+            .await
+            .map_err(|e| ZkError::Task(e.to_string()))?;
             if let Ok(ids) = ids {
                 services.insert(name, ids);
             }
@@ -368,11 +387,15 @@ impl ZkClient {
     pub async fn ping(&self) -> Result<bool, ZkError> {
         let zk = self.inner.clone();
         let path = self.prefix().trim_end_matches('/').to_string();
-        tokio::task::spawn_blocking(move || zk.lock().unwrap().exists(&path, false))
-            .await
-            .map_err(|e| ZkError::Task(e.to_string()))?
-            .map(|_| true)
-            .map_err(|e| ZkError::DiscoveryFailed(e.to_string()))
+        tokio::task::spawn_blocking(move || {
+            zk.lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .exists(&path, false)
+        })
+        .await
+        .map_err(|e| ZkError::Task(e.to_string()))?
+        .map(|_| true)
+        .map_err(|e| ZkError::DiscoveryFailed(e.to_string()))
     }
 
     /// 订阅服务目录变更（watcher）
@@ -403,7 +426,7 @@ impl ZkClient {
                         let zk = client.inner.clone();
                         let path_c = path.clone();
                         let children = tokio::task::spawn_blocking(move || {
-                            zk.lock().unwrap().get_children_w(&path_c, watcher)
+                            zk.lock().unwrap_or_else(|e| e.into_inner()).get_children_w(&path_c, watcher)
                         })
                         .await;
                         match children {
@@ -466,7 +489,7 @@ impl ZkClient {
             };
             // 锁在作用域块内立即释放（std MutexGuard 不 Send，不得跨 await 存活）
             let _sub = {
-                let zk = client.inner.lock().unwrap();
+                let zk = client.inner.lock().unwrap_or_else(|e| e.into_inner());
                 zk.add_listener(listener)
             };
             // 阻塞接收线程 → tokio channel 转发（Receiver 非 'static，移入线程）
@@ -520,7 +543,7 @@ impl ZkClient {
                     }
                 };
                 {
-                    let mut guard = self.inner.lock().unwrap();
+                    let mut guard = self.inner.lock().unwrap_or_else(|e| e.into_inner());
                     *guard = new_zk;
                 }
 
@@ -732,6 +755,7 @@ pub async fn try_register_service(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

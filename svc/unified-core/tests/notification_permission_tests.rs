@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! Notification 模块权限测试
 //!
 //! 覆盖测试用例清单中的 NOTIF-001 到 NOTIF-007

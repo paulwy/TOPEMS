@@ -186,6 +186,7 @@ impl SchemaBuilder {
     }
 
     /// 构建 JSON Schema
+    #[allow(clippy::indexing_slicing)]
     pub fn build(&self) -> Value {
         let mut schema = json!({
             "type": self.schema_type.as_str(),
@@ -253,6 +254,7 @@ pub fn empty_object_schema() -> Value {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

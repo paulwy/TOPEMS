@@ -55,10 +55,7 @@ impl LlmProvider for MockProvider {
     }
 
     async fn ask(&self, request: LlmRequest) -> Result<LlmResponse, LlmProviderError> {
-        let model = request
-            .model
-            .clone()
-            .unwrap_or_else(|| "mock-model".to_string());
+        let model = request.model.unwrap_or_else(|| "mock-model".to_string());
 
         Ok(LlmResponse {
             content: self.fixed_response.clone(),
@@ -128,6 +125,7 @@ impl LlmProvider for MockProvider {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

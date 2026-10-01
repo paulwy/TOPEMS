@@ -262,6 +262,7 @@ pub async fn fetch_entries_by_type(
     ),
     tag = "ERP/addressbook"
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn get_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookQueryParams>,
@@ -549,6 +550,7 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

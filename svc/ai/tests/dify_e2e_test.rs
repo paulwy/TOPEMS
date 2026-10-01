@@ -8,6 +8,7 @@
 //! Tests auto-skip when DIFY_API_KEY is not set (requires running Dify instance).
 //! To enable: set DIFY_API_KEY=app-xxx in .env, then run:
 //!   cargo test -p topems-ai --test dify_e2e_test -- --include-ignored
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
 use topems_ai::models::{DifyChatRequest, DifyConfig};
 use topems_ai::services::dify::DifyService;

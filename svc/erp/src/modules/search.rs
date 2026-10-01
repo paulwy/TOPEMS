@@ -86,7 +86,10 @@ async fn global_search(
     >,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let limit = params.page_size_or_default();
     let query = params.query.to_lowercase();
     let search_pattern = format!("%{}%", query);
@@ -180,6 +183,7 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

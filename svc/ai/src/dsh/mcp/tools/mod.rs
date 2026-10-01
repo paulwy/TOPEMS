@@ -363,6 +363,7 @@ pub fn http_call(base: &str, method: &str, path: &str, body: Option<Value>) -> O
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use topems_shared_mcp::protocol::McpContent;
@@ -403,7 +404,7 @@ mod tests {
                     .property("message", SchemaBuilder::string())
                     .build(),
                 |params| {
-                    let msg = params["message"].as_str().unwrap_or("");
+                    let msg = params.get("message").and_then(|v| v.as_str()).unwrap_or("");
                     Ok(McpToolResult {
                         content: vec![McpContent::text(msg.to_string())],
                         is_error: None,

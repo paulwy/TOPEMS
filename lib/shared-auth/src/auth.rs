@@ -258,6 +258,7 @@ use sha2::Sha256;
 
 type HmacSha256 = Hmac<Sha256>;
 
+#[allow(clippy::expect_used)]
 pub fn sign_message(message: &str, secret: &str) -> String {
     let mut mac =
         HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take any size of key");
@@ -822,6 +823,7 @@ pub fn require_all_permissions<T>(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serial_test::serial;

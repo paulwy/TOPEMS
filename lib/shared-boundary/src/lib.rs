@@ -245,6 +245,7 @@ fn tokenize(sql: &str) -> Vec<String> {
 ///
 /// 只校验边界真正关心的：读/写哪些表。WHERE / JOIN ON 中的 `alias.column`、
 /// 函数调用、参数占位符均不在表引用位置，不会被误判为 schema。
+#[allow(clippy::indexing_slicing)]
 fn extract_schema_refs(sql: &str) -> Vec<(String, String)> {
     let tokens = tokenize(sql);
     let mut refs = Vec::new();
@@ -276,6 +277,7 @@ fn extract_schema_refs(sql: &str) -> Vec<(String, String)> {
     refs
 }
 
+#[allow(clippy::indexing_slicing)]
 fn is_ident(s: &str) -> bool {
     let b = s.as_bytes();
     !b.is_empty() && (b[0].is_ascii_alphabetic() || b[0] == b'_')
@@ -328,6 +330,7 @@ pub fn only_own_schema_query(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

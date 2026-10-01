@@ -229,6 +229,7 @@ pub fn audit_export_task_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -273,7 +274,7 @@ mod tests {
             interval_secs: 86400,
             batch_size: 500,
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"interval_secs\":86400"));
         assert!(json.contains("\"batch_size\":500"));
     }
@@ -289,7 +290,7 @@ mod tests {
             },
             controller_ready: true,
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"running\":true"));
         assert!(json.contains("\"interval_secs\":3600"));
         assert!(json.contains("\"last_export_count\":42"));
@@ -329,7 +330,7 @@ mod tests {
                 error: None,
             },
         };
-        let json = serde_json::to_string(&resp).unwrap();
+        let json = serde_json::to_string(&resp).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"success\":true"));
         assert!(json.contains("\"exported\":5"));
         assert!(json.contains("\"archived\":5"));

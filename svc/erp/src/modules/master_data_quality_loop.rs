@@ -513,6 +513,7 @@ pub async fn get_quality_ticket_history(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "分配质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn assign_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -551,6 +552,7 @@ pub async fn assign_quality_ticket(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "启动质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn start_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -597,6 +599,7 @@ pub async fn start_quality_ticket(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "提交质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn submit_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -642,6 +645,7 @@ pub async fn submit_quality_ticket(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "验证质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn verify_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -689,6 +693,7 @@ pub async fn verify_quality_ticket(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "关闭质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn close_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -731,6 +736,7 @@ pub async fn close_quality_ticket(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "驳回质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn reject_quality_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -771,6 +777,7 @@ pub async fn reject_quality_ticket(
     params(("id" = String, Path, description = "质量工单ID")),
     responses((status = 200, description = "升级质量工单成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn escalate_ticket(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -979,6 +986,7 @@ pub async fn execute_repair_workflow(
 }
 
 /// 内部：执行修复工作流（模拟 SQL UPDATE 占位实现）
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn execute_repair_workflow_internal(workflow_id: String) {
     let store = get_quality_loop_store();
     let mut workflows = store.repair_workflows.lock().await;
@@ -1069,6 +1077,7 @@ fn simulate_repair_step(action: &str, target_field: &str) -> bool {
     ),
     responses((status = 200, description = "执行修复步骤成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn execute_repair_step(
     Path((workflow_id, step_index)): Path<(String, usize)>,
     State(state): State<ApiState>,
@@ -1113,6 +1122,7 @@ pub async fn execute_repair_step(
     params(("id" = String, Path, description = "修复工作流ID")),
     responses((status = 200, description = "审批修复工作流成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn approve_repair_workflow(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -1225,6 +1235,7 @@ pub async fn list_repair_workflows(
     params(("id" = String, Path, description = "修复工作流ID")),
     responses((status = 200, description = "验证修复工作流成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn verify_repair(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -1347,6 +1358,7 @@ pub async fn get_data_domain(
     params(("id" = String, Path, description = "数据域ID")),
     responses((status = 200, description = "更新数据域成功", body = ApiResponse<serde_json::Value>))
 )]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn update_data_domain(
     Path(id): Path<String>,
     State(state): State<ApiState>,
@@ -1627,6 +1639,7 @@ pub async fn get_quality_loop_stats(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

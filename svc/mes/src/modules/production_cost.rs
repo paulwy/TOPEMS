@@ -13,7 +13,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, Duration, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -944,8 +944,10 @@ pub async fn get_cost_forecast(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
 
     #[test]
     fn naive_to_utc_some_keeps_value() {

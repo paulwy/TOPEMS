@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! Deployment Manager V60 HTTP 集成测试
 //!
 //! 用途：调用 portal 服务的 V60 部署管理 HTTP 端点，验证端到端可达性和响应格式。

@@ -1,4 +1,5 @@
 //! ZooKeeper 服务发现集成测试（真实 ZooKeeper 集群）
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //!
 //! 前置：`docker compose -f deploy/docker/zookeeper-compose.yml up -d`
 //! 运行：`ZK_TEST_CONNECT_STRING=127.0.0.1:2181 cargo test -p topems-shared-event --test zookeeper_integration`

@@ -1,4 +1,5 @@
 //! etcd 服务发现集成测试（真实 etcd 集群）
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //!
 //! 前置：`docker compose -f deploy/docker/etcd-compose.yml up -d`
 //! 运行：`ETCD_TEST_ENDPOINTS=http://localhost:2379 cargo test -p topems-shared-event --test etcd_integration`

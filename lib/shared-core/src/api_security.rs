@@ -202,6 +202,7 @@ pub fn verify_request_signature(
 }
 
 /// 公开函数：生成请求签名（供客户端/SDK 使用）
+#[allow(clippy::expect_used)]
 pub fn generate_request_signature(
     method: &str,
     path: &str,
@@ -243,6 +244,7 @@ pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 /// - IP（X-Forwarded-For / X-Real-IP / peer addr）
 /// - User-Agent
 /// - trace_id（从 `traceparent` 头提取）
+#[allow(clippy::indexing_slicing)]
 pub fn extract_audit_context(request: &Request<Body>) -> AuditContext {
     let headers = request.headers();
 
@@ -348,6 +350,7 @@ pub fn signature_error_response(verification: SignatureVerification) -> Response
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

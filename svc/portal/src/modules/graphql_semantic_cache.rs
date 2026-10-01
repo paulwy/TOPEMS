@@ -166,6 +166,7 @@ impl SemanticCacheEngine {
     }
 
     /// 去除 GraphQL 别名（仅处理括号外的 alias: 模式，保留参数 key:value）
+    #[allow(clippy::indexing_slicing)]
     fn strip_aliases(query: &str) -> String {
         let chars: Vec<char> = query.chars().collect();
         let mut result = String::with_capacity(query.len());
@@ -215,6 +216,7 @@ impl SemanticCacheEngine {
     }
 
     /// 字段排序：对每个花括号块内的直接子字段（含嵌套块）按字典序排序
+    #[allow(clippy::indexing_slicing)]
     fn sort_fields(query: &str) -> String {
         let chars: Vec<char> = query.chars().collect();
         let mut idx = 0;
@@ -231,6 +233,7 @@ impl SemanticCacheEngine {
     }
 
     /// 处理一个 { ... } 块，返回包含花括号的已排序结果
+    #[allow(clippy::indexing_slicing)]
     fn sort_fields_block(chars: &[char], idx: &mut usize) -> String {
         let mut result = String::new();
         if *idx >= chars.len() || chars[*idx] != '{' {
@@ -335,6 +338,7 @@ impl SemanticCacheEngine {
         words.join(",")
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn extract_arguments(query: &str) -> String {
         let mut args: Vec<String> = Vec::new();
         let chars: Vec<char> = query.chars().collect();
@@ -368,6 +372,7 @@ impl SemanticCacheEngine {
         args.join(";")
     }
 
+    #[allow(clippy::indexing_slicing)]
     fn extract_directives(query: &str) -> String {
         let mut dirs: Vec<String> = Vec::new();
         let chars: Vec<char> = query.chars().collect();
@@ -441,6 +446,7 @@ impl SemanticCacheEngine {
     }
 
     /// 获取缓存（精确匹配 + 模糊匹配回退）
+    #[allow(clippy::indexing_slicing)]
     pub fn get_cached(query: &str) -> Option<SemanticCacheEntryGql> {
         let start = std::time::Instant::now();
         let mut state = semantic_cache_state()
@@ -858,6 +864,7 @@ impl QueryResultCompressor {
     /// 增量编码（对时间序列等有序数据）
     ///
     /// 将连续的数字序列转换为相对前一个值的增量。
+    #[allow(clippy::indexing_slicing)]
     pub fn delta_encode(data: &str) -> String {
         let mut result = String::with_capacity(data.len());
         let chars: Vec<char> = data.chars().collect();
@@ -915,6 +922,7 @@ impl QueryResultCompressor {
     }
 
     /// 分析数据画像
+    #[allow(clippy::indexing_slicing)]
     pub fn profile_data(data: &str) -> DataProfileGql {
         let _total = data.len().max(1) as f64;
         let mut array_count = 0i64;

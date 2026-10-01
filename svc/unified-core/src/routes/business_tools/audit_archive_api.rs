@@ -314,6 +314,7 @@ pub fn audit_archive_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -350,7 +351,8 @@ mod tests {
             total: 2,
             archives: vec![],
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total\":2"));
         assert!(json.contains("\"archives\":[]"));
     }
@@ -358,7 +360,8 @@ mod tests {
     #[test]
     fn test_cleanup_archives_response_serialization() {
         let response = CleanupArchivesResponse { deleted_count: 5 };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"deleted_count\":5"));
     }
 
@@ -370,7 +373,8 @@ mod tests {
             archive_dir: "/tmp/archives".to_string(),
             compress: false,
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"total_files\":10"));
         assert!(json.contains("\"total_size\":102400"));
         assert!(json.contains("/tmp/archives"));

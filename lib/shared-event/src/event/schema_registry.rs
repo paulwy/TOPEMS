@@ -228,7 +228,9 @@ fn validate_against_schema(
     if !schema.is_object() {
         return result;
     }
-    let obj = schema.as_object().unwrap();
+    let Some(obj) = schema.as_object() else {
+        return result;
+    };
 
     // type
     if let Some(type_val) = obj.get("type") {
@@ -364,6 +366,7 @@ fn json_type_of(value: &serde_json::Value) -> &'static str {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde_json::json;

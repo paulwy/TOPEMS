@@ -31,6 +31,7 @@ pub async fn log_audit(
         .await;
 }
 
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 pub async fn call_finance_core_approval(
     finance_client: &TypedServiceClient<FinanceApi>,
     pool: &PgPool,

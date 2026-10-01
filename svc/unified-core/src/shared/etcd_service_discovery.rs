@@ -374,6 +374,7 @@ impl EtcdServiceDiscovery {
     }
 
     /// Get a key from etcd.
+    #[allow(clippy::indexing_slicing)]
     async fn get_key(&self, key: &str) -> Result<Option<String>, ServiceClientError> {
         let url = self.build_url("/v3/kv/range");
         let request = serde_json::json!({
@@ -504,7 +505,7 @@ impl ServiceDiscovery for EtcdServiceDiscovery {
         // Track the lease for revocation
         self.registered_leases
             .lock()
-            .unwrap()
+            .unwrap_or_else(|e| e.into_inner())
             .insert(registration.name.clone(), lease_id);
 
         Ok(())
@@ -516,7 +517,11 @@ impl ServiceDiscovery for EtcdServiceDiscovery {
         self.delete_key(&key).await?;
 
         // Revoke the lease if tracked
-        let lease_id = self.registered_leases.lock().unwrap().remove(name);
+        let lease_id = self
+            .registered_leases
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(name);
         if let Some(lease_id) = lease_id {
             let _ = self.revoke_lease(&lease_id).await;
         }
@@ -569,7 +574,12 @@ impl ServiceDiscovery for EtcdServiceDiscovery {
             let data = Self::registration_to_data(&registration)?;
 
             // Get the lease ID if tracked
-            let lease_id = self.registered_leases.lock().unwrap().get(name).cloned();
+            let lease_id = self
+                .registered_leases
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(name)
+                .cloned();
             self.put_key(&key, &data, lease_id.as_deref()).await?;
         }
 
@@ -581,7 +591,11 @@ impl Drop for EtcdServiceDiscovery {
     fn drop(&mut self) {
         // Revoke all tracked leases
         // Note: This is a best-effort operation since we can't await in drop
-        let leases = self.registered_leases.lock().unwrap().clone();
+        let leases = self
+            .registered_leases
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone();
         for (name, lease_id) in leases {
             tracing::debug!("Would revoke lease for service {}: {}", name, lease_id);
         }
@@ -652,6 +666,7 @@ impl Default for EtcdServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

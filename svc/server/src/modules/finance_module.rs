@@ -107,7 +107,7 @@ impl Module for FinanceModule {
             .route(
                 "/api/finance-demo/accounts",
                 axum::routing::get({
-                    let balances = balances.clone();
+                    let balances = balances;
                     move || {
                         let balances = balances.clone();
                         async move { Json(json!({ "accounts": balances })) }
@@ -118,8 +118,8 @@ impl Module for FinanceModule {
             .route(
                 "/api/finance-demo/total-assets",
                 axum::routing::get({
-                    let asset_codes = asset_codes.clone();
-                    let balances = balances_2.clone();
+                    let asset_codes = asset_codes;
+                    let balances = balances_2;
                     move || {
                         let balances = balances.clone();
                         let total: f64 = asset_codes.iter().filter_map(|c| balances.get(c)).sum();
@@ -131,7 +131,7 @@ impl Module for FinanceModule {
             .route(
                 "/api/finance-demo/info",
                 axum::routing::get({
-                    let asset_codes = asset_codes_2.clone();
+                    let asset_codes = asset_codes_2;
                     move || {
                         let asset_codes = asset_codes.clone();
                         async move {

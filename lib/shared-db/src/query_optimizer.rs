@@ -95,6 +95,7 @@ impl PaginationOptimizer {
 pub struct NPlusOneDetector;
 
 impl NPlusOneDetector {
+    #[allow(clippy::indexing_slicing)]
     pub fn analyze_queries(queries: &[String]) -> Vec<NPlusOneWarning> {
         let mut pattern_counts: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -137,6 +138,7 @@ pub struct NPlusOneWarning {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

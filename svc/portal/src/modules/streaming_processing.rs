@@ -711,7 +711,7 @@ impl DeduplicationEngine {
 
         let mut final_result: Option<DedupResult> = None;
 
-        for rule in &applicable_rules {
+        if let Some(rule) = applicable_rules.first() {
             let mut windows = store.dedup_windows.lock().await;
             let stream_windows = windows
                 .entry(stream_id.to_string())
@@ -812,7 +812,6 @@ impl DeduplicationEngine {
             drop(stats);
 
             final_result = Some(result);
-            break;
         }
 
         final_result.unwrap_or_else(|| DedupResult {
@@ -1704,6 +1703,7 @@ pub async fn reset_counter_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

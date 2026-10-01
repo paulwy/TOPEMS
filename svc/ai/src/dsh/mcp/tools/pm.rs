@@ -75,12 +75,12 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "pm:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let status = params["status"].as_str().unwrap_or("");
-                let project_type = params["project_type"].as_str().unwrap_or("");
-                let manager = params["manager"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let project_type = params.get("project_type").and_then(|v| v.as_str()).unwrap_or("");
+                let manager = params.get("manager").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let base = service_base_url("PM_SERVICE_URL", 8023);
                 let mut path = format!("/api/pm/projects?page={}&page_size={}", page, page_size);
@@ -97,13 +97,13 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                         }));
                     }
                 }
-                let projects = real.map(|r| r["projects"].as_array().cloned().unwrap_or_default()).unwrap_or_else(|| {
+                let projects = real.map(|r| r.get("projects").and_then(|v| v.as_array()).cloned().unwrap_or_default()).unwrap_or_else(|| {
                     generate_mock_projects(status, project_type, manager, keyword)
                 });
                 let total = projects.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_projects = &projects[start.min(total)..end];
+                let page_projects = projects.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -134,7 +134,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "pm:read",
 
             |params| {
-                let project_id = params["project_id"].as_str().unwrap_or("");
+                let project_id = params.get("project_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if project_id.is_empty() {
                     return Err(ToolExecutionError::Validation("project_id is required".to_string()));
@@ -200,12 +200,12 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "pm:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let project_id = params["project_id"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let priority = params["priority"].as_str().unwrap_or("");
-                let assignee = params["assignee"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let project_id = params.get("project_id").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let priority = params.get("priority").and_then(|v| v.as_str()).unwrap_or("");
+                let assignee = params.get("assignee").and_then(|v| v.as_str()).unwrap_or("");
 
                 // 真实服务优先：GET /api/pm/tasks（含筛选与分页），失败降级 mock
                 let base = service_base_url("PM_SERVICE_URL", 8023);
@@ -238,7 +238,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = real_total.unwrap_or(tasks.len() as u64) as usize;
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_tasks = &tasks[start.min(total)..end];
+                let page_tasks = tasks.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -297,10 +297,16 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),
             "pm:write",
             |params| {
-                let name = params["name"].as_str().unwrap_or("");
-                let project_type = params["project_type"].as_str().unwrap_or("");
-                let manager = params["manager"].as_str().unwrap_or("");
-                let start_date = params["start_date"].as_str().unwrap_or("");
+                let name = params.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                let project_type = params
+                    .get("project_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let manager = params.get("manager").and_then(|v| v.as_str()).unwrap_or("");
+                let start_date = params
+                    .get("start_date")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
 
                 if name.is_empty() {
                     return Err(ToolExecutionError::Validation(
@@ -342,7 +348,11 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                 } else {
                     format!("{}T00:00:00Z", start_date)
                 };
-                let end_ts = params["end_date"].as_str().unwrap_or("").to_string();
+                let end_ts = params
+                    .get("end_date")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
                 let end_ts = if end_ts.is_empty() || end_ts.contains('T') {
                     end_ts
                 } else {
@@ -360,8 +370,8 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                     "leader": manager,
                     "start_date": start_ts,
                     "end_date": end_ts,
-                    "description": params["description"].as_str().unwrap_or(""),
-                    "budget": params["budget"].as_f64().unwrap_or(0.0),
+                    "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
+                    "budget": params.get("budget").and_then(|v| v.as_f64()).unwrap_or(0.0),
                     "status": "planning",
                 });
                 if let Some(data) = http_call(&base, "POST", "/api/pm/projects", Some(body)) {
@@ -377,9 +387,9 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
                     "project_type": project_type,
                     "manager": manager,
                     "start_date": start_date,
-                    "end_date": params["end_date"].as_str().unwrap_or(""),
-                    "description": params["description"].as_str().unwrap_or(""),
-                    "budget": params["budget"].as_f64().unwrap_or(0.0),
+                    "end_date": params.get("end_date").and_then(|v| v.as_str()).unwrap_or(""),
+                    "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
+                    "budget": params.get("budget").and_then(|v| v.as_f64()).unwrap_or(0.0),
                     "status": "planning",
                     "progress": 0,
                     "created_at": chrono::Utc::now().to_rfc3339(),
@@ -400,6 +410,7 @@ pub async fn register_pm_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 项目列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_projects(
     status_filter: &str,
     type_filter: &str,
@@ -455,20 +466,27 @@ fn generate_mock_projects(
             })
         })
         .filter(|p| {
-            (status_filter.is_empty() || p["status"].as_str() == Some(status_filter))
-                && (type_filter.is_empty() || p["project_type"].as_str() == Some(type_filter))
-                && (manager_filter.is_empty() || p["manager"].as_str() == Some(manager_filter))
+            (status_filter.is_empty()
+                || p.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (type_filter.is_empty()
+                    || p.get("project_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (manager_filter.is_empty()
+                    || p.get("manager").and_then(|v| v.as_str()) == Some(manager_filter))
                 && (keyword_filter.is_empty()
                     || p["project_number"]
                         .as_str()
                         .unwrap_or("")
                         .contains(keyword_filter)
-                    || p["name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || p.get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 项目详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_project_detail(project_id: &str) -> Value {
     json!({
         "project_id": project_id,
@@ -540,6 +558,7 @@ fn generate_mock_project_detail(project_id: &str) -> Value {
 }
 
 /// 生成 Mock 任务列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_tasks(
     project_filter: &str,
     status_filter: &str,
@@ -578,15 +597,16 @@ fn generate_mock_tasks(
             })
         })
         .filter(|t| {
-            (project_filter.is_empty() || t["project_id"].as_str() == Some(project_filter))
-                && (status_filter.is_empty() || t["status"].as_str() == Some(status_filter))
-                && (priority_filter.is_empty() || t["priority"].as_str() == Some(priority_filter))
-                && (assignee_filter.is_empty() || t["assignee"].as_str() == Some(assignee_filter))
+            (project_filter.is_empty() || t.get("project_id").and_then(|v| v.as_str()) == Some(project_filter))
+                && (status_filter.is_empty() || t.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (priority_filter.is_empty() || t.get("priority").and_then(|v| v.as_str()) == Some(priority_filter))
+                && (assignee_filter.is_empty() || t.get("assignee").and_then(|v| v.as_str()) == Some(assignee_filter))
         })
         .collect()
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -759,7 +779,7 @@ mod tests {
             _ => String::new(),
         };
         let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-        let total = parsed["total"].as_u64().unwrap_or(0);
+        let total = parsed.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         assert!(
             total > 0,
             "pm.list_projects 真实服务应返回 total>0，实际: {}",

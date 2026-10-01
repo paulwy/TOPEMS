@@ -221,6 +221,7 @@ impl VectorStore for RedisVectorStore {
         Ok(search_results)
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn get(&self, key: &str) -> Result<Option<(Vec<f32>, VectorMetadata)>> {
         let mut conn = self.conn.clone();
         let full_key = self.make_key(key);
@@ -267,6 +268,7 @@ pub async fn create_vector_store(redis_url: &str) -> Result<Arc<dyn VectorStore>
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

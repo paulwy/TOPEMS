@@ -213,7 +213,10 @@ pub async fn list_leave_requests(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<LeaveRequest>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -311,7 +314,10 @@ pub async fn create_leave_request(
     Json(req): Json<CreateLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("申请人姓名", &req.employee_name) {
@@ -434,7 +440,10 @@ pub async fn get_leave_request(
     >,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -490,7 +499,10 @@ pub async fn update_leave_request(
     Json(req): Json<UpdateLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -632,7 +644,10 @@ pub async fn delete_leave_request(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -721,7 +736,10 @@ pub async fn submit_leave_request(
     >,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -819,7 +837,10 @@ pub async fn approve_leave_request(
     Json(req): Json<ApproveLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
@@ -925,7 +946,10 @@ pub async fn reject_leave_request(
     Json(req): Json<RejectLeaveRequestRequest>,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
@@ -1034,7 +1058,10 @@ pub async fn cancel_leave_request(
     >,
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     ensure_table(&state).await;
 
     let tenant = tenant_id_from_claims(&claims);
@@ -1118,6 +1145,7 @@ pub async fn cancel_leave_request(
 // ============ 单元测试 ============
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

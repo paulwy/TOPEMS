@@ -83,7 +83,10 @@ pub async fn list_sales_orders(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -173,7 +176,10 @@ pub async fn get_sales_order(
     >,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -214,7 +220,10 @@ pub async fn create_sales_order(
     Json(body): Json<CreateSalesOrderRequest>,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -328,7 +337,10 @@ pub async fn update_sales_order(
     Json(body): Json<UpdateSalesOrderRequest>,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -380,7 +392,10 @@ pub async fn delete_sales_order(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -488,7 +503,10 @@ pub async fn approve_sales_order(
     >,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     update_sales_order_status(
         state,
         claims,
@@ -518,7 +536,10 @@ pub async fn ship_sales_order(
     >,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     update_sales_order_status(
         state,
         claims,
@@ -548,7 +569,10 @@ pub async fn complete_sales_order(
     >,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     update_sales_order_status(
         state,
         claims,
@@ -578,7 +602,10 @@ pub async fn cancel_sales_order(
     >,
 ) -> Json<ApiResponse<SalesOrder>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     update_sales_order_status(
         state,
         claims,
@@ -660,7 +687,10 @@ async fn batch_create_sales_orders(
     Json(body): Json<BatchCreateOrdersRequest>,
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -714,7 +744,10 @@ async fn batch_update_sales_orders(
     Json(body): Json<BatchUpdateOrdersRequest>,
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -783,7 +816,10 @@ pub async fn batch_approve_sales_orders(
     Json(body): Json<BatchIdsRequest>,
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -819,7 +855,10 @@ pub async fn batch_ship_sales_orders(
     Json(body): Json<BatchShipRequest>,
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -855,7 +894,10 @@ pub async fn batch_complete_sales_orders(
     Json(body): Json<BatchIdsRequest>,
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -891,7 +933,10 @@ pub async fn batch_cancel_sales_orders(
     Json(body): Json<BatchCancelRequest>,
 ) -> Json<ApiResponse<Vec<SalesOrder>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
@@ -926,7 +971,10 @@ pub async fn get_sales_order_stats(
     >,
 ) -> Json<ApiResponse<SalesOrderStatsResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }

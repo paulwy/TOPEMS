@@ -182,7 +182,7 @@ async fn main() -> anyhow::Result<()> {
 
         match EventSubscriber::new("lims-cache-invalidation") {
             Ok(subscriber) => {
-                let listener = listener.clone();
+                let listener = listener;
                 let subscriber =
                     subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
                         let listener = listener.clone();

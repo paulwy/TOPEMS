@@ -79,9 +79,14 @@
 | React | ^19.2.7 | 前端框架 |
 
 ### API 路径规范
-所有 API 路径统一为 `/api/core/{service}/v1` 格式，例如：
-- `GET /api/core/erp/v1/orders`
-- `POST /api/core/finance/v1/payments`
+API 路径按服务实际挂载前缀暴露，主流格式为 `/api/{service}`，例如：
+- `GET /api/erp/orders`
+- `POST /api/finance/payments`
+- `GET /api/core/iam/users`（unified-core 统一入口，`/api/core` 前缀）
+
+兼容层说明（新增服务请勿依赖，仅存量兼容）：
+- 部分服务仍保留 `/api/core/{service}/v1` 与 `/api/v1/{service}` 遗留别名（经 `register_routes_with_legacy_alias` 挂载，或经 URI 重写中间件转发）；
+- 前端存在历史调用走 `/api/core/{service}/v1`，经 server 兼容层仍可用，新代码一律使用 `/api/{service}` 规范前缀。
 
 ## 📁 项目结构
 
@@ -361,6 +366,29 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 # 检查并重启异常服务
 ./scripts/topems.sh check
 ```
+
+### 磁盘与构建缓存维护（2026-10-01）
+
+Rust 增量编译产物（`target/debug/incremental`）长期累积可达数十 GB。日常维护建议：
+
+```bash
+# 日常推荐：只清 Rust 增量缓存 + 嵌套 target 残留（保留 debug/release 产物，恢复最快）
+./scripts/topems.sh clean --debug          # 或 make clean-debug
+
+# 更彻底：再清 debug 依赖/构建脚本产物（保留 release，依赖需重编）
+./scripts/topems.sh clean --debug-full     # 或 make clean-debug-full
+
+# 清空 sccache 编译缓存（下次构建冷启动）
+./scripts/topems.sh clean --sccache        # 或 make clean-sccache
+
+# 全量清理（含 release）——发布由 CI 出包时可用
+./scripts/topems.sh clean --rust           # 或 make clean-rust
+```
+
+- 所有 `clean` 命令均支持 `--dry-run` 预演；执行时会自动终止后台 cargo/rustc 进程，并输出 `target/` 前后占用与磁盘可用量。
+- `.cargo/config.toml` 的 `target-dir` 已设为绝对路径，从任何子目录构建都统一落在根 `target/`，不再产生重复编译的嵌套 target。
+- sccache 上限已配置为 5GiB（`~/.sccache/config`；sccache 0.16.0 存在不读取配置的缺陷，升级 ≥ 0.17 后生效）。
+- 独立阈值工具：`scripts/clean_target.sh`（`--check/--auto/--full`）可在脚本/CI 中做阈值自动清理。
 
 ## 🔌 端口配置规范
 

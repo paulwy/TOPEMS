@@ -250,7 +250,7 @@ impl PermissionCenterClient {
                 let action_str = mp.action.as_str().to_string();
                 let code = format!("{}:{}:{}", module_str, action_str, "all");
                 PermissionMetadata {
-                    code: code.clone(),
+                    code,
                     module: module_str.clone(),
                     resource: "*".to_string(),
                     action: action_str.clone(),
@@ -290,6 +290,7 @@ pub fn check_permission_with_scope(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::permission::{PermissionScope, ResourcePermission};

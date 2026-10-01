@@ -1000,6 +1000,7 @@ pub struct PerformanceAnalysisGql {
 }
 
 /// V41.0: 获取性能调优建议
+#[allow(clippy::indexing_slicing)]
 pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGql> {
     let audit_logs = get_query_audit_logs(200);
     let mut suggestions = Vec::new();
@@ -1011,7 +1012,7 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
     let durations: Vec<u64> = audit_logs.iter().map(|l| l.duration_ms).collect();
     let avg_duration = durations.iter().sum::<u64>() as f64 / durations.len() as f64;
 
-    let mut sorted_durations = durations.clone();
+    let mut sorted_durations = durations;
     sorted_durations.sort();
     let p95_idx = (sorted_durations.len() as f64 * 0.95) as usize;
     let p95_duration = if p95_idx < sorted_durations.len() {
@@ -1146,6 +1147,7 @@ pub fn get_performance_tuning_suggestions() -> Vec<PerformanceTuningSuggestionGq
 }
 
 /// V41.0: 获取完整性能分析
+#[allow(clippy::indexing_slicing)]
 pub fn get_performance_analysis() -> PerformanceAnalysisGql {
     let suggestions = get_performance_tuning_suggestions();
     let audit_logs = get_query_audit_logs(200);
@@ -1168,7 +1170,7 @@ pub fn get_performance_analysis() -> PerformanceAnalysisGql {
         0.0
     };
 
-    let mut sorted_durations = durations.clone();
+    let mut sorted_durations = durations;
     sorted_durations.sort();
     let p95_idx = (sorted_durations.len() as f64 * 0.95) as usize;
     let p95_query_time_ms = if p95_idx < sorted_durations.len() {

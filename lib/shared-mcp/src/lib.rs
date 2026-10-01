@@ -16,14 +16,6 @@
 //! └── schema.rs     # JSON Schema 生成工具
 //! ```
 
-#![allow(
-    unknown_lints,
-    renamed_and_removed_lints,
-    clippy::too_many_arguments,
-    clippy::type_complexity,
-    clippy::module_inception
-)]
-
 pub mod jsonrpc;
 pub mod protocol;
 pub mod schema;

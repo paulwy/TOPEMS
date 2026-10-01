@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! System 模块权限测试
 //!
 //! 覆盖系统设置、监控等模块的核心权限场景

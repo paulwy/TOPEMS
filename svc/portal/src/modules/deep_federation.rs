@@ -660,6 +660,7 @@ impl ConsistencyManager {
         Ok(model)
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn detect_conflicts(entity_ids: Vec<String>) -> Result<Vec<ConflictInfo>, String> {
         let store = get_deep_federation_store();
         let vectors = store.version_vectors.lock().await;
@@ -1790,6 +1791,7 @@ pub async fn get_auth_status_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

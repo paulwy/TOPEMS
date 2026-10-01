@@ -26,7 +26,7 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
             _ = ticker.tick() => {
                 // 获取数据后立即释放锁，避免 MutexGuard 跨 await 导致不 Send
                 let stats = {
-                    let service = MesService::instance().lock().unwrap();
+                    let service = MesService::instance().lock().unwrap_or_else(|e| e.into_inner());
                     service.get_dashboard_stats()
                 };
 
@@ -46,11 +46,11 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
                     Some(Ok(Message::Text(text))) => {
                         // 处理客户端消息（如订阅特定设备）
                         if let Ok(msg) = serde_json::from_str::<serde_json::Value>(&text) {
-                            if msg["type"] == "subscribe_equipment" {
+                            if msg.get("type").and_then(|v| v.as_str()) == Some("subscribe_equipment") {
                                 // 可以在这里处理特定设备的订阅
                                 let response = json!({
                                     "type": "subscribed",
-                                    "equipment_id": msg["equipment_id"],
+                                    "equipment_id": msg.get("equipment_id").cloned().unwrap_or_default(),
                                 });
                                 if socket.send(Message::Text(response.to_string().into())).await.is_err() {
                                     break;
@@ -70,7 +70,9 @@ async fn handle_mes_dashboard_socket(mut socket: WebSocket) {
 
 /// MES 仪表盘初始数据（HTTP 端点，用于首次加载）
 pub async fn mes_dashboard_initial() -> Json<serde_json::Value> {
-    let service = MesService::instance().lock().unwrap();
+    let service = MesService::instance()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let stats = service.get_dashboard_stats();
     let wip = service.get_wip_statistics();
 

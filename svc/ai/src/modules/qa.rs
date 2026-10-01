@@ -72,6 +72,7 @@ pub struct BatchDeleteResponse {
 pub struct QaApi;
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use topems_shared_auth::auth::Claims;

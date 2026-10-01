@@ -199,6 +199,7 @@ pub fn audit_retention_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -247,7 +248,8 @@ mod tests {
     fn test_retention_policy_response_serialization() {
         let policy = RetentionPolicy::new(30);
         let response = RetentionPolicyResponse { policy };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"retention_days\":30"));
     }
 
@@ -257,7 +259,8 @@ mod tests {
             triggered: true,
             result: None,
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"triggered\":true"));
         assert!(!json.contains("result")); // None should be skipped
     }
@@ -275,7 +278,8 @@ mod tests {
             triggered: true,
             result: Some(result),
         };
-        let json = serde_json::to_string(&response).unwrap();
+        let json = serde_json::to_string(&response)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"triggered\":true"));
         assert!(json.contains("\"deleted_count\":10"));
     }

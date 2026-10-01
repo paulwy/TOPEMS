@@ -1051,6 +1051,7 @@ fn default_cache_write_through() -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serial_test::serial;

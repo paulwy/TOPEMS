@@ -324,6 +324,7 @@ pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiRespon
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};

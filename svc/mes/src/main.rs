@@ -28,6 +28,7 @@ use topems_shared_service_client::service_client::{api::erp_api::ErpApi, TypedSe
 use modules::openapi::MesApiDoc;
 
 #[tokio::main]
+#[allow(clippy::expect_used)]
 async fn main() -> anyhow::Result<()> {
     std::env::set_var("SEARCH_PATH", "mes, public");
 
@@ -192,7 +193,7 @@ async fn main() -> anyhow::Result<()> {
 
         match EventSubscriber::new("mes-cache-invalidation") {
             Ok(cache_subscriber) => {
-                let listener = cache_invalidation_listener.clone();
+                let listener = cache_invalidation_listener;
                 let cache_subscriber =
                     cache_subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
                         let listener = listener.clone();
@@ -291,6 +292,7 @@ async fn home() -> &'static str {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod openapi_extract_tests {
     use super::*;
 

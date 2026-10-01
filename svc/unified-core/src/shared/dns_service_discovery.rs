@@ -15,10 +15,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use hickory_resolver::config::{
+    ConnectionConfig, NameServerConfig, ProtocolConfig, ResolverConfig, ResolverOpts,
+};
+use hickory_resolver::net::runtime::TokioRuntimeProvider;
+use hickory_resolver::proto::rr::RData;
+use hickory_resolver::TokioResolver;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-use trust_dns_resolver::config::{NameServerConfig, Protocol, ResolverConfig, ResolverOpts};
-use trust_dns_resolver::TokioAsyncResolver;
 
 use super::service_client::{ServiceClientError, ServiceDiscovery, ServiceRegistration};
 
@@ -122,7 +126,7 @@ struct CachedService {
 /// ```
 pub struct DnsServiceDiscovery {
     config: DnsConfig,
-    resolver: TokioAsyncResolver,
+    resolver: TokioResolver,
     /// In-memory cache: service_name -> CachedService.
     cache: Arc<RwLock<HashMap<String, CachedService>>>,
 }
@@ -132,15 +136,23 @@ impl DnsServiceDiscovery {
     pub fn new(config: DnsConfig) -> Result<Self, ServiceClientError> {
         let resolver = if config.nameservers.is_empty() {
             // Use system DNS configuration
-            TokioAsyncResolver::tokio_from_system_conf().map_err(|e| {
-                ServiceClientError::OperationFailed(format!(
-                    "Failed to create DNS resolver from system config: {}",
-                    e
-                ))
-            })?
+            TokioResolver::builder_tokio()
+                .map_err(|e| {
+                    ServiceClientError::OperationFailed(format!(
+                        "Failed to create DNS resolver from system config: {}",
+                        e
+                    ))
+                })?
+                .build()
+                .map_err(|e| {
+                    ServiceClientError::OperationFailed(format!(
+                        "Failed to build DNS resolver from system config: {}",
+                        e
+                    ))
+                })?
         } else {
             // Use custom nameservers
-            let mut resolver_config = ResolverConfig::new();
+            let mut resolver_config = ResolverConfig::default();
             for ns in &config.nameservers {
                 let socket_addr = ns
                     .to_socket_addrs()
@@ -155,20 +167,30 @@ impl DnsServiceDiscovery {
                         ))
                     })?;
 
-                resolver_config.add_name_server(NameServerConfig {
-                    socket_addr,
-                    protocol: Protocol::Udp,
-                    tls_dns_name: None,
-                    trust_negative_responses: false,
-                    bind_addr: None,
-                });
+                resolver_config.add_name_server(NameServerConfig::new(
+                    socket_addr.ip(),
+                    false,
+                    vec![{
+                        let mut conn = ConnectionConfig::new(ProtocolConfig::Udp);
+                        conn.port = socket_addr.port();
+                        conn
+                    }],
+                ));
             }
 
             let mut opts = ResolverOpts::default();
             opts.timeout = Duration::from_secs(config.timeout_secs);
             opts.cache_size = 32;
 
-            TokioAsyncResolver::tokio(resolver_config, opts)
+            TokioResolver::builder_with_config(resolver_config, TokioRuntimeProvider::default())
+                .with_options(opts)
+                .build()
+                .map_err(|e| {
+                    ServiceClientError::OperationFailed(format!(
+                        "Failed to build DNS resolver with custom nameservers: {}",
+                        e
+                    ))
+                })?
         };
 
         Ok(Self {
@@ -242,21 +264,25 @@ impl DnsServiceDiscovery {
             ))
         })?;
 
-        let srv = lookup.iter().next();
-        let Some(srv) = srv else {
+        let srv = lookup.answers().first();
+        let Some(record) = srv else {
             return Ok(None);
         };
 
-        let host = srv.target().to_string().trim_end_matches('.').to_string();
-        let port = srv.port();
+        let RData::SRV(srv) = &record.data else {
+            return Ok(None);
+        };
+
+        let host = srv.target.to_string().trim_end_matches('.').to_string();
+        let port = srv.port;
         let base_url = format!("http://{}:{}", host, port);
 
         let mut metadata = HashMap::new();
         metadata.insert("srv_name".to_string(), srv_name);
-        metadata.insert("srv_target".to_string(), host.clone());
+        metadata.insert("srv_target".to_string(), host);
         metadata.insert("srv_port".to_string(), port.to_string());
-        metadata.insert("srv_priority".to_string(), srv.priority().to_string());
-        metadata.insert("srv_weight".to_string(), srv.weight().to_string());
+        metadata.insert("srv_priority".to_string(), srv.priority.to_string());
+        metadata.insert("srv_weight".to_string(), srv.weight.to_string());
 
         Ok(Some(ServiceRegistration {
             name: name.to_string(),
@@ -464,6 +490,7 @@ impl Default for DnsServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

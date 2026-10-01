@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, NaiveDateTime, Timelike, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -1198,8 +1198,10 @@ pub async fn resume_work_order(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::{Datelike, Timelike};
 
     #[test]
     fn test_parse_datetime_rfc3339() {

@@ -521,7 +521,7 @@ impl DocumentService {
             if n == 0 {
                 break;
             }
-            let part = String::from_utf8_lossy(&buffer[..n]).into_owned();
+            let part = String::from_utf8_lossy(buffer.get(..n).unwrap_or(&[])).into_owned();
             text.push_str(&part);
         }
 
@@ -1190,6 +1190,7 @@ pub struct DocumentQAQuestion {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};

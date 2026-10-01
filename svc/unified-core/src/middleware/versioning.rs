@@ -819,6 +819,7 @@ async fn reload_version_config(state: &AppState) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::http::{HeaderValue, Uri};
@@ -835,14 +836,14 @@ mod tests {
         };
 
         let mut req = Request::builder()
-            .uri(Uri::try_from(uri).unwrap())
+            .uri(Uri::try_from(uri).unwrap_or_else(|e| panic!("invalid uri: {e}")))
             .body(Body::empty())
             .unwrap();
 
         if let Some(version) = version_header {
             req.headers_mut().insert(
                 ACCEPT_VERSION_HEADER,
-                HeaderValue::from_str(version).unwrap(),
+                HeaderValue::from_str(version).unwrap_or_else(|e| panic!("invalid header: {e}")),
             );
         }
 

@@ -609,6 +609,7 @@ impl QueryCompiler {
 pub struct QueryPlanner;
 
 impl QueryPlanner {
+    #[allow(clippy::indexing_slicing)]
     pub async fn create_plan(
         query_hash: String,
         field_paths: Vec<String>,
@@ -1367,6 +1368,7 @@ pub async fn get_performance_profile_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use serde::Serialize;

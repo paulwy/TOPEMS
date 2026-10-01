@@ -536,6 +536,7 @@ pub fn set_ws_connections(count: u64) {
 }
 
 /// V44.0: 计算百分位
+#[allow(clippy::indexing_slicing)]
 fn percentile(sorted: &[f64], p: f64) -> f64 {
     if sorted.is_empty() {
         return 0.0;
@@ -946,6 +947,7 @@ pub fn delete_alert_rule(id: &str) -> bool {
 }
 
 /// V44.0: 触发告警
+#[allow(clippy::unwrap_used)]
 fn trigger_alert_internal(
     alert_type: AlertType,
     level: AlertLevel,
@@ -1257,6 +1259,7 @@ pub fn get_monitoring_dashboard() -> MonitoringDashboardStatsGql {
 }
 
 /// V44.0: 获取查询延迟分布
+#[allow(clippy::indexing_slicing)]
 pub fn get_query_latency_distribution(window: MetricsWindow) -> QueryLatencyDistributionGql {
     let metrics_collector_state = metrics_collector()
         .lock()
@@ -1357,6 +1360,7 @@ struct SlowQueryStats {
 }
 
 /// V44.0: 获取错误率趋势
+#[allow(clippy::indexing_slicing)]
 pub fn get_error_rate_trend(
     window: MetricsWindow,
     interval_seconds: Option<i64>,

@@ -650,7 +650,7 @@ async fn handle_create_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse
         properties,
     };
 
-    store.entities.insert(id.clone(), entity.clone());
+    store.entities.insert(id, entity.clone());
 
     Json(GraphqlResponse {
         data: Some(serde_json::json!({
@@ -804,6 +804,7 @@ fn base64_encode(input: &str) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

@@ -84,20 +84,20 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "cs:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let status = params["status"].as_str().unwrap_or("");
-                let priority = params["priority"].as_str().unwrap_or("");
-                let ticket_type = params["ticket_type"].as_str().unwrap_or("");
-                let assignee = params["assignee"].as_str().unwrap_or("");
-                let customer_id = params["customer_id"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let priority = params.get("priority").and_then(|v| v.as_str()).unwrap_or("");
+                let ticket_type = params.get("ticket_type").and_then(|v| v.as_str()).unwrap_or("");
+                let assignee = params.get("assignee").and_then(|v| v.as_str()).unwrap_or("");
+                let customer_id = params.get("customer_id").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let tickets = generate_mock_tickets(status, priority, ticket_type, assignee, customer_id, keyword);
                 let total = tickets.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_tickets = &tickets[start.min(total)..end];
+                let page_tickets = tickets.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -128,7 +128,7 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "cs:read",
 
             |params| {
-                let ticket_id = params["ticket_id"].as_str().unwrap_or("");
+                let ticket_id = params.get("ticket_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if ticket_id.is_empty() {
                     return Err(ToolExecutionError::Validation("ticket_id is required".to_string()));
@@ -189,18 +189,18 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "cs:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let customer_level = params["customer_level"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let industry = params["industry"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let customer_level = params.get("customer_level").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let industry = params.get("industry").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 let customers = generate_mock_customers(customer_level, status, industry, keyword);
                 let total = customers.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_customers = &customers[start.min(total)..end];
+                let page_customers = customers.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -254,9 +254,15 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),
             "cs:write",
             |params| {
-                let title = params["title"].as_str().unwrap_or("");
-                let customer_id = params["customer_id"].as_str().unwrap_or("");
-                let ticket_type = params["ticket_type"].as_str().unwrap_or("");
+                let title = params.get("title").and_then(|v| v.as_str()).unwrap_or("");
+                let customer_id = params
+                    .get("customer_id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let ticket_type = params
+                    .get("ticket_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
 
                 if title.is_empty() {
                     return Err(ToolExecutionError::Validation(
@@ -290,11 +296,11 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
                     "title": title,
                     "customer_id": customer_id,
                     "ticket_type": ticket_type,
-                    "priority": params["priority"].as_str().unwrap_or("medium"),
-                    "description": params["description"].as_str().unwrap_or(""),
-                    "requester": params["requester"].as_str().unwrap_or(""),
-                    "assignee": params["assignee"].as_str().unwrap_or(""),
-                    "channel": params["channel"].as_str().unwrap_or("web"),
+                    "priority": params.get("priority").and_then(|v| v.as_str()).unwrap_or("medium"),
+                    "description": params.get("description").and_then(|v| v.as_str()).unwrap_or(""),
+                    "requester": params.get("requester").and_then(|v| v.as_str()).unwrap_or(""),
+                    "assignee": params.get("assignee").and_then(|v| v.as_str()).unwrap_or(""),
+                    "channel": params.get("channel").and_then(|v| v.as_str()).unwrap_or("web"),
                     "status": "open",
                     "created_at": chrono::Utc::now().to_rfc3339(),
                     "message": "工单创建成功，已分配工单编号，等待客服处理",
@@ -314,6 +320,7 @@ pub async fn register_cs_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 工单列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_tickets(
     status_filter: &str,
     priority_filter: &str,
@@ -362,19 +369,20 @@ fn generate_mock_tickets(
             })
         })
         .filter(|t| {
-            (status_filter.is_empty() || t["status"].as_str() == Some(status_filter))
-                && (priority_filter.is_empty() || t["priority"].as_str() == Some(priority_filter))
-                && (type_filter.is_empty() || t["ticket_type"].as_str() == Some(type_filter))
-                && (assignee_filter.is_empty() || t["assignee"].as_str() == Some(assignee_filter))
-                && (customer_filter.is_empty() || t["customer_id"].as_str() == Some(customer_filter))
+            (status_filter.is_empty() || t.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (priority_filter.is_empty() || t.get("priority").and_then(|v| v.as_str()) == Some(priority_filter))
+                && (type_filter.is_empty() || t.get("ticket_type").and_then(|v| v.as_str()) == Some(type_filter))
+                && (assignee_filter.is_empty() || t.get("assignee").and_then(|v| v.as_str()) == Some(assignee_filter))
+                && (customer_filter.is_empty() || t.get("customer_id").and_then(|v| v.as_str()) == Some(customer_filter))
                 && (keyword_filter.is_empty()
-                    || t["ticket_number"].as_str().unwrap_or("").contains(keyword_filter)
-                    || t["title"].as_str().unwrap_or("").contains(keyword_filter))
+                    || t.get("ticket_number").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || t.get("title").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 工单详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_ticket_detail(ticket_id: &str) -> Value {
     json!({
         "ticket_id": ticket_id,
@@ -422,6 +430,7 @@ fn generate_mock_ticket_detail(ticket_id: &str) -> Value {
 }
 
 /// 生成 Mock 客户列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_customers(
     level_filter: &str,
     status_filter: &str,
@@ -474,17 +483,18 @@ fn generate_mock_customers(
             })
         })
         .filter(|c| {
-            (level_filter.is_empty() || c["customer_level"].as_str() == Some(level_filter))
-                && (status_filter.is_empty() || c["status"].as_str() == Some(status_filter))
-                && (industry_filter.is_empty() || c["industry"].as_str() == Some(industry_filter))
+            (level_filter.is_empty() || c.get("customer_level").and_then(|v| v.as_str()) == Some(level_filter))
+                && (status_filter.is_empty() || c.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (industry_filter.is_empty() || c.get("industry").and_then(|v| v.as_str()) == Some(industry_filter))
                 && (keyword_filter.is_empty()
-                    || c["customer_code"].as_str().unwrap_or("").contains(keyword_filter)
-                    || c["customer_name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || c.get("customer_code").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || c.get("customer_name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

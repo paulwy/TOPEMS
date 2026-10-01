@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! SCM 模块权限测试
 //!
 //! 覆盖 SCM 供应链管理模块的核心权限场景

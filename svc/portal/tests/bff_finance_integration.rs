@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! BFF → Finance 代理集成测试
 //!
 //! 测试 Portal BFF 作为聚合层代理请求到下游服务的关键业务路径：

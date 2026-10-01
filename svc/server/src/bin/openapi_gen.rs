@@ -97,7 +97,7 @@ fn main() {
     )
     .expect("base openapi.json 非法 JSON");
 
-    let mut merged = base.clone();
+    let mut merged = base;
     // 重建 paths：仅保留既有 /api/ 前缀 key（手工精选 + 历史规范化），丢弃相对路径旧 key 防重复膨胀
     let mut merged_paths: Map<String, Value> = merged
         .get("paths")

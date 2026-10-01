@@ -498,7 +498,7 @@ pub async fn update_alert(
             None
         },
         acknowledged_by: if status == "resolved" {
-            Some(claims.username.clone())
+            Some(claims.username)
         } else {
             None
         },
@@ -1369,7 +1369,7 @@ pub async fn get_template(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<AlertTemplate>> {
     let template = AlertTemplate {
-        id: id.clone(),
+        id,
         name: "邮件告警模板".to_string(),
         channels: vec!["email".to_string()],
         subject_template: "[{{severity}}] {{service_name}} - {{title}}".to_string(),
@@ -1494,7 +1494,7 @@ pub async fn get_suppression_rule(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<SuppressionRule>> {
     let rule = SuppressionRule {
-        id: id.clone(),
+        id,
         name: "计划内维护窗口".to_string(),
         description: Some("在计划维护期间抑制相关告警".to_string()),
         conditions: vec![SuppressionCondition {

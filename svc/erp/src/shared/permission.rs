@@ -99,6 +99,7 @@ pub async fn check_resource_permission_for_erp<T>(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use topems_shared_auth::permission::{ModuleCode, PermissionAction};

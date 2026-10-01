@@ -6,7 +6,7 @@
 //! - `production_scheduling.rs` — 完成率计算（原内联 `completed / total * 100`）
 //! - `models/work_report.rs` — 报工数量汇总（原缺失）
 
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 
 // ── 完成率 & 进度 ──────────────────────────────────
 
@@ -198,8 +198,10 @@ pub fn naive_to_utc(ndt: DateTime<Utc>) -> DateTime<Utc> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
 
     fn dt(y: i32, m: u32, d: u32, h: u32, mi: u32) -> DateTime<Utc> {
         Utc.with_ymd_and_hms(y, m, d, h, mi, 0).single().unwrap()

@@ -179,10 +179,22 @@ pub async fn list_transfers(
 
 /// WMS 仪表盘统计
 pub async fn dashboard_stats() -> Json<ApiResponse<serde_json::Value>> {
-    let inbound_count = inbound_orders().lock().unwrap().len();
-    let outbound_count = outbound_orders().lock().unwrap().len();
-    let inventory_count = inventory_items().lock().unwrap().len();
-    let transfer_count = transfer_orders().lock().unwrap().len();
+    let inbound_count = inbound_orders()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
+    let outbound_count = outbound_orders()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
+    let inventory_count = inventory_items()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
+    let transfer_count = transfer_orders()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .len();
 
     Json(ApiResponse {
         success: true,
@@ -202,10 +214,10 @@ use super::service::{inbound_orders, inventory_items, outbound_orders, transfer_
 /// WMS Analytics - 仪表盘汇总
 pub async fn analytics_dashboard_summary() -> Json<serde_json::Value> {
     Json(serde_json::json!({
-        "total_inbound_orders": inbound_orders().lock().unwrap().len(),
-        "total_outbound_orders": outbound_orders().lock().unwrap().len(),
-        "total_inventory_items": inventory_items().lock().unwrap().len(),
-        "total_transfers": transfer_orders().lock().unwrap().len(),
+        "total_inbound_orders": inbound_orders().lock().unwrap_or_else(|e| e.into_inner()).len(),
+        "total_outbound_orders": outbound_orders().lock().unwrap_or_else(|e| e.into_inner()).len(),
+        "total_inventory_items": inventory_items().lock().unwrap_or_else(|e| e.into_inner()).len(),
+        "total_transfers": transfer_orders().lock().unwrap_or_else(|e| e.into_inner()).len(),
     }))
 }
 

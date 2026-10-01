@@ -203,6 +203,7 @@ impl ModulePermission {
         ModulePermission { module, action }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn parse(s: &str) -> Option<Self> {
         let parts: Vec<&str> = s.split(':').collect();
         if parts.len() != 2 {
@@ -464,6 +465,7 @@ impl ResourcePermission {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn parse(s: &str) -> Option<Self> {
         let parts: Vec<&str> = s.split(':').collect();
         // V21.0: 支持两种格式：
@@ -945,6 +947,7 @@ pub fn check_iam_permission(
 /// 验证权限码格式是否合法
 ///
 /// 合法格式：`module:action` 或 `module:resource:action` 或 `module:resource:action:scope`
+#[allow(clippy::indexing_slicing)]
 pub fn validate_permission_code(code: &str) -> Result<(), String> {
     let parts: Vec<&str> = code.split(':').collect();
 
@@ -1007,6 +1010,7 @@ fn get_all_permission_codes() -> Vec<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

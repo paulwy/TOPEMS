@@ -107,7 +107,10 @@ pub async fn get_dashboard(
     >,
 ) -> Json<ApiResponse<ErpDashboardStats>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let total_assets = count_table(txn, "assets").await;
     let active_assets = count_table_with_status(txn, "assets", "active").await;
 
@@ -162,6 +165,7 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

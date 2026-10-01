@@ -75,12 +75,12 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "scm:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let supplier_level = params["supplier_level"].as_str().unwrap_or("");
-                let status = params["status"].as_str().unwrap_or("");
-                let category = params["category"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let supplier_level = params.get("supplier_level").and_then(|v| v.as_str()).unwrap_or("");
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let category = params.get("category").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 // 真实调用 SCM API（GET /api/scm/suppliers，降级 mock）
                 let mut path = format!("/api/scm/suppliers?page={}&page_size={}", page, page_size);
@@ -98,7 +98,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = suppliers.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_suppliers = &suppliers[start.min(total)..end];
+                let page_suppliers = suppliers.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -129,7 +129,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "scm:read",
 
             |params| {
-                let supplier_id = params["supplier_id"].as_str().unwrap_or("");
+                let supplier_id = params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or("");
 
                 if supplier_id.is_empty() {
                     return Err(ToolExecutionError::Validation("supplier_id is required".to_string()));
@@ -200,11 +200,11 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "scm:read",
 
             |params| {
-                let page = params["page"].as_u64().unwrap_or(1);
-                let page_size = params["page_size"].as_u64().unwrap_or(20);
-                let status = params["status"].as_str().unwrap_or("");
-                let supplier_id = params["supplier_id"].as_str().unwrap_or("");
-                let keyword = params["keyword"].as_str().unwrap_or("");
+                let page = params.get("page").and_then(|v| v.as_u64()).unwrap_or(1);
+                let page_size = params.get("page_size").and_then(|v| v.as_u64()).unwrap_or(20);
+                let status = params.get("status").and_then(|v| v.as_str()).unwrap_or("");
+                let supplier_id = params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or("");
+                let keyword = params.get("keyword").and_then(|v| v.as_str()).unwrap_or("");
 
                 // 真实调用 SCM API（GET /api/scm/purchase-orders，降级 mock）
                 let mut path = format!("/api/scm/purchase-orders?page={}&page_size={}", page, page_size);
@@ -222,7 +222,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 let total = orders.len();
                 let start = ((page - 1) * page_size) as usize;
                 let end = (start + page_size as usize).min(total);
-                let page_orders = &orders[start.min(total)..end];
+                let page_orders = orders.get(start.min(total)..end);
 
                 let result = json!({
                     "total": total,
@@ -282,31 +282,34 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                 .build(),            "scm:write",
 
             |params| {
-                let supplier_id = params["supplier_id"].as_str().unwrap_or("");
-                let items = params["items"].as_array();
+                let supplier_id = params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or("");
+                let items = params.get("items").and_then(|v| v.as_array());
 
                 if supplier_id.is_empty() {
                     return Err(ToolExecutionError::Validation("supplier_id is required".to_string()));
                 }
-                if items.is_none() || items.unwrap().is_empty() {
-                    return Err(ToolExecutionError::Validation("items must contain at least one item".to_string()));
-                }
-
-                let items = items.unwrap();
+                let items = match items {
+                    Some(items) if !items.is_empty() => items,
+                    _ => {
+                        return Err(ToolExecutionError::Validation(
+                            "items must contain at least one item".to_string(),
+                        ))
+                    }
+                };
                 let mut total_amount = 0.0;
                 for item in items {
-                    let qty = item["quantity"].as_f64().unwrap_or(0.0);
-                    let price = item["unit_price"].as_f64().unwrap_or(0.0);
+                    let qty = item.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                    let price = item.get("unit_price").and_then(|v| v.as_f64()).unwrap_or(0.0);
                     total_amount += qty * price;
                 }
 
                 // 真实调用 SCM API（POST /api/scm/purchase-orders，降级 mock）
                 let base = service_base_url("SCM_SERVICE_URL", 8040);
                 let body = json!({
-                    "supplier_id": params["supplier_id"].as_str().unwrap_or(""),
-                    "items": params["items"].as_array().cloned().unwrap_or_default(),
-                    "expected_delivery_date": params["expected_delivery_date"].as_str().unwrap_or(""),
-                    "remark": params["remark"].as_str().unwrap_or(""),
+                    "supplier_id": params.get("supplier_id").and_then(|v| v.as_str()).unwrap_or(""),
+                    "items": params.get("items").and_then(|v| v.as_array()).cloned().unwrap_or_default(),
+                    "expected_delivery_date": params.get("expected_delivery_date").and_then(|v| v.as_str()).unwrap_or(""),
+                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
                 });
                 if let Some(data) = http_call(&base, "POST", "/api/scm/purchase-orders", Some(body)) {
                     let result = json!({ "order": data, "message": "采购订单创建成功" });
@@ -322,10 +325,10 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
                     "supplier_id": supplier_id,
                     "items": items,
                     "total_amount": total_amount,
-                    "expected_delivery_date": params["expected_delivery_date"].as_str().unwrap_or(""),
-                    "payment_terms": params["payment_terms"].as_str().unwrap_or(""),
-                    "remark": params["remark"].as_str().unwrap_or(""),
-                    "creator": params["creator"].as_str().unwrap_or(""),
+                    "expected_delivery_date": params.get("expected_delivery_date").and_then(|v| v.as_str()).unwrap_or(""),
+                    "payment_terms": params.get("payment_terms").and_then(|v| v.as_str()).unwrap_or(""),
+                    "remark": params.get("remark").and_then(|v| v.as_str()).unwrap_or(""),
+                    "creator": params.get("creator").and_then(|v| v.as_str()).unwrap_or(""),
                     "status": "draft",
                     "created_at": chrono::Utc::now().to_rfc3339(),
                     "message": "采购订单创建成功，已分配订单编号，等待审批",
@@ -345,6 +348,7 @@ pub async fn register_scm_tools(server: &McpServer, _jwt_secret: &str) {
 // ============ Mock 数据生成 ============
 
 /// 生成 Mock 供应商列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_suppliers(
     level_filter: &str,
     status_filter: &str,
@@ -403,17 +407,18 @@ fn generate_mock_suppliers(
             })
         })
         .filter(|s| {
-            (level_filter.is_empty() || s["supplier_level"].as_str() == Some(level_filter))
-                && (status_filter.is_empty() || s["status"].as_str() == Some(status_filter))
-                && (category_filter.is_empty() || s["category"].as_str() == Some(category_filter))
+            (level_filter.is_empty() || s.get("supplier_level").and_then(|v| v.as_str()) == Some(level_filter))
+                && (status_filter.is_empty() || s.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (category_filter.is_empty() || s.get("category").and_then(|v| v.as_str()) == Some(category_filter))
                 && (keyword_filter.is_empty()
-                    || s["supplier_code"].as_str().unwrap_or("").contains(keyword_filter)
-                    || s["supplier_name"].as_str().unwrap_or("").contains(keyword_filter))
+                    || s.get("supplier_code").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter)
+                    || s.get("supplier_name").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 /// 生成 Mock 供应商详情
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_supplier_detail(supplier_id: &str) -> Value {
     json!({
         "supplier_id": supplier_id,
@@ -472,6 +477,7 @@ fn generate_mock_supplier_detail(supplier_id: &str) -> Value {
 }
 
 /// 生成 Mock 采购订单列表
+#[allow(clippy::indexing_slicing)] // mock 数据生成：模运算索引 i % len < len，数学上安全
 fn generate_mock_purchase_orders(
     status_filter: &str,
     supplier_filter: &str,
@@ -509,14 +515,15 @@ fn generate_mock_purchase_orders(
             })
         })
         .filter(|o| {
-            (status_filter.is_empty() || o["status"].as_str() == Some(status_filter))
-                && (supplier_filter.is_empty() || o["supplier_id"].as_str() == Some(supplier_filter))
-                && (keyword_filter.is_empty() || o["order_number"].as_str().unwrap_or("").contains(keyword_filter))
+            (status_filter.is_empty() || o.get("status").and_then(|v| v.as_str()) == Some(status_filter))
+                && (supplier_filter.is_empty() || o.get("supplier_id").and_then(|v| v.as_str()) == Some(supplier_filter))
+                && (keyword_filter.is_empty() || o.get("order_number").and_then(|v| v.as_str()).unwrap_or("").contains(keyword_filter))
         })
         .collect()
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use topems_shared_mcp::protocol::McpContent;
@@ -540,7 +547,7 @@ mod tests {
             _ => String::new(),
         };
         let parsed: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-        let total = parsed["total"].as_u64().unwrap_or(0);
+        let total = parsed.get("total").and_then(|v| v.as_u64()).unwrap_or(0);
         assert!(total > 0, "真实 API 应返回数据，total={}", total);
         eprintln!("scm.list_suppliers 真实调用返回 total = {}", total);
     }
@@ -655,7 +662,14 @@ mod tests {
             assert_eq!(parsed["total_amount"], 11000.0);
             assert_eq!(parsed["status"], "draft");
             assert!(parsed["items"].is_array());
-            assert_eq!(parsed["items"].as_array().unwrap().len(), 2);
+            assert_eq!(
+                parsed
+                    .get("items")
+                    .and_then(|v| v.as_array())
+                    .unwrap()
+                    .len(),
+                2
+            );
             assert!(parsed["order_id"].is_string());
         } else {
             panic!("Expected text content");

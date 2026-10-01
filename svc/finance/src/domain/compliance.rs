@@ -180,7 +180,7 @@ impl<T: EventStore + Send + Sync + 'static> ComplianceChecker<T> {
             });
         }
 
-        let mut sorted_logs = logs.clone();
+        let mut sorted_logs = logs;
         sorted_logs.sort_by_key(|l| l.timestamp);
 
         issues

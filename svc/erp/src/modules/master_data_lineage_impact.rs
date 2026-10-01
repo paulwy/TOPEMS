@@ -1106,6 +1106,7 @@ async fn find_critical_paths() -> Vec<Vec<String>> {
 
     let mut all_paths: Vec<Vec<String>> = Vec::new();
 
+    #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
     fn dfs(
         current: &str,
         path: Vec<String>,
@@ -1159,6 +1160,7 @@ async fn detect_circular_dependencies() -> Vec<Vec<String>> {
     let mut visited = HashSet::new();
     let mut rec_stack = Vec::new();
 
+    #[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
     fn dfs(
         node: &str,
         adj: &HashMap<String, Vec<String>>,

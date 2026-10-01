@@ -199,6 +199,7 @@ impl MessageConsumer for InMemoryMessageBroker {
 
 #[cfg(test)]
 #[allow(deprecated)] // 测试仍覆盖废弃 RedisMessageBroker 的 stub 行为
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -210,7 +211,7 @@ mod tests {
         let handler = {
             let received = received.clone();
             Box::new(move |msg: Message| {
-                *received.lock().unwrap() = true;
+                *received.lock().unwrap_or_else(|e| e.into_inner()) = true;
                 assert_eq!(msg.topic, "test-topic");
                 Ok(())
             })
@@ -222,7 +223,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(*received.lock().unwrap());
+        assert!(*received.lock().unwrap_or_else(|e| e.into_inner()));
     }
 
     #[test]
@@ -333,7 +334,7 @@ mod tests {
         let handler = {
             let received = received.clone();
             Box::new(move |_msg: Message| {
-                *received.lock().unwrap() = true;
+                *received.lock().unwrap_or_else(|e| e.into_inner()) = true;
                 Ok(())
             })
         };
@@ -344,7 +345,7 @@ mod tests {
             .publish("topic", serde_json::json!({}))
             .await
             .unwrap();
-        assert!(!*received.lock().unwrap());
+        assert!(!*received.lock().unwrap_or_else(|e| e.into_inner()));
     }
 
     #[tokio::test]
@@ -354,14 +355,17 @@ mod tests {
         let handler = {
             let received_topic = received_topic.clone();
             Box::new(move |msg: Message| {
-                *received_topic.lock().unwrap() = msg.topic.clone();
+                *received_topic.lock().unwrap_or_else(|e| e.into_inner()) = msg.topic.clone();
                 Ok(())
             })
         };
         broker.subscribe("direct-topic", handler).await.unwrap();
         let message = Message::new("direct-topic", serde_json::json!({"x": 1}));
         broker.publish_message(message).await.unwrap();
-        assert_eq!(*received_topic.lock().unwrap(), "direct-topic");
+        assert_eq!(
+            *received_topic.lock().unwrap_or_else(|e| e.into_inner()),
+            "direct-topic"
+        );
     }
 
     #[tokio::test]
@@ -372,7 +376,7 @@ mod tests {
         let handler = {
             let received_headers = received_headers.clone();
             Box::new(move |msg: Message| {
-                *received_headers.lock().unwrap() = msg.headers.clone();
+                *received_headers.lock().unwrap_or_else(|e| e.into_inner()) = msg.headers.clone();
                 Ok(())
             })
         };
@@ -383,7 +387,7 @@ mod tests {
             .publish_with_headers("hdr-topic", serde_json::json!({}), headers)
             .await
             .unwrap();
-        let h = received_headers.lock().unwrap();
+        let h = received_headers.lock().unwrap_or_else(|e| e.into_inner());
         assert_eq!(h.get("k1"), Some(&"v1".to_string()));
     }
 
@@ -396,7 +400,7 @@ mod tests {
             .subscribe(
                 "multi",
                 Box::new(move |_msg: Message| {
-                    *c1.lock().unwrap() += 1;
+                    *c1.lock().unwrap_or_else(|e| e.into_inner()) += 1;
                     Ok(())
                 }),
             )
@@ -407,7 +411,7 @@ mod tests {
             .subscribe(
                 "multi",
                 Box::new(move |_msg: Message| {
-                    *c2.lock().unwrap() += 1;
+                    *c2.lock().unwrap_or_else(|e| e.into_inner()) += 1;
                     Ok(())
                 }),
             )
@@ -417,7 +421,7 @@ mod tests {
             .publish("multi", serde_json::json!({}))
             .await
             .unwrap();
-        assert_eq!(*count.lock().unwrap(), 2);
+        assert_eq!(*count.lock().unwrap_or_else(|e| e.into_inner()), 2);
     }
 
     #[tokio::test]

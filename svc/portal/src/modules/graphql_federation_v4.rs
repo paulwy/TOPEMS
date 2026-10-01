@@ -306,6 +306,7 @@ pub struct DistributedExecutionEngine;
 
 impl DistributedExecutionEngine {
     /// 将查询分解为分布式任务
+    #[allow(clippy::indexing_slicing)]
     pub fn plan_distributed_execution(
         query: &str,
         variables: &serde_json::Value,
@@ -1513,9 +1514,9 @@ impl MultiClusterRouter {
             .unwrap_or(50);
         let now = Utc::now();
         let data = CrossClusterQueryData {
-            query_id: query_id.clone(),
+            query_id,
             query: query.to_string(),
-            target_clusters: target_clusters.clone(),
+            target_clusters,
             routing_policy: state.policy,
             fan_out,
             merge_strategy: "union-dedupe".into(),

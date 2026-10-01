@@ -140,8 +140,9 @@ pub fn transfer_orders() -> &'static Mutex<Vec<TransferOrder>> {
 pub struct InboundOrderService;
 
 impl InboundOrderService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<InboundOrder> {
-        let orders = inbound_orders().lock().unwrap();
+        let orders = inbound_orders().lock().unwrap_or_else(|e| e.into_inner());
         let total = orders.len() as i64;
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, orders.len());
@@ -159,7 +160,7 @@ impl InboundOrderService {
     }
 
     pub fn get_by_id(id: &str) -> Option<InboundOrder> {
-        let orders = inbound_orders().lock().unwrap();
+        let orders = inbound_orders().lock().unwrap_or_else(|e| e.into_inner());
         orders.iter().find(|o| o.id == id).cloned()
     }
 }
@@ -168,8 +169,9 @@ impl InboundOrderService {
 pub struct OutboundOrderService;
 
 impl OutboundOrderService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<OutboundOrder> {
-        let orders = outbound_orders().lock().unwrap();
+        let orders = outbound_orders().lock().unwrap_or_else(|e| e.into_inner());
         let total = orders.len() as i64;
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, orders.len());
@@ -191,8 +193,9 @@ impl OutboundOrderService {
 pub struct InventoryService;
 
 impl InventoryService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<InventoryItem> {
-        let items = inventory_items().lock().unwrap();
+        let items = inventory_items().lock().unwrap_or_else(|e| e.into_inner());
         let total = items.len() as i64;
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, items.len());
@@ -214,8 +217,9 @@ impl InventoryService {
 pub struct TransferService;
 
 impl TransferService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<TransferOrder> {
-        let orders = transfer_orders().lock().unwrap();
+        let orders = transfer_orders().lock().unwrap_or_else(|e| e.into_inner());
         let total = orders.len() as i64;
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, orders.len());

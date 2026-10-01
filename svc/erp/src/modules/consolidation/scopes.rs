@@ -30,7 +30,10 @@ pub async fn list_scopes(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationScope>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceRead).await {
         return e;
     }
@@ -98,7 +101,10 @@ pub async fn get_scope(
     >,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query_as::<_, ConsolidationScope>(
         "SELECT * FROM erp.consolidation_scopes WHERE deleted_at IS NULL AND id = $1",
     )
@@ -131,7 +137,10 @@ pub async fn create_scope(
     Json(req): Json<CreateConsolidationScopeRequest>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = Uuid::new_v4();
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
@@ -185,7 +194,10 @@ pub async fn update_scope(
     Json(req): Json<UpdateConsolidationScopeRequest>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, ConsolidationScope>(
         r#"
         UPDATE erp.consolidation_scopes
@@ -242,7 +254,10 @@ pub async fn delete_scope(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query("UPDATE erp.consolidation_scopes SET deleted_at = NOW() WHERE id = $1")
         .bind(scope_id)
         .execute(&mut **txn)

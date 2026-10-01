@@ -805,6 +805,7 @@ impl RealtimeAggregator {
         Ok(config)
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn start_aggregation(config_id: &str) -> Result<bool, String> {
         let store = get_realtime_store();
 
@@ -841,6 +842,7 @@ impl RealtimeAggregator {
         Ok(true)
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn stop_aggregation(config_id: &str) -> Result<bool, String> {
         let store = get_realtime_store();
 
@@ -915,6 +917,7 @@ impl RealtimeAggregator {
         PersistentSubscription::create_subscription(subscriber_id, config.topic, None).await
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub async fn compute_window(config_id: &str) -> Result<AggregationResult, String> {
         let store = get_realtime_store();
 
@@ -1573,6 +1576,7 @@ pub async fn get_aggregation_stats_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

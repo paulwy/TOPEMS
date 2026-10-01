@@ -201,6 +201,10 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
 mod tests {
     use super::*;
 
+    /// RUNTIME_URL 环境变量测试互斥锁：并行测试会相互覆盖进程级 env，
+    /// 导致 `test_get_runtime_url_*` 随机断言失败（push 门禁 flake）。
+    static RUNTIME_URL_ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     fn sample_plugin_info() -> PluginInfo {
         PluginInfo {
             code: "pm".to_string(),
@@ -308,6 +312,9 @@ mod tests {
 
     #[test]
     fn test_get_runtime_url_default() {
+        let _guard = RUNTIME_URL_ENV_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let saved = std::env::var("RUNTIME_URL").ok();
         std::env::remove_var("RUNTIME_URL");
         let url = get_runtime_url();
@@ -319,6 +326,9 @@ mod tests {
 
     #[test]
     fn test_get_runtime_url_from_env() {
+        let _guard = RUNTIME_URL_ENV_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let saved = std::env::var("RUNTIME_URL").ok();
         std::env::set_var("RUNTIME_URL", "https://example.com:9000");
         let url = get_runtime_url();

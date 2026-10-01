@@ -1025,8 +1025,9 @@ pub async fn forgot_password(
         reset_token
     );
 
-    let from_email =
-        std::env::var("SMTP_FROM").unwrap_or_else(|_| "noreply@topems.local".to_string());
+    let from_email = std::env::var("SMTP_FROM")
+        .or_else(|_| std::env::var("SMTP_FROM_ADDRESS"))
+        .unwrap_or_else(|_| "noreply@topems.local".to_string());
     send_email_async(
         from_email,
         email.to_string(),
@@ -1251,6 +1252,7 @@ fn verify_password(password: &str, password_hash: &str) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -1354,7 +1356,8 @@ mod tests {
                 permissions: vec!["iam:read".to_string()],
             },
         };
-        let json = serde_json::to_string(&lrd).unwrap();
+        let json =
+            serde_json::to_string(&lrd).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         let de: LoginResponseData = serde_json::from_str(&json).unwrap();
         assert_eq!(de.token_type, "Bearer");
         assert_eq!(de.expires_in, 3600);

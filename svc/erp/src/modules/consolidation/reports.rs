@@ -27,7 +27,10 @@ pub async fn list_reports(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationReport>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let page = params.base.page_or_default();
     let page_size = params.base.page_size_or_default();
     let offset = params.base.offset();
@@ -101,7 +104,10 @@ pub async fn get_report(
     >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
@@ -142,7 +148,10 @@ pub async fn generate_report(
     Json(req): Json<GenerateConsolidationReportRequest>,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let id = Uuid::new_v4();
     let report_no = format!(
         "CR{}{:04}",
@@ -254,7 +263,10 @@ pub async fn get_report_lines(
     >,
 ) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query_as::<_, ConsolidationReportLine>(
         "SELECT * FROM erp.consolidation_report_lines WHERE report_id = $1 ORDER BY line_no ASC",
     )
@@ -288,7 +300,10 @@ pub async fn export_report(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let report = match sqlx::query_as::<_, ConsolidationReport>(
         r#"
         SELECT cr.*, cs.name as scope_name
@@ -350,7 +365,10 @@ pub async fn submit_report(
     >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let username = headers
         .get("x-username")
         .and_then(|v| v.to_str().ok())
@@ -435,7 +453,10 @@ pub async fn approve_report(
     >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let username = headers
         .get("x-username")
         .and_then(|v| v.to_str().ok())
@@ -520,7 +541,10 @@ pub async fn publish_report(
     >,
 ) -> Json<ApiResponse<ConsolidationReport>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         UPDATE erp.consolidation_reports
@@ -569,7 +593,10 @@ pub async fn delete_report(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() {
+        Some(txn) => txn,
+        None => unreachable!("rls txn missing"),
+    };
     match sqlx::query("UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1")
         .bind(report_id)
         .execute(&mut **txn)

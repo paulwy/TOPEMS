@@ -394,6 +394,7 @@ fn extract_date_from_filename(filename: &str, prefix: &str) -> Option<String> {
 // ===== Tests =====
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::routes::business_tools::mock_audit_store::{make_test_entry, MockAuditLogStore};
@@ -459,7 +460,8 @@ mod tests {
             success: true,
             error: None,
         };
-        let json = serde_json::to_string(&result).unwrap();
+        let json = serde_json::to_string(&result)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         assert!(json.contains("\"restored_count\":10"));
         assert!(json.contains("\"skipped_count\":5"));
         assert!(json.contains("\"success\":true"));
@@ -493,7 +495,8 @@ mod tests {
             make_archived_entry("1", "2026-01-15T10:00:00Z"),
             make_archived_entry("2", "2026-01-15T11:00:00Z"),
         ];
-        let json = serde_json::to_string_pretty(&entries).unwrap();
+        let json = serde_json::to_string_pretty(&entries)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         fs::write(&archive_path, json).unwrap();
 
         let config = RestoreConfig::new(temp_dir.path());
@@ -517,7 +520,8 @@ mod tests {
         let archive_path = temp_dir.path().join("audit_log_2026-01-15.json");
 
         let entries = vec![make_archived_entry("1", "2026-01-15T10:00:00Z")];
-        let json = serde_json::to_string_pretty(&entries).unwrap();
+        let json = serde_json::to_string_pretty(&entries)
+            .unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
         fs::write(&archive_path, json).unwrap();
 
         let config = RestoreConfig::new(temp_dir.path()).with_skip_existing(true);

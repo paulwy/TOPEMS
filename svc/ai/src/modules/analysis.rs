@@ -9,6 +9,7 @@ use topems_shared_auth::get_tenant_id_from_claims;
 pub struct AnalysisApi;
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use uuid::Uuid;

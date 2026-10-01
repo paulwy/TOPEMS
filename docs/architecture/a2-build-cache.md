@@ -37,6 +37,8 @@ rustc-wrapper = "sccache"
 protocol = "sparse"
 ```
 
+**本地 sccache 磁盘缓存位置**：macOS 为 `~/Library/Caches/Mozilla.sccache`（Linux 为 `~/.cache/sccache`）；上限配置见 §1.4。
+
 **环境变量**（CI 必设，`.github/workflows/ci.yml:47-60` 已配置）：
 
 | 变量 | 值 | 说明 |
@@ -82,6 +84,20 @@ TOPEMS CI 已采用业界主流的"动作组合"方案，而非手写 `actions/c
 - fingerprint 对 mtime 敏感，restore 后易大面积失效
 
 **本地开发启用**（workspace Cargo.toml 已默认 `incremental = true`）。
+
+### 1.4 本地磁盘治理（2026-10-01 落地）
+
+增量目录（`target/debug/incremental`）与多份嵌套 target 是本地磁盘膨胀主因。现状与配套命令：
+
+- **`target-dir` 绝对路径**：`.cargo/config.toml` 已改为 `/Users/xingzhai/TOPEMS/target`（原相对路径 `target` 会导致在 `svc/*`、`lib/*` 子目录单独构建时各自生成完整依赖副本，重复编译同一批依赖）。
+- **分级清理命令**（`scripts/topems.sh clean`）：
+  - `--debug`：清 debug/release incremental + 嵌套 target 残留（`lib/*/target`、`svc/*/target`、`llvm-cov-target`），保留 debug/release 最终产物 —— 日常推荐。
+  - `--debug-full`：追加清 `target/debug/{deps,build,examples}`（依赖需重编，配合 sccache 可接受）。
+  - `--sccache`：停止 sccache 守护进程并清空其磁盘缓存。
+  - `--rust`：全量 `cargo clean`（含 release）。
+  - 均支持 `--dry-run`，自动终止后台 cargo/rustc 进程，结束时输出 target/ 前后占用与磁盘可用量。
+- **sccache 上限**：`~/.sccache/config` 已配置 `[general] cache_size = 5368709120`（5GiB）。注意：sccache 0.16.0 存在不读取配置/环境变量的缺陷（实测 Max cache size 仍为 10GiB），升级 sccache ≥ 0.17 后生效。
+- **独立阈值工具**：`scripts/clean_target.sh`（`--check/--auto/--full`，默认阈值 25G）适合脚本/CI 接入。
 
 ---
 

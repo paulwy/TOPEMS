@@ -2018,7 +2018,7 @@ pub async fn start_event_subscribers(
     });
 
     // 订阅缓存失效事件
-    let cache_listener = cache_invalidation_listener.clone();
+    let cache_listener = cache_invalidation_listener;
     let cache_subscriber = EventSubscriber::new("erp-cache-invalidation")
         .map_err(|e| e.to_string())?
         .subscribe(vec![EventType::CacheInvalidated], move |event| {

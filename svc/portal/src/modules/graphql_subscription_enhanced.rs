@@ -496,6 +496,7 @@ pub fn record_event_published(_channel: SubscriptionChannel) {
 }
 
 /// 计算每秒事件数（过去 60 秒滑动窗口）
+#[allow(clippy::unwrap_used)]
 pub fn get_events_per_second() -> f64 {
     let timestamps = event_timestamps().lock().unwrap_or_else(|e| e.into_inner());
     if timestamps.len() < 2 {

@@ -890,7 +890,7 @@ pub async fn get_intercompany_elims(
         serde_json::json!({
             "id": Uuid::new_v4(),
             "consolidation_id": params.consolidation_id.clone().unwrap_or_default(),
-            "period": params.period.clone().unwrap_or_default(),
+            "period": params.period.unwrap_or_default(),
             "description": "内部销售收入抵消",
             "debit_account_code": "6001",
             "credit_account_code": "6401",
