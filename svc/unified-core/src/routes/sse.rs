@@ -238,7 +238,6 @@ mod tests {
         assert!(json.contains("\"expires_in\":1800"));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_endpoint_event_data_deserialization() {
         let json =
@@ -249,7 +248,6 @@ mod tests {
         assert_eq!(data.expires_in, 900);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_endpoint_event_data_round_trip() {
         let original = EndpointEventData {
@@ -265,7 +263,6 @@ mod tests {
         assert_eq!(parsed.expires_in, original.expires_in);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_endpoint_event_data_field_order() {
         // 确保字段顺序稳定（前端 SDK 按字段名解析，不依赖顺序但记录基线）
@@ -286,7 +283,6 @@ mod tests {
 
     // ===== SseSessionRequest tests =====
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_default_event_type() {
         let json = r#"{"data":{"msg":"hello"}}"#;
@@ -295,7 +291,6 @@ mod tests {
         assert_eq!(req.data["msg"], "hello");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_custom_event_type() {
         let json = r#"{"event_type":"update","data":{"count":42}}"#;
@@ -304,7 +299,6 @@ mod tests {
         assert_eq!(req.data["count"], 42);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_null_data() {
         let json = r#"{"event_type":"ping","data":null}"#;
@@ -313,7 +307,6 @@ mod tests {
         assert!(req.data.is_null());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_sse_session_request_nested_data() {
         let json = r#"{"event_type":"notify","data":{"user":{"id":"u1","name":"Alice"},"tags":["a","b"]}}"#;
@@ -384,7 +377,6 @@ mod tests {
     // ===== Event construction logic tests =====
     // 验证从 SseSessionRequest 构造 Event 的逻辑（不依赖 AppState / channel）
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_event_construction_from_request() {
         let req = SseSessionRequest {

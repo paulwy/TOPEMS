@@ -650,7 +650,6 @@ mod tests {
         assert!(json.contains("\"tenant_id\":\"t1\""));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_import_request_full_format() {
         let json = r#"{
@@ -673,7 +672,6 @@ mod tests {
         }
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_import_request_bare_format() {
         // Bare format is a direct array of permission items

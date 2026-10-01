@@ -120,7 +120,6 @@ mod tests {
             .with_timezone(&chrono::Utc)
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_group_serde() {
         let mg = MenuGroup {
@@ -143,7 +142,6 @@ mod tests {
         assert_eq!(de.sort_order, 1);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_serde() {
         let m = Menu {
@@ -168,7 +166,6 @@ mod tests {
         assert!(de.permissions.is_some());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_requests_serde() {
         let cmgr = CreateMenuGroupRequest {
@@ -226,7 +223,6 @@ mod tests {
         assert_eq!(de4.status, Some("active".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_menu_queries_and_list_responses() {
         let mgq = MenuGroupQuery {

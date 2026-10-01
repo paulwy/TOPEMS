@@ -220,7 +220,6 @@ mod tests {
         assert_eq!(req.cleanup_interval_hours, Some(12));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_update_retention_policy_request_partial() {
         let json = r#"{"retention_days": 30}"#;
@@ -232,7 +231,6 @@ mod tests {
         assert!(req.cleanup_interval_hours.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_trigger_cleanup_request_deserialization() {
         let json = r#"{"retention_days": 7}"#;

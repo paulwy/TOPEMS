@@ -399,7 +399,6 @@ mod tests {
         assert_eq!(aggregate_health(&[]), HealthStatus::Healthy);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn health_status_roundtrip() {
         for s in [
@@ -414,7 +413,6 @@ mod tests {
         }
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn component_health_roundtrip() {
         let c = ComponentHealth {
@@ -457,7 +455,6 @@ mod tests {
         assert_eq!(p.offset, 20);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn pagination_roundtrip() {
         let p = build_pagination(Some(5), Some(25), 100);
@@ -631,7 +628,6 @@ mod tests {
         assert_eq!(r[0].field, "a");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn filter_clause_and_op_roundtrip() {
         let fc = FilterClause {
@@ -705,7 +701,6 @@ mod tests {
         id: i32,
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn api_list_resp_roundtrip() {
         let resp = ApiListResp::<Item>::new(vec![Item { id: 1 }, Item { id: 2 }], 42, 2, 20);
@@ -719,7 +714,6 @@ mod tests {
         assert_eq!(d.total_pages, resp.total_pages);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn tenant_scope_roundtrip_and_eq() {
         let t = TenantScope {

@@ -212,7 +212,6 @@ mod tests {
         assert!(req.skip_existing);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_restore_request_partial() {
         let json = r#"{"start_date": "2026-01-01"}"#;

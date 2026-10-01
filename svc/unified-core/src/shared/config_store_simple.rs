@@ -232,7 +232,6 @@ mod tests {
         assert_eq!(policy.cleanup_interval_hours, 24);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_retention_policy_serialization() {
         let policy = RetentionPolicy::new(30);

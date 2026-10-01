@@ -454,7 +454,6 @@ mod tests {
         chrono::DateTime::from_timestamp(1705314600, 0).unwrap() // 2024-01-15T10:30:00Z
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_type_default_and_serde() {
         assert_eq!(TenantType::default(), TenantType::Shared);
@@ -465,7 +464,6 @@ mod tests {
         assert_eq!(de, TenantType::Shared);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_plan_default_and_variants() {
         assert_eq!(TenantPlan::default(), TenantPlan::Basic);
@@ -482,7 +480,6 @@ mod tests {
         }
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_status_default_and_variants() {
         assert_eq!(TenantStatus::default(), TenantStatus::Trial);
@@ -500,7 +497,6 @@ mod tests {
         }
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_license_type_default_and_variants() {
         assert_eq!(LicenseType::default(), LicenseType::Subscription);
@@ -511,7 +507,6 @@ mod tests {
         assert_eq!(de, LicenseType::Subscription);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_serde() {
         let tenant = Tenant {
@@ -547,7 +542,6 @@ mod tests {
         assert!(de.license_expires_at.is_some());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_usage_and_module() {
         let usage = TenantUsage {
@@ -586,7 +580,6 @@ mod tests {
         assert!(de2.is_active);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_requests_serde() {
         let ctr = CreateTenantRequest {
@@ -618,7 +611,6 @@ mod tests {
         assert_eq!(de2.plan, Some("enterprise".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_user_and_stats() {
         let tu = TenantUser {
@@ -650,7 +642,6 @@ mod tests {
         assert_eq!(de2.total_users, 50);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_onboard_and_response() {
         let otr = OnboardTenantRequest {
@@ -704,7 +695,6 @@ mod tests {
         assert_eq!(de2.admin_email, "admin@newcorp.com");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tenant_quota_and_list_responses() {
         let qr = TenantQuotaResponse {
@@ -760,7 +750,6 @@ mod tests {
         assert_eq!(de3.total, 5);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_switch_and_list_queries() {
         let lq = ListTenantsQuery {
@@ -796,7 +785,6 @@ mod tests {
         assert_eq!(de3.tenant_id, "tenant-uuid-123");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_invite_and_member_role() {
         let imr = InviteMemberRequest {

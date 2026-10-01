@@ -758,7 +758,6 @@ mod tests {
         assert!(req.tool_permissions.is_empty());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_tool_permission_request_defaults() {
         let json = r#"{"tool":"crm"}"#;

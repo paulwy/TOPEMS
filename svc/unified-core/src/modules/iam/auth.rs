@@ -1337,7 +1337,6 @@ mod tests {
         assert_eq!(cloned.username, "test_user");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_login_response_data_serde() {
         let lrd = LoginResponseData {

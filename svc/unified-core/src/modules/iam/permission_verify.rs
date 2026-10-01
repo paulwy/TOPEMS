@@ -293,7 +293,6 @@ mod tests {
         assert!(req.resource_type.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_verify_permission_request_with_resource() {
         let json = r#"{"permission": "crm:customers_read", "resource_id": "550e8400-e29b-41d4-a716-446655440000", "resource_type": "customer"}"#;
@@ -328,7 +327,6 @@ mod tests {
         assert_eq!(json["message"], "无权访问");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_verify_multiple_permissions_request() {
         let json = r#"{"permissions": ["iam:users_read", "iam:users_write"]}"#;
@@ -345,7 +343,6 @@ mod tests {
         assert!(req.permissions.is_empty());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_check_resource_permission_request() {
         let json = r#"{

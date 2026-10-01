@@ -79,7 +79,6 @@ mod tests {
         assert!(req.error_message.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_record_login_request_minimal() {
         let json = r#"{
@@ -95,7 +94,6 @@ mod tests {
         assert!(req.user_agent.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_login_log_query_default() {
         let json = r#"{}"#;
@@ -108,7 +106,6 @@ mod tests {
         assert!(query.page_size.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_login_log_query_full() {
         let json = r#"{
@@ -143,7 +140,6 @@ mod tests {
         assert!(json["items"].is_array());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_delete_login_log_request() {
         let json = r#"{"ids": ["id1", "id2", "id3"]}"#;

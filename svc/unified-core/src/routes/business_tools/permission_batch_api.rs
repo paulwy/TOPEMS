@@ -310,7 +310,6 @@ mod tests {
         assert_eq!(req.permissions[1].tenant_id, "t2");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_batch_delete_request_deserialization() {
         let json = r#"{

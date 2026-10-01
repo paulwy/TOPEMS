@@ -421,7 +421,6 @@ mod tests {
         assert!(matches!(retrieved.role, TenantRole::Owner));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_duplicate_permission_error() {
         let store = InMemoryPermissionStore::new();
@@ -433,7 +432,6 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_update_permission() {
         let store = InMemoryPermissionStore::new();
@@ -453,7 +451,6 @@ mod tests {
         assert!(!retrieved.active);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_delete_permission() {
         let store = InMemoryPermissionStore::new();
@@ -466,7 +463,6 @@ mod tests {
         assert!(retrieved.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[tokio::test]
     async fn test_check_permission() {
         let store = InMemoryPermissionStore::new();

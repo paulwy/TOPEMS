@@ -269,7 +269,6 @@ mod tests {
         assert!(params.search.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_permission_change_query_params_full() {
         let json = r#"{

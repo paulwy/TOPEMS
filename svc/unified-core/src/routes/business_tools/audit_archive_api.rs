@@ -326,7 +326,6 @@ mod tests {
         assert_eq!(query.date.as_deref(), Some("2026-01"));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_list_archives_query_default() {
         let query: ListArchivesQuery = serde_json::from_str("{}").unwrap();
@@ -334,7 +333,6 @@ mod tests {
         assert!(query.date.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_cleanup_archives_query_default() {
         let query: CleanupArchivesQuery = serde_json::from_str("{}").unwrap();

@@ -133,7 +133,7 @@ impl DatabaseAuditLogStore {
         let metadata_map: HashMap<String, String> = if metadata.is_object() {
             metadata
                 .as_object()
-                .unwrap()
+                .unwrap_or_else(|| panic!("metadata guarded by is_object check"))
                 .iter()
                 .map(|(k, v)| (k.clone(), v.as_str().unwrap_or("").to_string()))
                 .collect()

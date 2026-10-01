@@ -135,7 +135,6 @@ mod tests {
             .with_timezone(&chrono::Utc)
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_document_construct_and_serde() {
         let doc = Document {
@@ -170,7 +169,6 @@ mod tests {
         assert_eq!(de.tags.as_ref().unwrap().len(), 2);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_template_serde() {
         let t = Template {
@@ -195,7 +193,6 @@ mod tests {
         assert_eq!(de.is_enabled, Some(true));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_folder_serde() {
         let folder = Folder {
@@ -217,7 +214,6 @@ mod tests {
         assert!(de.parent_id.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_document_request() {
         let req = CreateDocumentRequest {
@@ -237,7 +233,6 @@ mod tests {
         assert!(de.template_id.is_some());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_update_document_request() {
         let req = UpdateDocumentRequest {
@@ -253,7 +248,6 @@ mod tests {
         assert_eq!(de.title, Some("更新后的标题".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_and_update_template_requests() {
         let ctr = CreateTemplateRequest {
@@ -287,7 +281,6 @@ mod tests {
         assert_eq!(de2.is_default, Some(true));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_folder_requests() {
         let cfr = CreateFolderRequest {

@@ -390,7 +390,6 @@ mod tests {
         assert!(json.contains("/tmp/archive"));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_retention_policy_deserialization() {
         let json = r#"{"retention_days":60,"archive_enabled":false,"batch_size":500,"cleanup_interval_hours":12}"#;

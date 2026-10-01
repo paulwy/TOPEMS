@@ -416,7 +416,6 @@ mod tests {
         assert_eq!(wf.status, cloned.status);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_serde_roundtrip() {
         let wf = Workflow {
@@ -443,7 +442,6 @@ mod tests {
         assert!(de.published_at.is_some());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_workflow_request() {
         let req = CreateWorkflowRequest {
@@ -460,7 +458,6 @@ mod tests {
         assert!(de.description.is_some());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_update_workflow_request() {
         let req = UpdateWorkflowRequest {
@@ -476,7 +473,6 @@ mod tests {
         assert!(de.description.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_instance_serde() {
         let inst = WorkflowInstance {
@@ -502,7 +498,6 @@ mod tests {
         assert!(de.completed_at.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_instance_request() {
         let req = CreateInstanceRequest {
@@ -517,7 +512,6 @@ mod tests {
         assert_eq!(de.title, "测试实例");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_task_serde() {
         let task = WorkflowTask {
@@ -554,7 +548,6 @@ mod tests {
         assert_eq!(de.comment, Some("同意，符合规定".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_task_batch_request_and_result() {
         let req = TaskBatchRequest {
@@ -583,7 +576,6 @@ mod tests {
         assert_eq!(de_res.failed_tasks[0].task_id, "t2");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_task_stats() {
         let stats = TaskStats {
@@ -605,7 +597,6 @@ mod tests {
         assert_eq!(de.candidate, 1);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_category_serde() {
         let cat = WorkflowCategory {
@@ -625,7 +616,6 @@ mod tests {
         assert!(de.is_active);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_category_request() {
         let req = CreateCategoryRequest {
@@ -640,7 +630,6 @@ mod tests {
         assert_eq!(de.code, Some("hr".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_delegate_serde() {
         let delegate = WorkflowDelegate {
@@ -664,7 +653,6 @@ mod tests {
         assert!(de.is_active);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_delegate_request() {
         let req = CreateDelegateRequest {
@@ -681,7 +669,6 @@ mod tests {
         assert_eq!(de.reason, Some("休假".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_form_definition_and_instance() {
         let fd = FormDefinition {
@@ -723,7 +710,6 @@ mod tests {
         assert_eq!(de_fi.status, "submitted");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_create_form_requests() {
         let cfd = CreateFormDefinitionRequest {
@@ -750,7 +736,6 @@ mod tests {
         assert!(de2.workflow_instance_id.is_none());
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_history_serde() {
         let h = WorkflowHistory {
@@ -777,7 +762,6 @@ mod tests {
         assert_eq!(de.actor_name, Some("主管A".to_string()));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_setting_and_request() {
         let s = WorkflowSetting {
@@ -807,7 +791,6 @@ mod tests {
         assert_eq!(de2.category, "file");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_template_serde() {
         let t = WorkflowTemplate {
@@ -831,7 +814,6 @@ mod tests {
         assert_eq!(de.is_active, Some(true));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_statistics_response() {
         let sr = StatisticsResponse {
@@ -871,7 +853,6 @@ mod tests {
         assert_eq!(de.monthly_data[0].month, "2024-01");
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_process_log_serde() {
         let pl = ProcessLog {
@@ -898,7 +879,6 @@ mod tests {
         assert_eq!(de.duration, Some(500));
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn test_workflow_rule_and_create_request() {
         let rule = WorkflowRule {
