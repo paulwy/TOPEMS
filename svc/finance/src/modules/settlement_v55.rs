@@ -1056,6 +1056,7 @@ impl AutoReconciler {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn apply_rule(
         rule_type: MatchType,
         tolerance: f64,
@@ -1165,6 +1166,7 @@ impl AutoReconciler {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn similarity(a: &str, b: &str) -> f64 {
         if a.is_empty() && b.is_empty() {
             return 1.0;

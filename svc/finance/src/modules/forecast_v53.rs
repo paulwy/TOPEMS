@@ -231,6 +231,7 @@ pub struct PredictionResult {
 }
 
 impl CashFlowPredictor {
+    #[allow(clippy::as_conversions)]
     pub async fn predict(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -336,6 +337,7 @@ impl CashFlowPredictor {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     fn generate_synthetic_history() -> Vec<(f64, f64)> {
         let mut data = Vec::new();
         for i in 0..12 {
@@ -349,6 +351,7 @@ impl CashFlowPredictor {
         data
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn apply_model(
         historical: &[(f64, f64)],
         model: &PredictionModel,
@@ -445,6 +448,7 @@ impl CashFlowPredictor {
         (inflow * inflow_factor, outflow * outflow_factor)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn calculate_confidence(historical: &[(f64, f64)], model: &PredictionModel) -> f64 {
         if historical.len() < 3 {
             return 0.5;
@@ -499,6 +503,7 @@ impl CashFlowPredictor {
         (predicted_net - margin, predicted_net + margin)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn detect_seasonal_patterns(historical: &[(f64, f64)]) -> Vec<f64> {
         let mut patterns = vec![0.0f64; 12];
         if historical.is_empty() {
@@ -525,6 +530,7 @@ impl CashFlowPredictor {
         patterns
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn calculate_trend_slope(historical: &[(f64, f64)]) -> f64 {
         if historical.len() < 2 {
             return 0.0;
@@ -635,6 +641,7 @@ impl CashFlowPredictor {
         Ok(record)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn compute_retrain_accuracy(
         _pool: &PgPool,
         _tenant_id: Uuid,

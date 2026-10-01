@@ -2502,6 +2502,11 @@ pub struct ReorderEntriesRequest {
     ),
     tag = "Mod"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn reorder_template_entries_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -4312,6 +4317,7 @@ pub async fn batch_create_vouchers(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn batch_delete_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

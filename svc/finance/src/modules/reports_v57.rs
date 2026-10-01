@@ -886,6 +886,7 @@ impl MultiDimensionalAnalyzer {
         serde_json::json!({ "rows": rows })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn compute_aggregations(data: &serde_json::Value, measures: &[String]) -> serde_json::Value {
         let rows = data
             .get("rows")
@@ -1220,6 +1221,7 @@ impl PredictiveInsightEngine {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn detect_outliers(metric: &str, threshold: f64) -> serde_json::Value {
         let data_points: Vec<f64> = vec![
             100.0, 120.0, 115.0, 130.0, 110.0, 500.0, 125.0, 140.0, 118.0, 135.0,

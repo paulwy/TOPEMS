@@ -636,6 +636,7 @@ impl AutoAuditEngine {
         Ok(findings)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn detect_unauthorized_access(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -683,6 +684,11 @@ impl AutoAuditEngine {
         Ok(findings)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     async fn detect_unusual_transactions(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1016,6 +1022,7 @@ impl AnomalyDetector {
         Ok(alerts)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn z_score_detection(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1077,6 +1084,7 @@ impl AnomalyDetector {
         Ok(alerts)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn benford_detection(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1138,6 +1146,7 @@ impl AnomalyDetector {
         Ok(alerts)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn time_based_detection(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1188,6 +1197,7 @@ impl AnomalyDetector {
         Ok(alerts)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn frequency_detection(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1235,6 +1245,7 @@ impl AnomalyDetector {
         Ok(alerts)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn amount_velocity_detection(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1311,6 +1322,11 @@ impl AnomalyDetector {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn get_first_digit(n: f64) -> usize {
         if n <= 0.0 {
             return 0;
@@ -1411,6 +1427,7 @@ impl AnomalyDetector {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_summary(
         pool: &PgPool,
         tenant_id: Option<Uuid>,

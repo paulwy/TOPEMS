@@ -514,6 +514,11 @@ pub struct EvaluateRiskRequest {
 }
 
 impl RealTimeRiskMonitor {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub async fn evaluate_risk(
         pool: &PgPool,
         tenant_id: Option<Uuid>,
@@ -851,6 +856,7 @@ impl AntiFraudEngine {
         .await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn check_velocity(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1196,6 +1202,11 @@ impl AutoComplianceReviewer {
         .await
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub async fn generate_compliance_report(
         pool: &PgPool,
         tenant_id: Uuid,

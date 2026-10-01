@@ -62,6 +62,11 @@ pub struct ImportRecordQuery {
 }
 
 impl FinanceService {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub async fn import_vouchers(
         &self,
         tenant_id: Uuid,

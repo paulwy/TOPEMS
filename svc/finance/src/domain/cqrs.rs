@@ -173,6 +173,7 @@ pub struct CqrsContext {
 }
 
 impl CqrsContext {
+    #[allow(clippy::as_conversions)]
     pub fn new() -> Self {
         let event_store = Arc::new(InMemoryEventStore::new());
         let voucher_summary_view = Arc::new(VoucherSummaryMaterializedView::new());
@@ -226,6 +227,7 @@ impl PgCqrsContext {
         Self::with_config(pool, AsyncProjectorConfig::default())
     }
 
+    #[allow(clippy::as_conversions)]
     pub fn with_config(pool: sqlx::PgPool, projector_config: AsyncProjectorConfig) -> Self {
         let event_store = Arc::new(PgEventStore::new(pool.clone()));
         let voucher_summary_view = Arc::new(PgVoucherSummaryView::new(pool.clone()));

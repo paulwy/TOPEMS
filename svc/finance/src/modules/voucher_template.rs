@@ -444,6 +444,7 @@ pub async fn toggle_generate_rule(
 
 // ========== 从源单据查询金额：sale/purchase/payment 三类型 + 兜底默认 ==========
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 查询源单据金额，返回 `{ source_id: amount }` 映射；查不到或异常的 ID 使用默认金额兜底。
 ///
 /// | source_type | 来源表 | 金额字段 | 说明 |

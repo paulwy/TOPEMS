@@ -29,6 +29,11 @@ fn parse_period_str(s: &str) -> Result<(i32, i32), &'static str> {
 }
 
 impl FinanceService {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub async fn create_voucher(
         &self,
         tenant_id: Uuid,
@@ -668,6 +673,11 @@ impl FinanceService {
         })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     /// V39.0 Phase 7: 更新凭证（仅 draft/submitted/rejected 状态可更新）
     pub async fn update_voucher(
         &self,
@@ -907,6 +917,11 @@ impl FinanceService {
         Ok(voucher)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub(super) async fn create_voucher_with_tx(
         &self,
         tx: &mut sqlx::PgConnection,
@@ -1021,6 +1036,11 @@ impl FinanceService {
         Ok(format!("{}{}{:04}", prefix, period_prefix, count.0 + 1))
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub(super) async fn update_voucher_lines_with_tx(
         &self,
         tx: &mut sqlx::PgConnection,

@@ -127,6 +127,7 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<VoucherAggregate>
         self.load_from_events(id).await
     }
 
+    #[allow(clippy::as_conversions)]
     async fn save(
         &self,
         aggregate: &mut VoucherAggregate,
@@ -260,6 +261,7 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<ReceivableAggregate>
         self.load_from_events(id).await
     }
 
+    #[allow(clippy::as_conversions)]
     async fn save(
         &self,
         aggregate: &mut ReceivableAggregate,
@@ -399,6 +401,7 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<PayableAggregate>
         self.load_from_events(id).await
     }
 
+    #[allow(clippy::as_conversions)]
     async fn save(
         &self,
         aggregate: &mut PayableAggregate,

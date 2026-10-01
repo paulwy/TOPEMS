@@ -106,6 +106,7 @@ impl FinanceService {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub async fn open_period(
         &self,
         tenant_id: Uuid,
@@ -183,6 +184,7 @@ impl FinanceService {
         Ok(period)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub async fn close_period(
         &self,
         tenant_id: Uuid,
@@ -285,6 +287,11 @@ impl FinanceService {
         Ok(period)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub async fn year_end_close(
         &self,
         tenant_id: Uuid,

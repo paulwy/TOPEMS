@@ -503,6 +503,7 @@ impl DecisionEngine {
         .await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn evaluate_scenario(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -639,6 +640,7 @@ impl DecisionEngine {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn generate_alternatives(scenario: &DecisionScenario, confidence: f64) -> serde_json::Value {
         let base_score = confidence;
         serde_json::json!([
@@ -1265,6 +1267,7 @@ impl IntelligentScheduler {
         .await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute_task(
         pool: &PgPool,
         tenant_id: Uuid,

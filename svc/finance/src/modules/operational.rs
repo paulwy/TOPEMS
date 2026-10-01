@@ -101,6 +101,7 @@ pub async fn list_expenses(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -220,6 +221,7 @@ pub async fn get_expense(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_expense(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -414,6 +416,7 @@ pub async fn list_budgets(
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

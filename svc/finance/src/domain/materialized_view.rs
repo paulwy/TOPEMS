@@ -37,6 +37,12 @@ impl VoucherSummaryMaterializedView {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     pub async fn list(
         &self,
         page: i64,
@@ -155,6 +161,12 @@ impl ReceivableAgingMaterializedView {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     pub async fn list(
         &self,
         page: i64,

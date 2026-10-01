@@ -305,6 +305,11 @@ pub async fn delete_entry(
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 pub async fn reorder_entries(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

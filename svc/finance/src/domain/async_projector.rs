@@ -67,6 +67,7 @@ impl AsyncProjector {
         self.running.store(false, Ordering::SeqCst);
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, String> {
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT view_name, last_event_id, last_event_time, processed_count, error_count, last_error, updated_at FROM cqrs_projection_progress WHERE view_name = $1"))
             .bind(view_name)
@@ -120,6 +121,7 @@ impl AsyncProjector {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn update_progress(
         &self,
         view_name: &str,

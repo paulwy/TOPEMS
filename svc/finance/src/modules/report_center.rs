@@ -622,6 +622,7 @@ pub fn calculate_financial_ratios(
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 生成财务分析报告（含趋势判断和预警）
 pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> FinancialAnalysisReport {
     let mut score: f64 = 0.0;

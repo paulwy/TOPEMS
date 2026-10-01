@@ -670,6 +670,7 @@ pub struct EntityListQuery {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_consolidation_entities(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -868,6 +869,7 @@ pub struct ElimListQuery {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_intercompany_elims(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1079,6 +1081,7 @@ pub struct SubscriptionListQuery {
         (status = 500, description = "服务器内部错误"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_report_subscriptions(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1333,6 +1336,7 @@ pub struct SubscriptionHistoryQuery {
         (status = 200, description = "操作成功"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_subscription_history(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -2442,6 +2446,7 @@ pub async fn get_department_summary(
     responses((status = 200, description = "Get aging analysis")),
     tag = "Finance"
 )]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 pub async fn get_aging_analysis(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
@@ -2720,6 +2725,7 @@ pub async fn get_profit_analysis(
     ),
     tag = "FinancialReports"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_financial_overview(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,

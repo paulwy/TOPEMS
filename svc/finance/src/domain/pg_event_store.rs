@@ -31,6 +31,7 @@ impl PgEventStore {
         .to_string()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     fn row_to_event_record(row: &sqlx::postgres::PgRow) -> Result<EventRecord, String> {
         let id: Uuid = row.try_get("id").map_err(|e| e.to_string())?;
         let aggregate_id: String = row.try_get("aggregate_id").map_err(|e| e.to_string())?;
@@ -59,6 +60,7 @@ impl PgEventStore {
         })
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_events_since(
         &self,
         last_event_id: Option<&str>,
@@ -91,6 +93,7 @@ impl PgEventStore {
         Ok(records)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub async fn get_event_count(&self) -> Result<u64, String> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -103,6 +106,7 @@ impl PgEventStore {
         Ok(count as u64)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub async fn get_events_by_type(
         &self,
         aggregate_type: &str,
@@ -139,6 +143,7 @@ impl PgEventStore {
         Ok((records, total as u64))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     pub async fn get_snapshot_count(&self) -> Result<u64, String> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -154,6 +159,11 @@ impl PgEventStore {
 
 #[async_trait]
 impl EventStore for PgEventStore {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     async fn append_events(
         &self,
         aggregate_id: &str,
@@ -218,6 +228,7 @@ impl EventStore for PgEventStore {
         Ok(records)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn read_events(
         &self,
         aggregate_id: &str,
@@ -252,6 +263,7 @@ impl EventStore for PgEventStore {
         Ok(records)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), String> {
         let state_json = serde_json::to_value(&snapshot.state).map_err(|e| e.to_string())?;
 
@@ -276,6 +288,7 @@ impl EventStore for PgEventStore {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_latest_snapshot(
         &self,
         aggregate_id: &str,
@@ -309,6 +322,7 @@ impl EventStore for PgEventStore {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, String> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",

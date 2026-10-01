@@ -386,6 +386,7 @@ impl ReconciliationService {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn string_similarity(&self, a: &str, b: &str) -> f64 {
         let a = a.trim().to_lowercase();
         let b = b.trim().to_lowercase();
@@ -461,6 +462,7 @@ impl ReconciliationService {
         Ok(items)
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn get_summary(
         &self,
         tenant_id: Uuid,
@@ -651,6 +653,7 @@ impl ReconciliationService {
 
     // ==================== 报告与差异处理（P0，V15 Phase 2）====================
 
+    #[allow(clippy::as_conversions)]
     /// 对账报告：余额调节表 + 完成率 + 金额汇总
     pub async fn get_report(
         &self,

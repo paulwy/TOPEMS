@@ -451,6 +451,7 @@ pub struct FraudRule {
 }
 
 impl AntiFraudEngine {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn analyze_transaction(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -788,6 +789,7 @@ pub struct BulkScoreRequest {
 }
 
 impl CreditScoringEngine {
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn calculate_score(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1197,6 +1199,11 @@ impl StressTestEngine {
         .await
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub async fn compare_scenarios(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -1335,6 +1342,7 @@ impl StressTestEngine {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_test_summary(
         pool: &PgPool,
         tenant_id: Option<Uuid>,

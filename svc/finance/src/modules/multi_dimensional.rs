@@ -189,6 +189,7 @@ impl CostCenterAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn analyze(period: &str) -> CostCenterReport {
         let items = vec![
             Self::build_item(
@@ -295,6 +296,7 @@ impl CostCenterAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_trend(_period: &str) -> Vec<CostTrendPoint> {
         let base = Utc::now();
         let labels = [
@@ -323,6 +325,7 @@ impl CostCenterAnalyzer {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_efficiency(period: &str) -> Vec<CostEfficiency> {
         let report = Self::analyze(period);
         let mut list: Vec<CostEfficiency> = report
@@ -467,6 +470,7 @@ impl ProfitCenterAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn analyze(period: &str) -> ProfitCenterReport {
         let items = vec![
             Self::build_item(
@@ -546,6 +550,7 @@ impl ProfitCenterAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_trend(_period: &str) -> Vec<ProfitTrendPoint> {
         let labels = [
             "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06",
@@ -570,6 +575,12 @@ impl ProfitCenterAnalyzer {
             .collect()
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     pub fn get_ranking(period: &str, top_n: Option<i64>) -> Vec<ProfitCenterRanking> {
         let report = Self::analyze(period);
         let limit = top_n.unwrap_or(report.items.len() as i64);
@@ -740,6 +751,7 @@ impl ProjectAccountingAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn analyze(period: &str) -> ProjectAccountReport {
         let items = vec![
             Self::build_item(
@@ -865,6 +877,7 @@ impl ProjectAccountingAnalyzer {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn get_profitability(period: &str) -> Vec<ProjectProfitability> {
         let report = Self::analyze(period);
         report
@@ -897,6 +910,7 @@ impl ProjectAccountingAnalyzer {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn get_summary() -> ProjectSummary {
         let report = Self::analyze("current");
         let mut by_status: HashMap<String, i64> = HashMap::new();

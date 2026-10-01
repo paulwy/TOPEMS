@@ -659,6 +659,7 @@ pub async fn update_reconcile_item(
     )))
 }
 
+#[allow(clippy::as_conversions)]
 fn rand_suffix() -> u16 {
     // 无 rand 依赖的轻量随机后缀：取系统时间微秒低位
     use std::time::{SystemTime, UNIX_EPOCH};

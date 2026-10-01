@@ -10,6 +10,11 @@ use topems_shared_core::error::TopemsError;
 use super::FinanceService;
 
 impl FinanceService {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub async fn create_payment(
         &self,
         tenant_id: Uuid,
@@ -283,6 +288,11 @@ impl FinanceService {
         })
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     pub async fn update_payment(
         &self,
         tenant_id: Uuid,

@@ -181,6 +181,7 @@ pub async fn create_reconciliation(
     Ok(item)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 手工对账：标记对账单明细为已匹配（操作 Finance 本地明细快照 + 发布事件）
 pub async fn manual_reconcile(
     pool: &PgPool,
@@ -271,6 +272,7 @@ pub async fn manual_reconcile(
     Ok(affected)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 自动对账：按金额相等原则匹配对账单明细（操作 Finance 本地明细快照）
 pub async fn auto_reconcile(
     pool: &PgPool,

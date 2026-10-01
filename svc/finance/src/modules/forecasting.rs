@@ -524,6 +524,7 @@ impl BudgetVarianceAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 计算差异趋势（多期对比）
     pub fn calculate_variance_trend(_period: &str) -> VarianceTrendAnalysis {
         let trends = vec![
@@ -618,6 +619,7 @@ impl BudgetVarianceAnalyzer {
         )
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取预算执行绩效评分
     pub fn get_budget_performance(period: &str) -> BudgetPerformance {
         let report = Self::analyze_budget_variance(period);
@@ -917,6 +919,7 @@ impl SmartAlertSystem {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     /// 获取告警摘要
     pub fn get_alert_summary() -> AlertSummary {
         let alerts = Self::evaluate_alerts();

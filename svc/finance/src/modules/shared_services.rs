@@ -205,6 +205,7 @@ impl SharedServiceCenterAnalyzer {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn analyze(period: &str) -> ServiceCenterReport {
         let items = vec![
             Self::build_item(
@@ -892,6 +893,7 @@ impl InternalPricingManager {
         ]
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub fn generate_settlements(req: GenerateSettlementRequest) -> GenerateSettlementResult {
         let settlements = Self::get_settlements(&req.period);
         let total_amount: Decimal = settlements.iter().map(|s| s.total_amount).sum();

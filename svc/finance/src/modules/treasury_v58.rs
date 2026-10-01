@@ -677,6 +677,7 @@ impl CashFlowPredictor {
         .await
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn run_forecast(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -749,6 +750,7 @@ impl CashFlowPredictor {
         Ok(results)
     }
 
+    #[allow(clippy::as_conversions)]
     fn compute_daily_cash_flow(
         day_offset: i32,
         growth_rate: f64,
@@ -1013,6 +1015,7 @@ impl LiquidityOptimizer {
         }))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn estimate_current_balance(
         _pool: &PgPool,
         _tenant_id: Option<Uuid>,

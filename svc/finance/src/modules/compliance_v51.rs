@@ -623,6 +623,11 @@ impl ControlPoint {
 }
 
 impl ControlMatrix {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub async fn generate(
         pool: &PgPool,
         tenant_id: Uuid,
@@ -858,6 +863,11 @@ impl RiskAssessment {
         q.fetch_all(pool).await
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     pub async fn get_summary(
         pool: &PgPool,
         tenant_id: Option<Uuid>,
@@ -905,6 +915,7 @@ impl RiskAssessment {
 }
 
 impl ComplianceReportV51 {
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn generate(
         pool: &PgPool,
         tenant_id: Uuid,
