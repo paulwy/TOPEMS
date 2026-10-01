@@ -293,3 +293,37 @@
 | svc/srm/src/modules/supplier_performance | `as_conversions` | using a potentially dangerous silent `as` conversion |
 | svc/srm/src/shared/util | `cast_precision_loss` | casting `usize` to `f64` may cause a loss of precision (`usize` can be up to 64 bits wide depending on the tar |
 | svc/srm/src/shared/util | `as_conversions` | using a potentially dangerous silent `as` conversion |
+
+---
+
+## D 项核查结论（2026-10-01 追加）
+
+### 全量重扫（force-warn 五 lint，按位置去重，剔测试代码）
+
+生产真实 cast 位置 **1,098 处**（lint 分布：as_conversions 561 / precision_loss 170 / truncation 136 / wrap 132 / sign_loss 99；服务分布：erp 488 / finance 335 / lib 252 / srm 23）。
+
+### 语义分类
+
+| 类别 | 数量 | 占比 | 处置 |
+|---|---|---|---|
+| 分页/索引（page/offset/idx/len） | 467 | 43% | 数学安全（值域钳制/非负），不机械改 |
+| 时间（timestamp/duration/retention） | 146 | 13% | 数学安全（i64 时间戳），不机械改 |
+| 比率/统计（ratio/score/avg/variance） | 67 | 6% | 显示用途，精度可接受，不机械改 |
+| 金额（amount/price/balance/fee/Decimal） | 30 | 3% | **逐一核实（见下）** |
+| 其他（类型适配/通用转换） | 388 | 35% | 非金额路径，按语义保留 |
+
+### 金额路径专项核实（30 处 + Decimal 类型 24 处，共 34 处去重后）
+
+**结论：金额路径 cast 全部数学安全，无精度丢失/溢出风险。**
+
+- **count→Decimal 分母类**（`Decimal::from(items.len() as i64)`、`safe_divide(sum, Decimal::from(len))`）：len 非负且值域远小于 i64 上限 → 安全
+- **f64→int 金额缩放**（voucher_template.rs:577 `(v * 100.0).round() as i128`）：已有 round + `is_finite && >= 0` 守卫，i128 值域覆盖 → **已是最佳实践，未改**
+- **索引钳制**（`(bucket-1).max(0).min(4) as usize`）：显式钳制 → 安全
+- **报表比例截断 ×2 → 本轮加固 round**：
+  - multi_dimensional.rs:881 `(completion_percentage * 12.0).round() as i64`（原为直接截断）
+  - report_center.rs:753 `(score * 100.0).round() as i64 / Decimal(100)`（原为直接截断）
+
+### 未处置说明
+
+剩余 1,064 处非金额 cast 按文档既定原则（"cast 按业务语义选择，禁止机械替换"）保留 `as` 原样；
+如需进一步固化（如 cast lint deny 全清），建议作为独立后续项分批推进。

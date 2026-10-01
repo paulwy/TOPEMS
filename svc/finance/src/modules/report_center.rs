@@ -750,7 +750,7 @@ pub fn generate_analysis_report(period: &str, ratios: &FinancialRatios) -> Finan
         period: period.to_string(),
         ratios: ratios.clone(),
         grade: grade.to_string(),
-        score: Decimal::from((score * 100.0) as i64) / Decimal::from(100),
+        score: Decimal::from((score * 100.0).round() as i64) / Decimal::from(100),
         suggestions,
         warnings,
         trend_judgment,

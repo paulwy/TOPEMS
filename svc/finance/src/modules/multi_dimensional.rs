@@ -877,8 +877,9 @@ impl ProjectAccountingAnalyzer {
                 let gp = contract - cost;
                 let gm = safe_percentage(gp, contract);
                 let roi = safe_percentage(gp, cost);
-                let months =
-                    Decimal::from((i.completion_percentage.to_f64().unwrap_or(1.0) * 12.0) as i64);
+                let months = Decimal::from(
+                    (i.completion_percentage.to_f64().unwrap_or(1.0) * 12.0).round() as i64,
+                );
                 let payback = safe_divide(cost, gp.max(Decimal::from(1))).max(Decimal::ZERO);
                 let profit_per_month = safe_divide(gp, months.max(Decimal::from(1)));
                 ProjectProfitability {
