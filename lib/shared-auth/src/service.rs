@@ -40,6 +40,7 @@ pub fn pre_register_service_metrics() {
     );
 }
 
+#[allow(clippy::expect_used)]
 fn service_calls_metric() -> &'static IntCounterVec {
     SERVICE_TO_SERVICE_CALLS.get_or_init(|| {
         register_int_counter_vec!(
@@ -77,6 +78,7 @@ pub fn target_service_from_path(path: &str) -> String {
 /// 用于区分"服务不可用"与"正常调用"、量化聚合功能降级面。
 pub static SERVICE_CALLS_DEGRADED: OnceLock<IntCounterVec> = OnceLock::new();
 
+#[allow(clippy::expect_used)]
 fn service_calls_degraded_metric() -> &'static IntCounterVec {
     SERVICE_CALLS_DEGRADED.get_or_init(|| {
         register_int_counter_vec!(
@@ -184,6 +186,7 @@ pub fn is_service_claims(claims: &Claims) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::auth::verify_jwt_token;

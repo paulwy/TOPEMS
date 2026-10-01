@@ -88,6 +88,7 @@ impl Drop for EventBusModeGuard {
 /// ```ignore
 /// let Some((client, _guard)) = skip_without_redis().await else { return };
 /// ```
+#[allow(clippy::expect_used)]
 pub async fn skip_without_redis() -> Option<(Client, EventBusModeGuard)> {
     match maybe_connect_redis().await {
         Some(c) => {
@@ -117,6 +118,7 @@ pub struct ActiveSubscription<T> {
 
 impl<T: Send + 'static> ActiveSubscription<T> {
     /// 等待匹配 `matcher` 的消息到达，超时 30s。
+    #[allow(clippy::expect_used)]
     pub async fn wait_for_match(self) -> T {
         self.subscriber_task
             .await
@@ -132,6 +134,7 @@ impl<T: Send + 'static> ActiveSubscription<T> {
 ///
 /// # 参数
 /// - `matcher`：函数式过滤条件，通常是"收到的消息 ID == 发布的事件 ID"。
+#[allow(clippy::expect_used)]
 pub async fn prepare_subscription<T, F>(
     client: &Client,
     channel_name: &str,

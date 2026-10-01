@@ -400,6 +400,7 @@ pub struct MasterDataRef {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::test_helpers::redis_pubsub::{self};

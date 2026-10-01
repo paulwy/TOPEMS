@@ -290,6 +290,7 @@ pub fn check_permission_with_scope(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::permission::{PermissionScope, ResourcePermission};

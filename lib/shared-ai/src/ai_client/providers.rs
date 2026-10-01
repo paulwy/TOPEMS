@@ -819,6 +819,7 @@ pub fn get_supported_models(provider: AIProviderType) -> Vec<String> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::super::config::AIProviderType;
     use super::*;

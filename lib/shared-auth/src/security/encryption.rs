@@ -642,6 +642,7 @@ fn build_from_encryption_key(encryption_key: &str, is_production: bool) -> Field
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

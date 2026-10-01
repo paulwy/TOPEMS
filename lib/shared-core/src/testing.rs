@@ -58,6 +58,7 @@ pub fn extract_openapi_spec_to_file<T: OpenApi>(pkg_name: &str, manifest_dir: &s
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use utoipa::OpenApi;

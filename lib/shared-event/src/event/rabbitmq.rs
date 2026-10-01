@@ -520,6 +520,7 @@ impl RabbitMqSubscriber {
 pub type CacheInvalidationHandler = Arc<dyn Fn(&str, &str) + Send + Sync>;
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use crate::event::error::{EventError, EventResult};

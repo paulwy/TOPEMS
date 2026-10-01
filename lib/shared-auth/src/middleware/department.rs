@@ -126,6 +126,7 @@ pub fn require_department(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::{body::Body, http::Request, routing::get, Router};

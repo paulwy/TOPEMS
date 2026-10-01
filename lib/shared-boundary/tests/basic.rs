@@ -1,4 +1,5 @@
 //! `only_own_schema_query!` 宏集成测试：正常场景展开验证。
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use topems_shared_boundary::only_own_schema_query;
 

@@ -170,6 +170,7 @@ pub fn fmt_masked(field_name: &str, value: &str) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

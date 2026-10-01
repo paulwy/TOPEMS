@@ -116,6 +116,7 @@ fn is_content_type_allowed(config: &BodyLimitConfig, content_type: &str) -> bool
             .any(|allowed| content_type.starts_with(allowed))
 }
 
+#[allow(clippy::expect_used)]
 pub async fn body_limit_middleware(
     middleware: Arc<BodyLimitMiddleware>,
     req: Request<Body>,
@@ -164,6 +165,7 @@ pub async fn body_limit_middleware(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::http::Method;

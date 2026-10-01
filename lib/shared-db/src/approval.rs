@@ -256,6 +256,7 @@ pub async fn reject_and_log(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use topems_shared_core::fsm::FsmDef;

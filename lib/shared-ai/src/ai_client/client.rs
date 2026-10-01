@@ -275,6 +275,7 @@ impl UnifiedAIClient {
     }
 }
 
+#[allow(clippy::expect_used)]
 fn process_stream<S>(
     stream: S,
 ) -> Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>
@@ -293,6 +294,7 @@ where
 }
 
 /// 创建 HTTP 客户端
+#[allow(clippy::expect_used)]
 pub fn create_http_client(timeout: std::time::Duration) -> Client {
     Client::builder()
         .timeout(timeout)
@@ -302,6 +304,7 @@ pub fn create_http_client(timeout: std::time::Duration) -> Client {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

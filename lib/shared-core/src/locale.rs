@@ -98,6 +98,7 @@ pub fn pick_optional_name(name: Option<&str>, name_en: Option<&str>, lang: &str)
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::http::HeaderMap;

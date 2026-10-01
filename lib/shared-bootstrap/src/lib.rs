@@ -510,6 +510,7 @@ pub async fn quick_bootstrap(
 }
 
 /// 快速启动服务（带数据库）
+#[allow(clippy::expect_used)]
 pub async fn quick_bootstrap_with_db(
     service_name: &'static str,
     default_port: u16,
@@ -1233,6 +1234,7 @@ pub async fn default_detailed_health_handler(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use serial_test::serial;

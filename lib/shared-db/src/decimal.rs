@@ -17,6 +17,7 @@ pub fn big_decimal_to_f64_non_opt(bd: BigDecimal) -> f64 {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use sqlx::types::BigDecimal;

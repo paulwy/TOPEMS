@@ -4,6 +4,7 @@ use prometheus::{
 };
 use std::sync::LazyLock;
 
+#[allow(clippy::expect_used)]
 pub static HTTP_REQUEST_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     register_histogram_vec!(
         "http_request_duration_seconds",
@@ -14,6 +15,7 @@ pub static HTTP_REQUEST_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     .expect("Failed to register HTTP_REQUEST_DURATION histogram")
 });
 
+#[allow(clippy::expect_used)]
 pub static HTTP_REQUESTS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "http_requests_total",
@@ -23,11 +25,13 @@ pub static HTTP_REQUESTS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     .expect("Failed to register HTTP_REQUESTS_TOTAL counter")
 });
 
+#[allow(clippy::expect_used)]
 pub static ACTIVE_USERS: LazyLock<IntGauge> = LazyLock::new(|| {
     register_int_gauge!("topems_active_users", "Number of currently active users")
         .expect("Failed to register ACTIVE_USERS gauge")
 });
 
+#[allow(clippy::expect_used)]
 pub static BUSINESS_OPERATION_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     register_histogram_vec!(
         "topems_business_operation_duration_seconds",
@@ -38,6 +42,7 @@ pub static BUSINESS_OPERATION_DURATION: LazyLock<HistogramVec> = LazyLock::new(|
     .expect("Failed to register BUSINESS_OPERATION_DURATION histogram")
 });
 
+#[allow(clippy::expect_used)]
 pub static BUSINESS_OPERATIONS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_business_operations_total",
@@ -47,6 +52,7 @@ pub static BUSINESS_OPERATIONS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(||
     .expect("Failed to register BUSINESS_OPERATIONS_TOTAL counter")
 });
 
+#[allow(clippy::expect_used)]
 pub static DB_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     register_histogram_vec!(
         "topems_db_query_duration_seconds",
@@ -60,6 +66,7 @@ pub static DB_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
 // ==================== 缓存指标 ====================
 
 /// 缓存命中总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_cache_hits_total",
@@ -70,6 +77,7 @@ pub static CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// 缓存未命中总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_cache_misses_total",
@@ -80,6 +88,7 @@ pub static CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// 缓存写入总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static CACHE_SETS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_cache_sets_total",
@@ -90,6 +99,7 @@ pub static CACHE_SETS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// 缓存失效总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static CACHE_REMOVALS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_cache_removals_total",
@@ -100,6 +110,7 @@ pub static CACHE_REMOVALS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// 当前缓存条目数（按 service、entity 分类）
+#[allow(clippy::expect_used)]
 pub static CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
     register_int_gauge_vec!(
         "topems_cache_entries",
@@ -112,6 +123,7 @@ pub static CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
 // ===== 多级缓存（L1/L2）监控指标 =====
 
 /// L1 缓存命中总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static L1_CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_l1_cache_hits_total",
@@ -122,6 +134,7 @@ pub static L1_CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// L1 缓存未命中总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static L1_CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_l1_cache_misses_total",
@@ -132,6 +145,7 @@ pub static L1_CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// L2 缓存命中总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static L2_CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_l2_cache_hits_total",
@@ -142,6 +156,7 @@ pub static L2_CACHE_HITS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// L2 缓存未命中总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static L2_CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_l2_cache_misses_total",
@@ -152,6 +167,7 @@ pub static L2_CACHE_MISSES_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// L2 缓存写入总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static L2_CACHE_SETS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_l2_cache_sets_total",
@@ -162,6 +178,7 @@ pub static L2_CACHE_SETS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// L2 缓存失效总数（按 service、entity、operation 分类）
+#[allow(clippy::expect_used)]
 pub static L2_CACHE_REMOVALS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
     register_int_counter_vec!(
         "topems_l2_cache_removals_total",
@@ -172,6 +189,7 @@ pub static L2_CACHE_REMOVALS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 /// L1 缓存条目数（按 service、entity 分类）
+#[allow(clippy::expect_used)]
 pub static L1_CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
     register_int_gauge_vec!(
         "topems_l1_cache_entries",
@@ -182,6 +200,7 @@ pub static L1_CACHE_ENTRIES: LazyLock<IntGaugeVec> = LazyLock::new(|| {
 });
 
 /// L2 缓存连接状态（按 service 分类，1 = 已连接，0 = 未连接）
+#[allow(clippy::expect_used)]
 pub static L2_CACHE_CONNECTED: LazyLock<IntGaugeVec> = LazyLock::new(|| {
     register_int_gauge_vec!(
         "topems_l2_cache_connected",
@@ -195,6 +214,7 @@ pub static L2_CACHE_CONNECTED: LazyLock<IntGaugeVec> = LazyLock::new(|| {
 
 /// L1 缓存查询延迟（按 service、entity、operation 分类）
 /// L1 是进程内 moka 缓存，延迟通常在微秒级
+#[allow(clippy::expect_used)]
 pub static L1_CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     register_histogram_vec!(
         "topems_l1_cache_query_duration_seconds",
@@ -207,6 +227,7 @@ pub static L1_CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
 
 /// L2 缓存查询延迟（按 service、entity、operation 分类）
 /// L2 是 Redis 分布式缓存，延迟通常在毫秒级
+#[allow(clippy::expect_used)]
 pub static L2_CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     register_histogram_vec!(
         "topems_l2_cache_query_duration_seconds",
@@ -219,6 +240,7 @@ pub static L2_CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
 
 /// 总缓存查询延迟（按 service、entity、operation、result 分类）
 /// result: l1_hit（L1 命中）、l2_hit（L2 命中）、miss（未命中，回源）、set（写入）
+#[allow(clippy::expect_used)]
 pub static CACHE_QUERY_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {
     register_histogram_vec!(
         "topems_cache_query_duration_seconds",
@@ -282,6 +304,7 @@ pub fn init_metrics() {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

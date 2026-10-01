@@ -65,6 +65,7 @@ const DEFAULT_KNOWN_SERVICES: &[&str] = &[
 /// Prometheus 告警计数（kind 维度）——供 /metrics 监控消费（审计告警可观测出口）。
 static SERVICE_ALERTS: OnceLock<IntCounterVec> = OnceLock::new();
 
+#[allow(clippy::expect_used)]
 fn service_alerts_metric() -> &'static IntCounterVec {
     SERVICE_ALERTS
         .get_or_init(|| {
@@ -270,6 +271,7 @@ impl ServiceCallMonitor {
 /// - 仅在服务运行于 tokio runtime 内时推送（`Handle::try_current`）；
 ///   无 runtime（如纯同步上下文/测试）时静默跳过，保持非阻塞语义。
 /// - 推送失败仅 `trace::debug!`，绝不 panic、绝不阻塞主流程。
+#[allow(clippy::expect_used)]
 fn notify_feishu(webhook_url: String, message: String) {
     let handle = match tokio::runtime::Handle::try_current() {
         Ok(h) => h,
@@ -301,6 +303,7 @@ fn notify_feishu(webhook_url: String, message: String) {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

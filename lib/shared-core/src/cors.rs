@@ -2,6 +2,7 @@ use axum::http::HeaderValue;
 use std::env;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
+#[allow(clippy::expect_used)]
 pub fn create_cors_layer() -> CorsLayer {
     let allowed_origins = env::var("CORS_ALLOWED_ORIGINS")
         .unwrap_or_else(|_| "http://localhost:3000,http://localhost:5173".to_string());
@@ -54,6 +55,7 @@ pub fn create_cors_layer() -> CorsLayer {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use serial_test::serial;

@@ -366,6 +366,7 @@ fn json_type_of(value: &serde_json::Value) -> &'static str {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use serde_json::json;

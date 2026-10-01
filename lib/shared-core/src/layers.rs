@@ -160,6 +160,7 @@ pub fn can_depend(from: &str, to: &str) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

@@ -297,6 +297,7 @@ pub fn create_ollama_client(config: OllamaConfig) -> OllamaClient {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

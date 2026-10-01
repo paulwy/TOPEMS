@@ -360,6 +360,7 @@ pub fn preprocess_text(text: &str, max_length: usize) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

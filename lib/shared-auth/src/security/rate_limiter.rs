@@ -224,6 +224,7 @@ fn add_rate_limit_headers(response: &mut Response, limit: u32, remaining: u32, r
     }
 }
 
+#[allow(clippy::expect_used)]
 pub async fn rate_limit_middleware(
     middleware: Arc<RateLimitMiddleware>,
     req: Request<axum::body::Body>,
@@ -316,6 +317,7 @@ pub async fn rate_limit_middleware(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

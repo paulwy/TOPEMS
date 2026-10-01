@@ -257,6 +257,7 @@ pub fn is_tenant_scoped(claims: &Claims) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::{body::Body, http::Request, routing::get, Router};

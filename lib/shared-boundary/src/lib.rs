@@ -328,6 +328,7 @@ pub fn only_own_schema_query(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

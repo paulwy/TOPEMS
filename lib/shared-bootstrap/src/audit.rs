@@ -386,6 +386,7 @@ pub async fn log_audit_event_with_id(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use axum::http::HeaderMap;

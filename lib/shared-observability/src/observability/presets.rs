@@ -116,6 +116,7 @@ pub fn standard_slos_for_all_services() -> Vec<SLODefinition> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

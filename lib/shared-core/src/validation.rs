@@ -105,6 +105,7 @@ impl Validator {
         }
     }
 
+    #[allow(clippy::expect_used)]
     pub fn email(value: &str, field: &str) -> ValidationResult {
         let re =
             Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").expect("Invalid regex");
@@ -269,6 +270,7 @@ impl Validator {
         result
     }
 
+    #[allow(clippy::expect_used)]
     pub fn phone_number(value: &str, field: &str) -> ValidationResult {
         let re = Regex::new(r"^1[3-9]\d{9}$").expect("Invalid regex");
 
@@ -279,6 +281,7 @@ impl Validator {
         }
     }
 
+    #[allow(clippy::expect_used)]
     pub fn id_card(value: &str, field: &str) -> ValidationResult {
         let re = Regex::new(r"^\d{17}[\dXx]$").expect("Invalid regex");
 
@@ -363,6 +366,7 @@ pub fn normalize_code(code: &str) -> String {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 

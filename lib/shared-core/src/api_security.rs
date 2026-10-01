@@ -202,6 +202,7 @@ pub fn verify_request_signature(
 }
 
 /// 公开函数：生成请求签名（供客户端/SDK 使用）
+#[allow(clippy::expect_used)]
 pub fn generate_request_signature(
     method: &str,
     path: &str,
@@ -348,6 +349,7 @@ pub fn signature_error_response(verification: SignatureVerification) -> Response
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
 
