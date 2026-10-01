@@ -47,7 +47,7 @@ pub async fn list_assets(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<Asset>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
         return e;
     }
@@ -120,7 +120,7 @@ pub async fn create_asset(
     Json(req): Json<CreateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
@@ -226,7 +226,7 @@ pub async fn get_asset(
     >,
 ) -> Json<ApiResponse<Asset>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetRead).await {
         return e;
     }
@@ -275,7 +275,7 @@ pub async fn update_asset(
     Json(req): Json<UpdateAssetRequest>,
 ) -> Json<ApiResponse<Asset>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }
@@ -405,7 +405,7 @@ pub async fn delete_asset(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::AssetWrite).await {
         return e;
     }

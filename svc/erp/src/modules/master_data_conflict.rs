@@ -110,7 +110,7 @@ pub async fn detect_conflicts(
     Json(req): Json<DetectConflictsRequest>,
 ) -> Json<ApiResponse<ConflictDetectionResult>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let strategy = req.merge_strategy.unwrap_or_default();
     let strategy_str = match strategy {
         MergeStrategy::LastWriteWins => "last_write_wins",
@@ -359,7 +359,7 @@ pub async fn list_conflicts(
     Query(params): Query<ConflictQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataConflict>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -498,7 +498,7 @@ pub async fn get_conflict(
     >,
 ) -> Json<ApiResponse<MasterDataConflict>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
@@ -580,7 +580,7 @@ pub async fn resolve_conflict(
     Json(req): Json<ResolveConflictRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),
@@ -665,7 +665,7 @@ pub async fn auto_merge_conflict(
     Json(req): Json<AutoMergeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let cid = match uuid::Uuid::parse_str(&conflict_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的冲突 ID")),

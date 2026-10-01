@@ -59,7 +59,7 @@ pub async fn list_rooms(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MeetingRoom>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -133,7 +133,7 @@ pub async fn create_room(
     Json(req): Json<CreateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = validate_required_field("会议室名称", &req.name) {
         return Json(api_error(400, &e));
     }
@@ -231,7 +231,7 @@ pub async fn get_room(
     >,
 ) -> Json<ApiResponse<MeetingRoom>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query_as::<_, MeetingRoom>(only_own_schema_query!(
         "erp",
         r#"
@@ -277,7 +277,7 @@ pub async fn update_room(
     Json(req): Json<UpdateMeetingRoomRequest>,
 ) -> Json<ApiResponse<MeetingRoom>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let existing = sqlx::query_as::<_, MeetingRoom>(
         only_own_schema_query!("erp", "SELECT id, name, capacity, location, facilities, status, created_at, updated_at FROM meeting_rooms WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -392,7 +392,7 @@ pub async fn delete_room(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE meeting_rooms SET deleted_at = NOW() WHERE id = $1"
@@ -474,7 +474,7 @@ pub async fn list_bookings(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MeetingBooking>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -546,7 +546,7 @@ pub async fn create_booking(
     Json(req): Json<CreateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if let Err(e) = validate_required_field("会议标题", &req.title) {
         return Json(api_error(400, &e));
     }
@@ -678,7 +678,7 @@ pub async fn get_booking(
     >,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at
@@ -722,7 +722,7 @@ pub async fn update_booking(
     Json(req): Json<UpdateMeetingBookingRequest>,
 ) -> Json<ApiResponse<MeetingBooking>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let existing = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", "SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at FROM meeting_bookings WHERE deleted_at IS NULL AND id = $1"),
     )
@@ -835,7 +835,7 @@ pub async fn delete_booking(
     >,
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "UPDATE meeting_bookings SET deleted_at = NOW() WHERE id = $1"
@@ -920,7 +920,7 @@ pub async fn get_room_bookings(
     >,
 ) -> Json<ApiResponse<Vec<MeetingBooking>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query_as::<_, MeetingBooking>(
         only_own_schema_query!("erp", r#"
         SELECT id, room_id, room_name, title, organizer, start_time, end_time, status, created_at, updated_at

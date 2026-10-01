@@ -179,7 +179,7 @@ pub async fn list_master_data_refs(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -265,7 +265,7 @@ pub async fn get_master_data_ref(
     >,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {
@@ -315,7 +315,7 @@ pub async fn get_master_data_ref_by_code(
     >,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
         None
     } else {

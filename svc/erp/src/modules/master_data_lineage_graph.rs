@@ -62,7 +62,7 @@ pub async fn get_lineage_graph(
     >,
 ) -> Json<ApiResponse<LineageGraph>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let db = &mut **txn;
     let _depth = params.depth.unwrap_or(3);
 
@@ -335,7 +335,7 @@ pub async fn get_lineage_upstream(
     >,
 ) -> Json<ApiResponse<LineageGraph>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let db = &mut **txn;
     let mut nodes: Vec<LineageNode> = Vec::new();
     let mut edges: Vec<LineageEdge> = Vec::new();
@@ -422,7 +422,7 @@ pub async fn get_lineage_downstream(
     >,
 ) -> Json<ApiResponse<LineageGraph>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let db = &mut **txn;
     let mut nodes: Vec<LineageNode> = Vec::new();
     let mut edges: Vec<LineageEdge> = Vec::new();

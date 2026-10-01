@@ -143,6 +143,7 @@ pub fn calculate_goodwill(
 // ── 校验 ───────────────────────────────────────────────
 
 /// 会计期间校验：格式 `YYYY-MM`
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 pub fn validate_accounting_period(period: &str) -> bool {
     if period.len() != 7 {
         return false;

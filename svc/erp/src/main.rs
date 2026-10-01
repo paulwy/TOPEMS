@@ -28,14 +28,31 @@ use topems_shared_service_client::service_client::{
 };
 
 lazy_static::lazy_static! {
-    pub static ref ASSET_COUNT: IntGauge = register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system").expect("Failed to register asset_count gauge - check for duplicate metric registrations");
-    pub static ref VOUCHER_COUNT: IntGauge = register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system").expect("Failed to register voucher_count gauge - check for duplicate metric registrations");
-    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions").expect("Failed to register financial_transactions counter - check for duplicate metric registrations");
-    pub static ref ACTIVE_USERS: IntGauge = register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour").expect("Failed to register active_users gauge - check for duplicate metric registrations");
-    pub static ref API_REQUESTS_TOTAL: IntCounter = register_int_counter!("topems_erp_api_requests_total", "Total number of API requests").expect("Failed to register api_requests counter - check for duplicate metric registrations");
+    pub static ref ASSET_COUNT: IntGauge = match register_int_gauge!("topems_erp_asset_count", "Total number of assets in ERP system") {
+        Ok(g) => g,
+        Err(e) => panic!("Failed to register asset_count gauge - check for duplicate metric registrations: {e}"),
+    };
+    pub static ref VOUCHER_COUNT: IntGauge = match register_int_gauge!("topems_erp_voucher_count", "Total number of vouchers in ERP system") {
+        Ok(g) => g,
+        Err(e) => panic!("Failed to register voucher_count gauge - check for duplicate metric registrations: {e}"),
+    };
+    pub static ref FINANCIAL_TRANSACTION_COUNT: IntCounter = match register_int_counter!("topems_erp_financial_transactions_total", "Total number of financial transactions") {
+        Ok(g) => g,
+        Err(e) => panic!("Failed to register financial_transactions counter - check for duplicate metric registrations: {e}"),
+    };
+    pub static ref ACTIVE_USERS: IntGauge = match register_int_gauge!("topems_erp_active_users", "Number of active users in the last hour") {
+        Ok(g) => g,
+        Err(e) => panic!("Failed to register active_users gauge - check for duplicate metric registrations: {e}"),
+    };
+    pub static ref API_REQUESTS_TOTAL: IntCounter = match register_int_counter!("topems_erp_api_requests_total", "Total number of API requests") {
+        Ok(g) => g,
+        Err(e) => panic!("Failed to register api_requests counter - check for duplicate metric registrations: {e}"),
+    };
 }
 
+#[allow(clippy::expect_used)] // tokio::main 宏展开内含 runtime.build().expect()，启动失败即崩溃属预期
 #[tokio::main]
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn main() -> Result<()> {
     std::env::set_var("SEARCH_PATH", "erp, public");
 

@@ -27,7 +27,7 @@ pub async fn list_elimination_rules(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<EliminationRule>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     if params.scope_id.is_none() {
         return Json(api_error(400, "scope_id为必填参数"));
     }
@@ -100,7 +100,7 @@ pub async fn get_elimination_rule(
     >,
 ) -> Json<ApiResponse<EliminationRule>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     match sqlx::query_as::<_, EliminationRule>(
         "SELECT * FROM erp.elimination_rules WHERE deleted_at IS NULL AND id = $1",
     )
@@ -133,7 +133,7 @@ pub async fn create_elimination_rule(
     Json(req): Json<CreateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let id = Uuid::new_v4();
     let debit_codes = req
         .debit_account_codes
@@ -196,7 +196,7 @@ pub async fn update_elimination_rule(
     Json(req): Json<UpdateEliminationRuleRequest>,
 ) -> Json<ApiResponse<EliminationRule>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let debit_codes = req
         .debit_account_codes
         .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null));
@@ -270,7 +270,7 @@ pub async fn delete_elimination_rule(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     match sqlx::query("UPDATE erp.elimination_rules SET deleted_at = NOW() WHERE id = $1")
         .bind(rule_id)
         .execute(&mut **txn)
@@ -322,7 +322,7 @@ pub async fn export_elimination_worksheet(
     >,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let rules = match sqlx::query_as::<_, EliminationRule>(
         "SELECT * FROM erp.elimination_rules WHERE deleted_at IS NULL AND scope_id = $1 ORDER BY priority ASC",
     )

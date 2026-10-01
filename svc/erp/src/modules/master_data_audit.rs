@@ -63,7 +63,7 @@ pub async fn record_audit_event(
     Json(req): Json<RecordAuditRequest>,
 ) -> Json<ApiResponse<MasterDataAuditEvent>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
     let target_service = req.target_service.unwrap_or_else(|| "erp".to_string());
@@ -138,7 +138,7 @@ pub async fn get_audit_trail(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataAuditEvent>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

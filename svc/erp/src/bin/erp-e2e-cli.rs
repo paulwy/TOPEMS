@@ -42,7 +42,7 @@ fn scenario_happy() -> Result<(), String> {
 
 fn scenario_excess_grn() -> Result<(), String> {
     let mut req = sample_happy_cny();
-    req.grn.lines[0].quantity = 15.0; // 超收 50%
+    if let Some(line) = req.grn.lines.first_mut() { line.quantity = 15.0; } // 超收 50%
     let err = validate_procurement_chain(&req.po, &req.grn, &req.invoice, &req.payment)
         .err()
         .ok_or_else(|| "expected error but validation passed".to_string())?;
@@ -67,7 +67,7 @@ fn scenario_excess_grn() -> Result<(), String> {
 
 fn scenario_mismatch_inv() -> Result<(), String> {
     let mut req = sample_happy_cny();
-    req.invoice.lines[0].unit_price = 150.0; // 多开价税合计 15%
+    if let Some(line) = req.invoice.lines.first_mut() { line.unit_price = 150.0; } // 多开价税合计 15%
     let err = validate_procurement_chain(&req.po, &req.grn, &req.invoice, &req.payment)
         .err()
         .ok_or_else(|| "expected error but validation passed".to_string())?;

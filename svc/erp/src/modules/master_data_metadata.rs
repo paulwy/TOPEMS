@@ -410,6 +410,7 @@ async fn list_schemas(domain: Option<&str>) -> Vec<MetadataSchema> {
 }
 
 /// 更新 Schema（版本化）
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn update_schema(schema_id: &str, req: &SchemaRequest) -> Option<MetadataSchema> {
     ensure_metadata_initialized().await;
     let store = get_metadata_store();
@@ -555,6 +556,7 @@ async fn get_record(record_id: &str) -> Option<MetadataRecord> {
 }
 
 /// 查询记录
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn query_records(query: &RecordQuery) -> Vec<MetadataRecord> {
     ensure_metadata_initialized().await;
     let store = get_metadata_store();

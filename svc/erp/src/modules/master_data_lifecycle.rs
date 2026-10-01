@@ -49,6 +49,7 @@ pub struct LifecycleQuery {
 }
 
 /// V38.0 AC-10: 内部辅助函数 - 记录生命周期审计事件
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn record_lifecycle_audit(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     master_data_id: &str,
@@ -110,7 +111,7 @@ pub async fn archive_master_data_ref(
     Json(req): Json<ArchiveRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -221,7 +222,7 @@ pub async fn restore_master_data_ref(
     Json(req): Json<RestoreRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -326,7 +327,7 @@ pub async fn schedule_destruction(
     Json(req): Json<ScheduleDestructionRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let now = chrono::Utc::now();
     let scheduled_at = req
         .scheduled_at
@@ -436,7 +437,7 @@ pub async fn cancel_destruction(
     >,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -544,7 +545,7 @@ pub async fn destroy_master_data_ref(
     Json(req): Json<DestroyRequest>,
 ) -> Json<ApiResponse<MasterDataRef>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let now = chrono::Utc::now();
 
     let row = sqlx::query_as::<_, MasterDataRow>(only_own_schema_query!(
@@ -652,7 +653,7 @@ pub async fn list_archived(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -731,7 +732,7 @@ pub async fn list_pending_destruction(
     >,
 ) -> Json<ApiResponse<PaginatedResponse<MasterDataRef>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;

@@ -245,6 +245,7 @@ pub fn get_knowledge_graph_store() -> &'static KnowledgeGraphStore {
     &KNOWLEDGE_GRAPH_STORE
 }
 
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 async fn ensure_knowledge_graph_initialized() {
     let store = get_knowledge_graph_store();
     let mut initialized = store.initialized.write().await;

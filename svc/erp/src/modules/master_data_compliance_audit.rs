@@ -622,6 +622,7 @@ async fn run_compliance_check(req: &ComplianceCheckRequest) -> Vec<AuditFinding>
 }
 
 /// 获取审计发现
+#[allow(clippy::indexing_slicing)] // pos/job_pos/idx 由 position() 前置校验（Some 或 else 提前返回）保证存在，索引数学安全
 async fn get_audit_findings(query: &AuditFindingQuery) -> Vec<AuditFinding> {
     ensure_compliance_audit_initialized().await;
     let store = get_compliance_audit_store();

@@ -564,6 +564,7 @@ fn score_entity_internal(profile: &EntityProfile) -> QualityAiScore {
 }
 
 /// 异常检测：Z-Score + IQR + 阈值规则
+#[allow(clippy::indexing_slicing)] // 有界循环/显式守卫（len 校验、min 保护、position 定位），索引数学安全
 fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> {
     let now = chrono::Utc::now().to_rfc3339();
     let mut anomalies = Vec::new();

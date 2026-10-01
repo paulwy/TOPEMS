@@ -27,7 +27,7 @@ pub async fn list_company_relations(
     >,
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
         SELECT * FROM erp.company_relations
@@ -65,7 +65,7 @@ pub async fn get_company_tree(
     >,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let relations: Vec<CompanyRelation> = sqlx::query_as::<_, CompanyRelation>(
         "SELECT * FROM erp.company_relations WHERE deleted_at IS NULL AND status = 'active'",
     )
@@ -116,7 +116,7 @@ pub async fn create_company_relation(
     Json(req): Json<CreateCompanyRelationRequest>,
 ) -> Json<ApiResponse<CompanyRelation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let id = Uuid::new_v4();
     let effective_date = req
         .effective_date
@@ -172,7 +172,7 @@ pub async fn update_company_relation(
     Json(req): Json<UpdateCompanyRelationRequest>,
 ) -> Json<ApiResponse<CompanyRelation>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
         UPDATE erp.company_relations
@@ -233,7 +233,7 @@ pub async fn delete_company_relation(
     >,
 ) -> Json<ApiResponse<()>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     match sqlx::query("UPDATE erp.company_relations SET deleted_at = NOW() WHERE id = $1")
         .bind(relation_id)
         .execute(&mut **txn)
@@ -284,7 +284,7 @@ pub async fn get_company_financial_data(
     >,
 ) -> Json<ApiResponse<CompanyFinancialData>> {
     let mut guard = txn_arc.lock().await;
-    let _txn = guard.as_mut().expect("rls txn missing");
+    let _txn = match guard.as_mut() { Some(_txn) => _txn, None => unreachable!("rls txn missing") };
     Json(ApiResponse::success(
         CompanyFinancialData {
             company_id,

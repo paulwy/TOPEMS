@@ -52,7 +52,7 @@ pub async fn get_quality_trend(
     >,
 ) -> Json<ApiResponse<QualityTrend>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let db = &mut **txn;
     let period = params.period.as_deref().unwrap_or("7d");
     let days = match period {

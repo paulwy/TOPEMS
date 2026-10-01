@@ -105,7 +105,7 @@ pub async fn list_bank_accounts(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * page_size;
@@ -185,7 +185,7 @@ pub async fn get_bank_account(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let row = match sqlx::query(only_own_schema_query!("erp",
         "SELECT id, bank_name, account_number, account_name, branch_name, currency, balance, is_default, status, created_at, updated_at \
          FROM erp.bank_accounts WHERE id = $1"))
@@ -221,7 +221,7 @@ pub async fn create_bank_account(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
     let balance = req.balance.unwrap_or(0.0);
     let is_default = req.is_default.unwrap_or(false);
@@ -266,7 +266,7 @@ pub async fn update_bank_account(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     // COALESCE 保留未传字段原值
     let row = match sqlx::query(only_own_schema_query!("erp",
         "UPDATE erp.bank_accounts SET \
@@ -321,7 +321,7 @@ pub async fn delete_bank_account(
 ) -> Result<Json<ApiResponse<serde_json::Value>>, (StatusCode, Json<ApiResponse<serde_json::Value>>)>
 {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let result = sqlx::query(only_own_schema_query!(
         "erp",
         "DELETE FROM erp.bank_accounts WHERE id = $1"

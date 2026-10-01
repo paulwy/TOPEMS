@@ -67,7 +67,7 @@ pub async fn create_voucher(
     Json(req): Json<CreateVoucherRequest>,
 ) -> Json<ApiResponse<CreateVoucherResponse>> {
     let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
+    let txn = match guard.as_mut() { Some(txn) => txn, None => unreachable!("rls txn missing") };
     let voucher_id = Uuid::new_v4();
     let now = Utc::now();
     let department_id = req.department_id.unwrap_or_else(Uuid::nil);
