@@ -330,10 +330,15 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
 
   # ──────────────────────────────────────────────────────────────────────────
-  # [V232-P3 NEW Gate L] Cargo check workspace --tests -D warnings (standalone job)
+  # [V232-P3 NEW Gate L] Cargo check workspace --all-targets -D warnings (standalone job)
+  # [2026-10-02 L4 升级] --tests → --all-targets：
+  #   - 对齐本地 pre-push 门禁（scripts/ci/run-cargo-check.sh 同用 --all-targets）
+  #   - 覆盖 examples/benches 编译（--tests 不查这两类目标）
+  #   - TRAE 多机事故远端防线：配合 L1 Required status checks，
+  #     任何编译不过的提交（含 examples/benches）无法合入 main
   # ──────────────────────────────────────────────────────────────────────────
   cargo-check:
-    name: Gate L · cargo check --workspace --tests -D warnings
+    name: Gate L · cargo check --workspace --all-targets -D warnings
     needs: changes
     if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
     runs-on: ubuntu-latest
@@ -344,8 +349,8 @@ jobs:
         with:
           cache-prefix: "cargo-check-nightly-2026-07-01"
 
-      - name: Run cargo check (workspace, all tests)
-        run: RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --tests --message-format=short
+      - name: Run cargo check (workspace, all targets)
+        run: RUSTFLAGS="-D warnings" SQLX_OFFLINE="true" cargo check --workspace --all-targets --message-format=short
 
   # ──────────────────────────────────────────────────────────────────────────
   # mes-online-check：mes 真实 schema 在线编译门禁（防漂移 / 防倒退）
@@ -2399,3 +2404,59 @@ jobs:
         # 参数 10 = 注入 10s 延迟（本地验证通过的最小回归用例）
         # 退出码非 0 表示 wait 策略失效（误判通过或 race condition）
         run: ./scripts/dev/test-slow-db-startup.sh 10
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # [2026-10-02 L4] Nightly Failure Notify — 夜间回归失败自动开 Issue
+  # 触发：仅 schedule（每日 02:00 UTC）且核心 Rust 门禁任一失败
+  # 动作：创建 GitHub Issue（失败 job 列表 + run 链接 + 复现提示）
+  # 防噪：手动触发 / PR / push 失败不通知（仅 schedule）；每日最多一条
+  # 权限：仅本 job 开放 issues: write（不全局放开 GITHUB_TOKEN）
+  # ──────────────────────────────────────────────────────────────────────────
+  nightly-failure-notify:
+    name: Nightly Failure Notify (schedule only)
+    needs: [cargo-check, clippy-check, cargo-test, rust-test, mes-online-check]
+    if: github.event_name == 'schedule' && failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open failure issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const gateResults = {
+              'cargo-check (Gate L · all-targets)': '${{ needs.cargo-check.result }}',
+              'clippy-check (Gate K · all-targets)': '${{ needs.clippy-check.result }}',
+              'cargo-test (V251 blocking)': '${{ needs.cargo-test.result }}',
+              'rust-test': '${{ needs.rust-test.result }}',
+              'mes-online-check': '${{ needs.mes-online-check.result }}',
+            };
+            const failed = Object.entries(gateResults)
+              .filter(([, r]) => r === 'failure')
+              .map(([n]) => `\`${n}\``);
+            if (failed.length === 0) {
+              console.log('No failed gates; skip opening issue.');
+              return;
+            }
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const today = new Date().toISOString().slice(0, 10);
+            const body = [
+              '## 夜间回归失败（schedule · 02:00 UTC）',
+              '',
+              `**失败门禁：** ${failed.join('、')}`,
+              '',
+              `**Run：** ${runUrl}`,
+              '',
+              '**本地复现建议：**',
+              '```bash',
+              'bash scripts/sync_base.sh   # fetch → rebase --no-fork-point → cargo check --all-targets',
+              '```',
+              '',
+              '> 本 Issue 由 CI 自动创建（L4 防线），修复后请手动关闭。',
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[CI Nightly] ${today} 夜间回归失败 — ${failed.length} 个门禁`,
+              body,
+            });
