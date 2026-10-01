@@ -7,7 +7,6 @@ use axum::{
 use serde::Deserialize;
 use sqlx::Row;
 
-use super::models::*;
 use crate::AppState;
 
 #[derive(Debug, Deserialize)]

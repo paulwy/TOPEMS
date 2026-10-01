@@ -423,7 +423,7 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
         .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
     let protected_api = protected_api.layer(axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
+        let mw = rate_limiter;
         move |req, next| {
             let mw = mw.clone();
             async move { rate_limit_middleware(mw, req, next).await }

@@ -453,7 +453,7 @@ impl LineageTracker {
             .unwrap_or_else(|| {
                 let id = uuid::Uuid::new_v4().to_string();
                 let node = LineageNode {
-                    id: id.clone(),
+                    id,
                     entity_type: from_entity_type.clone(),
                     entity_id: from_entity_id.clone(),
                     name: format!("{}:{}", from_entity_type, from_entity_id),
@@ -471,7 +471,7 @@ impl LineageTracker {
             .unwrap_or_else(|| {
                 let id = uuid::Uuid::new_v4().to_string();
                 let node = LineageNode {
-                    id: id.clone(),
+                    id,
                     entity_type: to_entity_type.clone(),
                     entity_id: to_entity_id.clone(),
                     name: format!("{}:{}", to_entity_type, to_entity_id),

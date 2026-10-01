@@ -802,7 +802,7 @@ impl PrefetchEngine {
             .unwrap_or_else(|e| e.into_inner());
         let id = format!("rule_{}", uuid_simple());
         let rule = PrefetchRuleData {
-            id: id.clone(),
+            id,
             name: input.name,
             rule_type: input.rule_type,
             trigger_query: input.trigger_query,
@@ -1157,7 +1157,7 @@ impl EdgeFunctionOrchestrator {
         let id = format!("fn_{}", uuid_simple());
         let now = Utc::now();
         let func = EdgeOrchFunctionData {
-            id: id.clone(),
+            id,
             name: input.name,
             description: input.description.unwrap_or_default(),
             runtime: input.runtime,
@@ -1214,12 +1214,12 @@ impl EdgeFunctionOrchestrator {
             .or_else(|| state.select_best_node().map(|n| n.id.clone()));
 
         let plan = EdgeOrchPlanData {
-            plan_id: plan_id.clone(),
+            plan_id,
             name: input.name,
             mode: input.mode,
             status: EdgeExecutionStatusGql::Pending,
             function_ids: input.function_ids,
-            target_node_id: target_node_id.clone(),
+            target_node_id,
             created_at: now,
             started_at: None,
             completed_at: None,
@@ -2372,9 +2372,9 @@ impl DeploymentManager {
         let previous = state.config.version.clone();
         let deployment_id = format!("deploy_{}", uuid_simple());
         let record = DeploymentRecordData {
-            deployment_id: deployment_id.clone(),
+            deployment_id,
             version: version.to_string(),
-            previous_version: previous.clone(),
+            previous_version: previous,
             status: DeploymentStatusGql::Pending,
             canary_percent: 0,
             traffic_percent: 0,

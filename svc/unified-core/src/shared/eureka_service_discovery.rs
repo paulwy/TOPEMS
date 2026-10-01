@@ -289,10 +289,10 @@ impl EurekaServiceDiscovery {
             .insert("enabled".to_string(), registration.enabled.to_string());
 
         Ok(EurekaInstanceInfo {
-            instance_id: instance_id.clone(),
+            instance_id,
             app: registration.name.to_uppercase(),
             host_name: host.clone(),
-            ip_addr: host.clone(),
+            ip_addr: host,
             port: EurekaPort {
                 value: port,
                 enabled: true,

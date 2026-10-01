@@ -437,7 +437,7 @@ impl AgentOrchestrator {
                     );
 
                     if error_retries >= self.config.max_error_retries {
-                        error_msg = tool_step.error.clone();
+                        error_msg = tool_step.error;
                         success = false;
                         break;
                     }

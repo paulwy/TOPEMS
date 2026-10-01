@@ -641,7 +641,7 @@ impl MultimodalService {
     pub async fn generate_image_tags(&self, image_base64: &str) -> Result<Vec<String>, String> {
         let features = self.extract_image_features(image_base64);
 
-        let mut tags = features.features.clone();
+        let mut tags = features.features;
 
         tags.push("高质量".to_string());
         tags.push("专业".to_string());

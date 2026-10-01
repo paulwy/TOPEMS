@@ -329,7 +329,7 @@ impl MemorySystem {
     /// 存储记忆
     pub fn store(&self, mut memory: MemoryItem) -> String {
         if !self.config.enabled {
-            return memory.id.clone();
+            return memory.id;
         }
 
         // 为短期记忆和工作记忆设置默认 TTL

@@ -979,7 +979,7 @@ pub async fn create_branch(
         name: req.name,
         branch_type,
         parent_branch: req.parent_branch,
-        created_at: now.clone(),
+        created_at: now,
         created_by: "current_user".to_string(),
         merged_at: None,
         merged_by: None,
@@ -1019,7 +1019,7 @@ pub async fn merge_branch(
     };
 
     let now = chrono::Utc::now().to_rfc3339();
-    target.merged_at = Some(now.clone());
+    target.merged_at = Some(now);
     target.merged_by = Some("current_user".to_string());
     target.status = "merged".to_string();
 

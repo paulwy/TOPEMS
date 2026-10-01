@@ -1,0 +1,103 @@
+# TOPEMS Clippy 存量审计（2026-10-01）
+
+> 命令：`cargo clippy --workspace --no-deps --message-format=short -- --force-warn <13 个高危 lint>`，原始日志 `/tmp/clippy_hidden.txt`。
+> 口径：按 `(文件, 消息)` 去重后的真实诊断数；同一位置在 lib/bin/多 feature 编译下的重复报告已合并。
+
+## 结论
+
+- **默认 clippy 输出：0 条**（workspace ~150 条 allow + 37 个 crate 内联 `#![allow]` 全部压制）；仅剩 81 条 rustc 级琐碎警告（map identity ×40 / unused import ×21 / 冗余字段名 ×11）。
+- **强制开启 13 个高危 lint 后：去重 2,227 条真实诊断**（原始行 9,169 含多目标重复）。
+- 分布：数值转换类 1,487（67%）| panic 类 541（24%）| 性能类 161（7%）| 机械清理 37（2%）。
+
+## 按 lint 统计
+
+| clippy lint | 数量 | 类别 | 修复方式 |
+|---|---|---|---|
+| `as_conversions` | 458 | 数值安全 | 人工 |
+| `cast_possible_truncation` | 303 | 数值安全 | 人工 |
+| `cast_possible_wrap` | 286 | 数值安全 | 人工 |
+| `cast_precision_loss` | 262 | 数值安全 | 人工 |
+| `cast_sign_loss` | 178 | 数值安全 | 人工 |
+| `expect_used` | 212 | panic 风险 | 人工 |
+| `indexing_slicing` | 201 | panic 风险 | 人工 |
+| `unwrap_used` | 128 | panic 风险 | 人工 |
+| `redundant_clone` | 99 | 性能 | 自动(clippy --fix) |
+| `needless_pass_by_value` | 58 | 性能 | 人工 |
+| `unused_import` | 22 | 机械清理 | 自动(clippy --fix) |
+| `redundant_field_names` | 7 | 机械清理 | 自动(clippy --fix) |
+| `map_identity` | 7 | 机械清理 | 自动(clippy --fix) |
+| `clone_on_copy` | 3 | 性能 | 人工 |
+| `unused_variable` | 1 | 机械清理 | 自动(clippy --fix) |
+| `other` | 2 | 其他 | 人工 |
+
+**合计：2227 条**
+
+## 按服务分布（Top 20）
+
+| 服务 | 条数 | 主要问题 |
+|---|---|---|
+| portal | 385 | cast_possible_wrap(118), cast_possible_truncation(63), cast_sign_loss(57) |
+| ai | 285 | as_conversions(72), cast_possible_truncation(63), indexing_slicing(49) |
+| erp | 232 | expect_used(44), as_conversions(39), cast_sign_loss(38) |
+| finance | 135 | as_conversions(31), cast_possible_wrap(23), cast_possible_truncation(19) |
+| unified-core | 132 | as_conversions(47), unwrap_used(16), cast_possible_truncation(12) |
+| mes | 105 | as_conversions(25), unused_import(18), cast_possible_truncation(13) |
+| crm | 81 | expect_used(23), unwrap_used(12), as_conversions(11) |
+| wms | 65 | expect_used(25), as_conversions(16), cast_possible_wrap(11) |
+| master-data | 65 | cast_precision_loss(13), as_conversions(11), cast_possible_truncation(11) |
+| srm | 53 | expect_used(17), unwrap_used(14), cast_precision_loss(8) |
+| rd | 52 | expect_used(17), as_conversions(9), unwrap_used(7) |
+| shared-event | 51 | as_conversions(11), cast_possible_truncation(10), cast_precision_loss(8) |
+| integration | 41 | cast_possible_truncation(10), as_conversions(9), cast_possible_wrap(6) |
+| analytics | 40 | as_conversions(16), cast_possible_wrap(7), indexing_slicing(4) |
+| scm | 39 | expect_used(17), as_conversions(9), cast_precision_loss(4) |
+| shared-core | 38 | as_conversions(12), cast_possible_truncation(6), expect_used(6) |
+| ehs | 38 | unwrap_used(14), as_conversions(7), redundant_clone(6) |
+| mobile | 35 | as_conversions(12), cast_possible_truncation(6), cast_possible_wrap(6) |
+| hrm | 35 | expect_used(18), as_conversions(5), indexing_slicing(3) |
+| gis | 34 | as_conversions(7), cast_possible_truncation(7), indexing_slicing(6) |
+
+## 服务 × lint 交叉矩阵（Top 20 服务 × 主要 lint）
+
+| 服务 | as_conversions | truncation | wrap | precision | sign_loss | expect | indexing | unwrap | redundant_clone |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
+| portal | 40 | 63 | 118 | 48 | 57 | 1 | 20 | 8 | 13 |
+| ai | 72 | 63 | 23 | 32 | 13 | 3 | 49 | 6 | 12 |
+| erp | 39 | 23 | 32 | 25 | 38 | 44 | 17 | 2 | 9 |
+| finance | 31 | 19 | 23 | 16 | 12 | 1 | 14 | 4 | 10 |
+| unified-core | 47 | 12 | 8 | 11 | 10 | 2 | 11 | 16 | 7 |
+| mes | 25 | 13 | 7 | 9 | 1 | 1 | 3 | 3 | 7 |
+| crm | 11 | 4 | 5 | 9 | 5 | 23 | 7 | 12 | 3 |
+| wms | 16 | 3 | 11 | 7 | 0 | 25 | 0 | 1 | 1 |
+| master-data | 11 | 11 | 10 | 13 | 7 | 1 | 6 | 2 | 4 |
+| srm | 7 | 2 | 0 | 8 | 1 | 17 | 3 | 14 | 1 |
+| rd | 9 | 5 | 4 | 3 | 3 | 17 | 2 | 7 | 0 |
+| shared-event | 11 | 10 | 2 | 8 | 4 | 2 | 8 | 4 | 2 |
+| integration | 9 | 10 | 6 | 2 | 4 | 1 | 4 | 2 | 2 |
+| analytics | 16 | 3 | 7 | 4 | 3 | 2 | 4 | 1 | 0 |
+| scm | 9 | 3 | 2 | 4 | 0 | 17 | 3 | 0 | 1 |
+| shared-core | 12 | 6 | 1 | 6 | 1 | 6 | 3 | 1 | 0 |
+| ehs | 7 | 5 | 0 | 2 | 1 | 1 | 1 | 14 | 6 |
+| mobile | 12 | 6 | 6 | 4 | 2 | 2 | 2 | 0 | 0 |
+| hrm | 5 | 1 | 2 | 1 | 0 | 18 | 3 | 2 | 3 |
+| gis | 7 | 7 | 3 | 3 | 2 | 1 | 6 | 2 | 3 |
+
+## 修复优先级（分阶段）
+
+### Phase 1 — 机械清理（~139 条，`cargo clippy --fix` 可自动）
+- `map_identity`(7) + `unused_import`(22) + `redundant_field_names`(7) + `clone_on_copy`(4) + `redundant_clone`(99，部分自动)
+
+### Phase 2 — panic 类（541 条，需人工分类）
+- `indexing_slicing`(201) + `unwrap_used`(128) + `expect_used`(212)
+- 分类原则：启动/配置路径可保留并局部 allow；请求处理路径改为错误传播（`?` / `map_err`）；测试代码单独审计。
+- 顺序：按服务从高到低（ai → erp → unified-core → mes → portal → finance）。
+
+### Phase 3 — 数值安全（1,487 条，需人工，最大面）
+- `as_conversions`(458)：`as` → `try_from`/`From` 或显式 `saturating_*`/`wrapping_*`
+- `cast_*`(1,029)：按业务语义选择截断/回绕/符号处理，不得机械替换
+- 顺序：金额域优先（finance → erp → srm），网关其次（portal），再批量（ai/unified-core/…）
+
+### Phase 4 — 闸门恢复（防回退）
+- 每清零一批，从根 `Cargo.toml` 的 `[workspace.lints.clippy]` 移除对应 allow 并升级为 `deny`
+- 删除 37 个 crate `lib.rs` 中与 workspace 重复的内联 `#![allow]` 块
+- CI 增加 `cargo clippy --workspace --no-deps -- -D warnings`（sccache 下成本≈0）

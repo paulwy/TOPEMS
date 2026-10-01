@@ -363,7 +363,7 @@ pub async fn get_plan(
                 },
                 PlanApproval {
                     id: "appr-002".to_string(),
-                    plan_id: id.clone(),
+                    plan_id: id,
                     approver: Some("总经理".to_string()),
                     approver_role: Some("批准".to_string()),
                     status: "approved".to_string(),

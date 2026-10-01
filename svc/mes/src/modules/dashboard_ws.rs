@@ -43,7 +43,7 @@ pub async fn dashboard_websocket(
         !auth_state.jwt_secret.is_empty()
     );
 
-    let jwt_secret = auth_state.jwt_secret.clone();
+    let jwt_secret = auth_state.jwt_secret;
     let token_from_url = params.token;
 
     ws.on_upgrade(move |socket| async move {

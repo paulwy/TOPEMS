@@ -451,7 +451,7 @@ pub fn create_default_tools(service_registry: Arc<ServiceRegistry>) -> Vec<Arc<d
         // IoT - Internet of Things
         Arc::new(IotTool::new(service_registry.clone())),
         // OA - Office Automation
-        Arc::new(OaTool::new(service_registry.clone())),
+        Arc::new(OaTool::new(service_registry)),
     ]
 }
 

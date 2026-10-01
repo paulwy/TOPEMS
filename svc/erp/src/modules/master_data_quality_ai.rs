@@ -645,7 +645,7 @@ fn detect_anomalies_internal(profiles: &[EntityProfile]) -> Vec<QualityAnomaly> 
         .filter_map(|p| p.name.as_ref().map(|n| n.chars().count() as f64))
         .collect();
     if lengths.len() >= 4 {
-        let mut sorted = lengths.clone();
+        let mut sorted = lengths;
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         let q1 = sorted[sorted.len() / 4];
         let q3 = sorted[sorted.len() * 3 / 4];

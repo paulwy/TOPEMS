@@ -974,7 +974,7 @@ pub async fn start_hazard_approval(
         req.workflow_id
     );
 
-    let workflow_client = state.workflow_client.clone();
+    let workflow_client = state.workflow_client;
     let id_clone = id.clone();
     tokio::spawn(async move {
         let request = CreateInstanceRequest {
@@ -996,7 +996,7 @@ pub async fn start_hazard_approval(
 
     Json(ApiResponse::success(
         Hazard {
-            id: id.clone(),
+            id,
             hazard_no: "HZ-2024001".to_string(),
             title: "消防通道堵塞".to_string(),
             description: Some("生产车间A区消防通道被货物堵塞".to_string()),
@@ -1051,7 +1051,7 @@ pub async fn approve_hazard(
 
     Json(ApiResponse::success(
         Hazard {
-            id: id.clone(),
+            id,
             hazard_no: "HZ-2024001".to_string(),
             title: "消防通道堵塞".to_string(),
             description: Some("生产车间A区消防通道被货物堵塞".to_string()),
@@ -1106,7 +1106,7 @@ pub async fn reject_hazard(
 
     Json(ApiResponse::success(
         Hazard {
-            id: id.clone(),
+            id,
             hazard_no: "HZ-2024001".to_string(),
             title: "消防通道堵塞".to_string(),
             description: Some("生产车间A区消防通道被货物堵塞".to_string()),

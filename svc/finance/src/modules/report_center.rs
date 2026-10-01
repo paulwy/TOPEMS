@@ -911,7 +911,7 @@ pub async fn get_enhanced_cash_flow_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<CashFlowStatementEnhanced>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = generate_cash_flow_statement(&period);
     Json(ApiResponse::success(report, "查询成功"))
@@ -966,7 +966,7 @@ pub async fn get_comparative_report_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<ComparativeReport>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = generate_comparative_report(&period);
     Json(ApiResponse::success(report, "查询成功"))
@@ -987,7 +987,7 @@ pub async fn export_report_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<ExportReportRequest>,
 ) -> Json<ApiResponse<ExportReportResponse>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let format = req.format.unwrap_or_else(|| "xlsx".to_string());
     let now = Utc::now().to_rfc3339();
@@ -995,9 +995,9 @@ pub async fn export_report_handler(
     let download_url = format!("/api/v1/finance/reports/download/{}", file_name);
     let response = ExportReportResponse {
         report_type: req.report_type.clone(),
-        period: req.period.clone(),
-        format: format.clone(),
-        file_name: file_name.clone(),
+        period: req.period,
+        format,
+        file_name,
         file_size: 102_400,
         download_url,
         generated_at: now,

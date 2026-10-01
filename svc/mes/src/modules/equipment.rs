@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -924,7 +924,7 @@ pub async fn create_maintenance(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no,
+            equipment_no,
             maintenance_type,
             description: Some(description),
             maintainer,
@@ -932,10 +932,10 @@ pub async fn create_maintenance(
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status,
+            status,
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at,
+            updated_at,
         },
         "维护记录创建成功",
     ))
@@ -1031,7 +1031,7 @@ pub async fn update_maintenance_status(
             id,
             equipment_id,
             equipment_name: Some(equipment_name.unwrap_or_default()),
-            equipment_no: equipment_no,
+            equipment_no,
             maintenance_type,
             description: Some(description),
             maintainer,
@@ -1039,10 +1039,10 @@ pub async fn update_maintenance_status(
             end_time,
             cost: big_decimal_to_f64_opt(result.cost),
             result: result.result,
-            status: status,
+            status,
             remarks: result.remarks,
-            created_at: created_at,
-            updated_at: updated_at,
+            created_at,
+            updated_at,
         },
         "维护状态更新成功",
     ))

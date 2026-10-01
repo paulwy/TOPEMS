@@ -269,7 +269,7 @@ impl DnsServiceDiscovery {
             return Ok(None);
         };
 
-        let &RData::SRV(ref srv) = &record.data else {
+        let RData::SRV(srv) = &record.data else {
             return Ok(None);
         };
 
@@ -279,7 +279,7 @@ impl DnsServiceDiscovery {
 
         let mut metadata = HashMap::new();
         metadata.insert("srv_name".to_string(), srv_name);
-        metadata.insert("srv_target".to_string(), host.clone());
+        metadata.insert("srv_target".to_string(), host);
         metadata.insert("srv_port".to_string(), port.to_string());
         metadata.insert("srv_priority".to_string(), srv.priority.to_string());
         metadata.insert("srv_weight".to_string(), srv.weight.to_string());

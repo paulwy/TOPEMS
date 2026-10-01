@@ -960,7 +960,7 @@ async fn get_service_centers_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<ServiceCenterReport>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = SharedServiceCenterAnalyzer::analyze(&period);
     Json(ApiResponse::success(report, "查询成功"))
@@ -981,7 +981,7 @@ async fn get_service_performance_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<ServicePerformance>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let performance = SharedServiceCenterAnalyzer::get_performance(&period);
     Json(ApiResponse::success(performance, "查询成功"))
@@ -1002,7 +1002,7 @@ async fn get_service_utilization_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<ServiceUtilization>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let utilization = SharedServiceCenterAnalyzer::get_utilization(&period);
     Json(ApiResponse::success(utilization, "查询成功"))
@@ -1023,7 +1023,7 @@ async fn calculate_cost_allocation_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CalculateAllocationRequest>,
 ) -> Json<ApiResponse<CalculateAllocationResult>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let result = ServiceCostAllocator::calculate(req);
     Json(ApiResponse::success(result, "计算成功"))
@@ -1044,7 +1044,7 @@ async fn get_cost_allocation_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<CostAllocationItem>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let items = ServiceCostAllocator::get_allocations(&period);
     Json(ApiResponse::success(items, "查询成功"))
@@ -1072,7 +1072,7 @@ async fn get_cost_allocation_breakdown_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<CostAllocationBreakdown>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let breakdown = ServiceCostAllocator::get_breakdown(&period);
     Json(ApiResponse::success(breakdown, "查询成功"))
@@ -1092,7 +1092,7 @@ async fn get_pricing_policies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<PricingPolicy>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let policies = InternalPricingManager::get_policies();
     Json(ApiResponse::success(policies, "查询成功"))
@@ -1113,7 +1113,7 @@ async fn create_pricing_policy_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePricingPolicyRequest>,
 ) -> Json<ApiResponse<PricingPolicy>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let policy = InternalPricingManager::create_policy(req);
     Json(ApiResponse::success(policy, "创建成功"))
@@ -1135,7 +1135,7 @@ async fn update_pricing_policy_handler(
     Path(policy_id): Path<Uuid>,
     Json(req): Json<UpdatePricingPolicyRequest>,
 ) -> Json<ApiResponse<PricingPolicy>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let existing = PricingPolicy {
         policy_id,
@@ -1178,7 +1178,7 @@ async fn get_internal_settlements_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<InternalSettlement>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let settlements = InternalPricingManager::get_settlements(&period);
     Json(ApiResponse::success(settlements, "查询成功"))
@@ -1199,7 +1199,7 @@ async fn generate_settlements_handler(
     Extension(claims): Extension<Claims>,
     Json(req): Json<GenerateSettlementRequest>,
 ) -> Json<ApiResponse<GenerateSettlementResult>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let result = InternalPricingManager::generate_settlements(req);
     Json(ApiResponse::success(result, "生成成功"))

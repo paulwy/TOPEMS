@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, NaiveDate, TimeZone, Timelike, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -472,8 +472,8 @@ pub async fn get_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
-                approved_by: r.approved_by.map(|u| u.to_string()),
+                status: r.status.unwrap_or_default(),
+                approved_by: r.approved_by,
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
                 created_at: r.created_at.unwrap_or_else(Utc::now),
@@ -670,7 +670,7 @@ pub async fn create_work_report(
                     defect_quantity: big_decimal_to_f64(r.defect_quantity),
                     labor_hours: big_decimal_to_f64(r.labor_hours),
                     remark: r.remark,
-                    status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                    status: r.status.unwrap_or_default(),
                     approved_by: r.approved_by.map(|u| u.to_string()),
                     approved_at: opt_datetime_to_string(r.approved_at),
                     approval_remark: r.approval_remark,
@@ -816,7 +816,7 @@ pub async fn update_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
@@ -956,7 +956,7 @@ pub async fn approve_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,
@@ -1051,7 +1051,7 @@ pub async fn reject_work_report(
                 defect_quantity: big_decimal_to_f64(r.defect_quantity),
                 labor_hours: big_decimal_to_f64(r.labor_hours),
                 remark: r.remark,
-                status: r.status.map(|u| u.to_string()).unwrap_or_default(),
+                status: r.status.unwrap_or_default(),
                 approved_by: r.approved_by.map(|u| u.to_string()),
                 approved_at: opt_datetime_to_string(r.approved_at),
                 approval_remark: r.approval_remark,

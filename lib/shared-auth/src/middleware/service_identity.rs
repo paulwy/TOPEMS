@@ -39,7 +39,7 @@ pub async fn service_identity_middleware(req: Request<Body>, next: Next) -> Resp
             );
             req.extensions_mut().insert(ServiceIdentity {
                 service_name: claims.username.clone(),
-                permissions: claims.permissions.clone(),
+                permissions: claims.permissions,
             });
         }
     }

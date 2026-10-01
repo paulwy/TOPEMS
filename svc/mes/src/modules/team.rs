@@ -6,7 +6,7 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
@@ -339,8 +339,8 @@ pub async fn get_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: r.description,
-                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "获取班组成功"))
         }
@@ -650,7 +650,7 @@ pub async fn add_team_member(
         return e;
     }
 
-    let now = Utc::now();
+    let _now = Utc::now();
 
     let employee_uuid = Uuid::parse_str(&req.employee_id).ok();
     let employee_uuid_arg = employee_uuid.as_ref().map(|u| u.to_string());

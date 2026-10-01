@@ -417,7 +417,7 @@ fn classify_entity_internal(
 ) -> ClassificationResult {
     let text = profile.name.clone().unwrap_or_default();
     // 同时纳入其他字段值作为"文档"
-    let mut doc = text.clone();
+    let mut doc = text;
     for (k, v) in &profile.fields {
         if let Some(val) = v {
             if k != "code" && k != "last_synced_at" {
@@ -514,7 +514,7 @@ fn classify_entity_internal(
     ClassificationResult {
         entity_id: profile.id.clone(),
         domain: profile.domain.clone(),
-        suggested_category: suggested_cat.name.clone(),
+        suggested_category: suggested_cat.name,
         category_path,
         confidence: (confidence * 100.0).round() / 100.0,
         alternative_categories,
@@ -553,7 +553,7 @@ fn suggest_tags_internal(profile: &EntityProfile, categories: &[Category]) -> Ve
     }
     // 基于 name 关键词匹配分类标签
     let text = profile.name.clone().unwrap_or_default();
-    let mut doc = text.clone();
+    let mut doc = text;
     for (k, v) in &profile.fields {
         if let Some(val) = v {
             if k != "code" && k != "last_synced_at" {

@@ -964,7 +964,7 @@ pub async fn get_cost_center_report_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<CostCenterReport>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = CostCenterAnalyzer::analyze(&period);
     Json(ApiResponse::success(report, "查询成功"))
@@ -985,7 +985,7 @@ pub async fn get_cost_center_trend_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<CostTrendPoint>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let trend = CostCenterAnalyzer::get_trend(&period);
     Json(ApiResponse::success(trend, "查询成功"))
@@ -1006,7 +1006,7 @@ pub async fn get_cost_center_efficiency_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<CostEfficiency>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let efficiency = CostCenterAnalyzer::get_efficiency(&period);
     Json(ApiResponse::success(efficiency, "查询成功"))
@@ -1027,7 +1027,7 @@ pub async fn get_profit_center_report_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<ProfitCenterReport>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = ProfitCenterAnalyzer::analyze(&period);
     Json(ApiResponse::success(report, "查询成功"))
@@ -1048,7 +1048,7 @@ pub async fn get_profit_center_trend_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<ProfitTrendPoint>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let trend = ProfitCenterAnalyzer::get_trend(&period);
     Json(ApiResponse::success(trend, "查询成功"))
@@ -1078,7 +1078,7 @@ pub async fn get_profit_center_ranking_handler(
     Path(period): Path<String>,
     Query(params): Query<MultiDimQueryParams>,
 ) -> Json<ApiResponse<Vec<ProfitCenterRanking>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let ranking = ProfitCenterAnalyzer::get_ranking(&period, params.top_n);
     Json(ApiResponse::success(ranking, "查询成功"))
@@ -1099,7 +1099,7 @@ pub async fn get_project_account_report_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<ProjectAccountReport>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let report = ProjectAccountingAnalyzer::analyze(&period);
     Json(ApiResponse::success(report, "查询成功"))
@@ -1120,7 +1120,7 @@ pub async fn get_project_progress_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<ProjectProgress>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let progress = ProjectAccountingAnalyzer::get_progress(&period);
     Json(ApiResponse::success(progress, "查询成功"))
@@ -1141,7 +1141,7 @@ pub async fn get_project_profitability_handler(
     Extension(claims): Extension<Claims>,
     Path(period): Path<String>,
 ) -> Json<ApiResponse<Vec<ProjectProfitability>>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let profitability = ProjectAccountingAnalyzer::get_profitability(&period);
     Json(ApiResponse::success(profitability, "查询成功"))
@@ -1161,7 +1161,7 @@ pub async fn get_project_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ProjectSummary>> {
-    let _service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
+    let _service = FinanceService::new(state.pool.clone(), state.workflow_client);
     let _tenant_id = get_tenant_id_from_claims(&claims);
     let summary = ProjectAccountingAnalyzer::get_summary();
     Json(ApiResponse::success(summary, "查询成功"))

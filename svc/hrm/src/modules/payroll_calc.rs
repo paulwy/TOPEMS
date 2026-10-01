@@ -423,7 +423,7 @@ pub fn split_deductions_into_social_security(
     let safe_ratio = if ratio_lo < one {
         ratio_lo
     } else {
-        one.clone()
+        one
     };
 
     let social_security = &safe_total * &safe_ratio;
@@ -557,7 +557,7 @@ pub fn build_payroll_voucher_entries(summary: &PayrollVoucherSummary<'_>) -> Vec
             line: 1,
             subject_code: "660101",
             subject_name: "工资",
-            debit: gross.clone(),
+            debit: gross,
             credit: zero.clone(),
         },
         VoucherEntry {

@@ -494,12 +494,12 @@ impl PromptEngine {
         let (template_id, _version) = if group == "A" {
             (
                 config.template_a_id.clone(),
-                config.template_a_version.clone(),
+                config.template_a_version,
             )
         } else {
             (
                 config.template_b_id.clone(),
-                config.template_b_version.clone(),
+                config.template_b_version,
             )
         };
 

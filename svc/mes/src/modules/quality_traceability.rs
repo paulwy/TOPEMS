@@ -3,7 +3,7 @@
 use axum::{
     extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
 };
-use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::types::Uuid;
@@ -262,8 +262,8 @@ pub async fn forward_traceability(
     });
 
     links.push(TraceLink {
-        from_id: prev_node_id.clone(),
-        to_id: finished_node_id.clone(),
+        from_id: prev_node_id,
+        to_id: finished_node_id,
         link_type: "completion".to_string(),
         quantity: order
             .completed_quantity
@@ -412,8 +412,8 @@ pub async fn backward_traceability(
     });
 
     links.push(TraceLink {
-        from_id: material_node_id.clone(),
-        to_id: supplier_node_id.clone(),
+        from_id: material_node_id,
+        to_id: supplier_node_id,
         link_type: "supply".to_string(),
         quantity: None,
     });

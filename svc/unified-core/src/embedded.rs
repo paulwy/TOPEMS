@@ -228,7 +228,7 @@ async fn build_router_inner(
         let policy_mutex = std::sync::Arc::new(tokio::sync::Mutex::new(policy.clone()));
         let retention_manager = std::sync::Arc::new(
             crate::routes::business_tools::audit_retention::RetentionManager::new(
-                policy.clone(),
+                policy,
                 audit_logger.clone(),
             ),
         );

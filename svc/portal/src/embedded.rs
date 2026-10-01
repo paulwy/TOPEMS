@@ -296,7 +296,7 @@ pub async fn build_router(
         .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
     let protected_routes = protected_routes.layer(axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
+        let mw = rate_limiter;
         move |req, next| {
             let mw = mw.clone();
             async move { rate_limit_middleware(mw, req, next).await }
@@ -1013,7 +1013,7 @@ pub async fn build_router(
     .route(
         "/api/portal/graphql/ws",
         get({
-            let schema = graphql_schema.clone();
+            let schema = graphql_schema;
             move |protocol: async_graphql_axum::GraphQLProtocol,
                   ws: axum::extract::WebSocketUpgrade| {
                 let schema = schema.clone();

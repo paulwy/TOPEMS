@@ -814,7 +814,7 @@ impl StreamManagerInner {
         self.subscribers
             .insert(id.clone(), StreamSubscribers::new());
         self.events.insert(id.clone(), Vec::new());
-        self.sequence_counters.insert(id.clone(), AtomicU64::new(0));
+        self.sequence_counters.insert(id, AtomicU64::new(0));
 
         info
     }

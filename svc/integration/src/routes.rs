@@ -49,7 +49,7 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
         .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
     let rate_limit_layer = from_fn({
-        let mw = rate_limiter.clone();
+        let mw = rate_limiter;
         move |req, next| {
             let mw = mw.clone();
             async move { rate_limit_middleware(mw, req, next).await }

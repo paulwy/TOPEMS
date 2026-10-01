@@ -5012,7 +5012,7 @@ pub fn try_start_redis_listener(event_bus: Arc<EventBus>) -> bool {
     );
 
     // 订阅主数据事件 → MasterDataChanged 频道
-    let eb_md = event_bus.clone();
+    let eb_md = event_bus;
     let subscriber = subscriber.subscribe_master_data(
         vec![
             topems_shared_event::event::MasterDataDomain::Customer,

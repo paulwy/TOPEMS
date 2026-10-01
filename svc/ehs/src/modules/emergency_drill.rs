@@ -603,7 +603,7 @@ pub async fn get_drill_record(
             }),
             problems: vec![DrillProblem {
                 id: "prob-001".to_string(),
-                drill_id: id.clone(),
+                drill_id: id,
                 description: "部分员工对疏散路线不熟悉".to_string(),
                 category: Some("training".to_string()),
                 severity: Some("medium".to_string()),

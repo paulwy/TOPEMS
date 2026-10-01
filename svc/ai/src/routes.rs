@@ -748,7 +748,7 @@ pub fn create_routes(
             get(workflow_handlers::get_workflow),
         )
         .layer(axum::middleware::from_fn_with_state(
-            pool.clone(),
+            pool,
             topems_shared_auth::tenant_middleware(),
         ))
         .layer(axum::middleware::from_fn_with_state(
@@ -762,7 +762,7 @@ pub fn create_routes(
         .with_by_ip(true);
     let rate_limiter = Arc::new(RateLimitMiddleware::new(rate_limit_config));
     let rate_limit_layer = axum::middleware::from_fn({
-        let mw = rate_limiter.clone();
+        let mw = rate_limiter;
         move |req, next| {
             let mw = mw.clone();
             async move { rate_limit_middleware(mw, req, next).await }
@@ -773,7 +773,7 @@ pub fn create_routes(
     // with_state 注入 AppState 后以 Router<()> 形态并入受保护路由链）
     let ai_knowledge_router = Router::new()
         .merge(crate::modules::ai_knowledge::create_routes())
-        .with_state(app_state.clone());
+        .with_state(app_state);
 
     let all_protected_routes = Router::new()
         .merge(protected_routes)
@@ -825,7 +825,7 @@ pub fn create_routes(
     // V335: MCP (Model Context Protocol) Server 路由
     // 端点：POST /mcp, GET /mcp/sse
     // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
-    let app = app.merge(create_mcp_routes(mcp_server, mcp_jwt_secret.clone()));
+    let app = app.merge(create_mcp_routes(mcp_server, mcp_jwt_secret));
 
     app
 }

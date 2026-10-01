@@ -286,7 +286,7 @@ pub async fn get_plugin_statistics(
 
     let stats = PluginStatistics {
         plugin_id: uuid::Uuid::nil(),
-        plugin_code: plugin_code.clone(),
+        plugin_code,
         total_downloads: 12580,
         monthly_downloads: 1842,
         weekly_downloads: 456,

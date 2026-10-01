@@ -57,7 +57,7 @@ impl LlmProvider for MockProvider {
     async fn ask(&self, request: LlmRequest) -> Result<LlmResponse, LlmProviderError> {
         let model = request
             .model
-            .clone()
+            
             .unwrap_or_else(|| "mock-model".to_string());
 
         Ok(LlmResponse {

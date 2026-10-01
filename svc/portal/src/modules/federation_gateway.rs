@@ -607,7 +607,7 @@ impl TransactionCoordinator {
             .collect();
 
         let ctx = TransactionContext {
-            id: id.clone(),
+            id,
             participants,
             state: TransactionState::Preparing,
             steps: parsed_steps,

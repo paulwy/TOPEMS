@@ -51,7 +51,7 @@ impl VersionNegotiator {
                         requested_version: requested_version.to_string(),
                         matched_version: Some(requested_version.to_string()),
                         fallback_used: false,
-                        supported_versions: supported.clone(),
+                        supported_versions: supported,
                         strategy_used: "exact_match".to_string(),
                     }
                 } else {
@@ -72,7 +72,7 @@ impl VersionNegotiator {
                             let fallback = self.get_latest_active_version();
                             NegotiatedVersion {
                                 requested_version: requested_version.to_string(),
-                                matched_version: Some(fallback.clone()),
+                                matched_version: Some(fallback),
                                 fallback_used: true,
                                 supported_versions: supported,
                                 strategy_used: "latest_compatible".to_string(),
@@ -90,7 +90,7 @@ impl VersionNegotiator {
                     let fallback = self.get_latest_active_version();
                     NegotiatedVersion {
                         requested_version: requested_version.to_string(),
-                        matched_version: Some(fallback.clone()),
+                        matched_version: Some(fallback),
                         fallback_used: true,
                         supported_versions: supported,
                         strategy_used: "latest_compatible".to_string(),
@@ -105,7 +105,7 @@ impl VersionNegotiator {
                             let fallback = self.get_latest_active_version();
                             NegotiatedVersion {
                                 requested_version: requested_version.to_string(),
-                                matched_version: Some(fallback.clone()),
+                                matched_version: Some(fallback),
                                 fallback_used: true,
                                 supported_versions: supported,
                                 strategy_used: "deprecated_with_fallback".to_string(),
@@ -123,7 +123,7 @@ impl VersionNegotiator {
                     let fallback = self.get_latest_active_version();
                     NegotiatedVersion {
                         requested_version: requested_version.to_string(),
-                        matched_version: Some(fallback.clone()),
+                        matched_version: Some(fallback),
                         fallback_used: true,
                         supported_versions: supported,
                         strategy_used: "deprecated_with_fallback".to_string(),
@@ -203,7 +203,7 @@ impl VersionNegotiator {
 
     fn add_version(&mut self, version: String, status: VersionStatus) -> SupportedVersion {
         let supported = SupportedVersion {
-            version: version.clone(),
+            version,
             status,
             deprecated_at: None,
             sunset_at: None,

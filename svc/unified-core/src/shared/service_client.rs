@@ -1510,7 +1510,7 @@ impl ServiceRegistry {
             .services
             .lock()
             .map_err(|e| ServiceClientError::InvalidHeader(e.to_string()))?;
-        services.insert(config.name.clone(), client);
+        services.insert(config.name, client);
         Ok(())
     }
 

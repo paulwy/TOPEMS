@@ -282,7 +282,7 @@ pub async fn create_sync_job_v2(
         SyncJobPriority::Low => store.priority_queue.low.push(queue_job),
     }
 
-    store.jobs.insert(id.clone(), job.clone());
+    store.jobs.insert(id, job.clone());
 
     let stats = store
         .tenant_stats
@@ -415,7 +415,7 @@ pub async fn retry_dead_letter_v2(
     };
 
     let now = chrono::Utc::now();
-    let job_id = dead_letter.job_id.clone();
+    let job_id = dead_letter.job_id;
 
     let (requeued, updated_job) = match store.jobs.get_mut(&job_id) {
         Some(job) => {

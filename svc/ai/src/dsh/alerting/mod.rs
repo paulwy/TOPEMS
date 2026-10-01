@@ -373,7 +373,7 @@ impl AlertManager {
         // 创建告警事件
         let event = AlertEvent {
             id: uuid::Uuid::new_v4().to_string(),
-            alert_type: alert_type.clone(),
+            alert_type,
             level,
             title: title.to_string(),
             message: message.to_string(),

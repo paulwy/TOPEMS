@@ -1143,14 +1143,14 @@ impl AssetCatalogManager {
             .ok_or_else(|| format!("未找到资产: {}", id))?;
 
         if let Some(n) = name {
-            asset.name = n.clone();
+            asset.name = n;
             search_index
                 .entry(asset.name.to_lowercase())
                 .or_default()
                 .push(asset.id.clone());
         }
         if let Some(d) = description {
-            asset.description = d.clone();
+            asset.description = d;
             search_index
                 .entry(asset.description.to_lowercase())
                 .or_default()

@@ -253,7 +253,7 @@ impl DelayedMessageSubscriber {
             .await
             .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
 
-        let consumer_tag = consumer.tag().clone();
+        let consumer_tag = consumer.tag();
 
         tokio::spawn(async move {
             let mut consumer = consumer;
@@ -335,7 +335,7 @@ impl DelayedMessageSubscriber {
             .await
             .map_err(|e| super::error::EventError::SubscribeError(e.to_string()))?;
 
-        let consumer_tag = consumer.tag().clone();
+        let consumer_tag = consumer.tag();
 
         tokio::spawn(async move {
             let mut consumer = consumer;

@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 use serde::Deserialize;
-use sqlx::{PgPool, Row};
+use sqlx::Row;
 
 use super::models::*;
 use crate::AppState;

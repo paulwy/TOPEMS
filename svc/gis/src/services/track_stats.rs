@@ -193,9 +193,9 @@ impl TrackStatisticsCalculator {
             ((pos.lng - start.lng) * dx + (pos.lat - start.lat) * dy) / (line_length * line_length);
 
         let projection = if t < 0.0 {
-            start.clone()
+            start
         } else if t > 1.0 {
-            end.clone()
+            end
         } else {
             GeoPosition {
                 lat: start.lat + t * dy,

@@ -419,7 +419,7 @@ impl PersistedQueryManager {
         self.version_index
             .entry(query_hash.clone())
             .or_default()
-            .push(query_hash.clone());
+            .push(query_hash);
         gql
     }
 
@@ -566,7 +566,7 @@ impl QueryAuditStore {
         let timestamp = Utc::now().timestamp();
 
         self.index_by_user
-            .entry(user_id.clone())
+            .entry(user_id)
             .or_default()
             .push(audit_id.clone());
         if let Some(hash) = &query_hash {
@@ -575,7 +575,7 @@ impl QueryAuditStore {
                 .or_default()
                 .push(audit_id.clone());
         }
-        self.index_by_time.push((timestamp, audit_id.clone()));
+        self.index_by_time.push((timestamp, audit_id));
         self.update_stats(&entry);
         self.entries.push(entry);
     }

@@ -130,7 +130,7 @@ async fn build_lineage_for_master_data(
         let code: String = row.try_get("code").unwrap_or_default();
         let name: Option<String> = row.try_get("name").ok().flatten();
         let source_service: String = row.try_get("source_service").unwrap_or_default();
-        let label = name.clone().unwrap_or_else(|| code.clone());
+        let label = name.unwrap_or_else(|| code.clone());
 
         let source_service_id = format!("service:{}", source_service);
         add_node(
@@ -141,7 +141,7 @@ async fn build_lineage_for_master_data(
                 label: source_service.clone(),
                 node_type: "service".to_string(),
                 domain: Some(domain.clone()),
-                service: Some(source_service.clone()),
+                service: Some(source_service),
             },
         );
 
@@ -173,7 +173,7 @@ async fn build_lineage_for_master_data(
                 id: erp_service_id.clone(),
                 label: "erp".to_string(),
                 node_type: "service".to_string(),
-                domain: Some(domain.clone()),
+                domain: Some(domain),
                 service: Some("erp".to_string()),
             },
         );
@@ -493,7 +493,7 @@ pub async fn get_lineage_downstream(
                 &mut node_ids,
                 LineageNode {
                     id: entity_node_id.clone(),
-                    label: entity_type.clone(),
+                    label: entity_type,
                     node_type: "system".to_string(),
                     domain: None,
                     service: Some("erp".to_string()),

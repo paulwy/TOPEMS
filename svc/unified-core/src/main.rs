@@ -550,7 +550,7 @@ async fn main() -> anyhow::Result<()> {
             >,
         > = std::sync::Arc::new(
             crate::routes::business_tools::audit_retention::RetentionManager::new(
-                policy.clone(),
+                policy,
                 audit_logger.clone(),
             ),
         );

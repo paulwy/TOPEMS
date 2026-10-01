@@ -2434,7 +2434,7 @@ impl DocumentIntelligenceEngine {
         }
 
         let document = DocumentInfo {
-            document_id: document_id.clone(),
+            document_id,
             name: title.clone(),
             document_type: request.document_type,
             file_size: content.len() as u64,
@@ -2451,7 +2451,7 @@ impl DocumentIntelligenceEngine {
                 keywords: None,
                 custom: HashMap::new(),
             }),
-            uploaded_at: now.clone(),
+            uploaded_at: now,
             processing_status: ProcessingStatus::Completed,
         };
 

@@ -190,7 +190,7 @@ pub async fn websocket_handler(
     Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
     let config = ws_manager.get_config();
-    let jwt_secret = auth_state.jwt_secret.clone();
+    let jwt_secret = auth_state.jwt_secret;
     let token = params.token;
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)
@@ -317,7 +317,7 @@ pub async fn websocket_device_handler(
     Query(params): Query<WsQueryParams>,
 ) -> impl IntoResponse {
     let config = ws_manager.get_config();
-    let jwt_secret = auth_state.jwt_secret.clone();
+    let jwt_secret = auth_state.jwt_secret;
     let token = params.token;
     ws.max_frame_size(config.max_frame_size)
         .max_message_size(config.max_message_size)

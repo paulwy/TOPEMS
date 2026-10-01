@@ -650,7 +650,7 @@ async fn handle_create_master_data(req: &GraphqlRequest) -> Json<GraphqlResponse
         properties,
     };
 
-    store.entities.insert(id.clone(), entity.clone());
+    store.entities.insert(id, entity.clone());
 
     Json(GraphqlResponse {
         data: Some(serde_json::json!({

@@ -513,8 +513,8 @@ pub async fn create_oee_record(
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
-        created_at: result.created_at.map(|t| t).unwrap_or_else(Utc::now),
-        updated_at: result.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+        created_at: result.created_at.unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(record, "OEE记录创建成功"))
@@ -592,8 +592,8 @@ pub async fn get_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(record, "获取OEE记录成功"))
         }
@@ -749,8 +749,8 @@ pub async fn update_oee_record(
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(record, "OEE记录更新成功"))
         }
@@ -1079,7 +1079,7 @@ pub async fn get_equipment_efficiency_analysis(
                 quality_rate: big_decimal_to_f64(r.quality_rate),
                 rank: (idx + 1) as i32,
                 trend: 0.0,
-                status: status,
+                status,
             }
         })
         .collect();

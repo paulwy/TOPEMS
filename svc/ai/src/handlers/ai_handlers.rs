@@ -851,7 +851,7 @@ pub async fn flow_assistant(
     tracing::info!("🤖 流程助手请求: {}", req.query);
 
     let response = FlowAssistantResponse {
-        query: req.query.clone(),
+        query: req.query,
         title: "标准业务流程".to_string(),
         description: Some("根据您的描述，以下是推荐的标准化流程步骤".to_string()),
         steps: vec![
@@ -966,7 +966,7 @@ pub async fn knowledge_ask(
     tracing::info!("🤖 知识库问答请求: {}", req.question);
 
     let response = KnowledgeAskResponse {
-        question: req.question.clone(),
+        question: req.question,
         answer: "根据企业知识库内容，采购审批需要经过以下步骤：\n\n1. 申请人在系统中提交采购申请\n2. 部门主管审核采购必要性和预算\n3. 财务部门复核预算和供应商资质\n4. 总经理或授权审批人进行最终审批\n5. 审批通过后转采购部门执行".to_string(),
         sources: vec![
             KnowledgeSource {

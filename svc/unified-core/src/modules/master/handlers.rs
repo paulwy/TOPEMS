@@ -944,7 +944,7 @@ async fn publish_master_data_event(
 
     // 通过事件总线发布（容错：失败仅记录日志，不影响主流程）
     let channel = event.channel();
-    let event_clone = event.clone();
+    let event_clone = event;
     tokio::spawn(async move {
         let redis_url =
             std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());

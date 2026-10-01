@@ -148,7 +148,7 @@ pub async fn create_session(
     (
         StatusCode::CREATED,
         Json(CreateSessionResponse {
-            session_id: session_id.clone(),
+            session_id,
             module,
             created_at: chrono::Utc::now().to_rfc3339(),
         }),

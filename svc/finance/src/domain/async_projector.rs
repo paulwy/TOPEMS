@@ -304,7 +304,7 @@ impl AsyncProjector {
             .find(|v| v.view_name() == view_name)
             .ok_or_else(|| format!("View '{}' not found", view_name))?;
 
-        view.rebuild().await.map_err(|e| e.to_string())?;
+        view.rebuild().await?;
 
         sqlx::query(only_own_schema_query!(
             "finance",

@@ -102,7 +102,7 @@ pub async fn get_data_lineage(
                 domain: domain.clone(),
                 code: code.clone(),
                 name: name.clone(),
-                status: status.clone(),
+                status,
                 local_entity_type,
                 local_entity_id: local_entity_id.map(|id| id.to_string()),
                 last_synced_at: last_synced_at.to_rfc3339(),

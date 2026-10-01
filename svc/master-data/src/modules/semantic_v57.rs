@@ -311,7 +311,7 @@ impl SemanticSearchEngine {
                 entity_type: idx.entity_type,
                 entity_id: idx.entity_id,
                 score,
-                highlights: vec![idx.text.clone()],
+                highlights: vec![idx.text],
             })
             .collect()
     }
@@ -455,7 +455,7 @@ impl SmartTagger {
             if !existing.tag_ids.contains(&tag_id) {
                 existing.tag_ids.push(tag_id.clone());
                 existing.confidence = 1.0;
-                existing.applied_at = now.clone();
+                existing.applied_at = now;
             }
             existing.clone()
         } else {

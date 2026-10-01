@@ -421,7 +421,7 @@ pub fn create_routes() -> Router<ApiState> {
         .with_by_ip(true);
     let strict_limiter = Arc::new(RateLimitMiddleware::new(strict_config));
     let strict_layer = axum::middleware::from_fn({
-        let mw = strict_limiter.clone();
+        let mw = strict_limiter;
         move |req, next| {
             let mw = mw.clone();
             async move { rate_limit_middleware(mw, req, next).await }

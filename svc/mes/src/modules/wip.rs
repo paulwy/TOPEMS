@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -524,12 +524,12 @@ pub async fn get_wip(
                 current_work_station_name: r.work_station_name,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|t| t),
-                last_transfer_time: r.last_transfer_time.map(|t| t),
+                start_time: r.start_time,
+                last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(wip, "获取WIP成功"))
         }
@@ -856,11 +856,11 @@ pub async fn transfer_wip(
         transfer_no: transfer.transfer_no,
         wip_id: transfer.wip_id,
         from_process_id: transfer.from_process_id,
-        from_process_name: from_process_name,
+        from_process_name,
         from_work_station_id: transfer.from_work_station_id,
         from_work_station_name: from_workstation_name,
         to_process_id: transfer.to_process_id,
-        to_process_name: to_process_name,
+        to_process_name,
         to_work_station_id: transfer.to_work_station_id,
         to_work_station_name: to_workstation_name,
         quantity: big_decimal_to_f64(Some(transfer.quantity)),

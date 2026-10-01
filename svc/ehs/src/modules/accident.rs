@@ -343,7 +343,7 @@ pub async fn get_accident(
             },
             investigation: Some(Investigation {
                 id: "inv-001".to_string(),
-                accident_id: id.clone(),
+                accident_id: id,
                 team: Some(vec!["李四".to_string(), "王五".to_string()]),
                 findings: Some("操作工未佩戴防护手套，操作时注意力不集中".to_string()),
                 root_cause: Some("安全意识不足，未遵守操作规程".to_string()),

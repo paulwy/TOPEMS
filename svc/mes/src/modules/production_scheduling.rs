@@ -8,7 +8,7 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -581,16 +581,16 @@ pub async fn get_production_schedule(
                 equipment_name: Some(r.equipment_name),
                 process_id: r.process_id,
                 process_name: Some(r.process_name),
-                planned_start_time: r.planned_start_time.map(|t| t),
-                planned_end_time: r.planned_end_time.map(|t| t),
-                actual_start_time: r.actual_start_time.map(|t| t),
-                actual_end_time: r.actual_end_time.map(|t| t),
+                planned_start_time: r.planned_start_time,
+                planned_end_time: r.planned_end_time,
+                actual_start_time: r.actual_start_time,
+                actual_end_time: r.actual_end_time,
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 priority: r.priority.unwrap_or(0),
                 sequence: r.sequence.unwrap_or(0),
                 notes: r.notes,
-                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(schedule, "获取生产排产成功"))
         }
@@ -874,10 +874,10 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-        let start = s.planned_start_time.map(|t| t).unwrap_or_else(Utc::now);
+        let start = s.planned_start_time.unwrap_or_else(Utc::now);
         let end = s
             .planned_end_time
-            .map(|t| t)
+            
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));

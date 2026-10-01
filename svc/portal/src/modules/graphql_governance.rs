@@ -849,7 +849,7 @@ impl SchemaVersionManager {
 
         let changelog = VersionChangelogGql {
             version: version.to_string(),
-            changes: changes.clone(),
+            changes,
             breaking_changes_count: breaking_count,
             additions_count,
             deprecations_count: 0,

@@ -239,7 +239,7 @@ impl PgCqrsContext {
             as Arc<dyn MaterializedView>);
         let sync_projector = Arc::new(sync_projector);
 
-        let mut async_projector = AsyncProjector::new(pool.clone(), projector_config);
+        let mut async_projector = AsyncProjector::new(pool, projector_config);
         async_projector
             .register_view(Arc::<PgVoucherSummaryView>::clone(&voucher_summary_view)
                 as Arc<dyn MaterializedView>);

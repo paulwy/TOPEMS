@@ -6,7 +6,7 @@ use axum::{
     routing::{get, put},
     Json, Router,
 };
-use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Timelike, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
@@ -388,8 +388,8 @@ pub async fn get_process_flow(
                     .capacity
                     .map(|d| d.to_string().parse().unwrap_or_default()),
                 unit: r.unit,
-                created_at: r.created_at.map(|t| t).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|t| t).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             },
             "获取工艺流程成功",
         )),
@@ -671,7 +671,7 @@ pub async fn get_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|t| t).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 })
                 .collect();
 
@@ -810,7 +810,7 @@ pub async fn add_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|t| t).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 },
                 "添加工艺步骤成功",
             ))
@@ -956,7 +956,7 @@ pub async fn update_flow_step(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|t| t).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 },
                 "更新工艺步骤成功",
             ))
@@ -1114,7 +1114,7 @@ pub async fn reorder_flow_steps(
                     transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
-                    created_at: s.created_at.map(|t| t).unwrap_or_else(Utc::now),
+                    created_at: s.created_at.unwrap_or_else(Utc::now),
                 })
                 .collect();
 
@@ -1207,7 +1207,6 @@ pub async fn analyze_capacity(
         .iter()
         .map(|s| {
             s.standard_time
-                .clone()
                 .unwrap_or(0)
                 .to_string()
                 .parse::<f64>()
@@ -1215,7 +1214,7 @@ pub async fn analyze_capacity(
         })
         .sum();
 
-    let flow_capacity = flow.capacity.clone().unwrap_or_default();
+    let flow_capacity = flow.capacity.unwrap_or_default();
     let theoretical_capacity = if total_time > 0.0 {
         480.0 / total_time
     } else {
@@ -1239,7 +1238,6 @@ pub async fn analyze_capacity(
     for step in &steps {
         let step_time = step
             .standard_time
-            .clone()
             .unwrap_or(0)
             .to_string()
             .parse::<f64>()

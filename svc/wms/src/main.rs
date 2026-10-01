@@ -189,7 +189,7 @@ async fn main() -> Result<()> {
 
         match EventSubscriber::new("wms-cache-invalidation") {
             Ok(cache_subscriber) => {
-                let listener = cache_invalidation_listener.clone();
+                let listener = cache_invalidation_listener;
                 let cache_subscriber =
                     cache_subscriber.subscribe(vec![EventType::CacheInvalidated], move |event| {
                         let listener = listener.clone();

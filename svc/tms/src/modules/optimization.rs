@@ -209,7 +209,7 @@ pub fn calculate_freight(
     let subtotal = (&distance_charge + &weight_charge).round(2);
     let min_charge_applied = subtotal < min;
     let total = if min_charge_applied {
-        min.clone()
+        min
     } else {
         subtotal.clone()
     };

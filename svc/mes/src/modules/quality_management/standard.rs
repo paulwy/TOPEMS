@@ -541,7 +541,7 @@ pub async fn create_standard(
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
-            effective_date: standard.effective_date.map(|d| d.to_string()),
+            effective_date: standard.effective_date,
             description: standard.description,
             created_at: standard
                 .created_at
@@ -758,7 +758,7 @@ pub async fn update_standard(
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version.map(|v| v.to_string()),
-            effective_date: standard.effective_date.map(|d| d.to_string()),
+            effective_date: standard.effective_date,
             description: standard.description,
             created_at: standard
                 .created_at

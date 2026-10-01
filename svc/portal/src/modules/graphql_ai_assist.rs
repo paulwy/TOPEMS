@@ -244,7 +244,7 @@ impl QueryOptimizer {
             suggestions.push(QueryOptimizationSuggestionGql {
                 id: format!("{}-healthy", query_hash),
                 query_hash: query_hash.to_string(),
-                query_name: query_name.clone(),
+                query_name,
                 category: "maintainability".to_string(),
                 severity: "info".to_string(),
                 title: "查询状态良好".to_string(),
