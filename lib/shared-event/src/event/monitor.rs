@@ -84,6 +84,7 @@ impl EventMonitor {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn record_processed(
         &self,
         _event: &Event,

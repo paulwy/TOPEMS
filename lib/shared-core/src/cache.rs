@@ -64,6 +64,7 @@ impl<T: Clone + Send + Sync + 'static> InMemoryCache<T> {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// 创建带容量限制和默认 TTL 的缓存。
     ///
     /// moka 原生 LRU 淘汰，无需手动遍历。
@@ -128,6 +129,7 @@ impl<T: Clone + Send + Sync + 'static> InMemoryCache<T> {
         self.cache.invalidate_all();
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 返回当前条目数（moka 近似计数）。
     pub fn len(&self) -> usize {
         self.cache.entry_count() as usize
@@ -407,6 +409,7 @@ pub fn update_cache_entries(service: &str, entity: &str, count: i64) {
         .set(count);
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算缓存命中率
 ///
 /// 返回命中率（0.0 ~ 1.0），如果总请求数为 0 则返回 0.0

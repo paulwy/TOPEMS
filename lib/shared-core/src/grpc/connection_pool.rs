@@ -239,6 +239,7 @@ impl GrpcChannelPool {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     #[allow(clippy::indexing_slicing)]
     async fn round_robin<'a>(
         &self,

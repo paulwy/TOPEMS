@@ -97,6 +97,7 @@ impl BatchRequestHandler {
         self
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn execute(&self, batch: BatchRequest) -> BatchResponse {
         let start = std::time::Instant::now();
 

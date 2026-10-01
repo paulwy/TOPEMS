@@ -345,6 +345,7 @@ impl BackupManager {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     async fn cleanup_old_backups(&self, config: &BackupConfig) {
         let cutoff = Utc::now() - chrono::Duration::days(config.retention_days as i64);
         let mut backups = self.backups.write().await;
@@ -359,6 +360,7 @@ impl BackupManager {
         });
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_statistics(&self) -> BackupStatistics {
         let backups = self.backups.read().await;
 

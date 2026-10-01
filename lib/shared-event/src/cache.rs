@@ -155,6 +155,7 @@ impl InMemoryCache {
         self.cache.write().clear();
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_statistics(&self) -> CacheStatistics {
         let cache = self.cache.read();
         let hits = self.hit_count.load(std::sync::atomic::Ordering::Relaxed);
@@ -348,6 +349,7 @@ impl CacheService for InMemoryCache {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn ttl(&self, key: &str) -> Result<i64> {
         let cache = self.cache.read();
         if let Some(entry) = cache.get(key) {
@@ -523,6 +525,7 @@ impl MultiLevelCacheManager {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_statistics(&self) -> MultiLevelCacheStatistics {
         let l1_stats = self.l1_cache.get_statistics();
         let l1_hits = self.l1_hit_count.load(std::sync::atomic::Ordering::Relaxed);

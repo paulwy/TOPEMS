@@ -132,6 +132,7 @@ pub enum SignatureVerification {
     InvalidTimestamp,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 验证请求签名
 ///
 /// 期望的请求头：
@@ -350,6 +351,7 @@ pub fn signature_error_response(verification: SignatureVerification) -> Response
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

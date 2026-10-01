@@ -29,6 +29,7 @@ pub enum GrpcHealthStatus {
 }
 
 impl GrpcHealthStatus {
+    #[allow(clippy::as_conversions)]
     pub fn as_i32(self) -> i32 {
         self as i32
     }

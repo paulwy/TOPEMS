@@ -16,6 +16,7 @@ use crate::shared::AppState;
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算治理成熟度综合分数（0-5 分制）。
 /// - 输入为各维度分数列表（每个维度 0-5 分）
 /// - 各维度 clamp 到 [0,5]，取算术平均

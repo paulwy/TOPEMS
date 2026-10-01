@@ -140,6 +140,7 @@ pub const SERVICE_SUBJECT: &str = "00000000-0000-0000-0000-000000000000";
 /// 服务身份的固定 role（区分于真实用户的业务角色）
 pub const SERVICE_ROLE: &str = "service";
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 /// 签发服务间认证 token（HS256/RS256 由 `jwt_secret` 格式自动选择）。
 ///
 /// - `jwt_secret`: 共享 JWT 密钥（与目标服务 `AuthState::from_env()` 读取的一致）。

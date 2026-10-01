@@ -136,6 +136,7 @@ impl FeatureFlagService {
         true
     }
 
+    #[allow(clippy::as_conversions)]
     fn evaluate_condition(&self, condition: &FeatureCondition, context: &FeatureContext) -> bool {
         match condition {
             FeatureCondition::TenantWhitelist(tenants) => {

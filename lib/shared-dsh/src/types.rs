@@ -177,6 +177,12 @@ pub struct PaginationResponse<T> {
 }
 
 impl<T> PaginationResponse<T> {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     /// 创建分页响应
     pub fn new(items: Vec<T>, total: u64, page: u32, page_size: u32) -> Self {
         let total_pages = if page_size == 0 {

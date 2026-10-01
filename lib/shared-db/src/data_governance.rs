@@ -1156,6 +1156,7 @@ impl ComplianceAuditor {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// 清理过期审计事件
     pub async fn purge_old_events(&self) -> usize {
         let cutoff = Utc::now() - chrono::Duration::days(self.retention_days as i64);
@@ -1243,6 +1244,7 @@ impl ComplianceReportGenerator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 生成合规报表
     pub async fn generate_report(
         &self,

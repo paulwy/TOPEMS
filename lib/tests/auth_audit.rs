@@ -96,6 +96,11 @@ fn test_jwt_invalid_secret_fails() {
     );
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[test]
 fn test_jwt_expired_fails() {
     let now = chrono::Utc::now();
@@ -136,6 +141,11 @@ struct IssuerClaims {
     iss: Option<String>,
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[test]
 fn test_jwt_issuer_validation_match() {
     let now = chrono::Utc::now();
@@ -171,6 +181,11 @@ fn test_jwt_issuer_validation_match() {
     assert_eq!(decoded.claims.iss.as_deref(), Some(valid_iss));
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[test]
 fn test_jwt_issuer_validation_mismatch_fails() {
     let now = chrono::Utc::now();
@@ -204,6 +219,11 @@ fn test_jwt_issuer_validation_mismatch_fails() {
     assert!(result.is_err(), "issuer mismatch should fail validation");
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[test]
 fn test_jwt_issuer_missing_but_no_validation_passes() {
     let now = chrono::Utc::now();
@@ -238,6 +258,11 @@ fn test_jwt_issuer_missing_but_no_validation_passes() {
     assert!(decoded.claims.iss.is_none());
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[test]
 fn test_jwt_roundtrip_rs256_pem_sniff() {
     let now = chrono::Utc::now();
@@ -286,6 +311,11 @@ fn test_jwt_roundtrip_rs256_pem_sniff() {
 // 模拟 unified-core/iam/access_log 与 audit_log 中间件写入的审计记录结构。
 // =============================================================================
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 构造一个带 tenant_id 与签发时间戳的 Claims，用于审计场景模拟。
 fn build_auth_audit_claims(user_id: &str, tenant_id: &str) -> Claims {
     let now = chrono::Utc::now();

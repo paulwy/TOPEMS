@@ -169,6 +169,7 @@ struct TokenBucket {
 }
 
 impl TokenBucket {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn new(max_tokens: u32, window_secs: u64) -> Self {
         let max = max_tokens as f64;
         let rate = max / window_secs.max(1) as f64;
@@ -201,10 +202,20 @@ impl TokenBucket {
         self.last_refill = now;
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn remaining(&self) -> u32 {
         self.tokens.floor() as u32
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     fn reset_seconds(&self, window_secs: u64) -> u64 {
         let needed = (1.0 - self.tokens).max(0.0);
         if self.rate <= 0.0 {
@@ -388,6 +399,7 @@ fn resolve_rule<'a>(
     best
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 校验时间戳
 fn validate_timestamp(value: &str, tolerance_secs: u64) -> Result<(), String> {
     let ts: i64 = value.parse().map_err(|_| "invalid timestamp".to_string())?;
@@ -609,6 +621,7 @@ pub fn generate_nonce() -> String {
     Uuid::new_v4().simple().to_string()
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 解析当前时间戳辅助函数
 pub fn current_timestamp() -> i64 {
     SystemTime::now()

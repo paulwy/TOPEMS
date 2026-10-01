@@ -29,6 +29,7 @@ pub struct RequestContext {
     pub trace_context: TraceContext,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn request_context_middleware(mut request: Request, next: Next) -> Response {
     let start = Instant::now();
 

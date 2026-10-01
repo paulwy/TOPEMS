@@ -54,6 +54,7 @@ struct EnhancedKnowledgeGraph {
 }
 
 impl EnhancedKnowledgeGraph {
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn add_node(&self, mut node: GraphNodeV57) -> GraphNodeV57 {
         let nodes = self.nodes.lock().await;
         let degree = self
@@ -182,6 +183,7 @@ impl EnhancedKnowledgeGraph {
         (sub_nodes, sub_edges)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn compute_embeddings(&self) -> i64 {
         let mut nodes = self.nodes.lock().await;
         let count = nodes.len() as i64;
@@ -193,6 +195,7 @@ impl EnhancedKnowledgeGraph {
         count
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn detect_communities(&self) -> Vec<GraphCommunity> {
         let mut nodes = self.nodes.lock().await;
         let edges = self.edges.lock().await;
@@ -356,6 +359,7 @@ impl SemanticSearchEngine {
         merged
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn reindex_all(&self) -> i64 {
         let indexes = self.indexes.lock().await;
         let count = indexes.len() as i64;
@@ -363,6 +367,7 @@ impl SemanticSearchEngine {
         count
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn get_search_stats(&self) -> serde_json::Value {
         let indexes = self.indexes.lock().await;
         let history = self.history.lock().await;
@@ -389,6 +394,7 @@ impl SemanticSearchEngine {
         indexes.len() < before
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn get_index_size(&self) -> i64 {
         self.indexes.lock().await.len() as i64
     }
@@ -564,6 +570,7 @@ impl SmartTagger {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn get_tag_stats(&self) -> serde_json::Value {
         let tags = self.tags.lock().await;
         let tagged = self.tagged_entities.lock().await;
@@ -591,6 +598,7 @@ impl SmartTagger {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn suggest_tags(&self, entity_type: &str, data: &serde_json::Value) -> Vec<Tag> {
         let tags = self.tags.lock().await;
         let rules = self.rules.lock().await;
@@ -651,6 +659,7 @@ fn get_v57_store() -> &'static V57Store {
 
 // ==================== 辅助函数 ====================
 
+#[allow(clippy::as_conversions)]
 fn generate_simulated_embedding(text: &str, context: &str) -> Vec<f64> {
     let dim = 64;
     let mut rng =
@@ -711,6 +720,7 @@ mod simple_rand {
             }
         }
 
+        #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
         pub fn next_f64(&mut self) -> f64 {
             self.state = self
                 .state
@@ -1168,6 +1178,7 @@ pub async fn get_community(
     ),
     tag = "semantic_v57"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn find_shortest_path_handler(
     State(_state): State<AppState>,
     Json(req): Json<FindPathRequest>,
@@ -1201,7 +1212,7 @@ pub async fn find_shortest_path_handler(
     responses((status = 200, description = "get_subgraph OK")),
     tag = "semantic_v57"
 )]
-
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_subgraph(
     State(_state): State<AppState>,
     Query(params): Query<SubgraphQuery>,
@@ -1517,6 +1528,7 @@ pub async fn apply_tag(
     ),
     tag = "semantic_v57"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn auto_tag(
     State(_state): State<AppState>,
     Json(req): Json<AutoTagRequest>,

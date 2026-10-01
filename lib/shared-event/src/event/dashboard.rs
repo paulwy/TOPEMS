@@ -84,6 +84,7 @@ impl EventDashboardGenerator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 生成完整的仪表盘数据
     pub async fn generate(&self) -> EventResult<EventGovernanceDashboard> {
         let version_stats = self.version_registry.stats();
@@ -171,6 +172,7 @@ struct RealtimeStats {
     recent_events: Vec<RecentEvent>,
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 工具函数：将 `HashMap<String, usize>` 转为分布列表
 ///
 /// 公开供外部组件复用。

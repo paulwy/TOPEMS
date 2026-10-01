@@ -614,6 +614,7 @@ fn action_type_from_str(s: &str) -> AutoFixActionType {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn compute_score(checks: &[QualityCheckV51]) -> f64 {
     if checks.is_empty() {
         return 100.0;
@@ -718,6 +719,12 @@ pub async fn run_quality_check(
     responses(
         (status = 200, description = "质量检查列表", body = ApiResponse<PaginatedResponse<QualityCheckV51>>),
     ),
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn list_quality_checks(
     State(_state): State<AppState>,
@@ -976,6 +983,7 @@ pub async fn delete_quality_rule(
         (status = 200, description = "质量评分", body = ApiResponse<QualityScore>),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiResponse<QualityScore>> {
     ensure_initialized().await;
     let store = get_quality_v51_store();
@@ -1040,6 +1048,7 @@ pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiRespon
         (status = 200, description = "质量仪表盘", body = ApiResponse<QualityDashboard>),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_quality_dashboard(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<QualityDashboard>> {
@@ -1140,7 +1149,12 @@ pub async fn apply_auto_fix(
     responses((status = 200, description = "get_fix_actions OK")),
     tag = "quality_v51"
 )]
-
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn get_fix_actions(
     State(_state): State<AppState>,
     Query(params): Query<FixActionQuery>,
@@ -1392,7 +1406,12 @@ pub async fn generate_suggestions(
     responses((status = 200, description = "get_suggestions OK")),
     tag = "quality_v51"
 )]
-
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn get_suggestions(
     State(_state): State<AppState>,
     Query(params): Query<SuggestionQuery>,
@@ -1558,6 +1577,11 @@ pub async fn get_governance_insights(
         (status = 500, description = "Internal server error")
     ),
     tag = "quality_v51"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn predict_quality_trend(
     State(_state): State<AppState>,

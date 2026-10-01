@@ -220,6 +220,7 @@ pub struct UsageMetrics {
 }
 
 impl UsageMetrics {
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn check_limits(&self, settings: &TenantSettings) -> Vec<UsageLimitExceeded> {
         let mut exceeded = Vec::new();
 
@@ -420,6 +421,7 @@ impl TenantManager {
             .unwrap_or(false)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn check_usage_limits(&self, tenant_id: Uuid) -> Vec<UsageLimitExceeded> {
         let tenants = self.tenants.read().await;
         let tenant = match tenants.get(&tenant_id) {

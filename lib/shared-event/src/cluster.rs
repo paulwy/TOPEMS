@@ -76,6 +76,7 @@ impl NodeHealth {
             && self.score >= 70
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn calculate_score(&self) -> u32 {
         let mut score = 100u32;
 
@@ -172,6 +173,7 @@ pub struct ClusterMetrics {
 }
 
 impl ClusterMetrics {
+    #[allow(clippy::as_conversions)]
     pub fn calculate_health_percentage(&self) -> f64 {
         if self.total_nodes == 0 {
             return 0.0;
@@ -179,6 +181,7 @@ impl ClusterMetrics {
         (self.healthy_nodes as f64 / self.total_nodes as f64) * 100.0
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn calculate_error_rate(&self) -> f64 {
         if self.total_requests == 0 {
             return 0.0;
@@ -361,6 +364,11 @@ impl ClusterManager {
         Ok(())
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     #[allow(clippy::indexing_slicing)]
     pub async fn select_node(
         &self,
@@ -466,6 +474,7 @@ impl ClusterManager {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn get_metrics(&self) -> ClusterMetrics {
         let nodes = self.nodes.read().await;
         let total = nodes.len() as u32;
@@ -547,6 +556,7 @@ pub enum ClusterError {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions, clippy::cast_sign_loss)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

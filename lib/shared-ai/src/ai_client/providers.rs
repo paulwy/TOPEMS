@@ -239,6 +239,7 @@ impl GeminiClient {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 将 Gemini 响应转换为标准格式
     #[allow(clippy::indexing_slicing)]
     fn convert_from_gemini_response(&self, response: serde_json::Value) -> ChatCompletionResponse {
@@ -377,6 +378,7 @@ impl AIClient for GeminiClient {
         Ok(Box::pin(stream))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     #[allow(clippy::indexing_slicing)]
     async fn embeddings(
         &self,

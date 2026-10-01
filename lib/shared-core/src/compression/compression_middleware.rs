@@ -217,6 +217,7 @@ impl CompressionMiddleware {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn compress_response(
         &self,
         mut response: Response<Body>,

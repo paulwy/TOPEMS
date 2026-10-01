@@ -207,6 +207,11 @@ pub fn check_plugin_auth_bypass() -> bool {
     true
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 /// 生成插件安装 JWT 令牌（scope=plugin_install）
 pub fn generate_plugin_install_token(
     secret: &str,

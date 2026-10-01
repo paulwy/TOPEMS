@@ -369,6 +369,7 @@ struct EnhancedLineage {
 }
 
 impl EnhancedLineage {
+    #[allow(clippy::as_conversions)]
     async fn build_lineage_graph(
         &self,
         root_entity_id: String,
@@ -536,6 +537,7 @@ impl EnhancedLineage {
         None
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn get_lineage_impact(&self, entity_id: &str, entity_type: &str) -> LineageImpact {
         let downstream = self.get_downstream(entity_id).await;
         let upstream = self.get_upstream(entity_id).await;
@@ -556,6 +558,7 @@ impl EnhancedLineage {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn get_lineage_dashboard(&self) -> LineageDashboard {
         let graphs = self.graphs.lock().await;
         let nodes = self.nodes.lock().await;

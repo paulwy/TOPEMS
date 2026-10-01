@@ -273,6 +273,7 @@ impl SimpleRng {
         self.state
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn next_f32(&mut self) -> f32 {
         (self.next_u64() as f32) / (u64::MAX as f32)
     }

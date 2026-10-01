@@ -201,6 +201,11 @@ impl AuthState {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> String {
     let now = chrono::Utc::now();
     let exp = (now + chrono::Duration::minutes(expire_minutes)).timestamp() as usize;
@@ -823,6 +828,11 @@ pub fn require_all_permissions<T>(
 }
 
 #[cfg(test)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

@@ -290,6 +290,11 @@ fn test_claims_user_id_invalid() {
     assert!(claims.user_id().is_err());
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 #[test]
 fn test_claims_encode_and_verify() {
     let user_id = Uuid::new_v4().to_string();

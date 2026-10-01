@@ -401,6 +401,7 @@ pub struct MasterDataRef {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

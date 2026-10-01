@@ -25,6 +25,7 @@ struct SkillMatchResult {
     similarity: f64,
 }
 
+#[allow(clippy::as_conversions)]
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f64 {
     let dot: f64 = a
         .iter()

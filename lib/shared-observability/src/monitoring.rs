@@ -390,6 +390,7 @@ impl MonitoringState {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     pub async fn record_request(&self, success: bool, response_time_ms: u64) {
         self.request_count.fetch_add(1, Ordering::Relaxed);
 
@@ -435,6 +436,7 @@ impl MonitoringState {
         self.metrics.read().await.clone()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn evaluate_alert_rule(&self, rule: &AlertRule, value: f64) -> Option<Alert> {
         if !rule.enabled {
             return None;
@@ -666,6 +668,7 @@ impl MonitoringState {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_statistics(&self) -> Result<AlertStatistics, MonitoringError> {
         let alerts = self.alerts.read().await;
         let now = Utc::now();

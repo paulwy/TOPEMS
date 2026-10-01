@@ -636,6 +636,11 @@ impl LineageTracker {
 struct ImpactAnalyzer;
 
 impl ImpactAnalyzer {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap
+    )]
     async fn analyze(req: &ImpactAnalysisRequest) -> Result<ImpactAnalysisResult, String> {
         let store = get_lineage_v52_store();
         let nodes = store.lineage_nodes.lock().await;
@@ -1468,6 +1473,12 @@ pub async fn add_propagation_rule(
         (status = 500, description = "Internal server error")
     ),
     tag = "lineage_v52"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn get_propagation_log(
     State(_state): State<AppState>,

@@ -160,6 +160,7 @@ impl UnifiedAIClient {
         }
     }
 
+    #[allow(clippy::as_conversions)]
     /// 聊天并返回 token 用量（provider 未返回 usage 时 None，诚实不填 0）
     pub async fn chat_with_usage(
         &self,

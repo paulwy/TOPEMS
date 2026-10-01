@@ -114,6 +114,7 @@ impl EmbeddingService for OpenAIEmbedding {
             .map(|mut results| results.remove(0))
     }
 
+    #[allow(clippy::as_conversions)]
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<EmbeddingResult>> {
         let request = OpenAIRequest {
             input: texts.to_vec(),
@@ -294,6 +295,7 @@ impl SimpleRng {
         self.state
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     fn next_f32(&mut self) -> f32 {
         (self.next_u64() as f32) / (u64::MAX as f32)
     }

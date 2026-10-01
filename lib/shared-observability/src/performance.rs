@@ -17,6 +17,7 @@ impl PerformanceMetrics {
         Self::default()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn record_request(&self, duration: Duration, success: bool) {
         self.request_count.fetch_add(1, Ordering::Relaxed);
         self.total_duration_ms
@@ -29,6 +30,7 @@ impl PerformanceMetrics {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_stats(&self) -> MetricsSnapshot {
         let request_count = self.request_count.load(Ordering::Relaxed);
         let success_count = self.success_count.load(Ordering::Relaxed);
@@ -114,6 +116,7 @@ pub struct ApiCallMetrics {
 }
 
 impl ApiCallMetrics {
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn new(endpoint: String, duration: Duration, status: String) -> Self {
         Self {
             endpoint,
@@ -135,6 +138,7 @@ pub struct DatabaseQueryMetrics {
 }
 
 impl DatabaseQueryMetrics {
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn new(
         query_type: String,
         table_name: String,
@@ -245,6 +249,7 @@ impl ComprehensiveMetrics {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_cache_hit_rate(&self) -> f64 {
         let hits = self.cache_hits.load(Ordering::Relaxed);
         let misses = self.cache_misses.load(Ordering::Relaxed);
@@ -288,6 +293,7 @@ impl ComprehensiveMetrics {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_db_stats(&self) -> DatabaseStats {
         let metrics = self.db_metrics.lock();
         let mut table_stats: HashMap<String, TableStats> = HashMap::new();
@@ -566,6 +572,7 @@ pub mod v28 {
             total_deleted
         }
 
+        #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
         pub async fn get_statistics(&self) -> QueryCacheStatistics {
             let mut stats = self.statistics.write().await;
             let local_stats = self.local_cache.get_statistics();
@@ -690,6 +697,7 @@ pub mod v28 {
             timestamps.retain(|t| now.duration_since(*t) < Duration::from_secs(60));
         }
 
+        #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
         async fn trigger_alert(&self, service_name: &str, duration_ms: u64, is_n_plus_one: bool) {
             if let (Some(slo), Some(alert)) = (&self.slo_manager, &self.alert_manager) {
                 let severity = if is_n_plus_one || duration_ms > 2000 {
@@ -749,6 +757,7 @@ pub mod v28 {
             queries.iter().skip(offset).take(limit).cloned().collect()
         }
 
+        #[allow(clippy::as_conversions)]
         pub async fn get_slow_query_stats(&self) -> SlowQueryStatistics {
             let queries = self.slow_queries.read().await;
             let now = Utc::now();

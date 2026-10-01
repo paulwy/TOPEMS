@@ -126,6 +126,7 @@ impl BaseServiceClient {
         self.execute_request(request).await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn execute_request<T: DeserializeOwned>(
         &self,
         request: RequestBuilder,
@@ -179,6 +180,7 @@ impl BaseServiceClient {
         Ok(result)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn get_without_response(&self, path: &str) -> ServiceClientResult<()> {
         if !self.breaker.allow_request() {
             self.metrics.record_circuit_block();
@@ -223,6 +225,7 @@ impl BaseServiceClient {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 发送 GET 请求并返回原始 Response（用于代理透传场景）
     /// 支持额外的 query 参数和 headers（如 x-tenant-id）
     pub async fn get_raw_response(

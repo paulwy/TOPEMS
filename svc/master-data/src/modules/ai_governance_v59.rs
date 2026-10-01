@@ -308,6 +308,7 @@ impl IntelligentMatcher {
         self.manual_review(id, MatchStatus::Rejected).await
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn get_match_stats(&self) -> MatchStats {
         let rules = self.rules.lock().await;
         let results = self.results.lock().await;
@@ -496,6 +497,7 @@ impl AutoClassifier {
         Some(result.clone())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn get_classification_stats(&self) -> ClassificationStats {
         let models = self.models.lock().await;
         let results = self.results.lock().await;

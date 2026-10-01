@@ -224,6 +224,7 @@ impl Default for AlertManager {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

@@ -436,16 +436,29 @@ impl BloomFilter {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     fn calculate_bits_needed(expected_elements: usize, false_positive_rate: f64) -> usize {
         let numerator = -(expected_elements as f64) * false_positive_rate.ln();
         let denominator = (2.0f64).ln().powi(2);
         (numerator / denominator).ceil() as usize
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     fn calculate_num_hashes(bits: usize, expected_elements: usize) -> usize {
         ((bits as f64 / expected_elements as f64) * (2.0f64).ln()).ceil() as usize
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     fn hash(&self, key: &str, hash_index: usize, bits_len: usize) -> usize {
         use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
@@ -549,6 +562,7 @@ impl CacheStatisticsCollector {
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub fn record_latency(&self, duration: Duration) {
         let mut latencies = self.latencies.lock();
         latencies.push(duration.as_millis() as u64);
@@ -557,6 +571,7 @@ impl CacheStatisticsCollector {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_statistics(&self) -> CacheStatistics {
         let hits = self.hits.load(std::sync::atomic::Ordering::Relaxed);
         let misses = self.misses.load(std::sync::atomic::Ordering::Relaxed);

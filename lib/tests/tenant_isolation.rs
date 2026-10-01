@@ -6,6 +6,11 @@ use topems_shared::tenant::{
 use topems_shared_db::rls::TenantContext as RlsTenantContext;
 use uuid::Uuid;
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss
+)]
 fn build_claims(tenant_id: Option<String>, role: &str, is_superuser: bool) -> Claims {
     let now = chrono::Utc::now();
     Claims {

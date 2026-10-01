@@ -640,6 +640,7 @@ pub fn record_cache_query_duration(
         .observe(duration_secs);
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算 L1 缓存命中率
 ///
 /// 返回命中率（0.0 ~ 1.0），如果总请求数为 0 则返回 0.0
@@ -658,6 +659,7 @@ pub fn l1_cache_hit_rate(service: &str, entity: &str, operation: &str) -> f64 {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算 L2 缓存命中率
 ///
 /// 返回命中率（0.0 ~ 1.0），如果总请求数为 0 则返回 0.0

@@ -517,6 +517,7 @@ impl ConsulDiscoveryClient {
         Some(Self::new(consul_url))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 获取健康服务实例
     pub async fn get_healthy_instances(&self, service_name: &str) -> Result<Vec<ServiceInstance>> {
         let url = format!(

@@ -219,6 +219,7 @@ impl SchemaRegistry {
 // 轻量级 JSON Schema 校验器
 // ====================================================================
 
+#[allow(clippy::as_conversions)]
 /// 校验 `value` 是否符合给定的 `schema`
 fn validate_against_schema(
     value: &serde_json::Value,

@@ -81,6 +81,7 @@ impl LocalStorage {
         })
     }
 
+    #[allow(clippy::as_conversions)]
     fn validate_file(&self, content: &[u8], content_type: &str) -> Result<()> {
         if content.len() as u64 > self.max_file_size {
             return Err(TopemsError::Validation(format!(
@@ -107,6 +108,7 @@ impl LocalStorage {
 
 #[async_trait]
 impl StorageService for LocalStorage {
+    #[allow(clippy::as_conversions)]
     async fn upload(
         &self,
         path: &Path,
@@ -265,6 +267,7 @@ impl StorageService for LocalStorage {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

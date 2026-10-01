@@ -213,6 +213,7 @@ impl LogAggregator {
             .collect()
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub async fn get_stats(&self) -> LogStats {
         let logs = self.logs.read().await;
 

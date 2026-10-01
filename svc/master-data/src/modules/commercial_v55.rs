@@ -45,6 +45,7 @@ pub fn calculate_sla_penalty(uptime_pct: f64, target_pct: f64, monthly_fee: f64)
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算使用量费用。
 /// - 调用量 ≤ free_tier：免费
 /// - 超过 free_tier 的部分按 rate_per_1k（每千次费用）计费
@@ -867,6 +868,7 @@ pub async fn record_usage(
     ),
     tag = "commercial_v55"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_usage_summary(
     State(_state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
@@ -932,6 +934,7 @@ pub async fn get_usage_summary(
     ),
     tag = "commercial_v55"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn generate_bill(
     State(_state): State<AppState>,
     Json(req): Json<GenerateBillRequest>,
@@ -1029,6 +1032,12 @@ pub async fn generate_bill(
         (status = 500, description = "Internal server error")
     ),
     tag = "commercial_v55"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn get_billing_history(
     State(_state): State<AppState>,
@@ -1250,6 +1259,7 @@ pub async fn measure_sla(
     ),
     tag = "commercial_v55"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_sla_status(
     State(_state): State<AppState>,
     Query(params): Query<SLAStatusQuery>,
@@ -1366,6 +1376,11 @@ pub async fn get_sla_history(
     ),
     tag = "commercial_v55"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 pub async fn calculate_penalty(
     State(_state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
@@ -1412,6 +1427,7 @@ pub async fn calculate_penalty(
     ),
     tag = "commercial_v55"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn create_incident(
     State(_state): State<AppState>,
     Json(req): Json<CreateSLAIncidentRequest>,
@@ -1511,6 +1527,11 @@ pub async fn get_incidents(
         (status = 500, description = "Internal server error")
     ),
     tag = "commercial_v55"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
 )]
 pub async fn generate_sla_report(
     State(_state): State<AppState>,

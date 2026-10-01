@@ -116,6 +116,7 @@ fn is_content_type_allowed(config: &BodyLimitConfig, content_type: &str) -> bool
             .any(|allowed| content_type.starts_with(allowed))
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 #[allow(clippy::expect_used)]
 pub async fn body_limit_middleware(
     middleware: Arc<BodyLimitMiddleware>,

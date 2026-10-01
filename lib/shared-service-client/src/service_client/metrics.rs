@@ -78,6 +78,7 @@ impl ClientMetrics {
         self.circuit_open_blocks.fetch_add(1, Ordering::Relaxed);
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     /// 生成当前快照（熔断态与目标地址由调用方提供）。
     pub fn snapshot(&self, circuit_open: bool, base_url: &str) -> ClientMetricsSnapshot {
         let total = self.total_requests.load(Ordering::Relaxed);

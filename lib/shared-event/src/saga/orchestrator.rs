@@ -107,6 +107,7 @@ impl SagaOrchestrator {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行一个 Saga
     ///
     /// 1. 创建 SagaInstance 并持久化到 store

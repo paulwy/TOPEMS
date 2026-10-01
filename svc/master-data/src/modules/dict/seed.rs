@@ -1,5 +1,10 @@
 use sqlx::PgPool;
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
+)]
 /// 预置系统基础字典数据
 ///
 /// 包含：通用状态、性别、是/否、用户类型、审批状态、优先级、货币、单位等

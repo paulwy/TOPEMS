@@ -75,6 +75,7 @@ impl DelayedMessagePublisher {
         })
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn publish_delayed_event(
         &self,
         event_type: EventType,
@@ -119,6 +120,7 @@ impl DelayedMessagePublisher {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn publish_delayed_event_with_target(
         &self,
         event_type: EventType,
@@ -380,6 +382,7 @@ impl DelayedMessageSubscriber {
 }
 
 #[cfg(test)]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;

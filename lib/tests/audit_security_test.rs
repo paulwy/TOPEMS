@@ -171,6 +171,7 @@ fn test_api_security_generate_signature() {
     assert_eq!(signature.len(), 64); // SHA-256 hex length
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 #[test]
 fn test_api_security_verify_valid_signature() {
     let secret = "test-secret";

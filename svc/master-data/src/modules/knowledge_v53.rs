@@ -523,6 +523,7 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     dot_product / (norm_a * norm_b)
 }
 
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn jaccard_similarity<T: Eq + std::hash::Hash>(a: &[T], b: &[T]) -> f64 {
     let set_a: HashSet<&T> = HashSet::from_iter(a.iter());
     let set_b: HashSet<&T> = HashSet::from_iter(b.iter());
@@ -698,6 +699,7 @@ impl KnowledgeGraphEngine {
         Err(format!("未找到从 {} 到 {} 的路径", start_id, end_id))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_similar(node_id: &str, limit: Option<i32>) -> Result<Vec<KGNode>, String> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
@@ -774,6 +776,11 @@ impl KnowledgeGraphEngine {
 struct RecommendationEngine;
 
 impl RecommendationEngine {
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_precision_loss,
+        clippy::cast_sign_loss
+    )]
     async fn get_recommendations(
         user_id: &str,
         target_id: Option<String>,
@@ -902,6 +909,7 @@ impl RecommendationEngine {
         record
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_similar_items(
         item_id: &str,
         limit: Option<i32>,
@@ -940,6 +948,7 @@ impl RecommendationEngine {
         Ok(result)
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_popular_items(limit: Option<i32>) -> Vec<DataAsset> {
         let store = get_knowledge_v53_store();
         let assets = store.assets.lock().await;
@@ -971,6 +980,7 @@ impl RecommendationEngine {
         result
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_trending_items(limit: Option<i32>) -> Vec<DataAsset> {
         let store = get_knowledge_v53_store();
         let assets = store.assets.lock().await;
@@ -1068,6 +1078,12 @@ impl AssetCatalogManager {
         Ok(asset)
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     async fn search_assets(
         query: Option<String>,
         asset_type: Option<AssetType>,
@@ -1182,6 +1198,11 @@ impl AssetCatalogManager {
         categories.clone()
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_wrap,
+        clippy::cast_precision_loss
+    )]
     async fn get_asset_stats() -> AssetStats {
         let store = get_knowledge_v53_store();
         let assets = store.assets.lock().await;

@@ -5,6 +5,7 @@
 use anyhow::Result;
 use topems_shared::{OllamaClient, OllamaConfig};
 
+#[allow(clippy::as_conversions)]
 #[tokio::main]
 async fn main() -> Result<()> {
     println!("╔══════════════════════════════════════════════════════════╗");
@@ -147,6 +148,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[allow(clippy::as_conversions)]
 /// 计算余弦相似度
 fn cosine_similarity(a: &[f32], b: &[f32]) -> f64 {
     let dot: f64 = a

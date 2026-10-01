@@ -266,6 +266,7 @@ impl EtcdClient {
         Ok(())
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     /// 租约自动续期循环（keep-alive）
     ///
     /// 按 `ttl_secs/3` 间隔向 etcd 发送 keep-alive 请求，保持租约不过期。

@@ -413,6 +413,7 @@ mod simple_hash {
     }
 
     impl SimpleHash {
+        #[allow(clippy::as_conversions)]
         pub fn update(&mut self, data: &[u8]) {
             for &byte in data {
                 self.state ^= byte as u64;
@@ -604,6 +605,7 @@ pub struct SwitchRegionsRequest {
     ),
     tag = "disaster_v56"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn create_recovery_point(
     State(_state): State<AppState>,
     Json(req): Json<CreateRecoveryPointRequest>,
@@ -649,6 +651,12 @@ pub async fn create_recovery_point(
         (status = 500, description = "Internal server error")
     ),
     tag = "disaster_v56"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
 )]
 pub async fn list_recovery_points(
     State(_state): State<AppState>,
@@ -746,6 +754,7 @@ pub async fn restore_from_point(
     ),
     tag = "disaster_v56"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_recovery_status(
     State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -805,6 +814,11 @@ pub async fn get_recovery_status(
         (status = 500, description = "Internal server error")
     ),
     tag = "disaster_v56"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap
 )]
 pub async fn create_recovery_plan(
     State(_state): State<AppState>,
@@ -867,6 +881,7 @@ pub async fn create_recovery_plan(
     ),
     tag = "disaster_v56"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn execute_plan(
     State(_state): State<AppState>,
     Json(req): Json<ExecutePlanRequest>,
@@ -918,6 +933,11 @@ pub async fn execute_plan(
         (status = 500, description = "Internal server error")
     ),
     tag = "disaster_v56"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
 )]
 pub async fn get_plan_progress(
     State(_state): State<AppState>,
@@ -1251,6 +1271,11 @@ pub async fn get_test_results(
     ),
     tag = "disaster_v56"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 pub async fn assess_impact(
     State(_state): State<AppState>,
     Query(params): Query<ImpactQuery>,
@@ -1325,6 +1350,11 @@ pub async fn assess_impact(
         (status = 500, description = "Internal server error")
     ),
     tag = "disaster_v56"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
 )]
 pub async fn get_continuity_score(
     State(_state): State<AppState>,

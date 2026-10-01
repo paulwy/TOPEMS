@@ -89,6 +89,7 @@ impl ServiceMonitor {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     pub async fn check_health(&mut self) -> ServiceHealth {
         let start = Instant::now();
         let result = check_http_health(&self.health_url).await;
@@ -148,6 +149,7 @@ impl ServiceMonitor {
         }
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     pub fn get_metrics(&self) -> ServiceMetrics {
         let avg_response_time = if self.response_times.is_empty() {
             0.0
@@ -241,6 +243,7 @@ impl ServiceHealth {
 }
 
 impl HealthCheckResponse {
+    #[allow(clippy::as_conversions)]
     pub fn new(services: Vec<ServiceHealth>) -> Self {
         let total_services = services.len();
         let overall_status = Self::calculate_overall_status(&services);
@@ -515,6 +518,7 @@ impl IntoResponse for ServiceHealth {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn standard_health_check(State(state): State<HealthState>) -> ServiceHealth {
     let start = Instant::now();
     let mut dependencies = Vec::new();
@@ -686,6 +690,7 @@ impl SimpleHealthConfig {
     }
 }
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn simple_health_check(config: &SimpleHealthConfig) -> ServiceHealth {
     let start = Instant::now();
     let mut dependencies = Vec::new();

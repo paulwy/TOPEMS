@@ -119,6 +119,11 @@ impl DeadLetterQueue {
         }
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub async fn get_retry_count(&self, event_id: &uuid::Uuid) -> EventResult<usize> {
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
         let result: Option<i64> = redis::cmd("HGET")
@@ -139,6 +144,11 @@ impl DeadLetterQueue {
         Ok(())
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )]
     pub async fn size(&self, event_type: &str) -> EventResult<usize> {
         let dlq_key = format!("{}:{}", DLQ_KEY_PREFIX, event_type);
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
@@ -466,6 +476,12 @@ impl DeadLetterQueue {
         Ok(())
     }
 
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::cast_sign_loss
+    )]
     /// V23.0: 获取死信队列统计
     #[allow(clippy::indexing_slicing)]
     pub async fn get_stats(&self) -> EventResult<DeadLetterStats> {

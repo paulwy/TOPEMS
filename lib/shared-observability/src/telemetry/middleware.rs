@@ -11,6 +11,7 @@ use std::time::Instant;
 use tracing::info_span;
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
     let start = Instant::now();
     let method = request.method().clone();

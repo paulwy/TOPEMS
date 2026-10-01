@@ -631,6 +631,7 @@ fn branch_type_from_str(s: &str) -> BranchType {
     }
 }
 
+#[allow(clippy::as_conversions)]
 fn compute_hash(data: &serde_json::Value) -> String {
     let serialized = serde_json::to_string(data).unwrap_or_default();
     format!("{:x}", {
@@ -910,6 +911,12 @@ pub async fn restore_version(
     ),
     tag = "versioning_v54"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn list_history(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -1038,6 +1045,12 @@ pub async fn merge_branch(
     ),
     tag = "versioning_v54"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn query_audit_log(
     State(_state): State<AppState>,
     Query(params): Query<AuditLogQuery>,
@@ -1130,6 +1143,12 @@ pub async fn query_audit_log(
     ),
     tag = "versioning_v54"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn get_user_activity(
     State(_state): State<AppState>,
     Path(user_id): Path<String>,
@@ -1201,6 +1220,12 @@ pub async fn get_user_activity(
     ),
     tag = "versioning_v54"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn get_entity_history(
     State(_state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
@@ -1268,6 +1293,7 @@ pub async fn get_entity_history(
     ),
     tag = "versioning_v54"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn export_audit_log(
     State(_state): State<AppState>,
     Json(req): Json<ExportAuditLogRequest>,
@@ -1326,6 +1352,7 @@ pub async fn export_audit_log(
     ),
     tag = "versioning_v54"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_compliance_audit(
     State(_state): State<AppState>,
     Query(params): Query<ComplianceAuditQuery>,
