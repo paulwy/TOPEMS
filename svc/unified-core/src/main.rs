@@ -304,7 +304,6 @@ fn init_field_encryption() -> Option<std::sync::Arc<FieldEncryptionService>> {
 }
 
 #[allow(clippy::expect_used)]
-#[allow(clippy::expect_used)]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // 确保 core 服务使用 public schema 来访问 core_* 表
