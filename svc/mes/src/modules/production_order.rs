@@ -772,6 +772,7 @@ pub async fn get_production_order(
         (status = 404, description = "生产订单不存在"),
     ),
 )]
+#[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
 pub async fn update_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
