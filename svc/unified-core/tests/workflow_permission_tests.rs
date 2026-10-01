@@ -1,4 +1,4 @@
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! Workflow 模块权限测试
 //!
 //! 覆盖测试用例清单中的 WF-001 到 WF-008

@@ -284,6 +284,7 @@ impl MesService {
         MES_SERVICE.get_or_init(|| Mutex::new(Self::new()))
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_equipment(&self, page: i32, page_size: i32) -> PaginatedResponse<Equipment> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.equipment.len());
@@ -300,6 +301,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_work_orders(&self, page: i32, page_size: i32) -> PaginatedResponse<WorkOrder> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.work_orders.len());
@@ -351,6 +353,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_quality_inspections(
         &self,
         page: i32,
@@ -371,6 +374,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_production_orders(
         &self,
         page: i32,
@@ -391,6 +395,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_workstations(&self, page: i32, page_size: i32) -> PaginatedResponse<WorkStation> {
         let start = ((page - 1) * page_size) as usize;
         let end = std::cmp::min(start + page_size as usize, self.workstations.len());
@@ -407,6 +412,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_production_records(
         &self,
         page: i32,
@@ -427,6 +433,7 @@ impl MesService {
         }
     }
 
+    #[allow(clippy::indexing_slicing)]
     pub fn list_production_schedules(
         &self,
         page: i32,

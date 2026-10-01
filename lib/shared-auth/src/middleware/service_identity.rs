@@ -47,7 +47,7 @@ pub async fn service_identity_middleware(req: Request<Body>, next: Next) -> Resp
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::auth::verify_jwt_token;

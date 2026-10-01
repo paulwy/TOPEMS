@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS shared core library - foundational types and utilities"
 
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
 [dependencies]
 # ===== 基础依赖 =====
 chrono.workspace = true
@@ -77,8 +81,6 @@ grpc = ["dep:tonic", "dep:prost", "dep:rand", "dep:async-trait"]
 [dev-dependencies]
 serial_test = "3"
 
-[lints]
-workspace = true
 
 [package.metadata.cargo-machete]
 ignored = ["prost"]

@@ -751,7 +751,7 @@ pub fn build_health_response(service_name: &str, is_healthy: bool) -> ServiceHea
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::body::Body;

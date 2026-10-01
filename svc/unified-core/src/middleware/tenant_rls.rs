@@ -11,7 +11,7 @@ use topems_shared_auth::auth::{verify_jwt_token, Claims};
 use crate::AppState;
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::http::Uri;

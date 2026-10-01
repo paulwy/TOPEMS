@@ -140,6 +140,7 @@ pub fn transfer_orders() -> &'static Mutex<Vec<TransferOrder>> {
 pub struct InboundOrderService;
 
 impl InboundOrderService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<InboundOrder> {
         let orders = inbound_orders().lock().unwrap_or_else(|e| e.into_inner());
         let total = orders.len() as i64;
@@ -168,6 +169,7 @@ impl InboundOrderService {
 pub struct OutboundOrderService;
 
 impl OutboundOrderService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<OutboundOrder> {
         let orders = outbound_orders().lock().unwrap_or_else(|e| e.into_inner());
         let total = orders.len() as i64;
@@ -191,6 +193,7 @@ impl OutboundOrderService {
 pub struct InventoryService;
 
 impl InventoryService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<InventoryItem> {
         let items = inventory_items().lock().unwrap_or_else(|e| e.into_inner());
         let total = items.len() as i64;
@@ -214,6 +217,7 @@ impl InventoryService {
 pub struct TransferService;
 
 impl TransferService {
+    #[allow(clippy::indexing_slicing)]
     pub fn list(page: i64, page_size: i64) -> PaginatedResponse<TransferOrder> {
         let orders = transfer_orders().lock().unwrap_or_else(|e| e.into_inner());
         let total = orders.len() as i64;

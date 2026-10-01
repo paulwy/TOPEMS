@@ -565,7 +565,7 @@ pub fn permission_export_import_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 
@@ -756,6 +756,7 @@ fn test_csv_escape_quotes_and_commas() {
 }
 
 #[test]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 fn test_export_format_csv_parse() {
     assert_eq!("csv".parse::<ExportFormat>().unwrap(), ExportFormat::Csv);
     assert_eq!("JSON".parse::<ExportFormat>().unwrap(), ExportFormat::Json);

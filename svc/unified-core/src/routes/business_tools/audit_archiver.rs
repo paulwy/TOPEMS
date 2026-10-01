@@ -362,7 +362,7 @@ fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
 // ===== Tests =====
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::routes::business_tools::mock_audit_store::make_test_entry;

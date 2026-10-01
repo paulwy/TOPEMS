@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS shared observability library - telemetry, tracing, metrics, alerting"
 
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
 [dependencies]
 topems-shared-core = { path = "../shared-core" }
 topems-shared-event = { path = "../shared-event" }
@@ -37,5 +41,3 @@ amqprs = { version = "2.1", features = ["tokio-rustls"] }
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 dotenv = { package = "dotenvy", version = "0.15" }
 
-[lints]
-workspace = true

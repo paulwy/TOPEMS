@@ -845,6 +845,7 @@ impl LoadBalancer {
     }
 
     /// Get the next endpoint based on the strategy.
+    #[allow(clippy::indexing_slicing)]
     pub fn next_endpoint(&mut self) -> &str {
         match self.strategy {
             LoadBalancingStrategy::RoundRobin => {
@@ -1882,7 +1883,7 @@ pub fn create_default_registry() -> Result<ServiceRegistry, ServiceClientError> 
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

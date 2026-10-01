@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS shared auth library - authentication, authorization, middleware"
 
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
 [dependencies]
 topems-shared-core = { path = "../shared-core" }
 topems-shared-event = { path = "../shared-event" }
@@ -46,5 +50,3 @@ rand = "0.8"
 [dev-dependencies]
 serial_test = "3"
 
-[lints]
-workspace = true

@@ -135,7 +135,7 @@ pub async fn delete(pool: &PgPool, table_name: &str, id: Uuid) -> Result<(), sql
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

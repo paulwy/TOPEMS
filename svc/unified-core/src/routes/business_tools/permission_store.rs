@@ -398,7 +398,7 @@ impl InMemoryPermissionStore {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::super::TenantRole;
     use super::*;
@@ -608,6 +608,7 @@ impl PermissionChangeNotifier {
 // ===== Permission Change Notifier tests (V530f) =====
 
 #[tokio::test]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 async fn test_notifier_publish_and_receive() {
     let notifier = PermissionChangeNotifier::new();
     let mut rx = notifier.subscribe();
@@ -644,6 +645,7 @@ async fn test_notifier_prunes_dropped_subscribers() {
 }
 
 #[tokio::test]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 async fn test_bulk_create_skips_existing() {
     let store = InMemoryPermissionStore::with_defaults();
     // "default"/"admin" already exists via with_defaults.
@@ -660,6 +662,7 @@ async fn test_bulk_create_skips_existing() {
 }
 
 #[tokio::test]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 async fn test_bulk_delete_skips_missing() {
     let store = InMemoryPermissionStore::with_defaults();
     let result = store

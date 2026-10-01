@@ -157,7 +157,7 @@ pub fn local_service_url(svc: &str) -> Option<String> {
 // ============ 单测 ============
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

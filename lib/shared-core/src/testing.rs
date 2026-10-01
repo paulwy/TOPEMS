@@ -1,4 +1,5 @@
 //! V71 A1 · OpenAPI 提取共享测试工具
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //!
 //! 30+ 个 `svc/*/tests/openapi_extract.rs` 集成测试共享的契约提取逻辑。
 //! 调用方传入自己的 `ApiDoc` 类型、`CARGO_PKG_NAME` 与 `CARGO_MANIFEST_DIR`，
@@ -58,7 +59,7 @@ pub fn extract_openapi_spec_to_file<T: OpenApi>(pkg_name: &str, manifest_dir: &s
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use utoipa::OpenApi;

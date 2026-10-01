@@ -107,7 +107,7 @@ pub fn extract_uuid(master_data_id: &str) -> Option<Uuid> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

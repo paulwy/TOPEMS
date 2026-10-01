@@ -156,6 +156,7 @@ fn get_restorer_with_config(skip_existing: bool) -> AuditLogRestorer {
 }
 
 /// Validate date format (YYYY-MM-DD).
+#[allow(clippy::indexing_slicing)]
 fn is_valid_date_format(date: &str) -> bool {
     if date.len() != 10 {
         return false;
@@ -184,7 +185,7 @@ pub fn audit_restore_routes() -> Router<AppState> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

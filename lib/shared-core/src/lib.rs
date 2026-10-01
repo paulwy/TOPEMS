@@ -96,7 +96,7 @@ pub use supplier::{
 pub use validation::{normalize_code, ValidationError, ValidationResult, Validator};
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     // 测试 crate 的公共 API re-export 是否可访问

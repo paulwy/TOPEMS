@@ -8,6 +8,11 @@ description = "TOPEMS compile-time schema boundary check - only_own_schema_query
 [lib]
 proc-macro = true
 
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
 [dependencies]
 quote.workspace = true
 syn.workspace = true

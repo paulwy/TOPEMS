@@ -241,6 +241,7 @@ impl AuditLogStore for InMemoryAuditLogStore {
         Ok(())
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn query(&self, query: &AuditLogQuery) -> Result<AuditLogResponse, AuditLogError> {
         let entries = self.entries.read().await;
 
@@ -310,6 +311,7 @@ impl AuditLogStore for InMemoryAuditLogStore {
         Ok(self.entries.read().await.len())
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn query_logs(
         &self,
         tenant_id: Option<String>,
@@ -534,7 +536,7 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

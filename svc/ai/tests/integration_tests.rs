@@ -1,5 +1,5 @@
 // AI 服务集成测试
-#![allow(dead_code)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #![allow(unused_imports)]
 
 use sqlx::{PgPool, Row};

@@ -10,6 +10,7 @@
 //! - ping 请求 → 验证返回成功
 //! - 无效 JSON → 验证返回解析错误
 //! - 通知（无 id）→ 验证不返回响应
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};

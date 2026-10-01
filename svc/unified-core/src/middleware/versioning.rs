@@ -819,7 +819,7 @@ async fn reload_version_config(state: &AppState) {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use axum::http::{HeaderValue, Uri};

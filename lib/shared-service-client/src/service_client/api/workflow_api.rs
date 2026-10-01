@@ -240,7 +240,7 @@ impl TypedServiceClient<WorkflowApi> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use chrono::{TimeZone, Utc};

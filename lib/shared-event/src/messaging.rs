@@ -199,7 +199,7 @@ impl MessageConsumer for InMemoryMessageBroker {
 
 #[cfg(test)]
 #[allow(deprecated)] // 测试仍覆盖废弃 RedisMessageBroker 的 stub 行为
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

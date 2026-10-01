@@ -186,7 +186,7 @@ pub fn is_service_claims(claims: &Claims) -> bool {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use crate::auth::verify_jwt_token;

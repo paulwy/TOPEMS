@@ -346,6 +346,7 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
         Ok(())
     }
 
+    #[allow(clippy::indexing_slicing)]
     async fn discover(
         &self,
         name: &str,
@@ -518,7 +519,7 @@ impl Default for ConsulServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

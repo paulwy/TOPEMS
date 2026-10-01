@@ -1,4 +1,4 @@
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! Eureka 服务发现集成测试（真实 Eureka server）
 //!
 //! 环境变量 `EUREKA_TEST_ADDRESS`（如 http://127.0.0.1:8761）未设置或不可达时自动跳过。

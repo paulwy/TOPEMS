@@ -324,7 +324,7 @@ pub fn system_time_to_ms(st: SystemTime) -> i64 {
 // ============================================================================
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
     use std::time::Duration;

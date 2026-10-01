@@ -374,6 +374,7 @@ impl EtcdServiceDiscovery {
     }
 
     /// Get a key from etcd.
+    #[allow(clippy::indexing_slicing)]
     async fn get_key(&self, key: &str) -> Result<Option<String>, ServiceClientError> {
         let url = self.build_url("/v3/kv/range");
         let request = serde_json::json!({
@@ -665,7 +666,7 @@ impl Default for EtcdServiceDiscoveryBuilder {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

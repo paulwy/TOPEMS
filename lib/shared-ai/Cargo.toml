@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS shared AI library - vector store, embeddings, AI clients"
 
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
 [dependencies]
 topems-shared-core = { path = "../shared-core" }
 
@@ -30,5 +34,3 @@ default = []
 [dev-dependencies]
 serial_test = "3"
 
-[lints]
-workspace = true

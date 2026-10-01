@@ -5,6 +5,10 @@ edition.workspace = true
 authors.workspace = true
 description = "TOPEMS shared database library - database access, migrations, repositories"
 
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+
 [dependencies]
 topems-shared-core = { path = "../shared-core" }
 topems-shared-auth = { path = "../shared-auth" }
@@ -29,5 +33,3 @@ md5 = "0.7"
 [dev-dependencies]
 tempfile = "3"
 
-[lints]
-workspace = true

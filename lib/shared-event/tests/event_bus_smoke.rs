@@ -1,5 +1,5 @@
 //! 事件总线冒烟测试：验证 Redis Stream 发布 / 订阅消费 / DLQ 全链路（需 Redis）
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //!
 //! 运行（本地 Redis 可用时）：
 //!   cargo test -p topems-shared-event --test event_bus_smoke -- --ignored

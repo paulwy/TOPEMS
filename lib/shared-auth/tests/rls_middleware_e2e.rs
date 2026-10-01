@@ -1,5 +1,5 @@
 //! RLS A 方案 · 真实 tenant_middleware → handler 端到端验证（sqlx::test 临时库）
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //!
 //! 覆盖链路：Claims(tenant_id) → tenant_middleware（begin + set_config('app.tenant_id') + 注入 txn）
 //! → handler 经 Extension 提取 txn → `&mut **txn` 查询 → RLS 过滤。

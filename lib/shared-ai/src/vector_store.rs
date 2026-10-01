@@ -267,7 +267,7 @@ pub async fn create_vector_store(redis_url: &str) -> Result<Arc<dyn VectorStore>
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

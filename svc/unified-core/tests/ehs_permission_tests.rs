@@ -1,4 +1,4 @@
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! EHS 模块权限测试
 //!
 //! 覆盖环境健康安全模块的核心权限场景

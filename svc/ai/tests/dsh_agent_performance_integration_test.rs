@@ -6,7 +6,7 @@
 //! - 延迟统计
 //! - 成功率统计
 
-#![allow(dead_code)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #![allow(unused_imports)]
 
 use std::collections::HashMap;

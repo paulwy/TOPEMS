@@ -193,7 +193,7 @@ pub fn distribution_from_map(map: &HashMap<String, usize>) -> Vec<EventTypeDistr
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
 

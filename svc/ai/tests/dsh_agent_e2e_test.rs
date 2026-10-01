@@ -8,7 +8,7 @@
 //! - LLM 集成（使用 MockProvider）
 //! - 多轮对话
 
-#![allow(dead_code)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #![allow(unused_imports)]
 
 use std::sync::Arc;

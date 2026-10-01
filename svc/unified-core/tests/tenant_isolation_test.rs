@@ -1,4 +1,4 @@
-#![allow(clippy::unwrap_used, clippy::expect_used)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! 多租户隔离集成测试
 //!
 //! 覆盖测试用例：租户间数据隔离、跨租户访问控制、租户 ID 校验等场景

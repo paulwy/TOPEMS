@@ -10,7 +10,7 @@
 //! - RAG 检索
 //! - 多 Agent 协作
 
-#![allow(dead_code)]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #![allow(unused_imports)]
 
 use std::collections::HashMap;
