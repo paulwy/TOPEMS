@@ -4,13 +4,6 @@
     "source_of_truth": "Per-file bare-sqlx baseline for the NODE gate only. Per-service schema allow lives in scripts/schema_boundary.json (python gate). Keep the temporary entries in sync across both files.",
     "temporary_entries": [
       {
-        "service": "unified-core",
-        "scope": "svc/unified-core/src/modules/*/handlers.rs (23 业务镜像模块只读投影，约 180 处业务 schema 直读)",
-        "reason": "unified-core 只读投影层（全 GET 列表聚合视图，无 INSERT/UPDATE）；生产 nginx 不把业务前缀转发到 :8000，投影无入向流量。灰度下架前保留。",
-        "decision_ref": "D1 §5 选项C（灰度下架）",
-        "remove_when": "阶段2 U1.2 停挂路由 / U1.3 删除镜像模块 / U1.4 撤销 schema_boundary.json 中 unified-core 业务 allow 后，本文件对应条目一并删除"
-      },
-      {
         "service": "search",
         "scope": "svc/search/src/handlers.rs:113,167,197 (erp.customers/sales_orders/purchase_orders 只读)",
         "reason": "search 聚合检索直读 erp.*，聚合检索设计使然；待阶段2 治理为走服务 API/事件。",
@@ -34,29 +27,6 @@
     "svc/plugin-registry/src/modules/plugin/mod.rs": "同 marketplace.rs：core schema 插件表归属待确认。【非临时】",
     "svc/ai/src/modules/ai_knowledge/service.rs": "ai_knowledge 模块未在 svc/ai/src/modules/mod.rs 挂载（死代码，26 处宏调用引用 core.* 白名单 plugin_ai——若激活将编译失败）；待决策：删除或挂载并修复白名单。【非临时，死代码待决策】",
     "svc/ai/src/modules/ai_knowledge/rag.rs": "同 service.rs：ai_knowledge 未挂载死代码。【非临时】",
-    "svc/unified-core/src/modules/wms/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 wms.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/pdm/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 pdm.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/qms/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 qms.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/scm/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 scm.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/search/src/handlers.rs": "【临时·阶段2检索治理】search 聚合检索只读直读 erp.*（customers/sales_orders/purchase_orders）；待改走服务 API/事件后撤销本条并撤销 schema_boundary.json 中 search.allow=[erp]。",
-    "svc/unified-core/src/modules/crm/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 crm.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/ehs/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 ehs.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/erp/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 erp.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/finance/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 finance.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/hrm/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 hrm.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/ai/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 ai.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/analytics/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 analytics.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/communication/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 communication.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/gis/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 gis.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/integration/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 integration.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/lims/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 lims.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/master_data/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 master_data.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/mobile/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 mobile.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/pm/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 pm.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/portal/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 portal.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/rd/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 rd.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/srm/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 srm.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/ticket/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 ticket.*；灰度下架前保留，U1 删除镜像模块后撤销本条。",
-    "svc/unified-core/src/modules/tms/handlers.rs": "【临时·D1/U1】unified-core 只读投影层直读 tms.*；灰度下架前保留，U1 删除镜像模块后撤销本条。"
+    "svc/search/src/handlers.rs": "【临时·阶段2检索治理】search 聚合检索只读直读 erp.*（customers/sales_orders/purchase_orders）；待改走服务 API/事件后撤销本条并撤销 schema_boundary.json 中 search.allow=[erp]。"
   }
 }

@@ -157,32 +157,7 @@
     "unified-core": {
       "schema": "public",
       "search_path": "public",
-      "allow": [
-        "ai",
-        "communication",
-        "crm",
-        "ehs",
-        "erp",
-        "finance",
-        "gis",
-        "hrm",
-        "integration",
-        "lims",
-        "master_data",
-        "mobile",
-        "pdm",
-        "pm",
-        "portal",
-        "qms",
-        "scm",
-        "srm",
-        "ticket",
-        "tms",
-        "wms"
-      ],
-      "allow_temporary": true,
-      "allow_reason": "unified-core 只读投影层（23 个业务镜像模块全 GET 列表聚合视图，无 INSERT/UPDATE）；生产 nginx 不把业务前缀转发到 :8000，投影无入向流量。灰度下架前保留跨 schema 直读。",
-      "allow_decision": "D1 §5 选项C（灰度下架）→ 阶段2 U1.2 停挂路由、U1.3 删除镜像模块、U1.4 撤销本 allow"
+      "allow": []
     },
     "wms": {
       "schema": "wms",
