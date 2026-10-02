@@ -19,10 +19,7 @@ deploy/
 ├── docker/                   # Docker Compose 主部署配置
 │   ├── docker-compose.yml    # 全量 compose 文件（含全部业务服务与中间件）
 │   ├── docker-compose.dify.yml       # Dify AI 平台集成（可选叠加）
-│   ├── etcd-compose.yml      # etcd 中间件独立栈（可选）
-│   ├── eureka-compose.yml    # Eureka 中间件独立栈（可选）
-│   ├── nacos-compose.yml     # Nacos 中间件独立栈（可选）
-│   ├── zookeeper-compose.yml # ZooKeeper 中间件独立栈（可选）
+│   ├── etcd-compose.yml      # etcd 中间件独立栈（可选；仅 ai/portal opt-in 配置管理）
 │   ├── Dockerfile.service    # 统一服务 Dockerfile 模板
 │   ├── build-service.sh      # 统一服务构建脚本
 │   ├── prometheus/           # Prometheus 配置
@@ -55,7 +52,8 @@ docker compose up -d
 # 叠加 Dify AI 平台集成
 docker compose -f docker-compose.yml -f docker-compose.dify.yml up -d
 
-# 启动可选中间件独立栈（etcd / eureka / nacos / zookeeper 按需）
+# 启动可选中间件独立栈（etcd 仅 ai/portal opt-in 配置管理；consul 为预留服务发现扩展点，默认关）
+# 注（D5/U9 2026-10-03）：eureka/nacos/zookeeper 独立栈已移除（未接线残留）
 docker compose -f etcd-compose.yml up -d
 ```
 

@@ -1301,7 +1301,7 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 > - **服务端路由**：nginx 静态 upstream 按前缀转发（`deploy/nginx/topems.conf:122-128`）——**nginx 即事实上的服务发现层**。
 > - **etcd**：仅 `svc/ai/src/dsh/config_center/` 与 `svc/portal/src/state.rs` opt-in **配置管理**（`ETCD_ENABLED` 默认 false），不承担服务发现。
 > - **Consul**：代码内置可选发现（`trait_api.rs:138` 设 `CONSUL_URL` 即启用），但 `CONSUL_ENABLED=false` 默认关——**预留扩展点**。
-> - **5 套注册中心收敛**：`deploy/docker/` 下曾并存 consul/etcd/eureka/nacos/zookeeper 五套 compose；实测 zookeeper/eureka/nacos **未接线（入口零调用）**、etcd opt-in、Consul 默认关——均为预留/残留，按 D5 阶段 2 U9 收敛（移除 zookeeper/eureka/nacos 残留 + zookeeper 0.8 future-incompat 依赖）。
+> - **注册中心收敛（U9 已落地 2026-10-03）**：`deploy/docker/` 曾并存 consul/etcd/eureka/nacos/zookeeper 五套 compose；实测 zookeeper/eureka/nacos **未接线（入口零调用）**、etcd opt-in、Consul 默认关。**U9 已移除**：`lib/shared-event` 的 zookeeper 依赖（0.8.0 future-incompat，审计 M7 随之消除）+ `src/zookeeper/` 模块、unified-core 的 `zookeeper/eureka/nacos_service_discovery.rs` 实现与集成测试、三个独立 compose、`deploy/eureka-mock/`。现 `deploy/docker/` 仅余 **consul（预留扩展点）+ etcd（opt-in 配置管理）** 两套；`Cargo.lock` 已无 zookeeper 条目。依据：D5 选项 B + 代码实测 2026-10-03。
 
 ### C. 关键文件快速索引
 

@@ -21,7 +21,7 @@
 > - **Bootstrap A/B/C 计数**：实测为纯 C=6 / 标准 A=4 / B 系=17 / analytics 混合=1（ENTRY-05 实测），原文 A=10/B=13/C=5 作废。
 > - **unified-core 瘦身**：代码层面 23 个业务镜像模块仍导出、独立模式挂 24 个业务只读投影路由，灰度下架进行中——对齐 [D1](./decision-d1-unified-core-architecture.md)（2026-10-02）。
 > - **事件总线**：已迁 Redis Stream（XADD/XREADGROUP/XACK + 消费组 + DLQ + 事件版本 + Schema Registry，默认开启），Pub/Sub+RabbitMQ 废弃——对齐 [D2](./decision-d2-call-cycle-elimination.md) §2.5。
-> - **服务发现**：静态配置为主（`config/services.yaml` 权威源 + nginx + env `SERVICE_URL`），5 套注册中心 compose 收敛中——对齐 [D5](./decision-d5-service-discovery-convergence.md)（2026-10-02）。
+> - **服务发现**：静态配置为主（`config/services.yaml` 权威源 + nginx + env `SERVICE_URL`）——5 套注册中心已收敛为 consul（预留）+ etcd（opt-in 配置管理）两套，zookeeper/eureka/nacos 未接线残留已移除（U9 2026-10-03）——对齐 [D5](./decision-d5-service-discovery-convergence.md)（2026-10-02）。
 
 ## 概述
 
@@ -332,7 +332,7 @@ SmartServiceClient（base_url 由调用方从 env SERVICE_URL / 静态配置构�
 服务实例 URL（nginx 按前缀静态 upstream 转发，端口权威源 = config/services.yaml）
 ```
 
-> 注：`deploy/docker/` 下曾并存 5 套注册中心 compose（consul/etcd/eureka/nacos/zookeeper），实测 3 套（zookeeper/eureka/nacos）未接线、etcd 仅 ai/portal opt-in 配置管理、Consul 默认关——均为预留/残留，按 D5 收敛中（阶段 2 U9）。
+> 注：`deploy/docker/` 曾并存 5 套注册中心 compose（consul/etcd/eureka/nacos/zookeeper），实测 3 套（zookeeper/eureka/nacos）未接线、etcd 仅 ai/portal opt-in 配置管理、Consul 默认关。**U9 已收敛（2026-10-03）**：移除 zookeeper/eureka/nacos 代码实现 + 集成测试 + 独立 compose + `lib/shared-event` zookeeper 0.8 依赖（M7 future-incompat 消除）；现仅余 consul（预留扩展点）+ etcd（opt-in 配置管理）两套。依据 D5 选项 B + 代码实测 2026-10-03。
 
 #### 前端动态导航
 
