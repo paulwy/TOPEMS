@@ -102,6 +102,23 @@ cargo check -p <crate> --all-targets                # 复现
 - 仍失败 → `rustup toolchain list` 确认 nightly-2026-07-01 已装；发首屏 error。
 - 不要在 main 上 push 失败后反复重试——先看门禁输出归类。
 
+### 2026-10-02 事故教训：把健康 main 误判成「坏了」
+
+某机在 `reset --hard origin/main` 后编译报 190+13 错，判定「远程退回编译失败状态、
+有人覆盖了修复」——**实际远端健康（本机+CI 双实证），错误来自该机本地旧状态**。
+诊断纪律：
+
+1. **先验证远端真实状态，别凭本地 refs/印象下结论**：`git ls-remote origin main`
+   对比 SHA（本地 `origin/main` 可能是陈旧的）。
+2. **确认你在看哪个提交、谁写的**：`git show -s --format='%h %an %s' <sha>`——
+   曾发生把他人已推送的修复提交（c7e521384）误认成「事故版本」。
+3. **`git reset --hard origin/main` 丢弃的是自己机器的本地未推提交**——这是 onboarding
+   的正常动作，不是「外部操作/有人动我代码」；reset 后 `git status --short` 应无输出
+   （工作区 = origin/main）。
+4. **工作区对齐最新 main 后仍报错 → 先查本机环境**（sccache 包装 `RUSTC_WRAPPER`、
+   工具链、脏文件混入），**再怀疑远端**——远端健康以 CI/多机实证为准，不以单机
+   本地编译为准。
+
 ## 其他
 
 - Revert 他人提交前确认影响面与理由（6016a041b 事故：修复被 Revert 引发连锁误解）。
