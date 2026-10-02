@@ -204,3 +204,29 @@ hbtykj（真实参与者）均只能为 Write；硬闸目标调整为「本地�
 
 - Revert 他人提交前确认影响面与理由（6016a041b 事故：修复被 Revert 引发连锁误解）。
 - 推送走完整门禁；`--no-verify` 仅限「门禁刚全绿、仅传输失败」的已知场景（如 SSH 长钩子超时）。
+
+## 2026-10-03 协作基线收口记录
+
+**两端身份归位确认（`git config` 实测）**：
+
+| 机器 | user.name | user.email | 角色 |
+|---|---|---|---|
+| 本机（xingzhai@Mac-mini） | WangYu | wy_hb@126.com | 作者/所有者（paulwy） |
+| TRAE 机（air@MacBook-Air） | topmap163 | topmap@163.com | TRAE 机专用作者身份 |
+
+- 意义：历史「谁推了坏提交」判断混乱的根源（身份颠倒，author 归属失真）已消除——
+  author 即提交者本地 git 配置，推送方是 SSH key；两端身份分离后，提交归属可追溯。
+- TRAE 机无需再切换身份；后续提交统一以 topmap163 标识。
+
+**本机 push 29 笔收口（cd8ab50c6，门禁全绿）**：
+- cast deny 收尾（hrm try_from 化 / mes f64 提变量+allow）、fmt 收尾（master-data 批量 +
+  TRAE 机 AI 会话 CRUD 3 文件格式化）、boundary-gate 修复（cjs own-schema 映射补
+  master-data + persist.rs/u4 迁移补录——此前未入库的编译依赖）、rebase 并入 TRAE 机
+  5 笔（docs/api/finance U5，无冲突）。
+- 验证：check 21s / clippy 59s / fmt 6s / test 69s（550 passed）/ shellcheck 7s 全绿。
+
+**8ffbf5280（本机 WangYu 推）**：fix(deps) frontend-lint 崩溃（minimatch@10 →
+brace-expansion 锁定 5.0.8 + .git/hooks 残留清理，pre-commit 20/20 全绿验证）。
+远端 main 已同步至 8ffbf5280，两端一致、工作区干净。
+
+**剩余待办**：远端 CI（39 jobs）最终全绿确认；CI 红灯即按 L4 快速定位修复。
