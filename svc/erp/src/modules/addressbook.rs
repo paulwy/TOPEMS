@@ -6,8 +6,8 @@ use axum::extract::Query;
 use axum::{extract::State, Json, Router};
 use serde::Deserialize;
 use serde::Serialize;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_service_client::service_client::api::hrm_api::{
     HrmCompany, HrmDepartment, HrmEmployee,
 };
@@ -349,7 +349,10 @@ pub async fn get_contact_detail(
                         "获取联系人详情成功",
                     ))
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("获取员工信息失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal(
+                    "获取员工信息失败",
+                    e,
+                ))),
             },
             "DEPARTMENT" => match state.hrm_client.list_departments().await {
                 Ok(departments) => {
@@ -378,7 +381,10 @@ pub async fn get_contact_detail(
                         Json(ApiResponse::error(404, "部门不存在"))
                     }
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("获取部门信息失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal(
+                    "获取部门信息失败",
+                    e,
+                ))),
             },
             "COMPANY" => match state.hrm_client.list_companies().await {
                 Ok(companies) => {
@@ -407,7 +413,10 @@ pub async fn get_contact_detail(
                         Json(ApiResponse::error(404, "公司不存在"))
                     }
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("获取公司信息失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal(
+                    "获取公司信息失败",
+                    e,
+                ))),
             },
             _ => Json(ApiResponse::error(400, "无效的联系人类型")),
         },

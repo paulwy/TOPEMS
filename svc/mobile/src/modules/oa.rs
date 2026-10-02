@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 fn tenant_id() -> String {
@@ -204,7 +204,7 @@ pub async fn list_meetings(
                 "ok",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -235,7 +235,7 @@ pub async fn get_meeting(
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "ok")),
         Ok(None) => Json(ApiResponse::error(404, "会议不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -274,7 +274,7 @@ pub async fn create_meeting(
     .await
     {
         Ok(m) => Json(ApiResponse::success(m, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
 
@@ -311,7 +311,7 @@ pub async fn update_meeting(
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "会议不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -329,7 +329,7 @@ pub async fn delete_meeting(
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "会议不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -360,7 +360,7 @@ pub async fn join_meeting(
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "已加入会议")),
         Ok(None) => Json(ApiResponse::error(404, "会议不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("操作失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("操作失败", e))),
     }
 }
 
@@ -391,7 +391,7 @@ pub async fn leave_meeting(
     {
         Ok(Some(m)) => Json(ApiResponse::success(m, "已离开会议")),
         Ok(None) => Json(ApiResponse::error(404, "会议不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("操作失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("操作失败", e))),
     }
 }
 
@@ -421,7 +421,7 @@ pub async fn list_calendar_events(
     .await
     {
         Ok(rows) => Json(ApiResponse::success(rows, "ok")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -458,7 +458,7 @@ pub async fn create_calendar_event(
     .await
     {
         Ok(e) => Json(ApiResponse::success(e, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
 
@@ -503,7 +503,7 @@ pub async fn update_calendar_event(
     {
         Ok(Some(e)) => Json(ApiResponse::success(e, "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "事件不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -521,7 +521,7 @@ pub async fn delete_calendar_event(
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "事件不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -574,7 +574,7 @@ pub async fn list_oa_tasks(
                 "ok",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -605,7 +605,7 @@ pub async fn get_oa_task(
     {
         Ok(Some(t)) => Json(ApiResponse::success(t, "ok")),
         Ok(None) => Json(ApiResponse::error(404, "任务不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -642,7 +642,7 @@ pub async fn create_oa_task(
     .await
     {
         Ok(t) => Json(ApiResponse::success(t, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &format!("创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
     }
 }
 
@@ -679,7 +679,7 @@ pub async fn update_oa_task(
     {
         Ok(Some(t)) => Json(ApiResponse::success(t, "更新成功")),
         Ok(None) => Json(ApiResponse::error(404, "任务不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("更新失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 
@@ -697,7 +697,7 @@ pub async fn delete_oa_task(
     {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
         Ok(_) => Json(ApiResponse::error(404, "任务不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("删除失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
     }
 }
 
@@ -728,7 +728,7 @@ pub async fn complete_oa_task(
     {
         Ok(Some(t)) => Json(ApiResponse::success(t, "任务已完成")),
         Ok(None) => Json(ApiResponse::error(404, "任务不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("操作失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("操作失败", e))),
     }
 }
 
@@ -779,7 +779,7 @@ pub async fn list_announcements(
                 "ok",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -810,7 +810,7 @@ pub async fn get_announcement(
     {
         Ok(Some(a)) => Json(ApiResponse::success(a, "ok")),
         Ok(None) => Json(ApiResponse::error(404, "公告不存在")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 

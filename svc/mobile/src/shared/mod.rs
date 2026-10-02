@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::db::repository::*;
 use crate::models::*;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use axum::extract::FromRef;
 use sqlx::PgPool;
@@ -641,7 +641,10 @@ async fn create_scan_record(
         Ok(record) => Json(ApiResponse::success(record, "创建扫码记录成功")),
         Err(e) => {
             tracing::error!("创建扫码记录失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建扫码记录失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建扫码记录失败",
+                e,
+            )))
         }
     }
 }
@@ -671,7 +674,10 @@ async fn create_photo_evidence(
         Ok(record) => Json(ApiResponse::success(record, "创建照片记录成功")),
         Err(e) => {
             tracing::error!("创建照片记录失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建照片记录失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建照片记录失败",
+                e,
+            )))
         }
     }
 }
@@ -701,7 +707,10 @@ async fn create_audio_recording(
         Ok(record) => Json(ApiResponse::success(record, "创建音频记录成功")),
         Err(e) => {
             tracing::error!("创建音频记录失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建音频记录失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建音频记录失败",
+                e,
+            )))
         }
     }
 }
@@ -731,7 +740,10 @@ async fn create_video_recording(
         Ok(record) => Json(ApiResponse::success(record, "创建视频记录成功")),
         Err(e) => {
             tracing::error!("创建视频记录失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建视频记录失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建视频记录失败",
+                e,
+            )))
         }
     }
 }

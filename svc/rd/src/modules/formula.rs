@@ -14,7 +14,7 @@ use crate::models::{
 };
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
@@ -379,7 +379,7 @@ pub async fn update_formula(
     let existing = match existing {
         Ok(Some(f)) => f,
         Ok(None) => return Json(ApiResponse::error(404, "配方不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询配方失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配方失败", e))),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -632,7 +632,7 @@ pub async fn create_formula_version(
     let existing_formula = match existing_formula {
         Ok(Some(f)) => f,
         Ok(None) => return Json(ApiResponse::error(404, "配方不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询配方失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配方失败", e))),
     };
 
     let ingredients = req.ingredients.unwrap_or_else(|| {

@@ -27,7 +27,7 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_db::decimal::big_decimal_to_f64;
 
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -935,7 +935,7 @@ pub async fn execute_aps_schedule(
         Ok(result) => Json(ApiResponse::success(result, "APS 智能排程执行成功")),
         Err(err) => {
             tracing::error!("APS排程失败: {}", err);
-            Json(ApiResponse::error(500, &format!("APS排程失败: {}", err)))
+            Json(ApiResponse::from(TopemsError::internal("APS排程失败", err)))
         }
     }
 }
@@ -1011,7 +1011,10 @@ pub async fn simulate_aps_schedule(
         }
         Err(err) => {
             tracing::error!("排程模拟失败: {}", err);
-            Json(ApiResponse::error(500, &format!("排程模拟失败: {}", err)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "排程模拟失败",
+                err,
+            )))
         }
     }
 }

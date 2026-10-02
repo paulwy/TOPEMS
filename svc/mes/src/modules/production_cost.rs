@@ -24,7 +24,7 @@ use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -425,10 +425,10 @@ pub async fn calculate_work_order_cost(
         Ok((result, _)) => Json(ApiResponse::success(result, "工单成本计算成功")),
         Err(err) => {
             tracing::error!("计算工单成本失败: {}", err);
-            Json(ApiResponse::error(
-                500,
-                &format!("计算工单成本失败: {}", err),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "计算工单成本失败",
+                err,
+            )))
         }
     }
 }
@@ -461,10 +461,10 @@ pub async fn get_work_order_cost_detail(
         Ok((result, _)) => Json(ApiResponse::success(result, "获取工单成本详情成功")),
         Err(err) => {
             tracing::error!("获取工单成本详情失败: {}", err);
-            Json(ApiResponse::error(
-                500,
-                &format!("获取工单成本详情失败: {}", err),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "获取工单成本详情失败",
+                err,
+            )))
         }
     }
 }

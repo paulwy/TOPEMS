@@ -2,7 +2,7 @@ use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 
 use crate::AppState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
@@ -149,7 +149,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<()>> {
     match sqlx::query("SELECT 1").fetch_one(&state.pool).await {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::error(503, &format!("Database error: {}", e))),
+        Err(e) => Json(ApiResponse::from({
+            tracing::warn!("Database error: {}", e);
+            TopemsError::ServiceUnavailable("Database error".to_string())
+        })),
     }
 }
 

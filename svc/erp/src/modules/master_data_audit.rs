@@ -7,9 +7,9 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::IntoParams;
 
 use super::ApiState;
@@ -117,7 +117,10 @@ pub async fn record_audit_event(
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 记录审计事件失败: {}", e);
-            Json(ApiResponse::error(500, &format!("记录审计事件失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "记录审计事件失败",
+                e,
+            )))
         }
     }
 }

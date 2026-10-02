@@ -6,8 +6,8 @@ use std::fmt::{Display, Formatter, Result as FmtResult};
 use topems_shared_boundary::only_own_schema_query;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::ApiState;
 
@@ -299,7 +299,7 @@ pub async fn get_master_data_ref(
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据引用失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -353,7 +353,7 @@ pub async fn get_master_data_ref_by_code(
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 按编码查询主数据引用失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }

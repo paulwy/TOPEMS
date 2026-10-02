@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
@@ -682,7 +682,7 @@ pub async fn record_lifecycle_event(
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
     let valid_stage = LIFECYCLE_STAGES
@@ -802,7 +802,7 @@ pub async fn transition_sample_stage(
             row.get::<String, _>("status"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
     let operator = req.get("operator").and_then(|v| v.as_str());
@@ -988,7 +988,7 @@ pub async fn get_sample_traceability(
             "updated_at": row.get::<Option<String>, _>("updated_at"),
         }),
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
     let lifecycle_rows = sqlx::query(
@@ -1020,10 +1020,10 @@ pub async fn get_sample_traceability(
             })
             .collect(),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
-                &format!("查询生命周期记录失败: {}", e),
-            ))
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询生命周期记录失败",
+                e,
+            )))
         }
     };
 

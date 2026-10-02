@@ -7,9 +7,9 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::IntoParams;
 
 use super::ApiState;
@@ -565,7 +565,7 @@ pub async fn get_conflict(
         Ok(None) => Json(ApiResponse::error(404, "未找到冲突记录")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询冲突详情失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询冲突失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询冲突失败", e)))
         }
     }
 }
@@ -633,7 +633,7 @@ pub async fn resolve_conflict(
 
     if let Err(e) = result {
         tracing::warn!("[erp-mdm] 解决冲突失败: {}", e);
-        return Json(ApiResponse::error(500, &format!("解决冲突失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("解决冲突失败", e)));
     }
 
     // 3. 应用解决值到本地主数据引用
@@ -750,7 +750,7 @@ pub async fn auto_merge_conflict(
 
     if let Err(e) = result {
         tracing::warn!("[erp-mdm] 自动合并失败: {}", e);
-        return Json(ApiResponse::error(500, &format!("自动合并失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("自动合并失败", e)));
     }
 
     // 4. 应用解决值

@@ -6,7 +6,7 @@
 
 use crate::modules::ApiState;
 use axum::{extract::State, routing::get, Json, Router};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_service_client::service_client::api::hrm_api::{
     HrmCompany, HrmDepartment, HrmEmployee,
 };
@@ -35,10 +35,10 @@ pub async fn list_employees_from_hrm(
 ) -> Json<ApiResponse<Vec<HrmEmployee>>> {
     match state.hrm_client.list_employees().await {
         Ok(employees) => Json(ApiResponse::success(employees, "从HRM服务获取员工列表成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("从HRM服务获取员工列表失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "从HRM服务获取员工列表失败",
+            e,
+        ))),
     }
 }
 
@@ -61,10 +61,10 @@ pub async fn get_employee_from_hrm(
     match Uuid::parse_str(&id) {
         Ok(uuid) => match state.hrm_client.get_employee(uuid).await {
             Ok(employee) => Json(ApiResponse::success(employee, "从HRM服务获取员工成功")),
-            Err(e) => Json(ApiResponse::error(
-                500,
-                &format!("从HRM服务获取员工失败: {}", e),
-            )),
+            Err(e) => Json(ApiResponse::from(TopemsError::internal(
+                "从HRM服务获取员工失败",
+                e,
+            ))),
         },
         Err(_) => Json(ApiResponse::error(400, "无效的员工ID格式")),
     }
@@ -89,10 +89,10 @@ pub async fn list_departments_from_hrm(
             departments,
             "从HRM服务获取部门列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("从HRM服务获取部门列表失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "从HRM服务获取部门列表失败",
+            e,
+        ))),
     }
 }
 
@@ -112,9 +112,9 @@ pub async fn list_companies_from_hrm(
 ) -> Json<ApiResponse<Vec<HrmCompany>>> {
     match state.hrm_client.list_companies().await {
         Ok(companies) => Json(ApiResponse::success(companies, "从HRM服务获取公司列表成功")),
-        Err(e) => Json(ApiResponse::error(
-            500,
-            &format!("从HRM服务获取公司列表失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "从HRM服务获取公司列表失败",
+            e,
+        ))),
     }
 }

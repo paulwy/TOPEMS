@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::shared::aps_fsm::capacity_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
@@ -384,7 +384,7 @@ pub async fn update_capacity(
     let existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     let work_center_name = req.work_center_name.or(existing.work_center_name);
@@ -529,7 +529,7 @@ pub async fn allocate_capacity(
     {
         Ok(Some(c)) => c,
         Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "allocated") {
@@ -613,7 +613,7 @@ pub async fn release_capacity(
     {
         Ok(Some(c)) => c,
         Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "released") {
@@ -685,7 +685,7 @@ pub async fn maintenance_capacity(
     {
         Ok(Some(c)) => c,
         Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     let target_status = if existing.status == "maintenance" {
@@ -808,7 +808,7 @@ pub async fn submit_capacity(
     {
         Ok(Some(c)) => c,
         Ok(None) => return Json(ApiResponse::error(404, "产能记录不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "allocated") {

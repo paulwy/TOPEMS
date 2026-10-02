@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::modules::ApiState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct CreateVoucherRequest {
@@ -150,7 +150,10 @@ pub async fn create_voucher(
                 "财务凭证创建成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("创建财务凭证失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "创建财务凭证失败",
+            e,
+        ))),
     }
 }
 

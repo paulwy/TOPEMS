@@ -7,8 +7,8 @@ use axum::extract::{Extension, Path, State};
 use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::ApiState;
 
@@ -130,7 +130,10 @@ pub async fn get_data_lineage(
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询数据血缘失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询数据血缘失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "查询数据血缘失败",
+                e,
+            )))
         }
     }
 }

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
 
@@ -903,7 +903,12 @@ pub async fn create_validation(
             row.get::<String, _>("version"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "检测方法不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询检测方法失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询检测方法失败",
+                e,
+            )))
+        }
     };
 
     let validation_date = req
@@ -1083,7 +1088,12 @@ pub async fn create_new_version(
             row.get::<String, _>("version"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "检测方法不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询检测方法失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询检测方法失败",
+                e,
+            )))
+        }
     };
 
     let version_parts: Vec<&str> = current_version.split('.').collect();

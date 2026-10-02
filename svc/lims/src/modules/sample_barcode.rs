@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
 
@@ -283,7 +283,7 @@ pub async fn generate_barcode(
                     Some(id)
                 }
                 Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
-                Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+                Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
             }
         }
         None => None,
@@ -561,7 +561,7 @@ pub async fn scan_barcode(
             row.get::<Option<String>, _>("sample_no"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "条码不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询条码失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询条码失败", e))),
     };
 
     let scan_type_name = match req.scan_type.as_str() {
@@ -875,7 +875,7 @@ pub async fn assign_rfid_tag(
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
     let row = sqlx::query(
@@ -1042,7 +1042,7 @@ pub async fn trace_sample_by_barcode(
             row.get::<Option<String>, _>("sample_no"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "条码不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询条码失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询条码失败", e))),
     };
 
     let sample = if let Some(sid) = sample_id {
@@ -1073,7 +1073,7 @@ pub async fn trace_sample_by_barcode(
                 "updated_at": row.get::<Option<String>, _>("updated_at"),
             })),
             Ok(None) => None,
-            Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+            Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
         }
     } else {
         None
@@ -1108,7 +1108,12 @@ pub async fn trace_sample_by_barcode(
                 })
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询扫描记录失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询扫描记录失败",
+                e,
+            )))
+        }
     };
 
     Json(ApiResponse::success(

@@ -1,7 +1,7 @@
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Serialize)]
 pub struct InspectionReport {
@@ -200,7 +200,7 @@ pub async fn generate_report(
             row.get::<Option<String>, _>("source"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
     // Determine conclusion based on inspection results

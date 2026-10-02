@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
@@ -439,10 +439,10 @@ pub async fn update_material_test(
         Ok(Some(r)) => r,
         Ok(None) => return Json(ApiResponse::error(404, "原料试验记录不存在")),
         Err(e) => {
-            return Json(ApiResponse::error(
-                500,
-                &format!("查询原料试验记录失败: {}", e),
-            ))
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询原料试验记录失败",
+                e,
+            )))
         }
     };
 

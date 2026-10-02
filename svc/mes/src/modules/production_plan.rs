@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::shared::aps_fsm::production_plan_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
@@ -327,7 +327,12 @@ pub async fn update_plan(
     let existing = match existing {
         Ok(Some(p)) => p,
         Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生产计划失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询生产计划失败",
+                e,
+            )))
+        }
     };
 
     let plan_name = req.plan_name.unwrap_or(existing.plan_name);
@@ -434,7 +439,7 @@ pub async fn submit_plan(
     {
         Ok(Some(p)) => p,
         Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "pending_approval") {
@@ -493,7 +498,7 @@ pub async fn approve_plan(
     {
         Ok(Some(p)) => p,
         Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "approved") {
@@ -552,7 +557,7 @@ pub async fn reject_plan(
     {
         Ok(Some(p)) => p,
         Ok(None) => return Json(ApiResponse::error(404, "生产计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "draft") {

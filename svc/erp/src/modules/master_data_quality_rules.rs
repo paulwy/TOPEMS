@@ -7,9 +7,9 @@
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::master_data_refs::{MasterDataRef, MasterDataRow};
 use super::ApiState;
@@ -318,7 +318,10 @@ pub async fn create_quality_rule(
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 创建质量规则失败: {}", e);
-            Json(ApiResponse::error(500, &format!("创建质量规则失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal(
+                "创建质量规则失败",
+                e,
+            )))
         }
     }
 }
@@ -459,13 +462,13 @@ pub async fn get_quality_rule(
             Ok(rule) => Json(ApiResponse::success(rule, "质量规则详情")),
             Err(e) => {
                 tracing::warn!("[erp-mdm] 解析质量规则失败: {}", e);
-                Json(ApiResponse::error(500, &format!("解析规则失败: {}", e)))
+                Json(ApiResponse::from(TopemsError::internal("解析规则失败", e)))
             }
         },
         Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -511,13 +514,13 @@ pub async fn update_quality_rule(
         Ok(None) => return Json(ApiResponse::error(404, "未找到质量规则")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询质量规则失败: {}", e);
-            return Json(ApiResponse::error(500, &format!("查询失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
         }
     };
 
     let existing = match existing {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &format!("解析失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("解析失败", e))),
     };
 
     let now = chrono::Utc::now();
@@ -577,7 +580,7 @@ pub async fn update_quality_rule(
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 更新质量规则失败: {}", e);
-            Json(ApiResponse::error(500, &format!("更新失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("更新失败", e)))
         }
     }
 }
@@ -635,7 +638,7 @@ pub async fn delete_quality_rule(
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 删除质量规则失败: {}", e);
-            Json(ApiResponse::error(500, &format!("删除失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("删除失败", e)))
         }
     }
 }

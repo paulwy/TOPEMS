@@ -21,7 +21,7 @@ use crate::services::project_permission::{
 };
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListProjectsQuery {
@@ -458,7 +458,7 @@ pub async fn update_project(
     let existing = match existing {
         Ok(Some(p)) => p,
         Ok(None) => return Json(ApiResponse::error(404, "项目不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询项目失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询项目失败", e))),
     };
 
     let name = req.name.clone().unwrap_or(existing.name);
@@ -674,7 +674,7 @@ pub async fn batch_create_projects(
     let mut tx = match state.db.begin().await {
         Ok(tx) => tx,
         Err(e) => {
-            return Json(ApiResponse::error(500, &format!("开启事务失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal("开启事务失败", e)));
         }
     };
 
@@ -743,7 +743,7 @@ pub async fn batch_create_projects(
 
     // 提交事务
     if let Err(e) = tx.commit().await {
-        return Json(ApiResponse::error(500, &format!("提交事务失败: {}", e)));
+        return Json(ApiResponse::from(TopemsError::internal("提交事务失败", e)));
     }
 
     let total = req.projects.len();

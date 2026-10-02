@@ -14,7 +14,7 @@ use uuid::Uuid;
 use crate::shared::aps_fsm::demand_forecast_can_transition;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {
@@ -355,7 +355,7 @@ pub async fn update_forecast(
     let existing = match existing {
         Ok(Some(f)) => f,
         Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     let product_name = req.product_name.or(existing.product_name);
@@ -465,7 +465,7 @@ pub async fn calculate_forecast(
     {
         Ok(Some(f)) => f,
         Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "calculated") {
@@ -537,7 +537,7 @@ pub async fn validate_forecast(
     {
         Ok(Some(f)) => f,
         Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "validated") {
@@ -607,7 +607,7 @@ pub async fn adopt_forecast(
     {
         Ok(Some(f)) => f,
         Ok(None) => return Json(ApiResponse::error(404, "需求预测不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     };
 
     if !can_transition(&existing.status, "adopted") {

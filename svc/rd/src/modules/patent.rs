@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
@@ -401,7 +401,7 @@ pub async fn update_patent(
     let existing = match existing_result {
         Ok(Some(r)) => row_to_patent(r),
         Ok(None) => return Json(ApiResponse::error(404, "专利不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询专利失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询专利失败", e))),
     };
 
     let name = req.name.unwrap_or(existing.name);

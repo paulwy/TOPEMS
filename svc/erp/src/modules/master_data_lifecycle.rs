@@ -7,9 +7,9 @@
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::IntoParams;
 
 use super::master_data_refs::{MasterDataRef, MasterDataRow};
@@ -195,14 +195,14 @@ pub async fn archive_master_data_ref(
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 归档主数据失败: {}", e);
-                    Json(ApiResponse::error(500, &format!("归档失败: {}", e)))
+                    Json(ApiResponse::from(TopemsError::internal("归档失败", e)))
                 }
             }
         }
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -303,14 +303,14 @@ pub async fn restore_master_data_ref(
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 恢复主数据失败: {}", e);
-                    Json(ApiResponse::error(500, &format!("恢复失败: {}", e)))
+                    Json(ApiResponse::from(TopemsError::internal("恢复失败", e)))
                 }
             }
         }
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -417,14 +417,14 @@ pub async fn schedule_destruction(
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 安排销毁计划失败: {}", e);
-                    Json(ApiResponse::error(500, &format!("安排失败: {}", e)))
+                    Json(ApiResponse::from(TopemsError::internal("安排失败", e)))
                 }
             }
         }
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -527,14 +527,14 @@ pub async fn cancel_destruction(
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 取消销毁计划失败: {}", e);
-                    Json(ApiResponse::error(500, &format!("取消失败: {}", e)))
+                    Json(ApiResponse::from(TopemsError::internal("取消失败", e)))
                 }
             }
         }
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }
@@ -638,14 +638,14 @@ pub async fn destroy_master_data_ref(
                 }
                 Err(e) => {
                     tracing::warn!("[erp-mdm] 销毁主数据失败: {}", e);
-                    Json(ApiResponse::error(500, &format!("销毁失败: {}", e)))
+                    Json(ApiResponse::from(TopemsError::internal("销毁失败", e)))
                 }
             }
         }
         Ok(None) => Json(ApiResponse::error(404, "未找到主数据引用")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询主数据失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询失败", e)))
         }
     }
 }

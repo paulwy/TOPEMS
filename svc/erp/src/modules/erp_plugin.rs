@@ -14,7 +14,7 @@ use std::env;
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::ApiState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 /// 插件信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -300,10 +300,10 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
         }
         Err(e) => {
             tracing::warn!("[ERP Plugin] Failed to register to core: {}", e);
-            Json(ApiResponse::error(
-                500,
-                &format!("Failed to connect to core: {}", e),
-            ))
+            Json(ApiResponse::from(TopemsError::internal(
+                "Failed to connect to core",
+                e,
+            )))
         }
     }
 }

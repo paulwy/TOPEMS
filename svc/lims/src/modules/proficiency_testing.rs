@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
 
@@ -699,7 +699,7 @@ pub async fn receive_sample(
             row.get::<String, _>("plan_name"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "能力验证计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询计划失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询计划失败", e))),
     };
 
     let received_date = chrono::Utc::now().to_rfc3339();
@@ -849,7 +849,7 @@ pub async fn submit_result(
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
         Ok(None) => return Json(ApiResponse::error(404, "能力验证计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询计划失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询计划失败", e))),
     };
 
     let sample_row = sqlx::query("SELECT sample_code FROM qa_lims_pt_samples WHERE id = $1")
@@ -860,7 +860,7 @@ pub async fn submit_result(
     let sample_code = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_code"),
         Ok(None) => return Json(ApiResponse::error(404, "能力验证样品不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询样品失败", e))),
     };
 
     let (mean_val, std_dev, cv) = if let Some(replicates) = &req.replicate_results {
@@ -1080,7 +1080,7 @@ pub async fn evaluate_result(
             row.get::<Option<f64>, _>("test_result"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "能力验证结果不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询结果失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询结果失败", e))),
     };
 
     let result_val = test_result.unwrap_or(0.0);
@@ -1285,7 +1285,7 @@ pub async fn create_corrective_action(
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
         Ok(None) => return Json(ApiResponse::error(404, "能力验证计划不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询计划失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询计划失败", e))),
     };
 
     let row = sqlx::query(

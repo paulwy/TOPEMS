@@ -7,9 +7,9 @@ use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::IntoParams;
 
 use super::ApiState;
@@ -124,7 +124,7 @@ pub async fn record_version(
         }
         Err(e) => {
             tracing::warn!("[erp-mdm] 记录版本失败: {}", e);
-            Json(ApiResponse::error(500, &format!("记录版本失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("记录版本失败", e)))
         }
     }
 }
@@ -278,7 +278,7 @@ pub async fn get_version(
         Ok(None) => Json(ApiResponse::error(404, "未找到版本")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 查询版本详情失败: {}", e);
-            Json(ApiResponse::error(500, &format!("查询版本失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("查询版本失败", e)))
         }
     }
 }
@@ -343,7 +343,7 @@ pub async fn rollback_to_version(
 
             if let Err(e) = update_result {
                 tracing::warn!("[erp-mdm] 回滚更新失败: {}", e);
-                return Json(ApiResponse::error(500, &format!("回滚更新失败: {}", e)));
+                return Json(ApiResponse::from(TopemsError::internal("回滚更新失败", e)));
             }
 
             // 3. 记录回滚版本快照（新版本 = max + 1）
@@ -397,7 +397,7 @@ pub async fn rollback_to_version(
         Ok(None) => Json(ApiResponse::error(404, "未找到要回滚的版本")),
         Err(e) => {
             tracing::warn!("[erp-mdm] 回滚查询失败: {}", e);
-            Json(ApiResponse::error(500, &format!("回滚查询失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::internal("回滚查询失败", e)))
         }
     }
 }

@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
@@ -594,7 +594,7 @@ pub async fn create_calibration_record(
             row.get::<String, _>("name"),
         ),
         Ok(None) => return Json(ApiResponse::error(404, "仪器不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询仪器失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询仪器失败", e))),
     };
 
     let record_id = Uuid::new_v4();

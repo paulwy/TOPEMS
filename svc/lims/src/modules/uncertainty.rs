@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
 
@@ -1301,7 +1301,7 @@ pub async fn calculate_combined(
 
     let components = match rows {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询分量失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询分量失败", e))),
     };
 
     if components.is_empty() {
@@ -1414,7 +1414,7 @@ pub async fn generate_report(
             })
         }
         Ok(None) => return Json(ApiResponse::error(404, "不确定度评定项目不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询项目失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询项目失败", e))),
     };
 
     let source_rows = sqlx::query(
@@ -1438,7 +1438,7 @@ pub async fn generate_report(
                 })
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询来源失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询来源失败", e))),
     };
 
     let component_rows = sqlx::query(
@@ -1473,7 +1473,7 @@ pub async fn generate_report(
                 })
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询分量失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询分量失败", e))),
     };
 
     let report = serde_json::json!({

@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct ListParams {
@@ -380,7 +380,7 @@ pub async fn update_experiment(
     let existing = match existing {
         Ok(Some(e)) => e,
         Ok(None) => return Json(ApiResponse::error(404, "试验不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询试验失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询试验失败", e))),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -966,7 +966,7 @@ pub async fn advance_phase(
     let existing = match existing {
         Ok(Some(e)) => e,
         Ok(None) => return Json(ApiResponse::error(404, "试验不存在")),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询试验失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询试验失败", e))),
     };
 
     let new_phase = match existing.phase.as_str() {
