@@ -65,7 +65,7 @@ pub async fn list_records(
                 Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
             };
             sqlx::query(
-                "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(tid)
             .bind(page_size)
@@ -74,7 +74,7 @@ pub async fn list_records(
             .await
         }
         None => sqlx::query(
-            "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
@@ -135,7 +135,7 @@ pub async fn create_record(
 
     match row {
         Ok(r) => {
-            let task_no = sqlx::query("SELECT task_no FROM qa_lab_tasks WHERE id = $1")
+            let task_no = sqlx::query("SELECT task_no FROM public.qa_lab_tasks WHERE id = $1")
                 .bind(task_id)
                 .fetch_optional(&state.pool)
                 .await
@@ -188,7 +188,7 @@ pub async fn get_record(
     };
 
     let row = sqlx::query(
-        "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
+        "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)

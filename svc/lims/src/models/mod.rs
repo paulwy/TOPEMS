@@ -6,7 +6,7 @@ use sqlx::PgPool;
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS qa_lab_samples (
+        CREATE TABLE IF NOT EXISTS public.qa_lab_samples (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             sample_no VARCHAR(64) NOT NULL UNIQUE,
@@ -29,11 +29,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS qa_lab_tasks (
+        CREATE TABLE IF NOT EXISTS public.qa_lab_tasks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             task_no VARCHAR(64) NOT NULL UNIQUE,
-            sample_id UUID NOT NULL REFERENCES qa_lab_samples(id) ON DELETE CASCADE,
+            sample_id UUID NOT NULL REFERENCES public.qa_lab_samples(id) ON DELETE CASCADE,
             sample_no VARCHAR(64) NOT NULL,
             test_items JSONB NOT NULL,
             status VARCHAR(32) DEFAULT 'pending',
@@ -60,7 +60,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             record_no VARCHAR(64) NOT NULL UNIQUE,
-            task_id UUID NOT NULL REFERENCES qa_lab_tasks(id) ON DELETE CASCADE,
+            task_id UUID NOT NULL REFERENCES public.qa_lab_tasks(id) ON DELETE CASCADE,
             test_data JSONB NOT NULL,
             conclusion VARCHAR(256) NOT NULL,
             recorded_by VARCHAR(64) NOT NULL,
@@ -142,7 +142,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         CREATE TABLE IF NOT EXISTS qa_lab_sample_lifecycle (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
-            sample_id UUID NOT NULL REFERENCES qa_lab_samples(id) ON DELETE CASCADE,
+            sample_id UUID NOT NULL REFERENCES public.qa_lab_samples(id) ON DELETE CASCADE,
             sample_no VARCHAR(64) NOT NULL,
             lifecycle_stage VARCHAR(32) NOT NULL,
             stage_description TEXT,
@@ -223,7 +223,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             report_no VARCHAR(64) NOT NULL UNIQUE,
-            sample_id UUID NOT NULL REFERENCES qa_lab_samples(id) ON DELETE CASCADE,
+            sample_id UUID NOT NULL REFERENCES public.qa_lab_samples(id) ON DELETE CASCADE,
             sample_no VARCHAR(64) NOT NULL,
             sample_name VARCHAR(256) NOT NULL,
             inspection_date TIMESTAMP,
@@ -240,19 +240,19 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_no ON qa_lab_samples(sample_no)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_no ON public.qa_lab_samples(sample_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_status ON qa_lab_samples(status)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_status ON public.qa_lab_samples(status)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_no ON qa_lab_tasks(task_no)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_no ON public.qa_lab_tasks(task_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_status ON qa_lab_tasks(status)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_status ON public.qa_lab_tasks(status)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_sample ON qa_lab_tasks(sample_id)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_sample ON public.qa_lab_tasks(sample_id)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_records_no ON qa_lab_records(record_no)")
@@ -344,7 +344,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             barcode VARCHAR(128) NOT NULL UNIQUE,
             barcode_type VARCHAR(32) NOT NULL,
-            sample_id UUID REFERENCES qa_lab_samples(id) ON DELETE SET NULL,
+            sample_id UUID REFERENCES public.qa_lab_samples(id) ON DELETE SET NULL,
             sample_no VARCHAR(64),
             rfid_tag VARCHAR(128),
             print_count INTEGER DEFAULT 0,
@@ -388,7 +388,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             tenant_id UUID,
             tag_id VARCHAR(128) NOT NULL UNIQUE,
             tag_type VARCHAR(32) DEFAULT 'uhf',
-            sample_id UUID REFERENCES qa_lab_samples(id) ON DELETE SET NULL,
+            sample_id UUID REFERENCES public.qa_lab_samples(id) ON DELETE SET NULL,
             sample_no VARCHAR(64),
             status VARCHAR(32) DEFAULT 'unused',
             assigned_at TIMESTAMP,
