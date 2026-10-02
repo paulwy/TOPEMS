@@ -107,6 +107,7 @@ const SCHEMA_REF_RE =
 const EXTRA_OWNED_SCHEMAS = {
   'unified-core': ['unified_core', 'iam', 'core'],
   rd: ['rs'], // rd 启动时经 schema_defense 建 rs schema
+  'master-data': ['master_data'], // 目录名连字符 vs schema 下划线；D1 起 master-data 独立拥有 master_data schema
 };
 
 // Pre-existing bare cross-schema references (see schema-boundary-allowlist.json).
