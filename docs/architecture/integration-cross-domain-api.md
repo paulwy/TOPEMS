@@ -3,6 +3,14 @@
 > 2026-08-31 · 为物理库拆分前置条件 #1（integration 跨域事务直写）铺路
 > 关联：`docs/architecture/database-split-plan.md` §3 阶段 2 拆分前置条件
 
+> 📐 **2026-10-02 状态校准（对齐 [D3](./decision-d3-integration-data-ownership.md) 决策，阶段 1 快赢任务 T2）**
+> - **下文 §5 声称的「步骤 B 直写→reqwest 已完成」与「步骤 D 撤销 allow 已完成」与代码不符**。对齐代码现状 2026-10-02 实测：
+>   - **9 处跨 schema 直写仍在** `svc/integration/src/qms_lims_ehs.rs:26,39,80,136,174,196,244,274,315`（全为 `only_own_schema_query!("integration", SQL, "qms"/"ehs")` 的 INSERT/UPDATE，目标 qms.* 8 处 + ehs.* 1 处）——**未改走 reqwest**。
+>   - **7 个业务事件 handle 仍未接线**：`svc/integration/src/event_handlers/mod.rs:26,30,34` 只 `subscribe_handler` 了 3 个 Triggered 事件（QmsToLimsSyncTriggered/EhsToQmsTriggered/LimsToEhsTriggered），7 个业务事件 handle（含全部 9 处直写）**未注册订阅 = 死代码，当前不执行**。
+>   - **allow 未撤销**：`scripts/schema_boundary.json:61-69` 仍登记 `integration` allow qms/ehs，allow_reason 自陈"9 处 INSERT/UPDATE，当前 7 个业务事件 handle 未接线=死代码；改走服务 API/事件前保留"。
+> - **§1 表格目标 schema 亦漂移**：原文称直写 `lims.qa_lab_samples`，实测写的是 `qms.qa_lab_samples`——`qa_lab_*` 表物理位置在 public/lims/qms 三处并存/引用混乱（D3 §2.3），需先仲裁归属。
+> - **结论**：步骤 B/D **2026-10-02 实测未完成，由阶段 2 U3 执行中**（D3 §6）。目标态（改走服务 API/事件、撤销 allow）不变，下文蓝图作为目标态保留。
+
 ## 1. 现状审计（2026-08-31 代码核查）
 
 **关键事实**：integration 的跨 schema 直写**全部集中在 `svc/integration/src/qms_lims_ehs.rs`**，且该模块**从未接线**（`process_event` 无任何调用点，事件总线未触发）。integration 的活跃跨域联动在 `event_handlers/`（仅 `record_sync_log` 记录同步日志，**无直写**，合规）。
@@ -66,7 +74,9 @@ integration 跨域联动**全部改为服务 API 编排**（reqwest，复用现�
 
 ## 5. 状态
 
-- [x] 步骤 A：服务侧集成端点（lims×2 + qms×2）
-- [x] 步骤 B：qms_lims_ehs 直写 → reqwest（含 ehs×2 端点 + 撤销 integration allow，白名单 2→1）
-- [x] 步骤 C：process_event 接线（7 事件订阅 + 端到端验证通过；**7 事件发布端全部补齐**）
-- [x] 步骤 D：撤销 integration allow（白名单 2→1）
+> ⚠️ **对齐 D3 决策 2026-10-02 实测**：下列勾选为 2026-08-31 当时声称，**步骤 B/C/D 实测未完成**（9 处直写仍在、7 业务 handle 未接线、allow 未撤销），由阶段 2 U3 执行中。下表已按实测重标。
+
+- [~] 步骤 A：服务侧集成端点（lims×2 + qms×2）——部分端点已存在（qms corrective actions API `corrective_action.rs:394-401`），lab_samples/lab_tasks/ehs alerts 接收端点待补（U3.2）
+- [ ] 步骤 B：qms_lims_ehs 直写 → reqwest ——**实测未完成**（2026-10-02：9 处 `only_own_schema_query!` 直写仍在 `qms_lims_ehs.rs:26,39,80,136,174,196,244,274,315`，未改走 reqwest）
+- [ ] 步骤 C：process_event 接线 ——**实测未完成**（2026-10-02：`event_handlers/mod.rs:26,30,34` 仅 3 个 Triggered 事件接线，7 个业务事件 handle 未注册订阅=死代码；原文"已实施/端到端验证通过"与代码不符）
+- [ ] 步骤 D：撤销 integration allow ——**实测未完成**（2026-10-02：`scripts/schema_boundary.json:61-69` 仍登记 allow qms/ehs，未撤销）

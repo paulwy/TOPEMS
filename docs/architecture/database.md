@@ -9,6 +9,12 @@
 | 状态 | 已实施 |
 | 更新说明 | 完全重构数据库架构，对齐产品架构计划，采用 unified_core + plugin_* 架构 |
 
+> 📐 **2026-10-02 命名口径校准（F-40 / XCUT-10，对齐代码现状实测）**
+> - **双命名并存**：`database/migrations/000_create_schemas.sql:15-67` 实际创建**两套并行 schema**——裸名（`iam/doc/flow/unified_core/erp/finance/hrm/crm/ai/...`，:15-42）+ 插件名（`plugin_erp … plugin_ai` 等 20 个，:45-64）。
+> - **代码实际用裸名**：各服务 `main.rs` 的 `SEARCH_PATH` 实际指向**裸名**（如 `erp, public` / `finance, public` / `ai, public`），**非 `plugin_erp`**。本文档下文以 `plugin_*` 为唯一命名的描述是**设计目标态**，与代码现状不符——**"erp→plugin_erp 已迁移完成"不成立**（F-40）。
+> - **新迁移规范**：存量给 rehome 计划，新迁移统一前缀待决策（当前以裸名为准）；scm/srm/pm 的 SEARCH_PATH 残留 `shared` 但无实际引用。
+> - **迁移数量口径**：实测 `database/migrations/` = **283 个 .sql**；`database/checksums.txt` 登记约 **250+ 条**（实测 253 行），即约 30 个迁移未登记 checksum，漂移检测有盲区（F-65 / XCUT-11）。`database/README.md` 称"合计 278"已过时。
+
 ---
 
 ## 概述
@@ -83,6 +89,8 @@ CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 ### Schema 命名规范
+
+> ⚠️ **对齐代码现状 2026-10-02（F-40）**：下表 `plugin_*` 为**设计目标态命名**；代码 `SEARCH_PATH` 实际用**裸名**（`erp`/`finance`/`crm`…），裸名与 `plugin_*` 两套 schema 在 `000_create_schemas.sql` 中并存。新写 SQL 前请确认目标表真实所在 schema（裸名 or plugin_），避免写错库。
 
 | Schema | 类型 | 用途 | 说明 |
 |--------|------|------|------|

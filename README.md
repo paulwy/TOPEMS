@@ -84,6 +84,8 @@ API 路径按服务实际挂载前缀暴露，主流格式为 `/api/{service}`�
 - `POST /api/finance/payments`
 - `GET /api/core/iam/users`（unified-core 统一入口，`/api/core` 前缀）
 
+> 📐 详细路由规范与「Double-Prefix Bug」陷阱见 [docs/architecture/code-wiki.md](docs/architecture/code-wiki.md) 路由统一化节（核心 `/api/core/{module}` · 业务 `/api/{svc}`，2026-10-02 对齐）。
+
 兼容层说明（新增服务请勿依赖，仅存量兼容）：
 - 部分服务仍保留 `/api/core/{service}/v1` 与 `/api/v1/{service}` 遗留别名（经 `register_routes_with_legacy_alias` 挂载，或经 URI 重写中间件转发）；
 - 前端存在历史调用走 `/api/core/{service}/v1`，经 server 兼容层仍可用，新代码一律使用 `/api/{service}` 规范前缀。
@@ -568,15 +570,17 @@ TOPEMS 使用基于角色的访问控制（RBAC）系统来管理用户权限。
 
 权限管理通过 IAM 服务提供的 API 进行管理：
 
-| 方法 | 端点 | 说明 |
+> 📐 **API 路径对齐（2026-10-02，与 [docs/architecture/code-wiki.md](docs/architecture/code-wiki.md) 路由统一化节一致）**：下表端点使用 `/api/v1/...` 前缀，这是**遗留别名**（经 nginx `rewrite ^/api/v1/(.*)$ /api/core/iam/$1 last` 转发，见 `deploy/nginx/topems.conf:225`）。**规范前缀为 `/api/core/iam/...`**（如 `GET /api/core/iam/permissions`），新代码一律使用 `/api/core/iam/` 或 `/api/{svc}` 规范前缀，勿依赖 `/api/v1/` 别名。
+
+| 方法 | 端点（遗留别名 → 规范路径） | 说明 |
 |------|------|------|
-| GET | /api/v1/permissions | 获取权限列表 |
-| POST | /api/v1/permissions | 创建权限 |
-| GET | /api/v1/roles | 获取角色列表 |
-| POST | /api/v1/roles | 创建角色 |
-| POST | /api/v1/roles/{id}/permissions | 分配权限给角色 |
-| POST | /api/v1/users/{id}/roles | 分配角色给用户 |
-| GET | /api/v1/users/{id}/effective-permissions | 获取用户有效权限 |
+| GET | /api/v1/permissions → `/api/core/iam/permissions` | 获取权限列表 |
+| POST | /api/v1/permissions → `/api/core/iam/permissions` | 创建权限 |
+| GET | /api/v1/roles → `/api/core/iam/roles` | 获取角色列表 |
+| POST | /api/v1/roles → `/api/core/iam/roles` | 创建角色 |
+| POST | /api/v1/roles/{id}/permissions → `/api/core/iam/roles/{id}/permissions` | 分配权限给角色 |
+| POST | /api/v1/users/{id}/roles → `/api/core/iam/users/{id}/roles` | 分配角色给用户 |
+| GET | /api/v1/users/{id}/effective-permissions → `/api/core/iam/users/{id}/effective-permissions` | 获取用户有效权限 |
 
 #### 初始化权限数据
 

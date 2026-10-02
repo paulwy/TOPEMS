@@ -3,19 +3,25 @@
 > 基于 `service-topology.design.json`（40 条设计边）叠加物理库拆分预案（`database-split-plan.md` §3 阶段 2）。
 > **跨库 35 条 / 同库 5 条**。跨库边在拆分后必须改走服务 API / 集成事件（Saga 补偿），是拆分前置治理对象。
 
+> 📐 **2026-10-02 校准（FCRM-09，对齐代码现状实测）**：本清单为**拆分预案/设计视角**，当前仍是单 PostgreSQL 实例 + schema 隔离（非物理分库）。其中部分边**代码已改走 HTTP/事件，不再是真实 DB 直连**，逐行以 ⚠️ 标注：
+> - **crm → erp / crm → wms**：售后链跨库直写已重构为 HTTP API（**V19.0**，`svc/crm/src/modules/aftersales.rs:1589,1617,1619` `erp_client.create_reconciliation`），非 DB 直连。
+> - **finance → workflow / finance → erp**：对账/结算已改**本地快照 + 事件**（**V256**，`svc/finance/src/modules/settlement_center/service.rs:3-7,21` 读 `finance.reconciliation_snapshots` 本地快照替代跨 schema 直查），非 DB 直连。
+> - **仍真实的 DB 直读边需保留治理**：如 crm 审计直读 `public.audit_logs`（`svc/crm/src/modules/audit.rs:86,112`，FCRM-06）。
+> - 下文表格中 ⚠️ 行 = 已改 HTTP/事件、**拆分预案里应从"待治理 DB 直连"中剔除**；其余行仍为待治理跨 schema 引用。
+
 ## 跨库调用清单
 
 | 调用方 | 调用方物理库 | 被调用方 | 被调用方物理库 | 备注 |
 |---|---|---|---|---|
 | unified-core-service | unknown | portal-service | business（业务综合库） |  |
-| crm-service | business（业务综合库） | erp-service | finance（财务库） |  |
-| crm-service | business（业务综合库） | wms-service | supply（供应链库） |  |
+| crm-service | business（业务综合库） | erp-service | finance（财务库） | ⚠️ 已改 HTTP（V19.0 aftersales.rs:1617 erp_client），非真实 DB 直连 |
+| crm-service | business（业务综合库） | wms-service | supply（供应链库） | ⚠️ 已改 HTTP（V19.0），非真实 DB 直连 |
 | crm-service | business（业务综合库） | workflow-service | core（平台核心库） |  |
 | ehs-service | manufacturing（制造库） | workflow-service | core（平台核心库） | 业务归属制造域；schema=public 现落 core 库，拆分前需将 ehs 表归位到制造库 |
 | erp-service | finance（财务库） | wms-service | supply（供应链库） |  |
 | erp-service | finance（财务库） | hrm-service | business（业务综合库） |  |
 | erp-service | finance（财务库） | mes-service | manufacturing（制造库） |  |
-| finance-service | finance（财务库） | workflow-service | core（平台核心库） |  |
+| finance-service | finance（财务库） | workflow-service | core（平台核心库） | ⚠️ 已改本地快照+事件（V256 settlement_center/service.rs:3-7），非真实 DB 直连 |
 | hrm-service | business（业务综合库） | erp-service | finance（财务库） |  |
 | mes-service | manufacturing（制造库） | erp-service | finance（财务库） |  |
 | mobile-service | business（业务综合库） | wms-service | supply（供应链库） |  |
@@ -32,12 +38,12 @@
 | portal-service | business（业务综合库） | erp-service | finance（财务库） |  |
 | portal-service | business（业务综合库） | finance-service | finance（财务库） |  |
 | qms-service | manufacturing（制造库） | workflow-service | core（平台核心库） |  |
-| server-crm-module | business（业务综合库） | erp-service | finance（财务库） |  |
-| server-crm-module | business（业务综合库） | wms-service | supply（供应链库） |  |
+| server-crm-module | business（业务综合库） | erp-service | finance（财务库） | ⚠️ 同 crm-service：已改 HTTP（V19.0），非真实 DB 直连 |
+| server-crm-module | business（业务综合库） | wms-service | supply（供应链库） | ⚠️ 同 crm-service：已改 HTTP（V19.0），非真实 DB 直连 |
 | server-crm-module | business（业务综合库） | workflow-service | core（平台核心库） |  |
 | server-ehs-module | manufacturing（制造库） | workflow-service | core（平台核心库） | 同 ehs-service：schema=public 现落 core 库，拆分前需归位 |
 | server-erp-module | finance（财务库） | hrm-service | business（业务综合库） |  |
-| server-finance-module | finance（财务库） | workflow-service | core（平台核心库） |  |
+| server-finance-module | finance（财务库） | workflow-service | core（平台核心库） | ⚠️ 同 finance-service：已改本地快照+事件（V256），非真实 DB 直连 |
 | server-pm-module | business（业务综合库） | workflow-service | core（平台核心库） |  |
 | server-qms-module | manufacturing（制造库） | workflow-service | core（平台核心库） |  |
 | server-srm-module | supply（供应链库） | workflow-service | core（平台核心库） |  |

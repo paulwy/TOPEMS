@@ -14,6 +14,15 @@
 > - 最终证据：运行中服务实际监听端口以 `svc/server` :8099 模块化单体统一入口为准（本地开发模式），独立部署端口映射见 `config/services.yaml`。
 > - **最后核对日期：2026-09-17**。
 
+> 📐 **2026-10-02 文档漂移校准（阶段 1 快赢任务 T2）**
+> - 本次按架构分析报告 `TOPEMS-架构分析报告-2026-10-02.md` 与决策文档 [D1](./decision-d1-unified-core-architecture.md) / [D2](./decision-d2-call-cycle-elimination.md) / [D3](./decision-d3-integration-data-ownership.md) / [D4](./decision-d4-frontend-mf-strategy.md) / [D5](./decision-d5-service-discovery-convergence.md) 校准以下漂移，文内以「对齐 Dx 决策（2026-10-02）」或「对齐代码现状 2026-10-02 实测」标注依据：
+> - **前端技术栈**：实为 Vite 8 + React 19 + MUI 9 + Zustand 5 + React Router 7 + TS 6 + Recharts（`apps/web/package.json` 实测），原文 AntD/Tailwind/Webpack/Vite 5/TS 5/Zustand 4/RR 6 整节作废。
+> - **前端形态**：为「模块化单体前端（单 bundle + 本地动态路由）」，Module Federation 是预留扩展点（原生 dynamic import 路径，不引入 MF 协议）——对齐 [D4](./decision-d4-frontend-mf-strategy.md)（2026-10-02）；代码改造由 T1 并行执行，本文档记录决策目标态。
+> - **Bootstrap A/B/C 计数**：实测为纯 C=6 / 标准 A=4 / B 系=17 / analytics 混合=1（ENTRY-05 实测），原文 A=10/B=13/C=5 作废。
+> - **unified-core 瘦身**：代码层面 23 个业务镜像模块仍导出、独立模式挂 24 个业务只读投影路由，灰度下架进行中——对齐 [D1](./decision-d1-unified-core-architecture.md)（2026-10-02）。
+> - **事件总线**：已迁 Redis Stream（XADD/XREADGROUP/XACK + 消费组 + DLQ + 事件版本 + Schema Registry，默认开启），Pub/Sub+RabbitMQ 废弃——对齐 [D2](./decision-d2-call-cycle-elimination.md) §2.5。
+> - **服务发现**：静态配置为主（`config/services.yaml` 权威源 + nginx + env `SERVICE_URL`），5 套注册中心 compose 收敛中——对齐 [D5](./decision-d5-service-discovery-convergence.md)（2026-10-02）。
+
 ## 概述
 
 TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、流程自动化、文件管理、协同通讯等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
@@ -24,7 +33,8 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 ```
 ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → build_application (7层中间件自动装配) → run
 ```
-三种复杂度模式（A/B/C）覆盖全部服务：无状态标准 10 个 + 自定义 state 13 个 + 自建 Application 5 个。
+三种复杂度模式（A/B/C）覆盖全部服务。
+> ⚠️ **计数校准（对齐代码现状 2026-10-02 实测，ENTRY-05）**：下文 V66.2 时期的「标准 10 / 自定义 state 13 / 自建 5」为历史口径，三处文档（根 `Cargo.toml:95-100`、`overview.md`、`config/services.yaml:4-6`）互不一致且均与代码不符。**实测分布：纯 C（自建 `Application{}`，不调 `build_application`）= 6（ai/gis/integration/mobile/portal/unified-core）· 标准 A（`build_application`，state 仅 db/ctx）= 4（communication/search/ticket/master-data）· B 系（`build_application` + 业务自定义 state/client）= 17 · analytics 混合 = 1**，合计 28。判定准则：是否带业务自定义 state/client（finance 持 workflow_client 实为 B，非 A）。详见架构分析报告 F-18。
 
 **V66.7** — 第三轮深度架构审计 31 项问题（P0×6 / P1×10 / P2×9 / P3×3）**全部 31/31 闭环** ✅
 
@@ -41,7 +51,8 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 
 **V68.0** — **质量门禁全通过**：`npx tsc --noEmit` 0 error · `cargo check --workspace` 0 error 0 warning · `npx vite build` ✅ · L3 导航子组 341 项 100% 对称 · CI 门禁上线
 
-平台采用 **插件化架构** 和 **微前端** 设计理念，支持按需加载业务模块，具备高度的可扩展性和灵活性。
+平台采用 **插件化架构** 与 **模块化单体前端**（单 bundle + 本地动态路由）的设计理念，支持按需加载业务模块，具备高度的可扩展性和灵活性。
+> 📐 **对齐 D4 决策（2026-10-02）**：前端当前为 36 业务域本地打包的单 bundle SPA，路由走本地 `DynamicRoutes`；Module Federation 是**预留扩展点**（将来若有独立部署诉求，用 Vite 原生 dynamic import / 路由级懒加载即可，不引入 MF 协议与 remoteEntry 分发机制）。原文「微前端为主叙事」作废。代码改造（归档 MF 死代码、移除 `@module-federation/vite` 硬依赖）由 T1 并行执行，本文档记录决策目标态。
 
 ## 架构设计原则
 
@@ -69,8 +80,8 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        Frontend UI                          │
-│              React + TypeScript + Vite + Tailwind          │
-│           Module Federation + Plugin Architecture          │
+│              React 19 + TypeScript 6 + Vite 8 + MUI 9      │
+│        模块化单体 SPA（单 bundle + 本地动态路由）          │
 │           (Port 3000/5173 - Development)                   │
 └─────────────────────────────┬───────────────────────────────┘
                               │ HTTP/HTTPS / WebSocket
@@ -129,7 +140,7 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 │  ├──────────┼───────────────────────────────────────────┤   │
 │  │ Tabs     │ 模块 Tab 标签页                          │   │
 │  ├──────────┼───────────────────────────────────────────┤   │
-│  │ Content  │ 远程模块 (Remote Modules)                │   │
+│  │ Content  │ 业务模块（本地打包，DynamicRoutes 路由）  │   │
 │  │          │  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐       │   │
 │  │          │  │ ERP │ │ HRM │ │ CRM │ │ MES │ ...   │   │
 │  │          │  └─────┘ └─────┘ └─────┘ └─────┘       │   │
@@ -187,7 +198,9 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 | master-data | 8090 | MasterData | 主数据管理 | /api/master-data/ | ✅ 已实现 | **A** |
 
 > **状态说明**: ✅ 已实现 | 🔶 部分实现 | 📋 规划中
-> **V2 模式说明**: **A** = 标准 `build_application`（10 个）· **B** = stateful + build_application（13 个）· **C** = `Application { router, port, name }` 自建（5 个）· 合计 28/28 = 100%
+> **V2 模式说明**: ⚠️ 下表「V2 模式」列与下列计数为 V71 历史口径，**已与代码不符**。
+> - **历史口径（原文）**：**A** = 标准 `build_application`（10 个）· **B** = stateful + build_application（13 个）· **C** = `Application { router, port, name }` 自建（5 个）。
+> - **实测口径（对齐代码现状 2026-10-02，ENTRY-05 / F-18）**：纯 C = 6（ai/gis/integration/mobile/portal/unified-core）· 标准 A = 4（communication/search/ticket/master-data）· B 系 = 17 · analytics 混合 = 1，合计 28。逐服务以各自 `main.rs` 实测为准；finance 持 workflow_client 实为 B（非表中 A）。后续 services.yaml/Cargo.toml 三处台账需统一回写（阶段 2）。
 
 ## 核心服务详解
 
@@ -216,13 +229,13 @@ ServiceConfig (单一真相源) → bootstrap_service (统一初始化) → buil
 | ServiceRegistry | 服务注册与发现 | unified-core |
 | GlobalConfig | 全局配置管理 | unified-core |
 | **ServiceConfigRegistry** | **集中化配置管理单例（V13.0）** | `lib/src/service_config.rs` |
-| **ConsulServiceRegistrar** | **Consul 服务注册（V13.0）** | `lib/src/service_discovery.rs` |
-| **SmartServiceClient** | **智能服务客户端（Consul + 回退，V13.0）** | `lib/src/service_discovery.rs` |
+| **ConsulServiceRegistrar** | **Consul 服务注册（V13.0）** ⚠️ 预留扩展点，默认关 | `lib/src/service_discovery.rs` |
+| **SmartServiceClient** | **智能服务客户端（Consul + 回退，V13.0）** ⚠️ 默认走 env 静态寻址 | `lib/src/service_discovery.rs` |
 | **PluginHeartbeatMonitor** | **插件心跳超时检测后台任务（V13.0）** | `svc/unified-core/src/main.rs` |
 | **🆕 Shared Bootstrap V2（V66.2 核心基础设施）** | **服务启动标准化框架 · ServiceConfig + bootstrap_service + build_application + run · 28/28 = 100%** | `lib/shared-bootstrap/src/lib.rs` |
-| **V2-Mode-A Standard** | 标准 `build_application`（10 个）：PgPool + AuthState | 10 服务 |
-| **V2-Mode-B Stateful** | 自定义 state 注入 `build_application`（13 个）：cache/tenant/6+ 客户端 | 13 服务 |
-| **V2-Mode-C Custom** | `Application { router, port, name }` 重建（5 个）：WS/GraphQL/Cookie/后台任务 | 5 服务 |
+| **V2-Mode-A Standard** | 标准 `build_application`（历史口径 10 个，实测 4 个）：PgPool + AuthState | 实测 4 服务 |
+| **V2-Mode-B Stateful** | 自定义 state 注入 `build_application`（历史口径 13 个，实测 17 个）：cache/tenant/6+ 客户端 | 实测 17 服务 |
+| **V2-Mode-C Custom** | `Application { router, port, name }` 重建（历史口径 5 个，实测 6 个）：WS/GraphQL/Cookie/后台任务 | 实测 6 服务 |
 
 ### 插件化架构 (V13.0)
 
@@ -301,21 +314,25 @@ unified-core 验证令牌
 
 #### 服务发现架构
 
+> 📐 **对齐 D5 决策（2026-10-02）**：生产服务发现 = **客户端 env 静态寻址 + nginx 静态转发**的双静态体系，`config/services.yaml` 是唯一服务/端口权威源；**nginx 即事实上的服务发现层**。下表 SmartServiceClient 的 Consul 分支为预留扩展点（默认关，`CONSUL_ENABLED=false`）。
+
 ```
 客户端请求
     │
     ▼
-SmartServiceClient
+SmartServiceClient（base_url 由调用方从 env SERVICE_URL / 静态配置构造）
     │
-    ├─ CONSUL_ENABLED=true?
+    ├─ CONSUL_ENABLED=true?（默认 false，预留扩展点）
     │   ├─ 是 → ConsulDiscoveryClient 发现服务
     │   │       ├─ 成功 → 返回服务实例
     │   │       └─ 失败 → 降级到环境变量
-    │   └─ 否 → 直接使用环境变量
+    │   └─ 否 → 直接使用环境变量 SERVICE_URL（唯一生效路径）
     │
     ▼
-服务实例 URL
+服务实例 URL（nginx 按前缀静态 upstream 转发，端口权威源 = config/services.yaml）
 ```
+
+> 注：`deploy/docker/` 下曾并存 5 套注册中心 compose（consul/etcd/eureka/nacos/zookeeper），实测 3 套（zookeeper/eureka/nacos）未接线、etcd 仅 ai/portal opt-in 配置管理、Consul 默认关——均为预留/残留，按 D5 收敛中（阶段 2 U9）。
 
 #### 前端动态导航
 
@@ -335,7 +352,7 @@ PluginManager.fetchNavigationConfig()
 
 #### 核心服务瘦身
 
-V13.0 移除了 unified-core 中的业务模块残留：
+V13.0 声称移除了 unified-core 中的业务模块残留：
 
 | 已移除模块 | 原位置 | 现归属 |
 |-----------|--------|--------|
@@ -345,7 +362,11 @@ V13.0 移除了 unified-core 中的业务模块残留：
 | wms | `svc/unified-core/src/modules/wms/` | `svc/wms/`（独立服务） |
 | finance | `svc/unified-core/src/modules/finance/` | `svc/finance/`（独立服务） |
 
-unified-core 现仅保留核心模块：iam、doc、flow、file、mail、im、notification、plugin、search、communication。
+> 📐 **对齐 D1 决策（2026-10-02）——上述「已移除」为文档层面完成、代码层面未完成**：
+> - 实测（对齐代码现状 2026-10-02）：**23 个业务镜像模块仍 `pub mod` 活跃导出**（`svc/unified-core/src/modules/mod.rs:36-81`）；独立模式（`embed_mode=false`）连续 merge **24 个业务只读投影路由**（`routes/mod.rs:267-313`，全 GET 列表，如 `/api/crm/customers`、`/api/finance/receivables`）；投影跨 schema 直读业务表 **180 处**（如 `modules/erp/handlers.rs:38` 读 `erp.purchase_orders`）。
+> - **生产无入向流量**：nginx 已把业务前缀全部转发到各独立服务（`deploy/nginx/topems.conf:122-128`），:8000 的业务投影当前无前端/服务间/脚本调用，嵌入模式（`svc/server` :8099）下投影不挂载。
+> - **目标终态 = 灰度下架（D1 选项 C）**：分批停挂路由 → 删除镜像模块目录与跨读代码 → 撤销 `scripts/schema_boundary.json` 中 unified-core 对业务 schema 的 allow。终态 unified-core 只保留平台核心域（iam/doc/flow/file/tenant/plugin/audit/communication/monitor + public 共享层）。
+> - 原「unified-core 现仅保留核心模块：iam、doc、flow、file、mail、im、notification、plugin、search、communication」为**目标态描述**，当前代码仍含 23 业务镜像模块；灰度下架由阶段 2 U1 执行。
 
 ### 服务间通信
 
@@ -375,13 +396,15 @@ ai (8013) ←→ unified-core (8000, doc/flow 智能审批)
 
 ## 前端架构
 
-### 微前端架构 (Module Federation)
+### 前端形态：模块化单体 SPA（Module Federation 为预留扩展点）
 
-采用 Webpack Module Federation 实现微前端：
+> 📐 **对齐 D4 决策（2026-10-02）**：目标态为**模块化单体前端（单 bundle + 本地动态路由）**，MF 不再是主叙事。代码改造（归档 MF 死代码、移除 `@module-federation/vite` 硬依赖）由 T1 并行执行，本文档记录决策目标态。
 
-- **Shell 应用**: 主框架，提供基础布局、认证、导航
-- **Remote 模块**: 各业务模块独立开发、独立部署
-- **共享依赖**: React、React Router、Zustand、Ant Design 等
+- **Shell 应用**: 主框架（`apps/web`，name=`topems-portal`），提供基础布局、认证、导航
+- **业务模块**: 36 个业务域全部**本地打包进单 bundle**（`apps/web/src/modules/`，路由走本地 `DynamicRoutes`），非独立部署的 remote
+- **共享依赖**: React 19、React Router 7、Zustand 5、MUI 9 等（workspace packages：api-client/app-shell/shared-components/shared-hooks/shared-types/shared-utils/tokens）
+- **MF 现状（对齐代码现状 2026-10-02 实测）**：`apps/web/src/microfrontend/config.ts:89-260` 声明 19 个 `topems_*` remote，但**零实现、无 remoteEntry 产物**；默认 `DEPLOYMENT_MODE='static'` 下 `buildRemotes()` 返回空、federation 插件整体跳过；`RemoteLoader`/`MicroAppRouter` 运行时加载代码未被 `App.tsx` 引用。即 MF 是「配置与代码齐备、运行时零生效」的占位实现。
+- **预留扩展点**: 将来若确有独立部署诉求，用 Vite 原生 dynamic import / 路由级懒加载实现按需加载即可，**不引入 MF 协议与 remoteEntry 分发机制**。
 
 ### 四级导航架构
 
@@ -394,12 +417,14 @@ ai (8013) ←→ unified-core (8000, doc/flow 智能审批)
 
 | 模块 | 说明 | 路径 |
 |------|------|------|
-| Shell | 主框架，布局与导航 | `frontend/src/` |
-| Plugin System | 插件系统 | `frontend/src/plugins/` |
-| Navigation Registry | 动态导航注册 | `frontend/src/registry/` |
-| Event Bus | 前端事件总线 | `frontend/src/utils/eventBus.ts` |
-| Auth Provider | 认证上下文 | `frontend/src/contexts/` |
-| Global State | 全局状态 (Zustand) | `frontend/src/stores/` |
+| Shell | 主框架，布局与导航 | `apps/web/src/` |
+| Plugin System | 插件系统 | `apps/web/src/plugins/` |
+| Navigation Registry | 动态导航注册 | `apps/web/src/registry/` |
+| Event Bus | 前端事件总线 | `apps/web/src/utils/eventBus.ts` |
+| Auth Provider | 认证上下文 | `apps/web/src/contexts/` |
+| Global State | 全局状态 (Zustand) | `apps/web/src/stores/` |
+
+> 注：路径前缀原文为 `frontend/src/`，已对齐代码现状 2026-10-02 实测（前端根目录为 `apps/web/src/`）。
 
 ## 技术栈
 
@@ -420,19 +445,23 @@ ai (8013) ←→ unified-core (8000, doc/flow 智能审批)
 
 ### 前端技术栈
 
+> 📐 **对齐代码现状 2026-10-02 实测**（以 `apps/web/package.json` + `vite.config.ts` 为准；原文 AntD/Tailwind/Webpack/Vite 5/TS 5/Zustand 4/RR 6 整列作废，F-16）。
+
 | 类别 | 技术 | 版本 | 说明 |
 |------|------|------|------|
-| 语言 | TypeScript | 5+ | 类型安全的 JavaScript |
-| 框架 | React | 19 | UI 框架 |
-| 构建工具 | Vite | 5+ | 快速构建工具 |
-| UI 框架 | Tailwind CSS | 3+ | 原子化 CSS |
-| UI 组件库 | Ant Design | 5+ | 企业级 UI 组件库 |
-| 状态管理 | Zustand | 4+ | 轻量状态管理 |
-| 路由 | React Router | 6+ | 前端路由 |
-| 微前端 | Module Federation | - | 微前端架构 |
-| 表单 | react-hook-form | - | 高性能表单库 |
-| 图表 | ECharts / Recharts | - | 数据可视化 |
-| HTTP 客户端 | Axios | - | HTTP 请求库 |
+| 语言 | TypeScript | 6.x（`^6.0.3`） | 类型安全的 JavaScript |
+| 框架 | React | 19.x（`^19.2.7`） | UI 框架（web/desktop；mobile 为 React Native 18） |
+| 构建工具 | Vite | 8.x（`^8.1.5`） | 快速构建工具（非 Webpack） |
+| UI 组件库 | MUI（`@mui/material`） | 9.x（`^9.4.0`） | 企业级 UI 组件库（**非 Ant Design**） |
+| 样式方案 | Emotion / MUI CSS | - | CSS-in-JS；**未使用 Tailwind CSS**（依赖中无 tailwindcss） |
+| 状态管理 | Zustand | 5.x（`^5.0.14`） | 轻量状态管理 |
+| 路由 | React Router | 7.x（`react-router-dom ^7.18.3`） | 前端路由（本地 `DynamicRoutes`） |
+| 数据请求 | TanStack Query | 5.x（`^5.101.0`） | 服务端状态管理 |
+| 微前端 | `@module-federation/vite` | `^1.23.0`（硬依赖） | ⚠️ 预留扩展点；19 remote 零实现、static 默认跳过，按 D4 由 T1 归档移除中 |
+| 表单 | react-hook-form | 7.x（`^7.79.0`） | 高性能表单库 |
+| 图表 | Recharts | 3.x（`^3.8.1`） | 数据可视化（**仅 Recharts，未用 ECharts**） |
+| HTTP 客户端 | Axios | 1.x（`^1.6.8`） | HTTP 请求库 |
+| 地图 | Leaflet | 1.9.x | GIS 图层 |
 
 ### DevOps 技术栈
 
@@ -473,6 +502,8 @@ ai (8013) ←→ unified-core (8000, doc/flow 智能审批)
 | plugin_ehs | ehs | 安全事件、环保 |
 | plugin_rs | rd | 研发管理 |
 | ... | ... | 各业务模块独立 Schema |
+
+> 📐 **Schema 命名校准（对齐代码现状 2026-10-02，F-40）**：上表 `plugin_erp`/`plugin_hrm`/`plugin_qms` 等为历史插件命名；实际 `database/migrations/000_create_schemas.sql:15-57` **裸名与 plugin_* 两套并存**，而各服务代码 `SEARCH_PATH` 实际用**裸名**（如 `erp, public`、`finance, public`），非 `plugin_erp`。详见 [database.md](./database.md) Schema 附录校准。
 
 ### 数据库扩展
 

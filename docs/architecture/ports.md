@@ -3,6 +3,9 @@
 > **版本**: v5.2 | **更新日期**: 2026-08-08 | **服务总数**: 28
 > **信源**: `svc/*/src/main.rs` 中 `ServiceConfig.port` 字段（单一事实来源）
 
+> 📐 **2026-10-02 权威源校准（对齐 [D5](./decision-d5-service-discovery-convergence.md)）**：服务/端口**唯一权威源为 `config/services.yaml`**；`config/ports.env`（41 个端口）为其派生物、`svc/*/src/main.rs` 的 `ServiceConfig.port` 为运行期实现值。三者由 `scripts/check-workspace-registry.py` 三向校验守护。生产寻址 = env `SERVICE_URL`（客户端）+ nginx 静态 upstream（服务端），Consul 默认关、etcd 仅 ai/portal opt-in。
+> 注：表中 billing/lowcode 已归档（`svc/_archive/`）、feedback 已并入 ticket，为历史端口登记。
+
 ## 端口分配规则
 
 | 段位区间 | 服务分组 | 说明 |

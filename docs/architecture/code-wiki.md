@@ -46,9 +46,9 @@
 | **供应链** | SCM、WMS、SRM |
 | **质量/研发** | QMS、LIMS、EHS、RD |
 | **数据/基础设施** | BI(Analytics)、Portal、Mobile、GIS、Integration、Search、Master-Data（Lowcode 已归档） |
-| **技术亮点** | Rust Axum 高性能后端、React 19 + TypeScript 前端、微服务/插件化架构、Module Federation 微前端、PWA、AI RAG、pgvector 向量搜索 |
+| **技术亮点** | Rust Axum 高性能后端、React 19 + TypeScript 前端、微服务/插件化架构、模块化单体前端（Module Federation 为预留扩展点，非运行时微前端——对齐 D4 2026-10-02）、PWA、AI RAG、pgvector 向量搜索 |
 | **安全特性** | JWT 认证、RBAC、行级安全(RLS)、多租户隔离、字段加密、CSRF 防护、审计日志 |
-| **插件化** | 安全令牌注册、Consul/环境变量服务发现、心跳超时检测、依赖检查、动态导航配置 |
+| **插件化** | 安全令牌注册、环境变量静态服务发现（Consul 为预留扩展点，默认关 `CONSUL_ENABLED=false`——对齐 D5 2026-10-02）、心跳超时检测、依赖检查、动态导航配置 |
 | **工单 SLA** | SLA 策略配置、响应/解决时限计算、多级升级机制、SLA 统计 API |
 | **Shared Bootstrap V2** | 29 服务统一启动 API：ServiceConfig → bootstrap_service → build_application → run（2026-09-17 基线） |
 | **路由统一化** | 核心服务统一 `/api/core/{module}`，业务服务统一 `/api/{svc}`，Vite proxy 新路径无 rewrite 直通 |
@@ -218,7 +218,7 @@ Cargo.toml (Workspace Root)
 │   ├── shared-db               # 数据库：连接池/审计/RLS/迁移/Repository/备份
 │   ├── shared-auth             # 认证：JWT/RBAC/租户/部门/权限中间件/安全
 │   ├── shared-bootstrap        # 启动引导：ServiceConfig/bootstrap_service/run
-│   ├── shared-event            # 事件总线：Redis/RabbitMQ/Saga/服务发现
+│   ├── shared-event            # 事件总线：Redis Stream(XADD/XREADGROUP/DLQ/版本/Schema Registry，主) + Pub/Sub(deprecated) + RabbitMQ(历史) + Saga/服务发现
 │   ├── shared-service-client   # 服务间调用客户端：28+ 业务服务 Typed Client
 │   ├── shared-observability    # 可观测性：遥测/日志/指标/告警/SLO
 │   └── shared-ai               # AI 能力：Ollama 客户端/向量存储/嵌入
@@ -1287,11 +1287,21 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 | svc/quality-assurance | svc/qms + svc/lims + svc/ehs | 拆分独立部署 |
 | svc/bi | svc/analytics | 2026-06 合并 |
 | svc/report | svc/analytics | 2026-07 合并 |
-| svc/config-center | etcd + unified-core 配置管理 | 功能整合 |
+| svc/config-center | etcd + unified-core 配置管理 | 功能整合（`svc/config-center` 目录已不存在） |
 | svc/shared | lib/topems_shared* | 功能下沉到共享 crate |
 | svc/user-service | unified-core/modules/iam/user | 2026-07 迁移（原端口 8060 与 BI 冲突） |
 | svc/monitor | unified-core/modules/monitor | 2026-07 迁移 · `/api/core/monitor/*` |
 | svc/doc | unified-core/modules/doc | 2026-07 迁移 · `/api/core/doc/*` |
+
+### B2. 服务发现与配置收敛（对齐 D5 决策 2026-10-02）
+
+> 📐 **生产服务发现 = 静态体系双轨**（对齐代码现状 2026-10-02 实测）：
+> - **唯一权威源**：`config/services.yaml`（服务/端口/bootstrap 模式登记，:16-17 自陈"任何端口变更必须同步 ports.env/docker-compose/vite.config.ts/.env"）→ 派生 `config/ports.env`（41 个端口）。
+> - **客户端寻址**：env `SERVICE_URL` → `ServiceClient::new(base_url)`（`lib/shared-service-client/src/service_client/base_client.rs:33-34`，构造仅接收 base_url，**不查注册中心**）。
+> - **服务端路由**：nginx 静态 upstream 按前缀转发（`deploy/nginx/topems.conf:122-128`）——**nginx 即事实上的服务发现层**。
+> - **etcd**：仅 `svc/ai/src/dsh/config_center/` 与 `svc/portal/src/state.rs` opt-in **配置管理**（`ETCD_ENABLED` 默认 false），不承担服务发现。
+> - **Consul**：代码内置可选发现（`trait_api.rs:138` 设 `CONSUL_URL` 即启用），但 `CONSUL_ENABLED=false` 默认关——**预留扩展点**。
+> - **5 套注册中心收敛**：`deploy/docker/` 下曾并存 consul/etcd/eureka/nacos/zookeeper 五套 compose；实测 zookeeper/eureka/nacos **未接线（入口零调用）**、etcd opt-in、Consul 默认关——均为预留/残留，按 D5 阶段 2 U9 收敛（移除 zookeeper/eureka/nacos 残留 + zookeeper 0.8 future-incompat 依赖）。
 
 ### C. 关键文件快速索引
 
@@ -1301,10 +1311,10 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 | [TODO.md](file:///Users/xingzhai/TOPEMS/docs/project/TODO.md) | 任务路线图真相源（V182） |
 | [Cargo.toml](file:///Users/xingzhai/TOPEMS/Cargo.toml) | Rust Workspace + 共享依赖版本 |
 | [package.json](file:///Users/xingzhai/TOPEMS/package.json) | pnpm Monorepo 脚本入口 |
-| [config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) | 端口单一信源（后端 + MF） |
-| [config/services.yaml](file:///Users/xingzhai/TOPEMS/config/services.yaml) | 服务配置（bootstrap_mode/依赖/分组） |
+| [config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) | 端口单一信源（后端；与 services.yaml 派生同步） |
+| [config/services.yaml](file:///Users/xingzhai/TOPEMS/config/services.yaml) | 服务配置（bootstrap_mode/依赖/分组）——服务/端口唯一权威源（D5） |
 | [scripts/topems.sh](file:///Users/xingzhai/TOPEMS/scripts/topems.sh) | 统一服务管理脚本 |
-| [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) | 前端构建 + 代理 + MF 配置 |
+| [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) | 前端构建 + 代理（MF 插件为预留扩展点，static 默认跳过——D4） |
 | [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts) | 前端端口 TS 类型（与 ports.env 同步） |
 | [apps/web/src/lib/apiClient.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/apiClient.ts) | 统一 API 客户端导出层 |
 | [apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts) | 多服务 Axios 工厂 + 重试 |
