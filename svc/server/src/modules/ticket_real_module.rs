@@ -54,10 +54,14 @@ impl TicketRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // 2. Ticket 数据库初始化（与独立部署 main.rs 一致：ticket + SLA 建表）
-        handlers::init_ticket_tables(&ctx.db)
+        //    DDL 走 MIGRATE_URL owner 迁移池（受限业务用户 topems_app 非表 owner，
+        //    CREATE INDEX IF NOT EXISTS 会被 PG 拒绝 → 原实现用 ctx.db 导致构建失败降级，
+        //    整个 /api/ticket/* 404；与独立部署 main.rs 的 ddl_pool 模式对齐）
+        let ddl_pool = ctx.migrate_pool.as_ref().unwrap_or(&ctx.db);
+        handlers::init_ticket_tables(ddl_pool)
             .await
             .map_err(|e| anyhow::anyhow!("初始化 ticket 表失败: {e}"))?;
-        handlers::init_sla_tables(&ctx.db)
+        handlers::init_sla_tables(ddl_pool)
             .await
             .map_err(|e| anyhow::anyhow!("初始化 SLA 表失败: {e}"))?;
 

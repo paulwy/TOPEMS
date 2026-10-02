@@ -31,6 +31,16 @@ SERVICES=(CRM ERP FEEDBACK FILE FINANCE HRM IAM AI BI COMMUNICATION EHS GIS
 build_env() {
   echo "DB_MAX_CONNECTIONS=8"
   echo "SEARCH_PATH=flow, mobile, rs, erp, public, iam, shared"
+  # .env 中 MIGRATE_URL 指向 owner 数据库连接（DDL 专用）。嵌入模式下若缺失，
+  # migrate_pool=None → 模块 DDL 回退受限业务用户池，表 owner 不是 topems_app 时
+  # CREATE INDEX IF NOT EXISTS 会被 PG 拒绝（曾导致 ticket 模块构建失败降级、
+  # /api/ticket/* 全 404）
+  if [ -z "${MIGRATE_URL:-}" ] && [ -f .env ]; then
+    MIGRATE_URL="$(sed -n 's/^MIGRATE_URL=//p' .env | head -1)"
+  fi
+  if [ -n "${MIGRATE_URL:-}" ]; then
+    echo "MIGRATE_URL=${MIGRATE_URL}"
+  fi
   # dashboard 聚合探活开关：portal probe_service_health 读该 env 统一探测 :8099/health
   # （缺失时走硬编码独立端口 → 嵌入模式下全部 healthy=false）
   echo "MONOLITH_SERVICE_URL=http://localhost:8099"

@@ -1,5 +1,34 @@
 # TOPEMS 项目 TODO 列表
 
+## ✅ 今日已完成（2026-10-02）——ticket 业务模块 API 挂载根治
+
+### 已根治/已完成（待推送）
+- ✅ **ticket 模块在 BFF 上的"挂载缺失"根治**（延续 MES 看板挂载先例，价值更高）：
+  - 根因：svc/server 的 TicketRealModule::build() 用业务用户池（topems_app）执行 DDL，
+    而 ticket 表 owner 是 topems；PostgreSQL 的 CREATE INDEX IF NOT EXISTS 即使索引已存在
+    也要求表 owner 权限 → build 返回 Err → 模块降级未注册 → **整个 /api/ticket/* 全 404**
+    （tickets 列表/详情、workflows、feedbacks、SLA stats 等 41 条路由全部不可用，前端
+    TicketCenterPage/DashboardPage 长期打不开；模块内路由早已实现，缺的只是正确挂载）
+  - 修复①（svc/server/src/modules/ticket_real_module.rs）：DDL 走
+    `ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)`（与独立部署 main.rs ddl_pool 模式及
+    crm/erp/ehs/analytics 等模块对齐；此前仅 portal_real_module 用了 migrate_pool）
+  - 修复②（scripts/run_monolith.sh）：build_env 从 .env 读取 MIGRATE_URL 注入进程
+    （此前 MIGRATE_URL 未注入 → migrate_pool=None → 回退受限池仍失败）；
+    其他模块 DDL 同样受益（owner 池）
+  - 验证：cargo build -p topems-server 0 错；重启后 module_list 含 ticket；
+    /api/ticket/tickets、/workflows、/feedbacks、/tickets/stats 全部恢复（401=已挂载）
+  - 注：首次实现后被 TRAE 机 `reset --hard origin/main` 抹除一次，已重做并尽快推送
+
+### ⏳ 后续工作（按优先级）
+- ⏳ **其余前端契约缺口审计**（本轮实测 99 条 404，排除 ticket 后大头为 mobile 58 条）：
+  - mobile 58 条：apps/web/src/api/mobile.ts 定义了但**无任何页面调用**（未使用骨架 API），
+    且 svc/mobile 与前端路径是两套（svc 服务移动端 App：/announcements、/approvals、
+    /devices/register 等）→ 判定无价值，不挂载
+  - srm/bids 列表、pm/risks、erp/addressbook、integration/endpoints、ai/conversations、
+    scm/inspection-records 等：svc 与 unified-core 均无对应实现（unified-core 版本带
+    State<AppState> 无法挂根层）→ 属"实现缺失"非"挂载缺失"，待前端页面确认价值后补实现
+  - 结论：本轮真正符合"已实现未挂载"的缺口只有 ticket（已根治）；其余为未使用定义或未实现
+
 ## ✅ 今日已完成（2026-09-29）——脚本体系整治批次
 
 ### 已根治/已完成（全部已推 origin/main）
