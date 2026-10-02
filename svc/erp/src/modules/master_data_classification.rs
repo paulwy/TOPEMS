@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use super::master_data_matching::{build_entity_profiles, EntityProfile};
 use super::ApiState;

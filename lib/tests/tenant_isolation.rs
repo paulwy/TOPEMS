@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use topems_shared::auth::Claims;
-use topems_shared::tenant::{
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::tenant::{
     Tenant, TenantContext as AuthTenantContext, TenantPlan, TenantRole, TenantStatus,
 };
 use topems_shared_db::rls::TenantContext as RlsTenantContext;

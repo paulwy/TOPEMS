@@ -44,7 +44,9 @@ use uuid::Uuid;
 use crate::models::*;
 use crate::services::FinanceService;
 use crate::shared::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_core::response::ApiResponse;
+
+use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{EventType, PaymentMadePayload, PaymentReceivedPayload};

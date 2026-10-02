@@ -21,7 +21,9 @@ use crate::models::supplier::{CreateSupplierRequest, Supplier, UpdateSupplierReq
 use crate::modules::audit::log_audit_event;
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
-use topems_shared::{auth::Claims, ApiResponse};
+use topems_shared_auth::auth::Claims;
+
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss};
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;

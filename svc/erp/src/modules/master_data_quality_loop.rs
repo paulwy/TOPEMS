@@ -9,7 +9,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 use super::ApiState;
 

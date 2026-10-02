@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use crate::AppState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, api_success};
 

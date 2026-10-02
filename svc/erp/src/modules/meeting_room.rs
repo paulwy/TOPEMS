@@ -16,7 +16,7 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]

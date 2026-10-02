@@ -1,7 +1,7 @@
-use topems_shared::error::{
+use topems_shared_core::error::{
     ErrorContext, ErrorRecovery, ErrorStatistics, SafeErrorHandler, TopemsError,
 };
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 #[test]
 fn test_topems_error_display_database_connection() {

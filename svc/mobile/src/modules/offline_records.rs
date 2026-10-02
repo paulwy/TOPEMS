@@ -10,7 +10,7 @@ use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::api_error;
 
 #[derive(Debug, Deserialize, Serialize)]

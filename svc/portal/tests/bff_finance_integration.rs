@@ -220,7 +220,7 @@ fn test_health_check_response_structure() {
 
 #[test]
 fn test_api_response_success_structure() {
-    use topems_shared::ApiResponse;
+    use topems_shared_core::response::ApiResponse;
 
     let resp: ApiResponse<String> = ApiResponse::success("ok".to_string(), "健康检查完成");
 
@@ -233,7 +233,7 @@ fn test_api_response_success_structure() {
 
 #[test]
 fn test_api_response_error_structure() {
-    use topems_shared::ApiResponse;
+    use topems_shared_core::response::ApiResponse;
 
     let resp: ApiResponse<String> = ApiResponse::error(502, "工单服务不可用");
 
@@ -337,7 +337,7 @@ fn test_event_publisher_unavailable_does_not_block() {
 #[test]
 fn test_proxy_response_pattern_for_success() {
     use serde_json::Value;
-    use topems_shared::ApiResponse;
+    use topems_shared_core::response::ApiResponse;
 
     // 模拟代理成功响应的模式（对应 status.is_success() 分支）
     let upstream_json: Value = serde_json::json!({"policies": [], "total": 0});
@@ -351,7 +351,7 @@ fn test_proxy_response_pattern_for_success() {
 #[test]
 fn test_proxy_response_pattern_for_upstream_error() {
     use serde_json::Value;
-    use topems_shared::ApiResponse;
+    use topems_shared_core::response::ApiResponse;
 
     // 模拟上游返回错误的模式（对应 !status.is_success() 分支）
     let upstream_status: u16 = 404;
@@ -366,7 +366,7 @@ fn test_proxy_response_pattern_for_upstream_error() {
 #[test]
 fn test_proxy_response_pattern_for_connection_failure() {
     use serde_json::Value;
-    use topems_shared::ApiResponse;
+    use topems_shared_core::response::ApiResponse;
 
     // 模拟连接失败的响应模式（对应 Err(e) 分支）
     let error_msg = "工单服务不可用: error sending request";

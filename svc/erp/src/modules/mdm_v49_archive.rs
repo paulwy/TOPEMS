@@ -1,6 +1,6 @@
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use super::super::ApiState;

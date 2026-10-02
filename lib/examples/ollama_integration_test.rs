@@ -3,7 +3,9 @@
 //! 运行: cargo run --example ollama_integration_test -p topems-shared
 
 use anyhow::Result;
-use topems_shared::{OllamaClient, OllamaConfig};
+use topems_shared_ai::OllamaClient;
+
+use topems_shared_ai::OllamaConfig;
 
 #[allow(clippy::as_conversions)]
 #[tokio::main]

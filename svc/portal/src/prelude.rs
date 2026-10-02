@@ -22,10 +22,12 @@ pub use tower_cookies::CookieManagerLayer;
 pub use utoipa::OpenApi;
 
 pub use topems_shared_auth::auth_middleware;
-pub use topems_shared::ApiResponse;
-pub use topems_shared::{
-    create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
-};
+pub use topems_shared_core::response::ApiResponse;
+pub use topems_shared_core::api_version::create_api_info_router;
+
+pub use topems_shared_core::cors::create_cors_layer;
+
+pub use topems_shared_core::api_version::register_routes_with_legacy_alias;
 pub use topems_shared_auth::security::{
     rate_limit_middleware, RateLimitConfig, RateLimitMiddleware,
 };

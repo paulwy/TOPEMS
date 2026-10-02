@@ -10,7 +10,7 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 use crate::utils::validate_required_field;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 #[derive(Debug, Deserialize)]

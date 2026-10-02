@@ -3,7 +3,9 @@
 //! 测试 Ollama 嵌入和聊天功能
 
 use anyhow::Result;
-use topems_shared::{OllamaClient, OllamaConfig};
+use topems_shared_ai::OllamaClient;
+
+use topems_shared_ai::OllamaConfig;
 
 #[tokio::main]
 async fn main() -> Result<()> {

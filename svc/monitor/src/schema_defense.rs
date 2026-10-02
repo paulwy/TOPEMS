@@ -4,7 +4,7 @@
 //! 说明：monitor 为纯监控服务，无业务表，仅使用 shared-bootstrap 提供的审计日志表。
 
 use sqlx::PgPool;
-use topems_shared::schema::run_schema_defense;
+use topems_shared_db::schema::run_schema_defense;
 
 pub const SERVICE_SCHEMA: &str = "public";
 pub const SERVICE_TAG: &str = "monitor";

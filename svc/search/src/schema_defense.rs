@@ -5,7 +5,7 @@
 //!       仅使用 shared-bootstrap 提供的审计日志表。
 
 use sqlx::PgPool;
-use topems_shared::schema::run_schema_defense;
+use topems_shared_db::schema::run_schema_defense;
 
 pub const SERVICE_SCHEMA: &str = "public";
 pub const SERVICE_TAG: &str = "search";

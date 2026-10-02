@@ -11,7 +11,7 @@ use serde_json::Value;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 
 // ─── Models ──────────────────────────────────────────────────────────────────

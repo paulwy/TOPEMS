@@ -6,7 +6,9 @@ use anyhow::Result;
 use redis::{AsyncCommands, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use topems_shared::{OllamaClient, OllamaConfig};
+use topems_shared_ai::OllamaClient;
+
+use topems_shared_ai::OllamaConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct EmployeeSkill {

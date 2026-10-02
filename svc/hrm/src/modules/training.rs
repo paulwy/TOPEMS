@@ -14,7 +14,7 @@ use crate::models::{
     TrainingCourse, TrainingPaginationParams, TrainingPlan, TrainingRecord,
     UpdateTrainingCourseRequest, UpdateTrainingPlanRequest, UpdateTrainingRecordRequest,
 };
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {

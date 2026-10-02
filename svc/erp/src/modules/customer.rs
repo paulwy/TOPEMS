@@ -14,8 +14,8 @@ use crate::modules::customer_calc::{
     build_search_pattern, default_credit_limit, default_customer_status, has_customer_filters,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared::auth::Claims;
-use topems_shared::ApiResponse;
+use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 

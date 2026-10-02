@@ -11,7 +11,7 @@ use axum::http::{Request, StatusCode};
 use axum::response::Response;
 use axum::Json;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::security::{
     audit_logger_middleware, body_limit_middleware, security_headers_middleware,
 };

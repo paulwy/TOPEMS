@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 use crate::modules::ApiState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 // ==================== 共享实体画像类型 ====================

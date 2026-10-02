@@ -7,7 +7,7 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{api_error, PaginatedResponse};
 

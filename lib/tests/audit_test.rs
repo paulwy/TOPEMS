@@ -1,5 +1,5 @@
 use chrono::Utc;
-use topems_shared::audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
+use topems_shared_db::audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 use uuid::Uuid;
 
 #[test]

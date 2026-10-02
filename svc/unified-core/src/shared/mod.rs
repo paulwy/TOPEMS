@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, Mutex};
-use topems_shared::AuthState;
+use topems_shared_auth::auth::AuthState;
 use topems_shared_auth::security::{
     AuditLoggerMiddleware, BodyLimitMiddleware, FieldEncryptionService, SecurityHeadersLayer,
 };

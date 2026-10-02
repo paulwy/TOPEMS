@@ -4,7 +4,7 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::AuthState;
+use topems_shared_auth::auth::AuthState;
 use topems_shared_auth::security::FieldEncryptionService;
 use topems_shared_core::health::SystemMetrics;
 use topems_shared_core::l2_cache::AsyncL2Cache;

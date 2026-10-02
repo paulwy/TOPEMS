@@ -9,7 +9,7 @@
 //! 自动提取时间：2026-08-28
 
 use sqlx::PgPool;
-use topems_shared::schema::run_schema_defense;
+use topems_shared_db::schema::run_schema_defense;
 
 pub const SERVICE_SCHEMA: &str = "ehs";
 pub const SERVICE_TAG: &str = "ehs";

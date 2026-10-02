@@ -19,7 +19,7 @@ use sqlx::{Pool, Postgres, Row};
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 const PUSH_CONFIG_TABLE_SQL: &str = r#"
 CREATE TABLE IF NOT EXISTS mobile.push_config (

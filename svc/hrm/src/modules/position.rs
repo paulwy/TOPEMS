@@ -13,7 +13,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{api_error, ApiResponse};

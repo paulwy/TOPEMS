@@ -14,14 +14,14 @@ use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
-use topems_shared::auth::Claims;
+use topems_shared_auth::auth::Claims;
 
 use crate::shared::aps_fsm::schedule_can_transition;
 use topems_shared_db::decimal::big_decimal_to_f64;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
-use topems_shared::response::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
 pub fn create_routes() -> Router<AppState> {

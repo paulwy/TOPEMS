@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use crate::modules::ApiState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 // ==================== 数据目录类型 ====================
 

@@ -1,4 +1,4 @@
-use topems_shared::health::{
+use topems_shared_core::health::{
     build_health_response, DependencyHealth, HealthCheckResponse, HealthStatus, ServiceHealth,
     ServiceMonitor, SystemMetrics,
 };

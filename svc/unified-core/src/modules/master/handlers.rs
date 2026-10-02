@@ -16,7 +16,9 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_core::response::ApiResponse;
+
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::id::{generate_master_data_id, MasterDataDomain as IdMasterDataDomain};
 use topems_shared_event::event::{MasterDataAction, MasterDataDomain, MasterDataEvent};
 

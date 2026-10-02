@@ -17,7 +17,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
 use crate::modules::ApiState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 // ==================== 仪表盘类型 ====================
 

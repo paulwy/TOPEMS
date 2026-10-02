@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 
 use crate::modules::ApiState;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 
 // ==================== 治理成熟度评估类型 ====================
 

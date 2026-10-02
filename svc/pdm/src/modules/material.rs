@@ -6,7 +6,9 @@ use uuid::Uuid;
 
 use crate::services::mdm_event_service::MdmEventService;
 use crate::shared::AppState;
-use topems_shared::{ApiResponse, Claims};
+use topems_shared_core::response::ApiResponse;
+
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
 use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};

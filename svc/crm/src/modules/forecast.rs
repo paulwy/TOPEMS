@@ -15,7 +15,7 @@ use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateL
 use utoipa::ToSchema;
 
 use super::ApiState;
-use topems_shared::response::{api_error, ApiResponse};
+use topems_shared_core::response::{api_error, ApiResponse};
 
 // ---------------------------------------------------------------------------
 // 数据模型

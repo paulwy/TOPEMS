@@ -3,10 +3,9 @@
 //! 运行: cargo run --example vector_search_test
 
 use anyhow::Result;
-use topems_shared::{
-    embedding::{create_embedding_service, EmbeddingConfig},
-    OllamaConfig,
-};
+use topems_shared_ai::embedding::{create_embedding_service, EmbeddingConfig};
+
+use topems_shared_ai::OllamaConfig;
 
 #[tokio::main]
 async fn main() -> Result<()> {
