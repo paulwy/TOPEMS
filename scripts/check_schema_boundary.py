@@ -6,6 +6,15 @@ TOPEMS 编译时 Schema 边界门禁检查（CI 用）。
 本脚本扫描所有 svc/*/src 的 Rust 源码中的 SQL 字符串字面量，提取 `schema.table` 引用，
 对照各服务的 schema 白名单（scripts/schema_boundary.json），发现未授权跨 schema 引用即失败。
 
+事实源分工（与 scripts/ci/check-schema-boundary.cjs 的关系）：
+  - 本脚本（PYTHON 门禁）：按【服务 → schema 归属】判定，事实源 = scripts/schema_boundary.json
+    （每个 service 的 schema / allow / search_path）。扫描 ALL SQL 字面量（含 only_own_schema_query!
+    宏包裹的），另做无前缀表名归属解析（scripts/schema_boundary_tables.json）。
+  - scripts/ci/check-schema-boundary.cjs（NODE 门禁）：按【文件 → 裸 sqlx::query* 调用点】判定，
+    事实源 = scripts/ci/schema-boundary-allowlist.json（per-file 基线）。只查未被宏包裹的裸调用。
+  - 两者语义互补、不可互相替代；临时跨 schema 条目须在两处同时标注（schema_boundary.json 的
+    allow_temporary 字段 + allowlist.json 的 _meta.temporary_entries），阶段 2 下架后一并撤销。
+
 用法：
     python3 scripts/check_schema_boundary.py            # 全量检查（默认）
     python3 scripts/check_schema_boundary.py --svc crm  # 单服务检查
@@ -98,9 +107,13 @@ def extract_schema_refs(sql):
     只提取"看起来像 schema 引用"的 x.y 结构（x 非 SQL 关键字/类型/常见别名，
     且未被本 SQL 声明为表别名）。"""
     refs = []
-    # 该 SQL 中已声明的表别名（FROM/JOIN t [AS] a）——避免把别名当 schema
+    # 该 SQL 中已声明的表别名（FROM/JOIN t [AS] a 或 FROM/JOIN schema.t [AS] a）
+    # ——避免把别名当 schema。注意表名可带 schema 前缀（如 FROM mes.bom_items bi），
+    # 否则带前缀表的别名列引用（bi.material_code）会被误判为对真实 schema bi 的跨读。
     aliases = set()
-    for m in re.finditer(r'\b(?:from|join)\s+[a-z_][a-z0-9_]*\s+(?:as\s+)?([a-z_][a-z0-9_]*)', sql, re.IGNORECASE):
+    for m in re.finditer(
+            r'\b(?:from|join)\s+[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)?\s+(?:as\s+)?([a-z_][a-z0-9_]*)',
+            sql, re.IGNORECASE):
         aliases.add(m.group(1).lower())
     for m in re.finditer(r'(?<![\w.])([a-z_][a-z0-9_]{1,63})\.([a-z_][a-z0-9_]{0,63})', sql, re.IGNORECASE):
         x, y = m.group(1).lower(), m.group(2).lower()

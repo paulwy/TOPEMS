@@ -20,6 +20,16 @@
  * Allowlist (shared/infrastructure schemas):
  *   public / unified_core / pg_catalog / information_schema
  *
+ * Fact source (read this before editing the allowlist):
+ *   - THIS file's allowlist = scripts/ci/schema-boundary-allowlist.json, keyed by
+ *     repo-relative FILE PATH. It covers PRE-EXISTING bare cross-schema call sites.
+ *   - The PYTHON gate (scripts/check_schema_boundary.py) uses a DIFFERENT model:
+ *     per-service schema ownership from scripts/schema_boundary.json, and scans ALL
+ *     SQL literals (including only_own_schema_query!-wrapped ones). The two are
+ *     complementary; temporary entries (unified-core 只读投影=D1/U1, search 聚合检索,
+ *     integration qms/ehs 直写=D3/U3) are documented in BOTH files and must be
+ *     revoked together after stage-2. See allowlist.json `_meta.temporary_entries`.
+ *
  * Usage: node scripts/ci/check-schema-boundary.cjs
  * Exit codes: 0 = pass, 1 = violations found
  */
