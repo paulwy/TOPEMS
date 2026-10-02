@@ -207,98 +207,16 @@ pub async fn get_sync_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn sync_hazard_to_qms(
-    State(state): State<crate::shared::AppState>,
-    Json(req): Json<SyncHazardToQmsRequest>,
+    State(_state): State<crate::shared::AppState>,
+    Json(_req): Json<SyncHazardToQmsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let hazard_id = match Uuid::parse_str(&req.hazard_id) {
-        Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的隐患ID")),
-    };
-
-    // Fetch hazard data
-    let hazard = sqlx::query(
-        only_own_schema_query!("ehs", "SELECT id, hazard_no, title, description, category, level, source, location, reported_by, reported_at::TEXT, status, inspection_id FROM qa_ehs_hazards WHERE id = $1")
-    )
-    .bind(hazard_id)
-    .fetch_one(&state.pool)
-    .await;
-
-    let hazard_row = match hazard {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Hazard not found: {}", e);
-            return Json(ApiResponse::error(404, "安全隐患不存在"));
-        }
-    };
-
-    let sync_no = format!(
-        "SYNC-{}-QMS",
-        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
-    let payload = serde_json::json!({
-        "hazard_id": req.hazard_id,
-        "hazard_no": hazard_row.get::<String, _>("hazard_no"),
-        "title": hazard_row.get::<String, _>("title"),
-        "description": hazard_row.get::<Option<String>, _>("description"),
-        "category": hazard_row.get::<Option<String>, _>("category"),
-        "level": hazard_row.get::<Option<String>, _>("level"),
-        "source": hazard_row.get::<Option<String>, _>("source"),
-        "location": hazard_row.get::<Option<String>, _>("location"),
-        "reported_by": hazard_row.get::<Option<String>, _>("reported_by"),
-        "reported_at": hazard_row.get::<Option<String>, _>("reported_at"),
-        "status": hazard_row.get::<Option<String>, _>("status"),
-        "inspection_id": hazard_row.get::<Option<Uuid>, _>("inspection_id").map(|u| u.to_string()),
-    });
-
-    let qms_url =
-        std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
-    tracing::debug!("Syncing hazard {} to QMS at {}", req.hazard_id, qms_url);
-
-    let target_issue_id = uuid::Uuid::new_v4().to_string();
-    let status = "completed";
-    let response = serde_json::json!({
-        "target_service": "qms",
-        "target_issue_id": target_issue_id,
-        "rectification_created": true,
-        "synced_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    let row = sqlx::query(
-        only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'hazard_to_qms', $2, 'qms', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
-    )
-    .bind(&sync_no)
-    .bind(req.hazard_id)
-    .bind(&target_issue_id)
-    .bind(status)
-    .bind(&payload)
-    .bind(&response)
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
-    .await;
-
-    match row {
-        Ok(r) => Json(ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "安全隐患已同步到 QMS 整改",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录创建失败"))
-        }
-    }
+    // D3 §5.2：手动假同步通道下线。原实现读取 QMS_SERVICE_URL 后从不发 HTTP，
+    // 直接编造 target_issue_id/rectification_created 并本地插入 status=completed 脏记录。
+    // 真实链路：EhsHazardReported 事件 → integration 编排 → qms internal 纠正措施端点。
+    Json(ApiResponse::error(
+        410,
+        "手动同步通道已下线：隐患经事件总线自动同步，请勿使用",
+    ))
 }
 
 #[utoipa::path(
@@ -310,103 +228,16 @@ pub async fn sync_hazard_to_qms(
     responses((status = 200, description = "OK")),
 )]
 pub async fn sync_accident_to_lims(
-    State(state): State<crate::shared::AppState>,
-    Json(req): Json<SyncAccidentToLimsRequest>,
+    State(_state): State<crate::shared::AppState>,
+    Json(_req): Json<SyncAccidentToLimsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let accident_id = match Uuid::parse_str(&req.accident_id) {
-        Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的事故ID")),
-    };
-
-    // Fetch accident data
-    let accident = sqlx::query(
-        only_own_schema_query!("ehs", "SELECT id, accident_no, title, description, accident_type, severity, location, occurred_at::TEXT, casualties, economic_loss, status, reported_by FROM qa_ehs_accidents WHERE id = $1")
-    )
-    .bind(accident_id)
-    .fetch_one(&state.pool)
-    .await;
-
-    let accident_row = match accident {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Accident not found: {}", e);
-            return Json(ApiResponse::error(404, "事故报告不存在"));
-        }
-    };
-
-    let sync_no = format!(
-        "SYNC-{}-LIMS",
-        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
-    let payload = serde_json::json!({
-        "accident_id": req.accident_id,
-        "accident_no": accident_row.get::<String, _>("accident_no"),
-        "title": accident_row.get::<String, _>("title"),
-        "description": accident_row.get::<Option<String>, _>("description"),
-        "accident_type": accident_row.get::<Option<String>, _>("accident_type"),
-        "severity": accident_row.get::<Option<String>, _>("severity"),
-        "location": accident_row.get::<Option<String>, _>("location"),
-        "occurred_at": accident_row.get::<Option<String>, _>("occurred_at"),
-        "casualties": accident_row.get::<Option<i32>, _>("casualties"),
-        "economic_loss": accident_row.get::<Option<String>, _>("economic_loss"),
-        "status": accident_row.get::<Option<String>, _>("status"),
-        "reported_by": accident_row.get::<Option<String>, _>("reported_by"),
-        "test_items": req.test_items,
-    });
-
-    let lims_url =
-        std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-    tracing::debug!(
-        "Syncing accident {} to LIMS at {}",
-        req.accident_id,
-        lims_url
-    );
-
-    let target_sample_id = uuid::Uuid::new_v4().to_string();
-    let status = "completed";
-    let response = serde_json::json!({
-        "target_service": "lims",
-        "target_sample_id": target_sample_id,
-        "detection_task_created": true,
-        "synced_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    let row = sqlx::query(
-        only_own_schema_query!("ehs", "INSERT INTO ehs.qa_ehs_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response, tenant_id) VALUES ($1, 'accident_to_lims', $2, 'lims', $3, $4, $5, $6, $7) RETURNING id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
-    )
-    .bind(&sync_no)
-    .bind(req.accident_id)
-    .bind(&target_sample_id)
-    .bind(status)
-    .bind(&payload)
-    .bind(&response)
-    .bind(Uuid::nil())
-    .fetch_one(&state.pool)
-    .await;
-
-    match row {
-        Ok(r) => Json(ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "事故报告已同步到 LIMS 检测",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录创建失败"))
-        }
-    }
+    // D3 §5.2：手动假同步通道下线。原实现读取 LIMS_SERVICE_URL 后从不发 HTTP，
+    // 直接编造 target_sample_id/detection_task_created 并本地插入 status=completed 脏记录。
+    // 真实链路：EhsAccidentReported 事件 → integration 编排 → lims internal 样品/任务端点。
+    Json(ApiResponse::error(
+        410,
+        "手动同步通道已下线：事故经事件总线自动同步，请勿使用",
+    ))
 }
 
 #[utoipa::path(
@@ -527,9 +358,10 @@ pub async fn list_sync_configs(
 
     Json(ApiResponse::success(
         SyncConfig {
-            qms_enabled: true,
+            // D3 §5.2：手动同步假通道已下线，跨域数据走事件总线 + internal 编排。
+            qms_enabled: false,
             qms_url,
-            lims_enabled: true,
+            lims_enabled: false,
             lims_url,
             auto_sync: false,
             sync_interval: 30,
@@ -563,7 +395,7 @@ pub async fn update_sync_configs(
             qms_enabled: req
                 .get("qms_enabled")
                 .and_then(|v| v.as_bool())
-                .unwrap_or(true),
+                .unwrap_or(false),
             qms_url: req
                 .get("qms_url")
                 .and_then(|v| v.as_str())
@@ -572,7 +404,7 @@ pub async fn update_sync_configs(
             lims_enabled: req
                 .get("lims_enabled")
                 .and_then(|v| v.as_bool())
-                .unwrap_or(true),
+                .unwrap_or(false),
             lims_url: req
                 .get("lims_url")
                 .and_then(|v| v.as_str())

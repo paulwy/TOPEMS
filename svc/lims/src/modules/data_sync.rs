@@ -7,7 +7,6 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
-use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -212,95 +211,16 @@ pub async fn get_sync_record(
     tag = "data_sync"
 )]
 pub async fn sync_record_to_qms(
-    State(state): State<crate::shared::AppState>,
-    Json(req): Json<SyncRecordToQmsRequest>,
+    State(_state): State<crate::shared::AppState>,
+    Json(_req): Json<SyncRecordToQmsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let record_id = match Uuid::parse_str(&req.record_id) {
-        Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的记录ID")),
-    };
-
-    // Fetch inspection record with task info
-    let record = sqlx::query(
-        "SELECT r.id, r.record_no, r.task_id, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, t.sample_no, t.test_items FROM qa_lab_records r LEFT JOIN qa_lab_tasks t ON r.task_id = t.id WHERE r.id = $1"
-    )
-    .bind(record_id)
-    .fetch_one(&state.pool)
-    .await;
-
-    let record_row = match record {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Record not found: {}", e);
-            return Json(ApiResponse::error(404, "检测记录不存在"));
-        }
-    };
-
-    let sync_no = format!(
-        "SYNC-{}-QMS",
-        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
-    let payload = serde_json::json!({
-        "record_id": req.record_id,
-        "record_no": record_row.get::<String, _>("record_no"),
-        "task_id": record_row.get::<Uuid, _>("task_id").to_string(),
-        "sample_no": record_row.get::<Option<String>, _>("sample_no"),
-        "test_data": record_row.get::<serde_json::Value, _>("test_data"),
-        "conclusion": record_row.get::<String, _>("conclusion"),
-        "recorded_by": record_row.get::<String, _>("recorded_by"),
-        "recorded_at": record_row.get::<Option<String>, _>("recorded_at"),
-    });
-
-    let qms_url =
-        std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string());
-    tracing::info!("Syncing record {} to QMS at {}", req.record_id, qms_url);
-
-    let target_inspection_id = req
-        .target_inspection_id
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    let status = "completed";
-    let response = serde_json::json!({
-        "target_service": "qms",
-        "target_inspection_id": target_inspection_id,
-        "synced_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    let row = sqlx::query(
-        "INSERT INTO qa_lims_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'record_to_qms', $2, 'qms', $3, $4, $5, $6) RETURNING id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
-    )
-    .bind(&sync_no)
-    .bind(req.record_id)
-    .bind(&target_inspection_id)
-    .bind(status)
-    .bind(&payload)
-    .bind(&response)
-    .fetch_one(&state.pool)
-    .await;
-
-    match row {
-        Ok(r) => Json(ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "检验结果同步到 QMS 成功",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录创建失败"))
-        }
-    }
+    // D3 §5.2：手动假同步通道下线。原实现读取 QMS_SERVICE_URL 后从不发 HTTP，
+    // 直接编造 target_inspection_id 并本地插入 status=completed 脏记录。
+    // 真实链路：LimsRecordCompleted 事件 → integration 编排 → qms internal 端点。
+    Json(ApiResponse::error(
+        410,
+        "手动同步通道已下线：检测结果经事件总线自动同步，请勿使用",
+    ))
 }
 
 #[utoipa::path(
@@ -314,105 +234,16 @@ pub async fn sync_record_to_qms(
     tag = "data_sync"
 )]
 pub async fn sync_reagent_to_ehs(
-    State(state): State<crate::shared::AppState>,
-    headers: axum::http::HeaderMap,
-    Json(req): Json<SyncReagentToEhsRequest>,
+    State(_state): State<crate::shared::AppState>,
+    Json(_req): Json<SyncReagentToEhsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let reagent_id = match Uuid::parse_str(&req.reagent_id) {
-        Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的试剂ID")),
-    };
-    let locale = Locale::from_headers(&headers).as_sql();
-
-    // Fetch reagent data
-    let reagent = sqlx::query(
-        "SELECT id::TEXT, reagent_no, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT FROM qa_lab_reagents WHERE id = $1"
-    )
-    .bind(reagent_id)
-    .bind(locale)
-    .fetch_one(&state.pool)
-    .await;
-
-    let reagent_row = match reagent {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Reagent not found: {}", e);
-            return Json(ApiResponse::error(404, "试剂记录不存在"));
-        }
-    };
-
-    let sync_no = format!(
-        "SYNC-{}-EHS",
-        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
-    let payload = serde_json::json!({
-        "reagent_id": req.reagent_id,
-        "reagent_no": reagent_row.get::<String, _>("reagent_no"),
-        "name": reagent_row.get::<String, _>("name"),
-        "specification": reagent_row.get::<Option<String>, _>("specification"),
-        "manufacturer": reagent_row.get::<Option<String>, _>("manufacturer"),
-        "batch_no": reagent_row.get::<Option<String>, _>("batch_no"),
-        "quantity": reagent_row.get::<Option<f64>, _>("quantity"),
-        "unit": reagent_row.get::<Option<String>, _>("unit"),
-        "status": reagent_row.get::<String, _>("status"),
-        "expired_at": reagent_row.get::<Option<String>, _>("expired_at"),
-        "alert_type": req.alert_type,
-        "alert_description": req.alert_description,
-    });
-
-    let ehs_url =
-        std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
-    tracing::info!(
-        "Syncing reagent alert {} to EHS at {}",
-        req.reagent_id,
-        ehs_url
-    );
-
-    let target_alert_id = uuid::Uuid::new_v4().to_string();
-    let status = "completed";
-    let response = serde_json::json!({
-        "target_service": "ehs",
-        "target_alert_id": target_alert_id,
-        "alert_triggered": true,
-        "synced_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    let row = sqlx::query(
-        "INSERT INTO qa_lims_sync_records (sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, 'reagent_to_ehs', $2, 'ehs', $3, $4, $5, $6) RETURNING id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT"
-    )
-    .bind(&sync_no)
-    .bind(req.reagent_id)
-    .bind(&target_alert_id)
-    .bind(status)
-    .bind(&payload)
-    .bind(&response)
-    .fetch_one(&state.pool)
-    .await;
-
-    match row {
-        Ok(r) => Json(ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "试剂异常已触发 EHS 告警",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录创建失败"))
-        }
-    }
+    // D3 §5.2：手动假同步通道下线。原实现读取 EHS_SERVICE_URL 后从不发 HTTP，
+    // 直接编造 target_alert_id 并本地插入 status=completed 脏记录。
+    // 真实链路：LimsReagentAlert 事件 → integration 编排 → ehs internal 告警端点。
+    Json(ApiResponse::error(
+        410,
+        "手动同步通道已下线：试剂告警经事件总线自动同步，请勿使用",
+    ))
 }
 
 #[utoipa::path(
