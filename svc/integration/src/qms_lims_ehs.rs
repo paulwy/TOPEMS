@@ -1,108 +1,144 @@
+//! QMS↔LIMS↔EHS 业务事件编排（D3 §5.1 选项 A）。
+//!
+//! 历史问题：本模块原含 9 处 `only_own_schema_query!` 跨 schema 直写
+//! （INSERT/UPDATE qms.* 与 ehs.* 表），绕过归属方服务的行级校验与业务规则，
+//! 且部分目标表（qms.qa_lab_samples/tasks 等）并非对应业务的实际读写表。
+//!
+//! 现定位：integration 仅作**编排方**——解析总线业务事件，经 reqwest HTTP
+//! 调用归属服务的 `/api/internal/*` 集成端点（qms/ehs/lims 各自暴露），
+//! 由归属服务在自有 schema 内完成写入。失败由事件订阅框架按 DLQ 处理。
+//!
+//! 租户上下文：业务事件 payload 不携带 tenant_id，编排侧统一传 `Uuid::nil()`，
+//! 与各服务 internal 集成端点既有契约（ehs 端 Uuid::nil 落库）一致。
+
 use serde_json::Value;
 use sqlx::types::Uuid;
-use sqlx::PgPool;
-use topems_shared_boundary::only_own_schema_query;
-use tracing::{info, warn};
-
 use topems_shared_event::event::{
     EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
     LimsInspectionAbnormalDetectedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
     QmsInspectionCompletedPayload, QmsQualityIssueCreatedPayload,
 };
+use tracing::{info, warn};
 
+fn qms_base_url() -> String {
+    std::env::var("QMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8050".to_string())
+}
+
+fn ehs_base_url() -> String {
+    std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string())
+}
+
+fn lims_base_url() -> String {
+    std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string())
+}
+
+fn rand_suffix(n: usize) -> String {
+    uuid::Uuid::new_v4()
+        .simple()
+        .to_string()
+        .chars()
+        .take(n)
+        .collect()
+}
+
+async fn post_json(url: &str, body: &Value) -> anyhow::Result<()> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(url)
+        .json(body)
+        .timeout(std::time::Duration::from_secs(30))
+        .send()
+        .await?;
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let text = resp.text().await.unwrap_or_default();
+        anyhow::bail!("调用 {} 返回 {}: {}", url, status, text);
+    }
+    Ok(())
+}
+
+/// QMS 检验完成 → LIMS 登记样品 + 检验任务（顺序：先样品后任务，任务按 sample_no 关联样品）。
 pub async fn handle_qms_inspection_completed(
-    pool: &PgPool,
-    tenant_id: Uuid,
     payload: &QmsInspectionCompletedPayload,
 ) -> anyhow::Result<()> {
     info!(
-        "处理QMS检验完成事件 - 同步到LIMS: {}",
+        "处理QMS检验完成事件 - 编排到LIMS样品/任务: {}",
         payload.inspection_no
     );
 
     let sample_no = format!("{}-SMP", payload.inspection_no);
-
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (sample_no) DO UPDATE SET updated_at = NOW()", "qms")
+    post_json(
+        &format!("{}/api/internal/lims/samples/integration", lims_base_url()),
+        &serde_json::json!({
+            "tenant_id": Uuid::nil(),
+            "sample_no": sample_no,
+            "sample_name": payload.product_name.clone().unwrap_or_else(|| "未知产品".to_string()),
+            "sample_type": "产品检验样品",
+            "source": "QMS同步",
+            "status": "registered",
+        }),
     )
-    .bind(tenant_id)
-    .bind(&sample_no)
-    .bind(payload.product_name.as_deref().unwrap_or("未知产品"))
-    .bind("产品检验样品")
-    .bind("QMS同步")
-    .bind("registered")
-    .execute(pool)
-    .await;
+    .await?;
 
     let task_no = format!("{}-TASK", payload.inspection_no);
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_tasks (tenant_id, task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (task_no) DO UPDATE SET updated_at = NOW()", "qms")
+    post_json(
+        &format!("{}/api/internal/lims/tasks/integration", lims_base_url()),
+        &serde_json::json!({
+            "tenant_id": Uuid::nil(),
+            "task_no": task_no,
+            "sample_no": sample_no,
+            "test_items": ["外观检查", "尺寸测量", "性能测试"],
+            "status": "pending",
+        }),
     )
-    .bind(tenant_id)
-    .bind(task_no)
-    .bind(&sample_no)
-    .bind(serde_json::json!(["外观检查", "尺寸测量", "性能测试"]))
-    .bind("pending")
-    .bind("normal")
-    .execute(pool)
-    .await;
+    .await?;
 
-    info!("QMS检验结果已同步到LIMS样品登记和检验任务");
+    info!("QMS检验结果已编排到LIMS样品登记和检验任务");
     Ok(())
 }
 
+/// QMS 质量问题创建 → EHS 隐患（隐患表归 ehs schema，原直写 qms.qa_ehs_hazards 为错写表）。
 pub async fn handle_qms_quality_issue_created(
-    pool: &PgPool,
-    tenant_id: Uuid,
     payload: &QmsQualityIssueCreatedPayload,
 ) -> anyhow::Result<()> {
     info!(
-        "处理QMS质量问题创建事件 - 触发EHS安全检查: {}",
+        "处理QMS质量问题创建事件 - 编排到EHS隐患: {}",
         payload.issue_no
     );
 
-    let hazard_no = format!(
-        "HAZ-QMS-{}",
-        uuid::Uuid::new_v4()
-            .simple()
-            .to_string()
-            .chars()
-            .take(8)
-            .collect::<String>()
-    );
+    let hazard_no = format!("HAZ-QMS-{}", rand_suffix(8));
     let level = match payload.severity.as_deref() {
         Some("critical") | Some("high") => "high",
         Some("medium") => "medium",
         _ => "low",
     };
 
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by, related_inspection_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", "qms")
+    post_json(
+        &format!("{}/api/internal/ehs/hazards/integration", ehs_base_url()),
+        &serde_json::json!({
+            "hazard_no": hazard_no,
+            "title": payload.title,
+            "category": "质量相关",
+            "level": level,
+            "location": "生产现场",
+            "description": payload.description,
+            "status": "pending",
+            "reported_by": payload.created_by,
+            "source": "QMS质量问题",
+        }),
     )
-    .bind(tenant_id)
-    .bind(hazard_no)
-    .bind(payload.title.clone())
-    .bind("质量相关")
-    .bind(level)
-    .bind("生产现场")
-    .bind(payload.description.as_deref().unwrap_or(""))
-    .bind("pending")
-    .bind(payload.created_by.as_deref().unwrap_or("system"))
-    .bind(payload.related_inspection_id)
-    .execute(pool)
-    .await;
+    .await?;
 
-    info!("QMS质量问题已触发EHS安全隐患检查");
+    info!("QMS质量问题已编排触发EHS安全隐患检查");
     Ok(())
 }
 
+/// EHS 隐患上报 → QMS 纠正措施。
 pub async fn handle_ehs_hazard_reported(
-    pool: &PgPool,
-    tenant_id: Uuid,
     payload: &EhsHazardReportedPayload,
 ) -> anyhow::Result<()> {
     info!(
-        "处理EHS隐患上报事件 - 触发QMS纠正措施: {}",
+        "处理EHS隐患上报事件 - 编排到QMS纠正措施: {}",
         payload.hazard_no
     );
 
@@ -115,105 +151,83 @@ pub async fn handle_ehs_hazard_reported(
         payload.location.as_deref().unwrap_or("未知"),
         payload.description.as_deref().unwrap_or("无")
     );
-
-    let action_no = format!(
-        "CAP-{}-{}",
-        payload.hazard_no,
-        uuid::Uuid::new_v4()
-            .simple()
-            .to_string()
-            .chars()
-            .take(4)
-            .collect::<String>()
-    );
+    let action_no = format!("CAP-{}-{}", payload.hazard_no, rand_suffix(4));
+    // 原直写把 ehs hazard_id 塞进 qms issue_id（跨 schema FK 不可靠），
+    // 按 qms internal 端点契约改传 issue_id=null，隐患编号并入 description。
     let priority = if payload.level == "high" || payload.level == "critical" {
         "high"
     } else {
         "medium"
     };
 
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_corrective_actions (tenant_id, action_no, title, description, status, priority, created_by, issue_id, related_issue_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", "qms")
+    post_json(
+        &format!("{}/api/internal/qms/actions/integration", qms_base_url()),
+        &serde_json::json!({
+            "tenant_id": Uuid::nil(),
+            "action_no": action_no,
+            "title": action_title,
+            "description": description,
+            "status": "pending",
+            "priority": priority,
+            "created_by": payload.reported_by,
+            "issue_id": serde_json::Value::Null,
+        }),
     )
-    .bind(tenant_id)
-    .bind(action_no)
-    .bind(action_title)
-    .bind(description)
-    .bind("pending")
-    .bind(priority)
-    .bind(payload.reported_by.as_deref().unwrap_or("system"))
-    .bind(payload.hazard_id)
-    .bind("EHS_HAZARD")
-    .execute(pool)
-    .await;
+    .await?;
 
-    info!("EHS隐患已触发QMS纠正措施");
+    info!("EHS隐患已编排触发QMS纠正措施");
     Ok(())
 }
 
+/// EHS 事故上报 → LIMS 检测样品 + 任务。
 pub async fn handle_ehs_accident_reported(
-    pool: &PgPool,
-    tenant_id: Uuid,
     payload: &EhsAccidentReportedPayload,
 ) -> anyhow::Result<()> {
     info!(
-        "处理EHS事故上报事件 - 触发LIMS检测任务: {}",
+        "处理EHS事故上报事件 - 编排到LIMS检测任务: {}",
         payload.accident_no
     );
 
-    let sample_no = format!(
-        "SMP-ACC-{}",
-        uuid::Uuid::new_v4()
-            .simple()
-            .to_string()
-            .chars()
-            .take(8)
-            .collect::<String>()
-    );
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5, $6)", "qms")
+    let sample_no = format!("SMP-ACC-{}", rand_suffix(8));
+    post_json(
+        &format!("{}/api/internal/lims/samples/integration", lims_base_url()),
+        &serde_json::json!({
+            "tenant_id": Uuid::nil(),
+            "sample_no": sample_no,
+            "sample_name": format!("事故检测样品: {}", payload.title),
+            "sample_type": "事故分析",
+            "source": "EHS事故",
+            "status": "registered",
+        }),
     )
-    .bind(tenant_id)
-    .bind(sample_no.clone())
-    .bind(format!("事故检测样品: {}", payload.title))
-    .bind("事故分析")
-    .bind("EHS事故")
-    .bind("registered")
-    .execute(pool)
-    .await;
+    .await?;
 
-    let task_no = format!(
-        "TASK-ACC-{}",
-        uuid::Uuid::new_v4()
-            .simple()
-            .to_string()
-            .chars()
-            .take(8)
-            .collect::<String>()
-    );
-    let test_items = serde_json::json!(["环境检测", "化学品残留", "材料分析", "安全评估"]);
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_lab_tasks (tenant_id, task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5, $6)", "qms")
+    let task_no = format!("TASK-ACC-{}", rand_suffix(8));
+    // lims.qa_lab_tasks 无 priority 列（internal 端点已裁剪该字段）。
+    post_json(
+        &format!("{}/api/internal/lims/tasks/integration", lims_base_url()),
+        &serde_json::json!({
+            "tenant_id": Uuid::nil(),
+            "task_no": task_no,
+            "sample_no": sample_no,
+            "test_items": ["环境检测", "化学品残留", "材料分析", "安全评估"],
+            "status": "pending",
+        }),
     )
-    .bind(tenant_id)
-    .bind(task_no)
-    .bind(sample_no)
-    .bind(test_items)
-    .bind("pending")
-    .bind("high")
-    .execute(pool)
-    .await;
+    .await?;
 
-    info!("EHS事故已触发LIMS检测任务");
+    info!("EHS事故已编排触发LIMS检测任务");
     Ok(())
 }
 
+/// LIMS 检测异常 → EHS 隐患。
 pub async fn handle_lims_inspection_abnormal(
-    pool: &PgPool,
-    tenant_id: Uuid,
     payload: &LimsInspectionAbnormalDetectedPayload,
 ) -> anyhow::Result<()> {
-    info!("处理LIMS检测异常事件 - 上报EHS: {}", payload.task_no);
+    info!(
+        "处理LIMS检测异常事件 - 编排到EHS: {}",
+        payload.task_no
+    );
 
     let hazard_title = format!("LIMS检测异常: {}", payload.test_item);
     let description = format!(
@@ -224,147 +238,137 @@ pub async fn handle_lims_inspection_abnormal(
         payload.abnormal_data,
         payload.conclusion
     );
-
-    let hazard_no = format!(
-        "HAZ-LIMS-{}",
-        uuid::Uuid::new_v4()
-            .simple()
-            .to_string()
-            .chars()
-            .take(8)
-            .collect::<String>()
-    );
+    let hazard_no = format!("HAZ-LIMS-{}", rand_suffix(8));
     let level = if payload.conclusion.contains("严重") || payload.conclusion.contains("超标") {
         "high"
     } else {
         "medium"
     };
 
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO qms.qa_ehs_hazards (tenant_id, hazard_no, title, category, level, location, description, status, reported_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)", "qms")
+    post_json(
+        &format!("{}/api/internal/ehs/hazards/integration", ehs_base_url()),
+        &serde_json::json!({
+            "hazard_no": hazard_no,
+            "title": hazard_title,
+            "category": "化学品/实验室",
+            "level": level,
+            "location": "实验室",
+            "description": description,
+            "status": "pending",
+            "reported_by": "LIMS系统",
+            "source": "LIMS检测异常",
+        }),
     )
-    .bind(tenant_id)
-    .bind(hazard_no)
-    .bind(hazard_title)
-    .bind("化学品/实验室")
-    .bind(level)
-    .bind("实验室")
-    .bind(description)
-    .bind("pending")
-    .bind("LIMS系统")
-    .execute(pool)
-    .await;
+    .await?;
 
-    info!("LIMS检测异常已上报EHS");
+    info!("LIMS检测异常已编排上报EHS");
     Ok(())
 }
 
+/// LIMS 检测记录完成 → QMS 质检结果回写（仅当携带 related_inspection_no）。
 pub async fn handle_lims_record_completed(
-    pool: &PgPool,
-    tenant_id: Uuid,
     payload: &LimsRecordCompletedPayload,
 ) -> anyhow::Result<()> {
     info!(
-        "处理LIMS检测完成事件 - 更新QMS质检结果: {}",
+        "处理LIMS检测完成事件 - 编排回写QMS质检结果: {}",
         payload.record_no
     );
 
-    let _ = sqlx::query(only_own_schema_query!(
-        "integration",
-        "UPDATE qms.qa_quality_inspections SET 
-            result = $1, test_data = $2, memo = $3, updated_at = NOW()
-         WHERE tenant_id = $4 AND inspection_no = $5",
-        "qms"
-    ))
-    .bind(payload.conclusion.clone())
-    .bind(payload.test_data.clone())
-    .bind(&payload.conclusion)
-    .bind(tenant_id)
-    .bind(payload.related_inspection_no.as_deref().unwrap_or(""))
-    .execute(pool)
-    .await;
+    let Some(inspection_no) = payload.related_inspection_no.clone() else {
+        warn!(
+            "LIMS记录 {} 未关联 QMS inspection_no，跳过质检结果回写",
+            payload.record_no
+        );
+        return Ok(());
+    };
 
-    info!("LIMS检测结果已更新到QMS质检记录");
+    // qms internal 端点：result=conclusion，memo 承接 test_data（原直写引用的
+    // test_data/conclusion 列名已按 qms 实际列 result/memo 修正）。
+    post_json(
+        &format!(
+            "{}/api/internal/qms/inspections/{}/result",
+            qms_base_url(),
+            inspection_no
+        ),
+        &serde_json::json!({
+            "tenant_id": Uuid::nil(),
+            "inspection_no": inspection_no,
+            "result": payload.conclusion,
+            "memo": serde_json::to_string(&payload.test_data).unwrap_or_default(),
+        }),
+    )
+    .await?;
+
+    info!("LIMS检测结果已编排回写QMS质检记录");
     Ok(())
 }
 
+/// LIMS 试剂告警 → EHS 告警。
 pub async fn handle_lims_reagent_alert(
-    pool: &PgPool,
-    // ehs.qa_ehs_alerts 表无 tenant_id 列（ehs schema 按 RLS 隔离），tenant 暂不落库
-    _tenant_id: Uuid,
     payload: &LimsReagentAlertPayload,
 ) -> anyhow::Result<()> {
-    info!("处理LIMS试剂告警事件 - 同步到EHS: {}", payload.reagent_no);
-
-    let alert_no = format!(
-        "ALERT-RGT-{}",
-        uuid::Uuid::new_v4()
-            .simple()
-            .to_string()
-            .chars()
-            .take(8)
-            .collect::<String>()
+    info!(
+        "处理LIMS试剂告警事件 - 编排到EHS告警: {}",
+        payload.reagent_no
     );
+
+    let alert_no = format!("ALERT-RGT-{}", rand_suffix(8));
     let alert_type = match payload.alert_type.as_deref() {
         Some("expired") => "过期告警",
         Some("low_stock") => "低库存告警",
         _ => "其他告警",
     };
 
-    let _ = sqlx::query(
-        only_own_schema_query!("integration", "INSERT INTO ehs.qa_ehs_alerts (alert_no, title, alert_type, severity, description, status, source_system, source_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", "ehs")
+    post_json(
+        &format!("{}/api/internal/ehs/alerts/integration", ehs_base_url()),
+        &serde_json::json!({
+            "alert_no": alert_no,
+            "title": format!("试剂告警: {}", payload.reagent_name),
+            "alert_type": alert_type,
+            "severity": payload.severity.clone().unwrap_or_else(|| "medium".to_string()),
+            "description": payload.description,
+            "status": "active",
+            "source_system": "LIMS",
+            "source_id": payload.reagent_id,
+        }),
     )
-    // ehs.qa_ehs_alerts 表无 tenant_id 列（ehs schema 按 RLS 隔离），不绑定 tenant
-    .bind(alert_no)
-    .bind(format!("试剂告警: {}", payload.reagent_name))
-    .bind(alert_type)
-    .bind(payload.severity.as_deref().unwrap_or("medium"))
-    .bind(payload.description.as_deref().unwrap_or(""))
-    .bind("active")
-    .bind("LIMS")
-    .bind(payload.reagent_id)
-    .execute(pool)
-    .await;
+    .await?;
 
-    info!("LIMS试剂告警已同步到EHS");
+    info!("LIMS试剂告警已编排同步到EHS");
     Ok(())
 }
 
-pub async fn process_event(
-    pool: &PgPool,
-    tenant_id: Uuid,
-    event_type: EventType,
-    payload: &Value,
-) -> anyhow::Result<()> {
+/// 业务事件分发（供 event_handlers 订阅 7 类业务事件后统一调用）。
+pub async fn dispatch(event_type: EventType, payload: &Value) -> anyhow::Result<()> {
     match event_type {
         EventType::QmsInspectionCompleted => {
             let parsed = serde_json::from_value::<QmsInspectionCompletedPayload>(payload.clone())?;
-            handle_qms_inspection_completed(pool, tenant_id, &parsed).await?;
+            handle_qms_inspection_completed(&parsed).await?;
         }
         EventType::QmsQualityIssueCreated => {
             let parsed = serde_json::from_value::<QmsQualityIssueCreatedPayload>(payload.clone())?;
-            handle_qms_quality_issue_created(pool, tenant_id, &parsed).await?;
+            handle_qms_quality_issue_created(&parsed).await?;
         }
         EventType::EhsHazardReported => {
             let parsed = serde_json::from_value::<EhsHazardReportedPayload>(payload.clone())?;
-            handle_ehs_hazard_reported(pool, tenant_id, &parsed).await?;
+            handle_ehs_hazard_reported(&parsed).await?;
         }
         EventType::EhsAccidentReported => {
             let parsed = serde_json::from_value::<EhsAccidentReportedPayload>(payload.clone())?;
-            handle_ehs_accident_reported(pool, tenant_id, &parsed).await?;
+            handle_ehs_accident_reported(&parsed).await?;
         }
         EventType::LimsInspectionAbnormalDetected => {
             let parsed =
                 serde_json::from_value::<LimsInspectionAbnormalDetectedPayload>(payload.clone())?;
-            handle_lims_inspection_abnormal(pool, tenant_id, &parsed).await?;
+            handle_lims_inspection_abnormal(&parsed).await?;
         }
         EventType::LimsRecordCompleted => {
             let parsed = serde_json::from_value::<LimsRecordCompletedPayload>(payload.clone())?;
-            handle_lims_record_completed(pool, tenant_id, &parsed).await?;
+            handle_lims_record_completed(&parsed).await?;
         }
         EventType::LimsReagentAlert => {
             let parsed = serde_json::from_value::<LimsReagentAlertPayload>(payload.clone())?;
-            handle_lims_reagent_alert(pool, tenant_id, &parsed).await?;
+            handle_lims_reagent_alert(&parsed).await?;
         }
         _ => warn!("未处理的事件类型: {:?}", event_type),
     }

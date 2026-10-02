@@ -3,6 +3,8 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType};
 
+use crate::qms_lims_ehs;
+
 type HandlerResult = std::result::Result<(), String>;
 
 #[derive(Clone)]
@@ -21,6 +23,7 @@ impl IntegrationEventHandlers {
         let h1 = self.clone();
         let h2 = self.clone();
         let h3 = self.clone();
+        let h_biz = self.clone();
 
         Ok(subscriber
             .subscribe_handler(vec![EventType::QmsToLimsSyncTriggered], move |event| {
@@ -34,7 +37,37 @@ impl IntegrationEventHandlers {
             .subscribe_handler(vec![EventType::LimsToEhsTriggered], move |event| {
                 let h = h3.clone();
                 Box::pin(async move { h.handle_lims_to_ehs_trigger(event).await })
-            }))
+            })
+            // 7 类业务事件：编排方经 /api/internal/* 调用归属服务（D3 §5.1 选项 A），
+            // 不再直写 qms.*/ehs.* schema。
+            .subscribe_handler(
+                vec![
+                    EventType::QmsInspectionCompleted,
+                    EventType::QmsQualityIssueCreated,
+                    EventType::EhsHazardReported,
+                    EventType::EhsAccidentReported,
+                    EventType::LimsInspectionAbnormalDetected,
+                    EventType::LimsRecordCompleted,
+                    EventType::LimsReagentAlert,
+                ],
+                move |event| {
+                    let h = h_biz.clone();
+                    Box::pin(async move { h.handle_business_event(event).await })
+                },
+            ))
+    }
+
+    /// 7 类业务事件统一分发：解析 payload → 调归属服务 internal 端点（HTTP 编排）。
+    async fn handle_business_event(&self, event: Event) -> HandlerResult {
+        let event_type = event.event_type.clone();
+        tracing::info!(
+            "[integration] 业务事件编排 - event_type={:?}, trace_id={:?}",
+            event_type,
+            event.trace_id
+        );
+        qms_lims_ehs::dispatch(event_type, &event.payload)
+            .await
+            .map_err(|e| format!("业务事件编排失败: {}", e))
     }
 
     async fn record_sync_log(
@@ -176,7 +209,7 @@ pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
     let handlers = IntegrationEventHandlers::new(db);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 
-    tracing::info!("[integration] 启动事件订阅者，注册 3 类业务事件 handler");
+    tracing::info!("[integration] 启动事件订阅者，注册 3 类触发事件 + 7 类业务事件编排 handler");
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
             tracing::error!("[integration] 事件订阅者异常退出: {}", e);
