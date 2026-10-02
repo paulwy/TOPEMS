@@ -17,12 +17,12 @@ use crate::shared::config_store_simple::ConfigStoreService;
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
 
-use topems_shared_core::cors::create_cors_layer;
 use topems_shared_auth::security::{
     AuditLoggerConfig, AuditLoggerMiddleware, BodyLimitConfig, BodyLimitMiddleware,
     FieldEncryptionService, KeyManager, SecurityHeadersConfig, SecurityHeadersLayer,
 };
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
+use topems_shared_core::cors::create_cors_layer;
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_core::{
     compression::{CompressionConfig, CompressionMiddleware},

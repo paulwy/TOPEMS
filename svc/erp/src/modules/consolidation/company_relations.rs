@@ -6,8 +6,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
 
 use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;

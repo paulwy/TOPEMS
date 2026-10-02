@@ -5,8 +5,8 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::env;
 
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {

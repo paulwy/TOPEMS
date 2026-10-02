@@ -6,9 +6,9 @@
 //! 3. 事件驱动架构 (Event Driven)
 //! 4. 服务发现 (Service Discovery)
 
+use topems_shared::*;
 use topems_shared_event::event::*;
 use topems_shared_service_client::service_client::*;
-use topems_shared::*;
 
 #[tokio::main]
 async fn main() {

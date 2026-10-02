@@ -27,8 +27,8 @@ use topems_shared_core::api_version::create_api_info_router;
 
 use topems_shared_core::cors::create_cors_layer;
 
-use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+use topems_shared_core::api_version::register_routes_with_legacy_alias;
 use topems_shared_core::logging::request_context_middleware;
 use topems_shared_observability::telemetry::telemetry_middleware;
 use utoipa::OpenApi;

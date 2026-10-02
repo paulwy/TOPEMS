@@ -134,9 +134,7 @@ pub async fn handle_qms_quality_issue_created(
 }
 
 /// EHS 隐患上报 → QMS 纠正措施。
-pub async fn handle_ehs_hazard_reported(
-    payload: &EhsHazardReportedPayload,
-) -> anyhow::Result<()> {
+pub async fn handle_ehs_hazard_reported(payload: &EhsHazardReportedPayload) -> anyhow::Result<()> {
     info!(
         "处理EHS隐患上报事件 - 编排到QMS纠正措施: {}",
         payload.hazard_no
@@ -224,10 +222,7 @@ pub async fn handle_ehs_accident_reported(
 pub async fn handle_lims_inspection_abnormal(
     payload: &LimsInspectionAbnormalDetectedPayload,
 ) -> anyhow::Result<()> {
-    info!(
-        "处理LIMS检测异常事件 - 编排到EHS: {}",
-        payload.task_no
-    );
+    info!("处理LIMS检测异常事件 - 编排到EHS: {}", payload.task_no);
 
     let hazard_title = format!("LIMS检测异常: {}", payload.test_item);
     let description = format!(
@@ -304,9 +299,7 @@ pub async fn handle_lims_record_completed(
 }
 
 /// LIMS 试剂告警 → EHS 告警。
-pub async fn handle_lims_reagent_alert(
-    payload: &LimsReagentAlertPayload,
-) -> anyhow::Result<()> {
+pub async fn handle_lims_reagent_alert(payload: &LimsReagentAlertPayload) -> anyhow::Result<()> {
     info!(
         "处理LIMS试剂告警事件 - 编排到EHS告警: {}",
         payload.reagent_no

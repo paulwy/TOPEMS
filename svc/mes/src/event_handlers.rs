@@ -18,14 +18,17 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> 
     let subscriber = EventSubscriber::new("mes-business")
         .map_err(|e| format!("创建 MES 业务事件订阅者失败: {}", e))?;
 
-    let subscriber = subscriber.subscribe(vec![EventType::ErpProductionOrderDispatched], move |event| {
-        let db = db.clone();
-        Box::pin(async move {
-            if let Err(e) = handle_erp_production_order_dispatched(&db, event).await {
-                tracing::error!("[mes] handle_erp_production_order_dispatched 失败: {}", e);
-            }
-        })
-    });
+    let subscriber = subscriber.subscribe(
+        vec![EventType::ErpProductionOrderDispatched],
+        move |event| {
+            let db = db.clone();
+            Box::pin(async move {
+                if let Err(e) = handle_erp_production_order_dispatched(&db, event).await {
+                    tracing::error!("[mes] handle_erp_production_order_dispatched 失败: {}", e);
+                }
+            })
+        },
+    );
 
     tokio::spawn(async move {
         if let Err(e) = subscriber.start_listening().await {
@@ -39,10 +42,7 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> 
 
 /// ErpProductionOrderDispatched → 在 MES 本地创建生产工单。
 /// 幂等：source_order_id = erp_order_id 已存在则跳过（事件重放不重复建单）。
-async fn handle_erp_production_order_dispatched(
-    db: &PgPool,
-    event: Event,
-) -> Result<(), String> {
+async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Result<(), String> {
     let payload: ErpProductionOrderDispatchedPayload = event
         .parse_payload()
         .map_err(|e| format!("解析 ErpProductionOrderDispatched payload 失败: {}", e))?;
@@ -104,7 +104,7 @@ async fn handle_erp_production_order_dispatched(
     .bind(&order_no)
     .bind(payload.product_name.unwrap_or_default())
     .bind(payload.product_code.unwrap_or_default())
-    .bind(payload.quantity.unwrap_or(0.0) as i32)
+    .bind(i32::try_from(payload.quantity.unwrap_or(0.0).trunc()).unwrap_or(0))
     .bind(payload.erp_order_id.to_string())
     .bind(&payload.order_no)
     .bind(planned_start.date_naive())

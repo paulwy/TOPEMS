@@ -961,13 +961,15 @@ pub async fn generate_payroll_voucher(
     // 凭证是"工资发放的副作用"，异步生成天然可接受；失败由 erp 侧 DLQ 兜底，不再阻塞本接口。
     let event_entries: Vec<topems_shared_event::event::HrmPayrollVoucherEntryPayload> = entries
         .iter()
-        .map(|e| topems_shared_event::event::HrmPayrollVoucherEntryPayload {
-            line_number: e.line as i32,
-            subject_code: e.subject_code.to_string(),
-            subject_name: e.subject_name.to_string(),
-            debit_amount: e.debit.to_f64().unwrap_or(0.0),
-            credit_amount: e.credit.to_f64().unwrap_or(0.0),
-        })
+        .map(
+            |e| topems_shared_event::event::HrmPayrollVoucherEntryPayload {
+                line_number: i32::try_from(e.line).unwrap_or(0),
+                subject_code: e.subject_code.to_string(),
+                subject_name: e.subject_name.to_string(),
+                debit_amount: e.debit.to_f64().unwrap_or(0.0),
+                credit_amount: e.credit.to_f64().unwrap_or(0.0),
+            },
+        )
         .collect();
 
     let event_payload = topems_shared_event::event::HrmPayrollPostedPayload {

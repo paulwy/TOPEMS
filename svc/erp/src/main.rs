@@ -191,8 +191,9 @@ async fn main() -> Result<()> {
         Err(e) => {
             tracing::warn!(error = %e, "Finance服务客户端带令牌初始化失败，降级为默认地址tokenless客户端；下游不可达时合并报表审批接口将报错，主服务继续启动");
             Arc::new(
-                TypedServiceClient::new(FinanceApi, "http://localhost:8011")
-                    .map_err(|e| anyhow::anyhow!("Finance降级客户端也无法构建（HTTP栈异常）: {e}"))?,
+                TypedServiceClient::new(FinanceApi, "http://localhost:8011").map_err(|e| {
+                    anyhow::anyhow!("Finance降级客户端也无法构建（HTTP栈异常）: {e}")
+                })?,
             )
         }
     };

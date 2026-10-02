@@ -10,9 +10,9 @@ use axum::{
     Json,
 };
 use serde_json::json;
+use topems_shared_ai::ai_client::UnifiedAIClient;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_ai::ai_client::UnifiedAIClient;
 use topems_shared_core::response::{api_error, api_success};
 use uuid::Uuid;
 

@@ -602,7 +602,10 @@ pub async fn create_order_from_erp(
         .execute(&mut *tx)
         .await
     {
-        tracing::error!("Failed to set nil RLS context for create_order_from_erp: {}", e);
+        tracing::error!(
+            "Failed to set nil RLS context for create_order_from_erp: {}",
+            e
+        );
         return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
     }
 

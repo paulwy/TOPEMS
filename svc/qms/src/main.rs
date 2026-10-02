@@ -12,7 +12,6 @@ use axum::{extract::State, routing::get, Json, Router};
 use utoipa::OpenApi;
 
 use topems_shared_auth::auth::AuthState;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
@@ -22,6 +21,7 @@ use topems_shared_core::cache::{
 };
 use topems_shared_core::health::{simple_health_check, ServiceHealth, SimpleHealthConfig};
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler, L2CacheConfig};
+use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{
     CacheInvalidatedPayload, EventPublisher, EventSubscriber, EventType,
 };
@@ -88,7 +88,10 @@ async fn main() -> anyhow::Result<()> {
         .and_then(|c| c.with_service_token(&jwt_secret, "qms-service", &["workflow:read"]))
     {
         Ok(client) => {
-            tracing::info!("🔗 工作流服务客户端初始化成功（service token）: {}", workflow_url);
+            tracing::info!(
+                "🔗 工作流服务客户端初始化成功（service token）: {}",
+                workflow_url
+            );
             client
         }
         Err(e) => {

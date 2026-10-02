@@ -7,8 +7,8 @@ use axum::extract::{Extension, State};
 use axum::Json;
 use serde::Serialize;
 use sqlx::Row;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::response::ApiResponse;
 
 use super::ApiState;
 

@@ -24,13 +24,13 @@ use topems_shared_core::cache::{
 };
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
-    CacheInvalidatedPayload, EmployeeOnboardedPayload, Event,
-    EventResult, EventSubscriber, EventType, HrmPayrollPostedPayload, InventoryUpdatedPayload,
-    MasterDataAction, MasterDataDomain, MasterDataEvent, MesWorkReportSubmittedPayload,
-    OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
-    PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReconciliationApprovedPayload,
-    ReconciliationCreatedPayload, ReconciliationUpdatedPayload, ReturnCompletedPayload,
-    SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
+    CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
+    EventType, HrmPayrollPostedPayload, InventoryUpdatedPayload, MasterDataAction,
+    MasterDataDomain, MasterDataEvent, MesWorkReportSubmittedPayload, OpportunityWonPayload,
+    PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload, PmProjectSettledPayload,
+    PurchaseOrderApprovedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
+    ReconciliationUpdatedPayload, ReturnCompletedPayload, SalesOrderApprovedPayload,
+    StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -1928,9 +1928,8 @@ impl ErpEventHandlers {
     /// （hrm 发工资核算完成事件 → erp 在本 schema 内落库，不再跨 schema 直写）
     /// 幂等：按 (source_system='HRM', source_id=payroll_run_id) 去重，同 payroll_run_id 重放只建证一次。
     async fn handle_hrm_payroll_posted(&self, event: Event) -> HandlerResult {
-        let payload: HrmPayrollPostedPayload =
-            serde_json::from_value(event.payload.clone())
-                .map_err(|e| format!("解析 HrmPayrollPosted payload 失败: {}", e))?;
+        let payload: HrmPayrollPostedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 HrmPayrollPosted payload 失败: {}", e))?;
 
         tracing::info!(
             "[erp] HrmPayrollPosted 处理 - voucher_number={}, payroll_run_id={}, entries={}, trace_id={:?}",
@@ -2038,9 +2037,8 @@ impl ErpEventHandlers {
     /// 幂等键 = work_report_id；同 work_report_id 重放只更新一次。
     /// DLQ 兜底由 shared-event 订阅器统一提供（handler 返回 Err 即入 topems:dlq，retry_count 累加）。
     async fn handle_mes_work_report_submitted(&self, event: Event) -> HandlerResult {
-        let payload: MesWorkReportSubmittedPayload =
-            serde_json::from_value(event.payload.clone())
-                .map_err(|e| format!("解析 MesWorkReportSubmitted payload 失败: {}", e))?;
+        let payload: MesWorkReportSubmittedPayload = serde_json::from_value(event.payload.clone())
+            .map_err(|e| format!("解析 MesWorkReportSubmitted payload 失败: {}", e))?;
 
         tracing::info!(
             "[erp] MesWorkReportSubmitted 处理 - work_report_id={}, erp_order_id={:?}, qty={:?}, trace_id={:?}",
@@ -2062,7 +2060,10 @@ impl ErpEventHandlers {
         .await
         .map_err(|e| format!("写入幂等账本失败: {}", e))?;
         if inserted.rows_affected() == 0 {
-            tracing::info!("[erp] MesWorkReportSubmitted 幂等跳过 - work_report_id={} 已处理", payload.work_report_id);
+            tracing::info!(
+                "[erp] MesWorkReportSubmitted 幂等跳过 - work_report_id={} 已处理",
+                payload.work_report_id
+            );
             return Ok(());
         }
 

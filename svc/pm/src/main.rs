@@ -89,7 +89,10 @@ async fn main() -> Result<()> {
         .and_then(|c| c.with_service_token(&jwt_secret, "pm-service", &["workflow:read"]))
     {
         Ok(client) => {
-            tracing::info!("🔗 工作流服务客户端初始化成功（service token）: {}", workflow_url);
+            tracing::info!(
+                "🔗 工作流服务客户端初始化成功（service token）: {}",
+                workflow_url
+            );
             client
         }
         Err(e) => {

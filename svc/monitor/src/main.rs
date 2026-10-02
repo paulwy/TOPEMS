@@ -5,7 +5,6 @@ use std::time::Instant;
 use axum::{extract::State, routing::get, Json, Router};
 
 use crate::modules::monitor::monitor_plugin;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
@@ -13,6 +12,7 @@ use topems_shared_bootstrap::{
 use topems_shared_core::health::{
     simple_health_check, ServiceHealth, SimpleHealthConfig, SystemMetrics,
 };
+use topems_shared_core::response::ApiResponse;
 
 mod shared;
 

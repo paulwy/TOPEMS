@@ -12,8 +12,8 @@ use crate::models::interaction::CreateInteractionRequest;
 use crate::models::{Interaction, UpdateInteractionRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{ApiResponse, ListResponse};
 use topems_shared_core::response::api_error;
+use topems_shared_core::response::{ApiResponse, ListResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct InteractionPaginationParams {

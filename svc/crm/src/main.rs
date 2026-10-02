@@ -183,7 +183,10 @@ async fn main() -> Result<()> {
             let warmup_tenant = match Uuid::parse_str("00000000-0000-0000-0000-000000000001") {
                 Ok(u) => u,
                 Err(e) => {
-                    tracing::warn!("[crm] 默认租户 UUID 常量解析失败(代码常量不应发生): {}, 跳过客户列表预热", e);
+                    tracing::warn!(
+                        "[crm] 默认租户 UUID 常量解析失败(代码常量不应发生): {}, 跳过客户列表预热",
+                        e
+                    );
                     return;
                 }
             };
@@ -318,7 +321,10 @@ async fn main() -> Result<()> {
         .and_then(|c| c.with_service_token(&jwt_secret, "crm-service", &["workflow:read"]))
     {
         Ok(client) => {
-            tracing::info!("🔗 工作流服务客户端初始化成功（service token）: {}", workflow_url);
+            tracing::info!(
+                "🔗 工作流服务客户端初始化成功（service token）: {}",
+                workflow_url
+            );
             client
         }
         Err(e) => {

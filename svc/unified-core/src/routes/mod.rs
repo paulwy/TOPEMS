@@ -221,9 +221,7 @@ pub fn create_routes(
         // 业务投影零入向流量。业务能力唯一入口 = 各独立服务 / svc/server:8099 聚合。
         // （原 24 条业务 merge：wms/mes/scm/finance/erp/crm/hrm/qms/pdm/ehs/analytics/pm/lims/
         //   srm/gis/tms/master_data/communication/ticket/rd/integration/portal/mobile/ai）
-        Router::new()
-            .merge(public_routes)
-            .merge(core_router)
+        Router::new().merge(public_routes).merge(core_router)
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(

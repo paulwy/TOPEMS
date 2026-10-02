@@ -115,7 +115,9 @@ pub async fn update_preferences(
 
     const KEYS: [&str; 4] = ["shortcuts", "notification_settings", "language", "timezone"];
     for key in KEYS {
-        let Some(value) = payload.get(key) else { continue };
+        let Some(value) = payload.get(key) else {
+            continue;
+        };
         let result = sqlx::query(
             "INSERT INTO core.user_preferences (user_id, preference_key, preference_value, updated_at, tenant_id) \
              VALUES ($1, $2, $3, NOW(), $4) \

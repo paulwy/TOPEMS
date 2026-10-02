@@ -12,13 +12,13 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared_core::config::CacheConfig;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
     default_init_db, run, ServiceConfig,
 };
 use topems_shared_core::config::enhanced::RedisConfig;
+use topems_shared_core::config::CacheConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::redis::{CacheService, RedisCacheService, RedisPool as RedisPoolTrait};
 

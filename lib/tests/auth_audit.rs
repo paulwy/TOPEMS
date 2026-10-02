@@ -1,7 +1,9 @@
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use topems_shared_auth::auth::{
+    generate_jwt_token, generate_refresh_token, verify_jwt_token, Claims,
+};
 use topems_shared_db::audit::CreateAuditLogRequest;
-use topems_shared_auth::auth::{generate_jwt_token, generate_refresh_token, verify_jwt_token, Claims};
 use uuid::Uuid;
 
 const HS256_SECRET: &str = "test-jwt-secret-key-for-testing-only-32chars!!";

@@ -228,7 +228,7 @@ mod tests {
         let a = Decimal::new(1, 1); // 0.1
         let b = Decimal::new(2, 1); // 0.2
         assert_eq!(a + b, Decimal::new(3, 1)); // 0.3，精确
-        // 0.1 * 3 = 0.3 精确（f64 下为 0.30000000000000004）
+                                               // 0.1 * 3 = 0.3 精确（f64 下为 0.30000000000000004）
         let line = Decimal::new(1, 1) * Decimal::from(3);
         assert_eq!(line, Decimal::new(3, 1));
     }

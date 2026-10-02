@@ -12,9 +12,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::api_error;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::MasterDataAction;
 
 pub fn create_routes() -> Router<ApiState> {
