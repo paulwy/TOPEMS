@@ -82,23 +82,23 @@ interface SystemParam {
 
 export const systemApi = {
   listApiKeys: (): Promise<ApiResponse<ApiKey[]>> => {
-    return apiClient.core.get('/api/core/system/api-keys');
+    return apiClient.core.get('/system/api-keys');
   },
 
   createApiKey: (data: { name: string; permissions?: string[] }): Promise<ApiResponse<ApiKey>> => {
-    return apiClient.core.post('/api/core/system/api-keys', data);
+    return apiClient.core.post('/system/api-keys', data);
   },
 
   getApiKey: (id: string): Promise<ApiResponse<ApiKey>> => {
-    return apiClient.core.get(`/api/core/system/api-keys/${id}`);
+    return apiClient.core.get(`/system/api-keys/${id}`);
   },
 
   updateApiKey: (id: string, data: Partial<ApiKey>): Promise<ApiResponse<ApiKey>> => {
-    return apiClient.core.put(`/api/core/system/api-keys/${id}`, data);
+    return apiClient.core.put(`/system/api-keys/${id}`, data);
   },
 
   deleteApiKey: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.core.delete(`/api/core/system/api-keys/${id}`);
+    return apiClient.core.delete(`/system/api-keys/${id}`);
   },
 
   listAuditLogs: (params?: {
@@ -110,7 +110,7 @@ export const systemApi = {
     page?: number;
     page_size?: number;
   }): Promise<ApiResponse<AuditLog[]>> => {
-    return apiClient.core.get('/api/core/system/audit-logs', { params });
+    return apiClient.core.get('/system/audit-logs', { params });
   },
 
   exportAuditLogs: (params?: {
@@ -121,64 +121,64 @@ export const systemApi = {
     end_date?: string;
     format?: 'csv' | 'json' | 'xlsx';
   }): Promise<Blob> => {
-    return downloadBlob('core', '/api/core/system/audit-logs/export', {
+    return downloadBlob('core', '/system/audit-logs/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },
 
   getAuditLog: (id: string): Promise<ApiResponse<AuditLog>> => {
-    return apiClient.core.get(`/api/core/system/audit-logs/${id}`);
+    return apiClient.core.get(`/system/audit-logs/${id}`);
   },
 
   clearCache: (data?: { pattern?: string }): Promise<ApiResponse<{ cleared_count: number }>> => {
-    return apiClient.core.post('/api/core/system/cache/clear', data || {});
+    return apiClient.core.post('/system/cache/clear', data || {});
   },
 
   getCacheConfig: (): Promise<ApiResponse<CacheConfig>> => {
-    return apiClient.core.get('/api/core/system/cache/config');
+    return apiClient.core.get('/system/cache/config');
   },
 
   updateCacheConfig: (data: Partial<CacheConfig>): Promise<ApiResponse<CacheConfig>> => {
-    return apiClient.core.put('/api/core/system/cache/config', data);
+    return apiClient.core.put('/system/cache/config', data);
   },
 
   getCacheStats: (): Promise<ApiResponse<CacheStats>> => {
-    return apiClient.core.get('/api/core/system/cache/stats');
+    return apiClient.core.get('/system/cache/stats');
   },
 
   getConfig: (): Promise<ApiResponse<SystemConfig>> => {
-    return apiClient.core.get('/api/core/system/config');
+    return apiClient.core.get('/system/config');
   },
 
   updateConfig: (data: Partial<SystemConfig>): Promise<ApiResponse<SystemConfig>> => {
-    return apiClient.core.put('/api/core/system/config', data);
+    return apiClient.core.put('/system/config', data);
   },
 
   getLogConfig: (): Promise<ApiResponse<LogConfig>> => {
-    return apiClient.core.get('/api/core/system/log/config');
+    return apiClient.core.get('/system/log/config');
   },
 
   updateLogConfig: (data: Partial<LogConfig>): Promise<ApiResponse<LogConfig>> => {
-    return apiClient.core.put('/api/core/system/log/config', data);
+    return apiClient.core.put('/system/log/config', data);
   },
 
   listParams: (params?: {
     category?: string;
     keyword?: string;
   }): Promise<ApiResponse<SystemParam[]>> => {
-    return apiClient.core.get('/api/core/system/params', { params });
+    return apiClient.core.get('/system/params', { params });
   },
 
   updateParams: (data: Record<string, string>): Promise<ApiResponse<SystemParam[]>> => {
-    return apiClient.core.put('/api/core/system/params', data);
+    return apiClient.core.put('/system/params', data);
   },
 
   getSmtpSettings: (): Promise<ApiResponse<SmtpSettings>> => {
-    return apiClient.core.get('/api/core/system/settings/smtp');
+    return apiClient.core.get('/system/settings/smtp');
   },
 
   updateSmtpSettings: (data: Partial<SmtpSettings>): Promise<ApiResponse<SmtpSettings>> => {
-    return apiClient.core.put('/api/core/system/settings/smtp', data);
+    return apiClient.core.put('/system/settings/smtp', data);
   },
 };
 

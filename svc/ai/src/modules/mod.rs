@@ -6,6 +6,7 @@ pub mod ai_plugin;
 pub mod ai_search_calc;
 pub mod ai_text_calc;
 pub mod analysis;
+pub mod chat_conversations;
 pub mod code_assistant;
 pub mod document;
 pub mod embedding;

@@ -68,78 +68,78 @@ export interface TenantUser {
 
 export const tenantApi = {
   getContext: (): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.get('/api/core/tenant/context');
+    return apiClient.core.get('/tenant/context');
   },
 
   create: (data: { name: string; slug?: string; plan?: string }): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.post('/api/core/tenant/create', data);
+    return apiClient.core.post('/tenant/create', data);
   },
 
   list: (): Promise<ApiResponse<Tenant[]>> => {
-    return apiClient.core.get('/api/core/tenant/list');
+    return apiClient.core.get('/tenant/list');
   },
 
   getMy: (): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.get('/api/core/tenant/my');
+    return apiClient.core.get('/tenant/my');
   },
 
   getBySlug: (slug: string): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.get(`/api/core/tenant/slug/${slug}`);
+    return apiClient.core.get(`/tenant/slug/${slug}`);
   },
 
   switch: (tenantId: string): Promise<ApiResponse<{ success: boolean }>> => {
-    return apiClient.core.post('/api/core/tenant/switch', { tenant_id: tenantId });
+    return apiClient.core.post('/tenant/switch', { tenant_id: tenantId });
   },
 
   get: (tenantId: string): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.get(`/api/core/tenant/${tenantId}`);
+    return apiClient.core.get(`/tenant/${tenantId}`);
   },
 
   update: (tenantId: string, data: Partial<Tenant>): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.put(`/api/core/tenant/${tenantId}`, data);
+    return apiClient.core.put(`/tenant/${tenantId}`, data);
   },
 
   remove: (tenantId: string): Promise<ApiResponse<void>> => {
-    return apiClient.core.delete(`/api/core/tenant/${tenantId}`);
+    return apiClient.core.delete(`/tenant/${tenantId}`);
   },
 
   activate: (tenantId: string): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.post(`/api/core/tenant/${tenantId}/activate`, {});
+    return apiClient.core.post(`/tenant/${tenantId}/activate`, {});
   },
 
   getBilling: (tenantId: string): Promise<ApiResponse<TenantBilling>> => {
-    return apiClient.core.get(`/api/core/tenant/${tenantId}/billing`);
+    return apiClient.core.get(`/tenant/${tenantId}/billing`);
   },
 
   listInvoices: (tenantId: string): Promise<ApiResponse<TenantInvoice[]>> => {
-    return apiClient.core.get(`/api/core/tenant/${tenantId}/invoices`);
+    return apiClient.core.get(`/tenant/${tenantId}/invoices`);
   },
 
   getStats: (tenantId: string): Promise<ApiResponse<TenantStats>> => {
-    return apiClient.core.get(`/api/core/tenant/${tenantId}/stats`);
+    return apiClient.core.get(`/tenant/${tenantId}/stats`);
   },
 
   suspend: (tenantId: string): Promise<ApiResponse<Tenant>> => {
-    return apiClient.core.post(`/api/core/tenant/${tenantId}/suspend`, {});
+    return apiClient.core.post(`/tenant/${tenantId}/suspend`, {});
   },
 
   getUsage: (tenantId: string): Promise<ApiResponse<TenantUsage>> => {
-    return apiClient.core.get(`/api/core/tenant/${tenantId}/usage`);
+    return apiClient.core.get(`/tenant/${tenantId}/usage`);
   },
 
   listUsers: (tenantId: string): Promise<ApiResponse<TenantUser[]>> => {
-    return apiClient.core.get(`/api/core/tenant/${tenantId}/users`);
+    return apiClient.core.get(`/tenant/${tenantId}/users`);
   },
 
   inviteUser: (
     tenantId: string,
     data: { email: string; role?: string }
   ): Promise<ApiResponse<TenantUser>> => {
-    return apiClient.core.post(`/api/core/tenant/${tenantId}/users/invite`, data);
+    return apiClient.core.post(`/tenant/${tenantId}/users/invite`, data);
   },
 
   removeUser: (tenantId: string, userId: string): Promise<ApiResponse<void>> => {
-    return apiClient.core.delete(`/api/core/tenant/${tenantId}/users/${userId}`);
+    return apiClient.core.delete(`/tenant/${tenantId}/users/${userId}`);
   },
 
   updateUserRole: (
@@ -147,7 +147,7 @@ export const tenantApi = {
     userId: string,
     role: string
   ): Promise<ApiResponse<TenantUser>> => {
-    return apiClient.core.put(`/api/core/tenant/${tenantId}/users/${userId}/role`, { role });
+    return apiClient.core.put(`/tenant/${tenantId}/users/${userId}/role`, { role });
   },
 };
 

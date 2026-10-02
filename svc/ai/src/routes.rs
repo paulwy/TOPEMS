@@ -656,6 +656,20 @@ pub fn create_routes(
         ))
         .with_state(app_state.clone());
 
+    // 2026-10-03：AI 对话会话自有存储路由（chat.ts 契约：GET/POST/DELETE /conversations）
+    let conversation_router = Router::new()
+        .merge(crate::modules::chat_conversations::create_routes())
+        // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .with_state(app_state.clone());
+
     let multimodal_router = Router::new()
         .route(
             "/multimodal/image/analyze",
@@ -786,6 +800,7 @@ pub fn create_routes(
         .merge(governance_dashboard_router)
         .merge(smart_forms_router)
         .merge(recommendation_router)
+        .merge(conversation_router)
         .merge(multimodal_router)
         .merge(dify_router)
         .merge(workflow_router)
