@@ -18,6 +18,7 @@ use crate::modules::approval_common::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::big_decimal_to_f64;
+use topems_shared_event::event::{EventType, MesWorkReportSubmittedPayload};
 
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -545,7 +546,7 @@ pub async fn create_work_report(
 
     let report_no = generate_report_no();
 
-    // 事务内设置 RLS 上下文（与 create_from_erp 一致）：确保 set_config 与 INSERT 同连接
+    // 事务内设置 RLS 上下文（与 create_order_from_erp 一致）：确保 set_config 与 INSERT 同连接
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
@@ -608,16 +609,20 @@ pub async fn create_work_report(
                 return Json(ApiResponse::error(500, "创建工报失败"));
             }
 
-            // 生产执行闭环：报工后异步回传 ERP 生产进度（服务间认证，失败不阻塞主流程）
-            // 回传基于工单 ID（work_order_id）反查 ERP 销售订单，而非可选 order_id 字段
+            // D2 U2 环2（决策 A）：mes→erp 报工进度回传由同步 HTTP（erp_client.sync_mes_progress）
+            // 改为发布 `MesWorkReportSubmitted` 事件，erp 订阅更新生产订单进度。
+            // 幂等键 = work_report_id；DLQ 兜底由 erp 订阅器统一提供，不阻塞报工主流程。
+            // erp_order_id 仍由工单 ID（work_order_id）反查本地 source_order_id 得到。
             let mes_order_id = r.work_order_id;
-            let erp_client_opt = state.erp_client.clone();
             let pool = state.pool.clone();
             let output_qty = big_decimal_to_f64(r.output_quantity.clone());
-            if let (Some(mes_order_id), Some(erp_client)) = (mes_order_id, erp_client_opt) {
+            let work_report_id = r.id;
+            let report_no = r.report_no.clone();
+            if let (Some(mes_order_id), Some(publisher)) =
+                (mes_order_id, state.event_publisher.clone())
+            {
                 tokio::spawn(async move {
                     // RLS 连接级隔离：反查工单需在独立连接上绑定 nil 租户上下文
-                    // （service token 无租户，未设置则受限 DB 用户下 RLS 拒绝该查询）
                     let mut conn = match pool.acquire().await {
                         Ok(c) => c,
                         Err(_) => return,
@@ -634,24 +639,31 @@ pub async fn create_work_report(
                     .await
                     .ok()
                     .flatten();
-                    if let Some(erp_order_id) = erp_order_id {
-                        let payload = serde_json::json!({
-                            "mes_order_id": mes_order_id,
-                            "erp_order_id": erp_order_id,
-                            "completed_quantity": output_qty,
-                            "status": "in_progress",
-                        });
-                        match erp_client.sync_mes_progress(&payload).await {
-                            Ok(resp) => {
-                                tracing::info!("[MES→ERP] 生产进度回传成功: {}", resp);
-                            }
-                            Err(e) => {
-                                tracing::error!(
-                                    "[MES→ERP] 生产进度回传失败（异步降级，不影响报工）: {}",
-                                    e
-                                );
-                            }
-                        }
+
+                    let payload = MesWorkReportSubmittedPayload {
+                        work_report_id,
+                        report_no: Some(report_no),
+                        mes_order_id: Some(mes_order_id),
+                        erp_order_id,
+                        completed_quantity: Some(output_qty),
+                        status: Some("in_progress".to_string()),
+                        reported_at: Some(Utc::now()),
+                        tenant_id: None,
+                    };
+                    if let Err(e) = publisher
+                        .publish_event(EventType::MesWorkReportSubmitted, payload)
+                        .await
+                    {
+                        tracing::error!(
+                            "[MES→ERP] MesWorkReportSubmitted 事件发布失败（进度回传滞留，需人工重发）: {}",
+                            e
+                        );
+                    } else {
+                        tracing::info!(
+                            "[MES→ERP] 报工进度回传事件发布成功 - work_report_id={}, erp_order_id={:?}",
+                            work_report_id,
+                            erp_order_id
+                        );
                     }
                 });
             }

@@ -17,6 +17,7 @@ use crate::models::production_order::{
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::api_error;
+use topems_shared_event::event::{ErpProductionOrderDispatchedPayload, EventType};
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
 pub struct ProductionOrderListParams {
@@ -511,40 +512,51 @@ pub async fn update_production_status(
 
     match result {
         Ok(Some(order)) => {
-            // 生产执行闭环：审核通过（approved）后异步下达 MES 生产工单（服务间认证，失败不阻塞主流程）
+            // D2 U2 环2（决策 A）：erp→mes 工单下达由同步 HTTP（mes_client.create_from_erp）
+            // 改为发布 `ErpProductionOrderDispatched` 事件，mes 订阅创建生产工单（保留 source_order_id 映射）。
+            // 幂等键 = erp_order_id；失败由 mes 侧 DLQ 兜底，不阻塞主流程。
             if req.status == "approved" {
-                let mes_client = state.mes_client.clone();
-                let order_clone = order.clone();
-                tokio::spawn(async move {
-                    let payload = serde_json::json!({
-                        "erp_order": {
-                            "order_id": order_clone.id,
-                            "order_number": order_clone.order_no,
-                            "customer_name": "",
-                            "product_name": order_clone.product_name,
-                            "product_code": order_clone.product_code,
-                            "quantity": order_clone.quantity,
-                            "unit": "pcs",
-                            "delivery_date": order_clone.planned_end_date,
-                            "priority": order_clone.priority,
-                        },
-                        "planned_start_date": order_clone.planned_start_date,
-                        "planned_completion_date": order_clone.planned_end_date,
-                        "workshop_id": order_clone.workshop_id,
-                        "notes": order_clone.notes,
-                    });
-                    match mes_client.create_from_erp(&payload).await {
-                        Ok(resp) => {
-                            tracing::info!("[ERP→MES] 生产工单下达成功: {}", resp);
-                        }
-                        Err(e) => {
+                if let Some(publisher) = &state.event_publisher {
+                    let publisher = publisher.clone();
+                    let order_clone = order.clone();
+                    tokio::spawn(async move {
+                        let order_no = order_clone.order_no.clone();
+                        let payload = ErpProductionOrderDispatchedPayload {
+                            erp_order_id: order_clone.id,
+                            order_no: order_clone.order_no,
+                            product_id: order_clone.product_id,
+                            product_name: Some(order_clone.product_name),
+                            product_code: Some(order_clone.product_code),
+                            quantity: Some(order_clone.quantity),
+                            workshop_id: order_clone.workshop_id,
+                            workshop_name: order_clone.workshop_name,
+                            priority: order_clone.priority.map(|p| p.to_string()),
+                            planned_start_date: order_clone.planned_start_date,
+                            planned_end_date: order_clone.planned_end_date,
+                            notes: order_clone.notes,
+                            tenant_id: None,
+                        };
+                        if let Err(e) = publisher
+                            .publish_event(EventType::ErpProductionOrderDispatched, payload)
+                            .await
+                        {
                             tracing::error!(
-                                "[ERP→MES] 生产工单下达失败（异步降级，不影响ERP订单）: {}",
+                                "[ERP→MES] ErpProductionOrderDispatched 事件发布失败（工单下达滞留，需人工重发）: {}",
                                 e
                             );
+                        } else {
+                            tracing::info!(
+                                "[ERP→MES] 生产工单下达事件发布成功 - order_no={}",
+                                order_no
+                            );
                         }
-                    }
-                });
+                    });
+                } else {
+                    tracing::warn!(
+                        "[ERP] event_publisher 未配置，生产工单下达事件未发布 - order_id={}",
+                        order.id
+                    );
+                }
             }
             Json(ApiResponse::success(order, "生产订单状态更新成功"))
         }

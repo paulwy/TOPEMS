@@ -33,7 +33,7 @@ pub fn create_routes() -> Router<AppState> {
             "/orders",
             get(list_production_orders).post(create_production_order),
         )
-        .route("/orders/from-erp", post(create_from_erp))
+        .route("/orders/from-erp", post(create_order_from_erp))
         .route(
             "/orders/{id}",
             get(get_production_order)
@@ -561,7 +561,7 @@ req.planned_end_date.map(|d| d.date_naive()),
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-pub async fn create_from_erp(
+pub async fn create_order_from_erp(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFromErpRequest>,
@@ -593,7 +593,7 @@ pub async fn create_from_erp(
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(e) => {
-            tracing::error!("Failed to begin tx for create_from_erp: {}", e);
+            tracing::error!("Failed to begin tx for create_order_from_erp: {}", e);
             return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
         }
     };
@@ -602,7 +602,7 @@ pub async fn create_from_erp(
         .execute(&mut *tx)
         .await
     {
-        tracing::error!("Failed to set nil RLS context for create_from_erp: {}", e);
+        tracing::error!("Failed to set nil RLS context for create_order_from_erp: {}", e);
         return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
     }
 
@@ -639,7 +639,7 @@ planned_end.date_naive(),
     .await;
 
     if let Err(e) = tx.commit().await {
-        tracing::error!("Failed to commit tx for create_from_erp: {}", e);
+        tracing::error!("Failed to commit tx for create_order_from_erp: {}", e);
         return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
     }
 

@@ -224,6 +224,11 @@ async fn main() -> anyhow::Result<()> {
                 tracing::warn!("[mes] 缓存失效事件订阅者创建失败: {}", e);
             }
         }
+
+        // D2 U2 环2：业务事件订阅（ErpProductionOrderDispatched → 本地建生产工单，幂等）
+        if let Err(e) = topems_mes::event_handlers::start_business_event_subscribers(ctx.db.clone()).await {
+            tracing::warn!("[mes] 业务事件订阅者启动失败: {}", e);
+        }
     }
 
     let state = AppState {
