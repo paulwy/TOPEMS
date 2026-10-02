@@ -8,7 +8,7 @@
 
 | 层 | 防线 | 状态 |
 |---|---|---|
-| L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⚠️ 已创建规则但**不生效**：免费个人账户的私有仓库不强制执行分支保护（GitHub 限制）；升级 Team/Enterprise 组织（需 transfer 仓库）后规则自动启用 |
+| L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⚠️ 已创建规则但**不生效**：免费个人账户的私有仓库不强制执行分支保护（GitHub 限制）；升级 Team/Enterprise 组织（需 transfer 仓库）后规则自动启用。**当前替代硬闸：降 TRAE 机协作者权限为 Read（权限层拦直接 push，只能走 PR）** |
 | L2 | 本地 push 守卫：stale-base 检查 + cargo check 错误归类 | ✅ 已落地（pre-push 第一道，并入 cargo-check 门禁） |
 | L3 | 开发起点：`scripts/sync_base.sh`（fetch + rebase --no-fork-point + 编译快验） | ✅ 已落地 |
 | L4 | CI 全量验证：Gate L `cargo check --all-targets` + 夜间回归失败自动开 Issue + 环境一致性自检 | ✅ 已落地（2026-10-02） |
@@ -118,6 +118,25 @@ cargo check -p <crate> --all-targets                # 复现
 4. **工作区对齐最新 main 后仍报错 → 先查本机环境**（sccache 包装 `RUSTC_WRAPPER`、
    工具链、脏文件混入），**再怀疑远端**——远端健康以 CI/多机实证为准，不以单机
    本地编译为准。
+
+### 2026-10-02 第二次事故：装了门禁仍推坏（机制失效）
+
+TRAE 机在 doctor 装好本地门禁后，仍基于错误认知推送 8df91e813（把 mes/wms 改回
+坏修复模式 + 越权修改共享 `.cargo/config.toml`），声称「四门禁验证通过」——本机
+实证 150+11 错。教训：
+
+1. **本地门禁对某些机器不可信**——`--no-verify` 可绕过、环境差异可致「本地验证」
+   失真——门禁是纪律层防线，不是硬闸。
+2. **「验证通过」必须有交叉证据**——单机自述不采信；以 CI / 第二台机器实证为准
+   （本机每次在 push 前跑全量 check + clippy 作为权威验证）。
+3. **共享配置不可单机擅改**——`.cargo/config.toml` 是仓库级（影响所有机器）；
+   TRAE 机 sccache 0.17 与 rustc 1.95.0 不兼容应改**本机**配置（如
+   `~/.cargo/config.toml` 或环境变量），不得改仓库级文件。
+
+**当前账户形态下的最强硬闸（免费私有仓库 L1 不生效）**：
+把 TRAE 机协作者权限降为 **Read**（GitHub → Settings → Collaborators）——
+它无法直接 push main，只能 fork + PR；PR 由 main 维护者审阅、CI 把关，
+坏提交物理上进不了 main。**权限层硬闸 > 门禁纪律**（纪律已被证伪两次）。
 
 ## 其他
 
