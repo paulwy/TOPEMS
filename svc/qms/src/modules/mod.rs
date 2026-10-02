@@ -34,6 +34,8 @@ pub fn create_routes() -> Router<AppState> {
         .merge(quality_dashboard::create_routes())
         .merge(apqp::create_routes())
         .merge(qms_plugin::create_routes())
+        // integration 编排侧 internal 接收端点（/api/internal/ 已在 auth 白名单）
+        .merge(integration::integration_routes())
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {

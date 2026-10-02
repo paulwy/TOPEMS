@@ -39,4 +39,6 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(occupational_disease::create_routes())
         .merge(hazardous_material::create_routes())
         .merge(environmental_compliance::create_routes())
+        // integration 编排侧 internal 接收端点（/api/internal/ 已在 auth 白名单）
+        .merge(integration::integration_routes())
 }

@@ -128,7 +128,7 @@ pub async fn create_integration_task(
     let test_items = serde_json::json!(req.test_items);
 
     let result = sqlx::query(
-        "INSERT INTO qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, status)
+        "INSERT INTO public.qa_lab_tasks (tenant_id, task_no, sample_id, sample_no, test_items, status)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (task_no) DO UPDATE SET updated_at = NOW()
          RETURNING id, task_no, sample_no, status",

@@ -37,4 +37,6 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(uncertainty::create_routes())
         .merge(instrument_data::create_routes())
         .merge(process::create_routes())
+        // integration 编排侧 internal 接收端点（/api/internal/ 已在 auth 白名单）
+        .merge(integration::integration_routes())
 }
