@@ -24,13 +24,13 @@ use topems_shared_core::cache::{
 };
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
-    CacheInvalidatedPayload, EmployeeOnboardedPayload, Event, EventResult, EventSubscriber,
-    EventType, HrmPayrollVoucherRequestedPayload, InventoryUpdatedPayload, MasterDataAction,
-    MasterDataDomain, MasterDataEvent, OpportunityWonPayload, PaymentMadePayload,
-    PaymentReceivedPayload, PmProjectCompletedPayload, PmProjectSettledPayload,
-    PurchaseOrderApprovedPayload, ReconciliationApprovedPayload, ReconciliationCreatedPayload,
-    ReconciliationUpdatedPayload, ReturnCompletedPayload, SalesOrderApprovedPayload,
-    StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
+    CacheInvalidatedPayload, EmployeeOnboardedPayload, Event,
+    EventResult, EventSubscriber, EventType, HrmPayrollPostedPayload, InventoryUpdatedPayload,
+    MasterDataAction, MasterDataDomain, MasterDataEvent, MesWorkReportSubmittedPayload,
+    OpportunityWonPayload, PaymentMadePayload, PaymentReceivedPayload, PmProjectCompletedPayload,
+    PmProjectSettledPayload, PurchaseOrderApprovedPayload, ReconciliationApprovedPayload,
+    ReconciliationCreatedPayload, ReconciliationUpdatedPayload, ReturnCompletedPayload,
+    SalesOrderApprovedPayload, StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
 };
 
 type HandlerResult = std::result::Result<(), String>;
@@ -73,6 +73,7 @@ impl ErpEventHandlers {
         let h19 = self.clone();
         let h20 = self.clone();
         let h21 = self.clone();
+        let h22 = self.clone();
 
         Ok(subscriber
             .subscribe(vec![EventType::SalesOrderApproved], move |event| {
@@ -238,11 +239,19 @@ impl ErpEventHandlers {
                     }
                 })
             })
-            .subscribe(vec![EventType::HrmPayrollVoucherRequested], move |event| {
+            .subscribe(vec![EventType::HrmPayrollPosted], move |event| {
                 let h = h21.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_hrm_payroll_voucher_requested(event).await {
-                        tracing::error!("[erp] handle_hrm_payroll_voucher_requested 失败: {}", e);
+                    if let Err(e) = h.handle_hrm_payroll_posted(event).await {
+                        tracing::error!("[erp] handle_hrm_payroll_posted 失败: {}", e);
+                    }
+                })
+            })
+            .subscribe(vec![EventType::MesWorkReportSubmitted], move |event| {
+                let h = h22.clone();
+                Box::pin(async move {
+                    if let Err(e) = h.handle_mes_work_report_submitted(event).await {
+                        tracing::error!("[erp] handle_mes_work_report_submitted 失败: {}", e);
                     }
                 })
             }))
@@ -1915,20 +1924,37 @@ impl ErpEventHandlers {
         Ok(())
     }
 
-    /// HrmPayrollVoucherRequested → 生成财务凭证
+    /// HrmPayrollPosted → 生成财务凭证（D2 U2 环1：hrm 工资过账事件化）
     /// （hrm 发工资核算完成事件 → erp 在本 schema 内落库，不再跨 schema 直写）
-    async fn handle_hrm_payroll_voucher_requested(&self, event: Event) -> HandlerResult {
-        let payload: HrmPayrollVoucherRequestedPayload =
+    /// 幂等：按 (source_system='HRM', source_id=payroll_run_id) 去重，同 payroll_run_id 重放只建证一次。
+    async fn handle_hrm_payroll_posted(&self, event: Event) -> HandlerResult {
+        let payload: HrmPayrollPostedPayload =
             serde_json::from_value(event.payload.clone())
-                .map_err(|e| format!("解析 HrmPayrollVoucherRequested payload 失败: {}", e))?;
+                .map_err(|e| format!("解析 HrmPayrollPosted payload 失败: {}", e))?;
 
         tracing::info!(
-            "[erp] HrmPayrollVoucherRequested 处理 - voucher_number={}, payroll_run_id={}, entries={}, trace_id={:?}",
+            "[erp] HrmPayrollPosted 处理 - voucher_number={}, payroll_run_id={}, entries={}, trace_id={:?}",
             payload.voucher_number,
             payload.payroll_run_id,
             payload.entries.len(),
             event.trace_id
         );
+
+        // 幂等去重：同一 payroll_run_id 已建证则直接跳过（事件重放/重复投递不重复建证）
+        let already: bool = sqlx::query_scalar(
+            "SELECT EXISTS(SELECT 1 FROM erp.financial_vouchers WHERE source_system = 'HRM' AND source_id = $1)",
+        )
+        .bind(payload.payroll_run_id.to_string())
+        .fetch_one(&self.db)
+        .await
+        .map_err(|e| format!("查询幂等键(payroll_run_id)失败: {}", e))?;
+        if already {
+            tracing::info!(
+                "[erp] HrmPayrollPosted 幂等跳过 - payroll_run_id={} 已存在凭证",
+                payload.payroll_run_id
+            );
+            return Ok(());
+        }
 
         let voucher_id = uuid::Uuid::new_v4();
         let now = chrono::Utc::now();
@@ -1983,12 +2009,114 @@ impl ErpEventHandlers {
         }
 
         tracing::info!(
-            "[erp] HrmPayrollVoucherRequested 完成 - voucher_id={}, voucher_number={}, entries={}",
+            "[erp] HrmPayrollPosted 完成 - voucher_id={}, voucher_number={}, entries={}",
             voucher_id,
             payload.voucher_number,
             payload.entries.len()
         );
 
+        Ok(())
+    }
+
+    /// 确保事件幂等账本表存在（自包含建表，免迁移文件；重复执行 IF NOT EXISTS 为 no-op）。
+    /// 键 = 事件业务主键（如 payroll_run_id / work_report_id），天然支持 at-least-once 重放去重。
+    async fn ensure_event_idempotency_table(&self) -> HandlerResult {
+        sqlx::query(
+            r#"CREATE TABLE IF NOT EXISTS erp.event_idempotency (
+                   idempotency_key TEXT PRIMARY KEY,
+                   event_type TEXT NOT NULL,
+                   processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+               )"#,
+        )
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("创建 erp.event_idempotency 失败: {}", e))?;
+        Ok(())
+    }
+
+    /// MesWorkReportSubmitted → 更新生产订单进度（D2 U2 环2：mes→erp 报工回传事件化）
+    /// 幂等键 = work_report_id；同 work_report_id 重放只更新一次。
+    /// DLQ 兜底由 shared-event 订阅器统一提供（handler 返回 Err 即入 topems:dlq，retry_count 累加）。
+    async fn handle_mes_work_report_submitted(&self, event: Event) -> HandlerResult {
+        let payload: MesWorkReportSubmittedPayload =
+            serde_json::from_value(event.payload.clone())
+                .map_err(|e| format!("解析 MesWorkReportSubmitted payload 失败: {}", e))?;
+
+        tracing::info!(
+            "[erp] MesWorkReportSubmitted 处理 - work_report_id={}, erp_order_id={:?}, qty={:?}, trace_id={:?}",
+            payload.work_report_id,
+            payload.erp_order_id,
+            payload.completed_quantity,
+            event.trace_id
+        );
+
+        self.ensure_event_idempotency_table().await?;
+
+        // 幂等：账本插入冲突 = 已处理过，直接收敛返回
+        let key = format!("mes_work_report:{}", payload.work_report_id);
+        let inserted = sqlx::query(
+            "INSERT INTO erp.event_idempotency (idempotency_key, event_type) VALUES ($1, 'MesWorkReportSubmitted') ON CONFLICT (idempotency_key) DO NOTHING",
+        )
+        .bind(&key)
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("写入幂等账本失败: {}", e))?;
+        if inserted.rows_affected() == 0 {
+            tracing::info!("[erp] MesWorkReportSubmitted 幂等跳过 - work_report_id={} 已处理", payload.work_report_id);
+            return Ok(());
+        }
+
+        // 解析 erp 生产订单 ID：优先事件内携带，否则按 mes_order_id 反查 source_order_id
+        let erp_order_id = match payload.erp_order_id {
+            Some(id) => Some(id),
+            None => match payload.mes_order_id {
+                Some(mid) => {
+                    sqlx::query_scalar::<_, Option<uuid::Uuid>>(
+                        "SELECT id FROM erp.erp_production_orders WHERE source_order_id = $1 AND deleted_at IS NULL LIMIT 1",
+                    )
+                    .bind(mid.to_string())
+                    .fetch_optional(&self.db)
+                    .await
+                    .map_err(|e| format!("按 mes_order_id 反查 erp 订单失败: {}", e))?
+                    .flatten()
+                }
+                None => None,
+            },
+        };
+
+        let Some(order_id) = erp_order_id else {
+            tracing::warn!(
+                "[erp] MesWorkReportSubmitted 无匹配 erp 订单 - work_report_id={}, mes_order_id={:?}（进 DLQ 待人工对账）",
+                payload.work_report_id, payload.mes_order_id
+            );
+            return Err(format!(
+                "未找到对应 erp 生产订单（mes_order_id={:?}）",
+                payload.mes_order_id
+            ));
+        };
+
+        let now = chrono::Utc::now();
+        sqlx::query(
+            r#"UPDATE erp.erp_production_orders SET
+                   completed_quantity = COALESCE($2, completed_quantity),
+                   status = COALESCE($3, status),
+                   updated_at = $4
+               WHERE id = $1"#,
+        )
+        .bind(order_id)
+        .bind(payload.completed_quantity)
+        .bind(&payload.status)
+        .bind(now.naive_utc())
+        .execute(&self.db)
+        .await
+        .map_err(|e| format!("更新 erp.erp_production_orders 进度失败: {}", e))?;
+
+        tracing::info!(
+            "[erp] MesWorkReportSubmitted 完成 - work_report_id={}, erp_order_id={}, qty={:?}",
+            payload.work_report_id,
+            order_id,
+            payload.completed_quantity
+        );
         Ok(())
     }
 }

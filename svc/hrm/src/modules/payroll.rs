@@ -5,11 +5,11 @@ use axum::{
     Json, Router,
 };
 use bigdecimal::BigDecimal;
+use bigdecimal::ToPrimitive;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::str::FromStr;
-use topems_shared_auth::service::issue_service_token;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -859,7 +859,7 @@ pub async fn create_payroll_detail(
     tag = "payroll"
 )]
 pub async fn generate_payroll_voucher(
-    State(_state): State<ApiState>,
+    State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
@@ -956,106 +956,85 @@ pub async fn generate_payroll_voucher(
     };
     let entries = build_payroll_voucher_entries(&summary);
 
-    let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
-    // 服务间认证密钥：从 ApiState.auth_state 取（已通过 AuthState::from_env 严格校验，无弱默认回退）
-    let jwt_secret = _state.auth_state.jwt_secret.clone();
-    let client = reqwest::Client::new();
+    // D2 U2 环1（决策 C）：hrm→erp 工资凭证由同步 HTTP（POST /api/erp/vouchers）改为发布
+    // `HrmPayrollPosted` 领域事件，erp 订阅生成总账凭证。幂等键 = payroll_run_id；
+    // 凭证是"工资发放的副作用"，异步生成天然可接受；失败由 erp 侧 DLQ 兜底，不再阻塞本接口。
+    let event_entries: Vec<topems_shared_event::event::HrmPayrollVoucherEntryPayload> = entries
+        .iter()
+        .map(|e| topems_shared_event::event::HrmPayrollVoucherEntryPayload {
+            line_number: e.line as i32,
+            subject_code: e.subject_code.to_string(),
+            subject_name: e.subject_name.to_string(),
+            debit_amount: e.debit.to_f64().unwrap_or(0.0),
+            credit_amount: e.credit.to_f64().unwrap_or(0.0),
+        })
+        .collect();
 
-    let payload = serde_json::json!({
-        "voucher_number": &voucher_number,
-        "voucher_date": &voucher_date,
-        "period": &period,
-        "summary": format!("发放{}月工资", payroll_run.pay_period),
-        "maker_id": req.maker_id,
-        "maker_name": req.maker_name.clone().unwrap_or_else(|| "系统".to_string()),
-        "total_debit": &total_gross,
-        "total_credit": &total_gross,
-        "source_system": "HRM",
-        "source_id": id.to_string(),
-        "department_id": req.department_id,
-        "entries": entries.iter().map(|e| serde_json::json!({
-            "line_number": e.line,
-            "subject_code": e.subject_code,
-            "subject_name": e.subject_name,
-            "summary": format!("发放{}月工资", payroll_run.pay_period),
-            "debit_amount": &e.debit,
-            "credit_amount": &e.credit,
-            "department_id": req.department_id,
-        })).collect::<Vec<_>>(),
-    });
+    let event_payload = topems_shared_event::event::HrmPayrollPostedPayload {
+        payroll_run_id: id,
+        pay_period: payroll_run.pay_period.clone(),
+        voucher_date,
+        period: period.clone(),
+        voucher_number: voucher_number.clone(),
+        summary: format!("发放{}月工资", payroll_run.pay_period),
+        maker_id: req.maker_id,
+        maker_name: req.maker_name.clone().unwrap_or_else(|| "系统".to_string()),
+        department_id: req.department_id.unwrap_or_else(Uuid::nil),
+        total_gross: total_gross.to_f64().unwrap_or(0.0),
+        total_tax: total_tax.to_f64().unwrap_or(0.0),
+        total_social_security: total_social_security.to_f64().unwrap_or(0.0),
+        total_housing_fund: total_housing_fund.to_f64().unwrap_or(0.0),
+        net_salary: net_salary.to_f64().unwrap_or(0.0),
+        employee_count: payroll_run.employee_count,
+        entries: event_entries,
+        tenant_id: None,
+    };
 
-    match issue_service_token(&jwt_secret, "hrm-service", &["erp:admin"], None) {
-        Ok(token) => {
-            let resp = client
-                .post(format!("{}/api/erp/vouchers", erp_url))
-                .header("Authorization", format!("Bearer {}", token))
-                .json(&payload)
-                .send()
-                .await;
-
-            match resp {
-                Ok(resp) if resp.status().is_success() => {
-                    let body: serde_json::Value = resp.json().await.unwrap_or_default();
-                    let voucher_id = body["data"]["voucher_id"]
-                        .as_str()
-                        .and_then(|s| Uuid::parse_str(s).ok())
-                        .unwrap_or_else(Uuid::new_v4);
-                    let voucher_number = body["data"]["voucher_number"]
-                        .as_str()
-                        .unwrap_or(&voucher_number)
-                        .to_string();
-
-                    tracing::info!(
-                        "[HRM] Created payroll voucher {} via ERP API for payroll run {}",
-                        voucher_number,
-                        id
-                    );
-
-                    Json(ApiResponse::success(
-                        PayrollVoucherResponse {
-                            success: true,
-                            voucher_id: Some(voucher_id),
-                            voucher_number: Some(voucher_number),
-                            message: "薪资凭证生成成功".to_string(),
-                            total_salary: total_gross,
-                            total_social_security,
-                            total_housing_fund,
-                            total_tax,
-                            employee_count: payroll_run.employee_count,
-                        },
-                        "薪资凭证生成成功",
-                    ))
-                }
-                Ok(resp) => {
-                    let status = resp.status();
-                    let err_body = resp.text().await.unwrap_or_default();
-                    tracing::error!(
-                        "[HRM] ERP voucher API error: status={}, body={}",
-                        status,
-                        err_body
-                    );
-                    Json(ApiResponse::<PayrollVoucherResponse>::error(
-                        502,
-                        &format!("ERP 服务返回错误: {}", status),
-                    ))
-                }
-                Err(e) => {
-                    tracing::error!("[HRM] ERP voucher API request failed: {}", e);
-                    Json(ApiResponse::<PayrollVoucherResponse>::error(
-                        502,
-                        &format!("调用 ERP 凭证服务失败: {}", e),
-                    ))
-                }
+    if let Some(publisher) = &state.event_publisher {
+        let publisher = publisher.clone();
+        let vn = voucher_number.clone();
+        tokio::spawn(async move {
+            if let Err(e) = publisher
+                .publish_event(
+                    topems_shared_event::event::EventType::HrmPayrollPosted,
+                    event_payload,
+                )
+                .await
+            {
+                tracing::error!(
+                    "[hrm] HrmPayrollPosted 事件发布失败（凭证将滞留，需人工重发/补事件）: {}",
+                    e
+                );
+            } else {
+                tracing::info!(
+                    "[hrm] HrmPayrollPosted 事件发布成功 - payroll_run_id={}, voucher_number={}",
+                    id,
+                    vn
+                );
             }
-        }
-        Err(e) => {
-            tracing::error!("[HRM] Failed to issue service token: {}", e);
-            Json(ApiResponse::<PayrollVoucherResponse>::error(
-                500,
-                &format!("签发服务凭证失败: {}", e),
-            ))
-        }
+        });
+    } else {
+        tracing::warn!(
+            "[hrm] event_publisher 未配置，HrmPayrollPosted 未发布 - payroll_run_id={}",
+            id
+        );
     }
+
+    // 凭证由 erp 订阅器异步生成（不再同步等待 erp 回执）；本接口立即受理成功。
+    Json(ApiResponse::success(
+        PayrollVoucherResponse {
+            success: true,
+            voucher_id: None,
+            voucher_number: Some(voucher_number),
+            message: "薪资凭证生成请求已提交（事件异步生成）".to_string(),
+            total_salary: total_gross,
+            total_social_security,
+            total_housing_fund,
+            total_tax,
+            employee_count: payroll_run.employee_count,
+        },
+        "薪资凭证生成请求已提交",
+    ))
 }
 
 /// 工资单（员工视角的薪资明细，JOIN payroll_items + payroll_runs + employees）

@@ -194,6 +194,13 @@ pub async fn fetch_entries_by_type(
     state: &ApiState,
     contact_type: Option<&str>,
 ) -> Vec<AddressbookEntry> {
+    // ── U2 调用环消除白名单（D2 决策 C，环1 erp↔hrm）──────────────────────────────
+    // 此处 erp→hrm 为【请求内同步只读查询】（list_employees/list_departments/list_companies）：
+    //   - 只读：hrm 是员工/部门主数据源，erp 通讯录仅做 BFF 聚合展示，无任何写回；
+    //   - 单向依赖：hrm→erp 方向的工资凭证写已改为 `HrmPayrollPosted` 事件（见 payroll.rs），
+    //     环的反向写边已消除，本条只读查询不再构成双向 HTTP 环；
+    //   - 失败降级：hrm 不可用时仅 warn 并返回空列表，不放大故障。
+    // 依据：docs/architecture/decision-d2-call-cycle-elimination.md §4 环1 选项 C。
     let mut entries: Vec<AddressbookEntry> = Vec::new();
 
     match contact_type {
