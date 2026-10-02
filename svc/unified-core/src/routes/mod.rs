@@ -145,8 +145,8 @@ pub fn create_routes(
             "/ws/core/im",
             get(modules::communication::ws::websocket_handler),
         )
-        // MES Dashboard WebSocket（公共路由，无需认证）
-        .route("/ws/mes/dashboard", get(modules::mes::ws::mes_dashboard_ws))
+        // U1-b1（D1 §5 选项C）：/ws/mes/dashboard 业务投影 WebSocket 随 mes 镜像模块下架移除。
+        // 生产由独立 svc/mes（dashboard_ws.rs）提供；:8000 无入向流量。
         // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
         .route("/api/sse/connect", get(sse::sse_connect_handler))
         .route(
@@ -260,57 +260,15 @@ pub fn create_routes(
             .merge(core_router)
             .merge(openapi::openapi_routes())
     } else {
+        // U1-b1（D1 §5 选项C 灰度下架）：独立模式（embed_mode=false）不再挂载 24 个业务投影路由。
+        // 依据：生产 nginx topems.conf:122-128 已把 /api/{erp,finance,crm,mes,ai,hrm,pm,...}
+        // 全部转发到对应独立服务，unified-core(:8000) 仅 /api/(core|doc|monitor)+/health+/metrics，
+        // 业务投影零入向流量。业务能力唯一入口 = 各独立服务 / svc/server:8099 聚合。
+        // （原 24 条业务 merge：wms/mes/scm/finance/erp/crm/hrm/qms/pdm/ehs/analytics/pm/lims/
+        //   srm/gis/tms/master_data/communication/ticket/rd/integration/portal/mobile/ai）
         Router::new()
             .merge(public_routes)
             .merge(core_router)
-            // WMS 业务 API
-            .merge(wms_routes::wms_routes())
-            // MES 业务 API
-            .merge(mes_routes::mes_routes())
-            // SCM 业务 API
-            .merge(scm_routes::scm_routes())
-            // Finance 业务 API
-            .merge(finance_routes::finance_routes())
-            // ERP 业务 API
-            .merge(erp_routes::erp_router())
-            // CRM 业务 API
-            .merge(crm_routes::crm_router())
-            // HRM 业务 API
-            .merge(hrm_routes::hrm_router())
-            // QMS 业务 API
-            .merge(qms_routes::qms_router())
-            // PDM 业务 API
-            .merge(pdm_routes::pdm_router())
-            // EHS 业务 API
-            .merge(ehs_routes::ehs_router())
-            // Analytics 业务 API
-            .merge(analytics_routes::analytics_router())
-            // PM 业务 API
-            .merge(pm_routes::pm_router())
-            // LIMS 业务 API
-            .merge(lims_routes::lims_router())
-            // SRM 业务 API
-            .merge(srm_routes::srm_router())
-            // GIS 业务 API
-            .merge(gis_routes::gis_router())
-            // TMS 业务 API
-            .merge(tms_routes::tms_router())
-            // Master-data 业务 API
-            .merge(master_data_routes::master_data_router())
-            // Communication 业务 API
-            .merge(communication_routes::communication_router())
-            // Ticket 业务 API
-            .merge(ticket_routes::ticket_router())
-            // RD 业务 API
-            .merge(rd_routes::rd_router())
-            // Integration 业务 API
-            .merge(integration_routes::integration_router())
-            // Portal 业务 API
-            .merge(portal_routes::portal_router())
-            // Mobile 业务 API
-            .merge(mobile_routes::mobile_router())
-            // AI 业务 API
-            .merge(ai_routes::ai_router())
     };
     base_router
         .layer(axum::middleware::from_fn_with_state(
