@@ -539,23 +539,11 @@ async fn main() -> Result<()> {
         .unwrap_or(8099);
 
     let app = registry.lock().unwrap().merge_routes();
-    // [2026-09-30 P3-WebSocket] MES 看板实时推送/初始数据：server 根层挂载。
-    // unified-core embedded 模式仅含 core 路由（/api/core/*），此前 /api/mes/*
-    // 与 /ws/mes/dashboard 全部 404，前端 ProductionDashboardPage 实时推送不可用。
-    // handler 均为无 state（MesService 惰性初始化），挂根层与前端既有 URL 契约一致。
-    let app = app
-        .route(
-            "/ws/mes/dashboard",
-            axum::routing::get(topems_unified_core::modules::mes::ws::mes_dashboard_ws),
-        )
-        .route(
-            "/api/mes/dashboard/stats",
-            axum::routing::get(topems_unified_core::modules::mes::handlers::dashboard_stats),
-        )
-        .route(
-            "/api/mes/dashboard/initial",
-            axum::routing::get(topems_unified_core::modules::mes::ws::mes_dashboard_initial),
-        );
+    // [U1-b2 D1] 原 3 行借用 unified-core mes 投影 handler 的根层路由（/ws/mes/dashboard、
+    // /api/mes/dashboard/stats、/api/mes/dashboard/initial）已随 unified-core mes 镜像模块删除而解引用。
+    // 生产 nginx 把 /api/mes/* 转发独立 svc/mes:8030；本处仅模块化单体直跑(:8099)的临时补丁，投影零入向流量。
+    // 真实 mes 模块（mes_real_module → topems_mes::create_routes 挂 /api/mes）已提供业务路由；ws 看板如需在
+    // :8099 恢复，应由 mes_real_module 内嵌 topems_mes::dashboard_ws（属 server 侧后续接线，非 U1 范围）。
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

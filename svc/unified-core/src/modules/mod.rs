@@ -33,49 +33,11 @@ pub mod openapi;
 pub mod subscription;
 pub mod system_audit;
 pub mod tenant;
-// WMS: 仓储管理系统
-pub mod wms;
-// MES: 制造执行系统
-pub mod mes;
-// SCM: 供应链管理
-pub mod scm;
-// Finance: 财务管理
-pub mod finance;
-// ERP: 企业资源计划
-pub mod erp;
-// CRM: 客户关系管理
-pub mod crm;
-// HRM: 人力资源管理
-pub mod hrm;
-// QMS: 质量管理
-pub mod qms;
-// PDM: 产品数据管理
-pub mod pdm;
-// EHS: 环境健康安全
-pub mod ehs;
-// Analytics: 数据分析
-pub mod analytics;
-// PM: 项目管理
-pub mod pm;
-// LIMS: 实验室信息管理系统
-pub mod lims;
-// SRM: 供应商关系管理
-pub mod srm;
-// GIS: 地理信息系统
-pub mod gis;
-// TMS: 运输管理系统
-pub mod tms;
-// Master-data: 主数据管理
-pub mod master_data;
-// Ticket: 工单
-pub mod ticket;
-// RD: 研发
-pub mod rd;
-// Integration: 集成
-pub mod integration;
-// Portal: 门户
-pub mod portal;
-// Mobile: 移动端
-pub mod mobile;
-// AI: 人工智能
-pub mod ai;
+
+// U1-b2（D1 §5 选项C 灰度下架）：以下 23 个业务镜像模块已删除——
+// wms/mes/scm/finance/erp/crm/hrm/qms/pdm/ehs/analytics/pm/lims/srm/gis/tms/
+// master_data/ticket/rd/integration/portal/mobile/ai。
+// 它们曾是独立模式下的只读 GET 投影层（约 180 处跨业务 schema 直读），生产 nginx
+// 不把业务前缀转发到 :8000（topems.conf:122-128），投影零入向流量。业务能力唯一
+// 入口 = 各独立服务 / svc/server:8099 聚合。跨 schema 直读随模块目录删除一并清零。
+// （communication 模块保留：ws.rs/ws_event_bridge.rs 为核心实时通信，其投影 handlers.rs 已删。）
