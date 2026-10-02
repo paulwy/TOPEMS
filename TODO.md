@@ -390,3 +390,16 @@
       的 '/api/core/flow'（插件注册元数据，非请求）
 - [ ] pre-commit frontend-lint 环境崩溃（eslint 10.8.0 + minimatch@10 brace_expansion
       TypeError），与代码无关；commit 需 --no-verify 绕过，建议修依赖版本
+
+## 2026-10-03 P0 模块挂载完整性抽查（31 模块）
+
+### 结论：31 模块挂载完整，无 ticket 式隐藏降级
+- 方法：对 health 31 模块按页面方法级调用热度抽 Top3-5 核心 API 实测（401/200=挂载，
+  404=可疑）；再对"页面真实调用面"186 条 URL+method 全量实测（参数化路径用示例 UUID）
+- 结果：**0 条真实 404**。9 条可疑 404 全部澄清为假阳性：
+  - 参数化去参探测误报（hrm/settings、srm/supplier-portal/{id}/stats、core/tenant/{id}
+    均带参 401；前端真实请求均带参）
+  - 方法级匹配误报（/api/core 根路径无任何 api 定义；push-config/channels 页面未调用）
+- 意义：ticket 式"health 在列但页面 API 404"隐患在当前 31 模块不存在；前端页面真实
+  调用面已全部挂载（401 认证保护正常）
+- 脚本：/tmp/p0_check.py（模块 Top 抽样）、/tmp/p0_full.py（调用面全量参数化实测）
