@@ -93,7 +93,8 @@ m = json.load(sys.stdin)
 for p in sorted(m['packages'], key=lambda x: x['name']):
     import os
     manifest = p['manifest_path']
-    d = os.path.dirname(manifest)
+    # Windows(Git Bash) 下为反斜杠路径，统一转正斜杠再匹配（与 topems.ps1 兼容）
+    d = os.path.dirname(manifest).replace('\\\\', '/')
     # 只关注 TOPEMS 源码：根下 svc/* 和 lib/*
     if '/svc/' in d or '/lib/' in d:
         print(f\"{p['name']}|{d}\")
