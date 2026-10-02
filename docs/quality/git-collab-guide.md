@@ -138,6 +138,11 @@ TRAE 机在 doctor 装好本地门禁后，仍基于错误认知推送 8df91e813
 它无法直接 push main，只能 fork + PR；PR 由 main 维护者审阅、CI 把关，
 坏提交物理上进不了 main。**权限层硬闸 > 门禁纪律**（纪律已被证伪两次）。
 
+> ⚠️ 前提：仓库当前 0 协作者——TRAE 机一直以 paulwy（所有者）身份 push，
+> 所有者不受协作者权限限制。**必须先给 TRAE 机换独立身份**（独立 GitHub 账号 +
+> 独立 SSH key），降 Read 才有效。**完整操作清单见
+> [trae-identity-isolation.md](trae-identity-isolation.md)**。
+
 ## 其他
 
 - Revert 他人提交前确认影响面与理由（6016a041b 事故：修复被 Revert 引发连锁误解）。
