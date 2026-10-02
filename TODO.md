@@ -467,3 +467,22 @@
 - [ ] **R4 灰度上线**（P0，依赖：R1/R2 通过）：
   - 方案：按服务分批部署（先 portal/unified-core 平台层，再业务服务），systemd/k8s 滚动，含回滚预案
   - 验证：每批部署后 /health 绿、关键指标（请求错误率/延迟）无劣化；回滚演练一次通过
+
+## 2026-10-03 workflow 增强：flow category + variable 模块（P2，commit 待推）
+
+- 背景：359 条真 404 中 workflow 43 条增强契约（categories/delegates/form-definitions/
+  rules/variables 等）此前因"前端页面未调用"未补；本轮补最基础两类（流程分类 + 变量），
+  前端契约文件（workflow/category.ts、workflow/variable.ts）完整定义
+- 新增 svc/unified-core/src/modules/flow/category.rs：core_flow_categories 表 + 8 handler
+  （list/get/create/update/delete/active/tree/sort；get_category_workflows 预留空实现，
+  待 core_workflows 加 category_id 后启用真实关联）
+- 新增 svc/unified-core/src/modules/flow/variable.rs：core_flow_variables +
+  core_flow_variable_history 表 + 12 handler（instance/task/global 三作用域
+  list/get/set/batch/delete + scope 过滤 + 历史快照），upsert 走 partial unique index
+  ON CONFLICT（(scope,instance_id,task_id,workflow_id,var_key) WHERE deleted_at IS NULL）
+- mod.rs 建表 + 索引；routes/flow.rs read/write 组挂载
+- 验证：cargo check unified-core + server 0 错；重启 health 200 modules=31；
+  categories/variables 读+写路由全部 401（挂载）；psql 模拟 handler DML：
+  category 全链路 + variable upsert 冲突更新 + 历史快照全通过；表建在 flow schema
+  （server SEARCH_PATH=flow 优先，与旧表 public 并存可解析）；MES 看板回归 401
+- 遗留：delegates/form-definitions/rules/notification 增强待前端流程设计器落地后补

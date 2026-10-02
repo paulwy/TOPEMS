@@ -1,6 +1,7 @@
 //! Flow module - Workflow Automation
 
 pub mod approval;
+pub mod category;
 pub mod history;
 pub mod instance;
 pub mod models;
@@ -11,6 +12,7 @@ pub mod setting;
 pub mod statistics;
 pub mod task;
 pub mod template;
+pub mod variable;
 pub mod workflow;
 
 use sqlx::PgPool;
@@ -97,6 +99,62 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_flow_categories (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(128) NOT NULL,
+            code VARCHAR(64),
+            parent_id UUID,
+            sort_order INTEGER DEFAULT 0,
+            status VARCHAR(32) DEFAULT 'active',
+            description TEXT,
+            tenant_id UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_flow_variables (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            scope VARCHAR(16) NOT NULL,
+            instance_id UUID,
+            task_id UUID,
+            workflow_id UUID,
+            var_key VARCHAR(128) NOT NULL,
+            var_value JSONB NOT NULL DEFAULT 'null'::jsonb,
+            value_type VARCHAR(32) DEFAULT 'string',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_flow_variable_history (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            variable_id UUID REFERENCES core_flow_variables(id),
+            var_key VARCHAR(128) NOT NULL,
+            var_value JSONB NOT NULL,
+            value_type VARCHAR(32),
+            changed_by UUID,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_workflows_status ON core_workflows(status)")
         .execute(pool)
         .await?;
@@ -105,6 +163,23 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .await?;
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_core_tasks_instance ON core_workflow_tasks(instance_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_core_flow_variables_scope_key
+         ON core_flow_variables(scope, instance_id, task_id, workflow_id, var_key)
+         WHERE deleted_at IS NULL",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_flow_variables_instance ON core_flow_variables(instance_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_flow_categories_parent ON core_flow_categories(parent_id)",
     )
     .execute(pool)
     .await?;

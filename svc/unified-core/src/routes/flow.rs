@@ -200,12 +200,87 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/settings/key/{key}",
             get(modules::flow::setting::get_setting_by_key),
         )
+        // ===== Flow category（分类管理，契约 workflow/category.ts）=====
+        .route("/categories", get(modules::flow::category::list_categories))
+        .route(
+            "/categories/active",
+            get(modules::flow::category::list_active_categories),
+        )
+        .route(
+            "/categories/tree",
+            get(modules::flow::category::get_category_tree),
+        )
+        .route(
+            "/categories/{id}",
+            get(modules::flow::category::get_category),
+        )
+        .route(
+            "/categories/{id}/workflows",
+            get(modules::flow::category::get_category_workflows),
+        )
+        // ===== Flow variable（变量管理，契约 workflow/variable.ts）=====
+        .route(
+            "/variables/instance/{instance_id}",
+            get(modules::flow::variable::list_instance_variables),
+        )
+        .route(
+            "/variables/instance/{instance_id}/{key}",
+            get(modules::flow::variable::get_instance_variable),
+        )
+        .route(
+            "/variables/instance/{instance_id}/scope/{scope}",
+            get(modules::flow::variable::get_variables_by_scope),
+        )
+        .route(
+            "/variables/instance/{instance_id}/{key}/history",
+            get(modules::flow::variable::get_variable_history),
+        )
+        .route(
+            "/variables/task/{task_id}",
+            get(modules::flow::variable::list_task_variables),
+        )
+        .route(
+            "/variables/global/{workflow_id}",
+            get(modules::flow::variable::get_global_variables),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("workflow:read"),
         ));
 
     let write = Router::new()
+        // ===== Flow category 写操作 =====
+        .route(
+            "/categories",
+            post(modules::flow::category::create_category),
+        )
+        .route(
+            "/categories/sort",
+            post(modules::flow::category::sort_categories),
+        )
+        .route(
+            "/categories/{id}",
+            put(modules::flow::category::update_category)
+                .delete(modules::flow::category::delete_category),
+        )
+        // ===== Flow variable 写操作 =====
+        .route(
+            "/variables/instance/{instance_id}",
+            post(modules::flow::variable::set_instance_variables_batch),
+        )
+        .route(
+            "/variables/instance/{instance_id}/{key}",
+            post(modules::flow::variable::set_instance_variable)
+                .delete(modules::flow::variable::delete_instance_variable),
+        )
+        .route(
+            "/variables/task/{task_id}/{key}",
+            post(modules::flow::variable::set_task_variable),
+        )
+        .route(
+            "/variables/global/{workflow_id}/{key}",
+            post(modules::flow::variable::set_global_variable),
+        )
         .route("/tasks/{id}/claim", post(modules::flow::task::claim_task))
         .route(
             "/tasks/{id}/unclaim",
