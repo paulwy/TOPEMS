@@ -7,7 +7,7 @@ use axum::{
     Json, Router,
 };
 
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,
 };

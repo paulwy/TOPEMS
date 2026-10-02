@@ -15,10 +15,10 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use utoipa::OpenApi;
 
-use topems_shared::{
-    auth_middleware, create_api_info_router, create_cors_layer, register_routes_with_legacy_alias,
-    ApiResponse,
-};
+use topems_shared_auth::auth::auth_middleware;
+use topems_shared_core::api_version::{create_api_info_router, register_routes_with_legacy_alias};
+use topems_shared_core::cors::create_cors_layer;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};

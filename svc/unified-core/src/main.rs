@@ -17,7 +17,7 @@ use crate::shared::config_store_simple::ConfigStoreService;
 use axum_prometheus::PrometheusMetricLayer;
 use reqwest::Client;
 
-use topems_shared::create_cors_layer;
+use topems_shared_core::cors::create_cors_layer;
 use topems_shared_auth::security::{
     AuditLoggerConfig, AuditLoggerMiddleware, BodyLimitConfig, BodyLimitMiddleware,
     FieldEncryptionService, KeyManager, SecurityHeadersConfig, SecurityHeadersLayer,

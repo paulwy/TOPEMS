@@ -282,10 +282,21 @@ async fn main() -> anyhow::Result<()> {
     let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
     let jwt_secret = ctx.auth_state.jwt_secret.clone();
-    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+    // U10 降级治理：令牌签发/构建失败时不再 .expect panic，降级为同地址 tokenless 客户端并
+    // 告警；下游 unified-core(workflow) 不可达仅影响审批流，主服务继续启动。
+    let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default()
         .and_then(|c| c.with_service_token(&jwt_secret, "finance-service", &["workflow:read"]))
-        .expect("工作流服务客户端初始化失败");
-    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
+    {
+        Ok(client) => {
+            tracing::info!("🔗 工作流服务客户端初始化成功（service token）: {}", workflow_url);
+            client
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "工作流服务客户端带令牌初始化失败，降级为同地址tokenless客户端；审批流在恢复前将报错，主服务继续启动");
+            TypedServiceClient::new(WorkflowApi, &workflow_url)
+                .map_err(|e| anyhow::anyhow!("工作流降级客户端也无法构建（HTTP栈异常）: {e}"))?
+        }
+    };
 
     let state = AppState {
         auth_state: ctx.auth_state.clone(),

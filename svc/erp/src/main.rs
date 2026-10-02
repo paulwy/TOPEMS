@@ -167,49 +167,49 @@ async fn main() -> Result<()> {
 
     // HRM 服务客户端（服务间认证：签发 service token 携带 hrm:admin）
     let jwt_secret = ctx.auth_state.jwt_secret.clone();
-    let hrm_client = TypedServiceClient::<HrmApi>::from_env_default()
+    // U10 降级治理：env/令牌签发失败时不再 panic，降级为默认地址 tokenless 客户端并告警；
+    // 下游 HRM 不可达仅影响通讯录代理接口，主服务 /health 与核心功能不受影响；
+    // 仅当 reqwest HTTP 栈本身无法初始化（灾难性）时才 fail-fast 返回错误。
+    let hrm_client = match TypedServiceClient::<HrmApi>::from_env_default()
         .and_then(|c| c.with_service_token(&jwt_secret, "erp-service", &["hrm:admin"]))
-        .map(Arc::new)
-        .unwrap_or_else(|e| {
-            tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
-            let default_url = "http://localhost:8020".to_string();
+    {
+        Ok(c) => Arc::new(c),
+        Err(e) => {
+            tracing::warn!(error = %e, "HRM服务客户端带令牌初始化失败，降级为默认地址tokenless客户端；下游不可达时通讯录代理接口将报错，主服务继续启动");
             Arc::new(
-                TypedServiceClient::new(HrmApi, default_url).unwrap_or_else(|e| {
-                    tracing::error!("默认HRM客户端创建失败: {}", e);
-                    panic!("HRM客户端创建失败，请检查HRM服务配置")
-                }),
+                TypedServiceClient::new(HrmApi, "http://localhost:8020")
+                    .map_err(|e| anyhow::anyhow!("HRM降级客户端也无法构建（HTTP栈异常）: {e}"))?,
             )
-        });
+        }
+    };
 
-    // Finance 服务客户端（服务间认证：签发 service token 携带 finance:read）
-    let finance_client = TypedServiceClient::<FinanceApi>::from_env_default()
+    // Finance 服务客户端（服务间认证：签发 service token 携带 finance:read）——同上降级策略
+    let finance_client = match TypedServiceClient::<FinanceApi>::from_env_default()
         .and_then(|c| c.with_service_token(&jwt_secret, "erp-service", &["finance:read"]))
-        .map(Arc::new)
-        .unwrap_or_else(|e| {
-            tracing::warn!("Finance服务客户端初始化失败: {}, 将使用mock模式", e);
-            let default_url = "http://localhost:8011".to_string();
+    {
+        Ok(c) => Arc::new(c),
+        Err(e) => {
+            tracing::warn!(error = %e, "Finance服务客户端带令牌初始化失败，降级为默认地址tokenless客户端；下游不可达时合并报表审批接口将报错，主服务继续启动");
             Arc::new(
-                TypedServiceClient::new(FinanceApi, default_url).unwrap_or_else(|e| {
-                    tracing::error!("默认Finance客户端创建失败: {}", e);
-                    panic!("Finance客户端创建失败，请检查Finance服务配置")
-                }),
+                TypedServiceClient::new(FinanceApi, "http://localhost:8011")
+                    .map_err(|e| anyhow::anyhow!("Finance降级客户端也无法构建（HTTP栈异常）: {e}"))?,
             )
-        });
+        }
+    };
 
-    // MES 服务客户端（生产执行闭环：erp 审核通过后下达生产工单，service token mes:admin）
-    let mes_client = TypedServiceClient::<MesApi>::from_env_default()
+    // MES 服务客户端（生产执行闭环：erp 审核通过后下达生产工单，service token mes:admin）——同上降级策略
+    let mes_client = match TypedServiceClient::<MesApi>::from_env_default()
         .and_then(|c| c.with_service_token(&jwt_secret, "erp-service", &["mes:admin"]))
-        .map(Arc::new)
-        .unwrap_or_else(|e| {
-            tracing::warn!("MES服务客户端初始化失败: {}, 将使用mock模式", e);
-            let default_url = "http://localhost:8030".to_string();
+    {
+        Ok(c) => Arc::new(c),
+        Err(e) => {
+            tracing::warn!(error = %e, "MES服务客户端带令牌初始化失败，降级为默认地址tokenless客户端；下游不可达时工单下达接口将报错，主服务继续启动");
             Arc::new(
-                TypedServiceClient::new(MesApi, default_url).unwrap_or_else(|e| {
-                    tracing::error!("默认MES客户端创建失败: {}", e);
-                    panic!("MES客户端创建失败，请检查MES服务配置")
-                }),
+                TypedServiceClient::new(MesApi, "http://localhost:8030")
+                    .map_err(|e| anyhow::anyhow!("MES降级客户端也无法构建（HTTP栈异常）: {e}"))?,
             )
-        });
+        }
+    };
 
     let api_state = ApiState {
         db: ctx.db.clone(),

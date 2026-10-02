@@ -5,7 +5,7 @@ use std::time::Instant;
 use axum::{extract::State, routing::get, Json, Router};
 
 use crate::modules::monitor::monitor_plugin;
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, prometheus_metrics_handler, run, ServiceConfig,

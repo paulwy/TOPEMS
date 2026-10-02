@@ -12,7 +12,7 @@ use std::time::Duration;
 use utoipa::OpenApi;
 
 use modules::ApiState;
-use topems_shared::config::CacheConfig;
+use topems_shared_core::config::CacheConfig;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{
     bootstrap_service, build_application, create_health_state, create_standard_health_routes,
@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");
 
-    let encryption = topems_shared::init_encryption_from_env();
+    let encryption = topems_shared_auth::security::init_encryption_from_env();
     tracing::info!("🔐 字段加密服务初始化完成");
 
     // 多级缓存初始化（L1: moka 进程内缓存 + L2: Redis 分布式缓存）

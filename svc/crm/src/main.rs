@@ -180,8 +180,13 @@ async fn main() -> Result<()> {
             tracing::info!("[crm] 开始客户列表缓存预热...");
             // 预热使用默认租户占位（与 create_customer 中使用的组织 UUID 一致），
             // 默认参数：page=1, page_size=25, search=None
-            let warmup_tenant = Uuid::parse_str("00000000-0000-0000-0000-000000000001")
-                .expect("default tenant uuid");
+            let warmup_tenant = match Uuid::parse_str("00000000-0000-0000-0000-000000000001") {
+                Ok(u) => u,
+                Err(e) => {
+                    tracing::warn!("[crm] 默认租户 UUID 常量解析失败(代码常量不应发生): {}, 跳过客户列表预热", e);
+                    return;
+                }
+            };
             match sqlx::query_scalar::<_, serde_json::Value>(
                 r#"
                 SELECT json_build_object(
@@ -306,10 +311,22 @@ async fn main() -> Result<()> {
     let workflow_url =
         env::var("WORKFLOW_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let jwt_secret = ctx.auth_state.jwt_secret.clone();
-    let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
+    // U10 降级治理（FCRM-07）：与 erp/wms 客户端一致，令牌签发/构建失败时不再 .expect panic，
+    // 降级为同地址 tokenless 客户端并告警；下游 unified-core(workflow) 不可达仅影响工作流相关
+    // 接口，主服务 /health 与核心功能继续可用；仅 reqwest HTTP 栈异常时才 fail-fast。
+    let workflow_client = match TypedServiceClient::<WorkflowApi>::from_env_default()
         .and_then(|c| c.with_service_token(&jwt_secret, "crm-service", &["workflow:read"]))
-        .expect("工作流服务客户端初始化失败");
-    tracing::info!("🔗 工作流服务客户端初始化成功: {}", workflow_url);
+    {
+        Ok(client) => {
+            tracing::info!("🔗 工作流服务客户端初始化成功（service token）: {}", workflow_url);
+            client
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "工作流服务客户端带令牌初始化失败，降级为同地址tokenless客户端；审批流在恢复前将报错，主服务继续启动");
+            TypedServiceClient::new(WorkflowApi, &workflow_url)
+                .map_err(|e| anyhow::anyhow!("工作流降级客户端也无法构建（HTTP栈异常）: {e}"))?
+        }
+    };
 
     let api_state = ApiState {
         db: ctx.db.clone(),

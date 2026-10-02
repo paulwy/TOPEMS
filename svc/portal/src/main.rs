@@ -11,7 +11,7 @@ use std::time::Instant;
 
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
-use topems_shared::ApiResponse;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_bootstrap::{bootstrap_service, resolve_port, run, Application, ServiceConfig};
 use topems_shared_core::health::{build_health_response, ServiceHealth};
 
