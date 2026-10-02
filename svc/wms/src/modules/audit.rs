@@ -62,7 +62,10 @@ pub async fn list_audit_logs(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM public.audit_logs
+        -- U12b: 读归位 wms 自有 schema（原误读 public.audit_logs 平台公共表，与写路径
+        -- SchemaAwareAuditLogService::new(db, None) 经 search_path=wms 解析到
+        -- wms.audit_logs 错位；对齐 mes/hrm/erp/rd/crm“读自己 schema audit_logs”模式）。
+        FROM wms.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id = $3)
@@ -89,7 +92,8 @@ pub async fn list_audit_logs(
             let count_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "wms",
                 r#"
-                SELECT COUNT(*) FROM public.audit_logs
+                -- U12b: 同 list 查询，读 wms.audit_logs（见上注释）
+                SELECT COUNT(*) FROM wms.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id = $3)
@@ -148,7 +152,8 @@ pub async fn get_audit_log(
         SELECT id, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM public.audit_logs WHERE id = $1
+        -- U12b: 读归位 wms.audit_logs（见 list_audit_logs 注释）
+        FROM wms.audit_logs WHERE id = $1
         "#
     ))
     .bind(id)
@@ -191,9 +196,12 @@ pub async fn log_audit_event(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
-    // P1-3: Schema prefix = None for WMS because the connection
-    // search_path already sets `wms`; so we use bare table name `audit_logs`
-    // and SchemaAware omits the qualifier. Same 13-col standard INSERT.
+    // P1-3: schema_prefix = None for WMS — the connection search_path already
+    // sets `wms` (main.rs SEARCH_PATH="wms, public, shared"), so SchemaAware
+    // writes bare `audit_logs` which resolves to wms.audit_logs (NOT public).
+    // wms.audit_logs carries the Cluster-A 15-col standard (columns aligned
+    // via migrations 20260918000033/38/44/45). U12b: 读路径（list/get_audit_log）
+    // 已同步改读 wms.audit_logs，读写同表。
     let mut req = CreateAuditLogRequest::new(action, entity_type, status);
     if let Some(eid) = entity_id {
         req = req.with_entity_id(eid);
