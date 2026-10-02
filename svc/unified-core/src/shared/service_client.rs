@@ -403,7 +403,7 @@ impl Drop for ServiceWatchHandle {
 ///
 /// This is the default service discovery implementation. Services are
 /// registered manually and stored in memory. For dynamic service discovery
-/// (e.g., Consul, etcd, Zookeeper), implement the ServiceDiscovery trait.
+/// (e.g., Consul as reserved extension point, etcd opt-in), implement the ServiceDiscovery trait.
 pub struct StaticServiceDiscovery {
     /// Registered services (shared across clones).
     services: Arc<std::sync::Mutex<HashMap<String, ServiceRegistration>>>,
@@ -544,7 +544,7 @@ impl ServiceDiscovery for StaticServiceDiscovery {
 ///
 /// Reads service configurations from environment variables. This serves as
 /// a simple dynamic service discovery implementation that can be used as
-/// a transition to more advanced solutions like Consul, etcd, or Zookeeper.
+/// a transition to more advanced solutions like Consul (reserved extension point) or etcd (opt-in).
 ///
 /// Environment variable format:
 /// - `TOPEMS_SERVICE_<NAME>_URL` — Service base URL (required)

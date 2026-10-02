@@ -15,7 +15,7 @@ pub mod messaging;
 pub mod redis;
 pub mod saga;
 pub mod service_discovery;
-pub mod zookeeper;
+// 注（D5/U9，2026-10-03）：`zookeeper` 模块已移除（未接线残留，事件主机制为 Redis Stream）。
 
 /// 通用测试辅助工具（Redis Pub/Sub 两阶段订阅 API、事件模拟等）。
 ///

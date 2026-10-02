@@ -47,7 +47,8 @@ serde_yaml = "0.9"
 # 正则表达式依赖（config_center 用）
 regex.workspace = true
 etcd-client = "0.19"
-zookeeper = "0.8"
+# 注（D5/U9，2026-10-03）：zookeeper 依赖已移除——事件协调无生产启用（主机制 Redis Stream），
+# zookeeper 0.8.0 future-incompat（审计 M7）随依赖移除一并消除。
 
 
 [dev-dependencies]

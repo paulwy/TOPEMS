@@ -1,16 +1,18 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
+// 服务发现实现登记（D5/U9 2026-10-03 收敛后形态）：
+// - 唯一活路径 = env SERVICE_URL 静态寻址（service_client.rs）+ nginx 静态转发 + config/services.yaml 权威源
+// - 保留：consul（预留扩展点，设 CONSUL_URL 即启用，默认关）、etcd（opt-in 配置管理，仅 ai/portal）
+//   dns/k8s（环境感知发现实现，非注册中心）、config_store_simple（配置存储）
+// - 已移除（未接线残留）：eureka / nacos / zookeeper 服务发现实现（2026-10-03）
 pub mod config_store_simple;
 pub mod consul_service_discovery;
 pub mod dns_service_discovery;
 pub mod etcd_service_discovery;
-pub mod eureka_service_discovery;
 pub mod k8s_service_discovery;
-pub mod nacos_service_discovery;
 pub mod service_client;
 pub mod util;
-pub mod zookeeper_service_discovery;
 
 use axum::extract::FromRef;
 use reqwest::Client;
