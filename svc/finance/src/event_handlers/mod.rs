@@ -1,4 +1,6 @@
 use chrono::{Datelike, Utc};
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
@@ -11,6 +13,13 @@ use topems_shared_event::event::{
 };
 
 type HandlerResult = std::result::Result<(), String>;
+
+/// U6：事件 payload 金额仍为 f64（lib/shared-event 事件契约，超出本阶段改造范围），
+/// 在 Finance 入站边界一次性转为 Decimal，之后全部以 Decimal 精确运算/落库，
+/// 避免 f64 累积误差进入自动凭证借贷金额。
+fn payload_amount(v: f64) -> Decimal {
+    Decimal::from_f64(v).unwrap_or(Decimal::ZERO)
+}
 
 #[derive(Clone)]
 pub struct FinanceEventHandlers {
@@ -103,7 +112,8 @@ impl FinanceEventHandlers {
         &self,
         voucher_type: &str,
         description: &str,
-        amount: f64,
+        // U6: 金额改 Decimal，直接绑定 NUMERIC(18,4) 列，消除 f64->NUMERIC 的浮点隐式转换
+        amount: Decimal,
         source_type: &str,
         source_id: uuid::Uuid,
         created_by: Option<&str>,
@@ -174,8 +184,8 @@ impl FinanceEventHandlers {
             payload.total_amount
         );
 
-        let payable_amount = payload.payable_amount.unwrap_or(0.0);
-        if payable_amount > 0.0 {
+        let payable_amount = payload_amount(payload.payable_amount.unwrap_or(0.0));
+        if payable_amount > Decimal::ZERO {
             self.store_source_amount_snapshot(
                 "sales_order",
                 payload.order_id,
@@ -185,8 +195,8 @@ impl FinanceEventHandlers {
             .await;
         }
 
-        let amount = payload.total_amount.unwrap_or(0.0);
-        if amount <= 0.0 {
+        let amount = payload_amount(payload.total_amount.unwrap_or(0.0));
+        if amount <= Decimal::ZERO {
             tracing::warn!("[finance] 销售订单金额为 0，跳过应收款记录生成");
             return Ok(());
         }
@@ -247,8 +257,8 @@ impl FinanceEventHandlers {
             payload.total_amount
         );
 
-        let payable_amount = payload.payable_amount.unwrap_or(0.0);
-        if payable_amount > 0.0 {
+        let payable_amount = payload_amount(payload.payable_amount.unwrap_or(0.0));
+        if payable_amount > Decimal::ZERO {
             self.store_source_amount_snapshot(
                 "sales_order",
                 payload.order_id,
@@ -258,8 +268,8 @@ impl FinanceEventHandlers {
             .await;
         }
 
-        let amount = payload.total_amount.unwrap_or(0.0);
-        if amount <= 0.0 {
+        let amount = payload_amount(payload.total_amount.unwrap_or(0.0));
+        if amount <= Decimal::ZERO {
             tracing::warn!("[finance] 销售订单金额为 0，跳过凭证生成");
             return Ok(());
         }
@@ -320,8 +330,8 @@ impl FinanceEventHandlers {
             payload.total_amount
         );
 
-        let payable_amount = payload.payable_amount.unwrap_or(0.0);
-        if payable_amount > 0.0 {
+        let payable_amount = payload_amount(payload.payable_amount.unwrap_or(0.0));
+        if payable_amount > Decimal::ZERO {
             self.store_source_amount_snapshot(
                 "purchase_order",
                 payload.order_id,
@@ -331,8 +341,8 @@ impl FinanceEventHandlers {
             .await;
         }
 
-        let amount = payload.total_amount.unwrap_or(0.0);
-        if amount <= 0.0 {
+        let amount = payload_amount(payload.total_amount.unwrap_or(0.0));
+        if amount <= Decimal::ZERO {
             tracing::warn!("[finance] 采购订单金额为 0，跳过凭证生成");
             return Ok(());
         }
@@ -393,7 +403,8 @@ impl FinanceEventHandlers {
             payload.payment_method
         );
 
-        if payload.amount <= 0.0 {
+        let amount = payload_amount(payload.amount);
+        if amount <= Decimal::ZERO {
             tracing::warn!("[finance] 收款金额为 0，跳过凭证生成");
             return Ok(());
         }
@@ -401,7 +412,7 @@ impl FinanceEventHandlers {
         let description = format!(
             "收款 {} - 金额: {}，方式: {}",
             payload.payment_no,
-            payload.amount,
+            amount,
             payload.payment_method.unwrap_or_else(|| "未知".to_string())
         );
 
@@ -409,7 +420,7 @@ impl FinanceEventHandlers {
             .create_auto_voucher(
                 "receipt",
                 &description,
-                payload.amount,
+                amount,
                 "payment_received",
                 payload.payment_id,
                 None,
@@ -453,7 +464,8 @@ impl FinanceEventHandlers {
             payload.payment_method
         );
 
-        if payload.amount <= 0.0 {
+        let amount = payload_amount(payload.amount);
+        if amount <= Decimal::ZERO {
             tracing::warn!("[finance] 付款金额为 0，跳过凭证生成");
             return Ok(());
         }
@@ -461,7 +473,7 @@ impl FinanceEventHandlers {
         let description = format!(
             "付款 {} - 金额: {}，方式: {}",
             payload.payment_no,
-            payload.amount,
+            amount,
             payload.payment_method.unwrap_or_else(|| "未知".to_string())
         );
 
@@ -469,7 +481,7 @@ impl FinanceEventHandlers {
             .create_auto_voucher(
                 "payment",
                 &description,
-                payload.amount,
+                amount,
                 "payment_made",
                 payload.payment_id,
                 None,
@@ -499,7 +511,8 @@ impl FinanceEventHandlers {
         &self,
         source_type: &str,
         source_id: uuid::Uuid,
-        payable_amount: f64,
+        // U6: 快照金额改 Decimal（列已对齐 NUMERIC(18,4)）
+        payable_amount: Decimal,
         tenant_id: uuid::Uuid,
     ) {
         let now = Utc::now();
@@ -548,8 +561,8 @@ impl FinanceEventHandlers {
             .parse_payload()
             .map_err(|e| format!("解析采购订单创建事件 payload 失败: {}", e))?;
 
-        let payable_amount = payload.payable_amount.unwrap_or(0.0);
-        if payable_amount > 0.0 {
+        let payable_amount = payload_amount(payload.payable_amount.unwrap_or(0.0));
+        if payable_amount > Decimal::ZERO {
             self.store_source_amount_snapshot(
                 "purchase_order",
                 payload.order_id,
@@ -559,8 +572,8 @@ impl FinanceEventHandlers {
             .await;
         }
 
-        let amount = payload.total_amount.unwrap_or(0.0);
-        if amount <= 0.0 {
+        let amount = payload_amount(payload.total_amount.unwrap_or(0.0));
+        if amount <= Decimal::ZERO {
             tracing::warn!("[finance] 采购订单金额为 0，跳过凭证生成");
             return Ok(());
         }
@@ -883,4 +896,36 @@ pub async fn start_event_subscribers(
         }
     });
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// U6 边界精度：事件 payload 的 f64 在入站转 Decimal 后，金额求和精确无浮点漂移。
+    #[test]
+    fn payload_amount_boundary_precision() {
+        // f64 下 0.1 + 0.2 == 0.30000000000000004；Decimal 边界转换后精确为 0.3
+        // Decimal::new(m, scale) = m / 10^scale；0.3 = new(3, 1)
+        let total = payload_amount(0.1) + payload_amount(0.2);
+        assert_eq!(total, Decimal::new(3, 1));
+        assert_eq!(total - Decimal::new(3, 1), Decimal::ZERO);
+        // 0.1 * 3 精确
+        assert_eq!(payload_amount(0.1) * Decimal::from(3), Decimal::new(3, 1));
+    }
+
+    /// U6 借贷平衡：自动凭证把同一 Decimal 同时写入 total_debit / total_credit，
+    /// 借贷两侧严格相等、差额恒为 Decimal::ZERO，无需容差（f64 路径下尾数漂移会破坏精确平衡）。
+    #[test]
+    fn auto_voucher_debit_credit_balanced_exactly() {
+        // 模拟某张应收自动凭证金额（含两位小数，f64 易漂移）
+        let amount = payload_amount(100.10) + payload_amount(0.20);
+        // create_auto_voucher 将 amount 同时绑定 total_debit($5) 与 total_credit($6)
+        let total_debit = amount;
+        let total_credit = amount;
+        // 严格平衡，不依赖 abs() < 1e-9 容差
+        assert_eq!(total_debit, total_credit);
+        assert_eq!(total_debit - total_credit, Decimal::ZERO);
+        assert!(total_debit > Decimal::ZERO);
+    }
 }

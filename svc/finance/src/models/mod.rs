@@ -119,7 +119,8 @@ pub struct Voucher {
     pub month: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(skip)]
-    pub total_amount: Option<f64>,
+    // U6: Voucher 序列化总金额改 Decimal（对齐 total_debit/total_credit 的 Decimal 类型）
+    pub total_amount: Option<Decimal>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[sqlx(skip)]
     pub currency_code: Option<String>,
