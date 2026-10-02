@@ -8,7 +8,7 @@
 
 | 层 | 防线 | 状态 |
 |---|---|---|
-| L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⚠️ 已创建规则但**不生效**：免费个人账户的私有仓库不强制执行分支保护（GitHub 限制）；升级 Team/Enterprise 组织（需 transfer 仓库）后规则自动启用。**当前替代硬闸：降 TRAE 机协作者权限为 Read（权限层拦直接 push，只能走 PR）** |
+| L1 | GitHub 分支保护：main 必须通过 status checks + up-to-date + 禁 bypass | ⚠️ 已创建规则但**不生效**：免费个人账户的私有仓库不强制执行分支保护（GitHub 限制）；升级 Team/Enterprise 组织（需 transfer 仓库）后规则自动启用。**替代硬闸（2026-10-03 实测不可行）：个人私有仓库协作者只能 Write（Read/Triage 仅组织仓库支持，API 422 实锤）——当前实际防线 = L2–L5 + CI 检测 + 快速回滚** |
 | L2 | 本地 push 守卫：stale-base 检查 + cargo check 错误归类 | ✅ 已落地（pre-push 第一道，并入 cargo-check 门禁） |
 | L3 | 开发起点：`scripts/sync_base.sh`（fetch + rebase --no-fork-point + 编译快验） | ✅ 已落地 |
 | L4 | CI 全量验证：Gate L `cargo check --all-targets` + 夜间回归失败自动开 Issue + 环境一致性自检 | ✅ 已落地（2026-10-02） |
@@ -133,15 +133,18 @@ TRAE 机在 doctor 装好本地门禁后，仍基于错误认知推送 8df91e813
    TRAE 机 sccache 0.17 与 rustc 1.95.0 不兼容应改**本机**配置（如
    `~/.cargo/config.toml` 或环境变量），不得改仓库级文件。
 
-**当前账户形态下的最强硬闸（免费私有仓库 L1 不生效）**：
-把 TRAE 机协作者权限降为 **Read**（GitHub → Settings → Collaborators）——
-它无法直接 push main，只能 fork + PR；PR 由 main 维护者审阅、CI 把关，
-坏提交物理上进不了 main。**权限层硬闸 > 门禁纪律**（纪律已被证伪两次）。
-
-> ⚠️ 前提：仓库当前 0 协作者——TRAE 机一直以 paulwy（所有者）身份 push，
-> 所有者不受协作者权限限制。**必须先给 TRAE 机换独立身份**（独立 GitHub 账号 +
-> 独立 SSH key），降 Read 才有效。**完整操作清单见
-> [trae-identity-isolation.md](trae-identity-isolation.md)**。
+**身份隔离已完成（2026-10-02）**：TRAE 机改用独立账号 topmap163 + 独立 SSH key
+（`~/.ssh/id_ed25519_topmap163`，认证实测 `Hi topmap163!`），paulwy 侧加为协作者。
+但 **2026-10-03 实测：免费个人仓库协作者权限只能 Write**——GitHub 官方文档
+（Permission levels for a personal account repository）明确：私有仓库协作者只能授予
+write，不存在 read-only；UI 无 Read 选项 + API `PUT .../collaborators/{user}`
+`permission=read|triage` 均返回 422 "Cannot assign ... permission of read/triage"。
+**结论：权限层硬闸在免费个人仓库物理不可行**——topmap163（TRAE 机作者）与
+hbtykj（真实参与者）均只能为 Write；硬闸目标调整为「本地门禁 + CI 红灯（39 jobs，
+坏提交几分钟内失败）+ 快速回滚（git revert）+ 推送纪律（push 需明确确认）」。
+**彻底硬闸（长期选项）**：升级 GitHub Team（组织）——组织私有仓库支持 Read 角色 +
+分支保护规则（main 必须 status checks + 仅维护者可合入）。操作清单见
+[trae-identity-isolation.md](trae-identity-isolation.md)。
 
 ### 2026-10-02 终局：双锚点漂移（Cargo.lock + .sqlx 缓存从不入库）
 
@@ -174,6 +177,28 @@ TRAE 机在 doctor 装好本地门禁后，仍基于错误认知推送 8df91e813
    + 独立 target（无缓存假象）+ 同一代码——而不是各自声称。
 6. 本次与事故一/二不同：不是推坏代码，而是**环境锚点漂移导致误判循环**——
    锚点入库后环境输入一致，分歧空间归零。
+
+### 2026-10-03 实测补录：免费个人仓库无 Read 协作者（平台限制）
+
+**结论**：free 个人账号私有仓库的协作者**只能 Write**——Read/Triage 角色仅组织
+（Organization）仓库支持。这解释了此前「网页找不到 Read 选项」的现象，并经 API
+实测坐实：
+
+- GitHub Docs（Permission levels for a personal account repository）：
+  "In a private repository, repository owners can only grant write access to
+  collaborators. Collaborators can't have read-only access to repositories owned
+  by a personal account."
+- API 实测（2026-10-03，paulwy 侧 PAT）：`PUT /repos/paulwy/TOPEMS/collaborators/
+  topmap163` 传 `{"permission":"pull"}` / `{"permission":"triage"}` → 422
+  `Cannot assign topmap163 permission of read/triage`；hbtykj 同样被拒。
+- 权限实况（API 复查）：topmap163 = write、hbtykj = write（无法降为只读）。
+
+**防线调整**：权限层硬闸在当前账户形态下不可行 → 有效防线 =
+① 本地门禁（lefthook 21+5 项，L2/L3）
+② CI 39 jobs（坏提交几分钟内红灯，L4）
+③ 快速回滚（git revert / reset，本机留证据链）
+④ 推送纪律（push 需明确确认，TRAE 机约定 fork+PR 优先）。
+**长期彻底方案**：升级 GitHub Team 组织（分支保护 + Read 角色 + main 仅维护者可合入）。
 
 ## 其他
 

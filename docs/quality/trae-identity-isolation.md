@@ -6,6 +6,14 @@
 > 一个**独立身份**：独立 GitHub 账号 + 独立 SSH key + Read 协作者。
 >
 > 适用：免费个人账户私有仓库（L1 分支保护不生效）下的最强替代硬闸。
+>
+> ⚠️ **2026-10-03 实测修正（重要）**：免费个人账户私有仓库的协作者**只能授予
+> Write**——Read/Triage 角色仅组织仓库支持（GitHub 官方文档 + API 实测 422
+> "Cannot assign ... permission of read/triage"）。因此**本清单第 6 步的
+> "角色选 Read" 在当前账户形态下无法实现**，topmap163 实际为 Write（能直接
+> push）。权限层物理硬闸需**升级 GitHub Team 组织**后才成立（组织私有仓库支持
+> Read 角色 + 分支保护）。升级前有效防线 = 本地门禁 + CI 红灯 + 快速回滚 +
+> 推送纪律（详见 git-collab-guide.md「2026-10-03 实测补录」）。
 
 ## 目标效果
 
@@ -62,10 +70,11 @@ ssh -T git@github.com
 # （若仍显示 Hi paulwy!：检查第 4 步的 IdentityFile 与 IdentitiesOnly）
 ```
 
-## 第 6 步：paulwy 把 trae-bot 加为协作者（Read）
+## 第 6 步：paulwy 把 trae-bot 加为协作者（实测：只能 Write）
 
 - paulwy 账号 → GitHub → TOPEMS → Settings → Collaborators → Add people
-- 搜索 trae-bot → 角色选 **Read** → Add
+- 搜索 trae-bot → 角色选 **Write**（⚠️ 2026-10-03 实测：Read 不可分配，API 422
+  "Cannot assign ... permission of read"；Write 是免费个人仓库唯一可选）
 
 ## 第 7 步：TRAE 机验证硬闸生效（push 被拒）
 
@@ -75,6 +84,8 @@ git push --dry-run origin main
 # 应报：remote: Permission to paulwy/TOPEMS.git denied to trae-bot
 #       ! [remote rejected] main -> main (pre-receive hook declined)
 # 这证明权限层硬闸生效——比门禁可靠（物理层拒绝）
+# ⚠️ 2026-10-03 实测：Write 协作者不会报 Permission denied（dry-run 显示
+#    main -> main）。此验证仅在升级 Team 组织（Read 角色）后适用。
 ```
 
 ## 第 8 步：TRAE 机新的协作流程（fork + PR）
