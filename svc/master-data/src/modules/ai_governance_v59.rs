@@ -651,6 +651,14 @@ fn parse_classification_status(s: &str) -> Option<ClassificationStatus> {
 async fn ensure_initialized() {
     let store = get_v59_store();
 
+    // U4：优先从库恢复既有快照；命中则置全部子引擎为已初始化并跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *store.ai.initialized.lock().await = true;
+        *store.matcher.initialized.lock().await = true;
+        *store.classifier.initialized.lock().await = true;
+        return;
+    }
+
     {
         let mut init = store.ai.initialized.lock().await;
         if *init {
@@ -770,6 +778,127 @@ async fn ensure_initialized() {
         *store.classifier.rules.lock().await = seed_rules;
         *init = true;
     }
+
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    use serde_json::Value;
+    let store = get_v59_store();
+    let mut restored = false;
+    if let Some(v) = crate::modules::persist::load::<Vec<GovernanceSuggestionV59>>(
+        "ai_governance_v59",
+        "ai_suggestions",
+    )
+    .await
+    {
+        *store.ai.suggestions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<GovernanceModel>>("ai_governance_v59", "ai_models")
+            .await
+    {
+        *store.ai.models.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<MatchRule>>("ai_governance_v59", "matcher_rules").await
+    {
+        *store.matcher.rules.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<MatchResult>>("ai_governance_v59", "matcher_results")
+            .await
+    {
+        *store.matcher.results.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<ClassificationModel>>(
+        "ai_governance_v59",
+        "classifier_models",
+    )
+    .await
+    {
+        *store.classifier.models.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<ClassificationResult>>(
+        "ai_governance_v59",
+        "classifier_results",
+    )
+    .await
+    {
+        *store.classifier.results.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<Value>>("ai_governance_v59", "classifier_rules").await
+    {
+        *store.classifier.rules.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v59_store();
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "ai_suggestions",
+        &*store.ai.suggestions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "ai_models",
+        &*store.ai.models.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "matcher_rules",
+        &*store.matcher.rules.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "matcher_results",
+        &*store.matcher.results.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "classifier_models",
+        &*store.classifier.models.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "classifier_results",
+        &*store.classifier.results.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "ai_governance_v59",
+        "classifier_rules",
+        &*store.classifier.rules.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v59_store();
+    if !*store.ai.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 请求/响应结构 ====================

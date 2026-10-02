@@ -38,6 +38,9 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("🚀 TOPEMS Master Data Service starting...");
 
+    // U4：注入持久化连接池（v51-v60 MDM 集合快照落库），幂等确保表存在。
+    modules::persist::init(ctx.db.clone()).await;
+
     // 初始化数据库表 + V69.3 Schema 防御
     if let Err(e) = modules::dict::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
     {
@@ -97,6 +100,26 @@ async fn main() -> anyhow::Result<()> {
         "✅ Master Data Service is running at http://0.0.0.0:{}",
         app.port
     );
+
+    // U4：后台近实时 flush——把 10 个 MDM 模块的内存集合快照回写库。
+    // 仅在模块已 load/seed 后生效（各 background_flush 内部按 initialized 门控），
+    // 避免启动空集合覆盖库内既有快照。
+    tokio::spawn(async {
+        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(3));
+        loop {
+            ticker.tick().await;
+            modules::quality_v51::background_flush().await;
+            modules::lineage_v52::background_flush().await;
+            modules::knowledge_v53::background_flush().await;
+            modules::versioning_v54::background_flush().await;
+            modules::commercial_v55::background_flush().await;
+            modules::disaster_v56::background_flush().await;
+            modules::semantic_v57::background_flush().await;
+            modules::governance_v58::background_flush().await;
+            modules::ai_governance_v59::background_flush().await;
+            modules::metadata_v60::background_flush().await;
+        }
+    });
 
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {

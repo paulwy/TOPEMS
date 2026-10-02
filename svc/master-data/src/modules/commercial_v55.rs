@@ -266,6 +266,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now();
     let now_str = now.to_rfc3339();
     let one_month_later = (now + chrono::Duration::days(30)).to_rfc3339();
@@ -402,7 +408,130 @@ async fn ensure_initialized() {
     *store.sla_measurements.lock().await = Vec::new();
     *store.sla_incidents.lock().await = Vec::new();
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    let store = get_v55_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<APIProduct>>("commercial_v55", "api_products").await
+    {
+        *store.api_products.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<Subscription>>("commercial_v55", "subscriptions").await
+    {
+        *store.subscriptions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<UsageRecord>>("commercial_v55", "usage_records").await
+    {
+        *store.usage_records.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<BillingRecord>>("commercial_v55", "billing_records")
+            .await
+    {
+        *store.billing_records.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<RateCard>>("commercial_v55", "rate_cards").await
+    {
+        *store.rate_cards.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<SLAConfig>>("commercial_v55", "sla_configs").await
+    {
+        *store.sla_configs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<SLAMeasurement>>("commercial_v55", "sla_measurements")
+            .await
+    {
+        *store.sla_measurements.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<SLAIncident>>("commercial_v55", "sla_incidents").await
+    {
+        *store.sla_incidents.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v55_store();
+    crate::modules::persist::save(
+        "commercial_v55",
+        "api_products",
+        &*store.api_products.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "subscriptions",
+        &*store.subscriptions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "usage_records",
+        &*store.usage_records.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "billing_records",
+        &*store.billing_records.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "rate_cards",
+        &*store.rate_cards.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "sla_configs",
+        &*store.sla_configs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "sla_measurements",
+        &*store.sla_measurements.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "commercial_v55",
+        "sla_incidents",
+        &*store.sla_incidents.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v55_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 辅助函数 ====================

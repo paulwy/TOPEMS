@@ -943,6 +943,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *init = true;
+        return;
+    }
+
     let now = chrono::Utc::now().to_rfc3339();
 
     let seed_scores = vec![
@@ -1067,7 +1073,166 @@ async fn ensure_initialized() {
 
     *store.products.products.lock().await = seed_products;
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *init = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    let store = get_v58_store();
+    let mut restored = false;
+    if let Some(v) = crate::modules::persist::load::<Vec<MaturityAssessment>>(
+        "governance_v58",
+        "maturity_assessments",
+    )
+    .await
+    {
+        *store.maturity.assessments.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<DimensionScore>>("governance_v58", "dimension_scores")
+            .await
+    {
+        *store.maturity.dimension_scores.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<ImprovementPlan>>("governance_v58", "improvement_plans")
+            .await
+    {
+        *store.maturity.improvement_plans.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<MaturityHistoryEntry>>(
+        "governance_v58",
+        "maturity_history",
+    )
+    .await
+    {
+        *store.maturity.history.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<WorkflowV58>>("governance_v58", "workflows").await
+    {
+        *store.workflow.workflows.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<WorkflowTemplate>>(
+        "governance_v58",
+        "workflow_templates",
+    )
+    .await
+    {
+        *store.workflow.templates.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<WorkflowHistoryEntry>>(
+        "governance_v58",
+        "workflow_history",
+    )
+    .await
+    {
+        *store.workflow.history.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<DataProduct>>("governance_v58", "data_products").await
+    {
+        *store.products.products.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<DataContract>>("governance_v58", "data_contracts").await
+    {
+        *store.products.contracts.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<ApiExposure>>("governance_v58", "api_exposures").await
+    {
+        *store.products.exposures.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v58_store();
+    crate::modules::persist::save(
+        "governance_v58",
+        "maturity_assessments",
+        &*store.maturity.assessments.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "dimension_scores",
+        &*store.maturity.dimension_scores.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "improvement_plans",
+        &*store.maturity.improvement_plans.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "maturity_history",
+        &*store.maturity.history.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "workflows",
+        &*store.workflow.workflows.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "workflow_templates",
+        &*store.workflow.templates.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "workflow_history",
+        &*store.workflow.history.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "data_products",
+        &*store.products.products.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "data_contracts",
+        &*store.products.contracts.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "governance_v58",
+        "api_exposures",
+        &*store.products.exposures.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v58_store();
+    if !*store.maturity.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 请求/响应结构 ====================

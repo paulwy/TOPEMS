@@ -240,21 +240,29 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_no ON public.qa_lab_samples(sample_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_status ON public.qa_lab_samples(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_no ON public.qa_lab_samples(sample_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_samples_status ON public.qa_lab_samples(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_no ON public.qa_lab_tasks(task_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_status ON public.qa_lab_tasks(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_sample ON public.qa_lab_tasks(sample_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_status ON public.qa_lab_tasks(status)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_tasks_sample ON public.qa_lab_tasks(sample_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_records_no ON qa_lab_records(record_no)")
         .execute(pool)
         .await?;

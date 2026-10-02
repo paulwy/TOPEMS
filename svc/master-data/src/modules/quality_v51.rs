@@ -286,6 +286,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照（重启后数据仍在）；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now();
     let now_str = now.to_rfc3339();
 
@@ -473,7 +479,128 @@ async fn ensure_initialized() {
     *store.governance_suggestions.lock().await = suggestions;
     *store.governance_insights.lock().await = insights;
 
+    // U4：首次 seed 后落库，后续重启直接从库恢复。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化（JSONB 快照落 master_data.mdm_collections） ====================
+
+/// 从库恢复各叶子集合；任一命中即视为已恢复。
+async fn persist_load() -> bool {
+    let store = get_quality_v51_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<QualityCheckV51>>("quality_v51", "quality_checks").await
+    {
+        *store.quality_checks.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<QualityRule>>("quality_v51", "quality_rules").await
+    {
+        *store.quality_rules.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<QualityLoopConfig>>(
+        "quality_v51",
+        "quality_loop_configs",
+    )
+    .await
+    {
+        *store.quality_loop_configs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<AutoFixAction>>("quality_v51", "auto_fix_actions").await
+    {
+        *store.auto_fix_actions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<FixStrategy>>("quality_v51", "fix_strategies").await
+    {
+        *store.fix_strategies.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<GovernanceSuggestion>>(
+        "quality_v51",
+        "governance_suggestions",
+    )
+    .await
+    {
+        *store.governance_suggestions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<GovernanceInsight>>(
+        "quality_v51",
+        "governance_insights",
+    )
+    .await
+    {
+        *store.governance_insights.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+/// 把各叶子集合整体快照回写库。
+async fn persist_save() {
+    let store = get_quality_v51_store();
+    crate::modules::persist::save(
+        "quality_v51",
+        "quality_checks",
+        &*store.quality_checks.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "quality_v51",
+        "quality_rules",
+        &*store.quality_rules.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "quality_v51",
+        "quality_loop_configs",
+        &*store.quality_loop_configs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "quality_v51",
+        "auto_fix_actions",
+        &*store.auto_fix_actions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "quality_v51",
+        "fix_strategies",
+        &*store.fix_strategies.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "quality_v51",
+        "governance_suggestions",
+        &*store.governance_suggestions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "quality_v51",
+        "governance_insights",
+        &*store.governance_insights.lock().await,
+    )
+    .await;
+}
+
+/// 后台 flush 入口：仅在模块已 load/seed 后快照回写，避免空集合覆盖库内数据。
+pub async fn background_flush() {
+    let store = get_quality_v51_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 请求/响应结构 ====================

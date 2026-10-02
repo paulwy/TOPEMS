@@ -916,6 +916,14 @@ fn transformation_type_str(t: &TransformationType) -> &str {
 async fn ensure_initialized() {
     let store = get_v60_store();
 
+    // U4：优先从库恢复既有快照；命中则置全部子引擎为已初始化并跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *store.metadata.initialized.lock().await = true;
+        *store.lineage.initialized.lock().await = true;
+        *store.lifecycle.initialized.lock().await = true;
+        return;
+    }
+
     {
         let mut init = store.metadata.initialized.lock().await;
         if *init {
@@ -1017,6 +1025,139 @@ async fn ensure_initialized() {
         *store.lifecycle.current_stages.lock().await = stages;
         *init = true;
     }
+
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    use std::collections::HashMap;
+    let store = get_v60_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<MetadataObject>>("metadata_v60", "objects").await
+    {
+        *store.metadata.objects.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<MetadataAttribute>>("metadata_v60", "attributes").await
+    {
+        *store.metadata.attributes.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<MetadataTag>>("metadata_v60", "tags").await
+    {
+        *store.metadata.tags.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LineageGraph>>("metadata_v60", "lineage_graphs").await
+    {
+        *store.lineage.graphs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LineageNodeV60>>("metadata_v60", "lineage_nodes").await
+    {
+        *store.lineage.nodes.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LineageEdgeV60>>("metadata_v60", "lineage_edges").await
+    {
+        *store.lineage.edges.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LifecyclePolicy>>("metadata_v60", "lifecycle_policies")
+            .await
+    {
+        *store.lifecycle.policies.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LifecycleHistory>>("metadata_v60", "lifecycle_history")
+            .await
+    {
+        *store.lifecycle.history.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<HashMap<String, LifecycleStage>>(
+        "metadata_v60",
+        "current_stages",
+    )
+    .await
+    {
+        *store.lifecycle.current_stages.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v60_store();
+    crate::modules::persist::save(
+        "metadata_v60",
+        "objects",
+        &*store.metadata.objects.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "attributes",
+        &*store.metadata.attributes.lock().await,
+    )
+    .await;
+    crate::modules::persist::save("metadata_v60", "tags", &*store.metadata.tags.lock().await).await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "lineage_graphs",
+        &*store.lineage.graphs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "lineage_nodes",
+        &*store.lineage.nodes.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "lineage_edges",
+        &*store.lineage.edges.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "lifecycle_policies",
+        &*store.lifecycle.policies.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "lifecycle_history",
+        &*store.lifecycle.history.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "metadata_v60",
+        "current_stages",
+        &*store.lifecycle.current_stages.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v60_store();
+    if !*store.metadata.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 请求/响应结构 ====================

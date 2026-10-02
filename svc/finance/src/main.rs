@@ -241,7 +241,12 @@ async fn main() -> anyhow::Result<()> {
         port_env_var: Some("FINANCE_PORT"),
         max_db_connections: 20,
         enable_events: true,
-        enable_rls: false,
+        // U5（FCRM-02/XCUT-06）：开启 RLS 中间件。finance schema 业务表已由迁移
+        // 20261003000001 启用 RLS + FORCE + rls_tenant_isolation 策略；
+        // 运行时 NOSUPERUSER 角色（topems_app）下，策略按 app.tenant_id 过滤，
+        // 跨租户行不可见。GUC 未设置时策略全放行（向后兼容系统/事件/健康查询）。
+        // 注：RLS 为纵深防御，主防线仍为业务 SQL 显式 tenant_id 过滤。
+        enable_rls: true,
         api_prefix: "/api/finance",
         legacy_prefixes: &["/api/v1/finance", "/api/core/finance/v1"],
         ..Default::default()

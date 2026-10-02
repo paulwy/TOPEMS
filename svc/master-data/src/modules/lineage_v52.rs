@@ -216,6 +216,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now().to_rfc3339();
 
     let nodes = vec![
@@ -350,7 +356,132 @@ async fn ensure_initialized() {
     *store.lineage_graphs.lock().await = vec![graph];
     *store.propagation_rules.lock().await = rules;
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    let store = get_lineage_v52_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LineageNode>>("lineage_v52", "lineage_nodes").await
+    {
+        *store.lineage_nodes.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LineageEdge>>("lineage_v52", "lineage_edges").await
+    {
+        *store.lineage_edges.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<LineageGraph>>("lineage_v52", "lineage_graphs").await
+    {
+        *store.lineage_graphs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<ImpactAnalysisResult>>("lineage_v52", "impact_analyses")
+            .await
+    {
+        *store.impact_analyses.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<ImpactSimulation>>("lineage_v52", "impact_simulations")
+            .await
+    {
+        *store.impact_simulations.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<ChangeEvent>>("lineage_v52", "change_events").await
+    {
+        *store.change_events.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<PropagationRule>>("lineage_v52", "propagation_rules")
+            .await
+    {
+        *store.propagation_rules.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<PropagationLog>>("lineage_v52", "propagation_logs")
+            .await
+    {
+        *store.propagation_logs.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_lineage_v52_store();
+    crate::modules::persist::save(
+        "lineage_v52",
+        "lineage_nodes",
+        &*store.lineage_nodes.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "lineage_edges",
+        &*store.lineage_edges.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "lineage_graphs",
+        &*store.lineage_graphs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "impact_analyses",
+        &*store.impact_analyses.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "impact_simulations",
+        &*store.impact_simulations.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "change_events",
+        &*store.change_events.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "propagation_rules",
+        &*store.propagation_rules.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "lineage_v52",
+        "propagation_logs",
+        &*store.propagation_logs.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_lineage_v52_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 内部辅助函数 ====================

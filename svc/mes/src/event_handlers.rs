@@ -93,6 +93,10 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
         .await
         .map_err(|e| format!("设置 nil 租户上下文失败: {}", e))?;
 
+    // f64→i32 无 TryFrom 实现；生产订单数量在 i32 合理范围，截断后转换（cast deny 受控点）
+    #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
+    let quantity_i32 = payload.quantity.unwrap_or(0.0).trunc() as i32;
+
     sqlx::query(
         r#"INSERT INTO production_orders (
                order_number, product_name, product_code, quantity,
@@ -104,7 +108,7 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
     .bind(&order_no)
     .bind(payload.product_name.unwrap_or_default())
     .bind(payload.product_code.unwrap_or_default())
-    .bind(i32::try_from(payload.quantity.unwrap_or(0.0).trunc()).unwrap_or(0))
+    .bind(quantity_i32)
     .bind(payload.erp_order_id.to_string())
     .bind(&payload.order_no)
     .bind(planned_start.date_naive())

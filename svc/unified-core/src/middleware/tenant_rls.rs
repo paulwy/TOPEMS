@@ -5,7 +5,6 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use sqlx::PgPool;
 use topems_shared_auth::auth::{verify_jwt_token, Claims};
 
 use crate::AppState;
@@ -134,6 +133,24 @@ mod tests {
         let tenant_id = TenantId("test-tenant".to_string());
         assert_eq!(tenant_id.0, "test-tenant");
     }
+
+    #[test]
+    fn test_rls_tenant_value_normal_user_uses_real_tenant() {
+        // 普通用户：GUC 写入真实 tenant_id，RLS 据此过滤
+        assert_eq!(rls_tenant_value("tenant-abc", false), "tenant-abc");
+    }
+
+    #[test]
+    fn test_rls_tenant_value_superuser_uses_empty() {
+        // superuser：GUC 置空 → 策略空分支放行全量，避免被零值租户误拦
+        assert_eq!(rls_tenant_value("tenant-abc", true), "");
+    }
+
+    #[test]
+    fn test_rls_tenant_value_empty_for_reset_semantics() {
+        // 归还连接前传 "" 清空：与 superuser/无租户分支一致，保证归还连接 app.tenant_id 为空
+        assert_eq!(rls_tenant_value("anything", true), "");
+    }
 }
 
 pub const X_TENANT_ID: &str = "x-tenant-id";
@@ -167,11 +184,37 @@ fn resolve_claims(req: &mut Request<Body>, jwt_secret: &str) -> Option<Claims> {
     Some(claims)
 }
 
-async fn set_rls_policy(pool: &PgPool, tenant_id: &str) -> Result<(), sqlx::Error> {
-    // is_local=false：会话级（autocommit 查询事务结束后仍生效）
+/// 决定写入会话 GUC `app.tenant_id` 的值（CORE-06 修复配套纯函数，便于单测）。
+///
+/// - superuser：返回空串 `""`。策略的空分支放行全量，避免 superuser 被零值租户误拦；
+/// - 普通用户：返回其真实 tenant_id，DB 层 RLS 据此做纵深过滤。
+///
+/// 注意：DB 行级 RLS 在池化下仅为纵深防御（业务查询可能借另一连接），主防线仍是
+/// 业务 SQL 显式 `WHERE tenant_id = $1`（以及写路径的事务级 `set_config(..., true)`）。
+fn rls_tenant_value(tenant_id: &str, is_superuser: bool) -> String {
+    if is_superuser {
+        String::new()
+    } else {
+        tenant_id.to_string()
+    }
+}
+
+/// 在【指定的、本请求独占的连接】上设置租户上下文。
+///
+/// CORE-06 根因：旧实现 `set_config(..., false)` 直接作用于 `&PgPool`，sqlx 会随机借取
+/// 一条池连接——(a) 业务 handler 后续查询可能借到另一条连接，GUC 不生效；(b) 会话级 GUC
+/// 在该连接归还后残留，污染后续请求。
+///
+/// 修复：调用方先 `pool.acquire()` 独占一条连接贯穿本请求，在其上 set；请求结束后在
+/// 【同一连接】再次调用本函数传 `""` 显式清空，再归还连接池 → 归还连接不残留会话租户状态。
+async fn set_rls_policy_conn(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
+    tenant_id: &str,
+) -> Result<(), sqlx::Error> {
+    // is_local=false：会话级。仅作用于本请求独占连接，且请求结束后显式清空，不污染池。
     sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
         .bind(tenant_id)
-        .execute(pool)
+        .execute(&mut **conn)
         .await?;
 
     Ok(())
@@ -211,18 +254,32 @@ pub async fn tenant_rls_middleware(
 
     match tenant_id {
         Some(tenant_id) => {
-            // superuser：不设置 GUC（连接保持空 → 策略空分支放行全量），避免零值误拦；
-            // 普通用户：设置实际租户（SQL 层显式租户条件是主防线，RLS 作纵深防御）
+            // superuser：置空 GUC（策略空分支放行全量），避免零值误拦；
+            // 普通用户：置实际租户（SQL 层显式租户条件是主防线，RLS 作纵深防御）
             let is_superuser = req
                 .extensions()
                 .get::<Claims>()
                 .map(|c| c.is_superuser)
                 .unwrap_or(false);
-            // set_config 的 is_local=false 为会话级：GUC 在连接上持久残留，
-            // 连接复用会污染后续请求。因此每个请求都必须显式设置/重置：
-            // 普通用户 set 实际租户；superuser set 空字符串（策略空分支放行全量）。
-            let rls_tenant = if is_superuser { "" } else { tenant_id.as_str() };
-            if let Err(e) = set_rls_policy(&state.pool, rls_tenant).await {
+            let rls_tenant = rls_tenant_value(&tenant_id, is_superuser);
+
+            // CORE-06 修复：acquire 独占本请求连接，在其上设置租户上下文；请求结束后在
+            // 【同一连接】显式清空 app.tenant_id 再归还连接池。
+            // 不再对 &PgPool 随机借连接 set 会话级 GUC（旧实现：借连接不保证生效 + 归还残留污染）。
+            let mut conn = match state.pool.acquire().await {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to acquire DB connection for RLS: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"内部服务器错误：无法获取数据库连接","code":500}"#,
+                    )
+                        .into_response();
+                }
+            };
+
+            if let Err(e) = set_rls_policy_conn(&mut conn, &rls_tenant).await {
                 tracing::error!("Failed to set RLS policy: {}", e);
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
@@ -240,18 +297,23 @@ pub async fn tenant_rls_middleware(
                 tenant_id
             );
 
-            next.run(req).await
+            let resp = next.run(req).await;
+
+            // 归还前显式清空：保证连接归还连接池时 app.tenant_id=''（干净），不残留上一位租户
+            if let Err(e) = set_rls_policy_conn(&mut conn, "").await {
+                tracing::error!("Failed to reset RLS policy on connection return: {}", e);
+            }
+            drop(conn); // 归还连接池（此时已清空会话租户状态）
+
+            resp
         }
         None => {
             tracing::warn!("No tenant_id found in request: {}", path);
 
             req.extensions_mut().insert(TenantId("default".to_string()));
 
-            // 清理会话级租户上下文，避免连接池复用残留上一位租户
-            if let Err(e) = set_rls_policy(&state.pool, "").await {
-                tracing::error!("Failed to clear RLS policy: {}", e);
-            }
-
+            // 本分支不触碰连接池：带租户请求已在其独占连接上 set 后显式清空，
+            // 归还连接均为干净状态，无需再随机借连接去“清场”。
             next.run(req).await
         }
     }

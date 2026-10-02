@@ -186,6 +186,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now().to_rfc3339();
 
     let nodes = vec![
@@ -477,7 +483,114 @@ async fn ensure_initialized() {
     *store.asset_categories.lock().await = categories;
     *store.search_index.lock().await = search_index;
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    use std::collections::HashMap;
+    let store = get_knowledge_v53_store();
+    let mut restored = false;
+    if let Some(v) = crate::modules::persist::load::<Vec<KGNode>>("knowledge_v53", "kg_nodes").await
+    {
+        *store.kg_nodes.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<KGEdge>>("knowledge_v53", "kg_edges").await
+    {
+        *store.kg_edges.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<KnowledgeGraph>>("knowledge_v53", "kg_graphs").await
+    {
+        *store.kg_graphs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<Recommendation>>("knowledge_v53", "recommendations")
+            .await
+    {
+        *store.recommendations.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<InteractionRecord>>("knowledge_v53", "interactions")
+            .await
+    {
+        *store.interactions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<DataAsset>>("knowledge_v53", "assets").await
+    {
+        *store.assets.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<AssetCategory>>("knowledge_v53", "asset_categories")
+            .await
+    {
+        *store.asset_categories.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<HashMap<String, Vec<String>>>(
+        "knowledge_v53",
+        "search_index",
+    )
+    .await
+    {
+        *store.search_index.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_knowledge_v53_store();
+    crate::modules::persist::save("knowledge_v53", "kg_nodes", &*store.kg_nodes.lock().await).await;
+    crate::modules::persist::save("knowledge_v53", "kg_edges", &*store.kg_edges.lock().await).await;
+    crate::modules::persist::save("knowledge_v53", "kg_graphs", &*store.kg_graphs.lock().await)
+        .await;
+    crate::modules::persist::save(
+        "knowledge_v53",
+        "recommendations",
+        &*store.recommendations.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "knowledge_v53",
+        "interactions",
+        &*store.interactions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save("knowledge_v53", "assets", &*store.assets.lock().await).await;
+    crate::modules::persist::save(
+        "knowledge_v53",
+        "asset_categories",
+        &*store.asset_categories.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "knowledge_v53",
+        "search_index",
+        &*store.search_index.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_knowledge_v53_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 内部辅助函数 ====================

@@ -242,6 +242,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now();
     let now_str = now.to_rfc3339();
 
@@ -383,7 +389,128 @@ async fn ensure_initialized() {
     *store.replication_configs.lock().await = vec![replication];
     *store.failover_records.lock().await = Vec::new();
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    let store = get_v56_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<RecoveryPoint>>("disaster_v56", "recovery_points").await
+    {
+        *store.recovery_points.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<RecoveryPlan>>("disaster_v56", "recovery_plans").await
+    {
+        *store.recovery_plans.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<ContinuityPlan>>("disaster_v56", "continuity_plans")
+            .await
+    {
+        *store.continuity_plans.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<CriticalFunction>>("disaster_v56", "critical_functions")
+            .await
+    {
+        *store.critical_functions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<BCTest>>("disaster_v56", "bc_tests").await
+    {
+        *store.bc_tests.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<RegionConfig>>("disaster_v56", "region_configs").await
+    {
+        *store.region_configs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<ReplicationConfig>>(
+        "disaster_v56",
+        "replication_configs",
+    )
+    .await
+    {
+        *store.replication_configs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<FailoverRecord>>("disaster_v56", "failover_records")
+            .await
+    {
+        *store.failover_records.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v56_store();
+    crate::modules::persist::save(
+        "disaster_v56",
+        "recovery_points",
+        &*store.recovery_points.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "disaster_v56",
+        "recovery_plans",
+        &*store.recovery_plans.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "disaster_v56",
+        "continuity_plans",
+        &*store.continuity_plans.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "disaster_v56",
+        "critical_functions",
+        &*store.critical_functions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save("disaster_v56", "bc_tests", &*store.bc_tests.lock().await).await;
+    crate::modules::persist::save(
+        "disaster_v56",
+        "region_configs",
+        &*store.region_configs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "disaster_v56",
+        "replication_configs",
+        &*store.replication_configs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "disaster_v56",
+        "failover_records",
+        &*store.failover_records.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v56_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 辅助函数 ====================

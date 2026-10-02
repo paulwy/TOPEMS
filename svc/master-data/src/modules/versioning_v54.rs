@@ -323,6 +323,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now();
     let now_str = now.to_rfc3339();
 
@@ -430,7 +436,124 @@ async fn ensure_initialized() {
     *store.data_permissions.lock().await = vec![perm];
     *store.user_role_assignments.lock().await = vec![user_assign];
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    let store = get_v54_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<VersionSnapshot>>("versioning_v54", "version_snapshots")
+            .await
+    {
+        *store.version_snapshots.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<VersionBranch>>("versioning_v54", "version_branches")
+            .await
+    {
+        *store.version_branches.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<AuditEvent>>("versioning_v54", "audit_events").await
+    {
+        *store.audit_events.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<AuditExportLog>>("versioning_v54", "audit_export_logs")
+            .await
+    {
+        *store.audit_export_logs.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<PermissionRole>>("versioning_v54", "permission_roles")
+            .await
+    {
+        *store.permission_roles.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<DataPermission>>("versioning_v54", "data_permissions")
+            .await
+    {
+        *store.data_permissions.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<UserRoleAssignment>>(
+        "versioning_v54",
+        "user_role_assignments",
+    )
+    .await
+    {
+        *store.user_role_assignments.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v54_store();
+    crate::modules::persist::save(
+        "versioning_v54",
+        "version_snapshots",
+        &*store.version_snapshots.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "versioning_v54",
+        "version_branches",
+        &*store.version_branches.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "versioning_v54",
+        "audit_events",
+        &*store.audit_events.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "versioning_v54",
+        "audit_export_logs",
+        &*store.audit_export_logs.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "versioning_v54",
+        "permission_roles",
+        &*store.permission_roles.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "versioning_v54",
+        "data_permissions",
+        &*store.data_permissions.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "versioning_v54",
+        "user_role_assignments",
+        &*store.user_role_assignments.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v54_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 请求/响应结构 ====================

@@ -740,6 +740,12 @@ async fn ensure_initialized() {
         return;
     }
 
+    // U4：优先从库恢复既有快照；命中则跳过 demo seed 与社区检测。
+    if crate::modules::persist::enabled() && persist_load().await {
+        *initialized = true;
+        return;
+    }
+
     let now = chrono::Utc::now().to_rfc3339();
 
     // --- 图谱种子数据 ---
@@ -941,7 +947,130 @@ async fn ensure_initialized() {
     // 执行初始社区检测
     store.graph.detect_communities().await;
 
+    // U4：首次 seed 后落库。
+    if crate::modules::persist::enabled() {
+        persist_save().await;
+    }
+
     *initialized = true;
+}
+
+// ==================== U4 持久化 ====================
+
+async fn persist_load() -> bool {
+    use serde_json::Value;
+    let store = get_v57_store();
+    let mut restored = false;
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<GraphNodeV57>>("semantic_v57", "graph_nodes").await
+    {
+        *store.graph.nodes.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<GraphEdgeV57>>("semantic_v57", "graph_edges").await
+    {
+        *store.graph.edges.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<GraphCommunity>>("semantic_v57", "graph_communities")
+            .await
+    {
+        *store.graph.communities.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<SearchIndex>>("semantic_v57", "search_indexes").await
+    {
+        *store.search.indexes.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<Value>>("semantic_v57", "search_history").await
+    {
+        *store.search.history.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) = crate::modules::persist::load::<Vec<Tag>>("semantic_v57", "tagger_tags").await
+    {
+        *store.tagger.tags.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<TagRule>>("semantic_v57", "tagger_rules").await
+    {
+        *store.tagger.rules.lock().await = v;
+        restored = true;
+    }
+    if let Some(v) =
+        crate::modules::persist::load::<Vec<TaggedEntity>>("semantic_v57", "tagger_tagged_entities")
+            .await
+    {
+        *store.tagger.tagged_entities.lock().await = v;
+        restored = true;
+    }
+    restored
+}
+
+async fn persist_save() {
+    let store = get_v57_store();
+    crate::modules::persist::save(
+        "semantic_v57",
+        "graph_nodes",
+        &*store.graph.nodes.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "graph_edges",
+        &*store.graph.edges.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "graph_communities",
+        &*store.graph.communities.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "search_indexes",
+        &*store.search.indexes.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "search_history",
+        &*store.search.history.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "tagger_tags",
+        &*store.tagger.tags.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "tagger_rules",
+        &*store.tagger.rules.lock().await,
+    )
+    .await;
+    crate::modules::persist::save(
+        "semantic_v57",
+        "tagger_tagged_entities",
+        &*store.tagger.tagged_entities.lock().await,
+    )
+    .await;
+}
+
+pub async fn background_flush() {
+    let store = get_v57_store();
+    if !*store.initialized.lock().await {
+        return;
+    }
+    persist_save().await;
 }
 
 // ==================== 请求/响应结构 ====================
