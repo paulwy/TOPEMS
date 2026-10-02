@@ -83,7 +83,10 @@ pub async fn list_audit_logs(
         SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id::text, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM public.audit_logs
+        -- U12: 读归位 crm 自有 schema（原误读 public.audit_logs 平台公共表，与下方写路径
+        -- SchemaAwareAuditLogService::new(db, Some("crm")) 写入 crm.audit_logs 错位；
+        -- 对齐 mes/hrm/erp/rd 兄弟服务“读自己 schema audit_logs”的既有模式）。
+        FROM crm.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
           AND ($3::text IS NULL OR user_id::text = $3)
@@ -109,7 +112,8 @@ pub async fn list_audit_logs(
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM public.audit_logs
+                -- U12: 同 list 查询，读 crm.audit_logs（见上注释）
+                SELECT COUNT(*) FROM crm.audit_logs
                 WHERE ($1::text IS NULL OR action = $1)
                   AND ($2::text IS NULL OR entity_type = $2)
                   AND ($3::text IS NULL OR user_id::text = $3)
@@ -179,7 +183,8 @@ pub async fn get_audit_log(
         SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
                user_id::text, user_name, request_details, response_details,
                status, error_message, ip_address, user_agent, created_at
-        FROM public.audit_logs WHERE id = $1
+        -- U12: 读归位 crm.audit_logs（见 list_audit_logs 注释）
+        FROM crm.audit_logs WHERE id = $1
         "#,
     )
     .bind(id)
@@ -222,9 +227,11 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
         .map(|s| s.to_string());
 
     // P1-3 migration: inner INSERT SQL delegated to shared-db
-    // SchemaAwareAuditLogService so the 13-col insert stays in sync with
-    // public.audit_logs automatically. The crm table layout is the
-    // exact Cluster-A 15-col standard, so no column mapping is needed.
+    // SchemaAwareAuditLogService so the 13-col insert is maintained in one place.
+    // schema_prefix = Some("crm") → writes crm.audit_logs (NOT public.audit_logs).
+    // crm.audit_logs is the exact Cluster-A 15-col standard (see
+    // svc/crm/src/schema_defense.rs TABLE_DEFS), so no column mapping is needed.
+    // U12: 读路径（list/get_audit_log）已同步改读 crm.audit_logs，读写同表。
     let mut req = CreateAuditLogRequest::new(action, entity_type, status);
     if let Some(eid) = entity_id {
         req = req.with_entity_id(eid);
