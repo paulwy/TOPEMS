@@ -61,13 +61,7 @@
     "integration": {
       "schema": "integration",
       "search_path": "integration, public",
-      "allow": [
-        "qms",
-        "ehs"
-      ],
-      "allow_temporary": true,
-      "allow_reason": "integration 跨域同步中枢直写 qms.*/ehs.*（svc/integration/src/qms_lims_ehs.rs 共 9 处 INSERT/UPDATE，当前 7 个业务事件 handle 未接线=死代码）；改走服务 API/事件前保留。",
-      "allow_decision": "D3 §5.1 选项A（改走 API/事件）→ 阶段2 U3.3 删除直写、U3.4 撤销本 allow"
+      "allow": []
     },
     "lims": {
       "schema": "lims",
