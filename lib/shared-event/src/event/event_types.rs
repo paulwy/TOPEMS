@@ -186,7 +186,21 @@ pub enum EventType {
     SettlementRejected,
 
     // Payroll 凭证跨域事件（hrm 发工资核算完成事件 → erp 消费生成凭证）
-    HrmPayrollVoucherRequested,
+    // D2 调用环消除（U2 环1 决策 C）：hrm→erp 工资凭证由同步 HTTP 改为本领域事件，
+    // 幂等键 payroll_run_id；原名 HrmPayrollVoucherRequested，按"域前缀+动作"规范更正为本名。
+    HrmPayrollPosted,
+
+    // 生产订单下达跨域事件（D2 U2 环2 决策 A：erp→mes 工单下达由同步 HTTP 改事件）
+    // 幂等键 erp_order_id（erp 生产订单 ID / 下达批次）
+    ErpProductionOrderDispatched,
+
+    // 报工进度回传跨域事件（D2 U2 环2 决策 A：mes→erp 报工进度由同步 HTTP 改事件）
+    // 幂等键 work_report_id
+    MesWorkReportSubmitted,
+
+    // 用户偏好变更事件（D2 U2 环3 决策 C：偏好主数据本地化到 unified-core IAM 域后发布，
+    // 供 portal 只读代理/缓存失效）
+    IamUserPreferencesUpdated,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -278,6 +292,8 @@ pub struct HrmDepartmentDeletedPayload {
 }
 
 // --- Payroll Voucher Events（hrm 薪资核算完成 → erp 生成凭证）---
+// D2 U2 环1：hrm 工资过账后发布本事件，erp 订阅生成总账凭证。
+// 幂等键 = payroll_run_id（erp 侧按 (source_system='HRM', source_id=payroll_run_id) 去重）。
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HrmPayrollVoucherEntryPayload {
@@ -289,7 +305,8 @@ pub struct HrmPayrollVoucherEntryPayload {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HrmPayrollVoucherRequestedPayload {
+pub struct HrmPayrollPostedPayload {
+    /// 幂等键：工资核算批次 ID（erp 侧按此去重，重复发放不重复建证）
     pub payroll_run_id: Uuid,
     pub pay_period: String,
     pub voucher_date: DateTime<Utc>,
@@ -306,6 +323,61 @@ pub struct HrmPayrollVoucherRequestedPayload {
     pub net_salary: f64,
     pub employee_count: i32,
     pub entries: Vec<HrmPayrollVoucherEntryPayload>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
+}
+
+// --- 生产订单下达事件（erp → mes，D2 U2 环2 决策 A）---
+// erp 生产订单状态变为 approved（下达）后发布，mes 订阅创建生产工单。
+// 幂等键 = erp_order_id（mes 侧按 source_order_id 唯一映射去重）。
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpProductionOrderDispatchedPayload {
+    /// 幂等键：erp 生产订单 ID
+    pub erp_order_id: Uuid,
+    pub order_no: String,
+    pub product_id: Option<Uuid>,
+    pub product_name: Option<String>,
+    pub product_code: Option<String>,
+    pub quantity: Option<f64>,
+    pub workshop_id: Option<Uuid>,
+    pub workshop_name: Option<String>,
+    pub priority: Option<String>,
+    pub planned_start_date: Option<DateTime<Utc>>,
+    pub planned_end_date: Option<DateTime<Utc>>,
+    pub notes: Option<String>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
+}
+
+// --- 报工进度回传事件（mes → erp，D2 U2 环2 决策 A）---
+// mes 报工后发布，erp 订阅更新生产订单完成数量/进度。
+// 幂等键 = work_report_id（erp 侧按 (source_system='MES', source_id=work_report_id) 去重）。
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MesWorkReportSubmittedPayload {
+    /// 幂等键：报工单 ID
+    pub work_report_id: Uuid,
+    pub report_no: Option<String>,
+    /// mes 侧工单 ID（mes.production_orders.id）
+    pub mes_order_id: Option<Uuid>,
+    /// erp 侧生产订单 ID（由 mes 经 source_order_id 反查得到；缺失则 erp 侧按 mes_order_id 反查）
+    pub erp_order_id: Option<Uuid>,
+    pub completed_quantity: Option<f64>,
+    pub status: Option<String>,
+    pub reported_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub tenant_id: Option<Uuid>,
+}
+
+// --- 用户偏好变更事件（unified-core IAM → portal/缓存，D2 U2 环3 决策 C）---
+// 偏好主数据本地化到 IAM 域后，更新偏好时发布本事件供只读代理/缓存失效。
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IamUserPreferencesUpdatedPayload {
+    pub user_id: Uuid,
+    pub updated_keys: Vec<String>,
+    pub changed_at: Option<DateTime<Utc>>,
     #[serde(default)]
     pub tenant_id: Option<Uuid>,
 }
@@ -1759,5 +1831,96 @@ mod tests {
         let back: StockInboundPayload = serde_json::from_str(&json).unwrap();
         assert_eq!(back.inbound_no, "IN-2026-001");
         assert_eq!(back.material_name.as_deref(), Some("Steel Bar"));
+    }
+
+    // --- D2 U2 调用环消除新增事件（环1/环2/环3）---
+
+    #[test]
+    fn hrm_payroll_posted_roundtrip_and_idempotency_key() {
+        let run_id = Uuid::new_v4();
+        let p = HrmPayrollPostedPayload {
+            payroll_run_id: run_id,
+            pay_period: "2026-09".into(),
+            voucher_date: Utc::now(),
+            period: "2026-09".into(),
+            voucher_number: "HRM-V-202609-0001".into(),
+            summary: "9月工资".into(),
+            maker_id: None,
+            maker_name: "hrm".into(),
+            department_id: Uuid::nil(),
+            total_gross: 100000.0,
+            total_tax: 5000.0,
+            total_social_security: 8000.0,
+            total_housing_fund: 6000.0,
+            net_salary: 81000.0,
+            employee_count: 10,
+            entries: vec![],
+            tenant_id: None,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: HrmPayrollPostedPayload = serde_json::from_str(&json).unwrap();
+        // 幂等键 payroll_run_id 往返不变（erp 侧据此去重）
+        assert_eq!(back.payroll_run_id, run_id);
+        assert_eq!(back.voucher_number, "HRM-V-202609-0001");
+    }
+
+    #[test]
+    fn erp_production_order_dispatched_roundtrip_and_idempotency_key() {
+        let order_id = Uuid::new_v4();
+        let p = ErpProductionOrderDispatchedPayload {
+            erp_order_id: order_id,
+            order_no: "ERP-WO-0001".into(),
+            product_id: Some(Uuid::new_v4()),
+            product_name: Some("Widget".into()),
+            product_code: Some("W-1".into()),
+            quantity: Some(100.0),
+            workshop_id: None,
+            workshop_name: Some("一车间".into()),
+            priority: Some("high".into()),
+            planned_start_date: None,
+            planned_end_date: None,
+            notes: None,
+            tenant_id: None,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: ErpProductionOrderDispatchedPayload = serde_json::from_str(&json).unwrap();
+        // 幂等键 erp_order_id 往返不变（mes 侧按 source_order_id 唯一映射去重）
+        assert_eq!(back.erp_order_id, order_id);
+        assert_eq!(back.order_no, "ERP-WO-0001");
+    }
+
+    #[test]
+    fn mes_work_report_submitted_roundtrip_and_idempotency_key() {
+        let report_id = Uuid::new_v4();
+        let p = MesWorkReportSubmittedPayload {
+            work_report_id: report_id,
+            report_no: Some("MR-0001".into()),
+            mes_order_id: Some(Uuid::new_v4()),
+            erp_order_id: Some(Uuid::new_v4()),
+            completed_quantity: Some(42.0),
+            status: Some("completed".into()),
+            reported_at: None,
+            tenant_id: None,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: MesWorkReportSubmittedPayload = serde_json::from_str(&json).unwrap();
+        // 幂等键 work_report_id 往返不变（erp.event_idempotency 账本据此去重）
+        assert_eq!(back.work_report_id, report_id);
+        assert_eq!(back.completed_quantity, Some(42.0));
+    }
+
+    #[test]
+    fn iam_user_preferences_updated_roundtrip() {
+        let uid = Uuid::new_v4();
+        let p = IamUserPreferencesUpdatedPayload {
+            user_id: uid,
+            updated_keys: vec!["language".into(), "timezone".into()],
+            changed_at: Some(Utc::now()),
+            tenant_id: None,
+        };
+        let json = serde_json::to_string(&p).unwrap();
+        let back: IamUserPreferencesUpdatedPayload = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.user_id, uid);
+        assert_eq!(back.updated_keys.len(), 2);
     }
 }

@@ -216,6 +216,24 @@ TOPEMS 采用事件驱动架构（EDA）实现微服务间的松耦合通信。
 | `FinanceAccountingPeriodClosed` | `FinanceAccountingPeriodClosedPayload` | Finance | ⚠️ 文档声称未实现 |
 | `FinanceJournalEntryCreated` | `FinanceJournalEntryCreatedPayload` | Finance | ⚠️ 文档声称未实现 |
 
+### 3.11 调用环消除事件（D2 U2，2026-10-03 新增）
+
+> 依据 [D2 调用环消除策略决策](./decision-d2-call-cycle-elimination.md) §6 U2。把 erp↔hrm、erp↔mes 两条 HTTP 环的写边、以及 portal↔unified-core 偏好回调，统一改为"域前缀+动作"命名的领域事件。发布/订阅/幂等键/DLQ 如下；DLQ 机制复用 §4.5（XADD/XREADGROUP/XACK + `topems:dlq` + `retry_count`）。
+
+| 事件类型 | Payload | 发布者 | 订阅者 | 幂等键 | DLQ 兜底 |
+|---------|---------|--------|--------|--------|---------|
+| `HrmPayrollPosted` | `HrmPayrollPostedPayload` | HRM（工资过账后） | ERP（生成总账凭证） | `payroll_run_id`（erp 按 `source_system='HRM' AND source_id=payroll_run_id` 去重） | erp handler 返回 Err → `topems:dlq`，retry_count 累加，恢复后按幂等键收敛 |
+| `ErpProductionOrderDispatched` | `ErpProductionOrderDispatchedPayload` | ERP（订单 approved 下达） | MES（创建生产工单，保留 `source_order_id` 映射） | `erp_order_id`（mes 按 `production_orders.source_order_id` 唯一映射去重） | mes handler 返回 Err → `topems:dlq` |
+| `MesWorkReportSubmitted` | `MesWorkReportSubmittedPayload` | MES（报工后） | ERP（更新 `erp_production_orders.completed_quantity`） | `work_report_id`（erp `erp.event_idempotency` 账本 `INSERT ... ON CONFLICT DO NOTHING`） | erp handler 返回 Err → `topems:dlq` |
+| `IamUserPreferencesUpdated` | `IamUserPreferencesUpdatedPayload` | unified-core IAM（偏好更新后） | Portal（只读代理/缓存失效，订阅接线中） | `user_id + updated_keys`（偏好 upsert 天然幂等） | 订阅接线后走标准 DLQ |
+
+**命名规范落地**：本表事件统一按 D2"域前缀 + 动作"命名（`ErpProductionOrderDispatched` / `MesWorkReportSubmitted` / `HrmPayrollPosted` / `IamUserPreferencesUpdated`），替代旧无前缀/漂移名（环1 原名 `HrmPayrollVoucherRequested` 已更正为 `HrmPayrollPosted`）。
+
+**环破除对照**：
+- 环1 erp↔hrm：hrm→erp 工资凭证写由同步 HTTP（`POST /api/erp/vouchers`）改为 `HrmPayrollPosted`；erp→hrm 通讯录只读查询保留（白名单，见 `svc/erp/src/modules/addressbook.rs` 注释，D2 决策 C）。
+- 环2 erp↔mes：erp→mes 工单下达、mes→erp 报工回传均由 spawn 同步 HTTP 改为双向事件（决策 A）。
+- 环3 portal↔unified-core：偏好主数据本地化到 unified-core `core.user_preferences`，删除 unified-core→portal 回调；portal 偏好接口改只读代理 unified-core（停 portal 不影响 unified-core 偏好读写）。
+
 ## 4. 核心组件
 
 ### 4.1 Event 结构体
