@@ -2,19 +2,41 @@ use crate::AppState;
 use axum::Extension;
 use axum::{extract::State, Json};
 use topems_shared_auth::auth::Claims;
-use topems_shared_auth::service::issue_service_token;
 
 use super::models::{UserResponse, UserRow};
+
+/// D2 U2 环3（决策 C）：用户偏好主数据本地化到 unified-core IAM 域（`core.user_preferences`）。
+///
+/// 原实现 `call_portal_preferences()` 回调 portal 的 `/api/portal/preferences`，使 unified-core
+/// 的偏好读写依赖 portal 在线，与 portal→unified-core 的 IAM 聚合构成双向 HTTP 环。
+/// 本地化后：偏好读写直读本库，**停掉 portal 不影响偏好接口**（无任何对 portal 的运行时调用）；
+/// portal 侧偏好接口改为只读代理本服务（见 svc/portal/src/modules/preferences.rs）。
+/// 表自包含建表（CREATE TABLE IF NOT EXISTS，免迁移文件），键结构与旧 portal.user_preferences 对齐。
+async fn ensure_preferences_table(pool: &sqlx::PgPool) {
+    let result = sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS core.user_preferences (
+               id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+               user_id UUID NOT NULL,
+               preference_key TEXT NOT NULL,
+               preference_value JSONB NOT NULL,
+               updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+               tenant_id UUID,
+               deleted_at TIMESTAMPTZ,
+               UNIQUE (user_id, preference_key)
+           )"#,
+    )
+    .execute(pool)
+    .await;
+    if let Err(e) = result {
+        tracing::error!("ensure core.user_preferences failed: {}", e);
+    }
+}
 
 pub async fn get_preferences(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user get_preferences called for user: {}", claims.sub);
-
-    // 拆分前置（database-split-plan §3 前置条件 2）：不再直读 portal.user_preferences，
-    // 改走 portal 偏好接口（service token 认证）；portal 不可用时回退默认值。
-    let (ok, data) = call_portal_preferences(&state, &claims.sub, "GET", None).await;
 
     // 默认值（与旧行为一致）
     let mut notification_settings = serde_json::json!({
@@ -30,26 +52,29 @@ pub async fn get_preferences(
     let mut language = serde_json::Value::String("zh-CN".into());
     let mut timezone = serde_json::Value::String("Asia/Shanghai".into());
 
-    if ok {
-        if let Some(d) = data {
-            if let Some(v) = d.get("notification_settings") {
-                notification_settings = v.clone();
-            }
-            if let Some(v) = d.get("shortcuts") {
-                shortcuts = v.clone();
-            }
-            if let Some(v) = d.get("language") {
-                language = v.clone();
-            }
-            if let Some(v) = d.get("timezone") {
-                timezone = v.clone();
+    if let Ok(user_id) = uuid::Uuid::parse_str(&claims.sub) {
+        ensure_preferences_table(&state.pool).await;
+        let rows: Vec<(String, serde_json::Value)> = sqlx::query_as(
+            "SELECT preference_key, preference_value FROM core.user_preferences \
+             WHERE user_id = $1 AND deleted_at IS NULL",
+        )
+        .bind(user_id)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::warn!("read local preferences failed for {}: {}", claims.sub, e);
+            Vec::new()
+        });
+
+        for (key, value) in rows {
+            match key.as_str() {
+                "notification_settings" => notification_settings = value,
+                "shortcuts" => shortcuts = value,
+                "language" => language = value,
+                "timezone" => timezone = value,
+                _ => {}
             }
         }
-    } else {
-        tracing::warn!(
-            "portal preferences unavailable for {}, fallback to defaults",
-            claims.sub
-        );
     }
 
     Json(serde_json::json!({
@@ -76,23 +101,51 @@ pub async fn update_preferences(
         payload
     );
 
-    // 拆分前置：不再直写 portal.user_preferences，改走 portal 偏好写接口（service token）。
-    let (ok, _) = call_portal_preferences(&state, &claims.sub, "PUT", Some(&payload)).await;
-    if !ok {
-        tracing::error!(
-            "save preferences failed: portal service unavailable for {}",
-            claims.sub
-        );
-        return Json(topems_shared_core::response::error_value(
-            500,
-            "保存偏好失败：portal 服务不可用",
-        ));
+    let user_id = match uuid::Uuid::parse_str(&claims.sub) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的用户ID",
+            ));
+        }
+    };
+
+    ensure_preferences_table(&state.pool).await;
+
+    const KEYS: [&str; 4] = ["shortcuts", "notification_settings", "language", "timezone"];
+    for key in KEYS {
+        let Some(value) = payload.get(key) else { continue };
+        let result = sqlx::query(
+            "INSERT INTO core.user_preferences (user_id, preference_key, preference_value, updated_at, tenant_id) \
+             VALUES ($1, $2, $3, NOW(), $4) \
+             ON CONFLICT (user_id, preference_key) \
+             DO UPDATE SET preference_value = $3, updated_at = NOW()",
+        )
+        .bind(user_id)
+        .bind(key)
+        .bind(value)
+        .bind(claims.tenant_id.as_deref().and_then(|s| uuid::Uuid::parse_str(s).ok()))
+        .execute(&state.pool)
+        .await;
+
+        if let Err(e) = result {
+            tracing::error!("save preference {} failed for {}: {}", key, claims.sub, e);
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &format!("保存偏好 {} 失败", key),
+            ));
+        }
     }
 
+    // 偏好变更事件（IamUserPreferencesUpdated）：供 portal 只读代理/缓存失效订阅。
+    // unified-core 的 Redis EventPublisher 注入属后续接线项；此处先落库 + 日志，事件登记见 event-driven.md。
     tracing::info!(
-        "User preferences updated successfully for user: {}",
-        claims.sub
+        "User preferences updated locally for {} (keys: {:?})",
+        claims.sub,
+        KEYS
     );
+
     Json(serde_json::json!({
         "success": true,
         "message": "保存用户偏好设置成功",
@@ -184,54 +237,5 @@ pub async fn get_current_user(
             tracing::warn!("User not found: {}", claims.sub);
             Json(topems_shared_core::response::error_value(404, "用户不存在"))
         }
-    }
-}
-
-/// 调用 portal 偏好接口（service token 认证）。
-///
-/// 拆分前置（database-split-plan §3 前置条件 2）：unified-core IAM 聚合用户偏好
-/// 改走 portal 服务 API（`/api/portal/preferences`），不再直读 `portal.user_preferences`。
-/// 返回 `(ok, Option<data>)`——`ok=false` 表示 portal 不可用/失败（调用方回退默认值）。
-async fn call_portal_preferences(
-    state: &AppState,
-    user_id: &str,
-    method: &str,
-    payload: Option<&serde_json::Value>,
-) -> (bool, Option<serde_json::Value>) {
-    let Ok(token) = issue_service_token(
-        &state.auth_state.jwt_secret,
-        "unified-core",
-        &["portal:admin"],
-        None,
-    ) else {
-        return (false, None);
-    };
-
-    let portal_url = std::env::var("PORTAL_SERVICE_URL")
-        .unwrap_or_else(|_| "http://localhost:18050".to_string());
-    let url = format!(
-        "{}/api/portal/preferences?user_id={}",
-        portal_url.trim_end_matches('/'),
-        user_id
-    );
-    let client = reqwest::Client::new();
-
-    let resp = if method == "GET" {
-        client.get(&url).bearer_auth(&token).send().await
-    } else {
-        client
-            .put(&url)
-            .bearer_auth(&token)
-            .json(payload.unwrap_or(&serde_json::Value::Null))
-            .send()
-            .await
-    };
-
-    match resp {
-        Ok(r) if r.status().is_success() => match r.json::<serde_json::Value>().await {
-            Ok(v) => (true, v.get("data").cloned()),
-            Err(_) => (false, None),
-        },
-        _ => (false, None),
     }
 }

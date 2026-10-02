@@ -1,152 +1,76 @@
-//! Portal 用户偏好只读接口（服务间内部用）
+//! Portal 用户偏好代理接口（D2 U2 环3 决策 C）
 //!
-//! unified-core IAM 的 `get_preferences` 原直读 `portal.user_preferences`，
-//! 为物理库拆分铺路（portal→business 库、unified-core→core 库）改走本接口：
-//! 本接口以 **service token** 认证（`is_service_claims`），仅平台服务可调，
-//! 按 `user_id` 返回该用户全部偏好（缺失 key 用默认值，与旧行为一致）。
+//! 偏好主数据已本地化到 unified-core IAM 域（`core.user_preferences`）。
+//! 本接口不再直读/直写 `portal.user_preferences`，而是**只读代理 unified-core**：
+//! 读走 unified-core `/users/me/preferences`，写也转发 unified-core——portal 不再持有偏好数据，
+//! 即"不写回 unified-core 之外"。停掉 portal 不影响 unified-core 偏好接口（它已无对 portal 的运行时调用）。
+//! 数据归属：unified-core IAM 域；portal 仅作 BFF 转发。
 
 use axum::{
-    extract::{Extension, Query, State},
+    extract::{Query, State},
+    http::HeaderMap,
     Json,
 };
 use serde::Deserialize;
-use topems_shared_auth::auth::Claims;
-use topems_shared_auth::service::is_service_claims;
 use topems_shared_core::response::{api_error, ApiResponse};
-use uuid::Uuid;
+use topems_shared_service_client::service_client::api::iam_api::IamApi;
+use topems_shared_service_client::TypedServiceClient;
 
 use crate::shared::AppState;
 
 #[derive(Deserialize)]
 pub struct PreferenceQuery {
-    /// 被代理的用户 ID（unified-core 等服务调用时传）；不传则用 claims.sub
+    /// 兼容旧契约保留；实际目标用户由转发的 Bearer（claims.sub）决定。
     pub user_id: Option<String>,
 }
 
-#[derive(sqlx::FromRow)]
-struct PreferenceRow {
-    preference_key: String,
-    preference_value: serde_json::Value,
+fn build_iam_client(state: &AppState, headers: &HeaderMap) -> TypedServiceClient<IamApi> {
+    let client = state.iam_client.clone();
+    if let Some(token) = extract_bearer(headers) {
+        client.with_auth_token(token)
+    } else {
+        client
+    }
 }
 
-/// GET /api/portal/preferences?user_id=xxx
-/// 仅服务身份（is_service_claims）可访问；返回 4 个偏好 key 的完整结构。
+fn extract_bearer(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get(axum::http::header::AUTHORIZATION)?
+        .to_str()
+        .ok()?
+        .strip_prefix("Bearer ")
+        .map(|s| s.to_string())
+}
+
+/// GET /api/portal/preferences → 代理 unified-core 偏好读取（只读，不落 portal 本地库）。
 pub async fn get_user_preferences(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Query(query): Query<PreferenceQuery>,
+    headers: HeaderMap,
+    Query(_query): Query<PreferenceQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    // 仅服务身份可调——该接口不面向普通用户（用户偏好经 IAM 接口聚合）
-    if !is_service_claims(&claims) {
-        return Json(api_error(403, "仅服务身份可访问偏好接口"));
-    }
-
-    let user_id = query.user_id.as_deref().unwrap_or(&claims.sub);
-    let Ok(user_uuid) = Uuid::parse_str(user_id) else {
-        return Json(api_error(400, &format!("无效的 user_id: {}", user_id)));
-    };
-
-    // 默认值（与 unified-core get_preferences 旧行为保持一致）
-    let mut notification_settings = serde_json::json!({
-        "email_notifications": true,
-        "push_notifications": true,
-        "sms_notifications": false,
-        "daily_digest": true
-    });
-    let mut shortcuts = serde_json::json!([
-        {"id": "1", "title": "仪表盘", "icon": "Activity", "path": "/dashboard"},
-        {"id": "2", "title": "文档中心", "icon": "FileText", "path": "/documents"}
-    ]);
-    let mut language = serde_json::Value::String("zh-CN".into());
-    let mut timezone = serde_json::Value::String("Asia/Shanghai".into());
-
-    let rows: Vec<PreferenceRow> = match sqlx::query_as(
-        "SELECT preference_key, preference_value FROM portal.user_preferences \
-         WHERE user_id = $1 AND deleted_at IS NULL",
-    )
-    .bind(user_id)
-    .fetch_all(&state.pool)
-    .await
-    {
-        Ok(rows) => rows,
+    let client = build_iam_client(&state, &headers);
+    match client.get_user_preferences().await {
+        Ok(prefs) => Json(ApiResponse::success(prefs, "获取用户偏好设置成功")),
         Err(e) => {
-            tracing::warn!("preferences query failed for {}: {}", user_id, e);
-            return Json(api_error(500, "查询用户偏好失败"));
-        }
-    };
-
-    for row in rows {
-        match row.preference_key.as_str() {
-            "notification_settings" => {
-                if let Ok(v) = serde_json::from_value::<serde_json::Value>(row.preference_value) {
-                    notification_settings = v;
-                }
-            }
-            "shortcuts" => {
-                if let Ok(v) = serde_json::from_value::<serde_json::Value>(row.preference_value) {
-                    shortcuts = v;
-                }
-            }
-            "language" => language = row.preference_value,
-            "timezone" => timezone = row.preference_value,
-            _ => {}
+            tracing::warn!("proxy get preferences to IAM failed: {}", e);
+            Json(api_error(502, "IAM 偏好服务暂不可用"))
         }
     }
-
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "notification_settings": notification_settings,
-            "shortcuts": shortcuts,
-            "language": language,
-            "timezone": timezone,
-        }),
-        "获取用户偏好设置成功",
-    ))
 }
 
-/// PUT /api/portal/preferences?user_id=xxx
-/// 仅服务身份可访问；批量 upsert 偏好（shortcuts/notification_settings/language/timezone）。
+/// PUT /api/portal/preferences → 代理转发到 unified-core（写只落 unified-core，不写 portal 本地库）。
 pub async fn update_user_preferences(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
-    Query(query): Query<PreferenceQuery>,
+    headers: HeaderMap,
+    Query(_query): Query<PreferenceQuery>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    if !is_service_claims(&claims) {
-        return Json(api_error(403, "仅服务身份可访问偏好接口"));
-    }
-
-    let user_id = query.user_id.as_deref().unwrap_or(&claims.sub);
-    let Ok(user_uuid) = Uuid::parse_str(user_id) else {
-        return Json(api_error(400, &format!("无效的 user_id: {}", user_id)));
-    };
-    let claims_tenant = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or_else(Uuid::nil);
-
-    const KEYS: [&str; 4] = ["shortcuts", "notification_settings", "language", "timezone"];
-    for key in KEYS {
-        let Some(value) = payload.get(key) else { continue };
-        let result = sqlx::query(
-            "INSERT INTO portal.user_preferences (user_id, preference_key, preference_value, updated_at, tenant_id) \
-             VALUES ($1, $2, $3, NOW(), $4) \
-             ON CONFLICT (user_id, preference_key) \
-             DO UPDATE SET preference_value = $3, updated_at = NOW()",
-        )
-        .bind(&user_uuid)
-        .bind(key)
-        .bind(value)
-        .bind(claims_tenant)
-        .execute(&state.pool)
-        .await;
-
-        if let Err(e) = result {
-            tracing::warn!("save preference {} failed for {}: {}", key, user_id, e);
-            return Json(api_error(500, &format!("保存偏好 {} 失败", key)));
+    let client = build_iam_client(&state, &headers);
+    match client.update_user_preferences(payload).await {
+        Ok(prefs) => Json(ApiResponse::success(prefs, "保存用户偏好设置成功")),
+        Err(e) => {
+            tracing::warn!("proxy update preferences to IAM failed: {}", e);
+            Json(api_error(502, "IAM 偏好服务暂不可用"))
         }
     }
-
-    Json(ApiResponse::success(serde_json::json!({"ok": true}), "保存用户偏好成功"))
 }
