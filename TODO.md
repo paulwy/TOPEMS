@@ -15,9 +15,10 @@
   - 修复②（scripts/run_monolith.sh）：build_env 从 .env 读取 MIGRATE_URL 注入进程
     （此前 MIGRATE_URL 未注入 → migrate_pool=None → 回退受限池仍失败）；
     其他模块 DDL 同样受益（owner 池）
-  - 验证：cargo build -p topems-server 0 错；重启后 module_list 含 ticket；
-    /api/ticket/tickets、/workflows、/feedbacks、/tickets/stats 全部恢复（401=已挂载）
-  - 注：首次实现后被 TRAE 机 `reset --hard origin/main` 抹除一次，已重做并尽快推送
+  - 验证：cargo build -p topems-server 0 错；重启后 module_list 含 ticket（30→31，
+    ticket-real 注册成功）；/api/ticket/tickets、/workflows、/feedbacks、/tickets/stats、
+    /sla-policies 全部恢复 401（=已挂载需认证）；MES 看板 /api/mes/dashboard/stats 回归 200
+  - 注：首次实现后被 TRAE 机 `reset --hard origin/main` 抹除一次，已重做并推送
 
 ### ⏳ 后续工作（按优先级）
 - ⏳ **其余前端契约缺口审计**（本轮实测 99 条 404，排除 ticket 后大头为 mobile 58 条）：
