@@ -1,0 +1,106 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, tenant_id, warehouse_id, material_id, material_code, material_name,\n               current_location_id, suggested_location_id, suggested_location_name,\n               reason, score::float8 as score, expected_improvement::float8 as expected_improvement,\n               status, created_at, applied_at\n        FROM wms.slotting_suggestions\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "tenant_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "warehouse_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "material_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 4,
+        "name": "material_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "material_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "current_location_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 7,
+        "name": "suggested_location_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 8,
+        "name": "suggested_location_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "reason",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "score",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 11,
+        "name": "expected_improvement",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 12,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "applied_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      null,
+      null,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "8ddc45518195dbe2330dadc4288122e604fd4f29f0713d11d28b506d9a0ca657"
+}

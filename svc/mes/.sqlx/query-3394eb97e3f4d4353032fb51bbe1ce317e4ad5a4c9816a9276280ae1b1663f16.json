@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM bom_items WHERE bom_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3394eb97e3f4d4353032fb51bbe1ce317e4ad5a4c9816a9276280ae1b1663f16"
+}

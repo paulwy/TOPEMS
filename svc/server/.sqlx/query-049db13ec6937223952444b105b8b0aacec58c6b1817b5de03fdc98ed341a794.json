@@ -1,0 +1,116 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, source_type, status, host, database, port, username,\n               connection_string, last_sync, data_volume, sync_frequency,\n               description, is_enabled, created_at, updated_at\n        FROM analytics_datasources\n        WHERE ($1 = '' OR name ILIKE $1)\n          AND ($2 = '' OR source_type = $2)\n          AND ($3 = '' OR status = $3)\n        ORDER BY created_at DESC\n        LIMIT $4 OFFSET $5\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "source_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "host",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "database",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "port",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "username",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "connection_string",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_sync",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "data_volume",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "sync_frequency",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "is_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "049db13ec6937223952444b105b8b0aacec58c6b1817b5de03fdc98ed341a794"
+}

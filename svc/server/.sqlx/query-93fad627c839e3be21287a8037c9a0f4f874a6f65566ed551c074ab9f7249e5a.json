@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE wms.cycle_count_configs\n        SET deleted_at = $2, is_active = false, updated_at = $2\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "93fad627c839e3be21287a8037c9a0f4f874a6f65566ed551c074ab9f7249e5a"
+}

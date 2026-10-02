@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE analytics_datasources\n        SET status = 'active',\n            last_sync = $1,\n            data_volume = COALESCE(data_volume, 0) + $2,\n            updated_at = $1\n        WHERE id = $3\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int8",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e4ea2a871321b774433fcdaa50e76547cd81513a7f1f3e73a98134d1dc7bcde4"
+}

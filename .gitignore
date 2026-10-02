@@ -65,7 +65,6 @@ packages/**/node_modules/
 **/target/
 target/llvm-cov-target/
 lib/target/
-svc/*/.sqlx/
 lib/*/.sqlx/
 **/sqlx-data.json
 

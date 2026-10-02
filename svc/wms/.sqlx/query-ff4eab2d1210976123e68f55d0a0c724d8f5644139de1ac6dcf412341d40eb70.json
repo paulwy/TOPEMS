@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            COUNT(*) as below_min_count,\n            0 as critical_count,\n            0 as warning_count,\n            0 as info_count,\n            0 as above_max_count,\n            0 as reorder_count,\n            0 as expiry_count,\n            0 as out_of_stock_count\n        FROM wms.inventory i\n        WHERE i.deleted_at IS NULL\n          AND (\n            (i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity)\n            OR (i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity)\n            OR (i.reorder_point IS NOT NULL AND i.quantity <= i.reorder_point)\n            OR i.quantity <= 0\n          )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "below_min_count",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "critical_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 2,
+        "name": "warning_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "info_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 4,
+        "name": "above_max_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 5,
+        "name": "reorder_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 6,
+        "name": "expiry_count",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "out_of_stock_count",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "ff4eab2d1210976123e68f55d0a0c724d8f5644139de1ac6dcf412341d40eb70"
+}

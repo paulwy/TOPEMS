@@ -1,0 +1,129 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE analytics_datasources\n        SET name = COALESCE($1, name),\n            source_type = COALESCE($2, source_type),\n            status = COALESCE($3, status),\n            host = COALESCE($4, host),\n            database = COALESCE($5, database),\n            port = COALESCE($6, port),\n            username = COALESCE($7, username),\n            password = COALESCE($8, password),\n            connection_string = COALESCE($9, connection_string),\n            last_sync = COALESCE($10, last_sync),\n            data_volume = COALESCE($11, data_volume),\n            sync_frequency = COALESCE($12, sync_frequency),\n            description = COALESCE($13, description),\n            is_enabled = COALESCE($14, is_enabled),\n            connection_config = COALESCE($15, connection_config),\n            query_template = COALESCE($16, query_template),\n            updated_at = $17\n        WHERE id = $18\n        RETURNING id, name, source_type, status, host, database, port, username,\n                  connection_string, last_sync, data_volume, sync_frequency,\n                  description, is_enabled, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "source_type",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "host",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "database",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "port",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 7,
+        "name": "username",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "connection_string",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_sync",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 10,
+        "name": "data_volume",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "sync_frequency",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 13,
+        "name": "is_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Int8",
+        "Text",
+        "Text",
+        "Bool",
+        "Jsonb",
+        "Text",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "c9d91b693ea4cd6483cd543e6692920e0174886086403a5ba1955ed6768eade4"
+}
