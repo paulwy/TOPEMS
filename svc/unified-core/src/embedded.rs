@@ -8,6 +8,7 @@
 //! 与独立部署共享同一份组装逻辑，避免双轨漂移。
 
 use axum::Router;
+use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use topems_shared_bootstrap::ServiceConfig;
 use topems_shared_event::event::EventPublisher;
@@ -281,7 +282,7 @@ async fn build_router_inner(
 }
 
 /// 启动后台任务
-async fn spawn_background_tasks(state: &AppState, _pool: sqlx::PgPool) {
+async fn spawn_background_tasks(state: &AppState, pool: sqlx::PgPool) {
     // WebSocket cleanup
     let ws_state_cleanup = state.ws_state.clone();
     tokio::spawn(async move {
@@ -307,14 +308,34 @@ async fn spawn_background_tasks(state: &AppState, _pool: sqlx::PgPool) {
         std::future::pending::<()>().await;
     });
 
-    // Plugin heartbeat detection
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
-        loop {
-            interval.tick().await;
-            // 简化：跳过 plugin heartbeat 检测（plugin-registry 已迁移）
-        }
-    });
+    // Plugin heartbeat offline detection（CORE-03 / U11）
+    // 嵌入模式原为空循环死代码；对齐 standalone `main.rs:666-717` 与 overview.md
+    // 「插件注册安全流程」：每 30s 扫描，心跳 >90s 或注册 >2min 无心跳 → runtime_status='offline'。
+    // 注意：心跳上报端（POST /api/plugin/runtime/{code}/status 写 last_heartbeat=NOW()）在
+    // svc/plugin-registry，与本任务同库 core.core_plugin_instances，评估侧无需改动上报路径。
+    {
+        let heartbeat_pool = pool.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(
+                HEARTBEAT_SCAN_INTERVAL_SECS,
+            ));
+            loop {
+                interval.tick().await;
+                // 错误容忍：扫描失败仅记日志，下一 tick 重试，绝不 panic
+                match evaluate_stale_plugin_heartbeats(&heartbeat_pool).await {
+                    Ok(marked) if marked > 0 => tracing::warn!(
+                        "[Plugin-Heartbeat] Marked {} plugin(s) as offline (stale heartbeat)",
+                        marked
+                    ),
+                    Ok(_) => {}
+                    Err(e) => tracing::warn!(
+                        "[Plugin-Heartbeat] scan failed, will retry next tick: {}",
+                        e
+                    ),
+                }
+            }
+        });
+    }
 
     // SSE cleanup
     let sse_sessions_cleanup = state.sse_sessions.clone();
@@ -337,4 +358,164 @@ fn init_field_encryption(
 ) -> Option<std::sync::Arc<topems_shared_auth::security::FieldEncryptionService>> {
     // 简化：跳过字段加密初始化
     None
+}
+
+// ============================================================================
+// 插件心跳离线评估（CORE-03 / U11）
+// ============================================================================
+
+/// 扫描周期：每 30s 评估一次（对齐 overview.md「每 30 秒检测」）。
+const HEARTBEAT_SCAN_INTERVAL_SECS: u64 = 30;
+
+/// 心跳离线阈值：`last_heartbeat` 距今超过 90s 的 running 实例 → offline。
+const HEARTBEAT_OFFLINE_SECS: i64 = 90;
+
+/// 注册后无心跳宽限期：`last_heartbeat IS NULL` 且创建超过 120s（2 分钟）→ offline。
+const HEARTBEAT_NO_BEAT_GRACE_SECS: i64 = 120;
+
+/// 执行一次心跳离线扫描（嵌入模式后台任务每 30s 调用）。
+///
+/// 采用集合式 UPDATE（与 standalone `main.rs:674-714` 同语义），单次往返、原子降级：
+/// - 规则 1：`running` 且 `last_heartbeat` 非空、早于 `NOW() - 90s` → `offline`
+/// - 规则 2：`running` 且 `last_heartbeat` 为空、`created_at` 早于 `NOW() - 2min` → `offline`
+///
+/// 仅降级 `running`；`stopped`（显式注销）/ `offline`（已降级）等终态不触碰。
+/// 返回本次被标记为 offline 的实例数；DB 错误向上传播由调用方记日志重试（不 panic）。
+async fn evaluate_stale_plugin_heartbeats(pool: &sqlx::PgPool) -> Result<u64, sqlx::Error> {
+    // 规则 1：心跳超时
+    let stale = sqlx::query(
+        r#"
+        UPDATE core.core_plugin_instances
+        SET runtime_status = 'offline'
+        WHERE runtime_status = 'running'
+          AND last_heartbeat IS NOT NULL
+          AND last_heartbeat < NOW() - INTERVAL '90 seconds'
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 规则 2：注册后从未上报心跳，超过宽限期
+    let no_beat = sqlx::query(
+        r#"
+        UPDATE core.core_plugin_instances
+        SET runtime_status = 'offline'
+        WHERE runtime_status = 'running'
+          AND last_heartbeat IS NULL
+          AND created_at < NOW() - INTERVAL '2 minutes'
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(stale.rows_affected() + no_beat.rows_affected())
+}
+
+/// 心跳离线判定纯函数（可注入 `now` 与阈值，单测无需真等 90s）。
+///
+/// 与上面两条集合式 UPDATE 的 WHERE 条件保持一一对应；改动任一侧须同步另一侧。
+/// 返回 `Some("offline")` 表示本次应降级，`None` 表示保持现状。
+fn plugin_target_status(
+    current_status: &str,
+    last_heartbeat: Option<DateTime<Utc>>,
+    created_at: DateTime<Utc>,
+    now: DateTime<Utc>,
+    offline_threshold: chrono::Duration,
+    no_heartbeat_grace: chrono::Duration,
+) -> Option<&'static str> {
+    // 仅对 running 实例做自动降级；显式 stopped / 已 offline 不触碰
+    if current_status != "running" {
+        return None;
+    }
+    match last_heartbeat {
+        // 规则 1：心跳距今超过离线阈值
+        Some(hb) if now - hb > offline_threshold => Some("offline"),
+        // 规则 2：从未心跳且创建超过宽限期
+        None if now - created_at > no_heartbeat_grace => Some("offline"),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod heartbeat_tests {
+    use super::*;
+    use chrono::Duration;
+
+    fn thresholds() -> (Duration, Duration) {
+        (
+            Duration::seconds(HEARTBEAT_OFFLINE_SECS),
+            Duration::seconds(HEARTBEAT_NO_BEAT_GRACE_SECS),
+        )
+    }
+
+    #[test]
+    fn fresh_heartbeat_stays_running() {
+        let now = Utc::now();
+        let hb = now - Duration::seconds(10); // 10s 前还在跳
+        let (off, grace) = thresholds();
+        assert_eq!(
+            plugin_target_status("running", Some(hb), now, now, off, grace),
+            None
+        );
+    }
+
+    #[test]
+    fn stale_heartbeat_becomes_offline() {
+        let now = Utc::now();
+        let hb = now - Duration::seconds(95); // 95s 未心跳 > 90s
+        let (off, grace) = thresholds();
+        assert_eq!(
+            plugin_target_status("running", Some(hb), now, now, off, grace),
+            Some("offline")
+        );
+    }
+
+    #[test]
+    fn boundary_at_90s_stays_running() {
+        // 恰好 90s：条件是 `> 90s`，边界不降级
+        let now = Utc::now();
+        let hb = now - Duration::seconds(HEARTBEAT_OFFLINE_SECS);
+        let (off, grace) = thresholds();
+        assert_eq!(
+            plugin_target_status("running", Some(hb), now, now, off, grace),
+            None
+        );
+    }
+
+    #[test]
+    fn no_heartbeat_within_grace_stays_running() {
+        let now = Utc::now();
+        let created = now - Duration::seconds(60); // 注册 60s，宽限 120s 内
+        let (off, grace) = thresholds();
+        assert_eq!(
+            plugin_target_status("running", None, created, now, off, grace),
+            None
+        );
+    }
+
+    #[test]
+    fn no_heartbeat_beyond_grace_becomes_offline() {
+        let now = Utc::now();
+        let created = now - Duration::seconds(150); // 注册 150s > 120s 宽限
+        let (off, grace) = thresholds();
+        assert_eq!(
+            plugin_target_status("running", None, created, now, off, grace),
+            Some("offline")
+        );
+    }
+
+    #[test]
+    fn stopped_instance_is_never_touched() {
+        let now = Utc::now();
+        let hb = now - Duration::seconds(3600); // 极陈旧
+        let (off, grace) = thresholds();
+        assert_eq!(
+            plugin_target_status("stopped", Some(hb), now, now, off, grace),
+            None
+        );
+        assert_eq!(
+            plugin_target_status("offline", Some(hb), now, now, off, grace),
+            None
+        );
+    }
 }
