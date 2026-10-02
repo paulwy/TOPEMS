@@ -27,54 +27,9 @@ mod sse;
 pub mod business_tools;
 // V440: OpenAPI 文档路由 - 提供 API 文档 JSON 和交互式查看器
 mod openapi;
-// WMS: 仓储管理系统业务 API
-mod wms_routes;
-// MES: 制造执行系统业务 API
-mod mes_routes;
-// SCM: 供应链管理业务 API
-mod scm_routes;
-// Finance: 财务管理业务 API
-mod finance_routes;
-// ERP: 企业资源计划业务 API
-mod erp_routes;
-// CRM: 客户关系管理业务 API
-mod crm_routes;
-// HRM: 人力资源管理业务 API
-mod hrm_routes;
-// QMS: 质量管理业务 API
-mod qms_routes;
-// PDM: 产品数据管理业务 API
-mod pdm_routes;
-// EHS: 环境健康安全业务 API
-mod ehs_routes;
-// Analytics: 数据分析业务 API
-mod analytics_routes;
-// PM: 项目管理业务 API
-mod pm_routes;
-// LIMS: 实验室信息管理系统业务 API
-mod lims_routes;
-// SRM: 供应商关系管理业务 API
-mod srm_routes;
-// GIS: 地理信息系统业务 API
-mod gis_routes;
-// TMS: 运输管理系统业务 API
-mod tms_routes;
-// Master-data: 主数据管理业务 API
-mod master_data_routes;
-// Communication: 通讯业务 API
-mod communication_routes;
-// Ticket: 工单业务 API
-mod ticket_routes;
-// RD: 研发业务 API
-mod rd_routes;
-// Integration: 集成业务 API
-mod integration_routes;
-// Portal: 门户业务 API
-mod portal_routes;
-// Mobile: 移动业务 API
-mod mobile_routes;
-// AI: 人工智能业务 API
-mod ai_routes;
+// U1-b2（D1 §5 选项C）：24 个业务投影路由模块已删除（wms/mes/scm/finance/erp/crm/hrm/qms/
+// pdm/ehs/analytics/pm/lims/srm/gis/tms/master_data/communication/ticket/rd/integration/portal/
+// mobile/ai_routes）。其 .merge() 挂载已在 U1-b1 停挂，本批删除 route 文件与 mod 声明。
 
 // ===== V289: R4/R6 stub 路由已删除 =====
 // V289 前：32 个纯空壳路由（admin/aps/asset/bi/crm/ehs/erp/finance/gis/hrm/im/integration/lims/
