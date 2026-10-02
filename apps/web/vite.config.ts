@@ -1,7 +1,6 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { federation } from '@module-federation/vite';
 import { visualizer } from 'rollup-plugin-visualizer';
 import viteCompression from 'vite-plugin-compression';
 import { promises as fsp } from 'fs';
@@ -15,7 +14,7 @@ import type { Plugin, ResolvedConfig } from 'vite';
 // ports.ts 为权威：BACKEND_PORTS（后端 80xx） + MF_PORTS（前端 MF 30xx）
 // 新增/修改端口：修改 config/ports.env 后同步更新 apps/web/src/config/ports.ts
 // ============================================================================
-import { BACKEND_PORTS, MF_PORTS } from './src/config/ports';
+import { BACKEND_PORTS } from './src/config/ports';
 
 // ============================================================================
 // 服务配置（与 config/services.yaml 保持同步）
@@ -186,90 +185,10 @@ const SERVICES: ServiceConfig[] = [
 ];
 
 // ============================================================================
-// Module Federation Remote 配置
-// 从 ports.ts MF_PORTS 单一信源动态生成，不再硬编码 19 个端口
+// D4: Module Federation Remote 配置已移除。
+// 原 REMOTE_MODULES（19 个 topems_* remote）/ getRemoteEntry / buildRemotes
+// 随 @module-federation/vite 一并删除；前端回归模块化单体，业务域全部本地打包。
 // ============================================================================
-
-const REMOTE_MODULES: { name: string; port: number }[] = Object.entries(MF_PORTS).map(
-  ([name, port]) => ({ name, port })
-);
-
-// Deployment mode: 'module-federation' | 'static' | 'hybrid'
-// V64 CORS 修复：Vite 约定只暴露 VITE_* 前缀（带下划线）的变量给前端 import.meta.env；
-// 历史代码错误使用了 VITEDeploymentMode（无下划线）读不到值。
-// 此处统一优先读 VITE_DEPLOYMENT_MODE，兼容旧键 VITEDeploymentMode 作为过渡。
-const DEPLOYMENT_MODE =
-  process.env.VITE_DEPLOYMENT_MODE || process.env.VITEDeploymentMode || 'static';
-
-/**
- * 从环境变量读取单个 remote 的 entry URL
- *
- * 多 remote 配置约定：
- *   VITE_REMOTE_<NAME_UPPER>=https://host/remoteEntry.js
- *
- * 生产环境注入示例：
- *   VITE_REMOTE_TOPEMS_CORE=https://core.topems.com/remoteEntry.js
- *   VITE_REMOTE_TOPEMS_ERP=https://erp.topems.com/remoteEntry.js
- *   VITE_REMOTE_TOPEMS_HRM=https://hrm.topems.com/remoteEntry.js
- *   ...
- *
- * 完整模块清单与运行时配置见 apps/web/src/microfrontend/config.ts
- * （REMOTE_MODULES 中定义了所有可启用的业务域模块）
- */
-const getRemoteEntry = (name: string, port: number): string => {
-  const env = loadEnv('', process.cwd(), '');
-  if (DEPLOYMENT_MODE === 'static') {
-    // 静态部署模式下不加载任何 remote
-    return '';
-  }
-  const envKey = `VITE_REMOTE_${name.toUpperCase()}`;
-  const envUrl = env[envKey];
-
-  // 如果环境变量设置了完整 URL，直接使用（生产环境）
-  if (envUrl) {
-    return envUrl;
-  }
-
-  // 开发/生产 MF 模式：统一用同源代理路径（vite.config.ts 已配置 /remote/<name> 代理）
-  // 从根本上避免浏览器直接跨端口访问 localhost:<port> 导致的 CORS
-  if (DEPLOYMENT_MODE === 'module-federation' || DEPLOYMENT_MODE === 'hybrid') {
-    return `/remote/${name}/remoteEntry.js`;
-  }
-
-  // 其它：保守返回空，避免跨域请求
-  return '';
-};
-
-/**
- * 构建 federation remotes 配置
- *
- * - module-federation / hybrid: 启用 topems_core 作为基础 remote
- * - static: 关闭所有 remote（使用本地打包）
- *
- * 扩展多 remote：
- *   1. 在 apps/web/src/microfrontend/config.ts 的 REMOTE_MODULES 中追加配置
- *   2. 通过环境变量 VITE_REMOTE_TOPEMS_<NAME> 注入生产入口
- *   3. 可按下方示例在返回对象中追加 remote（仅显式声明的 remote 会被 federation 编译期处理）
- *
- *   return {
- *     topems_core: getRemoteEntry('topems_core', 3001),
- *     topems_erp:  getRemoteEntry('topems_erp',  3002),
- *     topems_hrm:  getRemoteEntry('topems_hrm',  3003),
- *     // ...
- *   };
- *
- * 运行时动态加载（推荐生产环境使用）见
- * apps/web/src/microfrontend/RemoteLoader.tsx
- */
-const buildRemotes = (): Record<string, string> => {
-  if (DEPLOYMENT_MODE === 'static') {
-    return {};
-  }
-  // 保留 topems_core 作为基础 remote，向后兼容
-  return {
-    topems_core: getRemoteEntry('topems_core', MF_PORTS.topems_core),
-  };
-};
 
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
@@ -479,32 +398,6 @@ const buildServiceProxies = (): Record<string, any> => {
   // 通用 health 端点
   proxies['/health'] = { target: MONO_TARGET || `http://localhost:${CORE_PORT}`, changeOrigin: true };
 
-  // Module Federation remotes - proxy all remoteEntry.js requests through the host
-  // This prevents CORS issues when loading remote modules
-  for (const remote of REMOTE_MODULES) {
-    const proxyPath = `/remote/${remote.name}`;
-    proxies[proxyPath] = {
-      target: `http://localhost:${remote.port}`,
-      changeOrigin: true,
-      rewrite: (path: string) => path.replace(new RegExp(`^\\/remote\\/${remote.name}`), ''),
-      configure: (proxy: any) => {
-        proxy.on('error', (err: Error, req: IncomingMessage, res: ServerResponse) => {
-          if (!res.headersSent) {
-            res.writeHead(503, { 'Content-Type': 'application/json' });
-            res.end(
-              JSON.stringify({
-                code: 503,
-                success: false,
-                message: `Remote module ${remote.name} (port ${remote.port}) is currently unavailable`,
-                data: null,
-              })
-            );
-          }
-        });
-      },
-    };
-  }
-
   // ERP 插件代理（通过 unified-core）
   proxies['/api/plugins/erp'] = {
     target: MONO_TARGET || `http://localhost:${CORE_PORT}`,
@@ -523,196 +416,6 @@ const buildServiceProxies = (): Record<string, any> => {
   };
 
   return proxies;
-};
-
-// Fix for @module-federation/vite + Vite 8:
-// The `generateLocalSharedImportMap` plugin's resolveId compares
-// `source === getLocalSharedImportMapPath()`, but Vite 8 passes
-// the source with a \0 prefix (null byte) in resolveId hooks.
-//
-// V81-202608 扩展：除 virtual:mf-localSharedImportMap 之外，
-// MF 还生成 __loadShare__ / __prebuild__ / __mf_synthetic__ 等虚模块家族，
-// 它们统一以 `virtual:mf:__mfe_internal__<federationName>...` 为 ID。
-// 在 Vite 8 中这些 ID 同样会被前缀 \0，导致 @module-federation/vite 内部的
-// 精确字符串匹配失败，模块图中不会登记这些虚模块，浏览器 `/@id/__x00__...`
-// 请求就会拿到空响应 → MIME 类型为空、NS_ERROR_CORRUPTED_CONTENT、
-// "doesn't provide an export named"、DashboardPage 懒加载重试 3 次失败等等。
-// 此 pre-plugin 统一对所有 MF 虚模块 ID 做 null-byte 归一化：
-//   - 若 source 去除前导 \0 后命中任一 MF 虚模块前缀 → 返回 \0 前缀的规范形式
-//   - 从而保证后续 resolveId/load 能被 @module-federation/vite 正确认领
-const fixLocalSharedImportMapNullBytePlugin = {
-  name: 'fix-mf-localSharedImportMap-nullbyte',
-  enforce: 'pre' as const,
-  resolveId(rawSource: string) {
-    const LOCAL_SHARED_IMPORT_MAP_ID = 'virtual:mf-localSharedImportMap';
-    const INTERNAL_NAME_PREFIX = '__mfe_internal__';
-    const federationName = 'topems_portal';
-    const internalName = federationName.startsWith(INTERNAL_NAME_PREFIX)
-      ? federationName
-      : `${INTERNAL_NAME_PREFIX}${federationName}`;
-    // packageNameEncode: replaces @ / - . with _mf_X_ placeholders
-    const encodedName = internalName
-      .replace(/@/g, '_mf_0_')
-      .replace(/\//g, '_mf_1_')
-      .replace(/-/g, '_mf_2_')
-      .replace(/\./g, '_mf_3_');
-    const expectedPath = `${LOCAL_SHARED_IMPORT_MAP_ID}:${encodedName}`;
-    const expectedResolved = `\0${expectedPath}`;
-
-    // ============================================================
-    // V81-202608 强化：在 strip \0 之前先剥离 HTTP 形态前缀
-    // Vite 8 偶发把 `/@id/__x00__virtual:mf:...` 这种浏览器 URL 直接
-    // 传入 resolveId，需要先还原成模块 ID 形式再处理。
-    // ============================================================
-    let source = rawSource;
-    if (source.startsWith('/@id/')) {
-      // 剥去 /@id/ 前缀
-      source = source.slice(5);
-      // 处理 __x00__ 前缀 → \0（Vite 的 null byte URL 编码）
-      if (source.startsWith('__x00__')) {
-        source = `\0${source.slice(7)}`;
-      }
-      // 去除 query string / hash 部分
-      const qIdx = source.indexOf('?');
-      const hIdx = source.indexOf('#');
-      const cutIdx =
-        qIdx === -1 ? hIdx : hIdx === -1 ? qIdx : Math.min(qIdx, hIdx);
-      if (cutIdx !== -1) source = source.slice(0, cutIdx);
-    }
-
-    const normalizedSource = source.replace(/^\0+/, '');
-
-    // 1) virtual:mf-localSharedImportMap 原有分支（归一化返回）
-    if (normalizedSource === expectedPath || source === expectedResolved) {
-      return expectedResolved;
-    }
-
-    // 2) MF 虚模块家族统一兜底：
-    //    - virtual:mf:__mfe_internal__...      (loadShare / prebuild / synthetic)
-    //    - __mfe_internal__...                  某些引用场景不带 virtual:mf: 前缀
-    //    - 字符串中明确包含 __loadShare__ / __prebuild__ / __mf_synthetic__
-    //    - virtual:mf-localSharedImportMap:__mfe_internal__...
-    const mfVirtualPrefixes = [
-      `virtual:mf:${INTERNAL_NAME_PREFIX}`,
-      `virtual:mf:${internalName}`,
-      `virtual:mf-localSharedImportMap:${INTERNAL_NAME_PREFIX}`,
-      `virtual:mf-localSharedImportMap:${encodedName}`,
-      `${INTERNAL_NAME_PREFIX}`,
-    ];
-    const containsMfToken =
-      normalizedSource.includes('__loadShare__') ||
-      normalizedSource.includes('__prebuild__') ||
-      normalizedSource.includes('__mf_synthetic__') ||
-      normalizedSource.includes('__loadRemote__') ||
-      normalizedSource.includes('__treeShakingProvider__') ||
-      normalizedSource.includes('__mf_tree_shaking_graph__');
-    const matchesPrefix = mfVirtualPrefixes.some((p) => normalizedSource.startsWith(p));
-    if (containsMfToken || matchesPrefix) {
-      return `\0${normalizedSource}`;
-    }
-  },
-};
-
-// V81-202608 P2: MF 虚模块 HTTP 服务兜底中间件
-//
-// 问题背景：Vite 8 serve 模式下，浏览器对 loadShare/prebuild 虚模块发起
-//   GET /@id/__x00__virtual:mf:__mfe_internal__...__loadShare__react__loadShare__.js
-// 请求时，默认的 /@id/ 中间件偶发跳过完整插件管线，直接返回空响应（无 Content-Type），
-// 导致：
-//   - Firefox: NS_ERROR_CORRUPTED_CONTENT + 拦截 "不允许的 MIME 类型（""）"
-//   - Chrome: "Failed to load module script: Expected a JavaScript module script..."
-//   - WorkflowDashboardPage / DashboardPage 懒加载重试 3 次后崩溃
-//
-// 此中间件在 Vite 默认 /@id/ 处理器之前拦截所有 MF 虚模块请求，强制走
-// server.transformRequest() 完整管线（会依次触发 resolveId → load → transform），
-// 然后显式写入 Content-Type: application/javascript，彻底规避空 MIME / 空 body 问题。
-const fixMfVirtualModulesDevServerPlugin: Plugin = {
-  name: 'fix-mf-virtual-modules-dev-server',
-  enforce: 'pre' as const,
-  apply: 'serve',
-  configureServer(server) {
-    // 匹配：/@id/__x00__<rest>  其中 <rest> 必须包含 virtual:mf:
-    // 同时兼容带 query string 的情况：/@id/__x00__...?t=123
-    const MF_VIRTUAL_AT_ID_RE =
-      /^\/@id\/__x00__(virtual:mf:[^?#]+?)(\.(?:js|mjs))?(\?.*)?$/;
-
-    // 插入到 Vite 中间件栈最前面（在 transformMiddleware / @id handler 之前）
-    server.middlewares.use((req, res, next) => {
-      if (!req.url) return next();
-
-      const match = req.url.match(MF_VIRTUAL_AT_ID_RE);
-      if (!match) return next();
-
-      // 解构：$1 = virtual:mf:...（不含扩展名），$2 = 可能的 .js / .mjs 扩展，
-      //       $3 = 可能的 query string（?t=xxx）
-      const [, virtualCore, ext, query] = match;
-
-      // MF VirtualModule 的 importId 本身带后缀（如 __loadShare__.js），
-      // Vite 在做 /@id/ URL 编码时会把 \0 → __x00__，后缀保持不变。
-      // 这里保证模块 ID 构造为：\0 + virtualCore + (ext 若 virtualCore 已带后缀则忽略)
-      const needsExt = ext && !virtualCore.endsWith(ext);
-      const moduleId = `\0${virtualCore}${needsExt ? ext : ''}${query || ''}`;
-
-      // 异步：使用 transformRequest 强制走完整 plugin pipeline
-      // 这会触发：resolveId（fixLocalSharedImportMapNullBytePlugin + MF 内置插件）
-      //          → load（MF 返回 virtualModule.code）
-      //          → transform（源代码 / sourcemap 处理）
-      (async () => {
-        try {
-          const result = await server.transformRequest(moduleId);
-          if (!result) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(
-              JSON.stringify({
-                error: 'MF_VIRTUAL_MODULE_EMPTY',
-                moduleId: moduleId.replace(/^\0/, '\\0'),
-                message:
-                  'Module Federation virtual module returned empty transform result. This indicates a loadShare materialization failure.',
-              })
-            );
-            return;
-          }
-          const { code, map } = result;
-          if (!code) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(
-              JSON.stringify({
-                error: 'MF_VIRTUAL_MODULE_NO_CODE',
-                moduleId: moduleId.replace(/^\0/, '\\0'),
-              })
-            );
-            return;
-          }
-          // 正确 MIME 类型，避免 Firefox 空 Content-Type 拦截
-          const headers: Record<string, string> = {
-            'Content-Type': 'application/javascript; charset=utf-8',
-            'Cache-Control': 'no-cache',
-            'X-MF-Virtual-Module': moduleId.replace(/^\0/, 'virtual:mf'),
-          };
-          if (map) {
-            headers['SourceMap'] = JSON.stringify(map)
-              .slice(0, 1)
-              .replace(/./, ''); // placeholder: Vite 自带 sourcemap 处理，此处仅占位
-          }
-          res.writeHead(200, headers);
-          res.end(code, 'utf-8');
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          res.writeHead(500, { 'Content-Type': 'application/javascript; charset=utf-8' });
-          // 返回一个 ESM throw 语句，让浏览器端拿到结构化错误而不是静默 MIME 失败
-          res.end(
-            `throw new Error("[MF Virtual Module Transform Failed] ` +
-              `${msg.replace(/"/g, '\\"').replace(/\n/g, ' ')} ` +
-              `(module=${moduleId.replace(/^\0/, '\\0virtual:mf').slice(0, 120)}..."));\n`,
-            'utf-8'
-          );
-        }
-      })().catch(() => {
-        // 兜底：交给 Vite 默认 /@id/ 处理器尝试
-        next();
-      });
-    });
-  },
 };
 
 // ============================================================================
@@ -1353,12 +1056,6 @@ export default defineConfig({
       };
     })(),
     react(),
-    fixLocalSharedImportMapNullBytePlugin,
-    // V81-202608 P2: MF 虚模块 dev-server 兜底中间件（仅 apply: 'serve'）
-    // 必须放在 federation() 之前，因为它的 configureServer 要先于 Vite 默认 /@id/ 处理器
-    // 但实际中间件是在 configureServer 回调内动态用 server.middlewares.use()
-    // 插到栈顶，所以插件注册顺序不严格，只要在 defineConfig 的 plugins 里即可。
-    fixMfVirtualModulesDevServerPlugin,
     // V65.1.2: 启用 gzip + brotli 压缩
     // - gzip 兼容性最好（所有现代浏览器），用 vite-plugin-compression
     // - brotli 压缩率更高（比 gzip 再降 15-25%），主流浏览器均支持；
@@ -1384,172 +1081,8 @@ export default defineConfig({
           }),
         ]
       : []),
-    /**
-     * Module Federation 插件：仅在 module-federation / hybrid 部署模式下启用。
-     *
-     * static 模式（本地安装版、单机部署、离线环境）必须关闭 federation：
-     *   - static 模式下 buildRemotes() 返回空对象，无任何远程模块需要加载；
-     *   - 开启 federation 即使 remotes={} 也会为 shared 依赖生成
-     *     __loadShare__ 虚模块包装（react / react-dom / prop-types 等），
-     *     在 Vite 8 + @module-federation/vite 组合下这些虚模块的 null-byte
-     *     ID 常常无法进入 Vite 模块图 → 浏览器请求 @id/__x00__virtual:mf:...
-     *     拿到空响应（Content-Type=""），表现为 NS_ERROR_CORRUPTED_CONTENT +
-     *     "MIME 类型不允许" + DashboardPage 懒加载重试 3 次后失败。
-     *   - 关闭 federation 后，所有共享依赖直接从 node_modules 静态解析，
-     *     与 static 部署语义完全一致，不会触发任何 MF 相关 bug。
-     *
-     * 如需启用 SaaS 多 remote 架构：
-     *   $ export VITE_DEPLOYMENT_MODE=module-federation
-     *   或修改 .env.local 中的 VITE_DEPLOYMENT_MODE。
-     */
-    ...(DEPLOYMENT_MODE !== 'static'
-      ? [
-          federation({
-            name: 'topems_portal',
-            /**
-             * Remote modules configuration
-             * 核心模块通过 Module Federation 动态加载
-             *
-             * 部署模式:
-             * - module-federation: 动态加载远程模块 (SaaS)
-             * - static: 静态打包所有模块 (本地安装)
-             * - hybrid: 核心静态 + 插件动态
-             *
-             * 多 remote 扩展：
-             * - 编译期声明的 remote 通过 buildRemotes() 返回
-             * - 运行时按需加载见 apps/web/src/microfrontend/RemoteLoader.tsx
-             * - 模块清单（业务域拆分、权限、预加载策略）见
-             *   apps/web/src/microfrontend/config.ts 的 REMOTE_MODULES
-             */
-            remotes: buildRemotes(),
-            /**
-             * Shared dependencies - These are shared between host and remotes
-             * 配置为 singleton 模式避免重复加载
-             *
-             * 新增 shared 依赖（版本协商 + 降级）：
-             * - @tanstack/react-query: 业务模块共享 QueryClient
-             * - react-hook-form: 业务模块共享表单状态
-             * - zod: 业务模块共享 schema 验证
-             */
-            shared: {
-              react: {
-                singleton: true,
-                requiredVersion: '^19.0.0',
-                // V64：MF 的 loadShare runtime wrapper 会基于 package.json 的 named exports
-                // 列表生成 import * 壳。在 React 19 中 act 等可选导出会因为 wrapper
-                // 没包含它们而表现为 undefined，导致 @react-three/fiber 这类库
-                // 通过 `import * as React from 'react' + React['act'+'']` 访问时触发
-                // `IMPORT_IS_UNDEFINED`（warning id 落在消费方文件而非 MF 虚模块上）。
-                // 解决：打开 eager，让本地 React 直接作为 fallback 静态加载，
-                // 绕开 loadShare wrapper；同时关闭 strictVersion 避免因为
-                // small patch 差异（19.2.7 vs 19.2.8 之类）失败。
-                eager: true,
-                strictVersion: false,
-              },
-              'react-dom': {
-                singleton: true,
-                requiredVersion: '^19.0.0',
-                eager: true,
-                strictVersion: false,
-              },
-              'react-router-dom': {
-                singleton: true,
-                requiredVersion: '^7.0.0',
-                strictVersion: true,
-              },
-              '@tanstack/react-query': {
-                singleton: true,
-                requiredVersion: '^5.0.0',
-                strictVersion: true,
-              },
-              '@mui/material': {
-                singleton: true,
-                requiredVersion: '^9.0.0',
-                // CJS 传递依赖（prop-types、@babel/runtime 等）在 MF loadShare
-                // wrapper 中找不到 default export，导致 "doesn't provide an export
-                // named: 'default'" 错误。开启 eager 走静态加载绕开此问题。
-                eager: true,
-                strictVersion: false,
-              },
-              '@emotion/react': {
-                singleton: true,
-                requiredVersion: '^11.0.0',
-                eager: true,
-                strictVersion: false,
-              },
-              '@emotion/styled': {
-                singleton: true,
-                requiredVersion: '^11.0.0',
-                eager: true,
-                strictVersion: false,
-              },
-              // CJS 模块：react-is 是 @emotion/react/styled 的传递依赖，
-              // 其 named export (isValidElementType 等) 通过 MF loadShare wrapper
-              // 无法正确导出，需要 eager 走静态加载
-              'react-is': {
-                singleton: true,
-                requiredVersion: '^19.0.0',
-                eager: true,
-                strictVersion: false,
-              },
-              // CJS 模块：prop-types 是 @mui/material / recharts / 旧类库的传递依赖。
-              // 如果不加 singleton+eager，MF remote 会用 loadShare 直接从
-              // pnpm virtual store 的 /@fs/... 路径 serve 原始 CJS 文件（prop-types/index.js），
-              // 从而在 ESM 下抛出 "doesn't provide an export named: 'default'"，
-              // 表现为 lazy-loaded DashboardPage 重试 3 次后崩溃。加 eager 后，
-              // 统一由 host 的 optimizeDeps（已 include 'prop-types'）预构建后分发，
-              // default/interop 均正常。dedupe 数组中也已列出 prop-types 防版本分叉。
-              'prop-types': {
-                singleton: true,
-                eager: true,
-                strictVersion: false,
-              },
-              zustand: {
-                singleton: true,
-                requiredVersion: '^5.0.0',
-                strictVersion: true,
-              },
-              i18next: {
-                singleton: true,
-                requiredVersion: '^26.0.0',
-                strictVersion: true,
-              },
-              'react-i18next': {
-                singleton: true,
-                requiredVersion: '^17.0.0',
-                strictVersion: true,
-              },
-              axios: {
-                singleton: true,
-                requiredVersion: '^1.0.0',
-                strictVersion: true,
-              },
-              dayjs: {
-                singleton: true,
-                requiredVersion: '^1.11.0',
-                strictVersion: true,
-              },
-              'react-hook-form': {
-                singleton: true,
-                requiredVersion: '^7.0.0',
-                strictVersion: true,
-              },
-              zod: {
-                singleton: true,
-                requiredVersion: '^4.0.0',
-                strictVersion: true,
-              },
-              '@tanstack/react-table': {
-                singleton: true,
-                requiredVersion: '^8.0.0',
-                strictVersion: true,
-              },
-            },
-          }),
-        ]
-      : []),
-    // V72 P2-4c: recharts 拆分插件必须在 federation() 之后执行（enforce: 'post'）
-    // 以确保 MF 不会覆盖我们的 manualChunks 配置
+    // V72 P2-4c: recharts 拆分插件（enforce: 'post'）
+    // D4: federation() 已移除，此处不再有 MF 覆盖 manualChunks 的问题；保留 post 顺序。
     topemsRechartsSplitPlugin(),
   ],
   define: {

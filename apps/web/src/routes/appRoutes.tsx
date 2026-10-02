@@ -11,10 +11,6 @@ import { useAppInit } from '../hooks/useAppInit';
 import { createSafeLazy, lazyWithPreload } from '../utils/createSafeLazy';
 import { authRoutes, dashboardRoutes, commonRoutes, type RouteConfig } from './index';
 import { DASHBOARD_PATHS } from './dashboard';
-import { HRM_PATHS } from '../modules/hrm/config';
-import { CRM_PATHS } from '../modules/crm/config';
-import { VITEDeploymentMode } from '@/config/env';
-import i18n from '@/i18n';
 
 // 懒加载页面：避免影响首屏体积
 const TemplateDemoPage = createSafeLazy(() =>
@@ -25,8 +21,6 @@ const DynamicRouter = createSafeLazy(() => import('../lib/plugin-loader/DynamicR
 const { lazy: PerformanceTestPage } = lazyWithPreload(
   () => import('../pages/performance/PerformanceTestPage')
 );
-
-const IS_STATIC_MODE = VITEDeploymentMode() !== 'module-federation';
 
 /**
  * 将 RouteConfig[] 渲染为受保护的路由节点
@@ -121,78 +115,27 @@ const AppRoutes: React.FC = () => {
           element={<DynamicRoutes />}
         />
 
-        {!IS_STATIC_MODE && (
-          <Route
-            path='/core/*'
-            element={
-              <ProtectedRoute>
-                {isUIV3Enabled() ? (
-                  <AdaptiveLayout>
-                    <DynamicRouter />
-                  </AdaptiveLayout>
-                ) : (
-                  <GlobalLayout>
-                    <DynamicRouter />
-                  </GlobalLayout>
-                )}
-              </ProtectedRoute>
-            }
-          />
-        )}
-        {IS_STATIC_MODE && (
-          <Route
-            path='/core/*'
-            element={
-              <ProtectedRoute>
-                {isUIV3Enabled() ? (
-                  <AdaptiveLayout>
-                    <div style={{ padding: 5 }}>
-                      <h2>{i18n.t('routes.app_routes.k0')}</h2>
-                      <p>
-                        {i18n.t('routes.app_routes.k1')}
-                        Module Federation。
-                      </p>
-                      <p>{i18n.t('routes.app_routes.k2')}</p>
-                      <ul>
-                        <li>
-                          <a href={HRM_PATHS.root}>{i18n.t('routes.app_routes.k3')}</a>
-                        </li>
-                        <li>
-                          <a href={CRM_PATHS.root}>{i18n.t('routes.app_routes.k4')}</a>
-                        </li>
-                        <li>
-                          <a href={DASHBOARD_PATHS.dashboard}>{i18n.t('routes.app_routes.k5')}</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </AdaptiveLayout>
-                ) : (
-                  <GlobalLayout>
-                    <div style={{ padding: 5 }}>
-                      <h2>{i18n.t('routes.app_routes.k0')}</h2>
-                      <p>
-                        {i18n.t('routes.app_routes.k1')}
-                        Module Federation。
-                      </p>
-                      <p>{i18n.t('routes.app_routes.k2')}</p>
-                      <ul>
-                        <li>
-                          <a href={HRM_PATHS.root}>{i18n.t('routes.app_routes.k3')}</a>
-                        </li>
-                        <li>
-                          <a href={CRM_PATHS.root}>{i18n.t('routes.app_routes.k4')}</a>
-                        </li>
-                        <li>
-                          <a href={DASHBOARD_PATHS.dashboard}>{i18n.t('routes.app_routes.k5')}</a>
-                        </li>
-                      </ul>
-                    </div>
-                  </GlobalLayout>
-                )}
-              </ProtectedRoute>
-            }
-          />
-        )}
+        {/*
+         * D4: /core/* 统一走本地插件动态路由（DynamicRouter）。
+         * 原 IS_STATIC_MODE 分支的「Module Federation 未启用」占位页已移除——
+         * 前端回归模块化单体，业务域全部本地打包，不再区分 static / module-federation 部署模式。
+         */}
+        <Route
+          path='/core/*'
+          element={
+            <ProtectedRoute>
+              {isUIV3Enabled() ? (
+                <AdaptiveLayout>
+                  <DynamicRouter />
+                </AdaptiveLayout>
+              ) : (
+                <GlobalLayout>
+                  <DynamicRouter />
+                </GlobalLayout>
+              )}
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path='/template-demo'

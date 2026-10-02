@@ -3,10 +3,12 @@ import React, { Component, Suspense, lazy, useEffect, useRef } from 'react';
 import { Box, CircularProgress, Typography, Button, LinearProgress } from '@mui/material';
 import { AlertTriangle as ErrorIcon, RefreshCw as RefreshIcon } from 'lucide-react';
 import { logger } from '@/utils/logger';
-import { microFrontendPerf } from './performance';
-import { versionManager } from './version-manager';
-import { canaryRelease } from './canary-release';
-import { modulePerformanceMetrics, errorTracker, userBehaviorAnalytics } from './observability';
+// D4 归档说明：本文件已归档至 _archive-microfrontend/。其依赖的可观测性/版本管理/
+// 灰度模块仍保留在 src/microfrontend/ 下，故用 @/microfrontend 别名指向原位。
+import { microFrontendPerf } from '@/microfrontend/performance';
+import { versionManager } from '@/microfrontend/version-manager';
+import { canaryRelease } from '@/microfrontend/canary-release';
+import { modulePerformanceMetrics, errorTracker, userBehaviorAnalytics } from '@/microfrontend/observability';
 import i18n from '@/i18n';
 
 /**

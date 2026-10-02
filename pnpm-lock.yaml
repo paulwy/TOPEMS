@@ -308,12 +308,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.82.0(react@19.2.8))
-      '@module-federation/runtime':
-        specifier: ^2.8.0
-        version: 2.8.0
-      '@module-federation/vite':
-        specifier: ^1.23.0
-        version: 1.23.0(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
       '@mui/icons-material':
         specifier: ^9.4.0
         version: 9.4.0(@mui/material@9.4.0(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.8))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.17)(react@19.2.8))(@types/react@19.2.17)(react@19.2.8))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/react@19.2.17)(react@19.2.8)
@@ -2451,51 +2445,6 @@ packages:
   '@mediapipe/tasks-vision@0.10.17':
     resolution: {integrity: sha512-CZWV/q6TTe8ta61cZXjfnnHsfWIdFhms03M9T7Cnd5y2mdpylJM0rF1qRq+wsQVRMLz1OYPVEBU9ph2Bx8cxrg==}
 
-  '@module-federation/dts-plugin@2.9.1':
-    resolution: {integrity: sha512-OnJQNRrjUfI1UJu+rIUzC0jl2uQcpRp/hIbMLZChSleFLlYpvvMzu/s33E7oiST421HAg9gilgYLj1WAn1SSOw==}
-    peerDependencies:
-      typescript: ^4.9.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
-      vue-tsc: '>=1.0.24'
-    peerDependenciesMeta:
-      vue-tsc:
-        optional: true
-
-  '@module-federation/error-codes@2.8.0':
-    resolution: {integrity: sha512-Gaog9904EmxYOQV0hli3XQ7jXeFaADfh5bnBtTCtbZ37Qd/Sz9kQfd+gYQRyIj7RGmkv9DPiN/SsmrTMrTymKw==}
-
-  '@module-federation/error-codes@2.9.1':
-    resolution: {integrity: sha512-5lqrIZTeMiKdn4uuX/+X8uN/4C0yqI8P3WO42DNRR7B9gCA4HMDCHrrxU8odQup9bzRsN5TJSz3av6d2iNmPgA==}
-
-  '@module-federation/managers@2.9.1':
-    resolution: {integrity: sha512-X20XDvkTbClfG8Ig0VQW2GcUCzLAopb7fxdrVyk3kqLVeB6fLoNLhzA8K/S5xhnkeY7YhrOxZBujMnK5wETxtA==}
-
-  '@module-federation/runtime-core@2.8.0':
-    resolution: {integrity: sha512-Tf98+epGGiPSHqmQHuXa2uXZMMvjGf1IqJDR1/FpXfmobv5ECN0mGZCjUHGNSyxvoDyXKIkKwJu7IwEoh0ouQA==}
-
-  '@module-federation/runtime-core@2.9.1':
-    resolution: {integrity: sha512-HMdsiTQoWqOXFr9Boki+U99piC00C7GLBZN05t+sXcutHq99oXZ8ONjvPL/h2pu7VAuPXgCjuCE3iqUQXv54EQ==}
-
-  '@module-federation/runtime@2.8.0':
-    resolution: {integrity: sha512-cGtUBQ1/TVy7KrXy6xPgy3FEmOGyIYkBA2T4iGH3ZH5PNPPTmqN9jF2AfneTSOj0RtBr7Pxq3CUt81E/UCvK1A==}
-
-  '@module-federation/runtime@2.9.1':
-    resolution: {integrity: sha512-dRCy2HpUinPnk2b6GB/R6t2iJTHkSFGv83sbrEKylXkR2ATH0V47WpUdoNsZCEUOTQlAIHwZzDCVocA5FbcsBA==}
-
-  '@module-federation/sdk@2.8.0':
-    resolution: {integrity: sha512-yBP+9+0Z8nlvKEXAZS3AsQVy7bFbZf8eMivGk4q4ZdwG3TsLMlsPjb1dQb2i7gcAG6ux9y2LWLkj/0LVk74cnQ==}
-
-  '@module-federation/sdk@2.9.1':
-    resolution: {integrity: sha512-JneBWSHr9ZCZHa5geNUleVK2vBTugWXLIXlV72UAhgHm1cTMYKZljnhRSX59n7Xssz4Yk+m+W3rYg6Eb4ouL8w==}
-
-  '@module-federation/third-party-dts-extractor@2.9.1':
-    resolution: {integrity: sha512-8H3/SWPD93EHmLG0F30J0ihsGI+LpCT7xdc6YXQWX+1lkgzwJoWTwm4j+LMQRP+1OtSxrpEW5ebcKqKeTZ2B+Q==}
-
-  '@module-federation/vite@1.23.0':
-    resolution: {integrity: sha512-2nceKvsxLn+zXYJnwUrmzjaVWQpTexrCBrO8KfsHHrDAXwPFovDxQIw3QuRKp4tIcNvcbn7C/N2hMQo+VYTtKQ==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    peerDependencies:
-      vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
-
   '@monogrid/gainmap-js@3.4.0':
     resolution: {integrity: sha512-2Z0FATFHaoYJ8b+Y4y4Hgfn3FRFwuU5zRrk+9dFWp4uGAdHGqVEdP7HP+gLA3X469KXHmfupJaUbKo1b/aDKIg==}
     peerDependencies:
@@ -4531,10 +4480,6 @@ packages:
     resolution: {integrity: sha512-xRQbDb9BnwDafYNn6Vwl839DYVjqXYb1XVGtWAZ1kcDc6iwAL4hg3B1dZlRiuENFeO2H53gFG3in621AdERVAg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  adm-zip@0.6.1:
-    resolution: {integrity: sha512-Xwrja8nx9e5o2N1my4DsKCeKpdrnACyr1wtbPxBDgGzKzKyE9kRtBFA8mWldI+RVlD7CBZNWY/wQ2+ydwOR6kQ==}
-    engines: {node: '>=14.0'}
 
   agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
@@ -6990,11 +6935,6 @@ packages:
 
   isomorphic-fetch@3.0.0:
     resolution: {integrity: sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==}
-
-  isomorphic-ws@5.0.0:
-    resolution: {integrity: sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==}
-    peerDependencies:
-      ws: '*'
 
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
@@ -10361,18 +10301,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  ws@8.21.3:
-    resolution: {integrity: sha512-201TZ/kPWxoPr/OKWjquZR1SWKXcvxdH+e1xrx89b3YbmzLMFCLfnaG1HFIgWzJOEWZ7MvpK++odZufgYR50Rw==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   wsl-utils@0.1.0:
     resolution: {integrity: sha512-h3Fbisa2nKGPxCpm89Hk33lBLsnaGBvctQopaBSOW/uIs6FTe1ATyAnKFJrzVs9vpGdsTe73WF3V4lIsk4Gacw==}
     engines: {node: '>=18'}
@@ -12649,69 +12577,6 @@ snapshots:
       react: 19.2.8
 
   '@mediapipe/tasks-vision@0.10.17': {}
-
-  '@module-federation/dts-plugin@2.9.1(typescript@6.0.3)':
-    dependencies:
-      '@module-federation/error-codes': 2.9.1
-      '@module-federation/managers': 2.9.1
-      '@module-federation/sdk': 2.9.1
-      '@module-federation/third-party-dts-extractor': 2.9.1
-      adm-zip: 0.6.1
-      isomorphic-ws: 5.0.0(ws@8.21.3)
-      typescript: 6.0.3
-      undici: 7.29.1
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@module-federation/error-codes@2.8.0': {}
-
-  '@module-federation/error-codes@2.9.1': {}
-
-  '@module-federation/managers@2.9.1':
-    dependencies:
-      '@module-federation/sdk': 2.9.1
-
-  '@module-federation/runtime-core@2.8.0':
-    dependencies:
-      '@module-federation/error-codes': 2.8.0
-      '@module-federation/sdk': 2.8.0
-
-  '@module-federation/runtime-core@2.9.1':
-    dependencies:
-      '@module-federation/error-codes': 2.9.1
-      '@module-federation/sdk': 2.9.1
-
-  '@module-federation/runtime@2.8.0':
-    dependencies:
-      '@module-federation/error-codes': 2.8.0
-      '@module-federation/runtime-core': 2.8.0
-      '@module-federation/sdk': 2.8.0
-
-  '@module-federation/runtime@2.9.1':
-    dependencies:
-      '@module-federation/error-codes': 2.9.1
-      '@module-federation/runtime-core': 2.9.1
-      '@module-federation/sdk': 2.9.1
-
-  '@module-federation/sdk@2.8.0': {}
-
-  '@module-federation/sdk@2.9.1': {}
-
-  '@module-federation/third-party-dts-extractor@2.9.1': {}
-
-  '@module-federation/vite@1.23.0(typescript@6.0.3)(vite@8.1.5(@types/node@25.9.5)(esbuild@0.28.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))':
-    dependencies:
-      '@module-federation/dts-plugin': 2.9.1(typescript@6.0.3)
-      '@module-federation/runtime': 2.9.1
-      '@module-federation/sdk': 2.9.1
-      vite: 8.1.5(@types/node@25.9.5)(esbuild@0.28.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - vue-tsc
 
   '@monogrid/gainmap-js@3.4.0(three@0.184.0)':
     dependencies:
@@ -15036,8 +14901,6 @@ snapshots:
       acorn: 8.17.0
 
   acorn@8.17.0: {}
-
-  adm-zip@0.6.1: {}
 
   agent-base@6.0.2:
     dependencies:
@@ -18014,10 +17877,6 @@ snapshots:
       whatwg-fetch: 3.6.20
     transitivePeerDependencies:
       - encoding
-
-  isomorphic-ws@5.0.0(ws@8.21.3):
-    dependencies:
-      ws: 8.21.3
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -22374,8 +22233,6 @@ snapshots:
   ws@7.5.13: {}
 
   ws@8.21.1: {}
-
-  ws@8.21.3: {}
 
   wsl-utils@0.1.0:
     dependencies:

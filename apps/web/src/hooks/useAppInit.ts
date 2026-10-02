@@ -3,15 +3,10 @@ import { useAuth } from './useAuth';
 import { logger } from '@/utils/logger';
 import { eventBus, ModuleEvents } from '@/lib/plugin-loader/eventBus';
 import i18n from '@/i18n';
-// V35.0 Phase 7: 微前端智能预加载
-import { prefetchOnIdle } from '@/microfrontend/RemoteLoader';
-import { REMOTE_MODULES } from '@/microfrontend/config';
-// V37.0 Phase 7: Service Worker 离线缓存 + 智能预加载
-import { prefetchRemoteEntries } from '@/lib/pwa';
-// V39.0 Track F: 微前端版本管理 + 热更新 + 灰度发布
+// V39.0 Track F: 版本管理 + 灰度发布（独立于 MF，继续使用）
 import { versionManager } from '@/microfrontend/version-manager';
 import { canaryRelease } from '@/microfrontend/canary-release';
-// V40.0 Track F: 微前端可观测性
+// V40.0 Track F: 可观测性（错误追踪 + 用户行为分析）
 import { errorTracker, userBehaviorAnalytics } from '@/microfrontend/observability';
 
 /**
@@ -58,23 +53,7 @@ export const useAppInit = (): void => {
     };
   }, []);
 
-  // V35.0 Phase 7: 用户认证后，浏览器空闲时预加载非核心模块的远程入口
-  // V37.0 Phase 7: 同时预缓存远程模块入口到 Service Worker
-  // V64 防御：static 模式下 entry 为空字符串，必须过滤掉，
-  // 否则会对空字符串执行 prefetch（等同请求当前页面），产生不必要的网络开销
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const lazyEntries = REMOTE_MODULES.filter(
-      (m) => !m.isCore && m.entry && m.entry.trim() !== ''
-    ).map((m) => m.entry);
-    if (lazyEntries.length > 0) {
-      prefetchOnIdle(lazyEntries);
-      // V37.0: 预缓存远程入口到 Service Worker（离线可用）
-      prefetchRemoteEntries(lazyEntries);
-    }
-  }, [isAuthenticated]);
-
-  // V39.0 Track F: 启动微前端版本管理 + 灰度配置同步
+  // V39.0 Track F: 启动版本管理 + 灰度配置同步
   // 用户认证后启动定时版本检查（5 分钟一次）+ 灰度配置服务端同步（2 分钟一次）
   useEffect(() => {
     if (!isAuthenticated) return;

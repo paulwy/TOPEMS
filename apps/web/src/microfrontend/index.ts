@@ -48,8 +48,8 @@
  */
 
 // ==================== 配置中心 ====================
-export { REMOTE_MODULES, getEnabledModules, getModulesByPreloadStrategy } from './config';
-export type { RemoteModuleConfig } from './config';
+// D4: config.ts（REMOTE_MODULES 远程模块清单）已归档至 _archive-microfrontend/。
+// 模块化单体前端无远程模块，业务域全部本地打包，不再需要远程模块注册表。
 
 // ==================== 版本管理 + 热更新 ====================
 export {
@@ -98,13 +98,8 @@ export {
 } from './observability';
 
 // ==================== 远程模块加载器 ====================
-export {
-  RemoteLoader,
-  preloadRemoteModules,
-  prefetchRemoteEntry,
-  prefetchOnIdle,
-  prefetchOnHover,
-} from './RemoteLoader';
+// D4: RemoteLoader.tsx（远程模块加载器）已归档至 _archive-microfrontend/。
+// 模块化单体前端用 Vite 原生 dynamic import / 路由级懒加载实现按需加载，无需 MF 协议。
 
 // ==================== 模块注册表 ====================
 export { type RegisteredModule, type ModuleStatus } from './registry';
@@ -137,8 +132,8 @@ export { default as VersionPanel } from './version-platform/VersionPanel';
 // ==================== 可观测性仪表盘（V41.0）====================
 export { default as ObservabilityDashboard } from './observability/dashboard/ObservabilityDashboard';
 
-// ==================== 微前端路由 ====================
-export { MicroAppRouter } from './MicroAppRouter';
+// D4: MicroAppRouter.tsx（按 routePrefix 挂载远程 RemoteLoader 的微前端路由）
+// 已归档至 _archive-microfrontend/。本地业务域路由走 DynamicRoutes。
 
 // ==================== V43.0 AI 运维体系 ====================
 // 异常检测

@@ -1,7 +1,9 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { RemoteLoader } from './RemoteLoader';
-import { getEnabledModules } from './config';
+// D4 归档说明：config.ts 仍保留在 src/microfrontend/（被 version-manager/canary-release 引用），
+// 故用 @/microfrontend 别名指向原位。
+import { getEnabledModules } from '@/microfrontend/config';
 import i18n from '@/i18n';
 
 /**
