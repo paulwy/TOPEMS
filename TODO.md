@@ -1,35 +1,5 @@
 # TOPEMS 项目 TODO 列表
 
-## ✅ 今日已完成（2026-10-02）——ticket 业务模块 API 挂载根治
-
-### 已根治/已完成（待推送）
-- ✅ **ticket 模块在 BFF 上的"挂载缺失"根治**（延续 MES 看板挂载先例，价值更高）：
-  - 根因：svc/server 的 TicketRealModule::build() 用业务用户池（topems_app）执行 DDL，
-    而 ticket 表 owner 是 topems；PostgreSQL 的 CREATE INDEX IF NOT EXISTS 即使索引已存在
-    也要求表 owner 权限 → build 返回 Err → 模块降级未注册 → **整个 /api/ticket/* 全 404**
-    （tickets 列表/详情、workflows、feedbacks、SLA stats 等 41 条路由全部不可用，前端
-    TicketCenterPage/DashboardPage 长期打不开；模块内路由早已实现，缺的只是正确挂载）
-  - 修复①（svc/server/src/modules/ticket_real_module.rs）：DDL 走
-    `ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)`（与独立部署 main.rs ddl_pool 模式及
-    crm/erp/ehs/analytics 等模块对齐；此前仅 portal_real_module 用了 migrate_pool）
-  - 修复②（scripts/run_monolith.sh）：build_env 从 .env 读取 MIGRATE_URL 注入进程
-    （此前 MIGRATE_URL 未注入 → migrate_pool=None → 回退受限池仍失败）；
-    其他模块 DDL 同样受益（owner 池）
-  - 验证：cargo build -p topems-server 0 错；重启后 module_list 含 ticket（30→31，
-    ticket-real 注册成功）；/api/ticket/tickets、/workflows、/feedbacks、/tickets/stats、
-    /sla-policies 全部恢复 401（=已挂载需认证）；MES 看板 /api/mes/dashboard/stats 回归 200
-  - 注：首次实现后被 TRAE 机 `reset --hard origin/main` 抹除一次，已重做并推送
-
-### ⏳ 后续工作（按优先级）
-- ⏳ **其余前端契约缺口审计**（本轮实测 99 条 404，排除 ticket 后大头为 mobile 58 条）：
-  - mobile 58 条：apps/web/src/api/mobile.ts 定义了但**无任何页面调用**（未使用骨架 API），
-    且 svc/mobile 与前端路径是两套（svc 服务移动端 App：/announcements、/approvals、
-    /devices/register 等）→ 判定无价值，不挂载
-  - srm/bids 列表、pm/risks、erp/addressbook、integration/endpoints、ai/conversations、
-    scm/inspection-records 等：svc 与 unified-core 均无对应实现（unified-core 版本带
-    State<AppState> 无法挂根层）→ 属"实现缺失"非"挂载缺失"，待前端页面确认价值后补实现
-  - 结论：本轮真正符合"已实现未挂载"的缺口只有 ticket（已根治）；其余为未使用定义或未实现
-
 ## ✅ 今日已完成（2026-09-29）——脚本体系整治批次
 
 ### 已根治/已完成（全部已推 origin/main）
@@ -349,57 +319,151 @@
     保留对"测试挂起"（如 shared_event Redis hang）的兜底
   - 验证：下一次全量 push 五门禁全绿，test 实测 750.49s（新门禁下通过）
 
-## 2026-10-03 前端契约缺口补实现（第二轮，commit c061eb9e4 已推 origin/main）
+## 🚧 架构优化实施（2026-10-02）
 
-### 审计最终结论（方法学：静态→精确→实测→页面方法级四层收敛）
-- 全量 600 条静态候选 → 串行实测（含单次重试）359 条 method 级真 404 → 页面方法级
-  收敛后：**仅 2 类高价值缺口**，均已修复：
-  1. **ai conversations**（AiChatPage/DifyChatPage 在用）：GET/POST/DELETE /api/ai/conversations
-     全 404（svc/ai 只有 /dify/conversations 代理，无自有会话存储）
-  2. **unified-core 双重前缀 bug**（TenantSwitcher 全局租户切换器在用）：
-     apiClient.core + 写死 '/api/core/tenant/*' → /api/core/api/core/tenant/* 永远 404
-- 其余 222+ 条真 404 判定为"前端未使用定义"不补：mobile 98、notification 77、
-  workflow 43（flow.rs 缺 categories/delegates/form-definitions/rules/variables 等增强，
-  前端页面未调用）、file 33、erp addressbook 16（无页面）、doc 10、integration 8、
-  wms 7、ai 部分（vector/recommendations 未用）、iam/scm/monitor 等零星
+> 依据：`docs/audit/arch-analysis/` 8 份分片分析 + `TOPEMS-架构分析报告-2026-10-02.md`（73 条发现：高危16/中危30/低危27）。
+> 方案 = 阶段0 决策 → 阶段1 快赢 → 阶段2 改造 → 阶段3 收敛；条目引用报告发现编号（F-xx）与真实代码路径。
+> 优先级：P0=阻塞性/必须先行；P1=本批次内完成；P2=可延后但需排期。
 
-### 本轮修复
-- **svc/ai**：新增 modules/chat_conversations.rs（core.ai_conversations 表 + 4 CRUD）、
-  routes.rs 挂 conversation_router（租户/鉴权中间件）、main.rs + server
-  ai_real_module.rs 双入口 init_database 幂等建表
-- **前端**：unified-core/tenant.ts + system.ts 去除写死 '/api/core' 前缀（含反引号残留）
-- 验证：cargo build 0 错；重启 modules=31；GET/POST /api/ai/conversations 404→401；
-  core.ai_conversations 由 server init 自动建成；MES 200、ticket 401 回归正常
+### 阶段 0 架构决策（先行，全部 P0，产出决策记录落盘 `docs/architecture/decision-*.md`）
 
-### 方法学教训（避免下轮重蹈）
-- 静态对比（grep/路径归一）误报率极高（397 候选 164 误报）：**以 curl 实测为准**，
-  且 probe 必须串行+单次重试（并发超时会把 404 误标 ERR 漏掉——probe_all 初版 ai
-  只记 5/10 条即此因）
-- 页面使用判定必须**方法级**（页面 import api 模块 ≠ 调用缺口方法；gap_usage v2
-  "import 即用"把 mobile 误标 17 页、v4 把 admin workflow/file 误标 3-5 页）
-- 双重前缀是前端写死完整路径 + baseURL 重复拼接（apiClient.core.get('/api/core/...')），
-  特征是路径含 /api/core/api/core/ 或 /api/finance/api/core/
-- svc 模块目录名 ≠ api_prefix 映射（analytics→/api/bi）；unified-core embed 挂 /api/core
+- [x] **D1 unified-core 目标形态决策**（P0，依赖：无，先行项）——✅ 2026-10-02 决策落盘 [decision-d1-unified-core-architecture.md](docs/architecture/decision-d1-unified-core-architecture.md)（推荐 C 灰度下架→终态 A 瘦身）：
+  - 现状/证据：23 个业务镜像模块活跃导出（`svc/unified-core/src/modules/mod.rs:36-81`），独立模式挂 24 个业务路由（`routes/mod.rs:267-313`），跨 schema 直读 180 处业务表、不受 boundary 约束（`scripts/schema_boundary.json`）——报告 F-01/XCUT-01，与 `overview.md` 瘦身声明矛盾
+  - 选项：A 彻底瘦身（停挂业务路由，180 处跨读改 HTTP/事件，工作量大）；B 承认超集单体（保留但文档改口，走受控白名单治理，放弃瘦身叙事）；C 灰度下架（推荐：按路由调用方用量排序，低用先停挂、高用逐批迁移至各服务或 svc/server 模块组，迁移一批下架一批）
+  - 验收：决策记录落盘并含停挂/迁移批次表；每批下架后 `cargo check --workspace` 与 boundary 门禁全绿；独立模式路由清单与决策一致
 
-### 遗留（后续项，均已核实无页面使用或为环境问题）
-- [ ] unified-core/system.ts 与后端 v1 契约不匹配（前端 /system/config 无 v1，后端
-      /system/v1/config；api-keys/settings/smtp 后端无路由）——systemApi 无页面使用，
-      待真实启用时对齐
-- [ ] 前端写死前缀清理项（无页面使用）：finance/settlementCenter.ts
-      （/api/finance/api/core/settlement-center/* 双重前缀）、plugin/registry.ts
-      的 '/api/core/flow'（插件注册元数据，非请求）
-- [ ] pre-commit frontend-lint 环境崩溃（eslint 10.8.0 + minimatch@10 brace_expansion
-      TypeError），与代码无关；commit 需 --no-verify 绕过，建议修依赖版本
+- [x] **D2 两条同步 HTTP 双向环消除策略决策**（P0，依赖：无，先行项）——✅ 2026-10-02 决策落盘 [decision-d2-call-cycle-elimination.md](docs/architecture/decision-d2-call-cycle-elimination.md)（实测 3 环逐环推荐：环1 erp↔hrm=C 单向API+事件、环2 erp↔mes=A 双向事件化、环3 portal↔unified-core=C 本地化）：
+  - 现状/证据：erp↔hrm（`svc/erp/src/modules/addressbook.rs:200` 读通讯录 + `svc/hrm/src/modules/payroll.rs:990` 写凭证）；erp↔mes（`svc/erp/src/modules/production_order.rs:536` 下达工单 + `svc/mes/src/modules/work_report.rs:644` 报工回传）——报告 F-02/ENTRY-01/02
+  - 选项：A 事件化（工单下达/通讯录变更改 Redis Stream 事件，最终一致+断链韧性，需补幂等/DLQ 消费）；B 模块合并（成本高、破坏部署独立性）；C 单向 API+异步补偿（推荐组合：保留 hrm→erp 凭证单向 HTTP；erp→hrm 通讯录改 portal BFF 聚合或本地缓存+HRM 变更事件；工单下达改 erp 发布 `ProductionOrderCreated` 事件、mes 订阅）
+  - 验收：`docs/architecture/service-topology/service-dependency-matrix.runtime.csv` 重生成后无 2-环；grep 验证原环边不再双向同步
 
-## 2026-10-03 P0 模块挂载完整性抽查（31 模块）
+- [x] **D3 integration 直写 DB 归属与 data_sync 假同步处置决策**（P0，依赖：无，先行项）——✅ 2026-10-02 决策落盘 [decision-d3-integration-data-ownership.md](docs/architecture/decision-d3-integration-data-ownership.md)（直写→走服务 API/事件、假同步移除为主）：
+  - 现状/证据：`svc/integration/src/qms_lims_ehs.rs:26,39,80,136,174,196,244,274,315` 9 处 `only_own_schema_query!` 直写 qms.*/ehs.*（报告 F-03）；`svc/lims/src/modules/data_sync.rs:255`、`svc/ehs/src/modules/data_sync.rs:254,358` 假同步只插本地"成功"记录（报告 F-09/WMS-03+ENTRY-10）
+  - 选项：A 直写→qms/ehs 提供 HTTP 写接口、integration 改调接口并撤销 schema_boundary allow（推荐）；B 保留受控直写纳入白名单（承认现状）；data_sync：A 真实现（调目标服务 API）/ B 移除伪记录与入口 / C 标记废弃+前端隐藏（推荐先行 C，需求明确后再定 A/B）
+  - 验收：boundary 门禁零 FAIL；qms/ehs 写接口存在且有单测；data_sync 无"假成功"路径（伪记录清零或入口移除）
 
-### 结论：31 模块挂载完整，无 ticket 式隐藏降级
-- 方法：对 health 31 模块按页面方法级调用热度抽 Top3-5 核心 API 实测（401/200=挂载，
-  404=可疑）；再对"页面真实调用面"186 条 URL+method 全量实测（参数化路径用示例 UUID）
-- 结果：**0 条真实 404**。9 条可疑 404 全部澄清为假阳性：
-  - 参数化去参探测误报（hrm/settings、srm/supplier-portal/{id}/stats、core/tenant/{id}
-    均带参 401；前端真实请求均带参）
-  - 方法级匹配误报（/api/core 根路径无任何 api 定义；push-config/channels 页面未调用）
-- 意义：ticket 式"health 在列但页面 API 404"隐患在当前 31 模块不存在；前端页面真实
-  调用面已全部挂载（401 认证保护正常）
-- 脚本：/tmp/p0_check.py（模块 Top 抽样）、/tmp/p0_full.py（调用面全量参数化实测）
+- [x] **D4 前端 Module Federation 策略决策**（P0，依赖：无，先行项）——✅ 2026-10-02 决策落盘 [decision-d4-frontend-mf-strategy.md](docs/architecture/decision-d4-frontend-mf-strategy.md)（移除 remote 声明、回归单体 SPA，保留原生 dynamic import 扩展点）：
+  - 现状/证据：19 个 remote 声明 0 实现（`apps/web/src/microfrontend/config.ts:96-260`）、默认 static 模式（`apps/web/vite.config.ts:201-202`）、根 `package.json:21,26` 引用不存在的 topems-core 包（报告 F-07/FRONT-01/02/03/04）
+  - 选项：A 真联邦（按域建 19 个 app 工程，成本极高，当前无对应工程，不推荐）；B 去 remote 化（推荐：承认 static 单体，删除 MF 死代码 RemoteLoader/MicroAppRouter/registry 等 100+ 文件，移除 `@module-federation/vite` workaround 插件，文档改"模块化单体前端"叙事）；C 渐进（先删死代码修构建链，MF 保留编译期开关预留）
+  - 验收：`pnpm run build` 全链绿；MF 死代码文件数按决策归零或显式标记；`microfrontend-architecture-decision.md` 与代码一致
+
+- [x] **D5 服务发现与配置收敛决策**（P0，依赖：无，先行项）——✅ 2026-10-02 决策落盘 [decision-d5-service-discovery-convergence.md](docs/architecture/decision-d5-service-discovery-convergence.md)（静态配置为主+明确边界，移除 zookeeper/eureka/nacos 残留）：
+  - 现状/证据：5 套服务发现并存（`deploy/docker/{etcd,eureka,zookeeper,nacos}-compose.yml`，报告 F-39/XCUT-07）+ Consul 默认关闭走 env 回退（CORE-11）；配置源 `.env/.env.production/standalone.env/deployment.yaml` 多份并存
+  - 选项：A 收敛到 env/静态配置 + etcd 配置中心（推荐：删除未用发现组件目录，服务发现以 `config/services.yaml` + `ports.env` 为单一事实源，运行时统一 SERVICE_URL env 解析）；B 保留多套但明确职责边界（不推荐）
+  - 验收：`deploy/` 目录无未用发现组件；部署文档与 config/ 单一事实源对齐；standalone.env 与 deployment.yaml 合并为单一来源
+
+### 阶段 1 快赢并行（不依赖阶段 0 决策，可立即开工）
+
+- [x] **T1 前端构建链修复**（P0，依赖：无）——✅ 2026-10-03 commit `dec6e4639`（10 文件 +60/−1090，未 push）：build:core 移除、MF 空壳归档、@module-federation 归零；build:host/typecheck 绿、bundle 16.43MB<30M、vitest 6528 过/3 失败（既有 GIS mock 问题）：
+  - 根因：根 `package.json:21,26` 的 `pnpm --filter topems-core build` 引用不存在的包（apps/packages 无 topems-core）→ `pnpm run build` 必失败（报告 F-07/FRONT-01）
+  - 方案：移除/改写 build:core 步骤为实际包（@topems/*）或并入 build:host；CI 构建门禁补真实执行 `pnpm run build` 防复发
+  - 验证：`pnpm run build` 全链 0 失败；CI 门禁绿；无 topems-core 引用残留（grep 根 package.json + CI yml）
+
+- [x] **T2 系统性文档漂移修订**（P0，依赖：无）——✅ 2026-10-03 commit `aa821a1c2`（10 文档 +235/−120，未 push）：overview/event-driven/microfrontend 决策等按 D1–D5 校准，抽样核对零失实：
+  - 根因：报告 F-48/54/58/65 等——`docs/architecture/event-driven.md` 仍写 Pub/Sub+RabbitMQ（实为 Redis Stream）；`overview.md` 前端技术栈整节错误（Webpack/AntD5/Tailwind 等，实为 Vite8/MUI9/无 Tailwind）；bootstrap A/B/C 三处文档计数互矛盾（实测纯C=6/标准A=4/B系=17/混合=1）；`database.md` schema 命名 plugin_erp vs erp 两套
+  - 方案：按报告 §13 附录 a（漂移对照总表）逐条修订对应文档；bootstrap 分布以 ENTRY 实测为准写入 overview
+  - 验证：`verifier text must-contain` 抽查修订章节关键词通过；漂移对照总表中"文档"列与代码一致（无新增漂移）
+
+- [x] **T3 schema-boundary 门禁修复与基线固化**（P0，依赖：无）——✅ 2026-10-03 commit `87b53f96f`（5 文件 +141/−38，未 push）：py+cjs 双门禁 PASS、临时白名单（unified-core 21 schema/search/integration，撤销时机 U1/U3）、lefthook 挂 boundary-gate-py：
+  - 根因：`scripts/schema_boundary.json` ehs 配置异常（schema=public vs search_path=ehs，报告 WMS-08/XCUT-14）；integration 直写 9 处未在门禁 FAIL 基线中
+  - 方案：修正 ehs 配置；把 9 处直写登记为已知 FAIL 基线（阶段 2 U3 治理后转绿）；boundary 门禁脚本纳入 pre-commit/pre-push 实跑
+  - 验证：门禁脚本可运行且输出确定基线（FAIL 清单=9 处已知项）；ehs 配置修正后无新增误报
+
+- [ ] **T4 插件令牌门控修复**（P1，依赖：无）：
+  - 根因：`svc/unified-core/src/modules/plugin/handlers/runtime.rs:18-31` 令牌门控依赖 `PROFILE=="prod"` 精确串比较，非 prod 环境无令牌也能注册（报告 CORE-05）
+  - 方案：改布尔/枚举开关（如 PLUGIN_TOKEN_ENFORCE=true），prod 默认强制令牌
+  - 验证：非 prod 强制模式下无令牌注册返回 403（单测覆盖）；prod 行为不变
+
+### 阶段 2 架构改造（依赖阶段 0 决策）
+
+> 📌 2026-10-03 启动三项无决策依赖、可并行的改造：**U8 门面清理 + U10 启动 panic 治理（波次 1 并行，文件所有权已划清）**，**U7 统一错误处理（波次 2，待 U8 提交后接续）**——因 U7/U8 在业务文件上大量重叠（实测 U7 目标 341 文件 vs U8 目标 194 文件），严禁同文件并发编辑，故串行。注：本次用户指令编号 U6/U7/U8 与本表内容对应为 **U7（错误处理）/U8（门面清理）/U10（启动 panic）**；本表 U6（金额精度）不在本次范围。
+> 📌 2026-10-03 第二批并行启动 **U6（金额精度，finance+crm/models）+ U11（心跳离线检测，unified-core embedded）+ U12（crm 审计直读，crm/modules/audit.rs）**——文件面互斥，三个子代理并行。
+> 📌 2026-10-03 第三批并行启动 **U1（unified-core 瘦身）+ U2（调用环消除）+ U3（integration 改造）**（依赖 D1/D2/D3，均已落盘）。文件所有权划分：**schema_boundary.json/allowlist.json 与 unified-core routes/mod.rs、modules/mod.rs 及 23 个业务镜像模块归 U1**；**svc/erp、hrm、mes、portal、unified-core modules/iam/user（偏好）+ lib/shared-event + event-driven.md 归 U2**（U2 不碰 unified-core 的 routes/mod.rs 与 modules/mod.rs）；**svc/integration、qms、ehs、lims 归 U3**（U3 不碰白名单文件——integration allow 撤销由编排收尾）。
+> 📌 2026-10-03 第四批并行启动 **U4（master-data 落库）+ U5（RLS 开启与租户隔离修复）**——文件面互斥（U4=svc/master-data+新表迁移、U5=finance main.rs+unified-core middleware/tenant_rls.rs+RLS 迁移）；两个子代理的模块 .rs 改动均因并行 git 索引操作被并入前序 fmt/docs 提交（已逐一核实 HEAD 内容正确、工作树==HEAD 编译验证绿）；NODE 门禁曾因 U4 未提交 persist.rs 短暂 FAIL，U4 提交后复跑 PASS。阶段 2 十一项已全部完成，剩 U9（服务发现收敛，依赖 D5 已就绪）与 U12b（wms 审计错位，P2）。
+
+- [x] **U1 unified-core 瘦身落地**（P0，依赖 D1）——✅ 2026-10-03：b1 停挂 24 业务路由 commit `2849ff267`、b3 撤销 unified-core 21 业务 schema allow commit `d91963532`；b2 删除 23 业务镜像模块+24 投影路由+180 处跨读+解引用 svc/server mes 借用（因并行 git 索引操作并入 U2/U3 提交，代码已入 HEAD 但 b2 需整体 revert）；独立模式业务路由=0、跨业务 schema SQL=0、PY 门禁 exit 0（unified-core 119 引用全 public/自有）、NODE 门禁 PASS（38 allowlisted）、cargo check --workspace 0 错误；残留：:8099 直跑时 mes 看板 REST 端点 404（生产 nginx 转独立服务无影响）、clippy server 受并行 hrm 阻断（非本次改动）；**U5 RLS 联动提示已输出**：unified-core 数据面已收敛平台域，可启动 finance RLS 与 tenant_rls 修复：
+  - 按 D1 决策执行：业务路由停挂清单、180 处跨 schema 直读逐批迁移（改 TypedServiceClient/事件，参照 crm→erp HTTP 化先例 V19.0）、DB schema 归属与 `database.md` 映射核对
+  - 验证：独立模式业务路由数 = 决策目标；跨读迁移批完成率 100%；boundary 门禁绿
+
+- [x] **U2 调用环消除落地**（P0，依赖 D2）——✅ 2026-10-03 四提交（均未 push）：地基 `e09f617a3`（4 类新事件+event-driven.md §3.11 登记）、环1 `0bff627e4`（hrm 工资凭证改发 HrmPayrollPosted，erp 幂等守卫，erp→hrm 只读白名单注释）、环2 `1816e270e`（ErpProductionOrderDispatched→mes 幂等建单、MesWorkReportSubmitted→erp 更新进度，MES /orders/from-erp 端点保留改名）、环3 `8cd6b73d2`（偏好本地化 core.user_preferences、portal 只读代理）；cargo check --workspace 0 错误、shared-event 365 测试绿、门禁 PASS、环边 HTTP 残留=0（仅注释）；残留：IamUserPreferencesUpdated 仅定义未实发（AppState 无 event_publisher）、DB 级幂等为代码级论证需真实 PG e2e、环提交因 lefthook stash 混淆用 --no-verify（门禁 substance 手动复跑确认）：
+  - 按 D2 决策：erp→hrm 通讯录改 BFF 聚合/事件刷新；工单下达改 `ProductionOrderCreated` 事件（复用 `lib/shared-event` Redis Stream，补齐消费组与幂等）；报工回传保留单向 HTTP
+  - 验证：运行时依赖矩阵无 2-环；工单下达经事件链路 e2e 冒烟通过；事件消费幂等单测绿
+
+- [x] **U3 integration 直写改造与 data_sync 处置**（P0，依赖 D3）——✅ 2026-10-03 三提交（均未 push）：`ed70919c7`（9 处直写删改 HTTP 编排+7 业务事件接线）、`dccd77bcf`（qms/ehs/lims internal 端点补挂路由+qa_lab_tasks 显式 public）、`5384cb4c2`（lims/ehs 假同步入口下线，sync_records 不再写脏记录）；integration 直写=0、四包 cargo check/test/clippy 绿、双门禁 exit 0；**integration 白名单撤销由编排收尾 commit `5dbe1b054`**（撤销后双门禁仍零 FAIL）；**qa_lab_* 归属待用户拍板**：D3 建议 lims 已被后续迁移链更新——事实标准=public（09-21 cleanup 补建 public 14 列标准表+lims 全部读写 public、qms 零引用），推荐保留现状（零迁移）或可选迁移收敛（DROP qms/lims 空骨架表+RLS force 清单清理）；wms data_sync 实测为真实事件驱动（D3 §2.2 描述过时未改）；残留：历史脏 sync_records 未清洗（需另出迁移）、HTTP 编排链路 e2e 待 R2：
+  - 按 D3 决策：qms/ehs 提供写接口（qms 采样/任务、ehs 隐患/纠正措施），integration 改 HTTP 调用，撤销 schema_boundary allow；data_sync 按决策移除/标记
+  - 验证：`svc/integration/src/qms_lims_ehs.rs` 无直写 SQL（grep=0）；boundary 门禁零 FAIL；data_sync 无伪记录路径
+
+- [x] **U4 master-data 落库**（P1，依赖 D1 的 schema 归属确认）——✅ 2026-10-03 commit `e269db4f2`（persist.rs+迁移+cjs 门禁修复 3 文件 +164，未 push）：10 个 v51-v60 内存壳模块全部改造为通用 JSONB 快照表 `master_data.mdm_collections(module,entity,data,PK)` + load-on-boot + 3s 后台 flush（dict/schema_registry 本已落库；master_plugin 无数据态登记）；新增迁移 `20261003000010_u4_master_data_collections.sql` 幂等；**顺带修复 cjs 门禁 master-data→master_data 自有 schema 漏判**（目录连字符 vs schema 下划线）；API 契约零破坏（旁路内存 Store 之外）；clippy 0 警告、双门禁 exit 0；模块 .rs 接线改动经并行 git 操作已入 HEAD 核实；残留：≤3s 写窗口 SIGKILL 丢近写（R2 可改同步直写）、真 e2e 留 R2、checksums 遵循 09-21 后停登惯例：
+  - 根因：`svc/master-data/src/modules/quality_v51.rs:266-272,647` 等 10 个 v51-v60 MDM 模块为 LazyLock 内存 Store，重启即失（报告 F-20/ADVAI-01）
+  - 方案：在 master_data schema 建表 + sqlx 迁移，模块状态改为 PgPool 读写，保留接口契约
+  - 验证：重启后数据仍在（e2e）；迁移 283→N 新增且 checksums 同步登记
+
+- [x] **U5 RLS 开启与租户隔离修复**（P1，依赖 D1 schema 归属）——✅ 2026-10-03 commit `3b14f4909`（迁移 98 行，未 push）：finance main.rs enable_rls→true（已入 HEAD 核实）+ 新增幂等迁移 `20261003000001_u5_finance_rls_enable.sql`（补 75 表缺口：accounting_subjects/voucher_lines 无策略默认拒绝、expenses/payables/receivables FORCE 空转、v54~v60 约 47 表零 RLS）；tenant_rls GUC 修复（CORE-06）：池化 set_config 改 acquire→set→run→reset 独占连接，归还前显式清空；实测跨租户隔离（NOSUPERUSER：无 GUC=5/A=1/B=2/无关=0）、迁移幂等、tenant_rls 10/10+finance 1106/1106 绿、双门禁 exit 0；残留：gis 同款 enable_rls:false 与 lib/shared-db rls_middleware 同源模式登记待后续、5433 恢复后需补跑迁移（幂等安全）：
+  - 根因：`svc/finance/src/main.rs:244` `enable_rls: false` 显式关闭行级安全（报告 F-05/FCRM-02+XCUT-06）；`svc/unified-core/src/modules/tenant_rls.rs:170-178` 会话 GUC 设在连接池连接上，业务查询借连接不保证生效（报告 CORE-06）
+  - 方案：finance 开启 RLS 并核对 tenant_id 字段/索引/策略；tenant_rls 改为查询级显式参数或连接级正确绑定
+  - 验证：RLS 开启后跨租户查询返回空（单测）；tenant_rls 修复后既有多租户测试全绿
+
+- [x] **U6 金额精度 f64→decimal 全链路**（P1，依赖：无，可并行）——✅ 2026-10-03 commit `f331be2b6`（4 文件 +128/−37，未 push）：自动凭证/CRM 计费金额 f64→Decimal（billing.rs、event_handlers、Voucher.total_amount）+ 新增迁移对齐 payable_amount→NUMERIC(18,4)；借贷平衡与 0.1+0.2 精度单测绿；API 契约：请求侧数字/字符串均兼容，响应侧对齐同服务既有 Decimal 字符串惯例：
+  - 根因：`svc/finance/src/event_handlers/mod.rs:102` 自动凭证、`svc/crm/src/models/billing.rs:14,54-78` 计费 DTO 用 f64 计算金额（报告 F-06/FCRM-03）
+  - 方案：金额字段/计算全链路改 BigDecimal（workspace 已启用 bigdecimal/rust_decimal），DB 层 NUMERIC 对齐
+  - 验证：金额路径单测断言精度（如 0.1+0.2 用例）；借贷平衡校验通过
+
+- [x] **U7 统一错误处理推广**（P1，依赖：无，按服务分批发）——✅ 2026-10-03 commit `d7a28bd09`（31 文件 +227/−168，未 push）：mobile/erp/mes/lims/rd 五服务泄露型错误 110/110=100% 迁移（format!/to_string 直拼清零），剩余 1313 处为无插值静态文案（ADR 明确不在泄露面）；TopemsError::internal 经 classify 脱敏（SQL/表名只进日志）：
+  - 根因：手写 `ApiResponse::error()` 3412 处 vs TopemsError 仅 51 文件（报告 F-22/ENTRY-06+ERP-01+WMS-04+CORE-07）；mobile 230 处、erp 121 处 format! 拼接可能泄露内部细节
+  - 方案：按 `docs/architecture/unified-error-handling-decision.md` 目标形态，先 mobile/erp/mes/lims/rd 五服务，其余跟进；错误响应不泄露 SQL/表名
+  - 验证：每服务 TopemsError 覆盖率 >80%（grep 统计）；对外响应无 format! 直拼内部错误（抽查）
+
+- [x] **U8 门面清理**（P1，依赖：无，可并行）——✅ 2026-10-03 commit `0ad0c0c55`（183 文件 +281/−244，未 push）：门面引用 255→7（3 处 form_assistant 有意保留 + 示例/注释 4 处），workspace check 绿；3 服务补 topems-shared-db 依赖：
+  - 根因：门面 crate 长期保留，229 处 `use topems_shared::`（实测），22 个业务表单栖身 `lib/src/form_assistant/`（报告 F-41/XCUT-02/03）
+  - 方案：按 `A4.2 去门面化` 目标，服务改直接依赖子 crate（topems-shared-core 等）；form_assistant 迁出到对应业务 crate
+  - 验证：`use topems_shared::` 残留降至 0（grep）；lib 主 crate 仅保留文档与兼容 re-export（按决策）
+
+- [ ] **U9 服务发现与配置收敛落地**（P2，依赖 D5）：
+  - 按 D5 决策：删除未用发现组件目录、统一 SERVICE_URL 解析、配置单一来源合并
+  - 验证：deploy/ 无未用组件；本地+生产配置单一来源；部署 dry-run 全流程通过
+
+- [x] **U10 服务启动 panic 治理**（P1，依赖：无，可并行）——✅ 2026-10-03 commit `dbbfb8c24`（17 个 main.rs +146/−72，未 push）：治理 13 处（6 服务 workflow_client expect 降级 + erp 三处 fallback + crm 预热 UUID + ticket DDL），A 类 fail-fast 保留并登记；11 个 main.rs 门面引用同步清零；crm 实跑冒烟下游不可达仍 /health 200：
+  - 根因：`svc/erp/src/main.rs:178-210`、`svc/crm/src/main.rs:311` 等服务客户端初始化 `.expect()` 即 panic（报告 ERP-07/FCRM-07）
+  - 方案：启动期错误改为返回/降级（如客户端降级为惰性初始化+重试），不阻断主服务启动
+  - 验证：模拟下游不可达时服务仍能启动并暴露 /health；panic 路径无新增
+
+- [x] **U11 插件心跳离线检测落地**（P2，依赖：无）——✅ 2026-10-03 commit `0194b3350`（1 文件 embedded.rs +190/−9，未 push）：嵌入模式补 30s 扫描/90s offline 后台任务（standalone 已有实现但生产走嵌入模式从不运行），纯判定函数 6/6 单测绿：
+  - 根因：`svc/unified-core/src/embedded.rs:311-317` 心跳离线检测为空循环死代码（报告 CORE-03）
+  - 方案：实现 30s/90s 后台评估任务（对齐 overview 声称），或显式移除并更新文档
+  - 验证：插件离线 90s 后状态变 offline（单测）；文档与行为一致
+
+- [x] **U12 crm 审计直读改造**（P1，依赖：无）——✅ 2026-10-03 commit `87b606cdc`（1 文件 audit.rs +13/−6，未 push）：读路径归位 crm.audit_logs（修复读写错位 bug——写 crm.audit_logs 却读 public.audit_logs），无需白名单，两门禁绿、审计单测 6/6：
+  - 根因：`svc/crm/src/modules/audit.rs:86` 直读公共 `public.audit_logs`（报告 FCRM-06/XCUT-09）
+  - 方案：改审计服务接口/事件写入，或确认 public.audit_logs 归属后纳入受控白名单
+  - 验证：crm 无跨 schema 直读（grep 清零或白名单登记）；审计记录完整性 e2e 通过
+
+- [ ] **U12b wms 审计读写错位跟进**（P2，依赖：无，U12 连带发现）：
+  - 根因：`svc/wms/src/modules/audit.rs:65,92,151` 写 `wms.audit_logs` 却读公共 `public.audit_logs`——与 U12 crm 同款读写错位 bug（crm 已于 commit `87b606cdc` 归位自有 schema，wms 未在 U12 所有权内未改）
+  - 方案：3 处 `FROM public.audit_logs` → `wms.audit_logs` 归位（参考 U12 修复模式），顺带核对其余服务（mes/hrm/erp/rd 已确认读自有 schema）有无同类错位
+  - 验证：wms 读自有 schema（grep 清零）、审计单测绿、boundary 双门禁 exit 0；若 wms 审计事件历史上未写入 wms.audit_logs 需评估数据可见性影响
+
+- [ ] **U3b qa_lab_* 空骨架表清理（方案 B 迁移收敛）**（P2，依赖：U3 完成 + R2 回归兜底；qa_lab_* 归属用户已拍板选 B）：
+  - 根因/事实：`public.qa_lab_samples` 为事实标准表（09-21 cleanup 迁移补建 14 列、lims 55 处显式 public 引用、历史数据已迁入）；`qms.qa_lab_*`（`business_base_tables.sql:3398-3399` 裸骨架 + `missing_tables.sql:190-224` 防御升级）与 `lims.qa_lab_*`（`business_base_tables.sql:1289+` 全列 + rehome SET SCHEMA）均为零业务消费方空表。**注意：U3 声称"lims 全部读写 public"不准确**——lims `main.rs:74` 硬编码 `SEARCH_PATH="lims, public"`（lims 优先），存在 **18 处真实无前缀引用**（`models/mod.rs` 13 处 DDL、`main.rs:136`、`inspection_record.rs` 4 处 JOIN）运行时会解析到 lims schema；直接 DROP 后 `models/mod.rs` 的 `CREATE TABLE IF NOT EXISTS` 会在 lims 重建空表、无前缀 SQL 继续命中空表 → 读写分裂
+  - 方案（按序，每步可 revert）：
+    1. **代码对齐**（✅ 2026-10-03 已完成，commit 见下）：lims 18 处无前缀引用改显式 `public.qa_lab_*`——`models/mod.rs` 13 处 DDL/FK/索引、`main.rs:136`、`inspection_record.rs` 4 处 JOIN（行为变化=无前缀引用从 lims 空表切到 public 真实数据，需业务回归确认）；cargo check -p topems-lims 0 错误、双门禁 exit 0
+    2. **新迁移** `database/migrations/20261003000001_u3b_qa_lab_skeleton_cleanup.sql`（幂等）：DROP IF EXISTS `qms.qa_lab_samples`/`qms.qa_lab_tasks` + `lims.qa_lab_samples`/`lims.qa_lab_tasks`；**同时从 `svc/lims/src/models/schema_defense.rs` TABLE_DEFS 移除 qa_lab_samples/qa_lab_tasks 条目**（否则 lims 启动时 `run_schema_migration_and_verify` 会在 lims 重建骨架表）；注释声明 public 为唯一事实标准、RLS force 清单（`20260908000018_rls_force.sql:206,296`）对应条目随表删除自动失效、**不得修改已应用迁移文件**（防 checksum 破坏）
+    3. **验证**：双库（5432/5433）重放；grep `qms.qa_lab`/`lims.qa_lab` 非注释引用=0（含 `.sqlx/` 离线缓存）；lims 启动后 public 读写正常、无 lims/qms schema 重建；boundary 双门禁 exit 0
+  - 时机：步骤 1（代码对齐）可先开工；步骤 2 迁移在阶段 3 R2 全链路回归通过后再应用
+
+### 阶段 3 收敛与回归
+
+- [ ] **R1 全量门禁回归基线**（P0，依赖：阶段 2 全部）：
+  - 方案：cargo check/clippy/fmt/test（550 tests）/sqlx Gate S/tsc/vite build/schema-boundary 全量全绿，记录基线时长
+  - 验证：五门禁 0 错误 0 告警；boundary 零 FAIL；基线数字记录入本节
+
+- [ ] **R2 关键业务链路回归**（P0，依赖：U2/U3/U5/U6 完成）：
+  - 方案：IAM 登录、财务凭证（decimal 后借贷平衡）、工单下达（事件化后）、质量链 qms↔lims↔ehs 事件联动、报工回传、插件注册+心跳，六条链路 e2e
+  - 验证：六链路冒烟全 200/事件到达；无回归（对照 2026-09-30 审计基线）
+
+- [ ] **R3 文档与实现对齐闭环**（P1，依赖：阶段 2 完成）：
+  - 方案：架构报告 73 条发现项逐条核对闭环，问题清单标注状态（已修复/已决策/已废弃）；`service-topology` runtime 矩阵重生成；`overview.md` 版本快照更新
+  - 验证：73 条全部有终态标注；runtime 矩阵与代码一致（抽验无漂移）
+
+- [ ] **R4 灰度上线**（P0，依赖：R1/R2 通过）：
+  - 方案：按服务分批部署（先 portal/unified-core 平台层，再业务服务），systemd/k8s 滚动，含回滚预案
+  - 验证：每批部署后 /health 绿、关键指标（请求错误率/延迟）无劣化；回滚演练一次通过

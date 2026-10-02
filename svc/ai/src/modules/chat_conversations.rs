@@ -125,7 +125,10 @@ pub async fn get_conversation(
     .fetch_optional(&state.pool)
     .await
     {
-        Ok(Some(row)) => Json(ApiResponse::success(Some(ConversationDto::from(&row)), "会话详情")),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            Some(ConversationDto::from(&row)),
+            "会话详情",
+        )),
         Ok(None) => Json(ApiResponse::success(None, "会话不存在")),
         Err(e) => {
             tracing::error!("get_conversation failed: {e}");
@@ -219,8 +222,5 @@ pub fn create_routes() -> axum::Router<AppState> {
             "/conversations/{id}",
             axum::routing::get(get_conversation).delete(delete_conversation),
         )
-        .route(
-            "/conversations",
-            axum::routing::post(create_conversation),
-        )
+        .route("/conversations", axum::routing::post(create_conversation))
 }

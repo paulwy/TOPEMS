@@ -114,7 +114,10 @@ async fn main() -> anyhow::Result<()> {
     // 2026-10-03：AI 对话会话自有存储——初始化 core.ai_conversations 表（幂等；chat.ts 契约
     // GET/POST/DELETE /conversations 此前 404，AiChatPage 会话列表打不开，现补挂接线上线）
     if let Err(e) = crate::modules::chat_conversations::init_database(db.ddl_pool()).await {
-        tracing::error!("[ai] chat_conversations 初始化失败（会话表未就绪）: {:?}", e);
+        tracing::error!(
+            "[ai] chat_conversations 初始化失败（会话表未就绪）: {:?}",
+            e
+        );
     }
 
     // 读取 AI 配置
