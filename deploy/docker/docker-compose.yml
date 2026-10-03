@@ -30,6 +30,8 @@ volumes:
 
 services:
   postgres:
+    mem_limit: 1024m
+    cpus: 1.0
     image: pgvector/pgvector:pg18
     container_name: topems-postgres
     environment:
@@ -57,7 +59,9 @@ services:
     restart: unless-stopped
 
   pgbouncer:
-    image: edoburu/pgbouncer:latest
+    mem_limit: 256m
+    cpus: 0.5
+    image: edoburu/pgbouncer:1.23
     container_name: topems-pgbouncer
     environment:
       - DATABASE_URL=postgres://topems_app:topems_app_secret@postgres:5432/topems
@@ -82,7 +86,9 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:latest
+    mem_limit: 512m
+    cpus: 0.5
+    image: redis:7.4-alpine
     container_name: topems-redis
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
@@ -100,7 +106,9 @@ services:
     restart: unless-stopped
 
   rabbitmq:
-    image: rabbitmq:management
+    mem_limit: 512m
+    cpus: 0.5
+    image: rabbitmq:3.13-management
     container_name: topems-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-topems}
@@ -124,7 +132,9 @@ services:
   # 服务注册与发现
   # ================================================
   consul:
-    image: consul:latest
+    mem_limit: 256m
+    cpus: 0.5
+    image: consul:1.20
     container_name: topems-consul
     ports:
       - "${CONSUL_HTTP_PORT:-8500}:8500"
@@ -155,6 +165,8 @@ services:
   # 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
   # ================================================
   unified-core:
+    mem_limit: 1024m
+    cpus: 1.0
     build:
       context: ../..
       dockerfile: svc/unified-core/Dockerfile
@@ -232,6 +244,8 @@ services:
   # ================================================
 
   erp:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -272,6 +286,8 @@ services:
   # 协同办公服务
   # ================================================
   hrm:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -309,6 +325,8 @@ services:
     restart: unless-stopped
 
   pm:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -345,6 +363,8 @@ services:
     restart: unless-stopped
 
   crm:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -384,6 +404,8 @@ services:
   # 生产制造服务 (拆分后独立部署)
   # ================================================
   mes:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -418,6 +440,8 @@ services:
     restart: unless-stopped
 
   pdm:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -453,6 +477,8 @@ services:
   # 供应链服务
   # ================================================
   scm:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -490,6 +516,8 @@ services:
     restart: unless-stopped
 
   wms:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -527,6 +555,8 @@ services:
     restart: unless-stopped
 
   srm:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -567,6 +597,8 @@ services:
   # 质量/研发服务 (拆分后独立部署)
   # ================================================
   qms:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -604,6 +636,8 @@ services:
     restart: unless-stopped
 
   lims:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -638,6 +672,8 @@ services:
     restart: unless-stopped
 
   ehs:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -675,6 +711,8 @@ services:
     restart: unless-stopped
 
   rd:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -725,6 +763,8 @@ services:
   # 数据分析/门户服务 (拆分后独立部署)
   # ================================================
   bi:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -769,6 +809,8 @@ services:
   # 路由: /api/core/monitor/* (由 unified-core 提供)
 
   portal:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -810,6 +852,8 @@ services:
     restart: unless-stopped
 
   finance:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -863,6 +907,8 @@ services:
   # AI服务
   # ================================================
   ai:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -908,6 +954,8 @@ services:
   # 基础设施服务
   # ================================================
   mobile:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -949,6 +997,8 @@ services:
     restart: unless-stopped
 
   gis:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -993,6 +1043,8 @@ services:
     restart: unless-stopped
 
   integration:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -1038,6 +1090,8 @@ services:
   # 前端 /api/plugin/* 经 Traefik router-plugin → svc-plugin 路由至此
   # ================================================
   plugin-registry:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../..
       dockerfile: deploy/docker/Dockerfile.service
@@ -1079,6 +1133,8 @@ services:
   # API网关（Traefik 统一入口 + nginx 静态资源）
   # ================================================
   traefik:
+    mem_limit: 256m
+    cpus: 0.5
     image: traefik:v3.0
     container_name: topems-traefik
     ports:
@@ -1144,7 +1200,9 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:latest
+    mem_limit: 256m
+    cpus: 0.5
+    image: nginx:1.27-alpine
     container_name: topems-nginx
     # Traefik 已接管 80/443，nginx 仅作为静态资源后端
     # 通过 docker 网络内部访问 nginx:80（由 Traefik 路由 / 到此服务）
@@ -1215,7 +1273,9 @@ services:
   # 链路追踪系统
   # ================================================
   jaeger:
-    image: jaegertracing/all-in-one:latest
+    mem_limit: 512m
+    cpus: 0.5
+    image: jaegertracing/all-in-one:1.6
     container_name: topems-jaeger
     environment:
       - COLLECTOR_OTLP_ENABLED=true
@@ -1245,7 +1305,9 @@ services:
   # 监控系统
   # ================================================
   prometheus:
-    image: prom/prometheus:latest
+    mem_limit: 512m
+    cpus: 0.5
+    image: prom/prometheus:v2
     container_name: topems-prometheus
     ports:
       - "9090:9090"
@@ -1268,7 +1330,9 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    mem_limit: 512m
+    cpus: 0.5
+    image: grafana/grafana:11
     container_name: topems-grafana
     ports:
       - "3001:3000"
@@ -1292,7 +1356,9 @@ services:
     restart: unless-stopped
 
   alertmanager:
-    image: prom/alertmanager:latest
+    mem_limit: 256m
+    cpus: 0.5
+    image: prom/alertmanager:v0.27
     container_name: topems-alertmanager
     ports:
       - "9093:9093"
@@ -1314,74 +1380,13 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-networks:
-  topems-network:
-    driver: bridge
-# ================================================
-# 模块化单体模式服务（topems-server:8099）
-# ================================================
-  topems-monolith:
-    build:
-      context: ../../
-      dockerfile: deploy/docker/Dockerfile
-    container_name: topems-monolith
-    environment:
-      <<: *common-env-full
-      DATABASE_URL: postgres://topems_app:topems_app_secret@postgres:5432/${POSTGRES_DB:-topems}
-      DB_MAX_CONNECTIONS: 5
-      SEARCH_PATH: flow, mobile, rs, erp, public, iam, shared
-      MONOLITH_SERVICE_URL: http://topems-monolith:8099
-      IAM_SERVICE_URL: http://topems-monolith:8099
-      CRM_SERVICE_URL: http://topems-monolith:8099
-      ERP_SERVICE_URL: http://topems-monolith:8099
-      MES_SERVICE_URL: http://topems-monolith:8099
-      LIMS_SERVICE_URL: http://topems-monolith:8099
-      QMS_SERVICE_URL: http://topems-monolith:8099
-      SCM_SERVICE_URL: http://topems-monolith:8099
-      WMS_SERVICE_URL: http://topems-monolith:8099
-      HRM_SERVICE_URL: http://topems-monolith:8099
-      FINANCE_SERVICE_URL: http://topems-monolith:8099
-      PM_SERVICE_URL: http://topems-monolith:8099
-      SRM_SERVICE_URL: http://topems-monolith:8099
-      EHS_SERVICE_URL: http://topems-monolith:8099
-      RD_SERVICE_URL: http://topems-monolith:8099
-      BI_SERVICE_URL: http://topems-monolith:8099
-      AI_SERVICE_URL: http://topems-monolith:8099
-      COMMUNICATION_SERVICE_URL: http://topems-monolith:8099
-      DOC_SERVICE_URL: http://topems-monolith:8099
-      FILE_SERVICE_URL: http://topems-monolith:8099
-      FLOW_SERVICE_URL: http://topems-monolith:8099
-      MASTER_DATA_SERVICE_URL: http://topems-monolith:8099
-      MONITOR_SERVICE_URL: http://topems-monolith:8099
-      NOTIFICATION_SERVICE_URL: http://topems-monolith:8099
-      PORTAL_SERVICE_URL: http://topems-monolith:8099
-      SEARCH_SERVICE_URL: http://topems-monolith:8099
-      TICKET_SERVICE_URL: http://topems-monolith:8099
-      PLUGIN_REGISTRY_SERVICE_URL: http://topems-monolith:8099
-      FEEDBACK_SERVICE_URL: http://topems-monolith:8099
-      BILLING_SERVICE_URL: http://topems-monolith:8099
-      PDM_SERVICE_URL: http://topems-monolith:8099
-      INTEGRATION_SERVICE_URL: http://topems-monolith:8099
-      MOBILE_SERVICE_URL: http://topems-monolith:8099
-    ports:
-      - "8099:8099"
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - topems-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8099/api/server/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
 # ================================================
 # 模块化单体模式前端（topems-web:3000）
 # ================================================
   topems-web-monolith:
+    mem_limit: 512m
+    cpus: 0.5
     build:
       context: ../../
       dockerfile: apps/web/Dockerfile
@@ -1391,8 +1396,14 @@ networks:
     container_name: topems-web-monolith
     ports:
       - "3000:80"
-    depends_on:
-      - topems-monolith
     networks:
       - topems-network
     restart: unless-stopped
+
+
+
+networks:
+
+  topems-network:
+    driver: bridge
+

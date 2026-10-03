@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # TOPEMS 模块化单体镜像（P2-1 Docker 部署优化）
 # 多阶段构建：rust 构建阶段 → 精简运行时阶段（镜像仅含二进制 + 迁移脚本）
-# 注：Cargo.lock 被仓库 gitignore，构建依赖解析版本由约束决定（与本地一致风险已在 TODO 标注）
+# 注：Cargo.lock 已入库（2026-10-02 双锚点收口），COPY 锁定依赖版本保证镜像可复现
 
 # ---------- 阶段 1：构建 ----------
 FROM rust:1.95-slim AS builder
@@ -9,6 +9,7 @@ WORKDIR /build
 
 # 先复制 manifests 以利用依赖层缓存（无 Cargo.lock，跳过锁定）
 COPY Cargo.toml ./
+COPY Cargo.lock ./
 COPY lib/ ./lib/
 COPY svc/ ./svc/
 COPY apps/ ./apps/

@@ -65,7 +65,7 @@ RUN cd apps/web && pnpm build
 # =============================================================
 # 运行阶段：nginx 静态托管 + SPA 路由
 # =============================================================
-FROM nginx:alpine
+FROM nginx:1.27-alpine
 
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 COPY apps/web/nginx.conf /etc/nginx/nginx.conf

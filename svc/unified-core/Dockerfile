@@ -5,7 +5,7 @@
 # ============================================
 # Stage 1: Build
 # ============================================
-FROM rust:alpine AS builder
+FROM rust:1.95-alpine AS builder
 
 WORKDIR /app
 
