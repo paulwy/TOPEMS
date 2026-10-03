@@ -2,46 +2,6 @@ pub const SERVICE_SCHEMA: &str = "lims";
 
 pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
-        "qa_lab_samples",
-        &[
-            ("tenant_id", "UUID"),
-            ("sample_no", "VARCHAR(64) NOT NULL UNIQUE"),
-            ("sample_name", "VARCHAR(256) NOT NULL"),
-            ("sample_type", "VARCHAR(64)"),
-            ("source", "VARCHAR(64)"),
-            ("quantity", "DECIMAL(12,2)"),
-            ("unit", "VARCHAR(32)"),
-            ("status", "VARCHAR(32) DEFAULT 'received'"),
-            ("received_at", "TIMESTAMP DEFAULT NOW()"),
-            ("expired_at", "TIMESTAMP"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    (
-        "qa_lab_tasks",
-        &[
-            ("tenant_id", "UUID"),
-            ("task_no", "VARCHAR(64) NOT NULL UNIQUE"),
-            ("sample_id", "UUID NOT NULL"),
-            ("sample_no", "VARCHAR(64) NOT NULL"),
-            ("test_items", "JSONB NOT NULL"),
-            ("status", "VARCHAR(32) DEFAULT 'pending'"),
-            ("assigned_to", "VARCHAR(64)"),
-            ("instrument_id", "UUID"),
-            ("planned_date", "TIMESTAMP"),
-            ("actual_start_date", "TIMESTAMP"),
-            ("actual_end_date", "TIMESTAMP"),
-            ("result", "JSONB"),
-            ("conclusion", "VARCHAR(500)"),
-            ("recorded_by", "VARCHAR(64)"),
-            ("created_at", "TIMESTAMP DEFAULT NOW()"),
-            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
-            ("deleted_at", "TIMESTAMP"),
-        ],
-    ),
-    (
         "qa_lab_records",
         &[
             ("tenant_id", "UUID"),
