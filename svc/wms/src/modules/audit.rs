@@ -71,9 +71,15 @@ pub async fn list_audit_logs(
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, COALESCE(entity_type, '') AS entity_type, entity_id, entity_ids,
                user_id::text, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status, error_message, ip_address::text, user_agent, created_at
+        -- A3 防御性加固：wms.audit_logs.entity_type 为可空 text、ip_address 为 inet 列。
+        -- 共享 AuditLog 结构体要求 entity_type 为非空 String、ip_address 按 text 解码；
+        -- 一旦出现历史/手插的 NULL entity_type 或非空 inet ip 行，sqlx 反序列化直接报错
+        -- （外层 200/内层 code:500）。COALESCE(entity_type,'') 保证非空 String 解码；
+        -- ip_address::text 把 inet 统一转 text（NULL 仍为 NULL，映射 Option<String>）。
+        -- 真实写路径（log_audit_event→SchemaAwareAuditLogService）写入合规行不受影响。
         -- U12b: 读归位 wms 自有 schema（原误读 public.audit_logs 平台公共表，与写路径
         -- SchemaAwareAuditLogService::new(db, None) 经 search_path=wms 解析到
         -- wms.audit_logs 错位；对齐 mes/hrm/erp/rd/crm“读自己 schema audit_logs”模式）。
@@ -166,11 +172,12 @@ pub async fn get_audit_log(
     let result = sqlx::query_as::<_, AuditLog>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
+        SELECT id, tenant_id, action, COALESCE(entity_type, '') AS entity_type, entity_id, entity_ids,
                user_id::text, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status, error_message, ip_address::text, user_agent, created_at
         -- U12b: 读归位 wms.audit_logs（见 list_audit_logs 注释）
         -- R-5: user_id::text、补 tenant_id（对齐 crm，见 list 注释）
+        -- A3: COALESCE(entity_type,'') + ip_address::text（见 list 注释，防御 NULL/inet 行 500）
         FROM wms.audit_logs WHERE id = $1
         "#
     ))
