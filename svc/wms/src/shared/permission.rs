@@ -22,6 +22,8 @@ pub enum WmsPermission {
     TransferWrite,
     WavePickRead,
     WavePickWrite,
+    SyncRead,
+    SyncWrite,
     MovementRead,
     MovementWrite,
     DashboardRead,
@@ -75,6 +77,12 @@ impl WmsPermission {
                 SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
             }
             WmsPermission::WavePickWrite => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
+            }
+            WmsPermission::SyncRead => {
+                SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Read)
+            }
+            WmsPermission::SyncWrite => {
                 SharedModulePermission::new(ModuleCode::Wms, PermissionAction::Write)
             }
             WmsPermission::MovementRead => {

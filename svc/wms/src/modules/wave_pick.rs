@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -70,6 +71,15 @@ where
         .route("/wave-picks/{id}/start", post(start_wave_pick))
         .route("/wave-picks/{id}/complete", post(complete_wave_pick))
         .route("/wave-picks/{id}/cancel", post(cancel_wave_pick))
+        // 行级拣货动作（前端 picking.ts 契约 /picking/tasks/{taskId}/lines/{lineId}/pick|short-pick）
+        .route(
+            "/picking/tasks/{task_id}/lines/{line_id}/pick",
+            post(pick_line),
+        )
+        .route(
+            "/picking/tasks/{task_id}/lines/{line_id}/short-pick",
+            post(short_pick_line),
+        )
 }
 
 #[utoipa::path(
@@ -896,6 +906,167 @@ pub async fn cancel_wave_pick(
     .await;
 
     response
+}
+
+// ============================================================================
+// 行级拣货动作（前端契约 /picking/tasks/{task_id}/lines/{line_id}/pick|short-pick）
+// ============================================================================
+
+#[derive(Debug, Deserialize)]
+pub struct PickLineRequest {
+    pub quantity: Option<f64>,
+    pub location_code: Option<String>,
+    pub remarks: Option<String>,
+}
+
+/// POST /picking/tasks/{task_id}/lines/{line_id}/pick —— 完成拣货
+pub async fn pick_line(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path((task_id, line_id)): Path<(Uuid, Uuid)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<PickLineRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let now = Utc::now();
+
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+            UPDATE wms.wave_pick_items
+            SET picked_quantity = $3,
+                status = 'picked',
+                remarks = COALESCE($4, remarks),
+                updated_at = $5
+            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL
+            RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
+                      material_code, material_name, location_id, location_code,
+                      planned_quantity, picked_quantity, status, remarks
+            "#
+    ))
+    .bind(line_id)
+    .bind(task_id)
+    .bind(req.quantity.unwrap_or(-1.0))
+    .bind(&req.remarks)
+    .bind(now)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let value = serde_json::json!({
+                "id": row.get::<Uuid, _>("id"),
+                "task_id": row.get::<Uuid, _>("wave_pick_id"),
+                "outbound_order_id": row.get::<Option<Uuid>, _>("outbound_order_id"),
+                "outbound_order_no": row.get::<Option<String>, _>("outbound_order_number"),
+                "material_code": row.get::<String, _>("material_code"),
+                "material_name": row.get::<String, _>("material_name"),
+                "location_id": row.get::<Option<Uuid>, _>("location_id"),
+                "location_name": row.get::<Option<String>, _>("location_code"),
+                "required_quantity": row.get::<f64, _>("planned_quantity"),
+                "picked_quantity": row.get::<f64, _>("picked_quantity"),
+                "short_picked_quantity": 0.0,
+                "status": row.get::<String, _>("status"),
+                "remark": row.get::<Option<String>, _>("remarks"),
+                "pick_sequence": 0,
+                "picked_at": now,
+            });
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "拣货提交失败"));
+                }
+            }
+            Json(ApiResponse::success(value, "拣货完成"))
+        }
+        Ok(None) => Json(api_error(404, "拣货明细不存在")),
+        Err(e) => {
+            tracing::error!("拣货失败: {}", e);
+            Json(api_error(500, "拣货失败"))
+        }
+    }
+}
+
+/// POST /picking/tasks/{task_id}/lines/{line_id}/short-pick —— 缺量拣货
+pub async fn short_pick_line(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path((task_id, line_id)): Path<(Uuid, Uuid)>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<PickLineRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::WavePickWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let now = Utc::now();
+
+    let result = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+            UPDATE wms.wave_pick_items
+            SET picked_quantity = $3,
+                status = 'short_picked',
+                remarks = COALESCE($4, remarks),
+                updated_at = $5
+            WHERE id = $1 AND wave_pick_id = $2 AND deleted_at IS NULL
+            RETURNING id, wave_pick_id, outbound_order_id, outbound_order_number,
+                      material_code, material_name, location_id, location_code,
+                      planned_quantity, picked_quantity, status, remarks
+            "#
+    ))
+    .bind(line_id)
+    .bind(task_id)
+    .bind(req.quantity.unwrap_or(0.0))
+    .bind(&req.remarks)
+    .bind(now)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let value = serde_json::json!({
+                "id": row.get::<Uuid, _>("id"),
+                "task_id": row.get::<Uuid, _>("wave_pick_id"),
+                "outbound_order_id": row.get::<Option<Uuid>, _>("outbound_order_id"),
+                "outbound_order_no": row.get::<Option<String>, _>("outbound_order_number"),
+                "material_code": row.get::<String, _>("material_code"),
+                "material_name": row.get::<String, _>("material_name"),
+                "location_id": row.get::<Option<Uuid>, _>("location_id"),
+                "location_name": row.get::<Option<String>, _>("location_code"),
+                "required_quantity": row.get::<f64, _>("planned_quantity"),
+                "picked_quantity": row.get::<f64, _>("picked_quantity"),
+                "short_picked_quantity": row.get::<f64, _>("picked_quantity"),
+                "status": row.get::<String, _>("status"),
+                "remark": row.get::<Option<String>, _>("remarks"),
+                "pick_sequence": 0,
+                "picked_at": now,
+            });
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(api_error(500, "缺量拣货提交失败"));
+                }
+            }
+            Json(ApiResponse::success(value, "缺量拣货完成"))
+        }
+        Ok(None) => Json(api_error(404, "拣货明细不存在")),
+        Err(e) => {
+            tracing::error!("缺量拣货失败: {}", e);
+            Json(api_error(500, "缺量拣货失败"))
+        }
+    }
 }
 
 #[cfg(test)]

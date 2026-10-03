@@ -31,6 +31,7 @@ pub mod picking;
 pub mod serial_number;
 pub mod smart_replenishment;
 pub mod stock_take;
+pub mod sync_records;
 pub mod transfer_order;
 pub mod warehouse;
 pub mod wave_pick;
@@ -77,6 +78,7 @@ where
         .merge(inbound_order::create_routes())
         .merge(outbound_order::create_routes())
         .merge(stock_take::create_routes())
+        .merge(sync_records::create_routes())
         .merge(smart_replenishment::create_routes())
         .merge(wave_pick::create_routes())
         .merge(picking::create_routes())

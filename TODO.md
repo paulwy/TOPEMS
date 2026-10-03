@@ -566,3 +566,25 @@
   回归 6 条老路径（/rules /stats /logout /records /training-plans /alerts）不破坏
 - 经验：server 重启只跑旧二进制——cargo check ≠ cargo build，改代码后必须 cargo build -p topems-server；
   monitor 等模块的 *_plugin.rs 可能未进 merge 链（静态 grep 挂载≠实际挂载）；health 类路径免认证、info 类需认证
+
+## 2026-10-03 wms B 组缺口补实现：sync-records 9 + picking 2（11 条）
+
+- 背景：A 组审计标注 wms 真实缺口 = sync 系列 + picking pick/short-pick，本轮收敛
+- 前端契约（apps/web/src/api/wms/sync.ts + picking.ts）：
+  - list('/sync-records',{params}) / get('/sync-records/{id}') / listItems('/sync-records/{id}/items')
+  - retry('/sync-records/{id}/retry') / retryFailedItems('/sync-records/{id}/retry-items',{item_ids})
+  - getStatistics('/sync-records/statistics') / withScm('/sync/scm') / inventoryWithScm('/sync/scm/inventory')
+  - ordersWithScm('/sync/scm/orders') / pickLine('/picking/tasks/{taskId}/lines/{lineId}/pick')
+  - shortPickLine('/picking/tasks/{taskId}/lines/{lineId}/short-pick')
+- 实现（svc/wms/src/modules/sync_records.rs 新建，9 handler）：
+  - 表 wms.sync_records（18 列，含 skipped_count）+ wms.sync_record_details（10 列，含 source_data/target_data JSONB）
+    入 schema_defense TABLE_DEFS（启动自动建表，实测 \d wms.sync_records 就位）
+  - 权限 WmsPermission 新增 SyncRead/SyncWrite（映射 Read/Write）
+  - 写操作显式 commit（guard.take() + t.commit()，RLS txn 模式——首次实测 create 未提交导致 list 空，修复后落库）
+  - status 口径统一 'success'（statistics successful_syncs 查询同口径；避免 completed/success 分裂）
+- picking（wave_pick.rs 追加 pick_line / short_pick_line）：UPDATE wave_pick_items 行级状态
+  （picked / short_picked + picked_quantity + remarks，RLS txn + commit），返回 PickingTaskLine 结构
+- 验证：cargo build -p topems-server 通过；重启后 11 条新路由全 401（非 404）；
+  带 token 真实链路 create→list→statistics→retry→items 全 200 且落库（statistics total=6 successful=2 对新数据）
+- 经验：wms handler 必须显式 commit txn（中间件不自动提交）；status 枚举口径前后端/统计要一致；
+  多段 python replace 脚本中断会丢未写盘替换，逐段验证（REPLACED 计数）

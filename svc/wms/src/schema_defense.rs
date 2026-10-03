@@ -1105,6 +1105,45 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
         ],
     ),
+    // 同步记录（前端 sync.ts 契约：SyncRecord）
+    (
+        "sync_records",
+        &[
+            ("sync_no", "VARCHAR(50) NOT NULL"),
+            ("source_system", "VARCHAR(50) NOT NULL"),
+            ("target_system", "VARCHAR(50) NOT NULL"),
+            ("sync_type", "VARCHAR(50) NOT NULL"),
+            ("sync_direction", "VARCHAR(20) NOT NULL DEFAULT 'push'"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
+            ("total_count", "INTEGER DEFAULT 0"),
+            ("success_count", "INTEGER DEFAULT 0"),
+            ("failed_count", "INTEGER DEFAULT 0"),
+            ("skipped_count", "INTEGER DEFAULT 0"),
+            ("started_at", "TIMESTAMPTZ"),
+            ("completed_at", "TIMESTAMPTZ"),
+            ("duration_seconds", "INTEGER"),
+            ("error_message", "TEXT"),
+            ("tenant_id", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
+    // 同步明细（前端 sync.ts 契约：SyncRecordItem）
+    (
+        "sync_record_details",
+        &[
+            ("sync_record_id", "UUID NOT NULL"),
+            ("record_id", "VARCHAR(100)"),
+            ("record_type", "VARCHAR(50)"),
+            ("record_name", "VARCHAR(200)"),
+            ("status", "VARCHAR(20) NOT NULL DEFAULT 'pending'"),
+            ("error_message", "TEXT"),
+            ("source_data", "JSONB"),
+            ("target_data", "JSONB"),
+            ("tenant_id", "UUID"),
+            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"),
+        ],
+    ),
 ];
 
 pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::Error> {
