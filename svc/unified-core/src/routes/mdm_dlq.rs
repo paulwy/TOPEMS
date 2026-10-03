@@ -43,7 +43,10 @@ async fn list_mdm_dlq(
     let page = q.page.unwrap_or(0);
     let page_size = q.page_size.unwrap_or(20).clamp(1, 200);
     match DeadLetterQueue::new() {
-        Ok(dlq) => match dlq.list_mdm_dead_letters(q.prefix.as_deref(), page, page_size).await {
+        Ok(dlq) => match dlq
+            .list_mdm_dead_letters(q.prefix.as_deref(), page, page_size)
+            .await
+        {
             Ok(list) => Json(api_success(list)),
             Err(e) => Json(api_error(500, &err_message(&e))),
         },
@@ -69,7 +72,10 @@ async fn replay_mdm_dlq(
         }))),
         Err(topems_shared_event::EventError::ConfigError(_)) => {
             // 未找到条目
-            Json(api_error(404, &format!("未找到 MDM 事件 {} 的死信记录", event_id)))
+            Json(api_error(
+                404,
+                &format!("未找到 MDM 事件 {} 的死信记录", event_id),
+            ))
         }
         Err(e) => Json(api_error(500, &err_message(&e))),
     }

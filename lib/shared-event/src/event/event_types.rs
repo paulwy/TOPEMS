@@ -1942,7 +1942,10 @@ mod tests {
             credit_amount: Decimal::from_str_exact("0.2").unwrap()
                 + Decimal::from_str_exact("0.1").unwrap(),
         };
-        assert_eq!(entry.debit_amount + entry.credit_amount - Decimal::from(0u64), Decimal::from_str_exact("0.4").unwrap());
+        assert_eq!(
+            entry.debit_amount + entry.credit_amount - Decimal::from(0u64),
+            Decimal::from_str_exact("0.4").unwrap()
+        );
         // 借贷平衡语义：hrm 侧分录 debit 合计 == credit 合计（同值直绑）
         assert_eq!(entry.debit_amount, Decimal::from_str_exact("0.1").unwrap());
         // 出站形态：Decimal 序列化为字符串 "20000.0015"（窄出）

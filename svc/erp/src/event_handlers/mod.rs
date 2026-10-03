@@ -1116,7 +1116,9 @@ impl ErpEventHandlers {
         let now = chrono::Utc::now();
         let settled_at = payload.settled_at.unwrap_or(now);
         let period = settled_at.format("%Y-%m").to_string();
-        let settled_amount = payload.settled_amount.unwrap_or(rust_decimal::Decimal::ZERO);
+        let settled_amount = payload
+            .settled_amount
+            .unwrap_or(rust_decimal::Decimal::ZERO);
 
         if settled_amount <= rust_decimal::Decimal::ZERO {
             tracing::info!(

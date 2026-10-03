@@ -2527,7 +2527,7 @@ pub async fn confirm_return(
                     let customer_id = return_record.customer_id;
                     let order_id = return_record.order_id;
                     // U6-2：refund_amount 已是 Decimal，直接透传
-                let refund_amount = return_record.refund_amount;
+                    let refund_amount = return_record.refund_amount;
                     let return_type = return_record.return_type.clone();
                     let status = return_record.status.clone();
                     let completed_by = operator_id;

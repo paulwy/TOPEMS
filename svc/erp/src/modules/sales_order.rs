@@ -54,7 +54,6 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sales-orders/stats", get(get_sales_order_stats))
 }
 
-
 fn dec_owned(v: f64) -> rust_decimal::Decimal {
     use std::str::FromStr;
     rust_decimal::Decimal::from_str(&format!("{:.2}", v)).unwrap_or_default()

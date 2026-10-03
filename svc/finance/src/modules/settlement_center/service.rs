@@ -252,8 +252,12 @@ pub async fn manual_reconcile(
             id: recon_id,
             tenant_id,
             status: "matched".to_string(),
-            total_debit: stats.2.map(|v| Decimal::from_f64(v).unwrap_or(Decimal::ZERO)),
-            total_credit: stats.3.map(|v| Decimal::from_f64(v).unwrap_or(Decimal::ZERO)),
+            total_debit: stats
+                .2
+                .map(|v| Decimal::from_f64(v).unwrap_or(Decimal::ZERO)),
+            total_credit: stats
+                .3
+                .map(|v| Decimal::from_f64(v).unwrap_or(Decimal::ZERO)),
             difference: Some(Decimal::from_f64(difference).unwrap_or(Decimal::ZERO)),
             matched_count: stats.0,
             unmatched_count: stats.1,

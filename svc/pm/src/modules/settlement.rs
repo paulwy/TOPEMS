@@ -185,8 +185,10 @@ async fn create_settlement(
                     settlement_no: s.settlement_no.clone().unwrap_or_else(|| "".to_string()),
                     settlement_type: s.settlement_type.clone(),
                     status: s.status.clone(),
-                    amount: Some(rust_decimal::Decimal::from_f64(s.amount)
-                        .unwrap_or(rust_decimal::Decimal::ZERO)),
+                    amount: Some(
+                        rust_decimal::Decimal::from_f64(s.amount)
+                            .unwrap_or(rust_decimal::Decimal::ZERO),
+                    ),
                     settlement_date: s.settlement_period_start,
                     remarks: s.remarks.clone(),
                     created_by: s.created_by.clone(),

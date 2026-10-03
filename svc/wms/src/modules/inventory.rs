@@ -98,9 +98,8 @@ fn publish_inventory_updated(
         available_quantity,
         min_quantity,
         // U6-2：库存总值 f64 -> Decimal
-        total_value: total_value.map(|v| {
-            rust_decimal::Decimal::from_f64(v).unwrap_or(rust_decimal::Decimal::ZERO)
-        }),
+        total_value: total_value
+            .map(|v| rust_decimal::Decimal::from_f64(v).unwrap_or(rust_decimal::Decimal::ZERO)),
     };
 
     tokio::spawn(async move {

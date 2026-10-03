@@ -846,14 +846,20 @@ pub async fn compare_sales_forecasts(
                 .collect();
 
             let base_period = forecasts.first().cloned();
-            let base_pred: Decimal = rows.first().map(|(_, p, _, _, _, _)| *p).unwrap_or(Decimal::ZERO);
+            let base_pred: Decimal = rows
+                .first()
+                .map(|(_, p, _, _, _, _)| *p)
+                .unwrap_or(Decimal::ZERO);
             let base_actual_dec: Decimal = rows
                 .first()
                 .and_then(|(_, _, a, _, _, _)| *a)
                 .unwrap_or(Decimal::ZERO);
             let base_predicted: f64 = base_pred.to_f64().unwrap_or(0.0);
             let base_actual: f64 = base_actual_dec.to_f64().unwrap_or(0.0);
-            let base_accuracy: f64 = rows.first().and_then(|(_, _, _, a, _, _)| *a).unwrap_or(0.0);
+            let base_accuracy: f64 = rows
+                .first()
+                .and_then(|(_, _, _, a, _, _)| *a)
+                .unwrap_or(0.0);
 
             let comparisons: Vec<serde_json::Value> = rows
                 .iter()
@@ -1017,7 +1023,12 @@ pub async fn get_accuracy_report(
             let high_confidence_count = rows.iter().filter(|(_, _, _, _, c, _)| *c >= 0.8).count();
 
             let trend_analysis = if rows.len() >= 3 {
-                let recent: Vec<f64> = rows.iter().rev().take(3).map(|(_, _, _, a, _, _)| *a).collect();
+                let recent: Vec<f64> = rows
+                    .iter()
+                    .rev()
+                    .take(3)
+                    .map(|(_, _, _, a, _, _)| *a)
+                    .collect();
                 let accuracy_trend = recent.windows(2).map(|w| w[1] - w[0]).sum::<f64>() / 2.0;
 
                 if accuracy_trend > 0.01 {

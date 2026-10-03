@@ -250,9 +250,11 @@ impl DeadLetterQueue {
 
         // 重投回原 Stream：复用 MasterDataEvent::publish 的 XADD 字段格式
         // （event_id/payload/timestamp/source），保证与首次发布同构、可被消费者组解析。
-        dead_letter.event.publish().await.map_err(|e| {
-            EventError::PublishError(format!("MDM 死信重投回 Stream 失败: {}", e))
-        })?;
+        dead_letter
+            .event
+            .publish()
+            .await
+            .map_err(|e| EventError::PublishError(format!("MDM 死信重投回 Stream 失败: {}", e)))?;
 
         // 重投成功后从 DLQ 列表移除（按原始 JSON 精确匹配，仅删 1 条）
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
@@ -281,7 +283,10 @@ impl DeadLetterQueue {
             Some(p) => vec![format!("{}:{}", MDM_DLQ_KEY_PREFIX, p)],
             None => {
                 let pattern = format!("{}:*", MDM_DLQ_KEY_PREFIX);
-                redis::cmd("KEYS").arg(&pattern).query_async(&mut con).await?
+                redis::cmd("KEYS")
+                    .arg(&pattern)
+                    .query_async(&mut con)
+                    .await?
             }
         };
         Ok(keys)

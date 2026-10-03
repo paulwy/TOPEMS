@@ -3555,8 +3555,13 @@ pub async fn create_collection_handler(
                     .get("customer_name")
                     .and_then(|v| v.as_str())
                     .map(String::from);
-                let amount = data.get("amount")
-                    .and_then(|v| v.as_str().map(String::from).or_else(|| v.as_number().map(|n| n.to_string())))
+                let amount = data
+                    .get("amount")
+                    .and_then(|v| {
+                        v.as_str()
+                            .map(String::from)
+                            .or_else(|| v.as_number().map(|n| n.to_string()))
+                    })
                     .and_then(|st| std::str::FromStr::from_str(&st).ok())
                     .unwrap_or(Decimal::ZERO);
                 let payment_no_log = payment_no.clone();
