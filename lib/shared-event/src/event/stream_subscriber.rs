@@ -492,6 +492,7 @@ impl StreamEventSubscriber {
     }
 
     /// 启动事件监听（持续运行）
+    #[allow(clippy::indexing_slicing)] // XAUTOCLAIM 手动解析，下标前已做长度校验
     pub async fn start_listening(self) -> EventResult<()> {
         info!(
             "Stream 事件订阅器启动 - 服务: {}, 消费者组: {}, 消费者: {}",
@@ -610,6 +611,119 @@ impl StreamEventSubscriber {
                     if !err_msg.contains("timeout") {
                         error!("XREADGROUP 错误: {}", e);
                         tokio::time::sleep(Duration::from_secs(1)).await;
+                    }
+                }
+            }
+
+            // R-6: PEL 重投——handler 失败后 settle_failed 不 ACK，消息滞留 PEL。
+            // 此前循环只读 ">"（新消息），失败消息永不重投 → retry_count 永远停在 1
+            // → max_retries=3 永远到不了 → DLQ 从不触发。这里每轮用 XAUTOCLAIM
+            // 回收空闲 >5s 的 PEL 消息，重新走 process_message/settle_failed，
+            // 让 retry_count 累积到阈值后入 DLQ。
+            for stream_key in &stream_keys {
+                let is_mdm = stream_key.starts_with("topems:stream:master_data:");
+                // XAUTOCLAIM 返回 Bulk([cursor, entries, deleted_ids])，
+                // 用 redis::Value 手动遍历（redis 0.24 无现成 FromRedisValue 适配 XAUTOCLAIM）
+                let claim_result: Result<redis::Value, _> = redis::cmd("XAUTOCLAIM")
+                    .arg(stream_key)
+                    .arg(&self.config.group_name)
+                    .arg(&self.config.consumer_name)
+                    .arg(5000u64) // 最小空闲 5s 才回收（避免抢正在处理的消息）
+                    .arg("0")
+                    .arg("COUNT")
+                    .arg(self.config.count)
+                    .query_async(&mut con)
+                    .await;
+
+                if let Ok(redis::Value::Bulk(items)) = claim_result {
+                    // items = [cursor, entries_array, deleted_array]
+                    if items.len() >= 2 {
+                        if let redis::Value::Bulk(entries) = &items[1] {
+                            for entry in entries {
+                                // 每个 entry = Bulk([id, fields_array])
+                                let (message_id, payload_json) = match entry {
+                                    redis::Value::Bulk(pair) if pair.len() >= 2 => {
+                                        let id = match &pair[0] {
+                                            redis::Value::Data(b) => {
+                                                String::from_utf8_lossy(b).to_string()
+                                            }
+                                            _ => continue,
+                                        };
+                                        let mut payload = String::new();
+                                        if let redis::Value::Bulk(fields) = &pair[1] {
+                                            let mut i = 0;
+                                            while i + 1 < fields.len() {
+                                                let k = match &fields[i] {
+                                                    redis::Value::Data(b) => {
+                                                        String::from_utf8_lossy(b).to_string()
+                                                    }
+                                                    _ => {
+                                                        i += 1;
+                                                        continue;
+                                                    }
+                                                };
+                                                if k == "payload" {
+                                                    if let redis::Value::Data(v) = &fields[i + 1] {
+                                                        payload =
+                                                            String::from_utf8_lossy(v).to_string();
+                                                    }
+                                                    break;
+                                                }
+                                                i += 2;
+                                            }
+                                        }
+                                        (id, payload)
+                                    }
+                                    _ => continue,
+                                };
+
+                                if payload_json.is_empty() {
+                                    continue;
+                                }
+
+                                if is_mdm {
+                                    match serde_json::from_str::<MasterDataEvent>(&payload_json) {
+                                        Ok(mdm_event) => {
+                                            if let Err(e) = self
+                                                .process_mdm_message(
+                                                    mdm_event,
+                                                    &message_id,
+                                                    stream_key,
+                                                )
+                                                .await
+                                            {
+                                                error!("PEL 重投 MDM 消息出错: {}", e);
+                                            }
+                                        }
+                                        Err(e) => {
+                                            error!(
+                                                "PEL 重投 MDM 事件 JSON 错误: {:?}, 消息ID: {}",
+                                                e, message_id
+                                            );
+                                            let _ = self.ack_message(stream_key, &message_id).await;
+                                        }
+                                    }
+                                } else {
+                                    match serde_json::from_str::<Event>(&payload_json) {
+                                        Ok(event) => {
+                                            if let Err(e) = self
+                                                .process_message(event, &message_id, stream_key)
+                                                .await
+                                            {
+                                                error!("PEL 重投消息出错: {}", e);
+                                            }
+                                        }
+                                        Err(e) => {
+                                            error!(
+                                                "PEL 重投事件 JSON 错误: {:?}, 消息ID: {}",
+                                                e, message_id
+                                            );
+                                            let _ = self.ack_message(stream_key, &message_id).await;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -16,6 +16,11 @@ use tracing::{debug, error, info, warn, Instrument};
 pub type EventHandler =
     Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
 
+/// 返回 Result 的事件处理器（失败触发重试/DLQ）——与 `EventHandler` 分离，
+/// 避免 `subscribe_handler` 把 Err 吞成 `()` 导致 Stream 层永远看到 `Ok(())`。
+pub type ResultEventHandler =
+    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync>;
+
 /// MDM 事件处理器回调类型
 pub type MasterDataEventHandler =
     Arc<dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
@@ -28,6 +33,8 @@ pub struct EventSubscriber {
     /// 避免并行测试间 env 交错导致订阅模式漂移）
     use_stream: bool,
     handlers: Vec<(Vec<EventType>, EventHandler)>,
+    /// 返回 Result 的 handler（R-6：Err 直传 Stream 层走重试/DLQ，不再吞成 ()）
+    result_handlers: Vec<(Vec<EventType>, ResultEventHandler)>,
     mdm_handlers: Vec<(Vec<MasterDataDomain>, MasterDataEventHandler)>,
     schema_registry: Option<Arc<SchemaRegistry>>,
     event_versions: Option<Arc<EventVersionRegistry>>,
@@ -56,6 +63,7 @@ impl EventSubscriber {
             _service_name: service_name.to_string(),
             use_stream,
             handlers: Vec::new(),
+            result_handlers: Vec::new(),
             mdm_handlers: Vec::new(),
             schema_registry: None,
             event_versions: None,
@@ -91,6 +99,11 @@ impl EventSubscriber {
     }
 
     /// 订阅特定事件类型（返回 Result 的 handler 版本）
+    ///
+    /// R-6 修复：此前把 `Err` 经 `error!` 日志吞成 `()`，再由 `start_listening`
+    /// 包装为 `Ok(())` 直传 Stream 层 → StreamEventSubscriber 永远认为成功 →
+    /// 立即 ACK，`settle_failed`/DLQ 从不触发。现在直传 `Result<(), String>`，
+    /// 失败由 Stream 层走重试计数 → 超限入 DLQ。
     pub fn subscribe_handler<F>(mut self, event_types: Vec<EventType>, handler: F) -> Self
     where
         F: Fn(
@@ -102,19 +115,13 @@ impl EventSubscriber {
             + Clone
             + 'static,
     {
-        let handler_arc: EventHandler = Arc::new(move |event| {
+        // 不再 match/吞 Err：原样保留 Result，转发给 StreamEventSubscriber。
+        let handler_arc: ResultEventHandler = Arc::new(move |event| {
             let handler = handler.clone();
-            Box::pin(async move {
-                match handler(event).await {
-                    Ok(_) => {}
-                    Err(e) => {
-                        error!("事件处理器执行失败: {}", e);
-                    }
-                }
-            })
+            Box::pin(handler(event))
         });
 
-        self.handlers.push((event_types, handler_arc));
+        self.result_handlers.push((event_types, handler_arc));
         self
     }
 
@@ -155,6 +162,18 @@ impl EventSubscriber {
                                     handler_clone(event).await;
                                     Ok(())
                                 }
+                            });
+                        }
+                    }
+
+                    // R-6: 将返回 Result 的 handlers 直传 StreamEventSubscriber
+                    // （不包 Ok(())——Err 要让 Stream 层看到，走 settle_failed → 重试/DLQ）
+                    for (event_types, handler) in &self.result_handlers {
+                        for event_type in event_types {
+                            let handler_clone = handler.clone();
+                            stream_sub = stream_sub.subscribe(*event_type, move |event| {
+                                let handler_clone = handler_clone.clone();
+                                async move { handler_clone(event).await }
                             });
                         }
                     }
