@@ -794,3 +794,71 @@
   - **顺带修复 lims 既有 bug**：SampleBarcode.id/tenant_id 类型 String vs 列 UUID（generate panic ColumnDecode）
     → 改 Uuid；generate INSERT RETURNING 缺 tenant_id（ColumnNotFound panic）→ INSERT 补 gen_random_uuid()
 - **验证**：cargo build + run_monolith 重启后 6 条链路实测 200（print 空列表 400 校验、有 id 200 已验）
+
+## ✅ 执行进度：B2 + 批 1 完成态（2026-10-04）
+
+> 依据《下一步工作规划》B2 与批 1（A3/A4/B3/B4/B13）条目，六项并行交付全部完成。提交均为本地、未 push。
+
+### B2（U6-2）事件 payload 金额 f64→Decimal 全链升级 — ✅ 完成
+
+- **类型定案**：`rust_decimal::Decimal`（与 U6 `f331be2b6` 一致；hrm 内部 bigdecimal → 事件 Decimal 走字符串往返 `bd_to_dec`，不经 f64，无浮点中间态）
+- **序列化形态实测**：出站=JSON 字符串（窄出）；入站对数字/字符串 lenient 双接受（宽进）
+- **兼容策略（已落地）**：宽进窄出 + 一次性全链升级——事件名不变、存量在途旧数字 JSON 由 lenient 反解兜住，无需 v1/v2 双版本/双写窗口；已登记 `docs/architecture/event-driven.md` §9.2
+- **字段盘点**：21 个 payload 结构体 ~30 个金额字段改 Decimal（HrmPayrollPosted/Entries、PmProjectSettled、SalesOrderCreated/Approved、PaymentReceived/Made、PurchaseOrderCreated/Approved、InventoryUpdated.total_value、ShippingOrderRequested、ReturnCompleted.refund_amount、OpportunityWon、ScmPurchasePlanCreated、SrmBidSubmitted、Finance 4 类 amount、ReconciliationUpdated 3 字段、SettlementCreated）；**保留 f64**=数量类/比率/评分/坐标/dashboard 聚合；erp PmProjectSettled 成本系数 `*0.7` 同步 `Decimal::new(7,1)`
+- **验证**：`cargo check --workspace` 0 error/0 warning；clippy（10 crate）0 warning；shared-event **366 全绿**（+`payroll_payload_decimal_precision_and_wire_shape`）；finance/hrm/erp 测试 1106/1109/899 全绿；双门禁 exit 0
+- **链路① e2e**：XADD HrmPayrollPosted→erp 消费→凭证落库：`total_debit=total_credit=20000.0015`（NUMERIC 精确）、分录 0.3000/0.3000（0.1+0.2=0.3 零误差）、`balanced=t`、同 payroll_run_id 幂等重放不重复（1 凭证/2 分录）；测试数据已清理
+- **commit**：`3c5db4142`（shared-event 本体）/`db1f9fcf5`（下游 Decimal 适配 8 服务 17 文件）/`6343f78ef`（服务侧发布/订阅点全链对接）/`7e078845e`（event-driven.md §9.2 登记）
+- **残留**：crm aftersales.rs:1629 `refund_amount_f64` 为裸 JSON 构造（非类型化 payload，未走 shared-event 契约），不在契约范围
+
+### A3 wms 审计读路径 P2 加固 — ✅ 完成
+
+- **根因**：`wms.audit_logs` 实列 `entity_type text 可空` / `ip_address inet` vs 共享结构体 `entity_type: String`（非 Option）/`ip_address: Option<String>`（text 解码）→ 手插 NULL/inet 行 sqlx 解码 500（真实写路径行合规，空表 200）
+- **修复**：`svc/wms/src/modules/audit.rs` 两处 SELECT：`COALESCE(entity_type,'') AS entity_type` + `ip_address::text`（未动写路径/共享结构体/审计语义）
+- **证据**：psql 实插 3 行（合规/NULL/inet）新旧 SELECT 对比决定性（新 SELECT 列类型与结构体精确吻合）；测试行已清理
+- **验证**：boundary 双门禁 PASS；审计单测 4/4 因 B2 中间态编译阻断暂未跑（SQL 级等价证据，R2 基线 4/4 绿，B2 提交后补 HTTP 冒烟）
+- **commit**：`eed5ddbe4`（链上，rebase 后 hash；本地对象 `d30e1da61`）
+- **残留**：`inet::text` 非空 ip 带 `/32` 后缀（如需纯 IP 改 `host()`）；crm 读路径同形潜在严格性归 B 线评估；HTTP 级冒烟待服务重启补
+
+### A4 MDM DLQ 管理 API（list/replay） — ✅ 完成
+
+- **定案**：挂载 unified-core（control-plane）admin 路由，鉴权=全局 auth_middleware（JWT）+ `require_permission("system:read"/"system:write")`（对齐 feature_flag.rs）；既有 DLQ 管理 API 实测无 HTTP 暴露、erp 内部 DLQ 为 Mutex 队列非 Redis keyspace，故独立新增
+- **API**（双轨 `/api/core/` + `/api/v1/core/`）：`GET /system/mdm-dlq?prefix=&page=&page_size=`（MdmDeadLetterList 分页）+ `POST /system/mdm-dlq/events/{event_id}/replay`
+- **lib/shared-event**（dead_letter_queue.rs +253）：`list_mdm_dead_letters`/`replay_mdm_dead_letter`（复用 `MasterDataEvent::publish()` XADD 格式重投回原 stream，保留原 event_id 复用幂等，LREM 精确移除）
+- **实测**：注入→push_mdm LLEN 0→1→list total=1→replay→XREVRANGE 见新 entry（XLEN 109→110）→清理回 109；erp.erp_master_data_refs 无残留
+- **验证**：两 crate check 0 错、clippy 0 warning、shared-event **361 passed**（dead_letter_queue 19/19 含新增 4）、双门禁 PASS
+- **commit**：`8209774e5`（注意：并行线 rebase 将 B3 的 5 个 crm 文件并入同 commit，内容无丢失，commit 卫生问题已记录）
+- **残留**：MDM DLQ 管理 API 未接 dashboard 展示；workspace 半成品期仅验证自身 crate（B2 提交后整体绿）
+
+### B3 crm sales_forecast/dashboard 金额 f64→Decimal — ✅ 完成
+
+- **类型**：`rust_decimal::Decimal`（与 U6 billing.rs 一致）；响应=JSON 字符串、请求=数字/字符串双兼容（与 U6 惯例一致）
+- **字段**：8 个金额字段改 Decimal（models/sales_forecast.rs predicted/actual_amount、Update 请求 2 字段、models/dashboard.rs FunnelStage.total_value + SalesForecast 2 字段、modules/analytics.rs CrmDashboardStats.won_amount、modules/sales_forecast.rs 种子/update/trend/compare/accuracy 金额运算）；**保留 f64**=accuracy/confidence_level（比率）、ForecastFactor.impact（权重）、conversion_rate、average_cycle（天数）、modules/forecast.rs 统计算法核心（moving_average/exponential_smoothing/linear_regression/mse 等需浮点运算）
+- **验证**：check/clippy 0 错 0 警告、crm **504 passed**（+`sales_forecast_amount_precision_exact` 0.01 精确、`sales_forecast_amount_serde_contract` 双兼容）
+- **commit**：5 文件并入 `8209774e5`（与 A4 同 commit，内容完好）
+- **残留**：`modules/dashboard.rs`+`models/dashboard.rs` 实测未挂载（死代码，线上看板金额实为 analytics.rs::CrmDashboardStats.won_amount 已改）；crm 消费端 5 个瞬态错误系 B2 未提交涟漪，B2 提交后已消除
+
+### B4 checksums.txt 停更恢复 — ✅ 完成
+
+- **定案**：**恢复全量登记（非废弃）**——`scripts/migration/validate.sh` 是既有生成器（SHA-256/排序/`# DO NOT EDIT MANUALLY` 头），09-21 后停跑致文件退化；checksums.txt 为离线/git 版基线（无库 CI 场景账本无法承担），废弃会丢控制面；顺带证伪 `.sqlx/`（309 query-*.json）为 sqlx 离线查询缓存、与迁移校验和无关（F-65 口径修正）
+- **落地**：基线=旧文件 249 唯一/67 hash 失配/43 未登记；恢复后=3 行 canonical 头+**292 条排序登记零重复**；旧版备份 `tmp/checksums.txt.20260921.bak`（gitignored）
+- **核对脚本**：`scripts/migration/checksums-verify.sh`（只读幂等；DATABASE_URL 缺省降级磁盘侧）实跑：磁盘 SHA-256↔checksums.txt `all 292 registered, no removed/mismatch`；磁盘 SHA-384↔mes 账本 292 joined identical；差集 0、exit 0、连跑两次哈希不变
+- **commit**：`646856a44`（3 文件：checksums.txt + database/README.md +2 行 F-65 收敛注记 + checksums-verify.sh 新建）
+- **残留**：提交落 detached HEAD（与并行线工作流一致）；未挂 CI 门禁（可选后续项）；public/iam 残留账本非本项
+
+### B13 wms data_sync 文档口径对齐 — ✅ 完成
+
+- **过时点**：D3 §2.2 表格 wms 行（误诊为假同步，据审计分片推断）+「影响」段 + overview F-09 行（未澄清 wms 实为误诊）
+- **修订**：D3 §2.2 wms 行就地订正为真实事件驱动 + 表后 blockquote 订正说明 + 影响段补注（仅 lims/ehs）+ **§8.1 新增订正记录**；overview §5.1 F-09 行追加注记
+- **代码实证**：wms outbound→`publish_shipping_order_requested`→真实事件（`svc/wms/src/modules/data_sync.rs:224`→publisher.rs:443）；crm `event_handlers/mod.rs:82` 消费创建销售订单；inbound 自有 schema 落库（data_sync.rs:301）；反证 `grep SERVICE_URL|假` = 0；lims/ehs 假同步已 410 下线（data_sync.rs:221,244 / :217,238）
+- **commit**：`870bc37a6`（链上 `2ed4d8027`，2 docs +17/−3）
+- **残留**：历史审计底稿（WMS.md:123、架构报告 F-09）按"历史快照不重写"保留；历史脏 sync_records 清洗属 U3 既有残留
+
+### 协作风险记录（本次并行）
+
+- 并行线交互式 rebase/git restore/批提交多次冲掉未提交改动与 commit（B2 检查点一度被 detach 丢弃、A3/A4/B3 均被 wipe 过）；各代理按"脚本确定性重做 + 立即提交/pathspec 锁定"恢复；A4 首次提交误带 B3 已暂存 5 个 crm 文件，reset --soft 回退后并行线 rebase 又将两者并入 `8209774e5` 单 commit——**内容全部完好，仅 commit 边界混合**（如后续需拆分可 git filter 或留作记录）。
+- workspace 终态：`git status` 干净；链顶 `7e078845e`（B2 登记）。
+
+### 批 2（B5/B6/B8/B9+A5）启动建议
+
+- 文件面互斥确认后即可并行派发：**B5**（svc/gis 新迁移 RLS+策略）、**B6**（lib/shared-db rls.rs 池化 GUC 同源）、**B8**（根 package.json dev:core DTS + build:shared-types）、**B9**（GIS leaflet mock 补 3 测试）、**A5**（erp_master_data_refs RLS policy 供 topems_app）——前三为代码批、A5 为 DB 侧新迁移（新时间戳前缀，当前 0008/0009 空闲）。
+- 批 3 决策先行项（B1 白名单撤销方案 / B14 守卫重构 / B15 埋点 / A2 docker / A5 受限用户口径）待用户/各 owner 拍板。
