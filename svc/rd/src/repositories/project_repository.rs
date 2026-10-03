@@ -276,6 +276,11 @@ mod tests {
     use sqlx::PgPool;
     use tracing;
 
+    // 三个 DB 测试共享 rs.* 表并在开头 TRUNCATE，并行执行会互相清空对方数据。
+    // Windows/多线程下 cargo test 默认并行，用全局锁串行化这三个测试保证稳定。
+    static DB_TEST_LOCK: std::sync::LazyLock<tokio::sync::Mutex<()>> =
+        std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
+
     async fn setup_test_db() -> PgPool {
         let database_url = "postgres://topems:topems_secret@localhost:5432/topems";
         let pool = PgPool::connect(database_url)
@@ -413,6 +418,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_project() {
+        let _guard = DB_TEST_LOCK.lock().await;
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
 
@@ -448,6 +454,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_project_by_id() {
+        let _guard = DB_TEST_LOCK.lock().await;
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
 
@@ -482,6 +489,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_list_projects() {
+        let _guard = DB_TEST_LOCK.lock().await;
         let pool = setup_test_db().await;
         let repo = TestProjectRepository::new(pool.clone());
 
