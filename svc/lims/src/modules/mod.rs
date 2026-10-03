@@ -1,6 +1,7 @@
 pub mod audit;
 pub mod dashboard;
 pub mod data_sync;
+pub mod health;
 pub mod inspection_record;
 pub mod inspection_task;
 pub mod instrument;
@@ -24,6 +25,7 @@ pub fn create_api_routes() -> Router<AppState> {
     Router::new()
         .merge(audit::create_routes())
         .merge(dashboard::create_routes())
+        .merge(health::create_routes())
         .merge(sample::create_routes())
         .merge(inspection_task::create_routes())
         .merge(inspection_record::create_routes())

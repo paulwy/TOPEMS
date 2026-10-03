@@ -238,7 +238,10 @@ impl ErpEventHandlers {
                     match h.handle_master_data_employee_changed(event).await {
                         Ok(()) => Ok(()),
                         Err(e) => {
-                            tracing::error!("[erp] handle_master_data_employee_changed 失败: {}", e);
+                            tracing::error!(
+                                "[erp] handle_master_data_employee_changed 失败: {}",
+                                e
+                            );
                             Err(e)
                         }
                     }

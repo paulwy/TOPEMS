@@ -127,11 +127,7 @@ impl DeadLetterQueue {
     /// 由 `process_mdm_message` 超 max_retries 后调用，替代原"仅 error! + ACK 放弃"：
     /// 失败事件先落 MDM DLQ 保留供运维排查（本地 ref 持续失同步的可见信号），再 ACK。
     /// 不做 retry_count 账本/回放（MDM 本地 ref 自愈合设计）。
-    pub async fn push_mdm(
-        &self,
-        event: &MasterDataEvent,
-        error: &str,
-    ) -> EventResult<()> {
+    pub async fn push_mdm(&self, event: &MasterDataEvent, error: &str) -> EventResult<()> {
         let dead_letter = MdmDeadLetter {
             event: event.clone(),
             retry_count: 1,

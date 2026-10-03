@@ -665,3 +665,34 @@
   - **③ 上线检查单收口**：🔴必修 9/9 **全部已达成**（R-1..R-8+R2 六链路 6/6+R-6+R-7+R-7b 全生效）；🟡有条件 5（nginx 生产 conf=macOS epoll 限制、5433 docker 口径、wms 审计读路径 P2 加固、MDM DLQ 管理 API、erp RLS policy）；🔵观察 8；🟢基线 5 全绿（13 服务 /health 实测全 200、账本收敛、门禁、shared-event 364、前端链）；**crm 滚动重启**（旧 87128 08:24 旧二进制→重建含 R-7/R-7b 新二进制 PID 57928，/health 200、启动即消费 MDM 积压"本地 ref 已同步"无报错、测试数据清理残留 0；erp 已在 R-7b 重启 53966、mes 在 R-7 重启 43711——三服务新二进制全生效）；**最终结论=🟡 有条件就绪**（🔴9/9+基线全绿，未决项均为环境口径/后续加固，无代码缺陷阻塞）；未决项附建议责任人（nginx/5433-docker→部署运维、wms 加固→wms owner、MDM 管理 API→shared-event owner、erp RLS→DBA、矩阵重采→可观测 owner）；commit `670e6a7bd`（并行 scm 线索引归并竞争并入 2 个 fmt 文件，已 amend 注明，内容未动）
   - **5433 实例保留状态与启停**：Homebrew PG 18.4 并行实例**保留运行**（topems 库 292 收敛态完整）；启动=`pg_ctl -D /opt/homebrew/var/postgres5433 -l /opt/homebrew/var/postgres5433/server.log start`；停止=`pg_ctl -D /opt/homebrew/var/postgres5433 stop`；用途=迁移重放验证环境（canonical public 落点），docker 口径恢复后可回归
   - **主线完成态**：阶段 0-3 + U3b + R-1..R-8 + R2 复测 + R-6 + 5433 重放 + R-7/R-7b + 收官三批——全链落地、本地提交齐备（未 push，协作机制自动同步如实记录）、TODO.md 同步完成态
+## 2026-10-03 方向① 9 模块语义深挖（hrm/wms/rd/plugin/lims/iam/integration/monitor/mobile）
+
+- 方法：apps/web/src/api/<mod>/*.ts 正则抽 GET 契约 → 带 token 实测 → 非 200 汇总 → 逐条对照后端路由/页面引用判定
+- **已修复（全部实测 200）**：
+  - lims：新增 svc/lims/src/modules/health.rs（/health，复用 shared_core::health::simple_health_check）——lims 模块化挂载
+    （create_api_routes 非泛型）不含 main.rs 独立 /health，前端 lims/index.ts health 契约此前 404
+  - wms：/audit-logs/modules 被 /audit-logs/{id} 通配吞成 400——新增 list_audit_modules handler（静态模块清单）
+    且路由置于 {id} 前；前端 wms/audit.ts getModules 契约
+  - mobile→HRM 服务间调用链（页面 MobileAttendancePage 在用，500/404 根因链）：
+    - hrm_api 客户端路径错位：/leave-applications → HRM 实际 /leaves（list 404→500）；overview 打
+      /attendance/overview 而 HRM 无此路由 → 改 /attendance/today-status
+    - HrmCreateLeaveRequest 字段错位：user_id → employee_id + 新增 days:f64；list 参数 pagesize → page_size
+    - mobile apply_leave 构造对齐（days = end-start 天数 max 1）
+    - mobile /attendance/overview 别名路由（前端契约子路径 vs 后端 /attendance 根路径）
+  - hrm：新增 /attendance/stats handler（页面 MobileAttendancePage getAttendanceStats 契约：today_status +
+    月度 work_days/late/early_leave/absent/total_work_hours；attendance_records 月度聚合 + 工作日估算）；
+    路由置于 /attendance/{id} 前（原被通配吞成 400 UUID 解析错误）
+- **系统性根因修复（DB 层）**：
+  - 全库 446 条 tenant_isolation_* RLS policy 的 current_setting('app.tenant_id') 缺 missing_ok=true——
+    service token 无租户上下文且连接未预置该变量时 policy 求值直接抛错（"unrecognized configuration
+    parameter"）→ 服务间调用查询 500。已批量重建为 current_setting('app.tenant_id'::text, true)
+    （topems_app owner 438 张 + topems owner 8 张 ticket 表；验证余量 0）
+  - HRM user_id=$1 绑定 text 与 uuid 列比较无 operator（psql 字面量自动 cast 掩盖）→ 统一 $1::uuid（today-status/stats 两处）
+- **判定不补（页面 0 引用 + 合理设计）**：
+  - rd /statistics、rd /health：rd 实际挂 /api/rd（非 /api/erp），/api/rd/statistics 实测 200——deep_probe
+    的 /api/erp 前缀映射是误报；rd health 404 且页面 0 引用
+  - integration /health：embedded 模式有意跳过（宿主 /api/server/health 统一探活），契约存在但页面 0 引用
+  - mobile ai/analytics/approvals（4 组 17 条）：页面 0 引用，维持"未使用不补"标准
+  - mobile attendance stats 内层"未找到对应员工"：admin 在 hrm.employees 无绑定（测试数据），链路已 200
+- 验证：cargo build -p topems-server + run_monolith 重启后，lims/health、wms audit-logs/modules、
+  mobile leaves/overview/stats 全部 200

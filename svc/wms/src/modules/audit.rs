@@ -21,7 +21,19 @@ where
 {
     Router::new()
         .route("/audit-logs", get(list_audit_logs))
+        .route("/audit-logs/modules", get(list_audit_modules))
         .route("/audit-logs/{id}", get(get_audit_log))
+}
+
+/// GET /audit-logs/modules —— 审计日志模块清单（前端 auditLogApi.getModules 契约）
+pub async fn list_audit_modules() -> Json<ApiResponse<serde_json::Value>> {
+    let modules = serde_json::json!({
+        "modules": [
+            "warehouse", "inventory", "inbound", "outbound", "wave-pick",
+            "transfer", "stock-take", "batch", "location", "sync"
+        ]
+    });
+    Json(ApiResponse::success(modules, "审计模块清单获取成功"))
 }
 
 #[derive(Debug, Deserialize)]

@@ -31,7 +31,9 @@ pub type MasterDataEventHandler =
 /// 包成 `Ok(())` 直传 Stream 层 → process_mdm_message 永远 all_succeeded →
 /// 立即 ACK，重试计数/MDM DLQ 成为死代码（R-6 双缺陷的 MDM 侧残留）。
 pub type MasterDataResultEventHandler = Arc<
-    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync,
+    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>>
+        + Send
+        + Sync,
 >;
 
 /// 事件订阅者
@@ -638,9 +640,10 @@ mod tests {
             .subscribe_master_data_handler_organization(|_e: MasterDataEvent| {
                 Box::pin(async { Ok(()) })
             })
-            .subscribe_master_data_handler(vec![MasterDataDomain::Supplier], |_e: MasterDataEvent| {
-                Box::pin(async { Ok(()) })
-            });
+            .subscribe_master_data_handler(
+                vec![MasterDataDomain::Supplier],
+                |_e: MasterDataEvent| Box::pin(async { Ok(()) }),
+            );
 
         // 能正常编译 + 构造出来即视为通过（builder 模式无运行时）
         let _ = sub;

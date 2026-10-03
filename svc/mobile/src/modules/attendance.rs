@@ -375,11 +375,20 @@ pub async fn apply_leave(
         }
     };
 
+    #[allow(clippy::cast_precision_loss, clippy::as_conversions)]
+    let days = (chrono::NaiveDate::parse_from_str(&req.end_date, "%Y-%m-%d")
+        .unwrap_or_else(|_| chrono::Local::now().date_naive())
+        - chrono::NaiveDate::parse_from_str(&req.start_date, "%Y-%m-%d")
+            .unwrap_or_else(|_| chrono::Local::now().date_naive()))
+    .num_days()
+    .max(1) as f64;
+
     let request = HrmCreateLeaveRequest {
-        user_id,
+        employee_id: user_id,
         leave_type: req.leave_type,
         start_date: req.start_date,
         end_date: req.end_date,
+        days,
         reason: req.reason,
     };
 

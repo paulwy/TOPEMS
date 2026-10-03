@@ -4,7 +4,7 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::Utc;
+use chrono::{Datelike, Utc};
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -23,6 +23,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/attendance/today-status", get(get_today_status))
         .route("/attendance/check-in", post(check_in))
         .route("/attendance/check-out", post(check_out))
+        .route("/attendance/stats", get(get_attendance_stats))
         .route(
             "/attendance/{id}",
             get(get_attendance)
@@ -69,7 +70,7 @@ pub async fn get_today_status(
     // 如果传入 user_id，先解析为 employee_id（Mobile-BFF 数据迁移后统一走 hrm 表）
     let resolved_employee_id = if let Some(uid) = user_id {
         match sqlx::query_scalar::<_, Uuid>(
-            "SELECT id FROM hrm.employees WHERE user_id = $1 AND deleted_at IS NULL LIMIT 1",
+            "SELECT id FROM hrm.employees WHERE user_id = $1::uuid AND deleted_at IS NULL LIMIT 1",
         )
         .bind(uid)
         .fetch_optional(&mut **txn)
@@ -822,4 +823,176 @@ pub async fn check_out(
             Json(api_error(500, "下班打卡失败"))
         }
     }
+}
+
+// ============ 考勤统计（前端 MobileAttendancePage 契约 /attendance/stats） ============
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:attendance:read"])),
+    path = "/attendance/stats",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
+pub async fn get_attendance_stats(
+    State(_state): State<ApiState>,
+    Query(params): Query<TodayStatusParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+
+    // user_id -> employee_id 解析（与 today-status 同口径）
+    let resolved_employee_id = if let Some(uid) = params.user_id.as_deref() {
+        match sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM hrm.employees WHERE user_id = $1::uuid AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(uid)
+        .fetch_optional(&mut **txn)
+        .await
+        {
+            Ok(Some(eid)) => Some(eid),
+            Ok(None) => {
+                tracing::warn!("未找到 user_id={} 对应的 employee_id", uid);
+                None
+            }
+            Err(e) => {
+                tracing::error!("解析 user_id 为 employee_id 失败: {}", e);
+                return Json(ApiResponse::<serde_json::Value>::error(
+                    500,
+                    "解析用户信息失败",
+                ));
+            }
+        }
+    } else {
+        params.employee_id
+    };
+
+    let eid = match resolved_employee_id {
+        Some(eid) => eid,
+        None => {
+            return Json(ApiResponse::success(
+                serde_json::json!({
+                    "today_status": "not_checked_in",
+                    "work_days_this_month": 0,
+                    "late_days_this_month": 0,
+                    "early_leave_days": 0,
+                    "absent_days": 0,
+                    "total_work_hours": 0,
+                }),
+                "未找到对应员工，返回空统计",
+            ));
+        }
+    };
+
+    // 月度聚合（当月 attendance_records 明细）
+    let agg = sqlx::query(
+        r#"
+        SELECT
+            COUNT(*) FILTER (WHERE date >= date_trunc('month', CURRENT_DATE))::int8 AS work_days,
+            COUNT(*) FILTER (WHERE date >= date_trunc('month', CURRENT_DATE) AND status = 'late')::int8 AS late_days,
+            COUNT(*) FILTER (WHERE date >= date_trunc('month', CURRENT_DATE) AND status = 'early_leave')::int8 AS early_leave_days,
+            COALESCE(SUM(work_hours) FILTER (WHERE date >= date_trunc('month', CURRENT_DATE)), 0)::float8 AS total_work_hours
+        FROM hrm.attendance_records
+        WHERE employee_id = $1 AND date >= date_trunc('month', CURRENT_DATE)
+        "#,
+    )
+    .bind(eid)
+    .fetch_one(&mut **txn)
+    .await;
+
+    let (work_days, late_days, early_leave_days, total_work_hours) = match agg {
+        Ok(row) => (
+            row.get::<i64, _>("work_days"),
+            row.get::<i64, _>("late_days"),
+            row.get::<i64, _>("early_leave_days"),
+            row.get::<f64, _>("total_work_hours"),
+        ),
+        Err(e) => {
+            tracing::error!("获取考勤统计失败: {}", e);
+            return Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取考勤统计失败",
+            ));
+        }
+    };
+
+    // 今日状态（当天是否有打卡记录）
+    let today = sqlx::query(
+        r#"
+        SELECT check_in_time, check_out_time
+        FROM hrm.attendance_records
+        WHERE employee_id = $1 AND date::date = CURRENT_DATE
+        ORDER BY date DESC
+        LIMIT 1
+        "#,
+    )
+    .bind(eid)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    let (today_status, today_check_in, today_check_out) = match today {
+        Ok(Some(row)) => {
+            let ci: Option<chrono::NaiveTime> = row.get("check_in_time");
+            let co: Option<chrono::NaiveTime> = row.get("check_out_time");
+            let status = if co.is_some() {
+                "checked_out"
+            } else if ci.is_some() {
+                "checked_in"
+            } else {
+                "not_checked_in"
+            };
+            (
+                status,
+                ci.map(|t| t.format("%H:%M:%S").to_string()),
+                co.map(|t| t.format("%H:%M:%S").to_string()),
+            )
+        }
+        Ok(None) => ("not_checked_in", None, None),
+        Err(e) => {
+            tracing::error!("获取今日考勤状态失败: {}", e);
+            return Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取今日考勤状态失败",
+            ));
+        }
+    };
+
+    // 当月应出勤工作日估算（周一~周五，不扣除法定节假日）
+    let now = chrono::Local::now();
+    let month_start = chrono::NaiveDate::from_ymd_opt(now.year(), now.month(), 1)
+        .unwrap_or_else(|| now.date_naive());
+    let month_len = month_start
+        .checked_add_months(chrono::Months::new(1))
+        .map(|m| m - chrono::Duration::days(1))
+        .unwrap_or(month_start);
+    let mut expect_days: i64 = 0;
+    let mut d = month_start;
+    while d <= month_len {
+        let dow = d.weekday();
+        if dow != chrono::Weekday::Sat && dow != chrono::Weekday::Sun {
+            expect_days += 1;
+        }
+        d += chrono::Duration::days(1);
+    }
+    let absent_days = (expect_days - work_days).max(0);
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "today_status": today_status,
+            "today_check_in": today_check_in,
+            "today_check_out": today_check_out,
+            "work_days_this_month": work_days,
+            "late_days_this_month": late_days,
+            "early_leave_days": early_leave_days,
+            "absent_days": absent_days,
+            "total_work_hours": total_work_hours,
+        }),
+        "获取考勤统计成功",
+    ))
 }

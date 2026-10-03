@@ -376,6 +376,11 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         // Attendance Routes
         .route("/attendance", axum::routing::get(get_attendance_overview))
+        // 前端契约 /attendance/overview 别名（页面 MobileAttendancePage 使用）
+        .route(
+            "/attendance/overview",
+            axum::routing::get(get_attendance_overview),
+        )
         .route(
             "/attendance/stats",
             axum::routing::get(get_attendance_stats),

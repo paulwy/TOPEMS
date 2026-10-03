@@ -78,10 +78,11 @@ pub struct HrmCheckOutRequest {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct HrmCreateLeaveRequest {
-    pub user_id: String,
+    pub employee_id: String,
     pub leave_type: String,
     pub start_date: String,
     pub end_date: String,
+    pub days: f64,
     pub reason: Option<String>,
 }
 
@@ -151,7 +152,7 @@ impl TypedServiceClient<HrmApi> {
         &self,
         user_id: &str,
     ) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/attendance/overview?user_id={}", user_id);
+        let path = format!("/attendance/today-status?user_id={}", user_id);
         self.get(&self.build_path(&path)).await
     }
 
@@ -209,7 +210,7 @@ impl TypedServiceClient<HrmApi> {
         page_size: i32,
     ) -> ServiceClientResult<serde_json::Value> {
         let mut path = format!(
-            "/leave-applications?user_id={}&page={}&pagesize={}",
+            "/leaves?employee_id={}&page={}&page_size={}",
             user_id, page, page_size
         );
         if let Some(s) = status {
@@ -223,7 +224,7 @@ impl TypedServiceClient<HrmApi> {
         &self,
         data: &HrmCreateLeaveRequest,
     ) -> ServiceClientResult<serde_json::Value> {
-        let path = self.build_path("/leave-applications");
+        let path = self.build_path("/leaves");
         self.post(&path, data).await
     }
 }
