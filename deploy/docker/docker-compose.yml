@@ -180,8 +180,8 @@ services:
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
-      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_change_me}
+      - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
       - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
       - PLUGIN_HEARTBEAT_TIMEOUT=${PLUGIN_HEARTBEAT_TIMEOUT:-90}
