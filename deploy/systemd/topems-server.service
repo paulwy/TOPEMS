@@ -1,0 +1,32 @@
+[Unit]
+Description=TOPEMS Server Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/server
+ExecStart=/opt/topems/bin/server-service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/server.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-server
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/topems/logs /opt/topems/data
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

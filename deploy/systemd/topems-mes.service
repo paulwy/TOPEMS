@@ -8,17 +8,17 @@ Wants=postgresql.service redis.service
 Type=simple
 User=topems
 Group=topems
-WorkingDirectory=/opt/topems/svc/manufacturing
-ExecStart=/opt/topems/bin/manufacturing-service
+WorkingDirectory=/opt/topems/svc/mes
+ExecStart=/opt/topems/bin/mes-service
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5
 
-EnvironmentFile=/opt/topems/config/manufacturing.env
+EnvironmentFile=/opt/topems/config/mes.env
 
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=topems-manufacturing
+SyslogIdentifier=topems-mes
 
 NoNewPrivileges=true
 PrivateTmp=true

@@ -1,0 +1,32 @@
+[Unit]
+Description=TOPEMS Ticket Service
+Documentation=https://github.com/topems/topems
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=topems
+Group=topems
+WorkingDirectory=/opt/topems/svc/ticket
+ExecStart=/opt/topems/bin/ticket-service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+EnvironmentFile=/opt/topems/config/ticket.env
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=topems-ticket
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/topems/logs /opt/topems/data
+
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

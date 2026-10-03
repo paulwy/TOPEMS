@@ -8,17 +8,17 @@ Wants=postgresql.service redis.service
 Type=simple
 User=topems
 Group=topems
-WorkingDirectory=/opt/topems/svc/quality-assurance
-ExecStart=/opt/topems/bin/quality-assurance-service
+WorkingDirectory=/opt/topems/svc/qms
+ExecStart=/opt/topems/bin/qms-service
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5
 
-EnvironmentFile=/opt/topems/config/quality-assurance.env
+EnvironmentFile=/opt/topems/config/qms.env
 
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=topems-quality-assurance
+SyslogIdentifier=topems-qms
 
 NoNewPrivileges=true
 PrivateTmp=true

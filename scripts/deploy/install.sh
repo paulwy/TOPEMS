@@ -176,10 +176,20 @@ echo ""
             "wms"
             "srm"
             "rd"
-            "bi"
+            # bi 即 analytics 的别名（target/release 下无 bi / topems-bi 二进制），
+            # 由 analytics 条目覆盖，勿重复列出。
             "mobile"
             "portal"
             "integration"
+            # 以下为补齐的独立服务（deploy/systemd 已有对应 topems-*.service 单元，
+            # 二进制推导：target/release/topems-<name> → /opt/topems/bin/<name>-service）
+            "communication"
+            "server"
+            "search"
+            "ticket"
+            "tms"
+            "monitor"
+            "plugin-registry"
         )
 
         for svc in "${SERVICES[@]}"; do

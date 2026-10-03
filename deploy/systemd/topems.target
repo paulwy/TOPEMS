@@ -6,6 +6,7 @@ After=network.target postgresql.service redis.service
 Requires=topems-unified-core.service
 Requires=topems-ai.service
 Requires=topems-analytics.service
+Requires=topems-communication.service
 Requires=topems-crm.service
 Requires=topems-ehs.service
 Requires=topems-erp.service
@@ -17,13 +18,19 @@ Requires=topems-lims.service
 Requires=topems-master-data.service
 Requires=topems-mes.service
 Requires=topems-mobile.service
+Requires=topems-monitor.service
 Requires=topems-pdm.service
+Requires=topems-plugin-registry.service
 Requires=topems-pm.service
 Requires=topems-portal.service
 Requires=topems-qms.service
 Requires=topems-rd.service
 Requires=topems-scm.service
+Requires=topems-search.service
+Requires=topems-server.service
 Requires=topems-srm.service
+Requires=topems-ticket.service
+Requires=topems-tms.service
 Requires=topems-wms.service
 
 [Install]
