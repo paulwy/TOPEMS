@@ -209,7 +209,7 @@ docs/
 | `database-schema-ownership-review.md` | `database/` |
 | `database-split-plan.md` | `database/` |
 | `duplicate-table-consolidation.md` | `database/` |
-| `duplicate-table-convergence.md` | `database/` |
+| ~~`duplicate-table-convergence.md`~~ | `database/`（2026-10-03 并入 consolidation 附录后删除） |
 | `rls-coverage-report.md` | `database/` |
 | `rls-live-coverage.md` | `database/` |
 
