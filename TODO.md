@@ -609,3 +609,9 @@
   - 结论：8 个全绿模块语义级 0 缺口；resp_json_err 均为响应截断假象
 - 验证工具：/tmp/deep_probe.py（前端 api 文件正则抽 GET 契约 → 带 token 实测 → 非 200 汇总；
   注意 master→master-data、rd→erp 前缀映射；URL 去前导斜杠防双斜杠）
+
+- [x] **R2 六链路全量复测（排期 2，含 ck_qa_lab_tasks 前置放宽）**——✅ 2026-10-03 完成，commit `41e3978e3`（0006 迁移；复测为纯验证无代码改动）：
+  - 步骤 A：实测 lims 业务 status（integration.rs:127 建任务默认 pending、inspection_task.rs:635 完成置 completed）→ 0006 迁移幂等放宽 `ck_qa_lab_tasks_status_standard` 允许 pending/received/registered/assigned/in_progress/testing/completed/cancelled（R-3 同族 7 表唯独漏了它）；5432 应用+幂等重放 exit 0；事务内 INSERT pending→UPDATE completed 断言过（ROLLBACK 零残留）；账本手工补记 disk 290=ledger 290、SHA-384 逐字节吻合、未登记=0；check/clippy/双门禁绿
+  - 步骤 B 对照表（初测→复测，6/6 全 PASS）：① 工资→凭证 ✅→✅（PR-202610-R2B001 debit=credit=20000.0000 平衡、重放 99999 不覆盖）② 订单→工单 ❌→✅（source_order_id 精确匹配 status=pending、重放 HIJACK 不覆盖——R-1 生效）③ 报工→进度 ✅→✅（0→50.00/in_progress、重放 999 不覆盖、幂等账本 3→4）④ 质量链 ❌→✅（样品 registered+任务 pending 双落库、重放单行——R-2 路由+步骤 A 共同生效）⑤ 插件注册+心跳 ⚠️→✅（register success、list 含 r2b-test-plugin、last_heartbeat 11:53→11:54——R-4 生效）⑥ 审计 ⚠️→✅（crm/wms 200、wms 返回本服务测试行——R-5 生效）；测试数据全清理、真实自注册插件 4 个保留
+  - 新观察（非回归）：wms audit-logs 读路径严格（entity_type 非空/ip_address 按 text 解码，手插 NULL/inet 行 500、真实写路径行合规）——留加固 ticket
+  - 剩余缺口：5433 DOWN（0006 未重放）、DLQ 待核（排期 3）、nginx 未单独验证、20260924110000 checksum 漂移仍阻塞 sqlx migrate run（沿用手工账本）
