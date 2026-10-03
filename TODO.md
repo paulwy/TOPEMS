@@ -650,3 +650,11 @@
   - 验证：shared-event **364 测试全绿**（363 基线+1）、`cargo check --workspace` 0 错、clippy 0 warning、双门禁 PASS；erp 已重启新二进制（PID 53964）
   - **重要发现（另起排期）**：erp 运行时 search_path 下 `erp_master_data_refs` 关系**不存在**（现存 erp.erp_master_data_refs 仅归档列缺 master_data_id 等业务列）——erp MDM 本地 ref 同步**此前一直在静默失败**（旧二进制 warn 吞），本次后转为可见重试+MDM DLQ；**建表修复建议另起排期**（超出本任务范围未动 DDL）
   - 残留：MDM DLQ 仅 push+独立 keyspace 未接 list/replay 管理 API（按本地 ref 自愈合设计取舍）；crm 服务本体本次未重启（erp 抽验覆盖接线链路）
+
+- [x] **R-7b 联动：erp_master_data_refs 建表修复**——✅ 2026-10-03 完成，commit `5c44c85bd`（1 file +97，未 push）：
+  - 漂移定案（实测）：迁移链 `20260725000000:3079` 建空壳（id UUID PK）+ `20260923000000:0003` 仅补 8 生命周期归档列，**从未补 13 个 MDM 业务列**；runtime `ensure_master_data_refs_table` 的 CREATE IF NOT EXISTS 命中已存在归档表变 no-op；代码 upsert（event_handlers/mod.rs:1879 INSERT 12 列 + ON CONFLICT(master_data_id)）报 `column "master_data_id" does not exist`——R-7b 前静默 warn 吞、R-7b 后转可见重试→DLQ
+  - 修复：新迁移 `20261003000007_r7b_erp_master_data_refs_align.sql` 幂等补 13 列（类型/可空逐列对齐 crm 同型表）+ `master_data_id UNIQUE`（满足 ON CONFLICT，保留 id PK）+ domain 索引（兑现 20260911 预期）；**不加 crm 窄 status CHECK**（erp 生命周期写 pending_destruction/destroyed/deleted 会被拦）；**不动 RLS**（topems=superuser 绕过 FORCE RLS 非阻断点）；不改已应用迁移
+  - 双库账本：**磁盘 292 = 5432 mes 账本 292 = 5433 public 账本 292**，checksum 逐字节 diff 空（不一致 0、双向独有 0），0007 checksum=f6c8d643…（SHA-384 手工补记）；幂等重放双库通过
+  - 复测（真实落库）：直插验证（R7C-mat-001 落库、ON CONFLICT/NOT NULL/JSONB 全满足）+ 完整事件路径（XADD mat 事件→erp-group 消费→日志"本地 ref 已同步"→**行真实落库**）；**MDM DLQ `topems:mdm_dlq:mat` LLEN=0**（对照 R-7b 抽验同路径 3 次重试后 LLEN=1 失败态）；测试数据清理
+  - 验证：无 Rust 改动（cargo check/clippy 跳过）；boundary 双门禁 PASS（schema/api 均 0 违规）
+  - 残留：erp.erp_master_data_refs 仍 FORCE RLS 无 policy（superuser 绕过不影响功能，未来 topems_app 受限访问需补策略，与 crm RLS-off 口径不一致建议统一）；erp 生命周期 6 态 status 无 CHECK（按代码兼容有意不加）
