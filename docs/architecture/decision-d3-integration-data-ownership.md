@@ -38,9 +38,11 @@
 |---|---|---|
 | lims | `svc/lims/src/modules/data_sync.rs:255-268`（record_to_qms） | 读 `QMS_SERVICE_URL` → `tracing::info!("Syncing record {} to QMS at {}")` → **无任何 HTTP 调用** → 构造假响应 `{"target_service":"qms","target_inspection_id":<新UUID>,"synced_at":...}` → `INSERT INTO qa_lims_sync_records (..., status='completed', response=<假响应>)` |
 | ehs | `svc/ehs/src/modules/data_sync.rs:254-265`（hazard→QMS） | 读 `QMS_SERVICE_URL` → debug 日志 → **无 HTTP 调用** → 假响应 `{"target_issue_id":<新UUID>,"rectification_created":true,...}` → status=completed 本地插 sync_records |
-| wms | WMS 分片 WMS-03 同机制 | 读对方 URL → 无请求 → 本地"成功"记录 |
+| wms | ~~WMS 分片 WMS-03 同机制~~ **⚠️ 2026-10-04 B13 订正：系误诊，非假同步** | **实测为真实事件驱动（与 lims/ehs 假同步机制不同）**：`POST /sync/outbound-to-shipping`（及 `/sync/outbound-order/{id}/to-shipping`）查自有 `wms.outbound_orders`（status='confirmed'）→ 构造 `ShippingOrderRequestedPayload` → 经 `state.event_publisher.publish_shipping_order_requested()` 发布**真实事件** `ShippingOrderRequested`（`svc/wms/src/modules/data_sync.rs:219-237` → `lib/shared-event/src/event/publisher.rs:443-447`；消费方 CRM `svc/crm/src/event_handlers/mod.rs:82` 订阅并创建销售订单）→ 更新自有 outbound_orders（status='shipped'）→ 写 `unified_core.inter_module_sync` 日志；`POST /sync/inbound-from-scm` 读自有 `wms.purchase_order_snapshots` → INSERT 自有 `wms.inbound_orders`。**全程无 `*_SERVICE_URL` 读取、无编造假 UUID 响应、无本地脏 sync_records**（`grep SERVICE_URL/编造` svc/wms data_sync.rs = 0） |
 
-**影响**：① 用户触发"同步"得到虚假成功（无真实数据流）；② sync_records 成为**脏数据源**（completed 记录不可信，无法区分真假同步）；③ 与 integration-cross-domain-api.md 声称的"已改造为 reqwest 编排"严重不符。
+> **⚠️ B13 订正说明（2026-10-04）**：上表 lims/ehs 两行系 2026-10-02 实测真实现状（后经 U3 `3bec2a840` 假同步入口下线、改返回 410 Gone，真实链路改走 `LimsRecordCompleted`/`LimsReagentAlert` 事件 → integration 编排 → qms/ehs internal 端点，见 §8）。**wms 一行原表述"WMS-03 同机制"系据审计分片推断的误诊**——wms data_sync 从未实现"读 URL→不发请求→插本地成功记录"路径，其 outbound 同步自始即走真实事件总线（ShippingOrderRequested→CRM），inbound 走自有 schema 落库。F-09「lims/ehs/wms data_sync 为假同步」结论对 wms 不成立；lims/ehs 部分已于 U3 处置完毕。
+
+**影响**：① 用户触发"同步"得到虚假成功（无真实数据流）；② sync_records 成为**脏数据源**（completed 记录不可信，无法区分真假同步）；③ 与 integration-cross-domain-api.md 声称的"已改造为 reqwest 编排"严重不符。（以上影响面仅及 lims/ehs；wms 经 B13 订正为真实事件驱动，不在虚假成功/脏 sync_records 影响面内。）
 
 ### 2.3 关联发现：qa_lab_* 表物理归属混乱（实测，超出原报告范围）
 
@@ -153,3 +155,15 @@
   - **链④ 质量链编排 FAIL**：integration 按 D3 契约调裸路径 `/api/internal/*`，但 lims/ehs/qms 把 internal 路由嵌在 service api_prefix（`/api/lims` 等）下，实测拼接路径 `/api/lims/api/internal/lims/samples/integration` 才 200——**路径契约回归**，需统一 D3 契约与各服务挂载方式。
   - 落库再被 `ck_qa_lab_samples_status_standard` 窄约束拦（status='registered'）——系统性 `ck_*_status_standard` 漂移，见总览残留待办。
   - 历史脏 sync_records 未清洗（需另出迁移）；HTTP 编排链路 e2e 待 R4 环境（nginx/portal 在线）复测。
+
+### 8.1 B13 订正：wms data_sync 口径（2026-10-04）
+
+> R3 文档对齐闭环追加（对应 TODO.md B13）。D3 决策本身不变，仅订正 §2.2 对 wms 的现状口径。
+
+- **问题**：§2.2 原据审计分片 WMS-03 推断 wms data_sync 与 lims/ehs「同机制」（读对方 URL→不发请求→插本地假成功记录），但 U3 实测 + 2026-10-04 代码复核证实 **wms data_sync 自始即真实事件驱动，从无假同步路径**。
+- **代码实证**：
+  - outbound→CRM：`svc/wms/src/modules/data_sync.rs:219-237` 经 `event_publisher.publish_shipping_order_requested()` 发布真实事件 `ShippingOrderRequested`（`lib/shared-event/src/event/publisher.rs:443-447`，事件类型 `event_types.rs:85`）；消费方 `svc/crm/src/event_handlers/mod.rs:82` 订阅并创建销售订单。同步日志写统一表 `unified_core.inter_module_sync`（target_module='crm'）。
+  - inbound←SCM：`data_sync.rs:301` `create_inbound_from_scm` 读自有 `wms.purchase_order_snapshots` → INSERT 自有 `wms.inbound_orders`（均 wms 自有 schema，非跨域假同步）。
+  - 反证：`grep SERVICE_URL|编造|假 svc/wms/src/modules/data_sync.rs` = 0，无 lims/ehs 式假响应构造。
+- **lims/ehs 处置（对照）**：假同步入口已于 U3 `3bec2a840` 下线——`svc/lims/src/modules/data_sync.rs`（record-to-qms / reagent-to-ehs）与 `svc/ehs/src/modules/data_sync.rs:213,234` 现直接返回 **410 Gone**，注释声明真实链路为 `LimsRecordCompleted`/`LimsReagentAlert` 事件 → integration 编排 → qms/ehs internal 端点。
+- **结论**：F-09「lims/ehs/wms data_sync 为假同步」对 wms 系误诊；lims/ehs 假同步已按 D3 §5.2 选项 B 处置完毕。§2.2 wms 行已就地订正，决策结论（integration=编排方、假同步移除、事件化优先）不受影响。

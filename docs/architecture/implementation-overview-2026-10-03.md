@@ -134,7 +134,7 @@ qa_lab_* 终态 = **public 唯一事实标准**：步骤1（`4e2886840`）将 li
 | F-06 | finance 关闭 RLS | ✅ | U5 `1404532a8`（RLS 89 表） |
 | F-07 | 金额 f64 泄漏 | ✅ | U6 `9e8b34a77`（R2⑨ schema 漂移见 R-9） |
 | F-08 | integration 仅 3 事件、7 未接线 | ✅ | U3 `9b1f7c7d1`（7 事件接线；链④ R2 路径契约见 R-2） |
-| F-09 | data_sync 假同步 | ✅ | U3 `3bec2a840`（lims/ehs data_sync.rs:217,240 下线注释） |
+| F-09 | data_sync 假同步 | ✅ | U3 `3bec2a840`（lims/ehs data_sync.rs:217,240 下线注释→410 Gone）；**B13 订正（2026-10-04）：wms data_sync 非假同步、实测真实事件驱动**（outbound→`ShippingOrderRequested` 事件→CRM `event_handlers/mod.rs:82`，inbound 落自有 schema，无 SERVICE_URL/假响应），见 D3 §2.2/§8.1 |
 | F-10 | master-data 10 MDM 内存壳 | ✅ | U4 `e1e5b1399`（mdm_collections） |
 | F-11 | unified-core analytics 死模块 | ✅ | 随 U1 删 23 业务镜像（modules/ 无 analytics） |
 | F-12 | unified-core 跨读 22 schema 无门禁 | ✅ | U1 `2ace368f3`（21 schema allow 撤销） |
