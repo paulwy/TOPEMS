@@ -632,3 +632,11 @@
   - 恢复 Runbook 已产出（compose 服务名=postgres 容器名=topems-postgres、MIGRATE_URL 5433 超级用户、search_path 显式 mes 首位、sqlx migrate run --ignore-missing + psql 兜底 + 核对 SQL）；预期：5433 空库全量应用时 0005 先于 0000 就位 → U6 应能成功（5432 当初失败是半手工漂移态）
   - **阻塞需用户 GUI 操作**：打开 Docker Desktop.app 输本机登录密码授权特权 helper（或人工 sudo 重装）；可选替代=Homebrew 在 5433 起并行 PG 实例验证重放（偏离 docker 口径，待用户确认）
   - 残留：docker 网络到 docker.io/desktop.docker.com 受限（daemon 修好后拉 pgvector:pg18 可能需重试/换源）；crm/erp 滚动重启前仍旧二进制；MDM 事件不享 DLQ（待 shared-event 增 Result 变体）
+
+- [x] **排期项 1 落地（Homebrew 口径，用户批准）**：5433 并行实例全量迁移重放验证——✅ 2026-10-03：
+  - **实例**：PG 18.4 Homebrew（与 5432 同版本，postgresql@18 已装无需安装）；数据目录 `/opt/homebrew/var/postgres5433`（独立不共用）；端口 5433 + 私有 socket；`pg_ctl` 手动启动（不走 brew services 避免与 5432 launchd 冲突）；trust 认证；角色 topems/topems_app、库 topems；MIGRATE_URL 超级用户可连
+  - **重放**：canonical 空库（不带 search_path，对齐仓库自带 scripts/migrate-verify-empty.sh）从 0 应用 291 个 → **283/291 全绿后 U6(20261003000000) 失败**：`column "payable_amount" does not exist`——**U6↔R-8 版本序依赖证实（干净库纯序 U6 必失败：U6<R-8、finance.source_amount_snapshots 空壳缺列）**，与 5432 半手工漂移态不同路径；另暴露 2 处 20261003 批次对 5432 漂移态的隐式假设：R3（erp.financial_vouchers/crm.audit_logs 干净库缺 status 列）、R4（core.core_plugins 干净库仅 3 列空壳缺 code——code 等 33 列实为 plugin-registry 运行时内联 DDL 非迁移链）；按"手工补齐到 5432 终态、不改迁移文件"处置后 U6/U5/U3b/R3/R4/R8/R2b/U4 全绿 EXIT=0
+  - **账本终态**：磁盘 291 = 5433 账本 291（public 落点，canonical 设计）= 5432 账本 291（mes 落点）；checksum 不一致 0、双向独有 0、5433 vs 5432 版本集完全一致
+  - **双库对照**：表数 5432=1256 vs 5433=704、RLS 469 vs 343——5432 长期累积漂移对象（服务内联 DDL、public.qa_lab_* 影子表），干净库反而更干净；核心验证（迁移链账本/checksum）完全收敛
+  - **真实缺陷结论（不掩盖）**：迁移链在干净库从 0 重放需 3 处手工前置（U6 依赖 R-8 列、R3 依赖 status 列、R4 依赖 code 列）——因不得修改已应用迁移文件（防 checksum），无法用后续迁移修复"前面失败"；处置建议=新库建库按 Runbook 手工前置（已记录），或未来迁移链重构时统一处理；另建议 3 处补齐做成迁移内幂等守卫供空库一次性通过
+  - 5433 实例**保留运行**（验证态完整，停止/启动命令已记录）；无仓库产物改动、无 commit；冒烟按约定跳过（不切服务连接串）
