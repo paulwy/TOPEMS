@@ -73,8 +73,6 @@ TopemsBusinessToolsClient
 npm install @topems/business-tools-sdk
 # or
 pnpm add @topems/business-tools-sdk
-# or
-yarn add @topems/business-tools-sdk
 ```
 
 > 发布位置：初期私有 npm registry，后期评估公开 npm。
