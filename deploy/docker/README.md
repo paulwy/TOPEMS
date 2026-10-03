@@ -2,6 +2,8 @@
 
 This directory contains the Docker configuration for running the TOPEMS infrastructure services.
 
+> 资源限制 / 镜像版本精确锁定的调优 SOP 见 `docs/quality/docker-ops-2026-10-03.md`（34 服务已加 mem_limit/cpus，9 镜像 tag 已锁定）。
+
 ## Services
 
 - **PostgreSQL**: Primary database (port 5432)
