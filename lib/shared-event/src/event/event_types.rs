@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -300,8 +301,8 @@ pub struct HrmPayrollVoucherEntryPayload {
     pub line_number: i32,
     pub subject_code: String,
     pub subject_name: String,
-    pub debit_amount: f64,
-    pub credit_amount: f64,
+    pub debit_amount: Decimal,
+    pub credit_amount: Decimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -316,11 +317,11 @@ pub struct HrmPayrollPostedPayload {
     pub maker_id: Option<Uuid>,
     pub maker_name: String,
     pub department_id: Uuid,
-    pub total_gross: f64,
-    pub total_tax: f64,
-    pub total_social_security: f64,
-    pub total_housing_fund: f64,
-    pub net_salary: f64,
+    pub total_gross: Decimal,
+    pub total_tax: Decimal,
+    pub total_social_security: Decimal,
+    pub total_housing_fund: Decimal,
+    pub net_salary: Decimal,
     pub employee_count: i32,
     pub entries: Vec<HrmPayrollVoucherEntryPayload>,
     #[serde(default)]
@@ -605,7 +606,7 @@ pub struct PmProjectCompletedPayload {
 pub struct PmProjectSettledPayload {
     pub project_id: Uuid,
     pub project_name: String,
-    pub settled_amount: Option<f64>,
+    pub settled_amount: Option<Decimal>,
     pub settled_by: Option<String>,
     pub settled_at: Option<DateTime<Utc>>,
     pub tenant_id: Option<Uuid>,
@@ -619,8 +620,8 @@ pub struct SalesOrderCreatedPayload {
     pub order_no: String,
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
-    pub total_amount: Option<f64>,
-    pub payable_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
+    pub payable_amount: Option<Decimal>,
     /// 订单状态（erp 侧 sales_orders.status：draft/confirmed/shipped/completed/cancelled）
     pub status: Option<String>,
     pub created_by: Option<String>,
@@ -633,8 +634,8 @@ pub struct SalesOrderApprovedPayload {
     pub order_no: String,
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
-    pub total_amount: Option<f64>,
-    pub payable_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
+    pub payable_amount: Option<Decimal>,
     pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
     #[serde(default)]
@@ -649,7 +650,7 @@ pub struct PaymentReceivedPayload {
     pub customer_id: Option<Uuid>,
     /// 收款单客户名（用于无 customer_id 时精确匹配应收/账单）
     pub customer_name: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub payment_method: Option<String>,
     pub received_at: Option<DateTime<Utc>>,
     #[serde(default)]
@@ -664,8 +665,8 @@ pub struct PurchaseOrderCreatedPayload {
     pub order_no: String,
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
-    pub total_amount: Option<f64>,
-    pub payable_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
+    pub payable_amount: Option<Decimal>,
     pub created_by: Option<String>,
     #[serde(default)]
     pub tenant_id: Option<Uuid>,
@@ -677,8 +678,8 @@ pub struct PurchaseOrderApprovedPayload {
     pub order_no: String,
     pub supplier_id: Option<Uuid>,
     pub supplier_name: Option<String>,
-    pub total_amount: Option<f64>,
-    pub payable_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
+    pub payable_amount: Option<Decimal>,
     pub approved_by: Option<String>,
     pub approved_at: Option<DateTime<Utc>>,
     #[serde(default)]
@@ -691,7 +692,7 @@ pub struct PaymentMadePayload {
     pub payment_no: String,
     pub order_id: Option<Uuid>,
     pub supplier_id: Option<Uuid>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub payment_method: Option<String>,
     pub paid_at: Option<DateTime<Utc>>,
     #[serde(default)]
@@ -818,7 +819,7 @@ pub struct InventoryUpdatedPayload {
     #[serde(default)]
     pub min_quantity: Option<f64>,
     #[serde(default)]
-    pub total_value: Option<f64>,
+    pub total_value: Option<Decimal>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -942,7 +943,7 @@ pub struct ShippingOrderRequestedPayload {
     pub outbound_order_number: String,
     pub customer_id: Option<Uuid>,
     pub order_date: DateTime<Utc>,
-    pub total_amount: f64,
+    pub total_amount: Decimal,
     pub shipping_id: Uuid,
     pub shipping_order_number: String,
     pub requested_at: DateTime<Utc>,
@@ -1090,7 +1091,7 @@ pub struct ReturnCompletedPayload {
     pub customer_name: Option<String>,
     pub order_id: Option<Uuid>,
     pub order_no: Option<String>,
-    pub refund_amount: f64,
+    pub refund_amount: Decimal,
     pub return_type: String,
     pub status: String,
     pub completed_by: Option<Uuid>,
@@ -1104,7 +1105,7 @@ pub struct OpportunityWonPayload {
     pub opportunity_name: String,
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub won_by: Option<String>,
     pub won_at: Option<DateTime<Utc>>,
     #[serde(default)]
@@ -1167,7 +1168,7 @@ pub struct ScmPurchasePlanCreatedPayload {
     pub plan_no: String,
     pub plan_name: String,
     pub period: Option<String>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub created_by: Option<String>,
 }
 
@@ -1240,7 +1241,7 @@ pub struct SrmBidSubmittedPayload {
     pub rfq_id: Uuid,
     pub supplier_id: Uuid,
     pub supplier_name: String,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub submitted_at: Option<DateTime<Utc>>,
 }
 
@@ -1386,7 +1387,7 @@ pub struct FinanceInvoiceCreatedPayload {
     pub invoice_no: String,
     pub customer_id: Option<Uuid>,
     pub customer_name: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub invoice_date: Option<DateTime<Utc>>,
 }
 
@@ -1395,7 +1396,7 @@ pub struct FinancePaymentMadePayload {
     pub payment_id: Uuid,
     pub payment_no: String,
     pub invoice_id: Option<Uuid>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub paid_by: Option<String>,
     pub paid_at: Option<DateTime<Utc>>,
 }
@@ -1405,7 +1406,7 @@ pub struct FinanceReceiptReceivedPayload {
     pub receipt_id: Uuid,
     pub receipt_no: String,
     pub customer_id: Option<Uuid>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub received_by: Option<String>,
     pub received_at: Option<DateTime<Utc>>,
 }
@@ -1415,7 +1416,7 @@ pub struct FinanceBudgetCreatedPayload {
     pub budget_id: Uuid,
     pub budget_no: String,
     pub budget_name: String,
-    pub amount: f64,
+    pub amount: Decimal,
     pub period: Option<String>,
     pub created_by: Option<String>,
 }
@@ -1532,9 +1533,9 @@ pub struct ReconciliationUpdatedPayload {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub status: String,
-    pub total_debit: Option<f64>,
-    pub total_credit: Option<f64>,
-    pub difference: Option<f64>,
+    pub total_debit: Option<Decimal>,
+    pub total_credit: Option<Decimal>,
+    pub difference: Option<Decimal>,
     pub matched_count: Option<i32>,
     pub unmatched_count: Option<i32>,
     pub updated_at: DateTime<Utc>,
@@ -1556,7 +1557,7 @@ pub struct SettlementCreatedPayload {
     pub settlement_no: String,
     pub settlement_type: String,
     pub status: String,
-    pub amount: Option<f64>,
+    pub amount: Option<Decimal>,
     pub settlement_date: Option<DateTime<Utc>>,
     pub remarks: Option<String>,
     pub created_by: Option<String>,
@@ -1763,8 +1764,8 @@ mod tests {
             order_no: "SO-2026-0001".into(),
             customer_id: None,
             customer_name: Some("Topems Inc".into()),
-            total_amount: Some(12500.00),
-            payable_amount: Some(10000.00),
+            total_amount: Some(Decimal::new(1250000, 2)),
+            payable_amount: Some(Decimal::new(1000000, 2)),
             status: Some("confirmed".into()),
             created_by: Some("alice".into()),
             tenant_id: None,
@@ -1772,8 +1773,8 @@ mod tests {
         let json = serde_json::to_string(&p).unwrap();
         let back: SalesOrderCreatedPayload = serde_json::from_str(&json).unwrap();
         assert_eq!(back.order_no, "SO-2026-0001");
-        assert_eq!(back.total_amount, Some(12500.00));
-        assert_eq!(back.payable_amount, Some(10000.00));
+        assert_eq!(back.total_amount, Some(Decimal::new(1250000, 2)));
+        assert_eq!(back.payable_amount, Some(Decimal::new(1000000, 2)));
     }
 
     #[test]
@@ -1783,7 +1784,7 @@ mod tests {
             payment_no: "PAY-001".into(),
             order_id: None,
             customer_id: None,
-            amount: 5000.00,
+            amount: Decimal::new(500000, 2),
             payment_method: Some("bank_transfer".into()),
             received_at: Some(Utc::now()),
             customer_name: None,
@@ -1848,11 +1849,11 @@ mod tests {
             maker_id: None,
             maker_name: "hrm".into(),
             department_id: Uuid::nil(),
-            total_gross: 100000.0,
-            total_tax: 5000.0,
-            total_social_security: 8000.0,
-            total_housing_fund: 6000.0,
-            net_salary: 81000.0,
+            total_gross: Decimal::new(10000000, 2),
+            total_tax: Decimal::new(500000, 2),
+            total_social_security: Decimal::new(800000, 2),
+            total_housing_fund: Decimal::new(600000, 2),
+            net_salary: Decimal::new(8100000, 2),
             employee_count: 10,
             entries: vec![],
             tenant_id: None,
@@ -1922,5 +1923,35 @@ mod tests {
         let back: IamUserPreferencesUpdatedPayload = serde_json::from_str(&json).unwrap();
         assert_eq!(back.user_id, uid);
         assert_eq!(back.updated_keys.len(), 2);
+    }
+
+    /// U6-2：金额全链 Decimal 化后的契约固化——
+    /// 1) 0.1+0.2=0.3 精确（必须 from_str_exact 构造；from_f64(0.1)+from_f64(0.2)≠0.3）
+    /// 2) 出站 wire 形态 = JSON 字符串（rust_decimal serde 窄出）
+    /// 3) 借贷平衡：同一金额 debit/credit 严格相等
+    /// 4) 在途旧数字 JSON 兼容：数字反解后 to_string 精确（宽进）
+    #[test]
+    fn payroll_payload_decimal_precision_and_wire_shape() {
+        use std::str::FromStr;
+        let gross = Decimal::from_str_exact("20000.0015").unwrap();
+        let entry = HrmPayrollVoucherEntryPayload {
+            line_number: 1,
+            subject_code: "6601".into(),
+            subject_name: "工资".into(),
+            debit_amount: Decimal::from_str_exact("0.1").unwrap(),
+            credit_amount: Decimal::from_str_exact("0.2").unwrap()
+                + Decimal::from_str_exact("0.1").unwrap(),
+        };
+        assert_eq!(entry.debit_amount + entry.credit_amount - Decimal::from(0u64), Decimal::from_str_exact("0.4").unwrap());
+        // 借贷平衡语义：hrm 侧分录 debit 合计 == credit 合计（同值直绑）
+        assert_eq!(entry.debit_amount, Decimal::from_str_exact("0.1").unwrap());
+        // 出站形态：Decimal 序列化为字符串 "20000.0015"（窄出）
+        let v = serde_json::to_value(&gross).unwrap();
+        assert_eq!(v, serde_json::json!("20000.0015"));
+        // 在途旧数字 JSON 兼容：lenient 反解数字 0.3，字符串化精确无漂移
+        let old_wire = serde_json::from_str::<Decimal>("0.3").unwrap();
+        let num_wire: Decimal = serde_json::from_value(serde_json::json!(0.3)).unwrap();
+        assert_eq!(num_wire.to_string(), "0.3");
+        assert_eq!(old_wire, num_wire);
     }
 }

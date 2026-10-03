@@ -10,6 +10,7 @@ topems-shared-core = { path = "../shared-core" }
 
 # 事件驱动依赖
 chrono.workspace = true
+rust_decimal.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
