@@ -1,39 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use uuid::Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
-pub struct PurchaseInquiry {
-    pub id: Uuid,
-    pub inquiry_no: String,
-    pub title: String,
-    pub description: Option<String>,
-    pub inquiry_date: DateTime<Utc>,
-    pub deadline: Option<DateTime<Utc>>,
-    pub status: String,
-    pub created_by: Option<Uuid>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreatePurchaseInquiryRequest {
-    pub title: String,
-    pub description: Option<String>,
-    pub deadline: Option<DateTime<Utc>>,
-    pub items: Vec<CreateInquiryItemRequest>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CreateInquiryItemRequest {
-    pub item_name: String,
-    pub specification: Option<String>,
-    pub unit: Option<String>,
-    pub quantity: f64,
-    pub target_price: Option<f64>,
-    pub remarks: Option<String>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplierQuote {
@@ -166,82 +133,6 @@ mod tests {
         let json2 = serde_json::to_string(&back).unwrap();
         let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
         assert_eq!(v1, v2);
-    }
-
-    #[test]
-    fn purchase_inquiry_serde_roundtrip_full() {
-        let i = PurchaseInquiry {
-            id: fixed_uuid(),
-            inquiry_no: "INQ-001".to_string(),
-            title: "钢材询价".to_string(),
-            description: Some("采购100吨".to_string()),
-            inquiry_date: fixed_dt(),
-            deadline: Some(fixed_dt()),
-            status: "open".to_string(),
-            created_by: Some(fixed_uuid()),
-            created_at: fixed_dt(),
-            updated_at: fixed_dt(),
-        };
-        roundtrip(&i);
-    }
-
-    #[test]
-    fn purchase_inquiry_serde_roundtrip_minimal() {
-        let i = PurchaseInquiry {
-            id: fixed_uuid(),
-            inquiry_no: "INQ-002".to_string(),
-            title: "Min".to_string(),
-            description: None,
-            inquiry_date: fixed_dt(),
-            deadline: None,
-            status: "draft".to_string(),
-            created_by: None,
-            created_at: fixed_dt(),
-            updated_at: fixed_dt(),
-        };
-        roundtrip(&i);
-    }
-
-    #[test]
-    fn create_purchase_inquiry_request_serde_roundtrip() {
-        let req = CreatePurchaseInquiryRequest {
-            title: "新材料询价".to_string(),
-            description: Some("详情".to_string()),
-            deadline: Some(fixed_dt()),
-            items: vec![CreateInquiryItemRequest {
-                item_name: "钢材".to_string(),
-                specification: Some("Q235".to_string()),
-                unit: Some("吨".to_string()),
-                quantity: 100.0,
-                target_price: Some(5000.0),
-                remarks: None,
-            }],
-        };
-        roundtrip(&req);
-    }
-
-    #[test]
-    fn create_purchase_inquiry_request_serde_empty_items() {
-        let req = CreatePurchaseInquiryRequest {
-            title: "Empty".to_string(),
-            description: None,
-            deadline: None,
-            items: vec![],
-        };
-        roundtrip(&req);
-    }
-
-    #[test]
-    fn create_inquiry_item_request_serde_roundtrip() {
-        let item = CreateInquiryItemRequest {
-            item_name: "螺丝".to_string(),
-            specification: Some("M6".to_string()),
-            unit: Some("个".to_string()),
-            quantity: 1000.0,
-            target_price: Some(0.5),
-            remarks: Some("加急".to_string()),
-        };
-        roundtrip(&item);
     }
 
     #[test]

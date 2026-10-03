@@ -93,9 +93,9 @@
 
 | 优先级 | 项 | 动作 |
 |---|---|---|
-| P0 | 3 处方法级缺口 | 与产品确认删除/更新语义 → 补后端 handler 或删前端定义（需实质性代码修改，不擅改） |
-| P1 | scm inquiries 冗余 | 确认无其他调用方后移除（代码修改） |
-| P2 | 高价值未接线（dashboard/material-summary） | 前端功能开发接线 |
+| P0 | 3 处方法级缺口 | ✅ **已闭环**（2026-10-03/04：补 4 handler + 前端移除未用 DELETE，见上文处置表） |
+| P1 | scm inquiries 冗余 | ✅ **已移除**（2026-10-04：scm inquiries 路由/5 handler/models 3 struct + 5 测试块全删，-476 行；前端 0 引用已核实，srm inquiry 全量覆盖含 PUT/close；check/clippy/fmt/test 全绿） |
+| P2 | 高价值未接线（dashboard/material-summary） | 前端功能开发接线（待排期） |
 | P3 | 死 API（quotes 等） | 标注或移除（确认后） |
 
 **本报告仅审计不修改**：所有发现均已标注位置与建议；代码修改待用户确认对应项后逐项执行。
