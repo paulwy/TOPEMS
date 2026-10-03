@@ -257,7 +257,7 @@ _mes_db_url() {
 build_service() {
     local service_name=$1
     shift
-    local extra_opts="$*"
+    local -a extra_opts=("$@")
     local service_path
     service_path=$(get_service_path "$service_name")
 
@@ -289,7 +289,7 @@ build_service() {
     local offline_only=0
     local profile="--release"
     local _opt
-    for _opt in $extra_opts; do
+    for _opt in "${extra_opts[@]}"; do
         case "$_opt" in
             --dev|--debug) profile="" ;;
             --online)      online=1 ;;
@@ -302,7 +302,7 @@ build_service() {
     local mem_status=0
     local _safe_mode=0
     local _serial_requested=0
-    if [[ "$extra_opts" == *"--serial"* ]]; then
+    if [[ " ${extra_opts[*]} " == *" --serial "* ]]; then
         _serial_requested=1
     fi
 
@@ -311,7 +311,7 @@ build_service() {
         export CARGO_BUILD_JOBS=1
         _cargo_jobs_modified=1
         cargo_jobs=" (jobs=1, 串行模式)"
-    elif [[ "$extra_opts" != *"--skip-mem-check"* ]]; then
+    elif [[ " ${extra_opts[*]} " != *" --skip-mem-check "* ]]; then
         _check_available_memory
         mem_status=$?
         case "$mem_status" in
@@ -456,7 +456,7 @@ ensure_frontend_deps() {
 # 全量编译所有后端服务（只编译服务包，避免编译 workspace 中所有包）
 # V70+: 增加构建锁、内存自适应、--serial 模式、进度追踪
 build_all_backend() {
-    local extra_opts="${1:-""}"
+    local -a extra_opts=("$@")
     info "全量编译所有后端服务..."
 
     cd "$PROJECT_ROOT"
@@ -475,7 +475,7 @@ build_all_backend() {
     local serial_mode=0
     local build_cooldown=2
     local skip_packages=""
-    for opt in $extra_opts; do
+    for opt in "${extra_opts[@]}"; do
         case "$opt" in
             --prepare)        do_prepare=1 ;;
             --only-core)      only_core=1 ;;
@@ -530,13 +530,13 @@ build_all_backend() {
             warning "找不到 $SCRIPT_DIR/dev/sqlx-prepare.sh，跳过 sqlx prepare 阶段"
         fi
         # 刷新后强制校验：确认本次刷新真的让离线缓存可用
-        if ! _check_sqlx_cache_freshness $extra_opts; then
+        if ! _check_sqlx_cache_freshness "${extra_opts[@]}"; then
             _release_build_lock
             return 1
         fi
     else
         # 默认离线优先：缓存缺失/过时即停（--skip-sqlx-check / SQLX_CHECK_SKIP=1 可跳过）
-        if ! _check_sqlx_cache_freshness $extra_opts; then
+        if ! _check_sqlx_cache_freshness "${extra_opts[@]}"; then
             _release_build_lock
             return 1
         fi
@@ -613,13 +613,13 @@ build_all_backend() {
         info "[$((build_success + build_failed + 1))/$build_total] 编译 $svc -> bin=$binary_name ...${eta_str}"
 
         # V70+ 传递 --serial 给 build_service
-        local _svc_opts="$extra_opts"
+        local -a _svc_opts=("${extra_opts[@]}")
         if [ $serial_mode -eq 1 ]; then
-            _svc_opts="$_svc_opts --serial"
+            _svc_opts+=("--serial")
         fi
 
         # 单包离线构建优先
-        if build_service "$svc" "$_svc_opts" >/tmp/topems-build-"$svc".log 2>&1; then
+        if build_service "$svc" "${_svc_opts[@]}" >/tmp/topems-build-"$svc".log 2>&1; then
             build_success=$((build_success + 1))
             success "  ✅ $svc 构建成功"
         else
@@ -629,7 +629,7 @@ build_all_backend() {
             tail -n 15 "/tmp/topems-build-$svc.log" >&2
 
             # V70+ 内存不足时自动切换到安全模式
-            if [[ "$extra_opts" != *"--skip-mem-check"* ]]; then
+            if [[ " ${extra_opts[*]} " != *" --skip-mem-check "* ]]; then
                 _check_available_memory >/dev/null 2>&1
                 local post_mem=$?
                 if [ $post_mem -eq 1 ] || [ $post_mem -eq 2 ]; then
@@ -676,7 +676,7 @@ build_all_backend() {
 
 # 编译前端
 build_frontend() {
-    local extra_opts="${1:-""}"
+    local -a extra_opts=("$@")
     info "编译前端..."
 
     local pkg_cmd
@@ -685,7 +685,7 @@ build_frontend() {
 
     local dev_mode=0
     local skip_lint=0
-    for opt in $extra_opts; do
+    for opt in "${extra_opts[@]}"; do
         case "$opt" in
             --dev|--debug) dev_mode=1 ;;
             --skip-lint)   skip_lint=1 ;;
@@ -744,30 +744,30 @@ build_frontend() {
 # 全量编译（后端+前端）
 build_all() {
     _preflight_check "$@" || return 1
-    local extra_opts="$*"
+    local -a extra_opts=("$@")
     # 剥掉 --skip-preflight 避免透传给子函数
-    local filtered_opts=""
-    for opt in $extra_opts; do [ "$opt" != "--skip-preflight" ] && filtered_opts="$filtered_opts $opt"; done
-    extra_opts="$filtered_opts"
+    local -a filtered_opts=()
+    for opt in "${extra_opts[@]}"; do [ "$opt" != "--skip-preflight" ] && filtered_opts+=("$opt"); done
+    extra_opts=("${filtered_opts[@]}")
     info "========== 全量编译开始 =========="
-    info "参数: $( [ -z "$extra_opts" ] && echo "(无)" || echo "$extra_opts" )"
+    info "参数: $( [ ${#extra_opts[@]} -eq 0 ] && echo "(无)" || echo "${extra_opts[*]}" )"
     info "支持参数: --prepare --only-core --online --offline --dev/--debug --skip=<svc> --skip-lint --skip-sqlx-check --serial --force --skip-mem-check --cooldown=<N> --backend-only/--no-frontend --skip-preflight"
 
     local backend_result=0
     local frontend_result=0
     local skip_fe=0
 
-    for opt in $extra_opts; do
+    for opt in "${extra_opts[@]}"; do
         case "$opt" in
             --no-frontend|--backend-only) skip_fe=1 ;;
         esac
     done
 
-    if ! build_all_backend "$extra_opts"; then backend_result=1; fi
+    if ! build_all_backend "${extra_opts[@]}"; then backend_result=1; fi
 
     if [ $skip_fe -eq 0 ]; then
         info "========== 编译前端 =========="
-        if ! build_frontend "$extra_opts"; then frontend_result=1; fi
+        if ! build_frontend "${extra_opts[@]}"; then frontend_result=1; fi
     else
         info "========== 已指定跳过前端（--backend-only / --no-frontend）=========="
     fi
@@ -1515,13 +1515,13 @@ wait_for_core_services() {
 # 启动所有服务（V64 支持: --only-core / --no-frontend / --skip=<svc> / --register）
 start_all_services() {
     _preflight_check "$@" || return 1
-    local extra_opts="$*"
+    local -a extra_opts=("$@")
     # 剥掉 --skip-preflight 避免透传给子函数
-    local filtered_opts=""
-    for opt in $extra_opts; do [ "$opt" != "--skip-preflight" ] && filtered_opts="$filtered_opts $opt"; done
-    extra_opts="$filtered_opts"
+    local -a filtered_opts=()
+    for opt in "${extra_opts[@]}"; do [ "$opt" != "--skip-preflight" ] && filtered_opts+=("$opt"); done
+    extra_opts=("${filtered_opts[@]}")
     # V3xx SQLx 缓存新鲜度门禁：缓存与当前代码匹配才启动（--skip-sqlx-check 可跳过）
-    _check_sqlx_cache_freshness $extra_opts || return 1
+    _check_sqlx_cache_freshness "${extra_opts[@]}" || return 1
     info "启动所有服务..."
     info "支持参数: --only-core --no-frontend --no-register --skip=<svc> --skip-sqlx-check --skip-preflight"
     load_env
@@ -1530,7 +1530,7 @@ start_all_services() {
     local skip_fe=0
     local no_register=0
     local skip_packages=""
-    for opt in $extra_opts; do
+    for opt in "${extra_opts[@]}"; do
         case "$opt" in
             --only-core)    only_core=1 ;;
             --no-frontend)  skip_fe=1 ;;
