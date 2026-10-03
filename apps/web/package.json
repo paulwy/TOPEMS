@@ -56,7 +56,6 @@
     "perf": "lighthouse --view http://localhost:8063/ --output=html --output-path=./reports/lighthouse-report.html",
     "perf:ci": "lhci autorun",
     "perf:mobile": "lighthouse http://localhost:3000/ --preset=desktop --output=html --output-path=./reports/lighthouse-mobile.html --view",
-    "perf:analyze": "webpack-bundle-analyzer ./dist/stats.json",
     "gen:api": "node ../../scripts/openapi/gen-types.mjs",
     "openapi:gen": "bash ../../scripts/openapi/generate.sh --with-types"
   },
@@ -169,7 +168,6 @@
     "vite": "^8.1.5",
     "vite-plugin-compression": "^0.5.1",
     "vitest": "^4.1.10",
-    "webpack-bundle-analyzer": "^4.10.2",
     "workbox-cacheable-response": "^7.4.1",
     "workbox-expiration": "^7.4.1",
     "workbox-routing": "^7.4.1",
