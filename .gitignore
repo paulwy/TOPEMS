@@ -31,6 +31,8 @@ auth-state.json
 # 例外：所有 .env.example 模板文件必须可追踪（保证部署 / 模块 / standalone 示例能分发）
 !.env.example
 !*.env.example
+# standalone 独立运行配置含真实密钥，仅本地使用，不入库
+config/standalone.env
 
 # Frontend
 frontend/node_modules/
