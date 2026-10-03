@@ -18,6 +18,15 @@
 //! - federation_sdl 查询：返回组合后的联邦 Schema SDL
 //! - federation_entities 查询：批量解析跨服务联邦实体
 //! - federation_service_sdls 查询：返回各服务的 SDL 片段
+//!
+//! ===== 审计登记（2026-10-03, P2-7）=====
+//! 本文件 6537 行（portal 模块级 GraphQL 聚合层，含 Federation v2 / DataLoader /
+//! Mutation / Subscription）。审计建议评估拆分；拆分风险高（Schema 注册顺序、
+//! Object/Subscription 派生宏依赖同一模块作用域，拆分会触发大量 use 调整），
+//! 且当前文件结构完整、编译通过、无功能缺陷，故本次不拆分，仅登记：
+//! 若后续引入新的 GraphQL 域（如新增业务实体聚合），按域拆分为
+//! `graphql/<domain>.rs` 子模块并在此汇总注册；届时必须保证
+//! `cargo check --workspace` + `cargo test -p topems-portal --lib` 全绿。
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::{ComplexObject, Context, Object, Schema, SimpleObject, Subscription};
