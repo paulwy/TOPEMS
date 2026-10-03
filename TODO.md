@@ -588,3 +588,24 @@
   带 token 真实链路 create→list→statistics→retry→items 全 200 且落库（statistics total=6 successful=2 对新数据）
 - 经验：wms handler 必须显式 commit txn（中间件不自动提交）；status 枚举口径前后端/统计要一致；
   多段 python replace 脚本中断会丢未写盘替换，逐段验证（REPLACED 计数）
+
+## 2026-10-03 mobile 页面级核查 + 全绿模块语义深挖（0 缺口审计轮）
+
+- mobile 18 条缺口（shortcut 3 / approvalEnhanced 11 / bpm 1 / device 3）页面级核查：
+  - 页面引用统计：shortcutApi / approvalEnhancedApi / bpmApi 页面调用为 0；deviceApi 页面引用全部来自
+    GIS 套系（updateDevicePoint/listDevicesWithTracks 等，另一文件），mobile/device.ts 的
+    listDevices/getDevice/deactivateDevice 无引用
+  - 维持"前端页面未使用不补"标准：18 条全部跳过，无补实现
+  - 附带修复：bpm.ts completeTask 双写 /mobile 前缀（唯一双写调用点，与同文件其他方法不一致）→
+    去前缀对齐 apiClient.mobile base；后端 svc/mobile 无 workflow/bpm 路由（definitions/instances/complete 全 404），
+    页面未使用，路由缺口仅记录不补
+- 全绿模块语义级深挖（带 token 实测 GET 契约，比对返回结构与前端类型）：
+  - finance 47 条：200 结构正常（分页 items/total、报表 keys 匹配），5 个 400 为必填参数校验
+    （accounts/balances 缺 period 等），非缺口
+  - pm / master-data（mdm-v58 + quality-v51 系列）：200 真实数据
+  - erp / gis / tms / pdm / search：全绿无异常
+  - aps 5 条 308：刻意的向后兼容重定向（/api/aps/* → /api/mes/*，Location 头确认），跟随重定向后
+    200 真实数据（capacities/forecasts/material-plans/production-plans/schedules）——正常设计非缺口
+  - 结论：8 个全绿模块语义级 0 缺口；resp_json_err 均为响应截断假象
+- 验证工具：/tmp/deep_probe.py（前端 api 文件正则抽 GET 契约 → 带 token 实测 → 非 200 汇总；
+  注意 master→master-data、rd→erp 前缀映射；URL 去前导斜杠防双斜杠）

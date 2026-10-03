@@ -192,10 +192,7 @@ export const bpmApi = {
     taskId: string,
     data: CompleteBpmTaskRequest
   ): Promise<ApiResponse<BpmTask>> => {
-    return apiClient.mobile.post(
-      `/mobile/workflow/instances/${instanceId}/tasks/${taskId}/complete`,
-      data
-    );
+    return apiClient.mobile.post(`workflow/instances/${instanceId}/tasks/${taskId}/complete`, data);
   },
 
   delegateTask: async (
