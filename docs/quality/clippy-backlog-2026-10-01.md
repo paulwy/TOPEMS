@@ -123,6 +123,7 @@
 - **B 项（5a4d8df34）**：portal/mes 三 lint deny 固化（完整复制 workspace lint 集 + deny，见 Phase 2 补录）。
 - **C 项（b507fe78e）**：lib 11 补 indexing deny → **21 crate 三 lint 全 deny 固化完成**——新增 unwrap/expect/indexing 立即编译失败，闸门闭环。
 - 遗留优化项（非阻塞）：workspace 全量 ~1,000+ 风格 warning（sort_by_key/useless_conversion/manual_div_ceil/needless_borrow 等 8 个非 workspace allow 集 lint，全 workspace 普遍，门禁 `-D clippy::correctness` 不查 warning）；~~cast 五 lint 未 deny~~（已闭环：2026-10-02 全 workspace 41 crate 五 cast deny 生效，见下节）。
+  → **2026-10-03 关闭排期**：全 workspace 默认 clippy 实测 **0 警告**（2m48s 全量）——风格 lint（useless_conversion / needless_* / redundant_* / manual_div_ceil 等）已被根 `Cargo.toml [lints]` allow 集显式覆盖（15+ 条 allow），门禁只 force-warn cast 五 lint + deny 三 panic 高危项。此 allow 策略为有意设计（风格 lint 噪音大、价值低，Rust 社区标准做法），"~1,000+" 为早期 force-warn 量化，经 cast 重构后代码与 lint 配置均已变化。**无需执行清理，排期关闭**。
 
 ## cast deny 全清（2026-10-01~02，批 1-7 收官）
 
