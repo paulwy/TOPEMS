@@ -696,3 +696,56 @@
   - mobile attendance stats 内层"未找到对应员工"：admin 在 hrm.employees 无绑定（测试数据），链路已 200
 - 验证：cargo build -p topems-server + run_monolith 重启后，lims/health、wms audit-logs/modules、
   mobile leaves/overview/stats 全部 200
+
+## 🗺️ 下一步工作规划（2026-10-04）
+
+> 依据：TODO 架构优化实施全节 + `docs/architecture/implementation-overview-2026-10-03.md`（73 条 F-xx 终态/残留待办/白名单结论）+ 各批交付汇总登记的残留。优先级 P0=上线前置/门禁收紧；P1=本批建议完成；P2=可延后排期。工作量 S≤0.5d / M≤1.5d / L>1.5d。验收均为可测量断言。
+
+### A. 未决 5 项收尾排期（检查单 🟡 有条件就绪未决项）
+
+| # | 项 | 优先级 | 工作量 | 依赖 | 建议责任人 | 依据 | 可测量验收 |
+|---|---|---|---|---|---|---|---|
+| A1 | **nginx 生产 conf 首部署复核** | P0 | S | 生产/容器 Linux 环境（macOS `use epoll` 不可加载） | 部署/运维 | F-34/R-7；R4 演练 conf `/tmp/topems-nginx-drill.conf` 逐字复制生产 map 路由表 | 生产 nginx 加载 conf 成功 + map 路由表逐字比对 + 6 冒烟端点全 200 |
+| A2 | **5433 docker 口径回归（可选）** | P2 | S | Docker Desktop GUI 管理员授权（macOS 特权 helper 弹窗） | DBA/运维 | 排期项 1 阻塞点；Homebrew 已等价验证 292 收敛 | docker 容器 5433 空库重放 292 迁移、checksum 不一致 0 |
+| A3 | **wms 审计读路径 P2 加固** | P1 | S | 无 | wms backend owner | R2 复测新观察（手插 NULL entity_type/inet ip 行 500，真实写路径合规） | 手插异常行返回 200 或明确 4xx，不再 500；既有单测 4/4 绿 |
+| A4 | **MDM DLQ 管理 API（list/replay）** | P1 | M | R-7b 已定案独立 keyspace `topems:mdm_dlq:{prefix}` | shared-event owner | R-7b 残留（仅 push 未接 list/replay） | `topems:mdm_dlq:*` 可 list/get/republish；共享库测试 +N 全绿 |
+| A5 | **erp RLS policy（topems_app 切换）** | P2 | S | 受限用户接入决策 | DBA | R-7b 联动残留（FORCE RLS 无 policy，superuser 绕过） | topems_app 可读写 erp.erp_master_data_refs（非 superuser 实测） |
+
+### B. 已登记技术债分批偿还（按价值/风险排序）
+
+| # | 项 | 优先级 | 工作量 | 依赖 | 依据 | 可测量验收 |
+|---|---|---|---|---|---|---|
+| B1 | **T3 临时白名单撤销（search→erp，F-37）** | P0 | M | search 3 处直读（handlers.rs:113,167,197）改走 erp HTTP API/事件投影——需先决策 API 化 vs 事件投影 | T3 条目（撤销时机 U1/U3 已满足）；implementation-overview §7 | 撤销 allowlist + schema_boundary.json search.allow 后双门禁仍零 FAIL |
+| B2 | **U6 残留 a：事件 payload 金额 f64→Decimal（跨服务契约）** | P1 | M | shared-event 366 测试基线；先盘点各事件金额字段 | U6 条目（commit `f331be2b6` 仅 finance 4 文件+crm billing）；F-07 | 全仓事件 payload 金额字段 Decimal；grep f64 金额路径=0 |
+| B3 | **U6 残留 b：crm sales_forecast/dashboard 金额 f64** | P1 | S | 无 | U6 条目（crm/models/billing.rs:14,54-78 已改，预测/看板未覆盖） | 两处改 Decimal + 精度单测绿 |
+| B4 | **U6 残留 c：checksums.txt 停更恢复** | P1 | S | 无 | U4 残留（09-21 后停登惯例）；F-65（250 vs 283 覆盖不全） | checksums.txt 恢复登记与 `.sqlx/` 一致，或显式废弃声明（二选一落盘） |
+| B5 | **U5 残留 a：gis 表 enable_rls:false** | P1 | M | 无 | U5 条目残留（同款模式登记）；F-06 族 | 新迁移开启 gis RLS + 策略 + 跨租户实测（同 finance 1106 模式） |
+| B6 | **U5 残留 b：lib/shared-db rls.rs 池化 GUC 同源跟进** | P1 | M | 无 | U5 条目（tenant_rls 已修 acquire→set→run→reset；rls.rs 同源模式未改） | 池化 GUC 连接级正确绑定/清空 + 多租户单测绿 |
+| B7 | **U7 残留：1313 处静态 error() TopemsError 化（ADR 阶段二）** | P2 | L | 无（分批） | U7 条目（泄露型 110/110 清零；静态文案 ADR 明确不在泄露面，阶段二扩大覆盖） | 每服务分批 TopemsError 覆盖推进 + 对外响应一致性抽查 |
+| B8 | **T1 残留：dev:core 引用 topems-core + build:shared-types DTS @types/dompurify** | P1 | S | 无 | T1 条目（根 package.json:21,26）；R1 基线（DTS TS2688、web 走 alias） | grep topems-core=0；build:shared-types 全绿或显式豁免 |
+| B9 | **T1 残留：GIS leaflet 3 测试** | P2 | S | 无 | R1 基线（vitest 3 既有失败=react-leaflet mock 缺 useMapEvents） | 补 mock 后 3 测试转绿 |
+| B10 | **U4 残留：≤3s 快照窗口 SIGKILL 丢最近写** | P2 | S | 无 | U4 条目 | flush 改同步直写或 WAL 兜底；SIGKILL e2e 后数据不丢 |
+| B11 | **U8 残留：form_assistant 迁出独立 crate** | P2 | M | 无 | U8 条目（3 处有意保留） | lib/src/form_assistant/ 迁至业务 crate；门面引用=0 |
+| B12 | **U9.5：services.yaml↔nginx 一致性校验脚本** | P2 | S | 无 | U9 条目残留（D5 独立可停用项）；F-50/F-69 | 脚本校验 services.yaml↔ports.env↔nginx map 一致；挂 CI 门禁 |
+| B13 | **wms data_sync 文档口径（D3 §2.2 过时）** | P2 | S | 无 | U3 条目（实测真实事件驱动、描述未改） | D3 §2.2 修订 + verifier must-contain 抽查 |
+| B14 | **迁移链空库守卫重构级评估** | P1 | M（评估）/L（实施） | 决策：维持脚本层 vs 迁移大版本重构窗口 | 5433 Homebrew 重放条目；收官①（`ensure-empty-db-prereqs.sh` 已交付） | 决策记录落盘；如实施重构则空库一次通过 292 |
+| B15 | **runtime 矩阵重采路径** | P1 | M（埋点评估） | 出站客户端+入站 token 埋点落地 | 收官②（`runtime-matrix-decision-2026-10-03.md` 重采路径已记录） | 埋点后生产流量窗口采样重跑 --collect，runtime vs design 对比 |
+
+### C. 可选新方向（一句话价值判断）
+
+| 方向 | 价值判断 |
+|---|---|
+| **上线部署运维化**（nginx/CI 首部署复核流程固化） | 高价值：与 A1 合并，把演练 conf/回滚预案固化为生产部署 Runbook，消灭"环境口径漂移"类阻塞 |
+| **CI 强化**（门禁进 PR + 空库守卫入库） | 高价值低成本：`ensure-empty-db-prereqs.sh` 挂 CI 空库验证，防迁移链回归（本次 3 处前置即同类回归） |
+| **事件驱动深化**（Saga/补偿 + MDM DLQ 管理 API） | 中价值：补偿先覆盖 F-54（crm 售后本地事务+外部 HTTP 非原子）；MDM DLQ API 已在 A4 |
+| **观测治理**（tracing 覆盖率 + 服务依赖可观测） | 中价值：与 B15 同埋点推进，一举解决矩阵重采与调用环可观测 |
+
+### D. 建议执行形态
+
+- **可并行批（文件面互斥）**：
+  - **批 1（快赢收口）**：A3（svc/wms）+ A4（lib/shared-event）+ B3（svc/crm）+ B4（checksums）+ B13（文档）——全 S/M 独立项，5 代理并行
+  - **批 2（残留偿还）**：B2（lib/shared-event payload）+ B5/B6（svc/gis+lib/shared-db）+ B8/B9（前端）+ A5（DB 侧）——文件面互斥，并行
+  - **批 3（决策先行）**：B1（F-37 方案拍板后实施）+ B14（守卫重构决策）+ B15（埋点决策）+ B7（L 级分批启动）
+- **决策先行项**：B1（API 化 vs 事件投影）、B14（维持脚本层 vs 重构窗口）、B15（埋点投入确认）、A2（docker 授权回归）、A5（受限用户接入）——需用户/各 owner 拍板后开工
+- **前三批建议顺序**：批 1 → 批 2 → 批 3（批 3 内 B1 建议最先，涉及门禁收紧）
+- 每批纪律：pathspeg 只加自身文件、门禁绿、本地提交不 push、并行线共享工作区提交后立即锁定
