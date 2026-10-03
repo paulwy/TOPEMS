@@ -360,8 +360,8 @@ impl StreamEventSubscriber {
     /// 处理单条 MDM 主数据消息（Redis Stream，持久化 + 重试）
     ///
     /// 与标准事件共用同一套重试机制：成功 ACK；失败不 ACK 触发重新投递；
-    /// 超过 `max_retries` 后记录错误并 ACK 放弃（MDM DLQ 化为已知增强项，
-    /// Stream 持久化已保证消息在订阅端短暂故障期间不丢失）。
+    /// 超过 `max_retries` 后推入 MDM DLQ（`topems:mdm_dlq:{prefix}`，R-7b）再 ACK——
+    /// 替代原"仅 error! + ACK 放弃"：失败事件保留供运维排查本地 ref 失同步。
     async fn process_mdm_message(
         &self,
         event: MasterDataEvent,
@@ -421,9 +421,15 @@ impl StreamEventSubscriber {
 
             if retry_count >= self.config.max_retries {
                 error!(
-                    "MDM 事件超过最大重试次数，ACK 放弃 - domain: {:?}, 消息ID: {}, 重试次数: {}",
+                    "MDM 事件超过最大重试次数，进入 MDM 死信队列 - domain: {:?}, 消息ID: {}, 重试次数: {}",
                     domain, message_id, retry_count
                 );
+                // R-7b: 推入 MDM DLQ 保留（独立 keyspace），再 ACK 放弃
+                if let Some(dlq) = &self.dlq {
+                    if let Err(e) = dlq.push_mdm(&event, "max retries exceeded").await {
+                        error!("推入 MDM 死信队列失败: {}", e);
+                    }
+                }
                 self.ack_message(stream_key, message_id).await?;
             } else {
                 self.increment_retry_count(stream_key, message_id).await?;

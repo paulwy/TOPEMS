@@ -1,5 +1,6 @@
 use super::error::{EventError, EventResult};
 use super::event_types::Event;
+use super::master_data::MasterDataEvent;
 use chrono::{DateTime, Utc};
 use redis::Client;
 use serde::{Deserialize, Serialize};
@@ -11,6 +12,8 @@ use uuid::Uuid;
 const DLQ_KEY_PREFIX: &str = "topems:dlq";
 const DLQ_ARCHIVE_KEY_PREFIX: &str = "topems:dlq:archive";
 const DLQ_RETRY_COUNT_KEY: &str = "topems:dlq:retry_count";
+/// MDM 主数据死信独立 keyspace 前缀（R-7b：与标准事件 topems:dlq:* 隔离）
+const MDM_DLQ_KEY_PREFIX: &str = "topems:mdm_dlq";
 /// 统计计数器：成功重试次数
 const DLQ_STATS_RETRY_SUCCESS_KEY: &str = "topems:dlq:stats:retry_success";
 /// 统计计数器：失败重试次数
@@ -39,6 +42,21 @@ pub struct DeadLetterStats {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeadLetter {
     pub event: Event,
+    pub retry_count: usize,
+    pub last_error: String,
+    pub created_at: DateTime<Utc>,
+    pub last_attempt_at: DateTime<Utc>,
+}
+
+/// R-7b: MDM 主数据事件死信（独立 keyspace，不复用类型化 `DeadLetter{event: Event}`）
+///
+/// MDM 死信由 `process_mdm_message` 超 max_retries 后推入 `topems:mdm_dlq:{prefix}`：
+/// - 与标准事件 DLQ 隔离：不进 list/get/stats/retry 管理 API（MDM 本地 ref 是
+///   幂等自愈合快照，下次变更事件到达即自愈，人工回放价值低）；
+/// - 独立 keyspace 保证标准事件 DLQ 扫描（`topems:dlq:*`）不混入非 Event 结构。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdmDeadLetter {
+    pub event: MasterDataEvent,
     pub retry_count: usize,
     pub last_error: String,
     pub created_at: DateTime<Utc>,
@@ -101,6 +119,41 @@ impl DeadLetterQueue {
                 event.event_id, event.event_type, new_retry_count, error
             );
         }
+        Ok(())
+    }
+
+    /// R-7b: 推入 MDM 主数据死信队列（独立 keyspace `topems:mdm_dlq:{prefix}`）
+    ///
+    /// 由 `process_mdm_message` 超 max_retries 后调用，替代原"仅 error! + ACK 放弃"：
+    /// 失败事件先落 MDM DLQ 保留供运维排查（本地 ref 持续失同步的可见信号），再 ACK。
+    /// 不做 retry_count 账本/回放（MDM 本地 ref 自愈合设计）。
+    pub async fn push_mdm(
+        &self,
+        event: &MasterDataEvent,
+        error: &str,
+    ) -> EventResult<()> {
+        let dead_letter = MdmDeadLetter {
+            event: event.clone(),
+            retry_count: 1,
+            last_error: error.to_string(),
+            created_at: Utc::now(),
+            last_attempt_at: Utc::now(),
+        };
+
+        let dlq_key = format!("{}:{}", MDM_DLQ_KEY_PREFIX, event.domain.prefix());
+        let dead_letter_json = serde_json::to_string(&dead_letter)?;
+
+        let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        let _: () = redis::cmd("LPUSH")
+            .arg(&dlq_key)
+            .arg(&dead_letter_json)
+            .query_async(&mut con)
+            .await?;
+
+        error!(
+            "MDM 事件进入死信队列 - domain: {:?}, master_data_id: {}, 错误: {}",
+            event.domain, event.master_data_id, error
+        );
         Ok(())
     }
 

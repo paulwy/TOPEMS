@@ -25,6 +25,15 @@ pub type ResultEventHandler =
 pub type MasterDataEventHandler =
     Arc<dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
 
+/// MDM 主数据 Result 事件处理器回调类型（R-7b）
+///
+/// 与 `MasterDataEventHandler` 分离：避免 `subscribe_master_data` 把 handler Err
+/// 包成 `Ok(())` 直传 Stream 层 → process_mdm_message 永远 all_succeeded →
+/// 立即 ACK，重试计数/MDM DLQ 成为死代码（R-6 双缺陷的 MDM 侧残留）。
+pub type MasterDataResultEventHandler = Arc<
+    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync,
+>;
+
 /// 事件订阅者
 pub struct EventSubscriber {
     redis_client: Client,
@@ -36,6 +45,8 @@ pub struct EventSubscriber {
     /// 返回 Result 的 handler（R-6：Err 直传 Stream 层走重试/DLQ，不再吞成 ()）
     result_handlers: Vec<(Vec<EventType>, ResultEventHandler)>,
     mdm_handlers: Vec<(Vec<MasterDataDomain>, MasterDataEventHandler)>,
+    /// MDM Result 处理器（R-7b：Err 直传 Stream 层走重试/MDM DLQ，不再吞成 ()）
+    mdm_result_handlers: Vec<(Vec<MasterDataDomain>, MasterDataResultEventHandler)>,
     schema_registry: Option<Arc<SchemaRegistry>>,
     event_versions: Option<Arc<EventVersionRegistry>>,
 }
@@ -65,6 +76,7 @@ impl EventSubscriber {
             handlers: Vec::new(),
             result_handlers: Vec::new(),
             mdm_handlers: Vec::new(),
+            mdm_result_handlers: Vec::new(),
             schema_registry: None,
             event_versions: None,
         })
@@ -196,6 +208,19 @@ impl EventSubscriber {
                         }
                     }
 
+                    // R-7b: MDM Result handlers 直传 StreamEventSubscriber（不包 Ok(())——
+                    // Err 要让 process_mdm_message 看到，走重试计数 → 超列入 MDM DLQ）
+                    for (domains, handler) in &self.mdm_result_handlers {
+                        for domain in domains {
+                            let handler_clone = handler.clone();
+                            stream_sub =
+                                stream_sub.subscribe_master_data(*domain, move |mdm_event| {
+                                    let handler_clone = handler_clone.clone();
+                                    async move { handler_clone(mdm_event).await }
+                                });
+                        }
+                    }
+
                     // 启用死信队列
                     stream_sub.with_dlq()?;
 
@@ -241,6 +266,9 @@ impl EventSubscriber {
         for (domains, _) in &self.mdm_handlers {
             all_mdm_domains.extend(domains.iter().cloned());
         }
+        for (domains, _) in &self.mdm_result_handlers {
+            all_mdm_domains.extend(domains.iter().cloned());
+        }
 
         // 去重
         all_mdm_domains.sort_by(|a, b| a.prefix().cmp(b.prefix()));
@@ -254,6 +282,7 @@ impl EventSubscriber {
 
         let handlers = Arc::new(self.handlers);
         let mdm_handlers = Arc::new(self.mdm_handlers);
+        let mdm_result_handlers = Arc::new(self.mdm_result_handlers);
         let dlq = DeadLetterQueue::new()?;
         let mut stream = pubsub.on_message();
 
@@ -314,6 +343,46 @@ impl EventSubscriber {
                                             "MDM 事件处理超时: {:?}, master_data_id: {}",
                                             e, master_data_id
                                         );
+                                    }
+                                }
+                            }
+                            .instrument(span),
+                        );
+                    }
+                }
+
+                // R-7b: MDM Result handlers 分发（pubsub 降级模式无重试/DLQ，
+                // 失败仅记录 error 日志，与 stream 模式的重试/MDM-DLQ 形成对照）
+                for (domains, handler) in mdm_result_handlers.as_ref() {
+                    if domains.contains(&mdm_event.domain) {
+                        let event_clone = mdm_event.clone();
+                        let handler_clone = handler.clone();
+
+                        let span = tracing::info_span!(
+                            "mdm_event_handler",
+                            domain = ?mdm_event.domain,
+                            action = ?mdm_event.action,
+                            master_data_id = %mdm_event.master_data_id,
+                            tenant_id = %mdm_event.tenant_id,
+                        );
+
+                        tokio::spawn(
+                            async move {
+                                match tokio::time::timeout(
+                                    tokio::time::Duration::from_secs(30),
+                                    handler_clone(event_clone),
+                                )
+                                .await
+                                {
+                                    Ok(Ok(())) => {}
+                                    Ok(Err(e)) => {
+                                        error!(
+                                            "MDM Result 事件处理失败（pubsub 模式无重试）: {}",
+                                            e
+                                        );
+                                    }
+                                    Err(e) => {
+                                        warn!("MDM Result 事件处理超时: {:?}", e);
                                     }
                                 }
                             }
@@ -434,6 +503,69 @@ impl EventSubscriber {
     {
         self.subscribe_master_data(vec![MasterDataDomain::Organization], handler)
     }
+
+    /// 订阅 MDM 主数据事件（返回 Result 的 handler 版本）
+    ///
+    /// R-7b：与 `subscribe_handler`（标准事件）同构——此前 `subscribe_master_data`
+    /// 的 handler 返回 `()`，stream 模式下 start_listening 统一包成 `Ok(())`，
+    /// process_mdm_message 永远 all_succeeded → 立即 ACK，重试计数/MDM DLQ
+    /// 对 MDM 订阅是死代码（R-6 双缺陷中"Err 被吞成 Ok 立即 ACK"的 MDM 侧残留）。
+    /// 此变体直传 `Result<(), String>`：Err 走重试计数 → 超限推入 MDM DLQ。
+    /// 旧 `subscribe_master_data`（返回 ()）保留兼容 pdm/portal/scm 等 best-effort 调用方。
+    pub fn subscribe_master_data_handler<F>(
+        mut self,
+        domains: Vec<MasterDataDomain>,
+        handler: F,
+    ) -> Self
+    where
+        F: Fn(
+                MasterDataEvent,
+            )
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+            + Send
+            + Sync
+            + Clone
+            + 'static,
+    {
+        // 不再 match/吞 Err：原样保留 Result，转发给 StreamEventSubscriber。
+        let handler_arc: MasterDataResultEventHandler = Arc::new(move |event| {
+            let handler = handler.clone();
+            Box::pin(handler(event))
+        });
+
+        self.mdm_result_handlers.push((domains, handler_arc));
+        self
+    }
+
+    /// 便捷方法：订阅 MDM 员工事件（Result 版本）
+    pub fn subscribe_master_data_handler_employee<F>(self, handler: F) -> Self
+    where
+        F: Fn(
+                MasterDataEvent,
+            )
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+            + Send
+            + Sync
+            + Clone
+            + 'static,
+    {
+        self.subscribe_master_data_handler(vec![MasterDataDomain::Employee], handler)
+    }
+
+    /// 便捷方法：订阅 MDM 组织事件（Result 版本）
+    pub fn subscribe_master_data_handler_organization<F>(self, handler: F) -> Self
+    where
+        F: Fn(
+                MasterDataEvent,
+            )
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+            + Send
+            + Sync
+            + Clone
+            + 'static,
+    {
+        self.subscribe_master_data_handler(vec![MasterDataDomain::Organization], handler)
+    }
 }
 
 #[cfg(test)]
@@ -488,6 +620,27 @@ mod tests {
             )
             .subscribe_master_data_employee(|_e| Box::pin(async {}))
             .subscribe_master_data_organization(|_e| Box::pin(async {}));
+
+        // 能正常编译 + 构造出来即视为通过（builder 模式无运行时）
+        let _ = sub;
+    }
+
+    #[test]
+    fn test_subscriber_builder_chain_master_data_result_variant() {
+        // R-7b：验证 MDM Result 变体（subscribe_master_data_handler + 两个便捷变体）
+        // 能与标准链式 API 共存编译（mimic crm/erp 7 处迁移后的闭包形态，
+        // 内联传入以保留 Pin<Box<dyn Future>> unsize 强转点）
+        let sub = EventSubscriber::new("builder-test-mdm-result")
+            .unwrap()
+            .subscribe_master_data_handler_employee(|_e: MasterDataEvent| {
+                Box::pin(async { Ok(()) })
+            })
+            .subscribe_master_data_handler_organization(|_e: MasterDataEvent| {
+                Box::pin(async { Ok(()) })
+            })
+            .subscribe_master_data_handler(vec![MasterDataDomain::Supplier], |_e: MasterDataEvent| {
+                Box::pin(async { Ok(()) })
+            });
 
         // 能正常编译 + 构造出来即视为通过（builder 模式无运行时）
         let _ = sub;

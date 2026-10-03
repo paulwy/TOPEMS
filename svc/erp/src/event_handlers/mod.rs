@@ -232,38 +232,60 @@ impl ErpEventHandlers {
                     }
                 })
             })
-            .subscribe_master_data_employee(move |event| {
+            .subscribe_master_data_handler_employee(move |event| {
                 let h = h14.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_employee_changed(event).await {
-                        tracing::error!("[erp] handle_master_data_employee_changed 失败: {}", e);
+                    match h.handle_master_data_employee_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_master_data_employee_changed 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe_master_data_organization(move |event| {
+            .subscribe_master_data_handler_organization(move |event| {
                 let h = h15.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_organization_changed(event).await {
-                        tracing::error!(
-                            "[erp] handle_master_data_organization_changed 失败: {}",
-                            e
-                        );
+                    match h.handle_master_data_organization_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!(
+                                "[erp] handle_master_data_organization_changed 失败: {}",
+                                e
+                            );
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe_master_data(vec![MasterDataDomain::Customer], move |event| {
+            .subscribe_master_data_handler(vec![MasterDataDomain::Customer], move |event| {
                 let h = h16.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_customer_changed(event).await {
-                        tracing::error!("[erp] handle_master_data_customer_changed 失败: {}", e);
+                    match h.handle_master_data_customer_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!(
+                                "[erp] handle_master_data_customer_changed 失败: {}",
+                                e
+                            );
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe_master_data(vec![MasterDataDomain::Material], move |event| {
+            .subscribe_master_data_handler(vec![MasterDataDomain::Material], move |event| {
                 let h = h17.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_material_changed(event).await {
-                        tracing::error!("[erp] handle_master_data_material_changed 失败: {}", e);
+                    match h.handle_master_data_material_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!(
+                                "[erp] handle_master_data_material_changed 失败: {}",
+                                e
+                            );
+                            Err(e)
+                        }
                     }
                 })
             })
@@ -1878,6 +1900,8 @@ impl ErpEventHandlers {
         .execute(&self.db)
         .await;
 
+        // R-7b：写失败不再 warn 吞成 Ok（旧语义下 Err 被包成 Ok 立即 ACK，失败完全不可见）。
+        // ref 写入是幂等 UPSERT，瞬态故障走 Stream 重试自愈；永久性失败超列 MDM DLQ。
         match result {
             Ok(_) => {
                 tracing::info!(
@@ -1889,11 +1913,10 @@ impl ErpEventHandlers {
                 );
             }
             Err(e) => {
-                tracing::warn!(
-                    "[erp-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
-                    event.master_data_id,
-                    e
-                );
+                return Err(format!(
+                    "[erp-mdm] 本地 ref 同步失败 - master_data_id={}, domain={}, local_entity_type={}: {}",
+                    event.master_data_id, domain_str, local_entity_type, e
+                ));
             }
         }
 

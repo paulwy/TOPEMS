@@ -115,30 +115,45 @@ impl CrmEventHandlers {
                     }
                 })
             })
-            .subscribe_master_data_employee(move |event| {
+            .subscribe_master_data_handler_employee(move |event| {
                 let h = h4.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_employee_changed(event).await {
-                        tracing::error!("[crm] handle_master_data_employee_changed 失败: {}", e);
+                    match h.handle_master_data_employee_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_master_data_employee_changed 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe_master_data_organization(move |event| {
+            .subscribe_master_data_handler_organization(move |event| {
                 let h = h5.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_organization_changed(event).await {
-                        tracing::error!(
-                            "[crm] handle_master_data_organization_changed 失败: {}",
-                            e
-                        );
+                    match h.handle_master_data_organization_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!(
+                                "[crm] handle_master_data_organization_changed 失败: {}",
+                                e
+                            );
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe_master_data(vec![MasterDataDomain::Supplier], move |event| {
+            .subscribe_master_data_handler(vec![MasterDataDomain::Supplier], move |event| {
                 let h = h6.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_master_data_supplier_changed(event).await {
-                        tracing::error!("[crm] handle_master_data_supplier_changed 失败: {}", e);
+                    match h.handle_master_data_supplier_changed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!(
+                                "[crm] handle_master_data_supplier_changed 失败: {}",
+                                e
+                            );
+                            Err(e)
+                        }
                     }
                 })
             }))
@@ -678,24 +693,22 @@ impl CrmEventHandlers {
             payload_snapshot: event.payload.clone(),
         };
 
-        match svc.upsert_local_master_data_ref(&req).await {
-            Ok(_) => {
-                tracing::info!(
-                    "[crm-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
-                    event.master_data_id,
-                    domain_str,
-                    event.action,
-                    local_entity_type
-                );
-            }
-            Err(e) => {
-                tracing::warn!(
-                    "[crm-mdm] 本地 ref 同步失败（graceful fallback）- master_data_id={}: {}",
-                    event.master_data_id,
-                    e
-                );
-            }
-        }
+        // R-7b：写失败不再 warn 吞成 Ok（旧语义下 Err 被包成 Ok 立即 ACK，失败完全不可见）。
+        // ref 写入是幂等 UPSERT，瞬态故障走 Stream 重试自愈；永久性失败超列 MDM DLQ。
+        svc.upsert_local_master_data_ref(&req).await.map_err(|e| {
+            format!(
+                "[crm-mdm] 本地 ref 同步失败 - master_data_id={}, domain={}, local_entity_type={}: {}",
+                event.master_data_id, domain_str, local_entity_type, e
+            )
+        })?;
+
+        tracing::info!(
+            "[crm-mdm] 本地 ref 已同步 - master_data_id={}, domain={}, action={:?}, local_entity_type={}",
+            event.master_data_id,
+            domain_str,
+            event.action,
+            local_entity_type
+        );
 
         Ok(())
     }
