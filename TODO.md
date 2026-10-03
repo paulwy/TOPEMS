@@ -624,3 +624,11 @@
   - **联动批 2**：sqlx-cli 0.9.0 **无 repair 子命令**（仅 override skip）→ 按预案定向手工 UPDATE 账本 checksum：20260924110000 `778725e4`→`9d11faed`（=磁盘值，SQLX 存储=文件字节 SHA-384 已验证等价）；dry-run 不再 checksum abort、migrate info 全 installed
   - **编排发现与处置（迁移源文件丢失恢复）**：核实发现 R-4 的 0004 仅存于孤儿提交 b19a89bc7（被并行线 rebase 丢弃）、R-8 的 0005 提交 2bacc35ef 被 reset 拆散——均从孤儿提交对象检出恢复文件并提交（`f7a17f2a`）；0004 补记账本（SHA-384 对齐）→ **终态：磁盘 291 文件=mes 账本 291、checksum 不一致=0、账本独有=0、磁盘独有=0（完全收敛）**；0005 恢复文件 SHA-384 与账本逐字节吻合（确为当初记账字节）
   - 残留：5433 仍 DOWN（r4/r8 源文件已恢复，恢复后可完整重放）；`.subscribe()` 自吞错服务（mes/erp/crm 等）需 per-service 迁移到 subscribe_handler 才享受 DLQ；MDM 事件超限 ACK 放弃不入 DLQ（已知增强项）；search_path 陷阱（migrate 命令需显式 mes 首位）
+
+- [x] **排期项 1+2：5433 恢复重放 + R-7 per-service DLQ 迁移**——✅ 2026-10-03（部分阻塞）：
+  - **项 2（R-7）✅ 完成**：mes(1)/crm(6)/erp(18) 共 25 handler `.subscribe()`→`.subscribe_handler()`（内部已返回 Result 仅 wrapper 吞错——改 match 传播 Err、保留 error! 日志）；独立 commit `3c2260713`(mes)/`20e155cb4`(crm)/`01d33ca8d`(erp)；mes 三态抽验（注入缺必填字段 payload→retry 1→2→3→DLQ last_error="max retries exceeded"、XPENDING=0，测试数据已清理）；三服务 check/clippy 0 错 0 警告、双门禁 exit 0；有意不迁移=CacheInvalidated 缓存淘汰（12 处 best-effort 设计）+ MDM subscribe_master_data_*（7 处，shared-event 无 Result 变体——残留需改库本体）；crm/erp 二进制下次滚动重启生效（mes 已重启 PID 43711）
+  - **项 1（5433）❌ 环境硬阻塞**：Docker Desktop 4.70 后端确定性崩溃于 `repairing vmnetd configuration: configuring privileged port mapping: applescript error`——需 macOS GUI 管理员密码框（`security config --user xingzhai set-vmnetd set-docker-socket`），shell 无法驱动（sudo 禁）、backend 随即 crash；5433 保持 DOWN
+  - 5432 只读基线独立复核：**账本 291=磁盘 291、checksum 不一致 0、账本独有 0、磁盘独有 0**（与排期 3 终态吻合并复核确认）；8 个待重放迁移盘上全部在位
+  - 恢复 Runbook 已产出（compose 服务名=postgres 容器名=topems-postgres、MIGRATE_URL 5433 超级用户、search_path 显式 mes 首位、sqlx migrate run --ignore-missing + psql 兜底 + 核对 SQL）；预期：5433 空库全量应用时 0005 先于 0000 就位 → U6 应能成功（5432 当初失败是半手工漂移态）
+  - **阻塞需用户 GUI 操作**：打开 Docker Desktop.app 输本机登录密码授权特权 helper（或人工 sudo 重装）；可选替代=Homebrew 在 5433 起并行 PG 实例验证重放（偏离 docker 口径，待用户确认）
+  - 残留：docker 网络到 docker.io/desktop.docker.com 受限（daemon 修好后拉 pgvector:pg18 可能需重试/换源）；crm/erp 滚动重启前仍旧二进制；MDM 事件不享 DLQ（待 shared-event 增 Result 变体）
