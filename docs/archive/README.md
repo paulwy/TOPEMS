@@ -6,7 +6,7 @@
 
 | 子目录 | 文件数 | 内容定位 |
 |--------|-------:|----------|
-| [`misc/`](misc/) | 28 | 杂项历史归档：旧架构计划、重构报告、TODO 备份、泛化模板与指南、交付报告等 |
+| [`misc/`](misc/) | 29 | 杂项历史归档：旧架构计划、重构报告、TODO 备份、泛化模板与指南、交付报告、测试方案等 |
 | [`roadmap-history/`](roadmap-history/) | 43 | 路线图历史快照：V67–V266 版本阶段记录、周度报告、构建/基线日志、TODO 归档 |
 | [`superpowers/`](superpowers/) | 42 | 已完成并落地的实施计划与技术规格（`plans/` 23 份 + `specs/` 18 份 + 索引 README） |
 | [`ui-migration/`](ui-migration/) | 11 | UI v3 迁移期文档：迁移指南、部署、测试清单、根 TODO 历史、灰度发布配置等 |
@@ -38,6 +38,7 @@
 - **TODO 备份**：`TODO_backup_20260828.md`、`TODO_HISTORY_phases_19_55.md`
 - **交付与项目总结**：`PROJECT_COMPLETION_SUMMARY.md`、`PROJECT_COMPLETION_REPORT.md`、`final-delivery-report.md`、`project-summary-report.md`
 - **脚本体系整治（2026-09-29 归档）**：`TOPEMS脚本全面分析与topems.sh优化报告.md`（77 脚本全面分析 + topems.sh 优化 + 实施状态追踪表；实施链已落 TODO.md）
+- **测试方案（2026-10-03 归档）**：`TESTING_IMPROVEMENT_PLAN.md`（覆盖率/前端/性能/安全测试方案；实施已落地：ci.yml cargo-llvm-cov + frontend-coverage、apps/web vitest、e2e.yml Playwright、ai-tests.yml k6、secret-scan Gitleaks——工具演进 llvm-cov 替代 tarpaulin）
 - **泛化指南与手册**：`AI_ENGINEERING_GUIDE.md`、`development-guide-generic.md`、`USER_GUIDE-v1-merged.md`、`assessments-README-old.md`
 - **集成与迁移**：`aps_mes_merge_deployment.md`、`integration-implementation-plan.md`、`migration-inventory.md`
 - **其他阶段计划**：`TOPEMS_Architecture_Roadmap_v2.md`、`v68.1-implementation-plan.md`、`V82-2a-next-steps-20260812.md`

@@ -2,7 +2,7 @@
 
 ## 工作流概述
 
-本项目使用 GitHub Actions 实现自动化 CI/CD 流程，包含 5 个工作流（P2-5 合并后从 12 个精简而来）：
+本项目使用 GitHub Actions 实现自动化 CI/CD 流程，包含 7 个工作流（P2-5 合并从 12 精简到 5，后新增 AI Tests 与 Storybook Docs）：
 
 | # | 工作流 | 文件 | 职责 |
 |---|--------|------|------|
@@ -11,6 +11,8 @@
 | 3 | **Deploy to Kubernetes** | `deploy-k8s.yml` | K8s 集群部署（staging/production） |
 | 4 | **E2E** | `e2e.yml` | Playwright 端到端测试（含后端启动） |
 | 5 | **Secret Scan** | `secret-scan.yml` | Gitleaks 安全扫描 |
+| 6 | **AI Tests** | `ai-tests.yml` | AI 服务测试：API 功能 + k6 性能（AI 路径变更触发 + 每日 02:00 UTC） |
+| 7 | **Storybook Docs** | `storybook-docs.yml` | 组件文档站自动构建发布（GitHub Pages，apps/web/shared-components/tokens 变更触发） |
 
 ### P2-5 合并记录
 
