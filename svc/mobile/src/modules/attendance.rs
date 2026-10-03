@@ -384,7 +384,8 @@ pub async fn apply_leave(
     .max(1) as f64;
 
     let request = HrmCreateLeaveRequest {
-        employee_id: user_id,
+        employee_id: None,
+        user_id: Some(user_id.clone()),
         leave_type: req.leave_type,
         start_date: req.start_date,
         end_date: req.end_date,

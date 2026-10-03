@@ -33,11 +33,32 @@ pub struct LeaveRequest {
     pub updated_at: chrono::DateTime<chrono::Utc>,
 }
 
+/// 兼容前端日期字符串（"2026-10-05"）与 RFC3339 时间戳
+fn deserialize_date<'de, D>(deserializer: D) -> Result<chrono::DateTime<chrono::Utc>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    chrono::DateTime::parse_from_rfc3339(&s)
+        .map(|d| d.with_timezone(&chrono::Utc))
+        .or_else(|_| {
+            chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").map(|d| {
+                d.and_hms_opt(0u32, 0u32, 0u32)
+                    .unwrap_or(chrono::NaiveDateTime::MIN)
+                    .and_utc()
+            })
+        })
+        .map_err(serde::de::Error::custom)
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateLeaveRequest {
-    pub employee_id: Uuid,
+    pub employee_id: Option<Uuid>,
+    pub user_id: Option<String>,
     pub leave_type: String,
+    #[serde(deserialize_with = "deserialize_date")]
     pub start_date: chrono::DateTime<chrono::Utc>,
+    #[serde(deserialize_with = "deserialize_date")]
     pub end_date: chrono::DateTime<chrono::Utc>,
     pub days: BigDecimal,
     pub reason: Option<String>,
@@ -69,7 +90,27 @@ pub struct QueryParams {
     #[serde(alias = "page_size")]
     pub page_size: Option<i64>,
     pub employee_id: Option<Uuid>,
+    pub user_id: Option<String>,
     pub status: Option<String>,
+}
+
+/// 统一解析 user_id -> employee_id（与 attendance 模块同口径）
+async fn resolve_leave_employee_id(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    user_id: Option<&str>,
+    employee_id: Option<Uuid>,
+) -> Result<Option<Uuid>, String> {
+    if let Some(uid) = user_id {
+        sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM hrm.employees WHERE user_id = $1::uuid AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(uid)
+        .fetch_optional(&mut **txn)
+        .await
+        .map_err(|e| format!("user_id 解析 employee_id 失败: {}", e))
+    } else {
+        Ok(employee_id.filter(|e| !e.is_nil()))
+    }
 }
 
 pub fn create_routes() -> Router<ApiState> {
@@ -112,7 +153,17 @@ pub async fn list_leaves(
     let page_size = params.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
-    let emp_id = params.employee_id;
+    let emp_id =
+        match resolve_leave_employee_id(txn, params.user_id.as_deref(), params.employee_id).await {
+            Ok(eid) => eid,
+            Err(msg) => {
+                tracing::error!("解析员工信息失败: {}", msg);
+                return Json(ApiResponse::<serde_json::Value>::error(
+                    500,
+                    "解析员工信息失败",
+                ));
+            }
+        };
     let status_filter = params.status;
 
     let result = sqlx::query_as::<_, LeaveRequest>(
@@ -195,9 +246,15 @@ pub async fn create_leave(
 ) -> Json<ApiResponse<LeaveRequest>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
-    }
+    let employee_id =
+        match resolve_leave_employee_id(txn, req.user_id.as_deref(), req.employee_id).await {
+            Ok(Some(eid)) => eid,
+            Ok(None) => return Json(api_error(400, "员工ID不能为空")),
+            Err(msg) => {
+                tracing::error!("解析员工信息失败: {}", msg);
+                return Json(api_error(500, "解析员工信息失败"));
+            }
+        };
 
     if req.leave_type.is_empty() {
         return Json(api_error(400, "请假类型不能为空"));
@@ -219,7 +276,7 @@ pub async fn create_leave(
         "#)
     )
     .bind(id)
-    .bind(req.employee_id)
+    .bind(employee_id)
     .bind(&req.leave_type)
     .bind(req.start_date)
     .bind(req.end_date)
@@ -653,7 +710,8 @@ mod tests {
     #[test]
     fn test_create_leave_request_roundtrip() {
         roundtrip(&CreateLeaveRequest {
-            employee_id: Uuid::new_v4(),
+            employee_id: Some(Uuid::new_v4()),
+            user_id: None,
             leave_type: "annual".to_string(),
             start_date: now(),
             end_date: now(),
@@ -661,7 +719,8 @@ mod tests {
             reason: Some("Summer break".to_string()),
         });
         roundtrip(&CreateLeaveRequest {
-            employee_id: Uuid::new_v4(),
+            employee_id: Some(Uuid::new_v4()),
+            user_id: None,
             leave_type: "sick".to_string(),
             start_date: now(),
             end_date: now(),

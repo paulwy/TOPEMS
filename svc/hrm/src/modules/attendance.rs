@@ -24,6 +24,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/attendance/check-in", post(check_in))
         .route("/attendance/check-out", post(check_out))
         .route("/attendance/stats", get(get_attendance_stats))
+        .route("/attendance/records", get(list_attendance_records))
         .route(
             "/attendance/{id}",
             get(get_attendance)
@@ -649,7 +650,134 @@ mod tests {
 
 #[derive(Debug, Deserialize)]
 pub struct CheckRequest {
-    pub employee_id: Uuid,
+    pub employee_id: Option<Uuid>,
+    pub user_id: Option<String>,
+}
+
+/// 统一解析 user_id -> employee_id（与 today-status / stats 同口径）
+async fn resolve_employee_id_from_req(
+    txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
+    user_id: Option<&str>,
+    employee_id: Option<Uuid>,
+) -> Result<Option<Uuid>, String> {
+    if let Some(uid) = user_id {
+        sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM hrm.employees WHERE user_id = $1::uuid AND deleted_at IS NULL LIMIT 1",
+        )
+        .bind(uid)
+        .fetch_optional(&mut **txn)
+        .await
+        .map_err(|e| format!("user_id 解析 employee_id 失败: {}", e))
+    } else {
+        Ok(employee_id.filter(|e| !e.is_nil()))
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AttendanceRecordsParams {
+    pub user_id: Option<String>,
+    pub employee_id: Option<Uuid>,
+    pub page: Option<i64>,
+    #[serde(alias = "pagesize", alias = "page_size")]
+    pub page_size: Option<i64>,
+    pub month: Option<String>,
+}
+
+/// GET /attendance/records —— 移动端考勤记录分页（MobileAttendancePage 契约）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["hrm:attendance:read"])),
+    path = "/attendance/records",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "attendance"
+)]
+pub async fn list_attendance_records(
+    State(_state): State<ApiState>,
+    Query(params): Query<AttendanceRecordsParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+
+    let employee_id = match resolve_employee_id_from_req(
+        txn,
+        params.user_id.as_deref(),
+        params.employee_id,
+    )
+    .await
+    {
+        Ok(Some(eid)) => Some(eid),
+        Ok(None) => None,
+        Err(msg) => {
+            tracing::error!("解析员工信息失败: {}", msg);
+            return Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "解析员工信息失败",
+            ));
+        }
+    };
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    let month_prefix = params.month.map(|m| format!("{}%", m));
+
+    let items_result = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
+        "hrm",
+        r#"SELECT id, organization_id AS tenant_id, employee_id, date::timestamptz AS date,
+                  check_in_time::TEXT AS check_in, check_out_time::TEXT AS check_out,
+                  status, work_hours::float8 AS work_hours, notes, created_at, updated_at
+           FROM hrm.attendance_records
+           WHERE deleted_at IS NULL
+             AND ($1::uuid IS NULL OR employee_id = $1)
+             AND ($2::text IS NULL OR date::text LIKE $2)
+           ORDER BY date DESC
+           LIMIT $3 OFFSET $4"#
+    ))
+    .bind(employee_id)
+    .bind(&month_prefix)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&mut **txn)
+    .await;
+
+    match items_result {
+        Ok(items) => {
+            let total_result = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
+                "hrm",
+                r#"SELECT COUNT(*) FROM hrm.attendance_records
+                   WHERE deleted_at IS NULL
+                     AND ($1::uuid IS NULL OR employee_id = $1)
+                     AND ($2::text IS NULL OR date::text LIKE $2)"#
+            ))
+            .bind(employee_id)
+            .bind(&month_prefix)
+            .fetch_one(&mut **txn)
+            .await;
+            let total = total_result.unwrap_or(0);
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取考勤记录成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("查询考勤记录失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "查询考勤记录失败",
+            ))
+        }
+    }
 }
 
 /// POST /attendance/check-in —— 移动端打卡上班（当天已有记录则更新时间）
@@ -672,9 +800,15 @@ pub async fn check_in(
 ) -> Json<ApiResponse<AttendanceRecord>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
-    }
+    let employee_id =
+        match resolve_employee_id_from_req(txn, req.user_id.as_deref(), req.employee_id).await {
+            Ok(Some(eid)) => eid,
+            Ok(None) => return Json(api_error(400, "员工ID不能为空")),
+            Err(msg) => {
+                tracing::error!("解析员工信息失败: {}", msg);
+                return Json(api_error(500, "解析员工信息失败"));
+            }
+        };
     let now = Utc::now();
     let org_id = claims
         .tenant_id
@@ -691,7 +825,7 @@ pub async fn check_in(
            WHERE employee_id = $1 AND date::date = CURRENT_DATE
            ORDER BY created_at DESC LIMIT 1"#
     ))
-    .bind(req.employee_id)
+    .bind(employee_id)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -732,7 +866,7 @@ pub async fn check_in(
             ))
             .bind(id)
             .bind(org_id)
-            .bind(req.employee_id)
+            .bind(employee_id)
             .bind(now)
             .bind(now)
             .bind(now)
@@ -773,9 +907,15 @@ pub async fn check_out(
 ) -> Json<ApiResponse<AttendanceRecord>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
-    }
+    let employee_id =
+        match resolve_employee_id_from_req(txn, req.user_id.as_deref(), req.employee_id).await {
+            Ok(Some(eid)) => eid,
+            Ok(None) => return Json(api_error(400, "员工ID不能为空")),
+            Err(msg) => {
+                tracing::error!("解析员工信息失败: {}", msg);
+                return Json(api_error(500, "解析员工信息失败"));
+            }
+        };
     let now = Utc::now();
 
     let existing = sqlx::query_as::<_, AttendanceRecord>(only_own_schema_query!(
@@ -787,7 +927,7 @@ pub async fn check_out(
            WHERE employee_id = $1 AND date::date = CURRENT_DATE
            ORDER BY created_at DESC LIMIT 1"#
     ))
-    .bind(req.employee_id)
+    .bind(employee_id)
     .fetch_optional(&mut **txn)
     .await;
 

@@ -749,3 +749,28 @@
 - **决策先行项**：B1（API 化 vs 事件投影）、B14（维持脚本层 vs 重构窗口）、B15（埋点投入确认）、A2（docker 授权回归）、A5（受限用户接入）——需用户/各 owner 拍板后开工
 - **前三批建议顺序**：批 1 → 批 2 → 批 3（批 3 内 B1 建议最先，涉及门禁收紧）
 - 每批纪律：pathspeg 只加自身文件、门禁绿、本地提交不 push、并行线共享工作区提交后立即锁定
+## 方向② mobile 页面级精确深挖（2026-10-04）——页面在用 attendance 链路修复
+
+- **方法迭代**：先按子模块提取 151 条契约粗表（同名函数跨模块污染 ref 计数，如 listTemplates 在
+  approvalEnhanced/inspection 都有）；纠正为页面真实调用形态 `mobileApi.<方法>`（apps/web/src/api/mobile/index.ts
+  汇总导出）后，**两步法**（先 apiClient.<client>.<verb>('path') 再回溯最近方法名；泛型 <T> 用 [^()]*? 通配
+  跨嵌套泛型）收敛出 27 条 mobileApi 契约 → 页面精确引用（排除 __tests__）→ 带 token 实测三表
+- **结论**：页面真实在用 7 条，其中 200 三条（getAttendanceStats/records 别名?/listLeaveApplications/listMobileTasks），
+  真缺口 4 条全在 attendance：listAttendanceRecords(500)、checkIn(500)、checkOut(500)、applyLeave(500)——
+  之前"attendance/statistics 404、approvals/templates 400"等候选是子模块/测试引用误计，页面不在用，不补
+- **根因与修复（mobile→HRM 服务间链）**：
+  - HRM /attendance/records 路由缺失：hrm_api 打 GET /attendance/records?user_id=.. 被 /attendance/{id} 通配吞
+    → 新增路由+handler（AttendanceRecordsParams user_id/page/pagesize(别名)/month；user_id→employee_id 解析；
+    attendance_records 分页 + date::text LIKE 月度过滤）——置于 {id} 前
+  - HRM CheckRequest 仅 employee_id 必填，mobile 只传 user_id → missing field 400→mobile 500：
+    CheckRequest 改 {employee_id: Option, user_id: Option}；check_in/check_out 统一 resolve（user_id→employees 解析，
+    与 today-status/stats 同构）；新增共享 helper resolve_employee_id_from_req
+  - HRM CreateLeaveRequest employee_id 必填 + start_date/end_date DateTime<Utc> 拒收 "2026-10-05" 日期串：
+    加 user_id:Option + serde deserialize_with 兼容 RFC3339/"YYYY-MM-DD"；create_leave/list_leaves 统一解析
+    （QueryParams 加 user_id）
+  - lib hrm_api：HrmCreateLeaveRequest 改 {employee_id:Option, user_id:Option}（mobile apply_leave 改传 user_id）；
+    list_leave_applications 参数 employee_id={user_id} → user_id=（语义正确）
+- **顺带修复**：svc/mobile missing_endpoints.rs /inspection/tasks checked_at/created_at 读 TIMESTAMPTZ 为
+  NaiveDateTime panic（ColumnDecode）→ 改 DateTime<Utc>（实测 200 返回数据）
+- **验证口径**：records/inspection/tasks 实测 200；check-in/out/applyLeave 无员工绑定（hrm.employees 空表）时
+  返回明确 400"员工ID不能为空"（解析路径已通，非 500；有绑定员工时走与 today-status 同构的解析逻辑已证 200）

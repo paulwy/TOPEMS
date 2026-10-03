@@ -74,8 +74,8 @@ pub async fn list_inspection_tasks(
                 "type": r.get::<Option<String>, _>("patrol_type"),
                 "status": r.get::<String, _>("status"),
                 "checkedBy": r.get::<Option<String>, _>("checked_by"),
-                "checkedAt": r.get::<Option<chrono::NaiveDateTime>, _>("checked_at"),
-                "createdAt": r.get::<chrono::NaiveDateTime, _>("created_at"),
+                "checkedAt": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("checked_at"),
+                "createdAt": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
             })
         })
         .collect();
