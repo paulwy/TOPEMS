@@ -234,6 +234,8 @@ TOPEMS 采用事件驱动架构（EDA）实现微服务间的松耦合通信。
 - 环2 erp↔mes：erp→mes 工单下达、mes→erp 报工回传均由 spawn 同步 HTTP 改为双向事件（决策 A）。
 - 环3 portal↔unified-core：偏好主数据本地化到 unified-core `core.user_preferences`，删除 unified-core→portal 回调；portal 偏好接口改只读代理 unified-core（停 portal 不影响 unified-core 偏好读写）。
 
+> ✅ **R3 一致性核验（2026-10-03）**：上表 4 类事件与 `lib/shared-event/src/event/event_types.rs:191-203` 枚举变体及 Payload 结构（:308/:335/:358/:377）一一对应，roundtrip 测试在册。R2 真 PG 实测：`HrmPayrollPosted`（链①）、`MesWorkReportSubmitted`（链③）到达并幂等收敛；`ErpProductionOrderDispatched`（链②）因 mes `uuid=text` 绑定 bug 未建单（见总览残留待办）；`IamUserPreferencesUpdated` 已定义未实发（AppState 无 event_publisher）。
+
 ## 4. 核心组件
 
 ### 4.1 Event 结构体

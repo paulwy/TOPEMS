@@ -23,6 +23,13 @@
 > - **事件总线**：已迁 Redis Stream（XADD/XREADGROUP/XACK + 消费组 + DLQ + 事件版本 + Schema Registry，默认开启），Pub/Sub+RabbitMQ 废弃——对齐 [D2](./decision-d2-call-cycle-elimination.md) §2.5。
 > - **服务发现**：静态配置为主（`config/services.yaml` 权威源 + nginx + env `SERVICE_URL`）——5 套注册中心已收敛为 consul（预留）+ etcd（opt-in 配置管理）两套，zookeeper/eureka/nacos 未接线残留已移除（U9 2026-10-03）——对齐 [D5](./decision-d5-service-discovery-convergence.md)（2026-10-02）。
 
+> ✅ **2026-10-03 架构整改版本快照（阶段 3 R3 文档对齐闭环）**
+> - **阶段 0（D1–D5 决策）** 全部落盘；**阶段 1（T1 构建链 / T2 文档漂移 / T3 boundary 门禁）** 全绿；**阶段 2（U1–U12 + U12b + U3b）** 全部完成。
+> - **unified-core 瘦身已终态**（上文 2026-10-02 块「灰度下架进行中」作废）：23 个业务镜像模块删除、独立模式 24 条业务投影路由停挂、跨业务 schema 直读清零（U1 `89351e062`/`dea650b55`/`4a41df997`/`2ace368f3`）。
+> - **阶段 3 状态**：R1 全量门禁基线（`f7c3d687d`/`470a37392`）与 R2 六链路回归（`38232be15`）已记录；本快照为 R3 文档对齐闭环；**R4 灰度上线待启动**。
+> - **闭环总览**：73 条架构发现终态对照、残留待办（含 R2 回归）、未 push 提交清单见 [`implementation-overview-2026-10-03.md`](./implementation-overview-2026-10-03.md)。
+> - **最后核对日期：2026-10-03**。
+
 ## 概述
 
 TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、流程自动化、文件管理、协同通讯等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
