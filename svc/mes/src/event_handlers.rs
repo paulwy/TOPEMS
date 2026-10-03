@@ -18,13 +18,19 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> 
     let subscriber = EventSubscriber::new("mes-business")
         .map_err(|e| format!("创建 MES 业务事件订阅者失败: {}", e))?;
 
-    let subscriber = subscriber.subscribe(
+    // R-7: 迁移到 subscribe_handler —— Err 直传 Stream 层走重试/DLQ（此前 .subscribe 吞错自吞）。
+    // 保留 error! 日志后再返回 Err，可观测性不降。
+    let subscriber = subscriber.subscribe_handler(
         vec![EventType::ErpProductionOrderDispatched],
         move |event| {
             let db = db.clone();
             Box::pin(async move {
-                if let Err(e) = handle_erp_production_order_dispatched(&db, event).await {
-                    tracing::error!("[mes] handle_erp_production_order_dispatched 失败: {}", e);
+                match handle_erp_production_order_dispatched(&db, event).await {
+                    Ok(()) => Ok(()),
+                    Err(e) => {
+                        tracing::error!("[mes] handle_erp_production_order_dispatched 失败: {}", e);
+                        Err(e)
+                    }
                 }
             })
         },
