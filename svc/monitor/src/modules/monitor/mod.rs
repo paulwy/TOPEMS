@@ -23,4 +23,5 @@ pub fn create_routes() -> Router<AppState> {
         .merge(business_metrics::create_routes())
         .merge(slo::create_routes())
         .merge(settings::create_routes())
+        .merge(monitor_plugin::create_routes())
 }

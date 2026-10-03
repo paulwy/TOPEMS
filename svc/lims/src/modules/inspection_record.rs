@@ -9,6 +9,7 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/records", get(list_records).post(create_record))
         .route("/records/{id}", get(get_record).delete(delete_record))
+        .route("/records/task/{task_id}", get(list_records_by_task))
 }
 
 #[derive(Debug, Deserialize)]
@@ -161,6 +162,48 @@ pub async fn create_record(
         Err(e) => {
             tracing::error!("Failed to create record: {}", e);
             Json(ApiResponse::error(500, "检测记录创建失败"))
+        }
+    }
+}
+
+/// 按检测任务查询检测记录列表
+pub async fn list_records_by_task(
+    State(state): State<crate::shared::AppState>,
+    axum::extract::Path(task_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<InspectionRecord>>> {
+    let task_id = match Uuid::parse_str(&task_id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
+    };
+
+    let rows = sqlx::query(
+        "SELECT r.id, r.tenant_id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC"
+    )
+    .bind(task_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    match rows {
+        Ok(rows) => Json(ApiResponse::success(
+            rows.iter()
+                .map(|r| InspectionRecord {
+                    id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
+                    record_no: r.get("record_no"),
+                    task_id: r.get("task_id"),
+                    task_no: r.get("task_no"),
+                    test_data: r.get("test_data"),
+                    conclusion: r.get("conclusion"),
+                    recorded_by: r.get("recorded_by"),
+                    recorded_at: r.get("recorded_at"),
+                    created_at: r.get("created_at"),
+                })
+                .collect(),
+            "获取任务检测记录成功",
+        )),
+        Err(e) => {
+            tracing::error!("获取任务检测记录失败: {}", e);
+            Json(ApiResponse::error(500, "获取任务检测记录失败"))
         }
     }
 }

@@ -121,6 +121,10 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
         .route("/sync/trigger/scm-to-wms", post(sync::trigger_scm_wms))
         .route("/sync/trigger/wms-to-crm", post(sync::trigger_wms_crm))
         .route("/sync/trigger/srm-to-scm", post(sync::trigger_srm_scm))
+        // 前端契约：集成同步统计 / 历史 / 端点清单
+        .route("/sync-stats", get(sync::get_integration_sync_stats))
+        .route("/sync-stats/history", get(sync::get_sync_history))
+        .route("/endpoints", get(sync::list_endpoints))
         // MES↔QMS 质检数据集成 API
         .route("/mes-qms", get(mes_qms::list_mes_qms_sync_api))
         .route("/mes-qms/{id}", get(mes_qms::get_mes_qms_sync_api))
@@ -169,6 +173,27 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
         .route(
             "/rules/{id}/disable",
             post(conversion_rules::disable_conversion_rule_api),
+        )
+        // 前端 V2 契约别名：/conversion-rules（与 /rules 同 handler）
+        .route(
+            "/conversion-rules",
+            get(conversion_rules::list_conversion_rules_api),
+        )
+        .route(
+            "/conversion-rules",
+            post(conversion_rules::create_conversion_rule_api),
+        )
+        .route(
+            "/conversion-rules/{id}",
+            get(conversion_rules::get_conversion_rule_api),
+        )
+        .route(
+            "/conversion-rules/{id}",
+            put(conversion_rules::update_conversion_rule_api),
+        )
+        .route(
+            "/conversion-rules/{id}",
+            delete(conversion_rules::delete_conversion_rule_api),
         )
         .layer(from_fn_with_state(
             state.pool.clone(),

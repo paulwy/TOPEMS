@@ -40,6 +40,10 @@ pub fn create_routes() -> Router<ApiState> {
             "/employees/{id}/training-records",
             get(get_employee_records),
         )
+        // 培训计划启用/停用、培训记录完成（前端契约 PUT 动作）
+        .route("/training-plans/{id}/activate", put(activate_plan))
+        .route("/training-plans/{id}/deactivate", put(deactivate_plan))
+        .route("/training-records/{id}/complete", put(complete_record))
 }
 
 #[utoipa::path(
@@ -1185,5 +1189,115 @@ mod tests {
     #[test]
     fn test_create_routes_returns_router() {
         let _router = create_routes();
+    }
+}
+
+// ============================================================================
+// 培训计划启用/停用、培训记录完成（前端契约 /training-plans/{id}/activate 等）
+// ============================================================================
+
+async fn set_plan_status(
+    _state: &ApiState,
+    txn_arc: &std::sync::Arc<
+        tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>,
+    >,
+    id: Uuid,
+    status: &str,
+    message: &str,
+) -> Json<ApiResponse<TrainingPlan>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, TrainingPlan>(
+        only_own_schema_query!("hrm", r#"
+        UPDATE hrm.training_plans SET
+            status = $2,
+            updated_at = $3
+        WHERE deleted_at IS NULL AND id = $1
+        RETURNING id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
+        "#),
+    )
+    .bind(id)
+    .bind(status)
+    .bind(now)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(plan)) => Json(ApiResponse::success(plan, message)),
+        Ok(None) => Json(ApiResponse::<TrainingPlan>::error(404, "培训计划不存在")),
+        Err(e) => {
+            tracing::error!("更新培训计划状态失败: {}", e);
+            Json(ApiResponse::<TrainingPlan>::error(
+                500,
+                "更新培训计划状态失败",
+            ))
+        }
+    }
+}
+
+/// PUT /training-plans/{id}/activate —— 启用培训计划
+pub async fn activate_plan(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<TrainingPlan>> {
+    set_plan_status(&state, &txn_arc, id, "active", "培训计划已启用").await
+}
+
+/// PUT /training-plans/{id}/deactivate —— 停用培训计划
+pub async fn deactivate_plan(
+    State(state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<TrainingPlan>> {
+    set_plan_status(&state, &txn_arc, id, "inactive", "培训计划已停用").await
+}
+
+/// PUT /training-records/{id}/complete —— 标记培训记录完成
+pub async fn complete_record(
+    State(_state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<TrainingRecord>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
+        "hrm",
+        r#"
+        UPDATE hrm.training_records SET
+            completion_status = 'completed',
+            completed_at = $2,
+            updated_at = $2
+        WHERE deleted_at IS NULL AND id = $1
+        RETURNING id, tenant_id, course_id, employee_id, enrollment_date,
+                  attendance_status, completion_status, score, certificate_no,
+                  completed_at, feedback, created_at, updated_at
+        "#
+    ))
+    .bind(id)
+    .bind(now)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(record)) => Json(ApiResponse::success(record, "培训记录已完成")),
+        Ok(None) => Json(ApiResponse::<TrainingRecord>::error(404, "培训记录不存在")),
+        Err(e) => {
+            tracing::error!("更新培训记录状态失败: {}", e);
+            Json(ApiResponse::<TrainingRecord>::error(
+                500,
+                "更新培训记录状态失败",
+            ))
+        }
     }
 }

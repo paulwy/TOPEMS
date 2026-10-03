@@ -79,6 +79,20 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/positions/{position_id}/users",
             get(modules::iam::user_position::get_position_users),
         )
+        // 会话管理 / 安全设置（前端契约 /iam/auth/sessions、/password-policy、/security-settings）
+        .route("/auth/sessions", get(modules::iam::auth::list_sessions))
+        .route(
+            "/auth/sessions/{id}",
+            delete(modules::iam::auth::delete_session),
+        )
+        .route(
+            "/auth/password-policy",
+            get(modules::iam::auth::get_password_policy),
+        )
+        .route(
+            "/auth/security-settings",
+            get(modules::iam::auth::get_security_settings),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("iam:read"),

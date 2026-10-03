@@ -539,3 +539,30 @@
 - 结论：三模块前端契约面 100% 挂载，无 ticket/scm 式隐藏降级；本轮无代码改动
 - 经验：模块路由定义位置差异（analytics 在 routes.rs + modules/bi/*，非 modules/*.rs 平铺）
   导致静态提取误报 0 条——后端提取必须按模块实际结构递归定位
+
+## 2026-10-03 全模块契约面扩展覆盖：21 模块 probe + 18 条缺口补实现（A 组）
+
+- 背景：延续"继续扩展覆盖面"，对 21 个未核查模块全量契约面 probe（GET/POST/PUT/DELETE，串行+单次重试）
+- 结果：finance/tms/pdm/aps/erp/pm/gis/search/master 全绿；9 模块含非 401（详见 /tmp/allmod_404.json）
+- 分类结论（probe 误报清零）：
+  - hrm 20 条 → 17 条 `${queryString}` 无斜杠拼接噪音 + 3 条真实缺口（training activate/deactivate/complete）
+  - wms 25 条 → approval 双重前缀 12 条为 probe base 误报（全局 apiClient base=/api 对齐后端）；cycle/discrepancy 噪音；真实缺口 sync 系列 + picking（下轮 B 组）
+  - rd 6 条 → probe base 用错：material.ts 走 apiClient.erp（/api/erp/materials/* 已挂 401）
+  - plugin 6 条 → probe 误报：marketplace 用 pluginAxios 直连 /api/plugin/plugins/*（200 可达）
+  - lims 1 条真实缺口（records/task/{id}）；iam 4 条真实（sessions/password-policy/security-settings）；
+    integration 8 条真实（conversion-rules 双套 + sync-stats + endpoints）；monitor 2 条（monitor_plugin 未进 merge 链 + 前缀）
+  - mobile 18 条按"页面未使用不补"标准跳过
+- 本轮修复（18 条）：
+  - integration（8）：routes.rs 挂 /conversion-rules 别名（复用 conversion_rules handlers 5）+ handlers/sync.rs 新增
+    get_integration_sync_stats（core_inter_module_sync 聚合 + integration_stats 分组）、get_sync_history（分页过滤）、
+    list_endpoints（静态端点清单 8 项）
+  - iam（4）：auth.rs 新增 list_sessions（core_sessions 按 user_id+未删+未过期）、delete_session（软删本人）、
+    get_password_policy / get_security_settings（静态策略）；iam_routes read 段挂载
+  - monitor（2）：monitor_plugin.rs 已存在但未进 merge 链 → 挂载 + 路由改 /plugins/{health,info}（去 /api 前缀）
+  - lims（1）：inspection_record.rs 新增 list_records_by_task（/records/task/{task_id}，LEFT JOIN qa_lab_tasks）
+  - hrm（3）：training.rs 新增 activate_plan/deactivate_plan（status active/inactive）、complete_record
+    （completion_status=completed + completed_at，RLS txn 模式）
+- 验证：cargo build -p topems-server 通过；重启后 18 条全挂载（16×401 + monitor health 200 + info 401 认证保护），
+  回归 6 条老路径（/rules /stats /logout /records /training-plans /alerts）不破坏
+- 经验：server 重启只跑旧二进制——cargo check ≠ cargo build，改代码后必须 cargo build -p topems-server；
+  monitor 等模块的 *_plugin.rs 可能未进 merge 链（静态 grep 挂载≠实际挂载）；health 类路径免认证、info 类需认证

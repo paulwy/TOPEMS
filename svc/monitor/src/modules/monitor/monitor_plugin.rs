@@ -5,6 +5,8 @@ use std::env;
 use topems_shared_core::health::ServiceHealth;
 use topems_shared_core::response::ApiResponse;
 
+use crate::AppState;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
     pub code: String,
@@ -93,10 +95,10 @@ pub async fn plugin_health_check() -> Json<ServiceHealth> {
     ))
 }
 
-pub fn create_routes() -> Router {
+pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/plugins/info", get(get_plugin_info))
-        .route("/api/plugins/health", get(plugin_health_check))
+        .route("/plugins/info", get(get_plugin_info))
+        .route("/plugins/health", get(plugin_health_check))
 }
 
 /// 获取运行时 URL

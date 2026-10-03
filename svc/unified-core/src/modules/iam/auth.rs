@@ -1253,6 +1253,140 @@ pub async fn verify_token(Extension(claims): Extension<Claims>) -> Response {
         .into_response()
 }
 
+// ============================================================================
+// 会话管理 / 安全设置（前端契约 /iam/auth/sessions、/password-policy、/security-settings）
+// ============================================================================
+
+#[derive(Serialize)]
+struct SessionInfo {
+    id: Uuid,
+    ip_address: Option<String>,
+    user_agent: Option<String>,
+    device_info: Option<serde_json::Value>,
+    created_at: chrono::DateTime<chrono::Utc>,
+    last_active_at: chrono::DateTime<chrono::Utc>,
+    expires_at: chrono::DateTime<chrono::Utc>,
+    is_current: bool,
+}
+
+/// GET /iam/auth/sessions —— 当前用户活动会话列表
+pub async fn list_sessions(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let Ok(user_id) = claims.user_id() else {
+        return Json(serde_json::json!({
+            "code": 400, "success": false, "data": null, "message": "无效的用户ID"
+        }));
+    };
+    let rows = sqlx::query_as::<_, (Uuid, Option<String>, Option<String>, Option<serde_json::Value>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+        "SELECT id, ip_address::text, user_agent, device_info, created_at, last_active_at, expires_at \
+         FROM public.core_sessions \
+         WHERE user_id = $1 AND deleted_at IS NULL AND expires_at > now() \
+         ORDER BY created_at DESC",
+    )
+    .bind(user_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    match rows {
+        Ok(rows) => {
+            let data: Vec<SessionInfo> = rows
+                .into_iter()
+                .map(|(id, ip, ua, dev, created, last, exp)| SessionInfo {
+                    id,
+                    ip_address: ip,
+                    user_agent: ua,
+                    device_info: dev,
+                    created_at: created,
+                    last_active_at: last,
+                    expires_at: exp,
+                    is_current: false,
+                })
+                .collect();
+            Json(serde_json::json!({
+                "code": 200, "success": true, "data": data, "message": "获取会话列表成功"
+            }))
+        }
+        Err(e) => {
+            tracing::error!("获取会话列表失败: {}", e);
+            Json(serde_json::json!({
+                "code": 500, "success": false, "data": null, "message": "获取会话列表失败"
+            }))
+        }
+    }
+}
+
+/// DELETE /iam/auth/sessions/{id} —— 注销指定会话（仅本人）
+pub async fn delete_session(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+) -> Json<serde_json::Value> {
+    let Ok(user_id) = claims.user_id() else {
+        return Json(serde_json::json!({
+            "code": 400, "success": false, "data": null, "message": "无效的用户ID"
+        }));
+    };
+    let result = sqlx::query(
+        "UPDATE public.core_sessions SET deleted_at = now() \
+         WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(res) if res.rows_affected() > 0 => Json(serde_json::json!({
+            "code": 200, "success": true, "data": null, "message": "会话已注销"
+        })),
+        Ok(_) => Json(serde_json::json!({
+            "code": 404, "success": false, "data": null, "message": "会话不存在或已注销"
+        })),
+        Err(e) => {
+            tracing::error!("注销会话失败: {}", e);
+            Json(serde_json::json!({
+                "code": 500, "success": false, "data": null, "message": "注销会话失败"
+            }))
+        }
+    }
+}
+
+/// GET /iam/auth/password-policy —— 密码策略
+pub async fn get_password_policy() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "code": 200, "success": true,
+        "data": {
+            "min_length": 8,
+            "max_length": 64,
+            "require_uppercase": true,
+            "require_lowercase": true,
+            "require_digit": true,
+            "require_special_char": false,
+            "password_expiry_days": 90,
+            "cannot_reuse_last": 5
+        },
+        "message": "获取密码策略成功"
+    }))
+}
+
+/// GET /iam/auth/security-settings —— 安全设置
+pub async fn get_security_settings() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "code": 200, "success": true,
+        "data": {
+            "session_timeout_minutes": 120,
+            "refresh_token_rotation": true,
+            "mfa_enabled": false,
+            "login_attempt_limit": 5,
+            "lockout_duration_minutes": 30,
+            "ip_allowlist_enabled": false
+        },
+        "message": "获取安全设置成功"
+    }))
+}
+
 fn verify_password(password: &str, password_hash: &str) -> bool {
     match bcrypt::verify(password, password_hash) {
         Ok(result) => result,

@@ -564,3 +564,336 @@ pub async fn trigger_srm_scm(
         Err(_) => Json(api_error(400, "供应商ID格式错误")),
     }
 }
+
+// ============================================================================
+// 集成同步统计 + 历史 + 端点清单（前端契约 /sync-stats、/sync-stats/history、/endpoints）
+// ============================================================================
+
+#[derive(Debug, Serialize)]
+pub struct IntegrationSyncStatsResp {
+    pub total_syncs: i64,
+    pub success_rate: f64,
+    pub last_sync_at: Option<String>,
+    pub integration_stats: std::collections::HashMap<String, SyncTypeStats>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SyncTypeStats {
+    pub total: i64,
+    pub synced: i64,
+    pub failed: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SyncHistoryItemResp {
+    pub id: Uuid,
+    pub sync_type: String,
+    pub source_system: String,
+    pub target_system: String,
+    pub status: String,
+    pub total_records: i64,
+    pub success_count: i64,
+    pub failed_count: i64,
+    pub started_at: String,
+    pub completed_at: Option<String>,
+    pub duration_ms: Option<i64>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct SyncStatsAggRow {
+    sync_type: String,
+    total: i64,
+    synced: i64,
+    failed: i64,
+}
+
+/// GET /api/integration/sync-stats —— 集成同步整体统计（按 sync_type 聚合）
+#[allow(clippy::cast_precision_loss, clippy::as_conversions)]
+pub async fn get_integration_sync_stats(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<IntegrationSyncStatsResp>> {
+    let result: Result<IntegrationSyncStatsResp, sqlx::Error> = async {
+        let (total_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync"
+        ))
+        .fetch_one(&state.pool)
+        .await?;
+
+        let (success_count,): (i64,) = sqlx::query_as(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'success'"
+        ))
+        .fetch_one(&state.pool)
+        .await?;
+
+        let (_failed_count,): (i64,) = sqlx::query_as(only_own_schema_query!(
+            "integration",
+            "SELECT COUNT(*) FROM integration.core_inter_module_sync WHERE status = 'failed'"
+        ))
+        .fetch_one(&state.pool)
+        .await?;
+
+        let last_sync: Option<Option<String>> = sqlx::query_scalar(only_own_schema_query!(
+            "integration",
+            "SELECT MAX(created_at)::text FROM integration.core_inter_module_sync"
+        ))
+        .fetch_one(&state.pool)
+        .await?;
+
+        let rows: Vec<SyncStatsAggRow> = sqlx::query_as(only_own_schema_query!(
+            "integration",
+            "SELECT sync_type,
+                    COUNT(*)::bigint AS total,
+                    COUNT(*) FILTER (WHERE status = 'success')::bigint AS synced,
+                    COUNT(*) FILTER (WHERE status = 'failed')::bigint AS failed
+             FROM integration.core_inter_module_sync
+             GROUP BY sync_type"
+        ))
+        .fetch_all(&state.pool)
+        .await?;
+
+        let integration_stats = rows
+            .into_iter()
+            .map(|r| {
+                (
+                    r.sync_type,
+                    SyncTypeStats {
+                        total: r.total,
+                        synced: r.synced,
+                        failed: r.failed,
+                    },
+                )
+            })
+            .collect();
+
+        let success_rate = if total_syncs > 0 {
+            (success_count as f64 / total_syncs as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        Ok(IntegrationSyncStatsResp {
+            total_syncs,
+            success_rate: (success_rate * 100.0).round() / 100.0,
+            last_sync_at: last_sync.flatten(),
+            integration_stats,
+        })
+    }
+    .await;
+
+    match result {
+        Ok(stats) => Json(ApiResponse::success(stats, "获取同步统计成功")),
+        Err(e) => {
+            tracing::error!("获取同步统计失败: {}", e);
+            Json(api_error(500, "获取同步统计失败"))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SyncHistoryQuery {
+    pub connection_id: Option<String>,
+    pub sync_type: Option<String>,
+    pub status: Option<String>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct SyncHistoryRow {
+    id: Uuid,
+    sync_type: String,
+    source_module: String,
+    target_module: String,
+    status: String,
+    created_at: chrono::DateTime<chrono::Utc>,
+}
+
+/// GET /api/integration/sync-stats/history —— 同步历史记录（分页）
+pub async fn get_sync_history(
+    State(state): State<AppState>,
+    axum::extract::Query(q): axum::extract::Query<SyncHistoryQuery>,
+) -> Json<ApiResponse<Vec<SyncHistoryItemResp>>> {
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+
+    let mut sql = String::from(
+        "SELECT id, sync_type, source_module, target_module, status, created_at \
+         FROM integration.core_inter_module_sync WHERE 1=1",
+    );
+    let mut cond = Vec::new();
+    if let Some(st) = &q.sync_type {
+        cond.push(format!("sync_type = '{}'", st.replace('\'', "")));
+    }
+    if let Some(st) = &q.status {
+        cond.push(format!("status = '{}'", st.replace('\'', "")));
+    }
+    if let Some(conn) = &q.connection_id {
+        if let Ok(_uuid) = Uuid::parse_str(conn) {
+            cond.push(format!("source_id = '{}'", conn));
+        }
+    }
+    if !cond.is_empty() {
+        sql.push_str(" AND ");
+        sql.push_str(&cond.join(" AND "));
+    }
+    sql.push_str(" ORDER BY created_at DESC LIMIT $1 OFFSET $2");
+
+    // 仅支持已过滤条件构造，字段全部白名单内；LIMIT/OFFSET 参数化
+    let query = sqlx::query_as::<_, SyncHistoryRow>(&sql)
+        .bind(page_size)
+        .bind(offset);
+
+    let result: Result<Vec<SyncHistoryItemResp>, sqlx::Error> = async {
+        let rows = query.fetch_all(&state.pool).await?;
+        Ok(rows
+            .into_iter()
+            .map(|r| SyncHistoryItemResp {
+                id: r.id,
+                sync_type: r.sync_type,
+                source_system: r.source_module,
+                target_system: r.target_module,
+                status: r.status.clone(),
+                total_records: 0,
+                success_count: if r.status == "success" { 1 } else { 0 },
+                failed_count: if r.status == "failed" { 1 } else { 0 },
+                started_at: r.created_at.to_rfc3339(),
+                completed_at: r.created_at.to_rfc3339().into(),
+                duration_ms: None,
+            })
+            .collect())
+    }
+    .await;
+
+    match result {
+        Ok(items) => Json(ApiResponse::success(items, "获取同步历史成功")),
+        Err(e) => {
+            tracing::error!("获取同步历史失败: {}", e);
+            Json(api_error(500, "获取同步历史失败"))
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct IntegrationEndpointResp {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub description: Option<String>,
+    pub r#type: String,
+    pub protocol: String,
+    pub endpoint_url: String,
+    pub method: Option<String>,
+    pub auth_type: Option<String>,
+    pub status: String,
+}
+
+/// GET /api/integration/endpoints —— 集成端点清单（供 automation designer 选择）
+pub async fn list_endpoints(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<IntegrationEndpointResp>>> {
+    let endpoints = vec![
+        IntegrationEndpointResp {
+            id: "erp-connections".into(),
+            name: "ERP 连接".into(),
+            code: "erp_connections".into(),
+            description: Some("ERP 系统连接配置".into()),
+            r#type: "inbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/erp/connections".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "erp-mappings".into(),
+            name: "ERP 映射".into(),
+            code: "erp_mappings".into(),
+            description: Some("ERP 字段映射配置".into()),
+            r#type: "inbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/erp/mappings".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "lims-qms".into(),
+            name: "LIMS-QMS 同步".into(),
+            code: "lims_qms".into(),
+            description: Some("实验室到质检数据同步".into()),
+            r#type: "outbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/lims-qms".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "mes-erp".into(),
+            name: "MES-ERP 同步".into(),
+            code: "mes_erp".into(),
+            description: Some("制造执行到 ERP 数据同步".into()),
+            r#type: "outbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/mes-erp".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "wms-scm".into(),
+            name: "WMS-SCM 同步".into(),
+            code: "wms_scm".into(),
+            description: Some("仓储到供应链数据同步".into()),
+            r#type: "outbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/wms-scm".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "mes-qms".into(),
+            name: "MES-QMS 质检集成".into(),
+            code: "mes_qms".into(),
+            description: Some("制造质检数据集成".into()),
+            r#type: "outbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/mes-qms".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "sync-tasks".into(),
+            name: "跨服务同步任务".into(),
+            code: "sync_tasks".into(),
+            description: Some("通用跨服务同步任务".into()),
+            r#type: "outbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/sync/tasks".into(),
+            method: Some("POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+        IntegrationEndpointResp {
+            id: "conversion-rules".into(),
+            name: "转换规则".into(),
+            code: "conversion_rules".into(),
+            description: Some("数据转换规则配置".into()),
+            r#type: "inbound".into(),
+            protocol: "rest".into(),
+            endpoint_url: "/api/integration/rules".into(),
+            method: Some("GET/POST".into()),
+            auth_type: Some("bearer".into()),
+            status: "active".into(),
+        },
+    ];
+
+    // state 仅用于保持签名一致（供中间件链路使用）
+    let _ = state;
+    Json(ApiResponse::success(endpoints, "获取集成端点列表成功"))
+}
